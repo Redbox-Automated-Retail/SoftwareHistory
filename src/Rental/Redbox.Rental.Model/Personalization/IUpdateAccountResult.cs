@@ -7,6 +7,8 @@ public interface IUpdateAccountResult
 {
 	bool Success { get; set; }
 
+	string CustomerProfileNumber { get; set; }
+
 	string MobilePhoneNumber { get; set; }
 
 	UpdateAccountResponseErrors UpdateAccountResponseError { get; set; }

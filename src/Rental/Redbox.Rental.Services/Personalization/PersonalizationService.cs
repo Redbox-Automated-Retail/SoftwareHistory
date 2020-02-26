@@ -105,7 +105,9 @@ public class PersonalizationService : IPersonalizationService
 		}
 		else if (result.Properties.ContainsKey("response") && result.Properties["response"] is KioskLoginResponseErrors)
 		{
-			switch (loginResult.KioskLoginResponseError = (KioskLoginResponseErrors)result.Properties["response"])
+			KioskLoginResponseErrors kioskLoginResponseErrors = (loginResult.KioskLoginResponseError = (KioskLoginResponseErrors)result.Properties["response"]);
+			OrchestrationService.SetCurrentUICulture();
+			switch (kioskLoginResponseErrors)
 			{
 			case KioskLoginResponseErrors.AccountLocked:
 				loginResult.ErrorMessage = Resources.personalization_service_error_KLI0001;
@@ -175,6 +177,10 @@ public class PersonalizationService : IPersonalizationService
 				updateAccountResult.ErrorMessage = Resources.personalization_service_error_UPA0002;
 				break;
 			}
+		}
+		else
+		{
+			updateAccountResult.CustomerProfileNumber = result.GetProperty<string>("CustomerProfileNumber");
 		}
 		_updateAccountResultCallback?.Invoke(updateAccountResult);
 	}

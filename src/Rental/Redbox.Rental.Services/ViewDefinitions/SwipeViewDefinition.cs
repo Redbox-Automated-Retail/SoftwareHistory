@@ -16,9 +16,9 @@ public class SwipeViewDefinition : BaseViewDefinition, IViewDefinition
 		{
 			SwipeViewController.ConfigureSwipeView();
 		};
-		base.OnLeave = delegate
+		base.OnLeave = delegate(IViewFrameInstance viewFrameInstance)
 		{
-			SwipeViewController.LeaveSwipeView();
+			SwipeViewController.LeaveSwipeView(viewFrameInstance);
 		};
 	}
 }

@@ -4,9 +4,11 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment.CardDataReader;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Reservation;
 using Redbox.Rental.Model.Session;
+using Redbox.Rental.Model.Transaction;
 
 namespace Redbox.Rental.Services.Session;
 
@@ -19,6 +21,8 @@ public class Session : ISession
 	public IHelpState HelpState { get; set; }
 
 	public IPersonalizationSession PersonalizationSession { get; set; }
+
+	public IEmailConfirmResult EmailConfirmResult { get; set; }
 
 	public ITrackData TrackData { get; set; }
 
@@ -83,6 +87,8 @@ public class Session : ISession
 
 	public IPreauthorizeResult PreauthorizeResult { get; set; }
 
+	public ITransactionData TransactionData { get; set; }
+
 	public Session()
 	{
 		BrowseState = new BrowseState();
@@ -91,6 +97,7 @@ public class Session : ISession
 		ServiceLocator.Instance.GetService<ITrackDataEncryptionService>()?.RefreshCertificate();
 		ValidatedReservations = null;
 		CardReadAttemptCollection = new CardReadAttemptCollection();
+		TransactionData = new TransactionData();
 	}
 
 	public void ClearTrackData()

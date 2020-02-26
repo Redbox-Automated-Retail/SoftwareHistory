@@ -45,6 +45,8 @@ public class PromoOfferBrowseViewController : BaseViewController
 
 	private static bool _allowMnp;
 
+	private static bool _isPurchase;
+
 	private static IBrowseState BrowseState => Redbox.Rental.Services.Session.Session.Instance.BrowseState;
 
 	private static IPromoOfferState PromoOfferState => Redbox.Rental.Services.Session.Session.Instance.PromoOfferState;
@@ -67,6 +69,9 @@ public class PromoOfferBrowseViewController : BaseViewController
 			promoOfferBrowseViewModel.MiniCartText = "";
 			_availableProducts = parameters.applicableProducts;
 			_selectedTitle = PromoOfferState.SelectedProduct;
+			_allowMnp = parameters.AllowMnp;
+			_isPurchase = parameters.IsPurchase;
+			_promoPriceCalc = parameters.DiscountedPriceCalc;
 			ConfigureShoppingCartChangeHandler();
 			ConfigureAvailableTitlesBrowse(promoOfferBrowseViewModel);
 			ConfigureMiniCartControl(promoOfferBrowseViewModel);
@@ -83,8 +88,6 @@ public class PromoOfferBrowseViewController : BaseViewController
 			_cancelAction = parameters.CancelAction;
 			_continueAction = parameters.ContinueAction;
 			_timeoutAction = parameters.TimeoutAction;
-			_promoPriceCalc = parameters.DiscountedPriceCalc;
-			_allowMnp = parameters.AllowMnp;
 			ConfigureTTS(promoOfferBrowseViewModel);
 			viewUserControl.DataContext = promoOfferBrowseViewModel;
 		}
@@ -140,6 +143,7 @@ public class PromoOfferBrowseViewController : BaseViewController
 		browseControlModel.BorderShadowVisibility = Visibility.Collapsed;
 		browseControlModel.PageNumberVisibility = Visibility.Collapsed;
 		browseControlModel.ShowNoResultsMessage = false;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = (_isPurchase ? BrowseViewFilter.ForSale : BrowseViewFilter.All);
 		List<IBrowseItemModel> list = (browseControlModel.BrowseItems = CreateBrowseItemsFromTitleProducts(_availableProducts));
 		int count = list.Count;
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseItemModels = browseControlModel.BrowseItems;
@@ -151,12 +155,24 @@ public class PromoOfferBrowseViewController : BaseViewController
 		browseControlModel.SetPageNumber(viewModel.PageNumber, PageChangeSource.None);
 		for (int i = 0; i < browseControlModel.RowCount * browseControlModel.ColumnCount * 3; i++)
 		{
-			browseControlModel.BrowseControls.Add(new DisplayProductBrowseUserControl
+			if (_isPurchase)
 			{
-				Name = $"product_{i + 1}",
-				HorizontalAlignment = HorizontalAlignment.Center,
-				VerticalAlignment = VerticalAlignment.Center
-			});
+				browseControlModel.BrowseControls.Add(new DisplayProductWithPriceBrowseUserControl
+				{
+					Name = $"product_{i + 1}",
+					HorizontalAlignment = HorizontalAlignment.Center,
+					VerticalAlignment = VerticalAlignment.Center
+				});
+			}
+			else
+			{
+				browseControlModel.BrowseControls.Add(new DisplayProductBrowseUserControl
+				{
+					Name = $"product_{i + 1}",
+					HorizontalAlignment = HorizontalAlignment.Center,
+					VerticalAlignment = VerticalAlignment.Center
+				});
+			}
 		}
 		browseControlModel.OnNotifyBrowseItemsShown += BrowseProductControl_OnNotifyBrowseItemsShown;
 		browseControlModel.OnAddBrowseItemModel += BrowseProductControl_OnAddBrowseItemModel;
@@ -196,21 +212,17 @@ public class PromoOfferBrowseViewController : BaseViewController
 		{
 		case KioskProductType.Title:
 		case KioskProductType.MDV:
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "promo-offer-browse-add-item");
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("gridPosition", $"row = {browseItemModel.CurrentGridRow}, column = {browseItemModel.CurrentGridColumn}.");
 			AddProductCheckMnpView(titleProduct);
 			break;
 		case KioskProductType.TitleRollup:
 		{
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "promo-offer-browse-add-item");
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("gridPosition", $"row = {browseItemModel.CurrentGridRow}, column = {browseItemModel.CurrentGridColumn}.");
 			TitleRollupProduct titleRollupProduct = titleProduct as TitleRollupProduct;
 			if (!BrowseFunctions.IsPurchase && titleRollupProduct.KioskProducts.Count == 1)
 			{
 				AddProductCheckMnpView(titleProduct);
 				break;
 			}
-			OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase: false, delegate
+			OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, _isPurchase, delegate
 			{
 				CancelBrowseSelection();
 			}, _allowMnp, _promoPriceCalc));
@@ -243,7 +255,7 @@ public class PromoOfferBrowseViewController : BaseViewController
 		}
 		else
 		{
-			BrowseFunctions.AddProductToCart(titleProduct, isPurchase: false);
+			BrowseFunctions.AddProductToCart(titleProduct, _isPurchase);
 		}
 	}
 
@@ -262,7 +274,7 @@ public class PromoOfferBrowseViewController : BaseViewController
 				rentalShoppingCartItem.Status = LineItemStatus.Pending;
 				rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(_selectedTitle);
 				rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(_selectedTitle);
-				rentalShoppingCartItem.Tags = PersonalizationFunctions.GetTags(_selectedTitle);
+				rentalShoppingCartItem.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(_selectedTitle);
 				currentRentalShoppingCart.AddItem(rentalShoppingCartItem);
 				UpdateBrowseDisplay();
 			}
@@ -284,7 +296,6 @@ public class PromoOfferBrowseViewController : BaseViewController
 		BaseViewController.ProcessWPFHit();
 		if (_selectedTitle != null)
 		{
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "ContinueButton");
 			OrchestrationService.ViewGoBackSafe("PromoOfferBrowse_item_selected", popOnly: false);
 			_continueAction(_selectedTitle);
 		}
@@ -314,15 +325,36 @@ public class PromoOfferBrowseViewController : BaseViewController
 				}
 				DisplayProductModelConstants displayProductModelConstants = GetDisplayProductModelConstants();
 				bool flag = IsProductSelected(product, displayProductModelConstants);
-				DisplayProductModel displayProductModel = new DisplayProductModel
+				DisplayProductModel displayProductModel;
+				if (!isForMiniCart && BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
 				{
-					Name = product.ProductName,
-					Data = product,
-					Image = OrchestrationService.GetProductBitmapImage(product),
-					Header = product.ProductName,
-					DisplayProductModelConstants = displayProductModelConstants,
-					AddButtonStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "classic_rubine_button_style")
-				};
+					string purchasePriceText = BrowseFunctions.GetPurchasePriceText(product);
+					string purchasePriceText2 = BrowseFunctions.GetPurchasePriceText(product, _promoPriceCalc);
+					displayProductModel = new DisplayProductWithPriceModel
+					{
+						Name = product.ProductName,
+						Data = product,
+						Image = OrchestrationService.GetProductBitmapImage(product),
+						LockAspectRatio = true,
+						Header = product.ProductName,
+						DisplayProductModelConstants = displayProductModelConstants,
+						StrikethroughPriceText = purchasePriceText,
+						PriceText = purchasePriceText2,
+						PriceTypeText = (string.IsNullOrEmpty(purchasePriceText) ? "" : $"{Resources.browse_view_rent_and_buy_purchase_text}:")
+					};
+				}
+				else
+				{
+					displayProductModel = new DisplayProductModel
+					{
+						Name = product.ProductName,
+						Data = product,
+						Image = OrchestrationService.GetProductBitmapImage(product),
+						Header = product.ProductName,
+						DisplayProductModelConstants = displayProductModelConstants,
+						AddButtonStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "classic_rubine_button_style")
+					};
+				}
 				if (isForMiniCart)
 				{
 					if (isAdaMiniCart)
@@ -375,14 +407,14 @@ public class PromoOfferBrowseViewController : BaseViewController
 		return new DisplayProductModelConstants
 		{
 			StarringLabel = Resources.starring_label,
-			GenresLabel = Resources.genres_label,
+			GenresLabel = ((Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion == "B") ? Resources.title_details_genres_text : Resources.genres_label),
 			OneNightPriceLabel = Resources.one_night_price_label,
 			OneNightReturnTimeLabel = Resources.return_time_label,
 			MultiNightPriceLabel = Resources.multi_night_price_label,
 			MultiNightReturnTimeLabel = Resources.return_time_label,
 			AdImage = null,
-			AdHeight = 20,
-			MainHeight = 500,
+			AdHeight = 0,
+			MainHeight = 628,
 			ShowCollections = false,
 			CollectionTextLine1 = Resources.title_detail_collection_text,
 			BuyText = Resources.title_detail_buy,
@@ -392,24 +424,25 @@ public class PromoOfferBrowseViewController : BaseViewController
 			OutOfStockLine1Text = Resources.out_of_stock_line1,
 			OutOfStockLine2Text = Resources.out_of_stock_line2,
 			OutOfStockLine3Text = Resources.out_of_stock_line3,
+			OutOfStockLine4Text = Resources.out_of_stock_line4,
 			Movies = Resources.Movies,
 			Games = Resources.Games,
 			Movie = Resources.Movie.ToLower(),
 			Game = Resources.game.ToLower(),
-			FontMuseo20Style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_museo_slab_900_20"),
-			FontMuseo16Style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_museo_slab_900_16"),
+			FontMontserrat16Style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_montserrat_extrabold_16"),
+			FontMontserrat20Style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_montserrat_medium_20"),
 			PriceFor = Resources.price_for,
 			Night = Resources.night,
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
 			IsInCartBrowse = false,
+			TitleDetailsLayoutABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion,
 			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices
 		};
 	}
 
 	private static void CancelCommand_Execute(Action cancelAction)
 	{
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "SkipOffer");
 		OrchestrationService.ViewGoBackSafe("PromoOfferBrowse_cancel", popOnly: false);
 		OrchestrationService.ViewShow("OfferAbandonConfirmView", new OfferAbandonConfirmInfo
 		{
@@ -501,7 +534,6 @@ public class PromoOfferBrowseViewController : BaseViewController
 				ConfigureMiniCartControl(viewModelFromView);
 				ConfigureAvailableTitlesBrowse(viewModelFromView);
 			}
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "promo-browse-deselect-item");
 		}
 	}
 
@@ -525,10 +557,8 @@ public class PromoOfferBrowseViewController : BaseViewController
 		}
 		if (!AreProductListsIdentical(list, PromoOfferState?.BrowseProductsShown))
 		{
-			if ((list?.Count ?? 0) > 0)
-			{
-				BaseViewController.SessionAnalyticsService?.AddViewEvent("productsShown", list.Count.ToString());
-			}
+			_ = list?.Count ?? 0;
+			_ = 0;
 			if (PromoOfferState != null)
 			{
 				PromoOfferState.BrowseProductsShown = list;
@@ -586,7 +616,6 @@ public class PromoOfferBrowseViewController : BaseViewController
 		IIdleTimer obj = service?.CreateIdleTimer("PromoOfferBrowseViewTimer");
 		obj?.Initialize(timeOut, delegate
 		{
-			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			MessagePopupViewController.ShowOfferTimeoutMessage(delegate
 			{

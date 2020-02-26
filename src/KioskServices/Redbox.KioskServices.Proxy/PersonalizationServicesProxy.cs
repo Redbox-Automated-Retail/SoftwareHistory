@@ -167,7 +167,7 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 								{
 									Id = num,
 									IdType = idType,
-									Tags = source.Cast<string>().ToList()
+									PersonalizationTitleTags = source.Cast<string>().ToList()
 								});
 							}
 							((List<IRecommendedTitles>)remoteServiceResult.Properties["RecommendedTitles"]).Add(recommendedTitles);
@@ -321,6 +321,7 @@ public class PersonalizationServicesProxy : IPersonalizationServices
 					HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
 					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 					remoteServiceResult.Properties["MobilePhoneNumber"] = GetResponseValue(dictionary, "MobilePhoneNumber", null)?.ToString();
+					remoteServiceResult.Properties["CustomerProfileNumber"] = GetResponseValue(dictionary, "CustomerProfileNumber", null)?.ToString();
 					if (dictionary.ContainsKey("ServerName"))
 					{
 						remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];

@@ -16,7 +16,7 @@ public interface IViewService
 
 	TaskScheduler UITaskScheduler { get; set; }
 
-	event EventHandler ViewStateChanged;
+	event EventHandler<ViewStateChangedArgs> ViewStateChanged;
 
 	void Reset();
 

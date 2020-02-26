@@ -42,7 +42,6 @@ public class MemberPointsLogic : BaseLogic
 	{
 		CancelAction?.Invoke();
 		BaseLogic.HandleWPFHit();
-		BaseLogic.AnalyticsAddViewEvent("buttonPress", "cancel");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPointsLogicCancel");
 	}
 
@@ -50,7 +49,6 @@ public class MemberPointsLogic : BaseLogic
 	{
 		ContinueAction?.Invoke();
 		BaseLogic.HandleWPFHit();
-		BaseLogic.AnalyticsAddViewEvent("buttonPress", "okay");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPointsLogicOkay");
 	}
 
@@ -148,8 +146,6 @@ public class MemberPointsLogic : BaseLogic
 			if (!Model.SelectedProductIds.Contains(shoppingCartItem.ProductId))
 			{
 				Model.SelectedProductIds.Add(shoppingCartItem.ProductId);
-				long productId = shoppingCartItem.ProductId;
-				BaseLogic.AnalyticsAddViewEvent("buttonPress", $"redeem,{productId}");
 				BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPointsLogicRedeem")?.AddData(ProductData.ToProductData(shoppingCartItem));
 			}
 		}
@@ -163,8 +159,6 @@ public class MemberPointsLogic : BaseLogic
 			if (Model.SelectedProductIds.Contains(shoppingCartItem.ProductId))
 			{
 				Model.SelectedProductIds.Remove(shoppingCartItem.ProductId);
-				long productId = shoppingCartItem.ProductId;
-				BaseLogic.AnalyticsAddViewEvent("buttonPress", $"cancelredeem,{productId}");
 				BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPointsLogicCancelRedeem")?.AddData(ProductData.ToProductData(shoppingCartItem));
 			}
 		}

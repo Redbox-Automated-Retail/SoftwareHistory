@@ -11,11 +11,13 @@ public class AnalyticsShoppingCartItem
 {
 	public long ProductId { get; set; }
 
+	public long TitleRollupProductGroupId { get; set; }
+
 	public string TivoQueryId { get; set; }
 
 	public string OfferCode { get; set; }
 
-	public List<string> Tags { get; set; }
+	public List<string> PersonalizationTitleTags { get; set; }
 
 	[JsonConverter(typeof(StringEnumConverter))]
 	public RentalShoppingCartItemAction Action { get; set; }
@@ -59,6 +61,7 @@ public class AnalyticsShoppingCartItem
 		return new AnalyticsShoppingCartItem
 		{
 			ProductId = rentalShoppingCartItem.ProductId,
+			TitleRollupProductGroupId = rentalShoppingCartItem.TitleRollupProductGroupId,
 			Action = rentalShoppingCartItem.Action,
 			Price = rentalShoppingCartItem.Price,
 			Quantity = rentalShoppingCartItem.Quantity,
@@ -74,7 +77,7 @@ public class AnalyticsShoppingCartItem
 			DefaultExtraNightPrice = ((rentalShoppingCartItem.Action != RentalShoppingCartItemAction.purchase) ? rentalShoppingCartItem.PricingRecord.DefaultExtraNightPrice : ((decimal?)null)),
 			TivoQueryId = rentalShoppingCartItem.TivoQueryId,
 			OfferCode = rentalShoppingCartItem.OfferCode,
-			Tags = rentalShoppingCartItem.Tags
+			PersonalizationTitleTags = rentalShoppingCartItem.PersonalizationTitleTags
 		};
 	}
 }

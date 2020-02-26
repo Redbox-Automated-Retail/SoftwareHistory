@@ -1,13 +1,10 @@
 using System;
 using System.Windows;
-using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 
 namespace Redbox.Rental.UI.Models;
 
 public class ConfirmEmailModel : AbstractViewModel
 {
-	public new Func<ISpeechControl> OnGetSpeechControl;
-
 	public static readonly DependencyProperty HeaderTextProperty = DependencyProperty.Register("HeaderText", typeof(string), typeof(ConfirmEmailModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty BodyTextProperty = DependencyProperty.Register("BodyText", typeof(string), typeof(ConfirmEmailModel), new FrameworkPropertyMetadata(null));
@@ -131,15 +128,5 @@ public class ConfirmEmailModel : AbstractViewModel
 	public void ProcessTimeoutAction()
 	{
 		TimeoutAction?.Invoke();
-	}
-
-	public new ISpeechControl ProcessGetSpeechControl()
-	{
-		ISpeechControl result = null;
-		if (OnGetSpeechControl != null)
-		{
-			result = OnGetSpeechControl();
-		}
-		return result;
 	}
 }

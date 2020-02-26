@@ -100,8 +100,6 @@ public partial class HelpDocViewUserControl : BaseUserControl, IComponentConnect
 		}
 	}
 
-	public event HelpViewModel.HelpDocumentPageChangedHandler OnHelpDocumentPageChanged;
-
 	public event HelpViewModel.HelpPaddleButtonPressed OnHelpPaddleButtonPressed;
 
 	public HelpDocViewUserControl()
@@ -128,7 +126,7 @@ public partial class HelpDocViewUserControl : BaseUserControl, IComponentConnect
 	private void UpdateXpsDocument()
 	{
 		m_fixedDocumentSequence = ((XpsDocument != null) ? XpsDocument.GetFixedDocumentSequence() : null);
-		TotalPageCount = m_fixedDocumentSequence.DocumentPaginator.PageCount;
+		TotalPageCount = m_fixedDocumentSequence?.DocumentPaginator?.PageCount ?? 0;
 		ChangePage(0);
 	}
 

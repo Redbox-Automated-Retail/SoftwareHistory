@@ -140,7 +140,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		UpdateCreditCardHealthService(trackData, baseResponseEvent);
 		if (!_cardReadAborted)
 		{
-			OnCardReadComplete?.Invoke(trackData, chipCardRemovedFromReader);
+			OnCardReadComplete?.Invoke(trackData, chipCardRemovedFromReader, baseResponseEvent?.RequestId);
 		}
 	}
 
@@ -263,8 +263,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		if (trackData != null && trackData.IsInTechnicalFallback && trackData.CardSourceType == CardSourceType.Swipe && trackData.CardHasChip && trackData.CardType == Redbox.Core.CardType.AmericanExpress)
 		{
 			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (service != null && service.ChipEnabled && (service == null || service.CardReadTechnicalFallbackEnabled) && service2 != null && service2.SupportsEMV)
+			if (trackData != null && trackData.ChipEnabledAndSupportsEmv && (service == null || service.CardReadTechnicalFallbackEnabled))
 			{
 				trackData.Errors.Add(CardHelper.ErrorCodes.NewAmexCannotFallbackError());
 				trackData.FallbackStatusAction = FallbackStatusAction.ResetFallbackCounter;
@@ -274,14 +273,9 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 
 	private void DeclineChipEnabledCardThatWasSwiped(ITrackData trackData)
 	{
-		if (trackData != null && !trackData.IsInTechnicalFallback && trackData.CardSourceType == CardSourceType.Swipe && trackData.CardHasChip)
+		if (trackData != null && !trackData.IsInTechnicalFallback && trackData.CardSourceType == CardSourceType.Swipe && trackData.CardHasChip && trackData != null && trackData.ChipEnabledAndSupportsEmv)
 		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (service != null && service.ChipEnabled && service2 != null && service2.SupportsEMV)
-			{
-				trackData.Errors.Add(CardHelper.ErrorCodes.NewSwipedCardIsChipEnabledError());
-			}
+			trackData.Errors.Add(CardHelper.ErrorCodes.NewSwipedCardIsChipEnabledError());
 		}
 	}
 

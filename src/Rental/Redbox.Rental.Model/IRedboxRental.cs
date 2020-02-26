@@ -14,6 +14,8 @@ public interface IRedboxRental
 
 	void StartTheRentalApplication();
 
+	void SetupTheRentalApplication();
+
 	void EnterMaintenanceModeBecauseOfDisconnectedCardReader();
 
 	void EnterMaintenanceModeBecauseOfTamperedCardReader();

@@ -22,4 +22,6 @@ public class PromoOfferBrowseInfo : IViewAnalyticsName
 	public Func<decimal, decimal> DiscountedPriceCalc { get; set; }
 
 	public bool AllowMnp { get; set; }
+
+	public bool IsPurchase { get; set; }
 }

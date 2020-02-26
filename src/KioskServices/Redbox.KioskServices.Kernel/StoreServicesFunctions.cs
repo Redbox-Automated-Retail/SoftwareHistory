@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
@@ -208,27 +207,7 @@ internal static class StoreServicesFunctions
 	[KernelFunction(Name = "kernel.storesvcs_getkaseyainipath")]
 	internal static string GetKaseyainiPath()
 	{
-		try
-		{
-			List<string> list = new List<string>();
-			string[] directories = Directory.GetDirectories("C:\\Program Files\\Kaseya\\", "RDBX*", SearchOption.TopDirectoryOnly);
-			for (int i = 0; i < directories.Length; i++)
-			{
-				string text = Path.Combine(directories[i], "KaseyaD.ini");
-				if (File.Exists(text))
-				{
-					list.Add(text);
-				}
-			}
-			string text2 = list.OrderByDescending((string p) => File.GetLastWriteTimeUtc(p)).FirstOrDefault();
-			LogHelper.Instance.Log("KaseyaD.ini path: {0}", text2);
-			return text2;
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("An unhandled exception was raised in StoreServicesFunctions.GetKaseyainiPath.", e);
-		}
-		return null;
+		return KaseyaMethods.GetKaseyaIniDPath();
 	}
 
 	[KernelFunction(Name = "kernel.storesvcs_getopsmarketandkaseyaserverfromfile")]

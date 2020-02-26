@@ -30,23 +30,21 @@ public class ApplyPromoViewController : BaseViewController
 			applyPromoViewModel.EnterPromoMessage = Resources.apply_promo_enter_promo_message;
 			applyPromoViewModel.TitleText = Resources.apply_promo_title;
 			applyPromoViewModel.TopMessage = Resources.apply_promo_message_text;
-			PromoListLogic logic = new PromoListLogic(applyPromoViewModel);
-			applyPromoViewModel.PromoLogic = logic;
+			PromoListLogic promoListLogic = (applyPromoViewModel.PromoLogic = new PromoListLogic(applyPromoViewModel));
 			applyPromoViewModel.CancelCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), CancelCommand_Execute);
 			applyPromoViewModel.EnterPromoCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 			{
 				EnterPromoCommand_Execute(info.ApplyPromoCodeAction);
 			}, (Func<bool>)null);
-			applyPromoViewModel.NextPagePressedCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), logic.AddNextPagePressedAnalytics);
-			applyPromoViewModel.PreviousPagePressedCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), logic.AddPreviousPagePressedAnalytics);
-			applyPromoViewModel.PageNumberPressedCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), logic.AddPageNumberPressedAnalytics);
+			applyPromoViewModel.NextPagePressedCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), promoListLogic.AddNextPagePressedAnalytics);
+			applyPromoViewModel.PreviousPagePressedCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), promoListLogic.AddPreviousPagePressedAnalytics);
+			applyPromoViewModel.PageNumberPressedCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), promoListLogic.AddPageNumberPressedAnalytics);
 			applyPromoViewModel.AddOrRemovePromoCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), delegate(StoredPromoCodeModel obj)
 			{
 				AddOrRemovePromoCommand_Execute(obj, info.ApplyPromoCodeAction);
 			});
 			applyPromoViewModel.OnLoadedCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 			{
-				logic.AddAnalyticsPromosShown();
 			}, (Func<bool>)null);
 			UpdateOfferList(applyPromoViewModel);
 			applyPromoViewModel.PromosPerPage = 3;
@@ -60,7 +58,6 @@ public class ApplyPromoViewController : BaseViewController
 	private static void CancelCommand_Execute()
 	{
 		BaseViewController.ProcessWPFHit();
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "Cancel");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("ApplyPromoCancel");
 		OrchestrationService.ViewGoBackSafe("ApplyPromoView cancel", popOnly: false);
 	}
@@ -112,7 +109,6 @@ public class ApplyPromoViewController : BaseViewController
 	private static void EnterPromoCommand_Execute(Action<string> applyPromoAction)
 	{
 		BaseViewController.ProcessWPFHit();
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "EnterPromo");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("ApplyPromoEnterPromo");
 		OrchestrationService.ViewGoBackSafe("ApplyPromoView EnterPromoSelected", popOnly: false);
 		OrchestrationService.ViewShow("keyboard_promo_view", new KeyboardInfo

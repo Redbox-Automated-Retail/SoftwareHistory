@@ -42,6 +42,16 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 
 	private Label label2;
 
+	private RadioButton rbPerksFreeDisk;
+
+	private RadioButton rbPerksAmountOff;
+
+	private RadioButton rbPerksMessage;
+
+	private RadioButton rbPerksExtraPoints;
+
+	private CheckBox m_includePurchaseAmtOffInCartOfferCheckbox;
+
 	public CustomerOffersPreferencePage()
 	{
 		InitializeComponent();
@@ -72,10 +82,16 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		rbFracDiscountStorable.Checked = CustomerOfferProxy.Instance.IncludeFracStorableDiscountedDiscOffer;
 		rbFracFreeMovieRedeemable.Checked = CustomerOfferProxy.Instance.IncludeFracRedeemableFreeMovieOffer;
 		rbFracFreeMovieStorable.Checked = CustomerOfferProxy.Instance.IncludeFracStorableFreeMovieOffer;
+		rbPerksFreeDisk.Checked = CustomerOfferProxy.Instance.IncludePerksFreeRentalOffer;
 		m_includeFreeGameInCartOfferCheckbox.Checked = CustomerOfferProxy.Instance.IncludeFreeGameInCartOffer;
 		m_includeMovieInCart.Checked = CustomerOfferProxy.Instance.IncludeMovieDiscountInCartOffer;
 		m_includeMultiNightOfferCheckbox.Checked = CustomerOfferProxy.Instance.IncludeMNPInCartOffer;
-		rbNoOffer.Checked = !rbFracDiscountRedeemable.Checked && !rbFracDiscountStorable.Checked && !rbFracFreeMovieRedeemable.Checked && !rbFracFreeMovieStorable.Checked && !rbInCart.Checked;
+		m_includePurchaseAmtOffInCartOfferCheckbox.Checked = CustomerOfferProxy.Instance.IncludePurchaseOffer;
+		rbPerksAmountOff.Checked = CustomerOfferProxy.Instance.IncludePerksAmountOffOffer;
+		rbPerksFreeDisk.Checked = CustomerOfferProxy.Instance.IncludePerksFreeRentalOffer;
+		rbPerksMessage.Checked = CustomerOfferProxy.Instance.IncludePerksReminderMessage;
+		rbPerksExtraPoints.Checked = CustomerOfferProxy.Instance.IncludePerksExtraPointsOffer;
+		rbNoOffer.Checked = !rbFracDiscountRedeemable.Checked && !rbFracDiscountStorable.Checked && !rbFracFreeMovieRedeemable.Checked && !rbFracFreeMovieStorable.Checked && !rbInCart.Checked && !rbPerksAmountOff.Checked && !rbPerksFreeDisk.Checked && !rbPerksMessage.Checked && !rbPerksExtraPoints.Checked;
 		txtProductIds.Text = string.Join(",", CustomerOfferProxy.Instance.MnpProductIds);
 		m_isLoaded = true;
 	}
@@ -121,11 +137,17 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 				m_includeMovieInCart.Enabled = true;
 				m_includeFreeGameInCartOfferCheckbox.Enabled = true;
 				m_includeMultiNightOfferCheckbox.Enabled = true;
+				m_includePurchaseAmtOffInCartOfferCheckbox.Enabled = true;
 				txtProductIds.Enabled = m_includeMultiNightOfferCheckbox.Checked;
 				CustomerOfferProxy.Instance.IncludeFracRedeemableDiscountedDiscOffer = false;
 				CustomerOfferProxy.Instance.IncludeFracStorableDiscountedDiscOffer = false;
 				CustomerOfferProxy.Instance.IncludeFracRedeemableFreeMovieOffer = false;
 				CustomerOfferProxy.Instance.IncludeFracStorableFreeMovieOffer = false;
+				CustomerOfferProxy.Instance.IncludePerksAmountOffOffer = false;
+				CustomerOfferProxy.Instance.IncludePerksExtraPointsOffer = false;
+				CustomerOfferProxy.Instance.IncludePerksFreeRentalOffer = false;
+				CustomerOfferProxy.Instance.IncludePerksReminderMessage = false;
+				CustomerOfferProxy.Instance.IncludePerksExtraPointsOffer = false;
 			}
 			else
 			{
@@ -135,6 +157,8 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 				m_includeFreeGameInCartOfferCheckbox.Checked = false;
 				m_includeMultiNightOfferCheckbox.Checked = false;
 				m_includeMultiNightOfferCheckbox.Enabled = false;
+				m_includePurchaseAmtOffInCartOfferCheckbox.Enabled = false;
+				m_includePurchaseAmtOffInCartOfferCheckbox.Checked = false;
 				txtProductIds.Enabled = false;
 			}
 		}
@@ -181,6 +205,46 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
+	private void RbPerksFreeDisk_CheckedChanged(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			CustomerOfferProxy.Instance.IncludePerksFreeRentalOffer = rbPerksFreeDisk.Checked;
+		}
+	}
+
+	private void RbPerksAmountOff_CheckedChanged(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			CustomerOfferProxy.Instance.IncludePerksAmountOffOffer = rbPerksAmountOff.Checked;
+		}
+	}
+
+	private void RbPerksMessage_CheckedChanged(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			CustomerOfferProxy.Instance.IncludePerksReminderMessage = rbPerksMessage.Checked;
+		}
+	}
+
+	private void RbPerksExtraPoints_CheckedChanged(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			CustomerOfferProxy.Instance.IncludePerksExtraPointsOffer = rbPerksExtraPoints.Checked;
+		}
+	}
+
+	private void m_includePurchaseAmtOffInCartOfferCheckbox_CheckedChanged(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			CustomerOfferProxy.Instance.IncludePurchaseOffer = m_includePurchaseAmtOffInCartOfferCheckbox.Checked;
+		}
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -206,6 +270,11 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		this.txtProductIds = new System.Windows.Forms.TextBox();
 		this.label1 = new System.Windows.Forms.Label();
 		this.label2 = new System.Windows.Forms.Label();
+		this.rbPerksFreeDisk = new System.Windows.Forms.RadioButton();
+		this.rbPerksAmountOff = new System.Windows.Forms.RadioButton();
+		this.rbPerksMessage = new System.Windows.Forms.RadioButton();
+		this.rbPerksExtraPoints = new System.Windows.Forms.RadioButton();
+		this.m_includePurchaseAmtOffInCartOfferCheckbox = new System.Windows.Forms.CheckBox();
 		base.SuspendLayout();
 		this.m_liveCallCheckBox.AutoSize = true;
 		this.m_liveCallCheckBox.Location = new System.Drawing.Point(32, 20);
@@ -249,7 +318,7 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		this.rbInCart.UseVisualStyleBackColor = true;
 		this.rbInCart.CheckedChanged += new System.EventHandler(rbPresentInCart_CheckedChanged);
 		this.rbFracFreeMovieStorable.AutoSize = true;
-		this.rbFracFreeMovieStorable.Location = new System.Drawing.Point(32, 237);
+		this.rbFracFreeMovieStorable.Location = new System.Drawing.Point(32, 253);
 		this.rbFracFreeMovieStorable.Name = "rbFracFreeMovieStorable";
 		this.rbFracFreeMovieStorable.Size = new System.Drawing.Size(187, 17);
 		this.rbFracFreeMovieStorable.TabIndex = 5;
@@ -258,7 +327,7 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		this.rbFracFreeMovieStorable.UseVisualStyleBackColor = true;
 		this.rbFracFreeMovieStorable.CheckedChanged += new System.EventHandler(rbFracFreeMovieStorable_CheckedChanged);
 		this.rbFracFreeMovieRedeemable.AutoSize = true;
-		this.rbFracFreeMovieRedeemable.Location = new System.Drawing.Point(32, 260);
+		this.rbFracFreeMovieRedeemable.Location = new System.Drawing.Point(32, 276);
 		this.rbFracFreeMovieRedeemable.Name = "rbFracFreeMovieRedeemable";
 		this.rbFracFreeMovieRedeemable.Size = new System.Drawing.Size(191, 17);
 		this.rbFracFreeMovieRedeemable.TabIndex = 6;
@@ -267,7 +336,7 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		this.rbFracFreeMovieRedeemable.UseVisualStyleBackColor = true;
 		this.rbFracFreeMovieRedeemable.CheckedChanged += new System.EventHandler(rbFracFreeMovieRedeemable_CheckedChanged);
 		this.rbFracDiscountStorable.AutoSize = true;
-		this.rbFracDiscountStorable.Location = new System.Drawing.Point(32, 283);
+		this.rbFracDiscountStorable.Location = new System.Drawing.Point(32, 299);
 		this.rbFracDiscountStorable.Name = "rbFracDiscountStorable";
 		this.rbFracDiscountStorable.Size = new System.Drawing.Size(212, 17);
 		this.rbFracDiscountStorable.TabIndex = 7;
@@ -276,7 +345,7 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		this.rbFracDiscountStorable.UseVisualStyleBackColor = true;
 		this.rbFracDiscountStorable.CheckedChanged += new System.EventHandler(rbFracDiscountStorable_CheckedChanged);
 		this.rbFracDiscountRedeemable.AutoSize = true;
-		this.rbFracDiscountRedeemable.Location = new System.Drawing.Point(32, 306);
+		this.rbFracDiscountRedeemable.Location = new System.Drawing.Point(32, 322);
 		this.rbFracDiscountRedeemable.Name = "rbFracDiscountRedeemable";
 		this.rbFracDiscountRedeemable.Size = new System.Drawing.Size(216, 17);
 		this.rbFracDiscountRedeemable.TabIndex = 8;
@@ -293,31 +362,80 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		this.rbNoOffer.Text = "No Offer";
 		this.rbNoOffer.UseVisualStyleBackColor = true;
 		this.m_includeMultiNightOfferCheckbox.AutoSize = true;
-		this.m_includeMultiNightOfferCheckbox.Location = new System.Drawing.Point(73, 177);
+		this.m_includeMultiNightOfferCheckbox.Location = new System.Drawing.Point(73, 200);
 		this.m_includeMultiNightOfferCheckbox.Name = "m_includeMultiNightOfferCheckbox";
 		this.m_includeMultiNightOfferCheckbox.Size = new System.Drawing.Size(148, 17);
 		this.m_includeMultiNightOfferCheckbox.TabIndex = 10;
 		this.m_includeMultiNightOfferCheckbox.Text = "Include MNP In Cart Offer";
 		this.m_includeMultiNightOfferCheckbox.UseVisualStyleBackColor = true;
 		this.m_includeMultiNightOfferCheckbox.CheckedChanged += new System.EventHandler(m_includeMultiNightOfferCheckbox_CheckedChanged);
-		this.txtProductIds.Location = new System.Drawing.Point(162, 200);
+		this.txtProductIds.Location = new System.Drawing.Point(162, 223);
 		this.txtProductIds.Name = "txtProductIds";
 		this.txtProductIds.Size = new System.Drawing.Size(273, 20);
 		this.txtProductIds.TabIndex = 11;
 		this.label1.AutoSize = true;
-		this.label1.Location = new System.Drawing.Point(90, 203);
+		this.label1.Location = new System.Drawing.Point(90, 226);
 		this.label1.Name = "label1";
 		this.label1.Size = new System.Drawing.Size(66, 13);
 		this.label1.TabIndex = 12;
 		this.label1.Text = "Product IDs:";
 		this.label2.AutoSize = true;
-		this.label2.Location = new System.Drawing.Point(306, 227);
+		this.label2.Location = new System.Drawing.Point(306, 243);
 		this.label2.Name = "label2";
 		this.label2.Size = new System.Drawing.Size(107, 13);
 		this.label2.TabIndex = 13;
 		this.label2.Text = "(Comma delimited list)";
+		this.rbPerksFreeDisk.AutoSize = true;
+		this.rbPerksFreeDisk.Location = new System.Drawing.Point(32, 345);
+		this.rbPerksFreeDisk.Name = "rbPerksFreeDisk";
+		this.rbPerksFreeDisk.Size = new System.Drawing.Size(191, 17);
+		this.rbPerksFreeDisk.TabIndex = 14;
+		this.rbPerksFreeDisk.TabStop = true;
+		this.rbPerksFreeDisk.Text = "Present Free Item Perks Equivalent";
+		this.rbPerksFreeDisk.UseVisualStyleBackColor = true;
+		this.rbPerksFreeDisk.CheckedChanged += new System.EventHandler(RbPerksFreeDisk_CheckedChanged);
+		this.rbPerksAmountOff.AutoSize = true;
+		this.rbPerksAmountOff.Location = new System.Drawing.Point(32, 368);
+		this.rbPerksAmountOff.Name = "rbPerksAmountOff";
+		this.rbPerksAmountOff.Size = new System.Drawing.Size(200, 17);
+		this.rbPerksAmountOff.TabIndex = 15;
+		this.rbPerksAmountOff.TabStop = true;
+		this.rbPerksAmountOff.Text = "Present Amount Off Perks Equivalent";
+		this.rbPerksAmountOff.UseVisualStyleBackColor = true;
+		this.rbPerksAmountOff.CheckedChanged += new System.EventHandler(RbPerksAmountOff_CheckedChanged);
+		this.rbPerksMessage.AutoSize = true;
+		this.rbPerksMessage.Location = new System.Drawing.Point(32, 412);
+		this.rbPerksMessage.Name = "rbPerksMessage";
+		this.rbPerksMessage.Size = new System.Drawing.Size(140, 17);
+		this.rbPerksMessage.TabIndex = 16;
+		this.rbPerksMessage.TabStop = true;
+		this.rbPerksMessage.Text = "Present  Perks Message";
+		this.rbPerksMessage.UseVisualStyleBackColor = true;
+		this.rbPerksMessage.CheckedChanged += new System.EventHandler(RbPerksMessage_CheckedChanged);
+		this.rbPerksExtraPoints.AutoSize = true;
+		this.rbPerksExtraPoints.Location = new System.Drawing.Point(32, 391);
+		this.rbPerksExtraPoints.Name = "rbPerksExtraPoints";
+		this.rbPerksExtraPoints.Size = new System.Drawing.Size(203, 17);
+		this.rbPerksExtraPoints.TabIndex = 17;
+		this.rbPerksExtraPoints.TabStop = true;
+		this.rbPerksExtraPoints.Text = "Present Extra Points Perks Equivalent";
+		this.rbPerksExtraPoints.UseVisualStyleBackColor = true;
+		this.rbPerksExtraPoints.CheckedChanged += new System.EventHandler(RbPerksExtraPoints_CheckedChanged);
+		this.m_includePurchaseAmtOffInCartOfferCheckbox.AutoSize = true;
+		this.m_includePurchaseAmtOffInCartOfferCheckbox.Location = new System.Drawing.Point(73, 177);
+		this.m_includePurchaseAmtOffInCartOfferCheckbox.Name = "m_includePurchaseAmtOffInCartOfferCheckbox";
+		this.m_includePurchaseAmtOffInCartOfferCheckbox.Size = new System.Drawing.Size(207, 17);
+		this.m_includePurchaseAmtOffInCartOfferCheckbox.TabIndex = 18;
+		this.m_includePurchaseAmtOffInCartOfferCheckbox.Text = "Include Amt. off purchase In Cart Offer";
+		this.m_includePurchaseAmtOffInCartOfferCheckbox.UseVisualStyleBackColor = true;
+		this.m_includePurchaseAmtOffInCartOfferCheckbox.CheckedChanged += new System.EventHandler(m_includePurchaseAmtOffInCartOfferCheckbox_CheckedChanged);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.m_includePurchaseAmtOffInCartOfferCheckbox);
+		base.Controls.Add(this.rbPerksExtraPoints);
+		base.Controls.Add(this.rbPerksMessage);
+		base.Controls.Add(this.rbPerksAmountOff);
+		base.Controls.Add(this.rbPerksFreeDisk);
 		base.Controls.Add(this.label2);
 		base.Controls.Add(this.label1);
 		base.Controls.Add(this.txtProductIds);
@@ -333,7 +451,7 @@ public class CustomerOffersPreferencePage : UserControl, IPreferencePageHost
 		base.Controls.Add(this.m_simulateSuccessCheckBox);
 		base.Controls.Add(this.m_liveCallCheckBox);
 		base.Name = "CustomerOffersPreferencePage";
-		base.Size = new System.Drawing.Size(438, 367);
+		base.Size = new System.Drawing.Size(438, 468);
 		base.ResumeLayout(false);
 		base.PerformLayout();
 	}

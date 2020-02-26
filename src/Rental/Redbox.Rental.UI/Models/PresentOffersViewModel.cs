@@ -24,6 +24,8 @@ public class PresentOffersViewModel : BaseModel<PresentOffersViewModel>
 
 	public string LegalText2 { get; set; }
 
+	public string LegalText3 { get; set; }
+
 	public DynamicRoutedCommand CancelButtonCommand { get; set; }
 
 	public string CancelButtonText { get; set; }
@@ -37,6 +39,8 @@ public class PresentOffersViewModel : BaseModel<PresentOffersViewModel>
 	public Visibility BannerVisibility { get; set; }
 
 	public Visibility LegalText2Visibility { get; set; }
+
+	public Visibility LegalText3Visibility { get; set; }
 
 	public Visibility SingleOfferVisibility { get; set; }
 

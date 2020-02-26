@@ -195,6 +195,12 @@ public static class AnalyticsConstants
 
 		public const string MultiNightPopupCancel = "MultiNightPopupCancel";
 
+		public const string PerksConfirmAcceptAndSignUpButton = "PerksConfirmAcceptAndSignUpButton";
+
+		public const string PerksConfirmBackButton = "PerksConfirmBackButton";
+
+		public const string PerksConfirmTermsButton = "PerksConfirmTermsButton";
+
 		public const string PersonalizationFunctionsSignOutBack = "PersonalizationFunctionsSignOutBack";
 
 		public const string PersonalizationFunctionsSignOut = "PersonalizationFunctionsSignOut";
@@ -321,6 +327,10 @@ public static class AnalyticsConstants
 
 		public const string SignInCancel = "SignInCancel";
 
+		public const string SignUp = "SignUp";
+
+		public const string SignUpInfo = "SignUpInfo";
+
 		public const string StartStartBrowsing = "StartStartBrowsing";
 
 		public const string StartADAOn = "StartADAOn";
@@ -334,6 +344,8 @@ public static class AnalyticsConstants
 		public const string StartLanguageToggle = "StartLanguageToggle";
 
 		public const string StartHelp = "StartHelp";
+
+		public const string StartTermsAndPrivacy = "StartTermsAndPrivacy";
 
 		public const string StartCarouselCancelAddItem = "StartCarouselCancelAddItem";
 
@@ -369,8 +381,6 @@ public static class AnalyticsConstants
 
 		public const string StartRentAndBuyGames = "StartRentAndBuyGames";
 
-		public const string StartTV = "StartTV";
-
 		public const string StartScreenSaver99CentsMovies = "StartScreenSaver99CentsMovies";
 
 		public const string StartScreenSaverBuyMovies = "StartScreenSaverBuyMovies";
@@ -401,6 +411,10 @@ public static class AnalyticsConstants
 
 		public const string TitleDetailsPageBack = "TitleDetailsPageBack";
 
+		public const string TitleDetailsMoreLikeThis = "TitleDetailsMoreLikeThis";
+
+		public const string TitleDetailsFullDetailsPopupClose = "TitleDetailsFullDetailsPopupClose";
+
 		public const string UpsellUpgrade = "UpsellUpgrade";
 
 		public const string UpsellBack = "UpsellBack";
@@ -410,6 +424,30 @@ public static class AnalyticsConstants
 		public const string EmailOptInRejectOptIn = "EmailOptInRejectOptIn";
 
 		public const string EmailOptInAcceptOptIn = "EmailOptInAcceptOptIn";
+
+		public const string NewCartConfirmRemovePMNPOffer = "NewCartConfirmRemovePMNPOfferToProduct";
+
+		public const string NewCartConfirmAddPMNPOffer = "NewCartConfirmAddPMNPOfferToProduct";
+
+		public const string NewCartConfirmModifyCart = "NewCartConfirmModifyCart";
+
+		public const string NewCartConfirmRemoveProductOffer = "NewCartConfirmRemoveProductOffer";
+
+		public const string NewCartConfirmSubmit = "NewCartConfirmSubmit";
+
+		public const string NewCartConfirmSkipOffer = "NewCartConfirmSkipOffer";
+
+		public const string NewCartConfirmADAAddProductOffer = "NewCartConfirmADAAddProductOffer";
+
+		public const string NewCartConfirmADARemoveProductOffer = "NewCartConfirmADARemoveProductOffer";
+
+		public const string NewCartConfirmADAOK = "NewCartConfirmADAOK";
+
+		public const string OfferAbandonConfirmOK = "OfferAbandonConfirmOK";
+
+		public const string PerksSignupInfoPopupOK = "PerksSignupInfoPopupOK";
+
+		public const string TextMessageAlertOK = "TextMessageAlertOK";
 	}
 
 	public static class DataTypeNames

@@ -9,11 +9,7 @@ public interface IViewFrame : IBaseViewFrame, IDisposable
 
 	int Height { get; }
 
-	new bool Clear { get; }
-
 	bool Cached { get; }
-
-	new IScene Scene { get; }
 
 	string ViewVersion { get; }
 
@@ -30,8 +26,4 @@ public interface IViewFrame : IBaseViewFrame, IDisposable
 	string OnEnterResourceName { get; }
 
 	string OnLeaveResourceName { get; }
-
-	new bool RaiseOnEnter(IViewFrameInstance viewFrameInstance);
-
-	new void RaiseOnLeave(IViewFrameInstance viewFrameInstance);
 }

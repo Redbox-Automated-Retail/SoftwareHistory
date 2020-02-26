@@ -376,15 +376,29 @@ public static class HardwareFunctions
 	}
 
 	[KernelFunction(Name = "kernel.hardwaregetmachineinfo")]
-	internal static LuaTable HardwareGetMachineInfo(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler)
+	internal static LuaTable HardwareGetMachineInfo()
 	{
-		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
-		if (service == null)
+		IHardwareState service = ServiceLocator.Instance.GetService<IHardwareState>();
+		IMachineSettingsStore service2 = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
+		if (!string.IsNullOrEmpty(service.QlmDeckAsString))
 		{
-			return null;
+			service2.SetValue("Store", "QlmDeck", service.QlmDeckAsString);
 		}
-		ErrorList machineInfo = service.GetMachineInfo(eventHandler, statusChangeHandler, out var jobId);
-		return CreateResultTable(jobId, machineInfo);
+		if (service.MaxDeck > 0)
+		{
+			service2.SetValue("Store", "MaxDecks", service.MaxDeck.ToString());
+		}
+		if (service.MaxSlot > 0)
+		{
+			service2.SetValue("Store", "MaxSlots", service.MaxSlot.ToString());
+		}
+		LuaTable obj = ServiceLocator.Instance.GetService<IKernelService>().NewTable() as LuaTable;
+		obj["QlmDeck"] = service.QlmDeckAsString;
+		obj["MaxDecks"] = service.MaxDeck;
+		obj["MaxSlots"] = service.MaxSlot;
+		obj["MerchType"] = service.MerchandizeType;
+		obj["BufferSlot"] = service.BufferSlot;
+		return obj;
 	}
 
 	[KernelFunction(Name = "kernel.hardwaregethardwarestatus")]
@@ -479,16 +493,16 @@ public static class HardwareFunctions
 		}
 		string[] barcodesToThin = ((barcodesToBin != null) ? (from LuaTable r in barcodesToBin.Values
 			where r != null
-			select (string)r["barcode"]).Distinct().ToArray() : new string[0]);
+			select (string)r["barcode"]).Distinct().ToArray() : Array.Empty<string>());
 		string[] rebalances2 = ((rebalances != null) ? (from LuaTable r in rebalances.Values
 			where r != null
-			select (string)r["barcode"]).Distinct().ToArray() : new string[0]);
+			select (string)r["barcode"]).Distinct().ToArray() : Array.Empty<string>());
 		string[] redeployments2 = ((redeployments != null) ? (from LuaTable r in redeployments.Values
 			where r != null
-			select (string)r["barcode"]).Distinct().ToArray() : new string[0]);
+			select (string)r["barcode"]).Distinct().ToArray() : Array.Empty<string>());
 		string[] barcodesToVmz2 = ((barcodesToVmz != null) ? (from LuaTable r in barcodesToVmz.Values
 			where r != null
-			select (string)r["barcode"]).Distinct().ToArray() : new string[0]);
+			select (string)r["barcode"]).Distinct().ToArray() : Array.Empty<string>());
 		ErrorList errors = service.VmzThin(label, startTime.ToDateTime(), barcodesToThin, rebalances2, redeployments2, barcodesToVmz2, eventHandler, statusChangeHandler, out var jobId);
 		startTime.Dispose();
 		barcodesToBin.Dispose();
@@ -721,8 +735,7 @@ public static class HardwareFunctions
 		{
 			return null;
 		}
-		ErrorList jobErrors = service.GetJobErrors(jobId, out var errors);
-		LuaTable luaTable = CreateResultTable(jobId, jobErrors);
+		LuaTable luaTable = CreateResultTable(jobId, service.GetJobErrors(jobId, out var errors));
 		IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
 		LuaTable luaTable2 = (LuaTable)(luaTable["results"] = (LuaTable)service2.NewTable());
 		int num = 1;
@@ -760,12 +773,11 @@ public static class HardwareFunctions
 		{
 			return null;
 		}
-		ErrorList hardwareJobs = service.GetHardwareJobs(out var hardwareJobs2);
-		LuaTable luaTable = CreateResultTable(string.Empty, hardwareJobs);
+		LuaTable luaTable = CreateResultTable(string.Empty, service.GetHardwareJobs(out var hardwareJobs));
 		IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
 		LuaTable luaTable2 = (LuaTable)(luaTable["results"] = (LuaTable)service2.NewTable());
 		int num = 1;
-		foreach (IHardwareJob item in hardwareJobs2)
+		foreach (IHardwareJob item in hardwareJobs)
 		{
 			LuaTable luaTable3 = (LuaTable)service2.NewTable();
 			luaTable3["id"] = item.ID;
@@ -829,20 +841,6 @@ public static class HardwareFunctions
 		}
 		ErrorList initStatus = service.GetInitStatus(out var status);
 		LuaTable luaTable = CreateResultTable(string.Empty, initStatus);
-		luaTable["status"] = status;
-		return luaTable;
-	}
-
-	[KernelFunction(Name = "kernel.hardwaregetquickreturnstatus")]
-	internal static LuaTable HardwareGetQuickReturnStatus()
-	{
-		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
-		if (service == null)
-		{
-			return null;
-		}
-		ErrorList quickReturnStatus = service.GetQuickReturnStatus(out var status);
-		LuaTable luaTable = CreateResultTable(string.Empty, quickReturnStatus);
 		luaTable["status"] = status;
 		return luaTable;
 	}
@@ -929,10 +927,10 @@ public static class HardwareFunctions
 	}
 
 	[KernelFunction(Name = "kernel.sync_unknowns")]
-	internal static void SyncUnknowns(int? qlm_deck, bool forceSync = false)
+	internal static void SyncUnknowns(bool forceSync = false)
 	{
 		LogHelper.Instance.Log($"HardwareFunctions.SyncUnknowns called with forceSync = {forceSync.ToString()}");
-		ServiceLocator.Instance.GetService<ISyncUnknownProcessor>().ScheduleJob(qlm_deck, forceSync);
+		ServiceLocator.Instance.GetService<ISyncUnknownProcessor>().ScheduleJob(forceSync);
 	}
 
 	[KernelFunction(Name = "kernel.sync_unknowns_complete")]

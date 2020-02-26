@@ -4,6 +4,5 @@ public enum TitleFamily
 {
 	All,
 	Movies,
-	Games,
-	TV
+	Games
 }

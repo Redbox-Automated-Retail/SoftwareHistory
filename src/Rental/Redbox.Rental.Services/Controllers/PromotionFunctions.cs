@@ -22,10 +22,10 @@ public class PromotionFunctions
 	{
 		OrchestrationService.ViewShow("general_message_view", new GeneralMessageViewModel
 		{
-			DisableIdleTimer = true,
+			DisableIdleTimerOnEnter = true,
+			EnableIdleTimerOnLeave = true,
 			MessageText = Resources.promo_code_validating_message
 		});
-		AddPromoCodeToAnalytics(promoCode);
 		if (promoCode == PromotionService.Instance?.GetInCartPromoCode())
 		{
 			LogHelper.Instance.Log("User manualy entered the InCartPromoCode - clearing!");
@@ -37,17 +37,10 @@ public class PromotionFunctions
 		});
 	}
 
-	public static void AddPromoCodeToAnalytics(string promoCode)
-	{
-		OrchestrationService.AnalyticsAddNode("promoCodes", "promoCode");
-		OrchestrationService.AnalyticsAddAttribute("promoCode", "code", promoCode);
-	}
-
 	private static void ProcessPromoCodeValidationResult(IPromoCodeValidationResult promoCodeValidationResult, Action<IPromoCodeValidationResult> doneCallback, Action<IPromoCodeValidationResult> afterErrorMessageCallback)
 	{
 		Task.Factory.StartNew(delegate
 		{
-			bool flag = true;
 			Action action = delegate
 			{
 				doneCallback(promoCodeValidationResult);
@@ -58,7 +51,6 @@ public class PromotionFunctions
 			};
 			if (promoCodeValidationResult.Success)
 			{
-				OrchestrationService.AnalyticsAddAttribute("promoCode", "valid", "True");
 				decimal num = promoCodeValidationResult?.Amount ?? 0m;
 				decimal num2 = ((promoCodeValidationResult.IntentCode != Redbox.Rental.Model.PromotionIntentCode.PercentOffCartTotal) ? 0m : (promoCodeValidationResult?.Amount ?? 0m));
 				IPromotion promotion = new Redbox.Rental.Services.Promotion.Promotion
@@ -76,7 +68,8 @@ public class PromotionFunctions
 					GetFormat = promoCodeValidationResult.GetFormat,
 					CampaignTitles = promoCodeValidationResult.CampaignTitles,
 					ProductTypeId = promoCodeValidationResult.ProductTypeId,
-					FormatIds = promoCodeValidationResult.FormatIds
+					FormatIds = promoCodeValidationResult.FormatIds,
+					ActionCode = promoCodeValidationResult.ActionCode
 				};
 				PromotionService.Instance?.SetPromotion(promotion);
 				IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
@@ -140,16 +133,12 @@ public class PromotionFunctions
 				}
 				else
 				{
-					OrchestrationService.AnalyticsAddAttribute("promoCode", "valid", num.ToString());
 					action();
 				}
 			}
 			if (!promoCodeValidationResult.Success)
 			{
 				ServiceLocator.Instance.GetService<IPersonalizationService>()?.ClearSelectedPromo();
-				OrchestrationService.AnalyticsAddAttribute("promoCode", "valid", "False");
-				OrchestrationService.AnalyticsAddAttribute("promoCode", "value", "0.00");
-				OrchestrationService.AnalyticsAddViewEvent("context", "promoCodeDecline");
 				if (promoCodeValidationResult.Response == PromotionValidationResponse.CodeAlreadyUsed.ToString())
 				{
 					MessagePopupViewController.ShowPromoCodeAlreadyUsedWarning(action2, action2);
@@ -164,7 +153,6 @@ public class PromotionFunctions
 				}
 				else if (promoCodeValidationResult.Response == PromotionValidationResponse.Error.ToString() || promoCodeValidationResult.Response == "Server Busy" || promoCodeValidationResult.Response == "Communications Failure")
 				{
-					flag = false;
 					MessagePopupViewController.ShowPromoCodeValidationFailureWarning(action2, action2);
 				}
 				else if (promoCodeValidationResult.Response == "GameRequired")
@@ -175,9 +163,7 @@ public class PromotionFunctions
 				{
 					MessagePopupViewController.ShowPromoCodeNotValidWarning(action2, action2);
 				}
-				OrchestrationService.AnalyticsAddAttribute("promoCode", "online", flag.ToString());
 			}
-			OrchestrationService.AnalyticsAddAttribute("promoCode", "serverFailureReason", promoCodeValidationResult.Response);
 		}, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());
 	}
 

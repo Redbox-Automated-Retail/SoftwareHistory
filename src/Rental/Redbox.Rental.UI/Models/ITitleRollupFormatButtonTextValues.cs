@@ -10,15 +10,9 @@ public interface ITitleRollupFormatButtonTextValues
 
 	string OutOfStockText { get; }
 
-	string Buy { get; }
-
 	string Add { get; }
 
 	string CurrencySymbol { get; }
-
-	string RentalPriceFormat { get; }
-
-	string RentalPriceFormatNoCurrency { get; }
 
 	string InCartFormat { get; }
 }

@@ -5,5 +5,6 @@ public enum MaintenanceModeSource
 	None,
 	HAL,
 	CardReader,
-	Database
+	Database,
+	InventorySync
 }

@@ -245,34 +245,6 @@ internal static class ProcessFunctions
 		return Path.GetFileName(path);
 	}
 
-	internal static string GetKaseyainiPath()
-	{
-		List<string> list = new List<string>();
-		if (Directory.Exists("C:\\Program Files\\Kaseya"))
-		{
-			try
-			{
-				string[] directories = Directory.GetDirectories("C:\\Program Files\\Kaseya\\", "RDBX*", SearchOption.TopDirectoryOnly);
-				for (int i = 0; i < directories.Length; i++)
-				{
-					string text = Path.Combine(directories[i], "KaseyaD.ini");
-					if (File.Exists(text))
-					{
-						list.Add(text);
-					}
-				}
-				string text2 = list.OrderByDescending((string p) => File.GetLastWriteTimeUtc(p)).FirstOrDefault();
-				LogHelper.Instance.Log("KaseyaD.ini path: {0}", text2);
-				return text2;
-			}
-			catch (Exception ex)
-			{
-				LogHelper.Instance.Log("An unexpected exception was raised in Control Panel GetKaseyainiPath function.", ex.Message);
-			}
-		}
-		return null;
-	}
-
 	internal static void ReplaceInFile(string filePath, string pattern, string token, string newvalue)
 	{
 		if (File.Exists(filePath))

@@ -151,14 +151,6 @@ public static class EnvironmentFunctions
 		return false;
 	}
 
-	[KernelFunction(Name = "kernel.checkreadervalidation")]
-	internal static void CheckReaderActivation()
-	{
-		IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-		service?.CheckDeviceActivation();
-		service?.CheckDeviceStatus();
-	}
-
 	[KernelFunction(Name = "kernel.wait")]
 	internal static void Wait(int delay)
 	{

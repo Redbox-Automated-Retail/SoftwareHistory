@@ -43,7 +43,6 @@ public class AnimatedDiscReturnViewController : BaseViewController
 				OnTimeout = _timeoutAction,
 				OnGotItButtonClicked = delegate
 				{
-					BaseViewController.AnalyticsAddViewEvent("buttonPress", "gotit");
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("AnimatedDiscReturnGotIt");
 					_continueAction?.Invoke();
 				}

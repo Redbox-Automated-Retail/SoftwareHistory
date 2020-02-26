@@ -9,6 +9,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Marketing;
 
 namespace Redbox.Rental.Services.Marketing;
@@ -43,7 +44,7 @@ public class MarketingAdImpressionService : IMarketingAdImpressionService
 		}
 	}
 
-	public void AddImpression(MarketingAdCampaign marketingAdCampaign, MarketingAdLocation marketingAdLocation)
+	public void AddImpression(MarketingAdCampaign marketingAdCampaign, AdLocation marketingAdLocation)
 	{
 		Task.Run(delegate
 		{
@@ -75,6 +76,7 @@ public class MarketingAdImpressionService : IMarketingAdImpressionService
 					_marketingAdImpressions.Add(marketingAdImpression);
 				}
 				marketingAdImpression.Count++;
+				LogHelper.Instance.Log($"MarketingAdImpressionService.AddImpression: Campaign: {marketingAdCampaign?.Name}, Location: {marketingAdLocation}");
 			}
 			catch (Exception e)
 			{

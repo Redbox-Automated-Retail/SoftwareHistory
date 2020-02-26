@@ -112,7 +112,7 @@ public class PersonalizationPreferencePage : UserControl, IPreferencePageHost
 			txtRecoTitleIds.Text = instance.RecommendedTitleIds;
 			rbGroupIds.Checked = instance.RecommendedTitlesIdType == RecommendedTitlesIdType.ProductGroupID;
 			rbTitleIds.Checked = instance.RecommendedTitlesIdType == RecommendedTitlesIdType.TitleID;
-			txtTagsForEachTitle.Text = (string.IsNullOrEmpty(instance.RecommendedTitleIdTags) ? txtTagsForEachTitle.Text : instance.RecommendedTitleIdTags);
+			txtTagsForEachTitle.Text = (string.IsNullOrEmpty(instance.PersonalizationTitleTags) ? txtTagsForEachTitle.Text : instance.PersonalizationTitleTags);
 		}
 	}
 
@@ -140,7 +140,7 @@ public class PersonalizationPreferencePage : UserControl, IPreferencePageHost
 		instance.RecommendedTitlesOfferCode = txtRecoTitlesOfferCode.Text;
 		instance.RecommendedTitleIds = txtRecoTitleIds.Text;
 		instance.RecommendedTitlesIdType = (rbTitleIds.Checked ? RecommendedTitlesIdType.TitleID : RecommendedTitlesIdType.ProductGroupID);
-		instance.RecommendedTitleIdTags = txtTagsForEachTitle.Text;
+		instance.PersonalizationTitleTags = txtTagsForEachTitle.Text;
 		return true;
 	}
 

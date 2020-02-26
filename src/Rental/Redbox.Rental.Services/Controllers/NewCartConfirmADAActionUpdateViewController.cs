@@ -26,7 +26,6 @@ public class NewCartConfirmADAActionUpdateViewController : BaseViewController
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl != null)
 		{
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("context", "adaTitleDialog");
 			OrchestrationService.StopIdleTimer("idle_timer");
 			_viewModel = new NewCartConfirmADAActionUpdateViewModel();
 			_selectedOffer = selectedOffer;
@@ -160,7 +159,7 @@ public class NewCartConfirmADAActionUpdateViewController : BaseViewController
 	private static void AddMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer)
 	{
 		BaseViewController.ProcessWPFHit();
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"Remove offer from {rentalShoppingCartItem?.ProductId}");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmADAAddProductOffer", $"Add offer To {rentalShoppingCartItem?.ProductId}");
 		ServiceLocator.Instance.GetService<IRentalShoppingCartService>().AddMultiNightOfferToItem(rentalShoppingCartItem, selectedOffer);
 		UpdateCartDisplay();
 	}
@@ -174,7 +173,7 @@ public class NewCartConfirmADAActionUpdateViewController : BaseViewController
 	private static void RemoveMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, long offerId)
 	{
 		BaseViewController.ProcessWPFHit();
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"delete {rentalShoppingCartItem?.ProductId}");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmADARemoveProductOffer", $"delete {rentalShoppingCartItem?.ProductId}");
 		ServiceLocator.Instance.GetService<IRentalShoppingCartService>().RemoveMultiNightOfferFromItem(rentalShoppingCartItem);
 		UpdateCartDisplay();
 	}
@@ -189,7 +188,7 @@ public class NewCartConfirmADAActionUpdateViewController : BaseViewController
 
 	private static void OkCommand_Execute()
 	{
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "okButtonPress");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmADAOK");
 		OrchestrationService.ViewGoBackSafe("OK Pressed", popOnly: false);
 	}
 }

@@ -69,7 +69,6 @@ public class MultiDiscVendViewController : BaseViewController
 				multiDiscVendViewModel.CallbackExecuted = true;
 				if (fromOkayButton)
 				{
-					BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "okayButton");
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("MultiDiscVendOkay");
 				}
 				_continueAction?.Invoke();

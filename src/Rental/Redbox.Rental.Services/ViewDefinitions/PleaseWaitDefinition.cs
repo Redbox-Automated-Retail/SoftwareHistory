@@ -17,5 +17,9 @@ public class PleaseWaitDefinition : BaseViewDefinition, IViewDefinition
 		{
 			PleaseWaitController.ConfigureView(viewFrameInstance?.Parameter as ActionCallbackInfo);
 		};
+		base.OnLeave = delegate(IViewFrameInstance viewFrameInstance)
+		{
+			PleaseWaitController.OnLeave(viewFrameInstance);
+		};
 	}
 }

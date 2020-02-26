@@ -37,19 +37,25 @@ public interface IConfiguration
 
 	bool _4KUpsellEnabled { get; }
 
+	bool EndGameRentals { get; }
+
+	bool EndGames { get; }
+
 	bool EnableFlashDeals { get; }
 
 	List<decimal> FlashDealPrices { get; }
 
 	bool Show99CentsBrowseFilterButton { get; }
 
+	bool ShowExpandedFormatButtons { get; }
+
+	bool ShowExpandedFormatButtonsNewText { get; }
+
 	int OfflineItemsLimit { get; }
 
 	int OfflineGameRentalLimit { get; }
 
 	int OfflineGamePurchaseLimit { get; }
-
-	bool LoyaltySignUpEnabled { get; }
 
 	bool LoyaltySignUpAfterSwipeEnabled { get; }
 
@@ -77,11 +83,9 @@ public interface IConfiguration
 
 	string OutOfStockTitleDetailsABTestVersion { get; }
 
-	string TVEnabledABTestVersion { get; }
+	string TitleDetailsLayoutABTestVersion { get; }
 
-	List<long> TVTitleIds { get; }
-
-	string ShoppingCartLayoutABTestVersion { get; }
+	string TitleDetailsLayoutABTestVersionIgnoreCulture { get; }
 
 	bool MonitorBarcodeTracking { get; }
 
@@ -98,14 +102,6 @@ public interface IConfiguration
 	bool AuthorizeAtPickup { get; }
 
 	string FraudServicesKey { get; }
-
-	bool KioskAnalyticsEnabled { get; }
-
-	bool SendKioskAnalyticsToKioskDataService { get; }
-
-	string KioskDataServicesUrl { get; }
-
-	string KioskDataServicesKey { get; }
 
 	bool UseTimerToInvokeCallbackEntries { get; }
 
@@ -137,6 +133,12 @@ public interface IConfiguration
 
 	bool ContactlessDiscoverEnabled { get; }
 
+	bool HideMobilePayOption { get; }
+
+	bool HideApplePayImage { get; }
+
+	bool HideGooglePayImage { get; }
+
 	bool VisaInsertChipEnabled { get; }
 
 	bool AmexInsertChipEnabled { get; }
@@ -153,8 +155,6 @@ public interface IConfiguration
 
 	bool BluefinAutoActivate { get; }
 
-	bool KioskAnalyticsJsonEnabled { get; }
-
 	bool GiftCardsEnabled { get; }
 
 	bool ShowAuthChangeMessage { get; }
@@ -166,6 +166,66 @@ public interface IConfiguration
 	bool UseDiscountsForPmnpOffers { get; }
 
 	bool ShowOptinForNormalCheckout { get; }
+
+	string KioskDataServicesUrl { get; }
+
+	string KioskDataServicesKey { get; }
+
+	bool SendJsonKioskAnalyticsToKioskDataService { get; }
+
+	bool SendKioskAlertsToKioskServices { get; }
+
+	bool SendKioskAlertsToKioskDataService { get; }
+
+	bool SendKioskVersionsToKioskDataService { get; }
+
+	bool EnableVistarAds { get; }
+
+	int VistarGetAdTimeout { get; }
+
+	string KioskClientServiceBaseUrl { get; }
+
+	bool ForcedAirExchangerConfigured { get; }
+
+	bool SendKioskFunctionChecksToKioskServices { get; }
+
+	bool SendKioskFunctionChecksToKioskDataService { get; }
+
+	string FAQDocument { get; }
+
+	string TermsDocument { get; }
+
+	string RedboxCardDocument { get; }
+
+	string PrivacyDocument { get; }
+
+	string PerksDocument { get; }
+
+	string MobileFaqDocument { get; }
+
+	string CAPrivacyNoticeDocument { get; }
+
+	string DoNotSellDocument { get; }
+
+	bool ShowRedboxCardUpdated { get; }
+
+	bool ShowTermsUpdated { get; }
+
+	bool ShowMobileFaqUpdated { get; }
+
+	bool ShowFAQUpdated { get; }
+
+	bool ShowPrivacyUpdated { get; }
+
+	bool ShowPerksUpdated { get; }
+
+	bool ShowCAPrivacyNoticeUpdated { get; }
+
+	bool ShowDoNotSellUpdated { get; }
+
+	bool SendAuditEventsToKioskServices { get; }
+
+	bool SendAuditEventsToKioskDataService { get; }
 
 	void SessionReload();
 

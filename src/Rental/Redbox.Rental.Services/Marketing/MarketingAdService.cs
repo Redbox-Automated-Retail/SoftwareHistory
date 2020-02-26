@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Marketing;
 
 namespace Redbox.Rental.Services.Marketing;
 
-public class MarketingAdService : IMarketingAdService
+public class MarketingAdService : IMarketingAdService, IAdService
 {
 	private IMarketingConfigurationManager _marketingConfigurationManager;
 
@@ -34,7 +36,7 @@ public class MarketingAdService : IMarketingAdService
 		_resourceBundleService = resourceBundleService;
 	}
 
-	public void StartApplication()
+	public void LoadCampaigns()
 	{
 		LoadMarketingAdCampaignGroup();
 		_marketingAdCampaigns.Clear();
@@ -50,7 +52,7 @@ public class MarketingAdService : IMarketingAdService
 		});
 	}
 
-	public void StartSession()
+	public void ActivateCampaigns()
 	{
 		_enableMarketingAds = _marketingConfigurationManager.EnableMarketingAds;
 		_activeCampaigns = GetActiveCampaigns();
@@ -88,24 +90,60 @@ public class MarketingAdService : IMarketingAdService
 			select camp).ToList();
 	}
 
-	public MarketingAd GetScreenAd(MarketingAdLocation marketingAdLocation, bool createImpression)
+	public bool RecordAdImpression(IAdImpression adImpression)
 	{
-		MarketingAd result = new MarketingAd
+		if (adImpression.Ad is MarketingAd marketingAd)
 		{
-			Visible = false
-		};
-		if (!_enableMarketingAds || _activeCampaigns.Count == 0)
-		{
-			return result;
-		}
-		MarketingAdCampaign marketingAdCampaign = _activeCampaigns.Where((MarketingAdCampaign c) => c.Ads.ContainsKey(marketingAdLocation)).FirstOrDefault();
-		if (marketingAdCampaign != null)
-		{
-			if (createImpression)
+			IMarketingAdImpressionService marketingAdImpressionService = _marketingAdImpressionService;
+			if (marketingAdImpressionService == null)
 			{
-				_marketingAdImpressionService.AddImpression(marketingAdCampaign, marketingAdLocation);
+				return false;
 			}
-			return marketingAdCampaign.Ads[marketingAdLocation];
+			marketingAdImpressionService.AddImpression(marketingAd.Campaign, adImpression.AdLocation);
+		}
+		return false;
+	}
+
+	public async Task<bool> RecordAdImpressionAsync(IAdImpression adImpression)
+	{
+		bool result = false;
+		await Task.Run(delegate
+		{
+			if (adImpression.Ad is MarketingAd marketingAd)
+			{
+				_marketingAdImpressionService?.AddImpression(marketingAd.Campaign, adImpression.AdLocation);
+			}
+		}).ConfigureAwait(continueOnCapturedContext: false);
+		return result;
+	}
+
+	public async Task<IAd> GetScreenAdAsync(AdLocation marketingAdLocation)
+	{
+		IAd ad = null;
+		await Task.Run(delegate
+		{
+			if (_enableMarketingAds && _activeCampaigns.Count != 0)
+			{
+				MarketingAdCampaign marketingAdCampaign = _activeCampaigns.Where((MarketingAdCampaign c) => c.Ads.ContainsKey(marketingAdLocation)).FirstOrDefault();
+				if (marketingAdCampaign != null)
+				{
+					ad = marketingAdCampaign.Ads[marketingAdLocation];
+				}
+			}
+		}).ConfigureAwait(continueOnCapturedContext: false);
+		return ad;
+	}
+
+	public IAd GetScreenAd(AdLocation marketingAdLocation)
+	{
+		IAd result = null;
+		if (_enableMarketingAds && _activeCampaigns.Count != 0)
+		{
+			MarketingAdCampaign marketingAdCampaign = _activeCampaigns.Where((MarketingAdCampaign c) => c.Ads.ContainsKey(marketingAdLocation)).FirstOrDefault();
+			if (marketingAdCampaign != null)
+			{
+				result = marketingAdCampaign.Ads[marketingAdLocation];
+			}
 		}
 		return result;
 	}
@@ -184,9 +222,9 @@ public class MarketingAdService : IMarketingAdService
 				{
 					campaign.Ads[a.Location] = new MarketingAd
 					{
-						Visible = true,
 						ImageName = a.ImageName,
-						MinimumDisplay = a.MinimumDisplay
+						MinimumDisplay = a.MinimumDisplay,
+						Campaign = campaign
 					};
 				});
 			}

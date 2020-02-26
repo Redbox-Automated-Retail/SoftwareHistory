@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Redbox.Rental.Model.Ads;
 
 namespace Redbox.Rental.Model.Marketing;
 
@@ -18,7 +19,7 @@ public class MarketingAdCampaign
 
 	private List<long> _excludeKiosks = new List<long>();
 
-	private Dictionary<MarketingAdLocation, MarketingAd> _ads = new Dictionary<MarketingAdLocation, MarketingAd>();
+	private Dictionary<AdLocation, MarketingAd> _ads = new Dictionary<AdLocation, MarketingAd>();
 
 	public Guid Id { get; set; }
 
@@ -46,7 +47,7 @@ public class MarketingAdCampaign
 
 	public List<string> ExcludeMarkets => _excludeMarkets;
 
-	public Dictionary<MarketingAdLocation, MarketingAd> Ads => _ads;
+	public Dictionary<AdLocation, MarketingAd> Ads => _ads;
 
 	private bool HasKiosksSet
 	{

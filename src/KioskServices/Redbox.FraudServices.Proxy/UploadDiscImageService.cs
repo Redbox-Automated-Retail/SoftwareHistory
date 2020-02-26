@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using Redbox.Core;
 using Redbox.FraudServices.Proxy.ComponentModel;
@@ -13,8 +12,6 @@ namespace Redbox.FraudServices.Proxy;
 
 public class UploadDiscImageService : IUploadDiscImageService
 {
-	private object _lockObject = new object();
-
 	private IQueueMessageProcessorService _queueMessageProcessorService;
 
 	private bool _isActive;
@@ -54,15 +51,15 @@ public class UploadDiscImageService : IUploadDiscImageService
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 		if (service != null)
 		{
-			_queueMessageProcessorService = new QueueMessageProcessorService
+			IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
+			if (service2 != null && service2.AwsUploadDiscImageEnabled)
 			{
-				Name = "UploadDiscImageService",
-				IsDefault = false,
-				BeforeMessageProcessing = null,
-				ProcessMessage = OnProcessMessage,
-				MessageProcessed = null
-			};
-			_queueMessageProcessorService.SupportedMessageTypes.Add("UploadDiscImage");
+				_queueMessageProcessorService = new AWSUploadDiscImageMessageProcessorService();
+			}
+			else
+			{
+				_queueMessageProcessorService = new OldUploadDiscImageMessageProcessorService();
+			}
 			service.RegisterMessageProcessorService(_queueMessageProcessorService);
 		}
 		else
@@ -77,39 +74,6 @@ public class UploadDiscImageService : IUploadDiscImageService
 		{
 			ServiceLocator.Instance.GetService<IQueueService>()?.UnRegisterMessageProcessorService(_queueMessageProcessorService);
 			_queueMessageProcessorService = null;
-		}
-	}
-
-	private static bool OnProcessMessage(IMessage message, out IDictionary<string, object> response)
-	{
-		bool result = false;
-		response = new Dictionary<string, object>();
-		IApplicationState service = ServiceLocator.Instance.GetService<IApplicationState>();
-		if (service == null || service.IsStandAlone)
-		{
-			LogHelper.Instance.Log("Unable to process upload dsic image message because application is in stand alone mode");
-			result = false;
-		}
-		try
-		{
-			string jsonRequest = Encoding.ASCII.GetString(message.Data);
-			if (message.Type == "UploadDiscImage")
-			{
-				bool flag = ServiceLocator.Instance.GetService<IConfiguration>()?.AwsUploadDiscImageEnabled ?? false;
-				LogHelper.Instance.Log($"Use AWS for UploadDiscImage? {flag}");
-				string apiUri = (flag ? "api/frauddata/DiscImage" : "api/Fraud/discimage");
-				response = FraudServicesProxy.Instance.ExecuteMessage(message.Type, apiUri, jsonRequest, flag);
-			}
-			else
-			{
-				LogHelper.Instance.Log($"Error in UploadDiscImageService.OnProcessMessage.  No handler for message type {message.Type}");
-			}
-			return response != null && response.ContainsKey("success") && (bool)response["success"];
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Error in UploadDiscImageService.OnProcessMessage.", e);
-			return result;
 		}
 	}
 

@@ -10,7 +10,6 @@ using System.Runtime.Remoting.Channels.Http;
 using System.Text;
 using System.Web;
 using Redbox.Core;
-using Redbox.JSONPrettyPrinter;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.ComponentModel;
@@ -129,22 +128,22 @@ public class KioskServicesProxy
 				dictionary["Image"] = $"{arg} ... {list?.Count ?? 0}";
 			}
 			string text = dictionary.ToJson();
-			string prettyString = PrettyPrinter.GetPrettyString(text);
-			LogHelper.Instance.Log("KioskServicesProxy JSON request: {0}", (prettyString.Length <= 10000) ? prettyString : text);
-			string text2 = PerformRemoteMessage(jsonRequest);
-			dictionary = text2.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
+			string text2 = text.ToPrettyJson();
+			LogHelper.Instance.Log("KioskServicesProxy JSON request: {0}", (text2.Length <= 10000) ? text2 : text);
+			string text3 = PerformRemoteMessage(jsonRequest);
+			dictionary = text3.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
 			ObfuscationHelper.ObfuscateDictionary(dictionary);
 			if (dictionary.ContainsKey("CustomerProfile"))
 			{
 				ObfuscationHelper.ObfuscateDictionary((Dictionary<string, object>)dictionary["CustomerProfile"]);
 			}
-			string input = dictionary.ToJson();
-			LogHelper.Instance.Log("KioskServicesProxy JSON response: {0}", PrettyPrinter.GetPrettyString(input));
+			string source = dictionary.ToJson();
+			LogHelper.Instance.Log($"KioskServicesProxy JSON response: {source.ToPrettyJson()}");
 			LogHelper.Instance.Log("KioskServicesProxy call execution time: {0}", executionTimer.Elapsed);
-			if (!string.IsNullOrEmpty(text2))
+			if (!string.IsNullOrEmpty(text3))
 			{
 				CommunicationActivity?.BeginInvoke(true, EventArgs.Empty, null, null);
-				return text2.ToDictionary();
+				return text3.ToDictionary();
 			}
 			return new Dictionary<string, object> { ["Success"] = false };
 		}

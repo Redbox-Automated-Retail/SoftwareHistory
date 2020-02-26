@@ -130,6 +130,37 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 		}
 	}
 
+	public void SendEmailConfirm(string storeNumber, string emailAddress, string accountNumber, SendEmailConfirmCallback completeCallback)
+	{
+		RemoteServiceCallback completeCallback2 = delegate(IRemoteServiceResult remoteServiceResult)
+		{
+			completeCallback(GetEmailConfirmResult(remoteServiceResult));
+		};
+		SendEmailConfirm(storeNumber, emailAddress, accountNumber, completeCallback2);
+	}
+
+	private IEmailConfirmResult GetEmailConfirmResult(IRemoteServiceResult result)
+	{
+		EmailConfirmResult obj = new EmailConfirmResult
+		{
+			Success = result.Success,
+			Errors = result.Errors,
+			CustomerProfileNumber = result.GetProperty<string>("customer_profile_number"),
+			MobilePhoneNumber = result.GetProperty<string>("mobile_phone_number"),
+			PromptForPerks = result.GetProperty<bool>("prompt_for_perks"),
+			PromptForEarlyId = result.GetProperty<bool>("prompt_for_early_id"),
+			TextClubEnabled = result.GetProperty<bool>("text_club_enabled"),
+			EmailVerified = result.GetProperty<bool?>("email_verified")
+		};
+		ConfirmationStatus confirmationStatus = ConfirmationStatus.DoNotShow;
+		if (Enum.TryParse<ConfirmationStatus>(result.GetProperty<string>("confirmation_status"), out var result2))
+		{
+			confirmationStatus = result2;
+		}
+		((IEmailConfirmResult)obj).ConfirmationStatus = confirmationStatus;
+		return obj;
+	}
+
 	public void SendEmailConfirm(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
 	{
 		if (LiveCall)
@@ -142,7 +173,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 		}
 	}
 
-	public void SendSimulatedCall(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
+	private void SendSimulatedCall(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -217,7 +248,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 		});
 	}
 
-	public void SendLiveCall(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
+	private void SendLiveCall(string storeNumber, string emailAddress, string accountNumber, RemoteServiceCallback completeCallback)
 	{
 		ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
 		ThreadPool.QueueUserWorkItem(delegate
@@ -248,7 +279,7 @@ public class MarketingOptinServicesProxy : IMarketingOptinServices
 					UseMessageControl = false
 				});
 				remoteServiceResult.Success = dictionary2.ContainsKey("Success") && (bool)dictionary2["Success"];
-				remoteServiceResult.Properties["confirmation_status"] = ((ConfirmationStatus)dictionary2["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString();
+				remoteServiceResult.Properties["confirmation_status"] = (dictionary2.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary2["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : string.Empty);
 				remoteServiceResult.Properties["customer_profile_number"] = (dictionary2.ContainsKey("CustomerProfileNumber") ? ((string)dictionary2["CustomerProfileNumber"]) : string.Empty);
 				remoteServiceResult.Properties["mobile_phone_number"] = (dictionary2.ContainsKey("MobilePhoneNumber") ? ((string)dictionary2["MobilePhoneNumber"]) : string.Empty);
 				remoteServiceResult.Properties["prompt_for_perks"] = dictionary2.ContainsKey("PromptForPerks") && (bool)dictionary2["PromptForPerks"];

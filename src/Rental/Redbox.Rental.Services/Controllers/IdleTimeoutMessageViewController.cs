@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using Redbox.Core;
@@ -12,35 +13,62 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class IdleTimeoutMessageViewController : BaseViewController
 {
+	public const string ViewIdleTimerName = "idle_timeout_view_timer";
+
+	private static IIdleTimerService IdleTimerService => ServiceLocator.Instance.GetService<IIdleTimerService>();
+
 	public static void ConfigureView(IViewFrameInstance viewFrameInstance)
 	{
-		OrchestrationService.SuspendIdleTimer("idle_timer");
+		IdleTimeoutMessageViewParameter idleTimeoutMessageViewParameter = viewFrameInstance.Parameter as IdleTimeoutMessageViewParameter;
+		if (idleTimeoutMessageViewParameter == null)
+		{
+			idleTimeoutMessageViewParameter = (IdleTimeoutMessageViewParameter)(viewFrameInstance.Parameter = new IdleTimeoutMessageViewParameter
+			{
+				IdleTimerName = "idle_timer",
+				NoAction = delegate
+				{
+					OrchestrationService.StopIdleTimer("idle_timeout_view_timer");
+					OrchestrationService.InvokeIdleTimerExpireSessionCallback();
+				},
+				YesAction = delegate
+				{
+					OrchestrationService.StopIdleTimer("idle_timeout_view_timer");
+					ServiceLocator.Instance.GetService<IViewService>();
+					OrchestrationService.ViewGoBackSafe("need_more_time:second_button", popOnly: false);
+				}
+			});
+		}
+		OrchestrationService.SuspendIdleTimer(idleTimeoutMessageViewParameter.IdleTimerName);
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl != null)
 		{
 			IdleTimeoutMessageViewModel idleTimeoutMessageViewModel = new IdleTimeoutMessageViewModel();
-			viewFrameInstance.Parameter = idleTimeoutMessageViewModel;
 			OrchestrationService.SetCurrentUICulture();
 			idleTimeoutMessageViewModel.ButtonNoText = Resources.no_thanks_button;
 			idleTimeoutMessageViewModel.ButtonYesText = Resources.yes_button;
 			idleTimeoutMessageViewModel.MessageText = Resources.more_time_prompt_message;
-			idleTimeoutMessageViewModel.OnButtonNoClicked = delegate
-			{
-				OrchestrationService.InvokeIdleTimerExpireSessionCallback();
-			};
-			idleTimeoutMessageViewModel.OnButtonYesClicked = delegate
-			{
-				ServiceLocator.Instance.GetService<IViewService>();
-				OrchestrationService.ViewGoBackSafe("need_more_time:second_button", popOnly: false);
-			};
+			idleTimeoutMessageViewModel.OnButtonNoClicked = idleTimeoutMessageViewParameter.NoAction;
+			idleTimeoutMessageViewModel.OnButtonYesClicked = idleTimeoutMessageViewParameter.YesAction;
 			idleTimeoutMessageViewModel.OnGetSpeechControl = () => GetSpeechControl(idleTimeoutMessageViewModel);
 			ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
 			int num = 15000;
 			num = service?.GetTimeout("medium", num) ?? num;
-			idleTimeoutMessageViewModel.Timeout = num;
+			ConfigureTimeoutMessageViewIdleTimer(num, idleTimeoutMessageViewParameter.NoAction);
 			viewUserControl.DataContext = idleTimeoutMessageViewModel;
 			CommandManager.InvalidateRequerySuggested();
 		}
+	}
+
+	private static void ConfigureTimeoutMessageViewIdleTimer(int timeout, Action timeoutAction)
+	{
+		IIdleTimer obj = IdleTimerService?.CreateIdleTimer("idle_timeout_view_timer");
+		obj?.Initialize(timeout, delegate
+		{
+			OrchestrationService.StopIdleTimer("idle_timeout_view_timer");
+			LogHelper.Instance.Log("Idle timeout message view: idle timer expired");
+			timeoutAction();
+		});
+		obj?.Start();
 	}
 
 	private static ISpeechControl GetSpeechControl(IdleTimeoutMessageViewModel idleTimeoutMessageViewModel)
@@ -100,7 +128,10 @@ public class IdleTimeoutMessageViewController : BaseViewController
 
 	public static void CleanupView(IViewFrameInstance viewFrameInstance)
 	{
-		if (viewFrameInstance.Parameter is IdleTimeoutMessageViewModel idleTimeoutMessageViewModel)
+		OrchestrationService.RemoveIdleTimer("idle_timeout_view_timer");
+		IdleTimeoutMessageViewParameter obj = viewFrameInstance.Parameter as IdleTimeoutMessageViewParameter;
+		IdleTimeoutMessageViewModel idleTimeoutMessageViewModel = obj?.ViewModel;
+		if (idleTimeoutMessageViewModel != null)
 		{
 			idleTimeoutMessageViewModel.OnButtonNoClicked = null;
 		}
@@ -108,6 +139,6 @@ public class IdleTimeoutMessageViewController : BaseViewController
 		{
 			idleTimeoutMessageViewUserControl.DataContext = null;
 		}
-		OrchestrationService.ResumeIdleTimer("idle_timer");
+		OrchestrationService.ResumeIdleTimer(obj?.IdleTimerName);
 	}
 }

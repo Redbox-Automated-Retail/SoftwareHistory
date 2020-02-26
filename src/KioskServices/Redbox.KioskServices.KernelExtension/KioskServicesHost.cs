@@ -1,21 +1,22 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Kernel;
 using Redbox.KioskServices.Proxy;
 using Redbox.KioskServices.Proxy.ComponentModel;
-using Redbox.Rental.Model;
 
 namespace Redbox.KioskServices.KernelExtension;
 
 public class KioskServicesHost : IKernelExtensionHost, IDisposable
 {
 	private IQueueMessageProcessorService _queueMessageProcessorService;
+
+	private IQueueMessageProcessorService _kioskAlertMessageProcessorService;
+
+	private IQueueMessageProcessorService _auditEventMessageProcessorService;
+
+	private IQueueMessageProcessorService _kioskFunctionCheckMessageProcessorService;
 
 	public IKernelExtension Extension { get; set; }
 
@@ -145,19 +146,14 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 		if (service != null)
 		{
-			_queueMessageProcessorService = new QueueMessageProcessorService
-			{
-				Name = "KioskServices",
-				IsDefault = true,
-				BeforeMessageProcessing = OnBeforeMessageProcessing,
-				ProcessMessage = OnProcessMessage,
-				MessageProcessed = delegate(IMessage message, IDictionary<string, object> result2, object clientData)
-				{
-					OnMessageProcessed(message, result2, clientData);
-					ServiceLocator.Instance.GetService<IReservationServices>()?.ProcessValidationResponse(message, result2, clientData);
-				}
-			};
+			_queueMessageProcessorService = new DefaultMessageProcessorService();
 			service.RegisterMessageProcessorService(_queueMessageProcessorService);
+			_kioskAlertMessageProcessorService = new KSKioskAlertMessageProcessorService();
+			service.RegisterMessageProcessorService(_kioskAlertMessageProcessorService);
+			_auditEventMessageProcessorService = new KSAuditEventMessageProcessorService();
+			service.RegisterMessageProcessorService(_auditEventMessageProcessorService);
+			_kioskFunctionCheckMessageProcessorService = new KSKioskFunctionCheckMessageProcessorService();
+			service.RegisterMessageProcessorService(_kioskFunctionCheckMessageProcessorService);
 		}
 		HealthServicesProxy.Instance.StartPingTimer();
 		return result;
@@ -172,6 +168,12 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		{
 			service.UnRegisterMessageProcessorService(_queueMessageProcessorService);
 			_queueMessageProcessorService = null;
+			service.UnRegisterMessageProcessorService(_kioskAlertMessageProcessorService);
+			_kioskAlertMessageProcessorService = null;
+			service.UnRegisterMessageProcessorService(_auditEventMessageProcessorService);
+			_auditEventMessageProcessorService = null;
+			service.UnRegisterMessageProcessorService(_kioskFunctionCheckMessageProcessorService);
+			_kioskFunctionCheckMessageProcessorService = null;
 		}
 		InventoryServicesProxy.Instance.Deactivate();
 		HealthServicesProxy.Instance.StopPingTimer();
@@ -187,38 +189,6 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 	public void RegisterCommunicationActivity(Action<object, EventArgs> action)
 	{
 		KioskServicesProxy.Instance.RegisterCommunicationActivity(action);
-	}
-
-	private static void OnBeforeMessageProcessing(IMessage message, out object clientData)
-	{
-		IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
-		object clientData2 = null;
-		service?.HandleBeforeReturnMessageProcessing(message, out clientData2);
-		clientData = clientData2;
-	}
-
-	private static void OnMessageProcessed(IMessage message, IDictionary<string, object> result, object clientData)
-	{
-		ServiceLocator.Instance.GetService<IFraudService>()?.ProcessReturnResponse(message, result, clientData);
-	}
-
-	private static bool OnProcessMessage(IMessage message, out IDictionary<string, object> response)
-	{
-		response = new Dictionary<string, object>();
-		if (!HealthServicesProxy.Instance.IsOnline || HealthServicesProxy.Instance.IsServerBusy || StoreServicesProxy.Instance.IsStandAlone)
-		{
-			return false;
-		}
-		try
-		{
-			string jsonRequest = Encoding.ASCII.GetString(message.Data);
-			response = KioskServicesProxy.Instance.ExecuteMessage(jsonRequest);
-			return response.ContainsKey("Success") && (bool)response["Success"];
-		}
-		catch
-		{
-			return false;
-		}
 	}
 
 	private static bool GetPzSLiveCall()

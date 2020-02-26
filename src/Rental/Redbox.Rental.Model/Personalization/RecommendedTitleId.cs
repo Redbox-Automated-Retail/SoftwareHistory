@@ -6,7 +6,7 @@ namespace Redbox.Rental.Model.Personalization;
 
 public class RecommendedTitleId : IRecommendedTitleId
 {
-	private List<string> _tags;
+	private List<string> _personalizationTitleTags;
 
 	public long Id { get; set; }
 
@@ -14,16 +14,16 @@ public class RecommendedTitleId : IRecommendedTitleId
 
 	public bool IsWishList { get; private set; }
 
-	public List<string> Tags
+	public List<string> PersonalizationTitleTags
 	{
 		get
 		{
-			return _tags;
+			return _personalizationTitleTags;
 		}
 		set
 		{
-			_tags = value;
-			IsWishList = _tags.Any((string x) => x.Equals("wishlist", StringComparison.CurrentCultureIgnoreCase));
+			_personalizationTitleTags = value;
+			IsWishList = _personalizationTitleTags.Any((string x) => x.Equals("wishlist", StringComparison.CurrentCultureIgnoreCase));
 		}
 	}
 }

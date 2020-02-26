@@ -59,4 +59,6 @@ public static class AuthorizeResultConstants
 	public const string customer_profile_number = "customer_profile_number";
 
 	public const string store_number = "store_number";
+
+	public const string TransactionEntities = "TransactionEntities";
 }

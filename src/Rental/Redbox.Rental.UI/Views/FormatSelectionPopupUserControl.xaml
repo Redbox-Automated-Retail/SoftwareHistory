@@ -9,7 +9,7 @@
           </DataTrigger>
         </Style.Triggers>
       </Style>
-      <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_regular_16}">
+      <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_20}">
         <Style.Triggers>
           <DataTrigger Binding="{Binding Line2Text}" Value="{x:Null}">
             <Setter Property="Visibility" Value="Collapsed" />
@@ -37,16 +37,16 @@
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Redbox:RoundedButton Width="250" Height="59" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="25,35,25,0" CornerRadius="28" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:FormatSelectionPopupViewUserControlCommands.FormatCommand}" Visibility="Visible" Tag="{Binding Format}" IsEnabled="{Binding IsEnabled}">
+              <Redbox:RoundedButton Width="250" Height="59" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="25,35,25,0" CornerRadius="28" Style="{StaticResource warm_purple_no_border_button_style}" Command="{x:Static views:FormatSelectionPopupViewUserControlCommands.FormatCommand}" Visibility="Visible" Tag="{Binding Format}" IsEnabled="{Binding IsEnabled}">
                 <StackPanel Orientation="Vertical">
-                  <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_20}" HorizontalAlignment="Center" Text="{Binding Text}" />
-                  <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding Line2Text}" />
+                  <TextBlock Style="{StaticResource font_montserrat_extrabold_16}" HorizontalAlignment="Center" Text="{Binding Text}" />
+                  <TextBlock Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding Line2Text}" />
                 </StackPanel>
               </Redbox:RoundedButton>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <Redbox:RoundedButton Name="CancelButton" Width="250" Height="59" VerticalAlignment="Top" Margin="0,35,0,0" CornerRadius="28" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Command="{x:Static views:FormatSelectionPopupViewUserControlCommands.CancelCommand}">
+        <Redbox:RoundedButton Name="CancelButton" Width="250" Height="59" VerticalAlignment="Top" Margin="0,35,0,0" CornerRadius="28" Style="{StaticResource thin_border_button_style}" Command="{x:Static views:FormatSelectionPopupViewUserControlCommands.CancelCommand}">
           <TextBlock Name="CancelButtonText" Foreground="#E42045" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=CancelButtonText, FallbackValue=Cancel}" />
         </Redbox:RoundedButton>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,20,0,12" Visibility="{Binding Path=DigitalCodeInfoVisibility, FallbackValue=Visible}">

@@ -114,5 +114,6 @@
     </Redbox:GridExt>
     <local:CloseKioskViewUserControl x:Name="CloseKiosk" VerticalAlignment="Center" IsTabStop="False" Focusable="False" HorizontalAlignment="Center" Panel.ZIndex="1" Visibility="Hidden" />
     <local:ConfigureKioskViewUserControl x:Name="ConfigureKiosk" VerticalAlignment="Center" IsTabStop="False" Focusable="False" HorizontalAlignment="Center" Panel.ZIndex="1" Visibility="Hidden" />
+    <local:DisplayViewUserControl x:Name="Display" VerticalAlignment="Center" IsTabStop="False" Focusable="False" HorizontalAlignment="Center" Panel.ZIndex="1" Visibility="Hidden" />
   </Redbox:GridExt>
 </UserControl>

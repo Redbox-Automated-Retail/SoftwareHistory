@@ -13,7 +13,6 @@ public class OptionSelectionDialogController : BaseViewController
 	{
 		BaseViewController.StopIdleTimer();
 		CreateAndStartTimer();
-		OrchestrationService.AnalyticsAddViewEvent("context", parameter.ViewAnalyticsContext);
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl != null)
 		{
@@ -67,7 +66,6 @@ public class OptionSelectionDialogController : BaseViewController
 		(service?.CreateTimer("OptionSelectionDialogViewTimer", timeOut, timeOut, delegate
 		{
 			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
-			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			OrchestrationService.ViewGoBackSafe("OptionSelectionDialogViewController time out", popOnly: false);
 		}))?.Start();
 	}

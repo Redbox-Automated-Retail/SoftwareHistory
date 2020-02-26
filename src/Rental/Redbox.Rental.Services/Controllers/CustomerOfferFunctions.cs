@@ -22,7 +22,6 @@ public static class CustomerOfferFunctions
 		{
 			TitleFamily.Movies => Resources.Movie, 
 			TitleFamily.Games => Resources.game, 
-			TitleFamily.TV => Resources.TV, 
 			_ => Resources.disc, 
 		};
 	}
@@ -38,7 +37,6 @@ public static class CustomerOfferFunctions
 		{
 			TitleFamily.Movies => Resources.Movies, 
 			TitleFamily.Games => Resources.Games, 
-			TitleFamily.TV => Resources.TV, 
 			_ => Resources.disc, 
 		};
 	}

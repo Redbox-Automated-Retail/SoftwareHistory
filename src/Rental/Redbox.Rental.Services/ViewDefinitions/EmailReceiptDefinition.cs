@@ -17,5 +17,9 @@ public class EmailReceiptDefinition : BaseViewDefinition, IViewDefinition
 		{
 			SimpleViewController.ConfigureEmailReceiptView(viewFrameInstance?.Parameter as EmailReceiptInfo);
 		};
+		base.OnLeave = delegate(IViewFrameInstance viewFrameInstance)
+		{
+			SimpleViewController.OnLeaveEmailReceiptView(viewFrameInstance);
+		};
 	}
 }

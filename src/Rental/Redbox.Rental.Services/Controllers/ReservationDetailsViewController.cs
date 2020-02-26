@@ -196,7 +196,6 @@ public class ReservationDetailsViewController : BaseViewController
 				reservationDetailsViewModel.CallbackExecuted = true;
 				if (fromOkayButton)
 				{
-					BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "okayButton");
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("ReservationDetailsOkay");
 				}
 				_continueAction?.Invoke();

@@ -11,6 +11,7 @@ using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Promotion;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -20,6 +21,15 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class PresentOffersViewController : BaseViewController
 {
+	private class LegalText
+	{
+		public int Order { get; set; }
+
+		public string Text { get; set; }
+
+		public string Asterisk { get; set; }
+	}
+
 	private static Action<CustomerOffer> _continueAction;
 
 	private static Action _cancelAction;
@@ -58,7 +68,6 @@ public class PresentOffersViewController : BaseViewController
 
 	private static void ContinueButtonClickedAction(CustomerOffer o)
 	{
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("ButtonPress", "PresentOffersContinue");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PresentOffersContinue")?.AddData(new OfferData(o.DiscountType.ToString(), o.PromotionCode ?? o.OfferDiscountCode, o.Amount));
 		OrchestrationService.ViewGoBackSafe("PresentOffersView_OfferSelected", popOnly: false);
 		_continueAction(o);
@@ -66,7 +75,6 @@ public class PresentOffersViewController : BaseViewController
 
 	private static void CancelButtonClickedAction()
 	{
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("ButtonPress", "PresentOffersCancel");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PresentOffersCancel");
 		OrchestrationService.ViewGoBackSafe("PresentOffersView_NoThanks", popOnly: false);
 		_cancelAction();
@@ -91,76 +99,89 @@ public class PresentOffersViewController : BaseViewController
 			viewModel.SingleOfferVisibility = Visibility.Visible;
 			viewModel.CancelButtonVisibility = Visibility.Collapsed;
 			viewModel.BannerVisibility = Visibility.Collapsed;
-			viewModel.OfferAreaHeight = ((customerOffer != null && customerOffer.OfferScopeType == OfferScopeType.Session) ? 680 : 604);
-		}
-		string text = "";
-		string text2 = "";
-		if (customerOffer != null && customerOffer.OfferScopeType == OfferScopeType.Session)
-		{
-			viewModel.MessageText = Resources.offer_session_message;
-			viewModel.ExpirationVisibility = Visibility.Collapsed;
-			viewModel.LegalText2Visibility = Visibility.Collapsed;
-			viewModel.MessageVisibility = Visibility.Collapsed;
-			if (parameters.CustomerOffers.Count == 1)
+			if (customerOffer != null && customerOffer.CustomerSegmentType == CustomerSegmentType.NewMemberPerksSignup)
 			{
-				viewModel.LegalText1 = string.Empty;
-				if (customerOffer.DiscountType == OfferDiscountType.MultiNightPrice)
-				{
-					viewModel.LegalText2 = string.Format(Resources.offer_mnp_message, customerOffer.OfferProducts[0].NumberOfNights, customerOffer.OfferProducts[0].DiscountedPrice);
-				}
-				else
-				{
-					viewModel.LegalText2 = Resources.offer_legal_text_short;
-				}
-				viewModel.LegalText2Visibility = Visibility.Visible;
+				viewModel.OfferAreaHeight = 640.0;
 			}
-			else if (customerOffer.DiscountType == OfferDiscountType.MultiNightPrice)
+			else if (customerOffer != null && customerOffer.OfferScopeType == OfferScopeType.Session)
 			{
-				viewModel.LegalText1 = string.Format(Resources.offer_mnp_message, customerOffer.OfferProducts[0].NumberOfNights, customerOffer.OfferProducts[0].DiscountedPrice);
-				if (parameters.CustomerOffers.Any((CustomerOffer o) => o.DiscountType != OfferDiscountType.MultiNightPrice))
-				{
-					text = "*";
-					text2 = "**";
-					viewModel.LegalText1 = text + viewModel.LegalText1;
-					viewModel.LegalText2 = text2 + Resources.offer_legal_text_short;
-					viewModel.LegalText2Visibility = Visibility.Visible;
-				}
-				else
-				{
-					viewModel.LegalText2Visibility = Visibility.Collapsed;
-				}
+				viewModel.OfferAreaHeight = 680.0;
 			}
 			else
 			{
-				viewModel.LegalText1 = Resources.offer_legal_text_short;
-				CustomerOffer customerOffer2 = parameters.CustomerOffers.FirstOrDefault((CustomerOffer o) => o.DiscountType == OfferDiscountType.MultiNightPrice);
-				if (customerOffer2 != null)
-				{
-					text = "**";
-					text2 = "*";
-					viewModel.LegalText1 = text2 + viewModel.LegalText1;
-					viewModel.LegalText2 = text + string.Format(Resources.offer_mnp_message, customerOffer2.OfferProducts[0].NumberOfNights, customerOffer2.OfferProducts[0].DiscountedPrice);
-					viewModel.LegalText2Visibility = Visibility.Visible;
-				}
-				else
-				{
-					viewModel.MessageVisibility = Visibility.Collapsed;
-					viewModel.LegalText2Visibility = Visibility.Collapsed;
-				}
+				viewModel.OfferAreaHeight = 604.0;
 			}
 		}
-		else
+		Dictionary<LegalTextType, LegalText> legalTextStrings = GetLegalTextStrings(parameters);
+		viewModel.ExpirationVisibility = Visibility.Collapsed;
+		viewModel.LegalText2Visibility = Visibility.Collapsed;
+		viewModel.LegalText3Visibility = Visibility.Collapsed;
+		viewModel.MessageVisibility = Visibility.Collapsed;
+		foreach (LegalText item in legalTextStrings.Values.OrderBy((LegalText v) => v.Order))
 		{
-			viewModel.MessageVisibility = Visibility.Collapsed;
+			switch (item.Order)
+			{
+			case 1:
+				viewModel.LegalText1 = ((legalTextStrings.Count == 1) ? string.Empty : item.Asterisk) + item.Text;
+				break;
+			case 2:
+				viewModel.LegalText2 = item.Asterisk + item.Text;
+				viewModel.LegalText2Visibility = Visibility.Visible;
+				break;
+			case 3:
+				viewModel.LegalText3 = item.Asterisk + item.Text;
+				viewModel.LegalText3Visibility = Visibility.Visible;
+				break;
+			}
+		}
+		if (customerOffer == null || customerOffer.OfferScopeType != OfferScopeType.Session)
+		{
 			viewModel.ExpirationVisibility = Visibility.Visible;
 			viewModel.ExpirationText = string.Format(Resources.offer_expires_message, parameters.CustomerOffers.First().ExpirationDate.Value.ToString("M/d/yy"));
-			viewModel.LegalText1 = string.Format(Resources.offer_legal_text_with_expiration_date, parameters.CustomerOffers.First().ExpirationDate.Value.ToString("M/d/yy"));
-			viewModel.LegalText2Visibility = Visibility.Collapsed;
 		}
-		PopulateOfferInfo(viewModel, parameters, continueCommand, text, text2);
+		PopulateOfferInfo(viewModel, parameters, continueCommand, legalTextStrings);
 	}
 
-	private static void PopulateOfferInfo(PresentOffersViewModel viewModel, PresentOffersViewInfo parameters, DynamicRoutedCommand continueCommand, string mnpOfferAsterisk, string otherOfferAsterisk)
+	private static Dictionary<LegalTextType, LegalText> GetLegalTextStrings(PresentOffersViewInfo parameters)
+	{
+		Dictionary<LegalTextType, LegalText> dictionary = new Dictionary<LegalTextType, LegalText>();
+		int num = 0;
+		foreach (CustomerOffer customerOffer in parameters.CustomerOffers)
+		{
+			if (!dictionary.ContainsKey(customerOffer.LegalTextType))
+			{
+				num++;
+				string text = string.Empty;
+				switch (customerOffer.LegalTextType)
+				{
+				case LegalTextType.Standard:
+					text = Resources.offer_legal_text;
+					break;
+				case LegalTextType.Multinight:
+					text = string.Format(Resources.offer_mnp_message, customerOffer.OfferProducts[0].NumberOfNights, customerOffer.OfferProducts[0].DiscountedPrice);
+					break;
+				case LegalTextType.RentalShort:
+					text = Resources.offer_legal_text_short;
+					break;
+				case LegalTextType.Purchase:
+					text = Resources.offer_legal_text_purchase;
+					break;
+				case LegalTextType.Expires:
+					text = string.Format(Resources.offer_legal_text_with_expiration_date, customerOffer.ExpirationDate.Value.ToString("M/d/yy"));
+					break;
+				}
+				dictionary.Add(customerOffer.LegalTextType, new LegalText
+				{
+					Order = num,
+					Text = text,
+					Asterisk = new string('*', num)
+				});
+			}
+		}
+		return dictionary;
+	}
+
+	private static void PopulateOfferInfo(PresentOffersViewModel viewModel, PresentOffersViewInfo parameters, DynamicRoutedCommand continueCommand, Dictionary<LegalTextType, LegalText> legalTextStrings)
 	{
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		viewModel.Offers = new ObservableCollection<OfferInfoModel>();
@@ -171,7 +192,6 @@ public class PresentOffersViewController : BaseViewController
 		int num = 0;
 		foreach (CustomerOffer customerOffer in parameters.CustomerOffers)
 		{
-			OrchestrationService.AnalyticsAddViewEvent("offerDisplayed", customerOffer.PromotionCode ?? customerOffer.OfferDiscountCode ?? string.Empty);
 			num++;
 			OfferInfoModel offerInfoModel = new OfferInfoModel();
 			offerInfoModel.ControlWidth = (flag ? 1028 : 514);
@@ -182,6 +202,7 @@ public class PresentOffersViewController : BaseViewController
 			offerInfoModel.CancelButtonVisibility = ((!flag || customerOffer.OfferScopeType == OfferScopeType.Storeable) ? Visibility.Collapsed : Visibility.Visible);
 			offerInfoModel.BannerVisibility = ((!flag || customerOffer.DiscountType != OfferDiscountType.MultiNightPrice) ? Visibility.Collapsed : Visibility.Visible);
 			offerInfoModel.ImageVisibility = Visibility.Collapsed;
+			offerInfoModel.PerksIconsVisibility = Visibility.Collapsed;
 			offerInfoModel.MessageTextVisibility = Visibility.Collapsed;
 			offerInfoModel.TextHorizontalAlignment = HorizontalAlignment.Center;
 			offerInfoModel.CancelButtonCommand = viewModel.CancelButtonCommand;
@@ -192,9 +213,14 @@ public class PresentOffersViewController : BaseViewController
 			string singularTitleFamilyString = CustomerOfferFunctions.GetSingularTitleFamilyString(titleFamilyFromOffer);
 			string pluralTitleFamilyString = CustomerOfferFunctions.GetPluralTitleFamilyString(titleFamilyFromOffer);
 			offerInfoModel.StyledTextLines = new ObservableCollection<StyledTextModel>();
-			if (customerOffer.OfferScopeType == OfferScopeType.Session)
+			if (customerOffer.CustomerSegmentType == CustomerSegmentType.NewMemberPerksSignup)
 			{
-				SetTextLinesForInCartOffer(viewUserControl, flag, flag2, customerOffer, offerInfoModel, singularTitleFamilyString, pluralTitleFamilyString, hasMnpOffer, mnpOfferAsterisk, otherOfferAsterisk);
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.SignupFlowState.WasPerksSignupOfferPresented = true;
+				SetContentForPerksEquivalentOffer(viewUserControl, customerOffer, offerInfoModel, singularTitleFamilyString);
+			}
+			else if (customerOffer.OfferScopeType == OfferScopeType.Session)
+			{
+				SetTextLinesForInCartOffer(viewUserControl, flag, flag2, customerOffer, offerInfoModel, singularTitleFamilyString, pluralTitleFamilyString, hasMnpOffer, legalTextStrings);
 			}
 			else if (customerOffer.OfferScopeType == OfferScopeType.Storeable)
 			{
@@ -206,6 +232,58 @@ public class PresentOffersViewController : BaseViewController
 			}
 			viewModel.Offers.Add(offerInfoModel);
 		}
+	}
+
+	private static void SetContentForPerksEquivalentOffer(FrameworkElement viewUserControl, CustomerOffer offer, OfferInfoModel offerInfoModel, string singularFamily)
+	{
+		StyledTextModel styledTextModel = new StyledTextModel();
+		if (offer.DiscountType == OfferDiscountType.AmountOff)
+		{
+			offerInfoModel.TopMargin = 60;
+			styledTextModel.Text = string.Format(Resources.offer_info_amount_off_current_rental, offer.Amount, singularFamily.ToLower());
+			styledTextModel.Style = WPFFunctions.GetStyle(viewUserControl, "offer_info_big_bold_perks");
+		}
+		else if (offer.DiscountType == OfferDiscountType.Loyalty)
+		{
+			offerInfoModel.TopMargin = 60;
+			styledTextModel.Text = Resources.offer_info_perks_extra_dvd;
+			styledTextModel.Style = WPFFunctions.GetStyle(viewUserControl, "offer_info_big_bold_perks");
+		}
+		else if (offer.DiscountType == OfferDiscountType.Free)
+		{
+			offerInfoModel.TextHorizontalAlignment = HorizontalAlignment.Left;
+			offerInfoModel.TopMargin = 60;
+			offerInfoModel.ImageVisibility = Visibility.Visible;
+			offerInfoModel.Image = OrchestrationService.GetProductBitmapImage(offer.TargetProductInCart);
+			styledTextModel.Text = Resources.offer_info_get_first_night;
+			styledTextModel.Style = WPFFunctions.GetStyle(viewUserControl, "offer_info_medium_top_line");
+			offerInfoModel.StyledTextLines.Add(styledTextModel);
+			styledTextModel = new StyledTextModel();
+			styledTextModel.Text = Resources.offer_info_free_exclamation;
+			styledTextModel.Style = WPFFunctions.GetStyle(viewUserControl, "offer_info_big_bold_line_2");
+		}
+		if (offer.DiscountType == OfferDiscountType.Treatment)
+		{
+			styledTextModel.Text = Resources.offer_info_missing_out;
+			styledTextModel.Style = WPFFunctions.GetStyle(viewUserControl, "offer_info_big_bold_perks");
+			offerInfoModel.StyledTextLines.Add(styledTextModel);
+			styledTextModel = new StyledTextModel();
+			styledTextModel.Text = Resources.offer_info_free_rental_for_sign_up;
+			styledTextModel.Style = WPFFunctions.GetStyle(viewUserControl, "offer_info_medium_top_margin");
+			offerInfoModel.PerksIconsVisibility = Visibility.Visible;
+			offerInfoModel.PerksBdayGiftText = Resources.offer_info_bday_gift;
+			offerInfoModel.PerksDealsText = Resources.offer_info_special_deals;
+			offerInfoModel.PerksFreeRentalText = Resources.offer_info_earn_free;
+		}
+		else
+		{
+			offerInfoModel.MessageText = Resources.offer_info_join_perks;
+			offerInfoModel.MessageTextStyle = WPFFunctions.GetStyle(viewUserControl, "offer_info_medium_2up");
+			offerInfoModel.MessageTextVisibility = Visibility.Visible;
+		}
+		offerInfoModel.StyledTextLines.Add(styledTextModel);
+		offerInfoModel.ContinueButtonText = Resources.get_started_button_text;
+		offerInfoModel.CancelButtonText = Resources.no_thanks_button_text;
 	}
 
 	private static void SetTextLinesForStoredRedeemableOffer(FrameworkElement viewUserControl, bool isSingle, CustomerOffer offer, OfferInfoModel offerInfoModel, string singularFamily)
@@ -362,18 +440,30 @@ public class PresentOffersViewController : BaseViewController
 		};
 	}
 
-	private static void SetTextLinesForInCartOffer(FrameworkElement viewUserControl, bool isSingle, bool isDouble, CustomerOffer offer, OfferInfoModel offerInfoModel, string singularFamily, string pluralFamily, bool hasMnpOffer, string mnpOfferAsterisk, string otherOfferAsterisk)
+	private static void SetTextLinesForInCartOffer(FrameworkElement viewUserControl, bool isSingle, bool isDouble, CustomerOffer offer, OfferInfoModel offerInfoModel, string singularFamily, string pluralFamily, bool hasMnpOffer, Dictionary<LegalTextType, LegalText> legalTextStrings)
 	{
 		StyledTextModel styledTextModel = new StyledTextModel();
 		if (offer.DiscountType == OfferDiscountType.MultiNightPrice)
 		{
-			styledTextModel.Text = string.Format(Resources.offer_info_add_night, offer.OfferProducts[0].NumberOfNights, offer.OfferProducts[0].DiscountedPrice.Value.ToCurrencyString(useCentSign: true)) + mnpOfferAsterisk;
+			styledTextModel.Text = string.Format(Resources.offer_info_add_night, offer.OfferProducts[0].NumberOfNights, offer.OfferProducts[0].DiscountedPrice.Value.ToCurrencyString(useCentSign: true));
+			if (!isSingle)
+			{
+				styledTextModel.Asterisk = legalTextStrings[offer.LegalTextType].Asterisk;
+				styledTextModel.AsteriskStyle = WPFFunctions.GetStyle(viewUserControl, "offer_info_asterisks");
+			}
 			styledTextModel.Style = GetStyleForBasketStretchMnp(viewUserControl, isSingle, isDouble, hasMnpOffer, "offer_info_big_bold_mnp", "offer_info_multi_mnp");
 			offerInfoModel.ContinueButtonText = Resources.offer_info_mnp_continue_button_text;
 		}
 		else
 		{
-			styledTextModel.Text = string.Format(Resources.offer_info_add_a_one_night_rental, singularFamily.ToLower());
+			if (offer.ActionCode == ActionCode.Purchase)
+			{
+				styledTextModel.Text = string.Format(Resources.offer_info_add_a_purchase, singularFamily.ToLower());
+			}
+			else
+			{
+				styledTextModel.Text = string.Format(Resources.offer_info_add_a_one_night_rental, singularFamily.ToLower());
+			}
 			if (!hasMnpOffer)
 			{
 				styledTextModel.Text = styledTextModel.Text.ToUpper();
@@ -400,18 +490,15 @@ public class PresentOffersViewController : BaseViewController
 			{
 				styledTextModel.Text = styledTextModel.Text.ToUpper();
 			}
-			styledTextModel.Text += otherOfferAsterisk;
+			if (!isSingle)
+			{
+				styledTextModel.Asterisk = legalTextStrings[offer.LegalTextType].Asterisk;
+				styledTextModel.AsteriskStyle = WPFFunctions.GetStyle(viewUserControl, "offer_info_asterisks");
+			}
 			offerInfoModel.ContinueButtonText = string.Format(Resources.offer_info_continue_button_text, pluralFamily);
 		}
 		offerInfoModel.StyledTextLines.Add(styledTextModel);
 		offerInfoModel.CancelButtonText = Resources.no_thanks_button_text;
-		if (isSingle && offer.DiscountType != OfferDiscountType.MultiNightPrice)
-		{
-			styledTextModel = new StyledTextModel();
-			styledTextModel.Text = Resources.offer_session_message;
-			styledTextModel.Style = WPFFunctions.GetStyle(viewUserControl, "offer_info_small_1up");
-			offerInfoModel.StyledTextLines.Add(styledTextModel);
-		}
 	}
 
 	private static Style GetStyleForBasketStretchMnp(FrameworkElement viewUserControl, bool isSingle, bool isDouble, bool hasMnpOffer, string styleName1up, string styleName2up)

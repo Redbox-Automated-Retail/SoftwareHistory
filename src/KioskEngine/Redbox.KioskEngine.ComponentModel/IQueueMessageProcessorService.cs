@@ -4,15 +4,15 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface IQueueMessageProcessorService
 {
-	string Name { get; set; }
+	string Name { get; }
 
-	bool IsDefault { get; set; }
+	bool IsDefault { get; }
 
 	List<string> SupportedMessageTypes { get; }
 
-	ProcessMessageDelegate ProcessMessage { get; set; }
+	BeforeMessageProcessingDelegate BeforeMessageProcessing { get; }
 
-	MessageProcessedDelegate MessageProcessed { get; set; }
+	ProcessMessageDelegate ProcessMessage { get; }
 
-	BeforeMessageProcessingDelegate BeforeMessageProcessing { get; set; }
+	MessageProcessedDelegate MessageProcessed { get; }
 }

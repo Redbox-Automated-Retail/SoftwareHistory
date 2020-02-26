@@ -1,4 +1,3 @@
-using System.Windows.Input;
 using System.Windows.Markup;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -30,20 +29,5 @@ public partial class SignInViewUserControl : TextToSpeechUserControl, IWPFActor,
 		obj?.SetStyle(EmailAndPasswordButton);
 		obj?.SetStyle(PhoneAndPinButton);
 		obj?.SetStyle(CancelButton);
-	}
-
-	private void EmailAndPasswordCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		SignInViewModel?.ProcessOnEmailAndPasswordButtonClicked();
-	}
-
-	private void PhoneAndPinCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		SignInViewModel?.ProcessOnPhoneAndPinButtonClicked();
-	}
-
-	private void CancelCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		SignInViewModel?.ProcessOnCancelButtonClicked();
 	}
 }

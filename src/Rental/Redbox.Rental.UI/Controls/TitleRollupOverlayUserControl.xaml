@@ -26,10 +26,10 @@
           <ColumnDefinition Width="80*" />
           <ColumnDefinition Width="10*" />
         </Grid.ColumnDefinitions>
-        <Redbox:RoundedButton Name="DVDButton" Grid.Row="1" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource warmpurple_white_border_when_disabled_button_style}" Command="{x:Static localbase:Commands.AddDVDCommand}" Visibility="{Binding Path=DVDButtonVisibility, FallbackValue=Visible}">
+        <Redbox:RoundedButton Name="DVDButton" Grid.Row="1" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource warm_purple_no_border_button_style}" Command="{x:Static localbase:Commands.AddDVDCommand}" Visibility="{Binding Path=DVDButtonVisibility, FallbackValue=Visible}">
           <FrameworkElement.Resources>
             <ResourceDictionary>
-              <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_16}">
+              <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_24}">
                 <Style.Triggers>
                   <DataTrigger Binding="{Binding DVDButtonLine2Text}" Value="{x:Null}">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -39,14 +39,14 @@
             </ResourceDictionary>
           </FrameworkElement.Resources>
           <StackPanel Orientation="Vertical">
-            <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_bold_24}" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Path=DVDButtonText, FallbackValue=DVD}" />
-            <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding DVDButtonLine2Text}" />
+            <TextBlock Style="{StaticResource font_montserrat_extrabold_20}" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Path=DVDButtonText, FallbackValue=DVD}" />
+            <TextBlock Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding DVDButtonLine2Text}" />
           </StackPanel>
         </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="BlurayButton" Grid.Row="3" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource warmpurple_white_border_when_disabled_button_style}" Command="{x:Static localbase:Commands.AddBluRayCommand}" Visibility="{Binding Path=BlurayButtonVisibility, FallbackValue=Visible}">
+        <Redbox:RoundedButton Name="BlurayButton" Grid.Row="3" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource warm_purple_no_border_button_style}" Command="{x:Static localbase:Commands.AddBluRayCommand}" Visibility="{Binding Path=BlurayButtonVisibility, FallbackValue=Visible}">
           <FrameworkElement.Resources>
             <ResourceDictionary>
-              <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_16}">
+              <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_24}">
                 <Style.Triggers>
                   <DataTrigger Binding="{Binding BlurayButtonLine2Text}" Value="{x:Null}">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -56,14 +56,14 @@
             </ResourceDictionary>
           </FrameworkElement.Resources>
           <StackPanel Orientation="Vertical">
-            <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_bold_24}" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Path=BlurayButtonText, FallbackValue=Blu-ray}" />
-            <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding BlurayButtonLine2Text}" />
+            <TextBlock Style="{StaticResource font_montserrat_extrabold_20}" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Path=BlurayButtonText, FallbackValue=BLU-RAY}" />
+            <TextBlock Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding BlurayButtonLine2Text}" />
           </StackPanel>
         </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="_4kUhdButton" Grid.Row="5" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource warmpurple_white_border_when_disabled_button_style}" Command="{x:Static localbase:Commands.Add4kUhdCommand}" Visibility="{Binding Path=_4kUhdButtonVisibility, FallbackValue=Visible}">
+        <Redbox:RoundedButton Name="_4kUhdButton" Grid.Row="5" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{StaticResource warm_purple_no_border_button_style}" Command="{x:Static localbase:Commands.Add4kUhdCommand}" Visibility="{Binding Path=_4kUhdButtonVisibility, FallbackValue=Visible}">
           <FrameworkElement.Resources>
             <ResourceDictionary>
-              <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_16}">
+              <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_24}">
                 <Style.Triggers>
                   <DataTrigger Binding="{Binding _4kUhdButtonLine2Text}" Value="{x:Null}">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -73,8 +73,8 @@
             </ResourceDictionary>
           </FrameworkElement.Resources>
           <StackPanel Orientation="Vertical">
-            <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_bold_24}" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Path=_4kUhdButtonText, FallbackValue=4k UHD}" />
-            <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding _4kUhdButtonLine2Text}" />
+            <TextBlock Style="{StaticResource font_montserrat_extrabold_20}" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Path=_4kUhdButtonText, FallbackValue=4K UHD}" />
+            <TextBlock Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding _4kUhdButtonLine2Text}" />
           </StackPanel>
         </Redbox:RoundedButton>
       </Grid>

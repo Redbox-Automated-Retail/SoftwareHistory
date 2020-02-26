@@ -52,16 +52,6 @@ public class PhoneAndPinViewModel : DependencyObject
 		AffectsRender = true
 	});
 
-	public static readonly DependencyProperty ADAPhoneButtonVisibilityProperty = DependencyProperty.Register("ADAPhoneButtonVisibility", typeof(Visibility), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
-	{
-		AffectsRender = true
-	});
-
-	public static readonly DependencyProperty ADAPinButtonVisibilityProperty = DependencyProperty.Register("ADAPinButtonVisibility", typeof(Visibility), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
-	{
-		AffectsRender = true
-	});
-
 	public static readonly DependencyProperty IsSignInButtonEnabledProperty = DependencyProperty.Register("IsSignInButtonEnabled", typeof(bool), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(false)
 	{
 		AffectsRender = true
@@ -312,36 +302,6 @@ public class PhoneAndPinViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(MobilePhoneErrorVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility ADAPhoneButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ADAPhoneButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(ADAPhoneButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility ADAPinButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ADAPinButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(ADAPinButtonVisibilityProperty, value);
 			});
 		}
 	}

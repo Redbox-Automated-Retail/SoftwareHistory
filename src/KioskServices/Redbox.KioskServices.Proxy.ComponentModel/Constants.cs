@@ -1,8 +1,8 @@
 namespace Redbox.KioskServices.Proxy.ComponentModel;
 
-public class Constants
+public static class Constants
 {
-	public class Messages
+	public static class Messages
 	{
 		public const string Authorize = "Authorize";
 
@@ -21,7 +21,7 @@ public class Constants
 		public const string SoftSync = "SoftSync";
 	}
 
-	public class PropertyNames
+	public static class PropertyNames
 	{
 		public const string OfferDiscountCode = "OfferDiscountCode";
 	}

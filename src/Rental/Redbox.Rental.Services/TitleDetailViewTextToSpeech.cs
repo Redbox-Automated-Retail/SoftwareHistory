@@ -225,7 +225,7 @@ public class TitleDetailViewTextToSpeech
 			{
 				TextPart item4 = new TextPart
 				{
-					Text = displayProductModel.OutOfStockLine1Text + " " + displayProductModel.OutOfStockLine2Text + " " + displayProductModel.OutOfStockLine3Text
+					Text = displayProductModel.OutOfStockLine1Text + " " + displayProductModel.OutOfStockLine2Text + " " + displayProductModel.OutOfStockLine3Text + " " + displayProductModel.OutOfStockLine4Text
 				};
 				part.Texts.Add(item4);
 			}

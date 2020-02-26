@@ -17,5 +17,9 @@ public class ZipCodeViewDefinition : BaseViewDefinition, IViewDefinition
 		{
 			ZipCodeViewController.ConfigureZipCodeView((viewFrameInstance.Parameter as ZipCodeViewParameter)?.ContinueAction);
 		};
+		base.OnLeave = delegate(IViewFrameInstance viewFrameInstance)
+		{
+			ZipCodeViewController.OnLeave(viewFrameInstance);
+		};
 	}
 }

@@ -3,7 +3,7 @@
   <FrameworkElement.Resources>
     <ResourceDictionary>
       <BitmapImage x:Key="DefaultImage" UriSource="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/movie-missing-image.png" />
-      <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_regular_16}">
+      <Style x:Key="SecondLineTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_20}">
         <Style.Triggers>
           <DataTrigger Binding="{Binding Line2Text}" Value="{x:Null}">
             <Setter Property="Visibility" Value="Collapsed" />
@@ -24,22 +24,23 @@
           <ColumnDefinition Width="460" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-          <RowDefinition MinHeight="20" MaxHeight="110" Height="{Binding AdHeight}" />
-          <RowDefinition MinHeight="470" MaxHeight="600" Height="{Binding MainHeight}" />
+          <RowDefinition MinHeight="0" MaxHeight="98" Height="{Binding AdHeight}" />
+          <RowDefinition MinHeight="530" MaxHeight="628" Height="{Binding MainHeight}" />
           <RowDefinition Height="140" />
         </Grid.RowDefinitions>
-        <Grid Name="AdBanner" Row="0" ColumnSpan="2">
-          <Image Name="AdImage" Stretch="None" VerticalAlignment="Top" HorizontalAlignment="Center" Height="90" Width="728" Source="{Binding AdImage}" Visibility="{Binding AdImageVisibility, FallbackValue=Collapsed}" />
+        <Grid Name="AdBanner" Row="0" ColumnSpan="2" Margin="0,0,-52,0">
+          <Border Width="1024" Height="98" Background="#060208" Visibility="{Binding AdImageVisibility, FallbackValue=Collapsed}" />
+          <Image Name="AdImage" Height="90" Width="728" Source="{Binding AdImage}" Visibility="{Binding AdImageVisibility, FallbackValue=Collapsed}" />
         </Grid>
         <Grid Column="0" Row="1" Background="#FFFFFFFF">
-          <Grid Margin="20,0,0,0">
+          <Grid Margin="20,30,0,0">
             <Grid Margin="{Binding FlagMargin, FallbackValue=0}">
               <localControls:DisplayProductUserControl Margin="44,0,0,2" VerticalAlignment="Bottom" HorizontalAlignment="Center" ClipToBounds="False" />
             </Grid>
           </Grid>
         </Grid>
         <Grid Column="1" Row="1" Background="#FFFFFFFF">
-          <DockPanel LastChildFill="True" Margin="20,0,0,0">
+          <DockPanel LastChildFill="True" Margin="20,30,0,0">
             <TextBlock Style="{StaticResource font_museo_slab_900_30}" DockPanel.Dock="Top" Margin="0,3,100,10" Foreground="#E42045" TextWrapping="Wrap" Text="{Binding Header, FallbackValue=HEADER}" />
             <StackPanel Orientation="Horizontal" Margin="0,0,0,0" DockPanel.Dock="Top">
               <Border BorderThickness="2" BorderBrush="#B7ADA5" Visibility="{Binding RatingVisibility, FallbackValue=Visible}">
@@ -147,18 +148,18 @@
             <TextBlock Style="{StaticResource font_montserrat_regular_12}" Foreground="#303438" DockPanel.Dock="Top" Margin="0,20,50,10" TextWrapping="Wrap" Text="{Binding Description, FallbackValue=DESCRIPTION}" />
           </DockPanel>
         </Grid>
-        <Grid Name="Buttons" ColumnSpan="2" Row="3" VerticalAlignment="Top" Margin="16,20,-30,30">
+        <Grid Name="Buttons" ColumnSpan="2" Row="3" Margin="0,0,-52,-34" Height="104" Background="#EBEBEB">
           <DockPanel>
-            <StackPanel Name="leftButtons" Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Top">
-              <Redbox:RoundedButton Name="go_back_button" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="59" Width="163" CornerRadius="28" Command="{x:Static localbase:Commands.GoBackCommand}" Focusable="False">
-                <TextBlock Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=DataContext.BackText, FallbackValue=Back, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:TitleDetailsUserControl}}}" />
+            <StackPanel Name="leftButtons" Orientation="Horizontal" DockPanel.Dock="Left" Margin="24,0,0,0">
+              <Redbox:RoundedButton Name="go_back_button" Style="{StaticResource thin_border_button_style}" Height="56" Width="118" CornerRadius="28" Command="{x:Static localbase:Commands.GoBackCommand}" Focusable="False">
+                <TextBlock Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=DataContext.BackText, FallbackValue=BACK, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:TitleDetailsUserControl}}}" />
               </Redbox:RoundedButton>
             </StackPanel>
-            <StackPanel Name="rightButtons" Orientation="Horizontal" DockPanel.Dock="Right" FlowDirection="RightToLeft" VerticalAlignment="Bottom" Visibility="{Binding AddButtonBarVisibility, FallbackValue=Collapsed}">
-              <Redbox:RoundedButton Name="buy_button" Style="{StaticResource style_rb_rubine_white_border_with_dropshadow_button}" Margin="0,0,25,0" Height="59" Width="180" CornerRadius="28" VerticalAlignment="Bottom" Command="{x:Static localbase:Commands.BuyCommand}" Focusable="False" Visibility="{Binding ShowBuy, FallbackValue=Visible}">
+            <StackPanel Name="rightButtons" Orientation="Horizontal" DockPanel.Dock="Right" FlowDirection="RightToLeft" Margin="0,0,24,0" Visibility="{Binding AddButtonBarVisibility, FallbackValue=Collapsed}">
+              <Redbox:RoundedButton Name="buy_button" Style="{StaticResource rubine_no_border_button_style}" Margin="0,0,16,0" Height="56" Width="180" CornerRadius="28" Command="{x:Static localbase:Commands.BuyCommand}" Focusable="False" Visibility="{Binding ShowBuy, FallbackValue=Visible}">
                 <StackPanel Orientation="Vertical" FlowDirection="LeftToRight" HorizontalAlignment="Center" VerticalAlignment="Center">
-                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonTextStyle, FallbackValue={StaticResource font_museo_slab_900_20}}" Text="{Binding BuyText, FallbackValue=Own It}" />
-                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonTextStyle, FallbackValue={StaticResource font_museo_slab_900_16}}" Text="{Binding BuyPriceText, FallbackValue=$$$}" />
+                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonBuyTextStyle, FallbackValue={StaticResource font_montserrat_extrabold_16}}" Text="{Binding BuyText, FallbackValue=OWN IT}" />
+                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonBuyPriceTextStyle, FallbackValue={StaticResource font_montserrat_medium_20}}" Text="{Binding BuyPriceText, FallbackValue=$$$}" />
                 </StackPanel>
               </Redbox:RoundedButton>
               <ItemsControl Name="FormatButtonsItemsControl" ItemsSource="{Binding ButtonData}">
@@ -169,31 +170,34 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <Redbox:RoundedButton Width="Auto" MinWidth="180" Height="59" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="20,0,0,0" CornerRadius="28" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static localbase:Commands.PrimaryCommand}" CommandParameter="rent" Visibility="Visible" FlowDirection="LeftToRight" Tag="{Binding Format}" IsEnabled="{Binding IsEnabled}">
+                    <Redbox:RoundedButton Width="Auto" MinWidth="180" Height="56" HorizontalAlignment="Right" Margin="16,0,0,0" CornerRadius="28" Style="{StaticResource warm_purple_no_border_button_style}" Command="{x:Static localbase:Commands.PrimaryCommand}" CommandParameter="rent" Visibility="Visible" FlowDirection="LeftToRight" Tag="{Binding Format}" IsEnabled="{Binding IsEnabled}">
                       <StackPanel Orientation="Vertical" Margin="10,5,10,5">
-                        <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_20}" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Line1Text}" />
-                        <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding Line2Text}" />
+                        <TextBlock Style="{StaticResource font_montserrat_extrabold_16}" HorizontalAlignment="Center" TextAlignment="Center" Text="{Binding Line1Text}" />
+                        <TextBlock Style="{StaticResource SecondLineTextStyle}" HorizontalAlignment="Center" Text="{Binding Line2Text}" />
                       </StackPanel>
                     </Redbox:RoundedButton>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
             </StackPanel>
-            <StackPanel Name="comingSoonButtons" Orientation="Vertical" DockPanel.Dock="Right" FlowDirection="RightToLeft" VerticalAlignment="Bottom" Visibility="{Binding ComingSoonVisibility, FallbackValue=Collapsed}">
-              <TextBlock Name="comingSoonDateText" Style="{StaticResource font_museo_slab_900_16}" HorizontalAlignment="Center" Foreground="#AC2C32" Text="{Binding ComingSoonLabelText, FallbackValue=Coming}" />
-              <Redbox:RoundedButton Name="coming_soon_email_me" Style="{StaticResource classic_rubine_button_style}" Height="59" Width="180" CornerRadius="28" Command="{x:Static localbase:Commands.MoreInfoCommand}" Focusable="False">
-                <TextBlock Style="{StaticResource font_museo_slab_900_20}" TextAlignment="Center" Text="{Binding ComingSoonButtonText, FallbackValue=Email Me}" />
+            <StackPanel Name="comingSoonButtons" Orientation="Vertical" DockPanel.Dock="Right" FlowDirection="RightToLeft" Margin="0,5,0,0" Visibility="{Binding ComingSoonVisibility, FallbackValue=Collapsed}">
+              <TextBlock Name="comingSoonDateText" Style="{StaticResource font_montserrat_medium_16}" HorizontalAlignment="Center" Foreground="#AC2C32" Text="{Binding ComingSoonLabelText, FallbackValue=Coming}" />
+              <Redbox:RoundedButton Name="coming_soon_email_me" Style="{StaticResource classic_rubine_button_style}" Height="56" Width="180" CornerRadius="28" Command="{x:Static localbase:Commands.MoreInfoCommand}" Focusable="False">
+                <TextBlock Style="{StaticResource font_montserrat_medium_20}" TextAlignment="Center" Text="{Binding ComingSoonButtonText, FallbackValue=Email me}" />
               </Redbox:RoundedButton>
             </StackPanel>
-            <Grid Name="outOfStock" DockPanel.Dock="Right" Width="500" VerticalAlignment="Top" HorizontalAlignment="Right" Visibility="{Binding OutOfStockVisibility, FallbackValue=Visible}">
+            <Grid Name="outOfStock" DockPanel.Dock="Right" Width="708" Margin="0,0,24,0" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="{Binding OutOfStockVisibility, FallbackValue=Visible}">
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
-              <TextBlock Name="OutOfStockLine1" Grid.Row="0" Margin="20,0,0,0" Style="{StaticResource font_museo_slab_900_20}" Foreground="#E42045" TextWrapping="Wrap" Text="{Binding OutOfStockLine1Text, FallbackValue=TEXT!}" />
-              <TextBlock Name="OutOfStockLine2" Grid.Row="1" Margin="20,0,0,4" Style="{StaticResource font_museo_slab_900_16}" Foreground="#E42045" TextWrapping="Wrap" Text="{Binding OutOfStockLine2Text, FallbackValue=NOW!}" />
-              <TextBlock Name="OutOfStockLine3" Grid.Row="2" Margin="20,0,0,0" Style="{StaticResource font_museo_slab_900_10}" Foreground="#FF000000" TextWrapping="Wrap" Text="{Binding OutOfStockLine3Text, FallbackValue=TERMS_APPLY}" />
+              <TextBlock Name="OutOfStockLine1" Grid.Row="0" TextAlignment="Right" LineHeight="28" Style="{StaticResource font_montserrat_semibold_20}" Foreground="#E42045" TextWrapping="Wrap" Text="{Binding OutOfStockLine1Text, FallbackValue=Out of Stock}" />
+              <TextBlock Name="OutOfStockLines2_3" Grid.Row="1" TextAlignment="Right" LineHeight="24" Style="{StaticResource font_montserrat_regular_16}" Foreground="#060208" TextWrapping="Wrap">
+                <TextBlock.Inlines>
+                  <Run FontWeight="Bold" Text="{Binding OutOfStockLine2Text, FallbackValue=Text LOCATE to 727272}" /> <Run Text="{Binding OutOfStockLine3Text, FallbackValue=to find other Boxes nearby that might have this movie}" /></TextBlock.Inlines>
+              </TextBlock>
+              <TextBlock Name="OutOfStockLine4" Grid.Row="2" TextAlignment="Right" LineHeight="16" Style="{StaticResource font_montserrat_medium_12}" Foreground="#060208" TextWrapping="Wrap" Text="{Binding OutOfStockLine4Text, FallbackValue=You will get up to 2 messages. Msg. &amp; data rates may apply.}" />
             </Grid>
           </DockPanel>
         </Grid>

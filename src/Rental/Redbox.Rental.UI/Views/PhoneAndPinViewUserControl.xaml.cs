@@ -30,8 +30,6 @@ public partial class PhoneAndPinViewUserControl : TextToSpeechUserControl, IWPFA
 	private void ApplyTheme()
 	{
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
-		obj?.SetStyle(ADAPhoneButton);
-		obj?.SetStyle(ADAPinButton);
 		obj?.SetStyle(StartButton);
 		obj?.SetStyle(SignInButton);
 		obj?.SetStyle(RightSignInButton);

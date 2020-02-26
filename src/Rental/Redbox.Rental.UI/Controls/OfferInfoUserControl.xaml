@@ -14,7 +14,7 @@
     <Redbox:RoundedButton Style="{StaticResource transparent_button_style}" Command="{Binding ContinueButtonCommand}" CommandParameter="{Binding CustomerOffer}">
       <Grid Height="{Binding ControlHeight, FallbackValue=600}" Width="{Binding ControlWidth, FallbackValue=1024}">
         <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" MinHeight="{Binding TopMargin}" />
           <RowDefinition Height="*" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
@@ -26,9 +26,9 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
-          <local:AspectRatioLayoutDecorator Grid.Column="0" AspectRatio="0.7219512195121951" LockAspectRatio="True" Visibility="{Binding ImageVisibility}">
-            <Image Name="DisplayProductImage" Stretch="Fill" Source="{Binding Path=Image}" />
-          </local:AspectRatioLayoutDecorator>
+          <Border Grid.Column="0" Background="#FFFFFFFF" Height="190" Width="132" Margin="170,0,30,0" Visibility="{Binding ImageVisibility}">
+            <Image Name="DisplayProductImage" Margin="2" Stretch="Fill" Source="{Binding Path=Image}" />
+          </Border>
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
             <ItemsControl Grid.Column="1" ItemsSource="{Binding StyledTextLines}">
               <ItemsControl.ItemTemplate>
@@ -50,7 +50,8 @@
         <Redbox:RoundedButton Name="ContinueButton2Up" Grid.Row="2" Grid.Column="0" Width="196" Height="50" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,10,0,40" CornerRadius="28" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Command="{Binding ContinueButtonCommand}" CommandParameter="{Binding CustomerOffer}" Visibility="{Binding TwoUpVisibility}">
           <TextBlock Name="ContinueButtonText2Up" Style="{StaticResource font_museo_slab_900_24}" Text="{Binding Path=ContinueButtonText, FallbackValue=See Movies}" />
         </Redbox:RoundedButton>
-        <TextBlock Name="MessageTextBlock" Grid.Row="2" Grid.Column="0" Style="{Binding MessageTextStyle}" Text="{Binding MessageText}" Visibility="{Binding MessageTextVisibility}" />
+        <TextBlock Name="MessageTextBlock" Grid.Row="2" Grid.Column="0" Margin="0,10,0,120" Style="{Binding MessageTextStyle}" Text="{Binding MessageText}" Visibility="{Binding MessageTextVisibility}" />
+        <local:PerksIconBanner Grid.Row="2" Margin="0,0,0,60" Height="200" GridMargin="145,0,145,0" FreeRentalIconWidth="75" SpecialDealsIconWidth="97" BDayIconWidth="64" TextStyle="{StaticResource font_montserrat_semibold_22}" BackgroundOpacity=".2" PerksFreeRentalText="{Binding Path=PerksFreeRentalText}" PerksDealsText="{Binding PerksDealsText}" PerksBdayGiftText="{Binding PerksBdayGiftText}" Visibility="{Binding PerksIconsVisibility}" />
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top">
           <Redbox:RoundedButton Name="CancelButton" MinWidth="234" Height="56" VerticalAlignment="Center" Margin="25,0,25,10" CornerRadius="28" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Command="{Binding CancelButtonCommand}" Visibility="{Binding CancelButtonVisibility}">
             <TextBlock Name="CancelButtonText" Foreground="#E42045" Style="{StaticResource font_museo_slab_900_28}" Text="{Binding Path=CancelButtonText, FallbackValue=No Thanks}" />

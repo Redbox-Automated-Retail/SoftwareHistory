@@ -7,6 +7,8 @@ public class Constants
 		public const string ControlPanelView = "ControlPanelViewUserControl";
 
 		public const string CloseKioskView = "CloseKioskViewUserControl";
+
+		public const string DisplayView = "DisplayViewUserControl";
 	}
 
 	public class ThemeNames

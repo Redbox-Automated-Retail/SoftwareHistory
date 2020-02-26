@@ -12,8 +12,10 @@ using Redbox.KioskEngine.Environment;
 using Redbox.REDS.Framework;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
@@ -58,6 +60,23 @@ public class RedboxRentalService : IRedboxRental
 		return OrchestrationService.IsRentalSessionActive();
 	}
 
+	public void SetupTheRentalApplication()
+	{
+		HardwareHelper.TurnOnAirExchangerFanIfConfigured(ServiceLocator.Instance.GetService<IConfiguration>()?.ForcedAirExchangerConfigured ?? true, ServiceLocator.Instance.GetService<IResourceBundleService>()?.CurrentBundleName);
+		ServiceLocator.Instance.GetService<IRentalHealthService>()?.KioskFunctionCheck();
+		ServiceLocator.Instance.GetService<IMarketingAdService>()?.LoadCampaigns();
+		BrowseViewController.CacheProductImages();
+		ServiceLocator.Instance.GetService<IFraudService>()?.CreateFraudSyncTimer();
+		CheckReaderValidation();
+	}
+
+	private void CheckReaderValidation()
+	{
+		IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+		service?.CheckDeviceActivation();
+		service?.CheckDeviceStatus();
+	}
+
 	public void StartTheRentalApplication()
 	{
 		IApplicationState service = ServiceLocator.Instance.GetService<IApplicationState>();
@@ -83,6 +102,7 @@ public class RedboxRentalService : IRedboxRental
 			ServiceLocator.Instance.GetService<IEMVReaderHealth>()?.SessionWasInTechnicalFallback(cardReadAttemptCollection.IsInTrackableTechnicalFallback);
 		}
 		Redbox.Rental.Services.Session.Session.Instance?.ClearTrackData();
+		ServiceLocator.Instance.GetService<IKioskClientService>()?.Session?.End();
 		StartNewRentalSession(newSessionContext);
 	}
 
@@ -136,6 +156,7 @@ public class RedboxRentalService : IRedboxRental
 				browseState.TitleFamily = TitleFamily.Movies;
 			}
 			OrchestrationService.InvokeStartNewRentalSessionCallback();
+			ServiceLocator.Instance.GetService<IMarketingAdService>()?.ActivateCampaigns();
 			OrchestrationService.ViewShow(ViewService.GetStartOverViewName());
 		}
 	}
@@ -176,6 +197,7 @@ public class RedboxRentalService : IRedboxRental
 		RegisterEnvironmentServiceCallbacks();
 		RegisterApplicationStateCallbacks();
 		RegisterDeviceServiceCanShutDownHandler();
+		ServiceLocator.Instance.GetService<IKioskClientService>()?.Application?.Start();
 	}
 
 	private void CheckForTamperedCardReader()
@@ -221,10 +243,10 @@ public class RedboxRentalService : IRedboxRental
 	private void RegisterApplicationStateCallbacks()
 	{
 		ApplicationState.Instance.OnAddMaintenanceModeReasonHandler += HandleOnAddMaintenanceModeReason;
-		ApplicationState.Instance.OnRemoveMaintenanceModeReasonHandler += HandleOnExitMaintenanceMode;
+		ApplicationState.Instance.OnRemoveMaintenanceModeReasonHandler += HandleOnRemoveMaintenanceModeReason;
 	}
 
-	private void HandleOnExitMaintenanceMode(IMaintenanceModeReason removedMaintenanceModeReason, List<IMaintenanceModeReason> remainingMaintenanceModeReasons)
+	private void HandleOnRemoveMaintenanceModeReason(IMaintenanceModeReason removedMaintenanceModeReason, List<IMaintenanceModeReason> remainingMaintenanceModeReasons)
 	{
 		if (remainingMaintenanceModeReasons == null || remainingMaintenanceModeReasons.Count == 0)
 		{
@@ -489,29 +511,12 @@ public class RedboxRentalService : IRedboxRental
 			if (manifestInfo?.ProductName != "Rental Application")
 			{
 				LogHelper.Instance.Log($"TTS((> TextToSpeechService.AudioDeviceConnected Not in Rental Application. Currently {manifestInfo?.ProductName}");
-				return;
 			}
-			ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-			IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-			if (!CanForceStartOfNewRentalSession())
+			else if (CanForceStartOfNewRentalSession())
 			{
-				return;
+				LogHelper.Instance.Log("TTS((> Restarting session due to headphones being connected.");
+				CloseOpenSessionAndStartNewRentalSession("TTS Audio Device connected");
 			}
-			LogHelper.Instance.Log("TTS((> Restarting session due to headphones being connected.");
-			if (service2 != null)
-			{
-				IShoppingSession currentSession = service2.GetCurrentSession();
-				if (service != null)
-				{
-					service.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
-					{
-						{ "subItemType", "Timeout" },
-						{ "subItemValue", "HeadphonesConnected" }
-					}, currentSession.Id.ToString());
-					service.AddNode("session", "pricing");
-				}
-			}
-			CloseOpenSessionAndStartNewRentalSession("TTS Audio Device connected");
 		}
 		else if (CanForceStartOfNewRentalSession())
 		{

@@ -437,7 +437,7 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public IList<IPricingRecord> RentalPriceRecords => _primaryTitle?.RentalPriceRecords;
 
-	public long TitleRollupProductGroupId { get; set; }
+	public long TitleRollupProductGroupId => _primaryTitle?.TitleRollupProductGroupId ?? 0;
 
 	public bool DoNotRent => _titleProducts.Any((ITitleProduct tp) => tp.DoNotRent);
 

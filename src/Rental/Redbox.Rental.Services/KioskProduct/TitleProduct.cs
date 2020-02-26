@@ -103,6 +103,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return true;
 			}
+			if (TitleFamily == TitleFamily.Games && (Config.EndGames || !OrchestrationService.GetCanSellUsedGames()))
+			{
+				return false;
+			}
 			if (PricingService.IsPricingEngineEnabled)
 			{
 				if (PriceEngineIsSellable)
@@ -214,6 +218,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				return false;
 			}
 			if (TitleType == TitleType.DigitalCode)
+			{
+				return false;
+			}
+			if (TitleFamily == TitleFamily.Games && (Config.EndGameRentals || Config.EndGames))
 			{
 				return false;
 			}
@@ -345,7 +353,21 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
-	public long TitleRollupProductGroupId { get; set; }
+	public long TitleRollupProductGroupId
+	{
+		get
+		{
+			long productGroupId = 0L;
+			_profile?.ProductGroups?.Where((KeyValuePair<long, ProductGroup> pair) => pair.Value.ProductGroupTypeId == 1).ForEach(delegate(KeyValuePair<long, ProductGroup> pair)
+			{
+				if (pair.Value.ProductIds.Contains(ProductId))
+				{
+					productGroupId = pair.Value.ProductGroupId;
+				}
+			});
+			return productGroupId;
+		}
+	}
 
 	public bool DoNotRent
 	{

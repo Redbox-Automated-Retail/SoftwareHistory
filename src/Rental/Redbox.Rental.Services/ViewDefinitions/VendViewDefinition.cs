@@ -16,9 +16,9 @@ public class VendViewDefinition : BaseViewDefinition, IViewDefinition
 		{
 			VendViewController.ConfigureVendView();
 		};
-		base.OnLeave = delegate
+		base.OnLeave = delegate(IViewFrameInstance viewFrameInstance)
 		{
-			VendViewController.LeaveVendView();
+			VendViewController.LeaveVendView(viewFrameInstance);
 		};
 	}
 }

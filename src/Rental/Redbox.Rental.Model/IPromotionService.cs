@@ -50,4 +50,6 @@ public interface IPromotionService
 	void ValidatePromoCodeOnServer(string promoCode, Action<IPromoCodeValidationResult> promoCodeValidationResultCallback);
 
 	string GetInCartPromoCode();
+
+	decimal CalcInCartOfferPromoAmount(IRentalShoppingCartItem newLineItem, CustomerOffer offer);
 }

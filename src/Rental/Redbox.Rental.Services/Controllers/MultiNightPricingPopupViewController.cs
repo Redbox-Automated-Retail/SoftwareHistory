@@ -18,8 +18,6 @@ public class MultiNightPricingPopupViewController : BaseViewController
 	{
 		BaseViewController.StopIdleTimer();
 		CreateAndStartTimer();
-		OrchestrationService.AnalyticsAddViewEvent("context", "shownFromView," + multiNightPricingPopupInfo.ShownFromView);
-		OrchestrationService.AnalyticsAddViewEvent("context", "productId," + multiNightPricingPopupInfo.TitleProduct.ProductId);
 		IAnalyticsService service = ServiceLocator.Instance.GetService<IAnalyticsService>();
 		service?.AddData(ProductData.ToProductData(multiNightPricingPopupInfo.TitleProduct));
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
@@ -41,14 +39,12 @@ public class MultiNightPricingPopupViewController : BaseViewController
 			};
 			if (flag2)
 			{
-				OrchestrationService.AnalyticsAddViewEvent("context", "oneNightPrice," + list[0].InitialNight + ",initialDays," + (list[0].InitialDays ?? 1));
 				multiNightPopupData.InitialNightPrice = list[0].InitialNight;
 			}
 			multiNightPricingPopupViewModel.MultiNightButtonVisibility = ((!flag3) ? Visibility.Collapsed : Visibility.Visible);
 			multiNightPricingPopupViewModel.MultiNightButtonText = (flag3 ? GetButtonText(list[1]) : string.Empty);
 			if (flag3)
 			{
-				OrchestrationService.AnalyticsAddViewEvent("context", "multiNightPrice," + list[1].InitialNight + ",initialDays," + (list[1].InitialDays ?? 1));
 				multiNightPopupData.HasMultiNightPrice = true;
 				multiNightPopupData.MultiNightPrice = list[1].InitialNight;
 				multiNightPopupData.MultipNightInitialDays = list[1].InitialDays;
@@ -57,7 +53,6 @@ public class MultiNightPricingPopupViewController : BaseViewController
 			multiNightPricingPopupViewModel.BuyButtonText = (flag ? GetBuyButtonText(multiNightPricingPopupInfo.TitleProduct) : string.Empty);
 			if (flag)
 			{
-				OrchestrationService.AnalyticsAddViewEvent("context", "purchasePrice," + multiNightPricingPopupInfo.TitleProduct.PurchasePrice);
 				multiNightPopupData.ShowBuyButton = true;
 				multiNightPopupData.PurchasePrice = multiNightPricingPopupInfo.TitleProduct.PurchasePrice;
 			}
@@ -105,7 +100,6 @@ public class MultiNightPricingPopupViewController : BaseViewController
 		(service?.CreateTimer("MultiNightPricingPopupViewTimer", timeOut, timeOut, delegate
 		{
 			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
-			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			OrchestrationService.ViewGoBackSafe("MultiNightPricingPopupViewController time out", popOnly: false);
 		}))?.Start();
 	}
@@ -127,7 +121,11 @@ public class MultiNightPricingPopupViewController : BaseViewController
 		case "purchase_popup_view":
 			if (titleProduct.IsSellableAndInStock)
 			{
-				return titleProduct.IsMovie;
+				if (!titleProduct.IsMovie)
+				{
+					return titleProduct.IsGame;
+				}
+				return true;
 			}
 			break;
 		}
@@ -159,7 +157,6 @@ public class MultiNightPricingPopupViewController : BaseViewController
 
 	private static void MultiNightPricingPopupViewModel_OnOneNightButtonClicked()
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "oneNightRental");
 		MultiNightPricingPopupViewModel multiNightPricingPopupViewModel = GetMultiNightPricingPopupViewModel();
 		if (multiNightPricingPopupViewModel != null && multiNightPricingPopupViewModel.TitleProduct != null && multiNightPricingPopupViewModel.PricingRecords != null && multiNightPricingPopupViewModel.PricingRecords.Count > 0)
 		{
@@ -171,7 +168,6 @@ public class MultiNightPricingPopupViewController : BaseViewController
 
 	private static void MultiNightPricingPopupViewModel_OnMultiNightButtonClicked()
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "multiNightRental");
 		MultiNightPricingPopupViewModel multiNightPricingPopupViewModel = GetMultiNightPricingPopupViewModel();
 		if (multiNightPricingPopupViewModel != null && multiNightPricingPopupViewModel.TitleProduct != null && multiNightPricingPopupViewModel.PricingRecords != null && multiNightPricingPopupViewModel.PricingRecords.Count > 1)
 		{
@@ -183,7 +179,6 @@ public class MultiNightPricingPopupViewController : BaseViewController
 
 	private static void MultiNightPricingPopupViewModel_OnBuyButtonClicked()
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "purchase");
 		MultiNightPricingPopupViewModel multiNightPricingPopupViewModel = GetMultiNightPricingPopupViewModel();
 		if (multiNightPricingPopupViewModel != null && multiNightPricingPopupViewModel.TitleProduct != null)
 		{
@@ -195,7 +190,6 @@ public class MultiNightPricingPopupViewController : BaseViewController
 
 	private static void MultiNightPricingPopupViewModel_OnCancelButtonClicked()
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "cancel");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("MultiNightPopupCancel");
 		OrchestrationService.ViewGoBackSafe("MultiNightPricingPopupViewController cancel", popOnly: false);
 	}

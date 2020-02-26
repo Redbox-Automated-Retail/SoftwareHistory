@@ -64,10 +64,12 @@ public class GenericTouchScreen : IDisposable
 		if (m_hook.IsHooked)
 		{
 			m_hook.UnHook();
+			Windows10TouchScreen.Enable();
 		}
 		else
 		{
 			m_hook.SetHook();
+			Windows10TouchScreen.Disable();
 		}
 	}
 

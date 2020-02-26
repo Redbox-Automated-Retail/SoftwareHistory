@@ -29,5 +29,5 @@ public class LineItem
 
 	public string TivoQueryId { get; set; }
 
-	public List<string> Tags { get; set; }
+	public List<string> PersonalizationTitleTags { get; set; }
 }

@@ -7,5 +7,7 @@ public enum HelpDocuments
 	TermsReboxCard,
 	Privacy,
 	PlayPass,
-	MobileFaq
+	MobileFaq,
+	CAPrivacyNotice,
+	DoNotSell
 }

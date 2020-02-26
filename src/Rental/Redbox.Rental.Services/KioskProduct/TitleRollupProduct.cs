@@ -470,7 +470,7 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 		}
 	}
 
-	public long TitleRollupProductGroupId { get; set; }
+	public long TitleRollupProductGroupId => _primaryTitle?.TitleRollupProductGroupId ?? 0;
 
 	public List<long> RequiredAdditionalTitles { get; private set; }
 
@@ -510,13 +510,11 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 					{
 						if (!_kioskProducts.Contains(mDVProduct))
 						{
-							mDVProduct.TitleRollupProductGroupId = _productGroup.ProductGroupId;
 							_kioskProducts.Add(mDVProduct);
 						}
 					}
 					else
 					{
-						title.TitleRollupProductGroupId = _productGroup.ProductGroupId;
 						_kioskProducts.Add(title);
 					}
 					if (title.IsMovie && title.TitleType == TitleType.DVD)

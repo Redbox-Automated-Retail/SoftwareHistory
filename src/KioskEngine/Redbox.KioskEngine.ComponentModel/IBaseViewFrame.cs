@@ -4,13 +4,13 @@ public interface IBaseViewFrame
 {
 	string ViewName { get; }
 
-	IScene Scene { get; set; }
+	IScene Scene { get; }
 
 	string ActiveFlag { get; }
 
 	ErrorList Errors { get; }
 
-	bool Clear { get; set; }
+	bool Clear { get; }
 
 	bool IsMaintenanceModeView { get; set; }
 

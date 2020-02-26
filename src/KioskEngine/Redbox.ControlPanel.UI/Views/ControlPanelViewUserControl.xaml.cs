@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
@@ -22,23 +23,23 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 {
 	private static class ProcessNames
 	{
-		public static readonly string CMD = "cmd.exe";
+		public const string CMD = "cmd.exe";
 
-		public static readonly string CONTROL = "control.exe";
+		public const string CONTROL = "control.exe";
 
-		public static readonly string EXPLORER = "explorer.exe";
+		public const string EXPLORER = "explorer.exe";
 
-		public static readonly string MMC = "mmc.exe";
+		public const string MMC = "mmc.exe";
 
-		public static readonly string NOTEPAD = "notepad.exe";
+		public const string NOTEPAD = "notepad.exe";
 
-		public static readonly string HAL = "halsvc-win32";
+		public const string HAL = "halsvc-win32";
 
-		public static readonly string UpadateManager = "updatemgrd";
+		public const string UpadateManager = "updatemgrd";
 
-		public static readonly List<string> ExclusionList = new List<string> { EXPLORER, HAL, UpadateManager };
+		public static readonly List<string> ExclusionList = new List<string> { "explorer.exe", "halsvc-win32", "updatemgrd" };
 
-		public static readonly List<string> CloseOnlyList = new List<string> { CMD, CONTROL, MMC, NOTEPAD };
+		public static readonly List<string> CloseOnlyList = new List<string> { "cmd.exe", "control.exe", "mmc.exe", "notepad.exe" };
 	}
 
 	private static Dictionary<int, string> _priorExistingProcesses;
@@ -47,9 +48,9 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 
 	private bool _maintenancemodestate;
 
-	private DateTimeFormatInfo _fmt = new CultureInfo("hr-HR").DateTimeFormat;
+	private readonly DateTimeFormatInfo _fmt = new CultureInfo("hr-HR").DateTimeFormat;
 
-	private DispatcherTimer _idleTimer = new DispatcherTimer(DispatcherPriority.Background);
+	private readonly DispatcherTimer _idleTimer = new DispatcherTimer(DispatcherPriority.Background);
 
 	public ControlPanelViewUserControl()
 	{
@@ -86,7 +87,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 	private static int LaunchProcess(string processName, string args, bool hiddenProcess)
 	{
 		int num = ProcessFunctions.LaunchProcess(processName, args, hiddenProcess);
-		if (!processName.Equals(ProcessNames.EXPLORER) && num > 0 && !_pidList.Contains(num))
+		if (!processName.Equals("explorer.exe") && num > 0 && !_pidList.Contains(num))
 		{
 			_pidList.Add(num);
 		}
@@ -356,61 +357,61 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("open_c_drive");
 		open_c_drive_button.Focus();
-		LaunchProcess(ProcessNames.EXPLORER, "C:\\", hiddenProcess: false);
+		LaunchProcess("explorer.exe", "C:\\", hiddenProcess: false);
 	}
 
 	private void OpenCommandPromptButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("command_prompt");
-		LaunchProcess(ProcessNames.CMD, "/K cd c:\\program files", hiddenProcess: false);
+		LaunchProcess("cmd.exe", "/K cd c:\\program files", hiddenProcess: false);
 	}
 
 	private void RedboxFolderButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("redbox_directory");
-		LaunchProcess(ProcessNames.EXPLORER, "C:\\Program Files\\Redbox", hiddenProcess: false);
+		LaunchProcess("explorer.exe", "C:\\Program Files\\Redbox", hiddenProcess: false);
 	}
 
 	private void NotepadButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("notepad");
-		LaunchProcess(ProcessNames.NOTEPAD, null, hiddenProcess: false);
+		LaunchProcess("notepad.exe", null, hiddenProcess: false);
 	}
 
 	private void OpenHalServiceLogsButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("open_hal_service_logs");
-		LaunchProcess(ProcessNames.EXPLORER, "C:\\Program Files\\Redbox\\KioskLogs", hiddenProcess: false);
+		LaunchProcess("explorer.exe", "C:\\Program Files\\Redbox\\KioskLogs", hiddenProcess: false);
 	}
 
 	private void ComputerManagementButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("computer_management");
-		LaunchProcess(ProcessNames.MMC, Environment.SystemDirectory + "\\compmgmt.msc", hiddenProcess: false);
+		LaunchProcess("mmc.exe", Environment.SystemDirectory + "\\compmgmt.msc", hiddenProcess: false);
 	}
 
 	private void DeviceManagementButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("device_manager");
-		LaunchProcess(ProcessNames.MMC, Environment.SystemDirectory + "\\devmgmt.msc", hiddenProcess: false);
+		LaunchProcess("mmc.exe", Environment.SystemDirectory + "\\devmgmt.msc", hiddenProcess: false);
 	}
 
 	private void KioskEngineLogsFolderButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("kiosk_engine_logs_folder");
-		LaunchProcess(ProcessNames.EXPLORER, "C:\\Program Files\\Redbox\\REDS\\Kiosk Engine\\logs", hiddenProcess: false);
+		LaunchProcess("explorer.exe", "C:\\Program Files\\Redbox\\REDS\\Kiosk Engine\\logs", hiddenProcess: false);
 	}
 
 	private void DateTimeButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("date_time");
-		LaunchProcess(ProcessNames.CONTROL, "timedate.cpl", hiddenProcess: false);
+		LaunchProcess("control.exe", "timedate.cpl", hiddenProcess: false);
 	}
 
 	private void ControlPanelButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("control_panel");
-		LaunchProcess(ProcessNames.CONTROL, "", hiddenProcess: false);
+		LaunchProcess("control.exe", "", hiddenProcess: false);
 	}
 
 	public void SetConfigureButtonFocus(object sender, RoutedEventArgs e)
@@ -458,7 +459,6 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 	private void ToggleMaintenanceModeButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("toggle_maintenance_mode");
-		ServiceLocator.Instance.GetService<IResourceBundleService>();
 		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
 		if (service == null)
 		{
@@ -504,7 +504,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 				string fullPath = ProcessFunctions.GetFullPath(string.Concat(servicePath, "\\..\\video"));
 				if (!string.IsNullOrEmpty(fullPath))
 				{
-					LaunchProcess(ProcessNames.EXPLORER, fullPath.ToString(), hiddenProcess: false);
+					LaunchProcess("explorer.exe", fullPath.ToString(), hiddenProcess: false);
 					return;
 				}
 				LogHelper.Instance.Log("Unexpected error: Could not find path to video directory: " + servicePath);
@@ -541,10 +541,10 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 	private void OpenKaseyaConfigButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("open_kaseya_config");
-		string kaseyainiPath = ProcessFunctions.GetKaseyainiPath();
-		if (!string.IsNullOrEmpty(kaseyainiPath))
+		string kaseyaIniDPath = KaseyaMethods.GetKaseyaIniDPath();
+		if (!string.IsNullOrEmpty(kaseyaIniDPath))
 		{
-			LaunchProcess(ProcessNames.NOTEPAD, kaseyainiPath, hiddenProcess: false);
+			LaunchProcess("notepad.exe", kaseyaIniDPath, hiddenProcess: false);
 			return;
 		}
 		LogHelper.Instance.Log("Unexpected Error:  Unable to locate Kaseya directory.");
@@ -554,7 +554,14 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 	private void DisplayButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("display");
-		LaunchProcess(ProcessNames.CONTROL, "desk.cpl", hiddenProcess: false);
+		if (IsWindows10())
+		{
+			ShowWindows10Display();
+		}
+		else
+		{
+			ShowWindows7Display();
+		}
 	}
 
 	private void CloseButtonClick(object sender, RoutedEventArgs e)
@@ -566,19 +573,19 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 	private void NetworkButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("network");
-		LaunchProcess(ProcessNames.CONTROL, "ncpa.cpl", hiddenProcess: false);
+		LaunchProcess("control.exe", "ncpa.cpl", hiddenProcess: false);
 	}
 
 	private void AddRemoveProgramsButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("add_remove_programs");
-		LaunchProcess(ProcessNames.CONTROL, "appwiz.cpl", hiddenProcess: false);
+		LaunchProcess("control.exe", "appwiz.cpl", hiddenProcess: false);
 	}
 
 	private void EventViewerButtonClick(object sender, RoutedEventArgs e)
 	{
 		ProcessFunctions.PerformActivityLogAndSendAuditEvent("event_viewer");
-		LaunchProcess(ProcessNames.MMC, Environment.SystemDirectory + "\\eventvwr.msc", hiddenProcess: false);
+		LaunchProcess("mmc.exe", Environment.SystemDirectory + "\\eventvwr.msc", hiddenProcess: false);
 	}
 
 	private void KillProcessButtonClick(object sender, RoutedEventArgs e)
@@ -699,6 +706,40 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 		{
 			LogHelper.Instance.Log("Unexpected exception on Touch Screen Toggle. " + ex.Message);
 			System.Windows.MessageBox.Show("Unexpected exception on Touch Screen Toggle. " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+		}
+	}
+
+	private bool IsWindows10()
+	{
+		bool result = false;
+		RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion");
+		if (registryKey != null)
+		{
+			object value = registryKey.GetValue("CurrentMajorVersionNumber");
+			if (value != null)
+			{
+				result = Convert.ToInt32(value) == 10;
+			}
+			registryKey.Close();
+		}
+		return result;
+	}
+
+	private void ShowWindows7Display()
+	{
+		LaunchProcess("control.exe", "desk.cpl", hiddenProcess: false);
+	}
+
+	private void ShowWindows10Display()
+	{
+		try
+		{
+			Display.Visibility = Visibility.Visible;
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log("Unexpected Error starting Display Settings view. ", ex.Message);
+			System.Windows.MessageBox.Show("Unexpected Error starting Display Settings view. " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 }

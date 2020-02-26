@@ -87,16 +87,18 @@ public class KeyboardViewController : BaseViewController
 		case KeyboardMode.EMAIL_COMING_SOON:
 			InitForCommingSoonEmail(keyboardLogic);
 			break;
+		case KeyboardMode.PERKS_SIGN_UP:
+			InitForPerksSignup(keyboardLogic);
+			break;
 		}
 		ConfigureTTS(keyboardModel);
 	}
 
 	public static void ClosingView(object parameter)
 	{
-		KeyboardInfo keyboardInfo = parameter as KeyboardInfo;
 		OrchestrationService.RemoveIdleTimer("keyboard_idle_timer");
 		KeyboardModel keyboardModel = GetkeyboardModel();
-		if (keyboardModel != null && keyboardInfo != null)
+		if (keyboardModel != null && parameter is KeyboardInfo keyboardInfo)
 		{
 			keyboardInfo.keyboardLogic = keyboardModel.Logic;
 			keyboardInfo.keyboardModel = keyboardModel;
@@ -140,15 +142,8 @@ public class KeyboardViewController : BaseViewController
 		return GetkeyboardModel()?.Logic;
 	}
 
-	private static void InitForEmail(KeyboardLogic keyboardLogic)
-	{
-		_ = keyboardLogic.KeyboardInfo;
-		_ = keyboardLogic.Model;
-	}
-
 	private static void InitForAccountSignIn(KeyboardLogic keyboardLogic)
 	{
-		_ = keyboardLogic.KeyboardInfo;
 		KeyboardModel model = keyboardLogic.Model;
 		model.TitleText = Resources.keyboard_sign_in_tag;
 		model.MessageText = Resources.keyboard_sign_in_message;
@@ -162,7 +157,6 @@ public class KeyboardViewController : BaseViewController
 		{
 			keyboardSignInViewControl.UpdateKeyStates();
 		}
-		BaseViewController.AnalyticsAddViewEvent("context", "EmailSignIn");
 		BaseViewController.StartIdleTimer(reset: true);
 	}
 
@@ -174,8 +168,6 @@ public class KeyboardViewController : BaseViewController
 		model.CancelButtonText = Resources.keyboard_change_cancel_btn;
 		model.ContinueButtonText = Resources.keyboard_change_continue_btn;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
-		InitForEmail(keyboardLogic);
-		BaseViewController.AnalyticsAddViewEvent("context", "EmailChanged");
 		BaseViewController.StartIdleTimer(reset: true);
 	}
 
@@ -184,12 +176,10 @@ public class KeyboardViewController : BaseViewController
 		KeyboardModel model = keyboardLogic.Model;
 		model.TitleText = Resources.email_tag;
 		model.MessageText = Resources.email_prompt_message;
-		model.MarketingText = Resources.email_marketing_message;
+		model.MarketingText = null;
 		model.CancelButtonText = Resources.keyboard_receipt_cancel_btn;
 		model.ContinueButtonText = Resources.keyboard_receipt_continue_btn;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
-		InitForEmail(keyboardLogic);
-		BaseViewController.AnalyticsAddViewEvent("context", "EmailReceipt");
 		StartKeyboardIdleTimer();
 	}
 
@@ -202,8 +192,6 @@ public class KeyboardViewController : BaseViewController
 		model.CancelButtonText = Resources.coming_soon_cancel_btn;
 		model.ContinueButtonText = Resources.coming_soon_continue_btn;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
-		InitForEmail(keyboardLogic);
-		BaseViewController.AnalyticsAddViewEvent("context", "EmailCommingSoon");
 		BaseViewController.StartIdleTimer(reset: true);
 	}
 
@@ -217,8 +205,17 @@ public class KeyboardViewController : BaseViewController
 		model.CancelButtonText = Resources.promo_code_cancel_btn;
 		model.ContinueButtonText = Resources.promo_code_continue_btn;
 		model.EmailPromptText = Resources.promo_code_input_prompt;
-		BaseViewController.AnalyticsAddViewEvent("context", "promoCode");
 		BaseViewController.StartIdleTimer(reset: true);
+	}
+
+	private static void InitForPerksSignup(KeyboardLogic keyboardLogic)
+	{
+		KeyboardModel model = keyboardLogic.Model;
+		model.TitleText = Resources.perks_sign_up_title;
+		model.MessageText = Resources.email_privacy_message;
+		model.CancelButtonText = Resources.no_thanks_button_text;
+		model.ContinueButtonText = Resources.continue_button_text;
+		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 	}
 
 	private static void StartKeyboardIdleTimer()

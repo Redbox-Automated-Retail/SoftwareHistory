@@ -83,7 +83,7 @@ public class ClassicTrackDataService : IClassicTrackDataService, ITrackDataServi
 					IUnencryptedTrackData unencryptedTrackData = CardHelper.Parse(_trackDataBuffer);
 					if (unencryptedTrackData != null)
 					{
-						unencryptedTrackData.CardSourceType = CardSourceType.Swipe;
+						unencryptedTrackData.CardSourceType = CardSourceType.Unknown;
 					}
 					if (unencryptedTrackData != null && unencryptedTrackData.HasValidData())
 					{
@@ -95,7 +95,7 @@ public class ClassicTrackDataService : IClassicTrackDataService, ITrackDataServi
 					unencryptedTrackData?.LockData();
 					if (OnCardReadComplete != null)
 					{
-						OnCardReadComplete(unencryptedTrackData, chipCardRemovedFromReader: true);
+						OnCardReadComplete(unencryptedTrackData, chipCardRemovedFromReader: true, null);
 					}
 					_trackDataBuffer.Clear();
 				}

@@ -44,13 +44,15 @@ public class DisplayProductModelConstants
 
 	public string OutOfStockLine3Text { get; set; }
 
+	public string OutOfStockLine4Text { get; set; }
+
 	public string Movies { get; set; }
 
 	public string Games { get; set; }
 
-	public Style FontMuseo16Style { get; set; }
+	public Style FontMontserrat16Style { get; set; }
 
-	public Style FontMuseo20Style { get; set; }
+	public Style FontMontserrat20Style { get; set; }
 
 	public string PriceFor { get; set; }
 
@@ -67,6 +69,8 @@ public class DisplayProductModelConstants
 	public string Game { get; set; }
 
 	public string OutOfStockTitleDetailsABTestVersion { get; set; }
+
+	public string TitleDetailsLayoutABTestVersion { get; set; }
 
 	public List<decimal> FlashDealPrices { get; set; }
 }

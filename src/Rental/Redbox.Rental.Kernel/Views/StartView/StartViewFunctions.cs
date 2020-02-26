@@ -16,10 +16,4 @@ public static class StartViewFunctions
 	{
 		return StartViewController.IsProductInCarousel(productId);
 	}
-
-	[KernelFunction(Name = "kernel.leave_start_view")]
-	internal static void LeaveStartView()
-	{
-		StartViewController.LeaveStartView();
-	}
 }

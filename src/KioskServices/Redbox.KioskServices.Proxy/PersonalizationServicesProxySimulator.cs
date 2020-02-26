@@ -302,15 +302,15 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 		}
 	}
 
-	public string RecommendedTitleIdTags
+	public string PersonalizationTitleTags
 	{
 		get
 		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "RecommendedTitleIdTags", string.Empty);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Personalization Services", "PersonalizationTitleTags", string.Empty);
 		}
 		set
 		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "RecommendedTitleIdTags", value);
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Personalization Services", "PersonalizationTitleTags", value);
 		}
 	}
 
@@ -412,7 +412,7 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 					TivoQueryId = TivoQueryId,
 					OfferCode = RecommendedTitlesOfferCode
 				};
-				string[] array = RecommendedTitleIdTags.Split(new char[3] { '[', ']', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+				string[] array = PersonalizationTitleTags.Split(new char[3] { '[', ']', ' ' }, StringSplitOptions.RemoveEmptyEntries);
 				int num = 0;
 				if (!string.IsNullOrWhiteSpace(RecommendedTitleIds))
 				{
@@ -430,7 +430,7 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 							{
 								Id = result,
 								IdType = RecommendedTitlesIdType,
-								Tags = source.ToList()
+								PersonalizationTitleTags = source.ToList()
 							});
 						}
 						num++;
@@ -483,6 +483,7 @@ public class PersonalizationServicesProxySimulator : IPersonalizationServices
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Simulate call to remote IPersonalization.UpdateAccount");
 				remoteServiceResult.Success = SimulateSuccess;
+				remoteServiceResult.Properties["CustomerProfileNumber"] = CustomerProfileNumber;
 				remoteServiceResult.Properties["MobilePhoneNumber"] = MobilePhoneNumber;
 				remoteServiceResult.Properties["server_name"] = "SimulatedCall";
 				if (!SimulateSuccess)

@@ -2,16 +2,17 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskHealth;
-using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Services.Controllers;
@@ -21,8 +22,6 @@ public class BaseViewController
 	private static string IdleTimerName = "idle_timer";
 
 	protected static IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-
-	protected static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 
 	protected static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
 
@@ -53,9 +52,9 @@ public class BaseViewController
 		return GetViewUserControl()?.DataContext as T;
 	}
 
-	protected static void AnalyticsAddViewEvent(string subItemType, string subItemValue)
+	protected static T GetViewModel<T>(Guid userControlId) where T : class
 	{
-		SessionAnalyticsService?.AddViewEvent(subItemType, subItemValue);
+		return GetViewUserControl(userControlId)?.DataContext as T;
 	}
 
 	protected static void ProcessWPFHit()
@@ -132,9 +131,14 @@ public class BaseViewController
 		return result;
 	}
 
-	protected static MarketingAd GetMarketingAd(MarketingAdLocation location, bool createImpression)
+	protected static IAd GetAd(AdLocation location)
 	{
-		return ServiceLocator.Instance.GetService<IMarketingAdService>().GetScreenAd(location, createImpression);
+		return ServiceLocator.Instance.GetService<IAdService>().GetScreenAd(location);
+	}
+
+	protected static async Task<IAd> GetAdAsync(AdLocation location)
+	{
+		return await ServiceLocator.Instance.GetService<IAdService>().GetScreenAdAsync(location).ConfigureAwait(continueOnCapturedContext: false);
 	}
 
 	protected static void InvokeActionOnIdle(Action action)
@@ -172,6 +176,15 @@ public class BaseViewController
 		finally
 		{
 			Marshal.ZeroFreeGlobalAllocUnicode(intPtr);
+		}
+	}
+
+	protected static void RecordAdImpression(IAdImpression adImpression)
+	{
+		if (adImpression != null && !adImpression.HasEnded)
+		{
+			adImpression.End();
+			Task.Run(() => ServiceLocator.Instance.GetService<IAdService>()?.RecordAdImpression(adImpression));
 		}
 	}
 }

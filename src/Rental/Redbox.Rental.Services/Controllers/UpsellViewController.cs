@@ -149,9 +149,8 @@ public class UpsellViewController : BaseLoyaltyController
 
 	private static void ProcessOnUpgradeButtonClicked(UpsellViewModel upsellViewModel)
 	{
-		string text = ((upsellViewModel.UpsellFromTitleType == TitleType.Bluray) ? "4k_upsell_upgrade_button" : "blu_ray_upsell_upgrade_button");
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", text);
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("UpsellUpgrade", text);
+		string eventSubType = ((upsellViewModel.UpsellFromTitleType == TitleType.Bluray) ? "4k_upsell_upgrade_button" : "blu_ray_upsell_upgrade_button");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("UpsellUpgrade", eventSubType);
 		if (upsellViewModel?.DisplayProductModels != null)
 		{
 			foreach (DisplayUpsellProductModel displayProductModel in upsellViewModel.DisplayProductModels)
@@ -176,18 +175,16 @@ public class UpsellViewController : BaseLoyaltyController
 
 	private static void ProcessOnBackButtonClicked(UpsellViewModel upsellViewModel)
 	{
-		string text = ((upsellViewModel.UpsellFromTitleType == TitleType.Bluray) ? "4k_upsell_cancel_button" : "blu_ray_upsell_back_button");
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", text);
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("UpsellBack", text);
+		string eventSubType = ((upsellViewModel.UpsellFromTitleType == TitleType.Bluray) ? "4k_upsell_cancel_button" : "blu_ray_upsell_back_button");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("UpsellBack", eventSubType);
 		BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.UpsellInfo.RemoveUndecidedUpsellItems();
 		OrchestrationService.ViewGoBackSafe("upsell_view", popOnly: false);
 	}
 
 	private static void ProcessOnNoThanksButtonClicked(UpsellViewModel upsellViewModel)
 	{
-		string text = ((upsellViewModel.UpsellFromTitleType == TitleType.Bluray) ? "4K_upsell_no_thanks_button" : "blu_ray_upsell_no_thanks_button");
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", text);
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("UpsellNoThanks", text);
+		string eventSubType = ((upsellViewModel.UpsellFromTitleType == TitleType.Bluray) ? "4K_upsell_no_thanks_button" : "blu_ray_upsell_no_thanks_button");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("UpsellNoThanks", eventSubType);
 		BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.UpsellInfo.RejectUndecidedUpsellItems();
 		BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.UpsellInfo.SetDoNotShowAgain(upsellViewModel.UpsellFromTitleType, value: true);
 		OrchestrationService.ViewGoBackSafe("upsell_view no thanks button click", popOnly: false);

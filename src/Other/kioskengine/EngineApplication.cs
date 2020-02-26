@@ -38,8 +38,10 @@ using Redbox.REDS.Framework;
 using Redbox.Rental.Data;
 using Redbox.Rental.Kernel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.Loyalty;
@@ -48,8 +50,10 @@ using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services;
+using Redbox.Rental.Services.Ads;
 using Redbox.Rental.Services.Analytics;
 using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.KioskClientService;
 using Redbox.Rental.Services.KioskEvents;
 using Redbox.Rental.Services.KioskHealth;
 using Redbox.Rental.Services.Loyalty;
@@ -584,6 +588,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.AddService(typeof(IDeviceServiceTrackDataService), new DeviceServiceTrackDataService());
 		ServiceLocator.Instance.AddService(typeof(ITrackDataEncryptionService), new TrackDataEncryptionService());
 		ServiceLocator.Instance.AddService(typeof(IAfterSwipeOfferService), AfterSwipeOfferService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IKioskClientService), KioskClientService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IPerksSignupService), PerksSignupService.Instance);
 		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
 		if (service2 != null && (service2.TryGetValue<bool>("system", "General", "TextToSpeechEnabled", out var value) & value))
 		{
@@ -600,12 +606,12 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		errorList.AddRange(KernelService.Instance.Initialize());
 		errorList.AddRange(EnvironmentManager.Instance.Initialize());
 		errorList.AddRange(QueueService.Instance.Initialize(Path.Combine(RunningPath, "message.data"), new QueueServiceVistaDBData()));
-		IConfiguration service3 = ServiceLocator.Instance.GetService<IConfiguration>();
-		if (service3 != null && service3.KioskAnalyticsEnabled)
-		{
-			ServiceLocator.Instance.AddService(typeof(ISessionAnalyticsService), SessionAnalyticsService.Instance);
-		}
+		ServiceLocator.Instance.GetService<IConfiguration>();
 		ServiceLocator.Instance.AddService(typeof(IKioskSessionAnalyticsService), KioskSessionAnalyticsService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IKioskAlertsService), KioskAlertsService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IAuditEventsService), AuditEventsService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IKioskFunctionCheckService), KioskFunctionCheckService.Instance);
+		ServiceLocator.Instance.AddService(typeof(IKioskVersionsService), KioskVersionsService.Instance);
 		ServiceLocator.Instance.AddService(typeof(IBarcodeTrackingService), BarcodeTrackingService.Instance);
 		InitializeBarcodeTrackingService();
 		ServiceLocator.Instance.AddService(typeof(IUploadDiscImageService), UploadDiscImageService.Instance);
@@ -679,12 +685,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			ServiceLocator.Instance.AddService(typeof(IRentalSessionService), new RentalSessionService());
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
-			ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-			IConfiguration service4 = ServiceLocator.Instance.GetService<IConfiguration>();
-			if (service3 != null && service4 != null)
-			{
-				service3.MessagePriority = service4.KioskAnalyticsMessagePriority;
-			}
 			ControlPanelService instance = new ControlPanelService();
 			ServiceLocator.Instance.AddService(typeof(IControlPanelService), instance);
 			FieldMaintenanceService instance2 = new FieldMaintenanceService();
@@ -719,13 +719,17 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			dataService.Initialize();
 			dataService.Start();
 			dataService.RefreshIfNeeded();
-			IResourceBundleService service5 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			service5.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
+			IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			service3.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
 			MarketingAdImpressionService marketingAdImpressionService = new MarketingAdImpressionService(storeManagerService);
 			ServiceLocator.Instance.AddService(typeof(IMarketingAdImpressionService), marketingAdImpressionService);
 			marketingAdImpressionService.Start();
-			MarketingAdService instance6 = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service5);
-			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), instance6);
+			MarketingAdService marketingAdService = new MarketingAdService(marketingConfigurationManager, storeManagerService, marketingAdImpressionService, service3);
+			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), marketingAdService);
+			VistarAdService vistarAdService = new VistarAdService();
+			ServiceLocator.Instance.AddService(typeof(IVistarAdService), vistarAdService);
+			AdService instance6 = new AdService(marketingAdService, vistarAdService);
+			ServiceLocator.Instance.AddService(typeof(IAdService), instance6);
 			RentalShoppingCartService.Instance.Initialize();
 			ServiceLocator.Instance.AddService(typeof(IPersonalizationService), new PersonalizationService());
 			ServiceLocator.Instance.AddService(typeof(ILoyaltyService), new LoyaltyService());
@@ -856,6 +860,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			LogHelper.Instance.Log("Code: {0} Desc: {1} Details: {2}", error.Code, error.Description, error.Details);
 		});
+		ServiceLocator.Instance.GetService<IKioskClientService>()?.Application?.End();
 		base.OnMainFormClosed(sender, e);
 	}
 
@@ -894,13 +899,14 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 
 	internal void SwitchBundleIfNecessary()
 	{
-		if (!ResourceBundleService.Instance.IsPendingBundleSwitch())
+		IKernelExtensionService kernelExtensionService;
+		if (ResourceBundleService.Instance.IsPendingBundleSwitch())
 		{
-			return;
+			ServiceLocator.Instance.GetService<IPricingService>()?.ClearOnPricingSetChange();
+			kernelExtensionService = ServiceLocator.Instance.GetService<IKernelExtensionService>();
+			ThreadSafeHostUpdate(invoker);
 		}
-		ServiceLocator.Instance.GetService<IPricingService>()?.ClearOnPricingSetChange();
-		IKernelExtensionService kernelExtensionService = ServiceLocator.Instance.GetService<IKernelExtensionService>();
-		MethodInvoker invoker = delegate
+		void invoker()
 		{
 			base.MainForm.TopMost = true;
 			base.MainForm.TopMost = false;
@@ -917,8 +923,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 				errorForm.ShowDialog();
 				ResourceBundleService.Instance.SetSwitchToBundle(previousBundle);
 			}
-		};
-		ThreadSafeHostUpdate(invoker);
+		}
 	}
 
 	internal void ConfigureDefaultMacros()

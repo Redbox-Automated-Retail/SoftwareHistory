@@ -36,8 +36,6 @@ public class BrowseFunctions
 
 			public const string ShoppingCartUpdateADAIdleTimerName = "shopping_cart_update_ada_idle_timer";
 
-			public const string OptInThankYouTimer = "optin_thank_you_timer";
-
 			public const string OptInViewTimer = "optin_view_timer";
 
 			public const string ReservationNotFoundTimer = "reservation_not_found_timer";
@@ -55,8 +53,6 @@ public class BrowseFunctions
 	private static bool _subPlatformWarningShown;
 
 	private static bool _multiDiscWarningShown;
-
-	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 
 	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
 
@@ -82,12 +78,10 @@ public class BrowseFunctions
 		{
 			if (isPurchase)
 			{
-				SessionAnalyticsService?.AddViewEvent("buttonPress", $"buy,{titleProduct.ProductId}");
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsBuy")?.AddData(ProductData.ToProductData(titleProduct));
 			}
 			else
 			{
-				SessionAnalyticsService?.AddViewEvent("buttonPress", "shopping-cart-add-item");
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsShoppingCartAddItem")?.AddData(ProductData.ToProductData(titleProduct));
 			}
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
@@ -207,7 +201,7 @@ public class BrowseFunctions
 				{
 					result = ProductFlags.BackAgain;
 				}
-				else if (titleProduct.Genres.Contains(1095L) && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.Movies && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.TV)
+				else if (titleProduct.Genres.Contains(1095L) && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily != TitleFamily.Movies)
 				{
 					result = ProductFlags.Classics;
 				}
@@ -333,7 +327,7 @@ public class BrowseFunctions
 				rentalShoppingCartItem.Status = LineItemStatus.Pending;
 				rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(titleProduct);
 				rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(titleProduct);
-				rentalShoppingCartItem.Tags = PersonalizationFunctions.GetTags(titleProduct);
+				rentalShoppingCartItem.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(titleProduct);
 				RentalShoppingCartService?.CurrentRentalShoppingCart?.AddItem(rentalShoppingCartItem, pricingRecord);
 			}
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
@@ -405,7 +399,6 @@ public class BrowseFunctions
 		{
 			Action action = delegate
 			{
-				SessionAnalyticsService?.AddViewEvent("buttonPress", "related_movies_gotit");
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsRelatedMoviesGotit");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBack("RelatedMoviesGotIt", popOnly: false);
 			};
@@ -479,7 +472,6 @@ public class BrowseFunctions
 				}, delegate
 				{
 					BrowseState._4kWarningShown = true;
-					SessionAnalyticsService?.AddViewEvent("buttonPress", "Okay");
 					AnalyticsService?.AddButtonPressEvent("BrowseFunctionsOkay");
 					ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("multi_disc_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
 					AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
@@ -545,13 +537,11 @@ public class BrowseFunctions
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
 			}, delegate
 			{
-				SessionAnalyticsService?.AddViewEvent("buttonPress", "cancel");
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsCancel");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:hide()", popOnly: false);
 			}, delegate
 			{
 				BrowseState._4kWarningShown = true;
-				SessionAnalyticsService?.AddViewEvent("buttonPress", "gotit");
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsGotit");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
 				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
@@ -658,13 +648,11 @@ public class BrowseFunctions
 			result = false;
 			MessagePopupViewController.ShowDigitalCodeAlert(delegate
 			{
-				SessionAnalyticsService?.AddViewEvent("buttonPress", "cancel-digitalcodeincart-mesage-view");
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsCancelDigitalCodeIncart");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert back button", popOnly: false);
 			}, delegate
 			{
 				_digitalCodeWarningShown = true;
-				SessionAnalyticsService?.AddViewEvent("buttonPress", "ok-digitalcodeincart-mesage-view");
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsOkDigitalCodeIncart");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert ok button", popOnly: false);
 				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
@@ -729,5 +717,26 @@ public class BrowseFunctions
 			}, list);
 		}
 		return result;
+	}
+
+	public static string GetPurchasePriceText(ITitleProduct titleProduct, Func<decimal, decimal> discountedPriceCalc = null)
+	{
+		List<ITitleProduct> list = ((titleProduct is ITitleRollupProduct) ? ((ITitleRollupProduct)titleProduct).KioskProducts : new List<ITitleProduct> { titleProduct }).Where((ITitleProduct tp) => tp.IsSellableAndInStock).ToList();
+		if (list.Count == 0)
+		{
+			return string.Empty;
+		}
+		decimal price = list.Min((ITitleProduct tp) => tp.PurchasePrice);
+		bool flag = list.Count == 1 || list.All((ITitleProduct tp) => tp.PurchasePrice == price);
+		if (discountedPriceCalc != null)
+		{
+			decimal num = discountedPriceCalc(price);
+			if (num > 0m)
+			{
+				return string.Format("${0:F2}{1}", num, flag ? "" : "+");
+			}
+			return Resources.offer_info_free;
+		}
+		return string.Format("${0:F2}{1}", price, flag ? "" : "+");
 	}
 }

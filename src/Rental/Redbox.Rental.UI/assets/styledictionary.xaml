@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Redbox.Rental.UI.Assets" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:localViews="clr-namespace:Redbox.Rental.UI.Views" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" xmlns:properties="clr-namespace:Redbox.Rental.UI.Properties">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:localViews="clr-namespace:Redbox.Rental.UI.Views" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" xmlns:properties="clr-namespace:Redbox.Rental.UI.Properties">
   <Color x:Key="RubineRed">#E42045</Color>
   <Color x:Key="WarmPurple">#792D8D</Color>
   <Color x:Key="DarkishPink">#D92E6C</Color>
@@ -15,6 +15,7 @@
   <Color x:Key="LightPurple">#FFEFE4F3</Color>
   <Color x:Key="SelectedPurple">#A88AB4</Color>
   <Color x:Key="DeepPurple">#2F1E36</Color>
+  <Color x:Key="PopupMask">#1C0F1E</Color>
   <Color x:Key="BorderRed">#E32044</Color>
   <Color x:Key="ActiveBorder">#782d8d</Color>
   <Color x:Key="InactiveBorder">#979797</Color>
@@ -25,6 +26,8 @@
   <Color x:Key="FlagRubineColor">#E42045</Color>
   <Color x:Key="FlagRubineShadow">#AB1733</Color>
   <Color x:Key="LightGrayBackground">#EBEBEB</Color>
+  <Color x:Key="DarkGray">#000A12</Color>
+  <Color x:Key="Gold">#FECB77</Color>
   <SolidColorBrush x:Key="RubineRedBrush" Color="{StaticResource RubineRed}" />
   <SolidColorBrush x:Key="DarkishPinkBrush" Color="{StaticResource DarkishPink}" />
   <SolidColorBrush x:Key="InactiveBrush" Color="{StaticResource Inactive}" />
@@ -46,6 +49,9 @@
   <SolidColorBrush x:Key="SelectedPurpleBrush" Color="{StaticResource SelectedPurple}" />
   <SolidColorBrush x:Key="DeepPurpleBrush" Color="{StaticResource DeepPurple}" />
   <SolidColorBrush x:Key="LightGrayBackgroundBrush" Color="{StaticResource LightGrayBackground}" />
+  <SolidColorBrush x:Key="DarkGrayBrush" Color="{StaticResource DarkGray}" />
+  <SolidColorBrush x:Key="PopupBackgroundBrush" Color="{StaticResource PopupMask}" />
+  <SolidColorBrush x:Key="GoldBrush" Color="{StaticResource Gold}" />
   <LinearGradientBrush x:Key="RubineRedGradientBrush" StartPoint="0,0.5" EndPoint="1,0.5">
     <GradientBrush.GradientStops>
       <GradientStopCollection>
@@ -68,6 +74,15 @@
       <GradientStopCollection>
         <GradientStop Color="#792d8d" Offset="0" />
         <GradientStop Color="#E42045" Offset="1" />
+      </GradientStopCollection>
+    </GradientBrush.GradientStops>
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="RubineToDarkPurpleGradientBrush" StartPoint="0,0" EndPoint="1,1">
+    <GradientBrush.GradientStops>
+      <GradientStopCollection>
+        <GradientStop Color="#E42045" Offset="0" />
+        <GradientStop Color="#902A7D" Offset="0.5" />
+        <GradientStop Color="#491E54" Offset="1" />
       </GradientStopCollection>
     </GradientBrush.GradientStops>
   </LinearGradientBrush>
@@ -620,13 +635,21 @@
   <Style x:Key="inactive_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
     <Style.Triggers>
       <Trigger Property="IsEnabled" Value="False">
-        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#9B9B9B" />
-        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#9B9B9B" />
-        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#9B9B9B" />
-        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#9B9B9B" />
-        <Setter Property="Foreground" Value="#FFFFFFFF" />
+        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#C4C3C4" />
+        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#C4C3C4" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#D4D3D4" />
+        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#D4D3D4" />
+        <Setter Property="Foreground" Value="#959495" />
       </Trigger>
     </Style.Triggers>
+  </Style>
+  <Style x:Key="white_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource inactive_button_style}">
+    <Setter Property="Redbox:RoundedButton.BorderColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="White" />
+    <Setter Property="Foreground" Value="#E42045" />
   </Style>
   <Style x:Key="white_rubine_to_warm_purple_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource inactive_button_style}">
     <Setter Property="Redbox:RoundedButton.BorderColor" Value="{StaticResource WarmPurple}" />
@@ -979,6 +1002,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
+  <Style x:Key="font_montserrat_bold_14" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
   <Style x:Key="font_montserrat_bold_15" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="15" />
@@ -1002,6 +1031,13 @@
     <Setter Property="FontSize" Value="18" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_bold_underline_18" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="TextDecorations" Value="Underline" />
   </Style>
   <Style x:Key="font_montserrat_bold_20" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
@@ -1042,6 +1078,49 @@
   <Style x:Key="font_montserrat_bold_36" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="36" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_extrabold_14" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_extrabold_16" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_extrabold_underline_16" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="TextDecorations" Value="Underline" />
+  </Style>
+  <Style x:Key="font_montserrat_extrabold_18" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_extrabold_20" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_extrabold_24" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="24" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_bold_40" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="40" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
@@ -1108,6 +1187,12 @@
   <Style x:Key="font_montserrat_semibold_28" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
     <Setter Property="FontSize" Value="28" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style x:Key="font_montserrat_semibold_32" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
+    <Setter Property="FontSize" Value="32" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
@@ -1195,6 +1280,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Regular" />
   </Style>
+  <Style x:Key="font_montserrat_regular_20" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
   <Style x:Key="font_montserrat_regular_22" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="22" />
@@ -1222,6 +1313,12 @@
   <Style x:Key="font_montserrat_regular_30" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="30" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Regular" />
+  </Style>
+  <Style x:Key="font_montserrat_regular_36" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="36" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Regular" />
   </Style>
@@ -1297,6 +1394,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Medium" />
   </Style>
+  <Style x:Key="font_montserrat_medium_28" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Medium" />
+    <Setter Property="FontSize" Value="28" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Medium" />
+  </Style>
   <Style x:Key="font_montserrat_medium_30" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Medium" />
     <Setter Property="FontSize" Value="30" />
@@ -1357,6 +1460,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
+  <Style x:Key="font_museo_slab_900_50" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 900" />
+    <Setter Property="FontSize" Value="50" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
   <Style x:Key="font_museo_slab_900_64" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 900" />
     <Setter Property="FontSize" Value="64" />
@@ -1402,6 +1511,12 @@
   <Style x:Key="font_museo_slab_900_25" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 900" />
     <Setter Property="FontSize" Value="25" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style x:Key="font_museo_slab_900_22" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 900" />
+    <Setter Property="FontSize" Value="22" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
@@ -1474,6 +1589,12 @@
   <Style x:Key="font_museo_slab_700_18" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
     <Setter Property="FontSize" Value="18" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style x:Key="font_museo_slab_700_16" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 700" />
+    <Setter Property="FontSize" Value="16" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
@@ -1661,22 +1782,23 @@
       </Setter.Value>
     </Setter>
   </Style>
-  <Style x:Key="start_over_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}">
+  <Style x:Key="thin_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_rubine_to_warm_purple_border_button_style}">
     <Setter Property="Foreground" Value="#E42045" />
     <Setter Property="Redbox:RoundedButton.UsedDefaultCornerRadius" Value="True" />
+    <Setter Property="BorderThickness" Value="2" />
   </Style>
-  <Style x:Key="english_start_over_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource start_over_button_style}">
-    <Setter Property="Width" Value="115" />
-    <Setter Property="Height" Value="39" />
+  <Style x:Key="english_start_over_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource thin_border_button_style}">
+    <Setter Property="Width" Value="119" />
+    <Setter Property="Height" Value="32" />
   </Style>
   <Style x:Key="english_start_over_glass_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource gray_glass_rounded_radio_button_style}">
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="18" />
-    <Setter Property="Width" Value="115" />
-    <Setter Property="Height" Value="36" />
+    <Setter Property="Width" Value="119" />
+    <Setter Property="Height" Value="32" />
   </Style>
-  <Style x:Key="spanish_start_over_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource start_over_button_style}">
-    <Setter Property="Width" Value="121" />
-    <Setter Property="Height" Value="46" />
+  <Style x:Key="spanish_start_over_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource thin_border_button_style}">
+    <Setter Property="Width" Value="119" />
+    <Setter Property="Height" Value="32" />
   </Style>
   <Style x:Key="spanish_start_over_glass_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource gray_glass_rounded_radio_button_style}">
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="22" />
@@ -1695,9 +1817,7 @@
                     <PathFigure StartPoint="0,0">
                       <PathFigure.Segments>
                         <PathSegmentCollection>
-                          <ArcSegment Size="54,54" Point="54,54" IsLargeArc="False" RotationAngle="0" SweepDirection="Clockwise" />
-                          <LineSegment Point="54,248" />
-                          <ArcSegment Size="54,54" Point="0,306" IsLargeArc="False" RotationAngle="0" SweepDirection="Clockwise" />
+                          <ArcSegment Size="66,75" Point="0,150" IsLargeArc="False" RotationAngle="0" SweepDirection="Clockwise" />
                         </PathSegmentCollection>
                       </PathFigure.Segments>
                     </PathFigure>
@@ -1707,12 +1827,12 @@
             </Path>
             <Polygon Stroke="#FFFFFFFF" StrokeThickness="1" Fill="#FFFFFFFF">
               <Polygon.Points>
-                <Point X="48" Y="130" />
-                <Point X="25" Y="153" />
-                <Point X="48" Y="176" />
-                <Point X="43" Y="181" />
-                <Point X="15" Y="153" />
-                <Point X="43" Y="125" />
+                <Point X="50" Y="59" />
+                <Point X="33" Y="78" />
+                <Point X="50" Y="96" />
+                <Point X="47" Y="99" />
+                <Point X="27" Y="78" />
+                <Point X="47" Y="56" />
               </Polygon.Points>
             </Polygon>
           </Grid>
@@ -1729,12 +1849,10 @@
               <Path.Data>
                 <PathGeometry>
                   <PathGeometry.Figures>
-                    <PathFigure StartPoint="54,0">
+                    <PathFigure StartPoint="66,0">
                       <PathFigure.Segments>
                         <PathSegmentCollection>
-                          <ArcSegment Size="54,54" Point="0,54" IsLargeArc="False" RotationAngle="0" SweepDirection="Counterclockwise" />
-                          <LineSegment Point="0,248" />
-                          <ArcSegment Size="54,54" Point="54,306" IsLargeArc="False" RotationAngle="0" SweepDirection="Counterclockwise" />
+                          <ArcSegment Size="66,75" Point="66,150" IsLargeArc="False" RotationAngle="0" SweepDirection="Counterclockwise" />
                         </PathSegmentCollection>
                       </PathFigure.Segments>
                     </PathFigure>
@@ -1744,12 +1862,12 @@
             </Path>
             <Polygon Stroke="#FFFFFFFF" StrokeThickness="1" Fill="#FFFFFFFF">
               <Polygon.Points>
-                <Point X="10" Y="130" />
-                <Point X="33" Y="153" />
-                <Point X="10" Y="176" />
-                <Point X="15" Y="181" />
-                <Point X="43" Y="153" />
-                <Point X="15" Y="125" />
+                <Point X="16" Y="59" />
+                <Point X="32" Y="78" />
+                <Point X="16" Y="96" />
+                <Point X="19" Y="99" />
+                <Point X="38" Y="78" />
+                <Point X="19" Y="56" />
               </Polygon.Points>
             </Polygon>
           </Grid>
@@ -2919,18 +3037,6 @@
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="39" />
     <Setter Property="UIElement.Effect" Value="{StaticResource round_button_outline_dropShadow}" />
   </Style>
-  <Style x:Key="style_right_arrow_image" TargetType="{x:Type Image}">
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Style.Triggers>
-      <DataTrigger Value="True" Binding="{Binding Path=IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}">
-        <Setter Property="Source" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/next-rubine-arrow.png" />
-      </DataTrigger>
-      <DataTrigger Value="False" Binding="{Binding Path=IsEnabled, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}">
-        <Setter Property="Source" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/next-right-arrow.png" />
-      </DataTrigger>
-    </Style.Triggers>
-  </Style>
   <Style x:Key="style_cap_lock_image" TargetType="{x:Type Image}">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />
@@ -3145,6 +3251,9 @@
     <Setter Property="TextBlock.TextAlignment" Value="Left" />
     <Setter Property="Margin" Value="0,0,0,30" />
   </Style>
+  <Style x:Key="message_popup_button_text_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museoslab_900_28_white}">
+    <Setter Property="Margin" Value="15,0" />
+  </Style>
   <Style x:Key="message_popup_dialog_message_dock_panel_style4" TargetType="{x:Type DockPanel}">
     <Setter Property="Margin" Value="0,0,0,0" />
   </Style>
@@ -3176,12 +3285,18 @@
     <Setter Property="Margin" Value="0,180,0,0" />
   </Style>
   <Style x:Key="message_popup_warmpurple_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_with_dropshadow_style}">
-    <Setter Property="Width" Value="211" />
+    <Setter Property="MinWidth" Value="211" />
     <Setter Property="Height" Value="66" />
   </Style>
   <Style x:Key="message_popup_warmpurple_auto_size_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_with_dropshadow_style}">
     <Setter Property="Width" Value="auto" />
     <Setter Property="Height" Value="66" />
+  </Style>
+  <Style x:Key="message_popup_warmpurple_button_signout_dialog_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_with_dropshadow_style}">
+    <Setter Property="MinWidth" Value="211" />
+    <Setter Property="Height" Value="66" />
+    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="Margin" Value="0,0,64,0" />
   </Style>
   <Style x:Key="button_text_auto_size_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_small_button_overlays}">
     <Setter Property="Margin" Value="25,0" />
@@ -3338,6 +3453,21 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
+  </Style>
+  <Style x:Key="offer_info_medium_top_line" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_medium_1up}">
+    <Setter Property="FontSize" Value="44" />
+    <Setter Property="TextBlock.LineHeight" Value="44" />
+    <Setter Property="Margin" Value="0,60,0,-10" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_medium_header" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_light_18}">
     <Setter Property="FontSize" Value="40" />
@@ -3346,14 +3476,37 @@
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
     <Setter Property="Margin" Value="0,-20,0,0" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_medium_2up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_medium_1up}">
     <Setter Property="FontSize" Value="32" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
+  </Style>
+  <Style x:Key="offer_info_medium_top_margin" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_medium_2up}">
+    <Setter Property="Margin" Value="0,20,0,0" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_medium_3up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_medium_1up}">
     <Setter Property="FontSize" Value="28" />
     <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="Margin" Value="20,10,0,0" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_medium_bold" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_36}">
     <Setter Property="FontSize" Value="52" />
@@ -3361,6 +3514,11 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_medium_header_bold" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_36}">
     <Setter Property="FontSize" Value="64" />
@@ -3368,6 +3526,11 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_big_bold_1up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_64}">
     <Setter Property="FontSize" Value="170" />
@@ -3375,12 +3538,39 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}">
+          <Setter Property="FontSize" Value="170" />
+        </Style>
+      </ResourceDictionary>
+    </Style.Resources>
+  </Style>
+  <Style x:Key="offer_info_big_bold_line_2" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_big_bold_1up}">
+    <Setter Property="TextBlock.LineHeight" Value="170" />
+    <Setter Property="Margin" Value="0,-20,0,20" />
   </Style>
   <Style x:Key="offer_info_big_bold_mnp" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_64}">
     <Setter Property="Foreground" Value="#FFFFFFFF" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}">
+          <Setter Property="FontSize" Value="64" />
+        </Style>
+      </ResourceDictionary>
+    </Style.Resources>
+  </Style>
+  <Style x:Key="offer_info_big_bold_perks" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_big_bold_mnp}">
+    <Setter Property="FontSize" Value="72" />
+    <Setter Property="Margin" Value="20,0,20,0" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_multi_mnp" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_40}">
     <Setter Property="FontSize" Value="44" />
@@ -3389,25 +3579,45 @@
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
     <Setter Property="Margin" Value="30,0,30,0" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_3up_mnp" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_40}">
     <Setter Property="Foreground" Value="#FFFFFFFF" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
-    <Setter Property="Margin" Value="30,0,30,0" />
+    <Setter Property="Margin" Value="50,0,50,0" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_big_bold_2up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_big_bold_1up}">
     <Setter Property="FontSize" Value="120" />
     <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight" />
     <Setter Property="TextBlock.LineHeight" Value="110" />
     <Setter Property="Margin" Value="0,20,0,0" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_big_bold_3up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource offer_info_big_bold_1up}">
     <Setter Property="FontSize" Value="34" />
     <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight" />
     <Setter Property="Margin" Value="20,0,0,0" />
     <Setter Property="HorizontalAlignment" Value="Left" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_less_big_bold" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_900_64}">
     <Setter Property="FontSize" Value="120" />
@@ -3415,17 +3625,39 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_small_1up" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_24}">
     <Setter Property="Foreground" Value="#FFFFFFFF" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
   </Style>
   <Style x:Key="offer_info_small_serif" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museo_slab_700_24}">
     <Setter Property="Foreground" Value="#FFFFFFFF" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="TextBlock.TextAlignment" Value="Center" />
+    <Style.Resources>
+      <ResourceDictionary>
+        <Style x:Key="{x:Type Span}" TargetType="{x:Type Span}" />
+      </ResourceDictionary>
+    </Style.Resources>
+  </Style>
+  <Style x:Key="offer_info_asterisks" TargetType="{x:Type Run}">
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Museo Slab 900" />
+    <Setter Property="FontSize" Value="24" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Normal" />
   </Style>
 </ResourceDictionary>

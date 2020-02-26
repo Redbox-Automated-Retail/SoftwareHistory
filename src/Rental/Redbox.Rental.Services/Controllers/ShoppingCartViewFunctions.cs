@@ -21,8 +21,6 @@ public class ShoppingCartViewFunctions
 
 	private static IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 
-	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-
 	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
 
 	public static void ViewShoppingCart()
@@ -90,7 +88,6 @@ public class ShoppingCartViewFunctions
 			}
 		}, delegate
 		{
-			SessionAnalyticsService?.AddViewEvent("buttonPress", "in-cart-promo-decline");
 			AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartPromoDecline");
 			if (PromotionService.Instance.IsRentTwoInCartOfferRunning && (PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) == 1)
 			{
@@ -107,7 +104,6 @@ public class ShoppingCartViewFunctions
 			}
 		}, delegate
 		{
-			SessionAnalyticsService?.AddViewEvent("buttonPress", "in-cart-promo-accept");
 			AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartPromoAccept");
 			if (PromotionService.Instance.IsFreeInCartOfferRunning)
 			{
@@ -175,13 +171,11 @@ public class ShoppingCartViewFunctions
 				}, delegate
 				{
 					LogHelper.Instance.Log("User cancelled remove item with back");
-					SessionAnalyticsService?.AddViewEvent("buttonPress", "in-cart-removeitem-cancel");
 					AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartRemoveItemCancel");
 					GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning go back.");
 				}, delegate
 				{
 					LogHelper.Instance.Log("User confirmed remove item warning popup with continue");
-					SessionAnalyticsService?.AddViewEvent("buttonPress", "in-cart-removeitem-confirm");
 					AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartRemoveItemConfirm");
 					RemoveItemFromShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
 					ClearInCart(rentalShoppingCart);
@@ -232,7 +226,6 @@ public class ShoppingCartViewFunctions
 
 	private static void RemoveItemFromShoppingCart(IRentalShoppingCart rentalShoppingCart, IRentalShoppingCartItem deleteRentalShoppingCartItem)
 	{
-		SessionAnalyticsService?.AddViewEvent("buttonPress", $"shopping-cart-remove-item,{deleteRentalShoppingCartItem.ProductId}");
 		AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsRemoveItem")?.AddData(ProductData.ToProductData(deleteRentalShoppingCartItem));
 		rentalShoppingCart.RemoveItem(deleteRentalShoppingCartItem, userRemoved: true);
 	}

@@ -28,7 +28,6 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 	{
 		BaseViewController.StopIdleTimer();
 		CreateAndStartTimer();
-		OrchestrationService.AnalyticsAddViewEvent("context", (recommendedTitlesPopupInfo.ShownFromView == "option_selection_dialog_view") ? "RelatedMoviesDialog" : "RecommendedTitlesPopup");
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl != null)
 		{
@@ -219,7 +218,6 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 		IIdleTimer obj = service?.CreateIdleTimer("RecommendedTitlesPopupViewTimer");
 		obj?.Initialize(timeOut, delegate
 		{
-			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.ViewGoBackSafe("RecommendedTitlesPopupViewController time out", popOnly: false);
 		});
@@ -266,7 +264,6 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 			if (_shownFromView == "option_selection_dialog_view")
 			{
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", $"related_movies_title_details,{titleProduct.ProductId}");
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedMoviesTitleDetails")?.AddData(ProductData.ToProductData(titleProduct));
 			}
 			if (titleProduct != null)
@@ -293,12 +290,10 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			if (_shownFromView == "option_selection_dialog_view")
 			{
 				ITitleProduct titleProduct2 = kioskProduct as ITitleProduct;
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", $"related_movies_add_title,{titleProduct2.ProductId}", ProductData.ToProductData(titleProduct2));
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedMoviesAddTitle")?.AddData(ProductData.ToProductData(titleProduct2));
 			}
 			else
 			{
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "recommended-titles-popup-add-item");
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedAddItem");
 			}
 			OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(rollupProduct, isPurchase: false));
@@ -309,12 +304,10 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 			if (_shownFromView == "option_selection_dialog_view")
 			{
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", $"related_movies_add_title,{titleProduct.ProductId}", ProductData.ToProductData(titleProduct));
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedMoviesAddTitle")?.AddData(ProductData.ToProductData(titleProduct));
 			}
 			else
 			{
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "recommended-titles-popup-add-item");
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedAddItem");
 			}
 			if (titleProduct.HasMultiNightPrice)
@@ -338,13 +331,11 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 	{
 		if (_shownFromView == "option_selection_dialog_view")
 		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "related_movies_nothanks");
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedNoThanks");
 			OrchestrationService.UnwindToSafe("browse_view", discard: true, "recommended_titles_popup_view");
 		}
 		else
 		{
-			OrchestrationService.AnalyticsAddViewEvent("buttonPress", "recommended_titles_popup_no_thanks");
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedNoThanks");
 			OrchestrationService.ViewGoBackSafe("RecommendedTitlesPopupViewController cancel", popOnly: false);
 		}
@@ -355,14 +346,14 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 		return new DisplayProductModelConstants
 		{
 			StarringLabel = Resources.starring_label,
-			GenresLabel = Resources.genres_label,
+			GenresLabel = ((Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion == "B") ? Resources.title_details_genres_text : Resources.genres_label),
 			OneNightPriceLabel = Resources.one_night_price_label,
 			OneNightReturnTimeLabel = Resources.return_time_label,
 			MultiNightPriceLabel = Resources.multi_night_price_label,
 			MultiNightReturnTimeLabel = Resources.return_time_label,
 			AdImage = null,
-			AdHeight = 20,
-			MainHeight = 610,
+			AdHeight = 0,
+			MainHeight = 628,
 			ShowCollections = false,
 			CollectionTextLine1 = Resources.title_detail_collection_text,
 			BuyText = Resources.title_detail_buy,
@@ -372,17 +363,19 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			OutOfStockLine1Text = Resources.out_of_stock_line1,
 			OutOfStockLine2Text = Resources.out_of_stock_line2,
 			OutOfStockLine3Text = Resources.out_of_stock_line3,
+			OutOfStockLine4Text = Resources.out_of_stock_line4,
 			Movies = Resources.Movies,
 			Games = Resources.Games,
 			Movie = Resources.Movie.ToLower(),
 			Game = Resources.game.ToLower(),
-			FontMuseo20Style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_museo_slab_900_20"),
-			FontMuseo16Style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_museo_slab_900_16"),
+			FontMontserrat16Style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_montserrat_extrabold_16"),
+			FontMontserrat20Style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_montserrat_medium_20"),
 			PriceFor = Resources.price_for,
 			Night = Resources.night,
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
 			IsInCartBrowse = false,
+			TitleDetailsLayoutABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion,
 			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices
 		};
 	}

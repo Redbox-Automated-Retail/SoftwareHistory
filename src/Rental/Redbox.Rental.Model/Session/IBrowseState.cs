@@ -25,7 +25,7 @@ public interface IBrowseState
 
 	bool ShoppingCartFullMessagesShown { get; set; }
 
-	bool EmailOptInCampaignShown { get; set; }
+	ISignupFlowState SignupFlowState { get; }
 
 	int PaddleClickCount { get; set; }
 
@@ -82,6 +82,8 @@ public interface IBrowseState
 	bool InReturnFlow { get; set; }
 
 	bool NeedMarketingConfirm { get; set; }
+
+	bool ExpandedFormatButtonsShown { get; set; }
 
 	void PushBrowseStateSet();
 

@@ -4,14 +4,16 @@
     <CommandBinding Command="{x:Static local:SwipeViewCommands.GoBack}" Executed="GoBackCommandBinding_Executed" />
   </UIElement.CommandBindings>
   <Grid Background="#E42045">
-    <Image Name="ad_image" Width="728" Height="90" VerticalAlignment="Top" Margin="12" Source="{Binding AdImage}" />
     <Grid Name="AnimationContainer">
-      <animations:EMVTapRegularCheckoutUserControl VerticalAlignment="Center" />
+      <animations:EMVInsertAndTapRegularCheckoutUserControl VerticalAlignment="Center" />
     </Grid>
-    <redbox_controls:RoundedButton Name="back_button" Style="{StaticResource white_purple_border_gradient_button_style}" Command="{x:Static local:SwipeViewCommands.GoBack}" Width="194" Height="66" CornerRadius="34" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="35,665,0,0">
-      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
-        <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_museo_slab_900_25}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#E42045" Text="{Binding BackButtonText, FallbackValue=Back}" />
-      </StackPanel>
-    </redbox_controls:RoundedButton>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+      <redbox_controls:RoundedButton Name="back_button" Style="{StaticResource white_purple_border_gradient_button_style}" Command="{x:Static local:SwipeViewCommands.GoBack}" Width="194" Height="66" CornerRadius="34" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="35,665,0,0">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
+          <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_museo_slab_900_25}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#E42045" Text="{Binding BackButtonText, FallbackValue=Back}" />
+        </StackPanel>
+      </redbox_controls:RoundedButton>
+      <Image Name="ad_image" Width="728" Height="90" VerticalAlignment="Bottom" Margin="43,0,0,13" Source="{Binding AdImage}" />
+    </StackPanel>
   </Grid>
 </controls:TextToSpeechUserControl>

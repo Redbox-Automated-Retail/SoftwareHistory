@@ -8,6 +8,7 @@ using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
@@ -20,6 +21,13 @@ namespace Redbox.Rental.Services;
 
 public class AfterSwipeOfferService : IAfterSwipeOfferService
 {
+	private class ThanksDialogStrings
+	{
+		public string Message { get; set; }
+
+		public string Comment { get; set; }
+	}
+
 	private static AfterSwipeOfferService _instance;
 
 	private Action<bool> _continueAction;
@@ -80,16 +88,25 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 			{
 				List<CustomerOffer> property = result.GetProperty<List<CustomerOffer>>("NewOffers");
 				List<CustomerOffer> property2 = result.GetProperty<List<CustomerOffer>>("StoredOffers");
+				string property3 = result.GetProperty<string>("EmailAddress");
+				if (Redbox.Rental.Services.Session.Session.Instance.UserInfo == null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.UserInfo = new UserInfo();
+				}
+				if (!string.IsNullOrEmpty(property3) && string.IsNullOrEmpty(Redbox.Rental.Services.Session.Session.Instance.UserInfo.Email))
+				{
+					Redbox.Rental.Services.Session.Session.Instance.UserInfo.Email = property3;
+				}
 				_offerList = new List<CustomerOffer>();
 				if ((property?.Count ?? 0) > 0)
 				{
 					LogHelper.Instance.Log($"AfterSwipeOfferService: Found {property.Count} new offers");
-					AddOffersToOfferList(property);
+					AddValidOffersToOfferList(property);
 				}
 				if ((property2?.Count ?? 0) > 0)
 				{
 					LogHelper.Instance.Log($"AfterSwipeOfferService: Found {property2.Count} stored offers");
-					AddOffersToOfferList(property2);
+					AddValidOffersToOfferList(property2);
 				}
 				if (_offerList.Count > 0)
 				{
@@ -129,10 +146,35 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		_continueAction(obj: true);
 	}
 
-	private void AddOffersToOfferList(List<CustomerOffer> newOffers)
+	private ITitleProduct GetProductOfferWouldApplyTo(CustomerOffer customerOffer)
+	{
+		ITitleProduct result = null;
+		if (customerOffer.RequiresProductInCart)
+		{
+			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+			SetPromoForSelectedOffer(null, service, customerOffer);
+			IPromotion promotion = service.CurrentRentalShoppingCart.Promotion;
+			if ((promotion?.PromotionItems?.Count ?? 0) == 1)
+			{
+				result = promotion.PromotionItems[0].RentalShoppingCartItem.TitleProduct;
+			}
+			ServiceLocator.Instance.GetService<IPromotionService>().SetPromotion(_previousPromotion);
+		}
+		return result;
+	}
+
+	private void AddValidOffersToOfferList(List<CustomerOffer> newOffers)
 	{
 		foreach (CustomerOffer newOffer in newOffers)
 		{
+			if (newOffer.CustomerSegmentType == CustomerSegmentType.NewMemberPerksSignup)
+			{
+				IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+				if (personalizationSession != null && personalizationSession.IsLoggedIn)
+				{
+					LogHelper.Instance.Log($"Not showing perks signup offer id {newOffer.OfferId} because user is already signed in.");
+				}
+			}
 			if (newOffer.CustomerSegmentType == CustomerSegmentType.BasketStretch && newOffer.DiscountType != OfferDiscountType.MultiNightPrice)
 			{
 				SetApplicableProducts(newOffer);
@@ -156,6 +198,18 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 					LogHelper.Instance.Log($"AfterSwipeOfferService: No offer products returned for offer Id {newOffer.OfferId}");
 				}
 			}
+			else if (newOffer.RequiresProductInCart)
+			{
+				newOffer.TargetProductInCart = GetProductOfferWouldApplyTo(newOffer);
+				if (newOffer.TargetProductInCart == null)
+				{
+					LogHelper.Instance.Log($"AfterSwipeOfferService: Skipping offer id {newOffer.OfferId} due to no applicable product in cart.");
+				}
+				else
+				{
+					_offerList.Add(newOffer);
+				}
+			}
 			else
 			{
 				_offerList.Add(newOffer);
@@ -170,9 +224,13 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.WasOfferAccepted = true;
 		if (offer.CustomerSegmentType == CustomerSegmentType.BasketStretch && offer.DiscountType != OfferDiscountType.MultiNightPrice)
 		{
-			SelectProductForOffer(offer);
+			SelectNewProductForOffer(offer);
 		}
-		else if (offer.OfferScopeType != OfferScopeType.Storeable)
+		else if (offer.CustomerSegmentType == CustomerSegmentType.NewMemberPerksSignup)
+		{
+			BeginPerksSignup();
+		}
+		else if (offer.OfferScopeType != OfferScopeType.Storeable && offer.DiscountType != OfferDiscountType.Treatment)
 		{
 			CreateAndShowNewCart(null);
 		}
@@ -182,7 +240,31 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		}
 	}
 
-	private void SelectProductForOffer(CustomerOffer customerOffer)
+	private void BeginPerksSignup()
+	{
+		ServiceLocator.Instance.GetService<IPerksSignupService>().StartSignupFlow(delegate(ISignupFlowResult signupFlowResult)
+		{
+			ContinueAfterSignup(signupFlowResult);
+		}, SignUpFlowContext.AfterPerksEquivalentOffer, delegate(ISignupFlowResult signupFlowResult)
+		{
+			ContinueAfterSignup(signupFlowResult);
+		});
+	}
+
+	private void ContinueAfterSignup(ISignupFlowResult signupFlowResult)
+	{
+		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.WasPerksSignupCompleted = signupFlowResult.AcceptedPerksSignup;
+		if (!signupFlowResult.AcceptedPerksSignup || _selectedOffer.DiscountType == OfferDiscountType.Loyalty || _selectedOffer.DiscountType == OfferDiscountType.Treatment)
+		{
+			ContinueWithOriginalCart();
+		}
+		else
+		{
+			CreateAndShowNewCart(_newProduct);
+		}
+	}
+
+	private void SelectNewProductForOffer(CustomerOffer customerOffer)
 	{
 		string offerBrowseTitle = GetOfferBrowseTitle(customerOffer);
 		PromoOfferBrowseInfo promoOfferBrowseInfo = new PromoOfferBrowseInfo();
@@ -193,19 +275,28 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		promoOfferBrowseInfo.OfferTitleText = offerBrowseTitle;
 		promoOfferBrowseInfo.DiscountedPriceCalc = CalcPromoPrice;
 		promoOfferBrowseInfo.AllowMnp = false;
+		promoOfferBrowseInfo.IsPurchase = customerOffer.ActionCode == ActionCode.Purchase;
 		OrchestrationService.ViewShow("promo_offer_browse_view", promoOfferBrowseInfo);
 	}
 
 	private string GetOfferBrowseTitle(CustomerOffer customerOffer)
 	{
 		string singularTitleFamilyStringFromOffer = CustomerOfferFunctions.GetSingularTitleFamilyStringFromOffer(customerOffer);
-		return customerOffer.DiscountType switch
+		switch (customerOffer.DiscountType)
 		{
-			OfferDiscountType.AmountOff => string.Format(Resources.promo_amount_off_browse_title_text, singularTitleFamilyStringFromOffer, customerOffer.Amount.ToString("#.00")), 
-			OfferDiscountType.PercentOff => string.Format(Resources.promo_percent_off_browse_title_text, singularTitleFamilyStringFromOffer, customerOffer.Amount.ToString("##")), 
-			OfferDiscountType.Free => string.Format(Resources.promo_free_rental_offer_browse_title_text, singularTitleFamilyStringFromOffer), 
-			_ => string.Empty, 
-		};
+		case OfferDiscountType.AmountOff:
+			if (customerOffer.ActionCode == ActionCode.Purchase)
+			{
+				return string.Format(Resources.promo_amount_off_purchase_browse_title_text, singularTitleFamilyStringFromOffer, customerOffer.Amount.ToString("#.00"));
+			}
+			return string.Format(Resources.promo_amount_off_browse_title_text, singularTitleFamilyStringFromOffer, customerOffer.Amount.ToString("#.00"));
+		case OfferDiscountType.PercentOff:
+			return string.Format(Resources.promo_percent_off_browse_title_text, singularTitleFamilyStringFromOffer, customerOffer.Amount.ToString("##"));
+		case OfferDiscountType.Free:
+			return string.Format(Resources.promo_free_rental_offer_browse_title_text, singularTitleFamilyStringFromOffer);
+		default:
+			return string.Empty;
+		}
 	}
 
 	private void CreateAndShowNewCart(ITitleProduct newProduct)
@@ -214,7 +305,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.SelectedProduct = newProduct;
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		service.RemoveMultiDiscDiscsFromRentalShoppingCart(service.CurrentRentalShoppingCart.ShoppingSessionId);
-		SetPromoForSelectedOffer(newProduct, service);
+		SetPromoForSelectedOffer(newProduct, service, _selectedOffer);
 		NewCartConfirmviewParameters parameter = new NewCartConfirmviewParameters
 		{
 			NewCart = service.CurrentRentalShoppingCart,
@@ -236,19 +327,24 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		}
 	}
 
-	private void SetPromoForSelectedOffer(ITitleProduct newProduct, IRentalShoppingCartService shoppingCartService)
+	private void SetPromoForSelectedOffer(ITitleProduct newProduct, IRentalShoppingCartService shoppingCartService, CustomerOffer selectedOffer)
 	{
 		IRentalShoppingCart currentRentalShoppingCart = shoppingCartService.CurrentRentalShoppingCart;
-		IRentalShoppingCartItem applyToLineItem = currentRentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem i) => i.ProductId == newProduct?.ProductId);
+		IRentalShoppingCartItem rentalShoppingCartItem = currentRentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem i) => i.ProductId == newProduct?.ProductId);
 		IPromotionService service = ServiceLocator.Instance.GetService<IPromotionService>();
-		if (_selectedOffer.DiscountType != OfferDiscountType.MultiNightPrice || Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
+		if (selectedOffer.ShouldAdjustPrice(Redbox.Rental.Services.Configuration.Configuration.Instance) && selectedOffer.ActionCode == ActionCode.Purchase)
+		{
+			LogHelper.Instance.Log("AfterSwipeOfferService.SetPromoForSelectedOffer: Adjusting price for PRM offer.");
+			shoppingCartService.SetPurchasePriceForSelectedItem(selectedOffer, rentalShoppingCartItem, service);
+		}
+		else if (selectedOffer.DiscountType != OfferDiscountType.MultiNightPrice || Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
 		{
 			LogHelper.Instance.Log("AfterSwipeOfferService.SetPromoForSelectedOffer: Creating promo for the offer.");
-			service.SetPromoFromCustomerOffer(currentRentalShoppingCart, _selectedOffer, applyToLineItem);
+			service.SetPromoFromCustomerOffer(currentRentalShoppingCart, selectedOffer, rentalShoppingCartItem);
 		}
-		if (_selectedOffer.DiscountType == OfferDiscountType.MultiNightPrice)
+		if (selectedOffer.DiscountType == OfferDiscountType.MultiNightPrice)
 		{
-			SetMnpPriceForApplicableItems(_selectedOffer, shoppingCartService.CurrentRentalShoppingCart);
+			SetMnpPriceForApplicableItems(selectedOffer, currentRentalShoppingCart);
 		}
 	}
 
@@ -293,7 +389,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		{
 			exclude = offer.TitleIds;
 		}
-		ErrorList errorList = service.GetProductsForCustomerOffer(titleTypes: CustomerOfferFunctions.GetTitleTypesFromFormatIds(offer.FormatIds), titleFamily: offer.TitleFamily ?? TitleFamily.All, includeTitleTypes: offer.IncludeFormats, include: include, exclude: exclude, includeOlderThan: offer.IncludeOlderThan, isAdaView: ApplicationState.Instance.IsADAAccessible, products: out products);
+		ErrorList errorList = service.GetProductsForCustomerOffer(titleTypes: CustomerOfferFunctions.GetTitleTypesFromFormatIds(offer.FormatIds), titleFamily: offer.TitleFamily ?? TitleFamily.All, includeTitleTypes: offer.IncludeFormats, include: include, exclude: exclude, includeOlderThan: offer.IncludeOlderThan, isAdaView: ApplicationState.Instance.IsADAAccessible, isPurchase: offer.ActionCode == ActionCode.Purchase, products: out products);
 		if (errorList.Count > 0)
 		{
 			errorList.ToLogHelper();
@@ -313,7 +409,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		_offerList = null;
 		if (_selectedOffer != null && (_selectedOffer.PromotionCode != null || _selectedOffer.OfferDiscountCode != null))
 		{
-			PromotionFunctions.AddPromoCodeToAnalytics(_selectedOffer.PromotionCode ?? _selectedOffer.OfferDiscountCode);
+			_selectedOffer.RedeemedDateTime = DateTime.Now;
 		}
 		_continueAction(obj: true);
 	}
@@ -333,7 +429,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 			service.RemoveItemFromRentalShoppingCartByProductId(service.CurrentRentalShoppingCart.ShoppingSessionId, _newProduct.ProductId, userRemoved: true);
 			_newProduct = null;
 		}
-		service.RemovePromoOfferFromCart(service.CurrentRentalShoppingCart.ShoppingSessionId);
+		service.RemovePromoOfferFromCart(service.CurrentRentalShoppingCart.ShoppingSessionId, force: true);
 		Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.WasOfferAccepted = false;
 		ServiceLocator.Instance.GetService<IPromotionService>().SetPromotion(_previousPromotion);
 	}

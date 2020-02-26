@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Redbox.Core;
 using Redbox.FraudServices.Proxy.ComponentModel;
@@ -17,9 +16,9 @@ public class BarcodeTrackingService : IBarcodeTrackingService
 {
 	private List<IBarcodeTrackingInfo> _barcodeTrackingInfoCacheList = new List<IBarcodeTrackingInfo>();
 
-	private object _lockObject = new object();
+	private readonly object _lockObject = new object();
 
-	private BarcodeTrackingInfoCacheFile _barcodeTrackingInfoCacheFile;
+	private readonly BarcodeTrackingInfoCacheFile _barcodeTrackingInfoCacheFile;
 
 	private Timer _sendMessageTimer;
 
@@ -81,15 +80,15 @@ public class BarcodeTrackingService : IBarcodeTrackingService
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 		if (service != null)
 		{
-			_queueMessageProcessorService = new QueueMessageProcessorService
+			IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
+			if (service2 != null && service2.AwsBarcodeTrackingEnabled)
 			{
-				Name = "FraudServices",
-				IsDefault = false,
-				BeforeMessageProcessing = null,
-				ProcessMessage = OnProcessMessage,
-				MessageProcessed = null
-			};
-			_queueMessageProcessorService.SupportedMessageTypes.Add("BarcodeTracking");
+				_queueMessageProcessorService = new AWSBarcodeTrackingMessageProcessorService();
+			}
+			else
+			{
+				_queueMessageProcessorService = new OldBarcodeTrackingMessageProcessorService();
+			}
 			service.RegisterMessageProcessorService(_queueMessageProcessorService);
 		}
 		else
@@ -104,39 +103,6 @@ public class BarcodeTrackingService : IBarcodeTrackingService
 		{
 			ServiceLocator.Instance.GetService<IQueueService>()?.UnRegisterMessageProcessorService(_queueMessageProcessorService);
 			_queueMessageProcessorService = null;
-		}
-	}
-
-	private static bool OnProcessMessage(IMessage message, out IDictionary<string, object> response)
-	{
-		bool result = false;
-		response = new Dictionary<string, object>();
-		IApplicationState service = ServiceLocator.Instance.GetService<IApplicationState>();
-		if (service == null || service.IsStandAlone)
-		{
-			LogHelper.Instance.Log("Unable to process barcode tracking message because application is in stand alone mode");
-			result = false;
-		}
-		try
-		{
-			string jsonRequest = Encoding.ASCII.GetString(message.Data);
-			if (message.Type == "BarcodeTracking")
-			{
-				bool flag = ServiceLocator.Instance.GetService<IConfiguration>()?.AwsBarcodeTrackingEnabled ?? false;
-				LogHelper.Instance.Log($"Use AWS for BarcodeTracking? {flag}");
-				string apiUri = (flag ? "api/frauddata/BarcodeTracking" : "api/Fraud/addbarcodetracking");
-				response = FraudServicesProxy.Instance.ExecuteMessage(message.Type, apiUri, jsonRequest, flag);
-			}
-			else
-			{
-				LogHelper.Instance.Log($"Error in BarcodeTrackingService.OnProcessMessage.  No handler for message type {message.Type}");
-			}
-			return response != null && response.ContainsKey("success") && (bool)response["success"];
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Error in BarcodeTrackingServices.OnProcessMessage.", e);
-			return result;
 		}
 	}
 
@@ -279,8 +245,7 @@ public class BarcodeTrackingService : IBarcodeTrackingService
 			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 			ServiceLocator.Instance.GetService<IMacroService>();
 			IBarcodeTrackingInfo barcodeTrackingInfo = barcodeTrackingInfoList.FirstOrDefault();
-			int result2 = 0;
-			int.TryParse(barcodeTrackingInfo?.KioskId, out result2);
+			int.TryParse(barcodeTrackingInfo?.KioskId, out var result2);
 			AddBarcodeTrackingRequest addBarcodeTrackingRequest = new AddBarcodeTrackingRequest
 			{
 				KioskId = result2,

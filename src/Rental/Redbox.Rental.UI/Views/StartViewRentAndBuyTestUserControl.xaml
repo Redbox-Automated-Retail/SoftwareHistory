@@ -102,13 +102,13 @@
               </UserControl>
             </Grid>
           </Grid>
-          <Redbox:RoundedButton Name="help_button" Style="{StaticResource style_rb_purple_white_border_no_dropshadow_button}" CornerRadius="31" VerticalAlignment="Top" Width="50" Height="50" Margin="13,0,13,0" Command="{x:Static localbase:Commands.HelpCommand}" Focusable="False">
+          <Redbox:RoundedButton Name="help_button" Style="{StaticResource style_rb_purple_white_border_no_dropshadow_button}" CornerRadius="31" VerticalAlignment="Top" Width="50" Height="50" Margin="8,0,8,0" Command="{x:Static localbase:Commands.HelpCommand}" Focusable="False">
             <TextBlock Style="{StaticResource font_museo_slab_700_24}">?</TextBlock>
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="sign_in_button" CornerRadius="25" Width="160" Height="55" Margin="13,0,13,0" Focusable="False" Style="{StaticResource white_warmpurple_border_button_style}" Command="{x:Static localbase:Commands.SignInCommand}" IsEnabled="{Binding Path=SignInButtonEnabled, FallbackValue=true}" Visibility="{Binding SignInVisibility}">
-            <TextBlock Style="{StaticResource font_museo_slab_700_18}" Foreground="#FF000000" Text="{Binding ToggleSignInButtonText, FallbackValue=Sign In}" />
+          <Redbox:RoundedButton Name="sign_in_button" CornerRadius="25" Width="210" Height="55" Margin="8,0,8,0" Focusable="False" Style="{StaticResource white_warmpurple_border_button_style}" Command="{x:Static localbase:Commands.SignInCommand}" IsEnabled="{Binding Path=SignInButtonEnabled, FallbackValue=true}" Visibility="{Binding SignInVisibility}">
+            <TextBlock Style="{StaticResource font_museo_slab_700_18}" Foreground="#FF000000" Margin="20,0" Text="{Binding ToggleSignInButtonText, FallbackValue=Sign In  |  Sign Up}" />
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="espanol_button" Style="{StaticResource style_rb_purple_white_border_no_dropshadow_button}" CornerRadius="25" VerticalAlignment="Top" Width="120" Height="55" Margin="13,0,13,0" Command="{x:Static localbase:Commands.ToggleLanguageModeCommand}" Focusable="False">
+          <Redbox:RoundedButton Name="espanol_button" Style="{StaticResource style_rb_purple_white_border_no_dropshadow_button}" CornerRadius="25" VerticalAlignment="Top" Width="120" Height="55" Margin="8,0,8,0" Command="{x:Static localbase:Commands.ToggleLanguageModeCommand}" Focusable="False">
             <TextBlock Style="{StaticResource font_museo_slab_700_18}" Text="{Binding Path=ToggleLanguageButtonText, FallbackValue=Español}" />
           </Redbox:RoundedButton>
         </StackPanel>

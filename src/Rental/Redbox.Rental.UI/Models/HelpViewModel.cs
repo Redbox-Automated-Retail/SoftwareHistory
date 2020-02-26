@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Xps.Packaging;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.Model.Session;
@@ -58,19 +58,11 @@ public class HelpViewModel : BaseModel<HelpViewModel>
 
 	public static DependencyProperty CurrentPageTextProperty = BaseModel<HelpViewModel>.CreateDependencyProperty("CurrentPageText", TYPES.STRING);
 
-	private Dictionary<HelpDocuments, HelpDocumentInfo> m_helpDocumentInfoList = new Dictionary<HelpDocuments, HelpDocumentInfo>();
-
 	private HelpDocuments m_currentHelpDocument;
 
-	private int m_currentHelpDocumentPage;
+	public ObservableCollection<HelpButtonData> TopRowButtonList { get; set; }
 
-	private string m_helpPageCounter;
-
-	private FixedDocumentSequence m_fixedDocumentSequence;
-
-	private XpsDocument m_xpsDoc;
-
-	public ObservableCollection<HelpButtonData> HelpButtonList { get; set; }
+	public ObservableCollection<HelpButtonData> BottomRowButtonList { get; set; }
 
 	public string BackButtonText
 	{
@@ -261,24 +253,14 @@ public class HelpViewModel : BaseModel<HelpViewModel>
 		set
 		{
 			m_currentHelpDocument = value;
-			foreach (HelpButtonData helpButton in HelpButtonList)
+			foreach (HelpButtonData item in TopRowButtonList.Union(BottomRowButtonList))
 			{
-				helpButton.IsEnabled = helpButton.DocumentToShow != m_currentHelpDocument;
+				item.IsEnabled = item.DocumentToShow != m_currentHelpDocument;
 			}
 		}
 	}
 
-	public Dictionary<HelpDocuments, HelpDocumentInfo> HelpDocumentInfoList
-	{
-		get
-		{
-			return m_helpDocumentInfoList;
-		}
-		set
-		{
-			m_helpDocumentInfoList = value;
-		}
-	}
+	public Dictionary<HelpDocuments, HelpDocumentInfo> HelpDocumentInfoList { get; set; } = new Dictionary<HelpDocuments, HelpDocumentInfo>();
 
 	public event HelpDocumentChangedHandler OnHelpDocumentChanged;
 
@@ -294,7 +276,8 @@ public class HelpViewModel : BaseModel<HelpViewModel>
 
 	public HelpViewModel()
 	{
-		HelpButtonList = new ObservableCollection<HelpButtonData>();
+		TopRowButtonList = new ObservableCollection<HelpButtonData>();
+		BottomRowButtonList = new ObservableCollection<HelpButtonData>();
 	}
 
 	private static void CurrentHelpDocPageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

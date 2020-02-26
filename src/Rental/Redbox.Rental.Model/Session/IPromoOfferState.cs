@@ -17,6 +17,8 @@ public interface IPromoOfferState
 
 	bool WasOfferAccepted { get; set; }
 
+	bool WasPerksSignupCompleted { get; set; }
+
 	List<IKioskProduct> BrowseProductsShown { get; set; }
 
 	List<IBrowseItemModel> TTSBrowseItemModelsShown { get; set; }

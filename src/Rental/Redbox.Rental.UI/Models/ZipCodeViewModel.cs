@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
+using Redbox.Rental.Model.Ads;
 
 namespace Redbox.Rental.UI.Models;
 
@@ -17,7 +18,7 @@ public class ZipCodeViewModel : DependencyObject
 
 	public static readonly DependencyProperty AdImageVisibilityProperty = DependencyProperty.Register("AdImageVisibility", typeof(Visibility), typeof(ZipCodeViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
-	public static readonly DependencyProperty StackPanelMarginProperty = DependencyProperty.Register("StackPanelMargin", typeof(Thickness), typeof(ZipCodeViewModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty StackPanelMarginProperty = DependencyProperty.Register("StackPanelMargin", typeof(Thickness), typeof(ZipCodeViewModel), new FrameworkPropertyMetadata(new Thickness(0.0, 49.0, 0.0, 0.0)));
 
 	public static readonly DependencyProperty DisplayTextProperty = DependencyProperty.Register("DisplayText", typeof(string), typeof(ZipCodeViewModel), new FrameworkPropertyMetadata(null));
 
@@ -26,14 +27,11 @@ public class ZipCodeViewModel : DependencyObject
 		AffectsRender = true
 	});
 
-	public static readonly DependencyProperty NextButtonArrowVisibilityProperty = DependencyProperty.Register("NextButtonArrowVisibility", typeof(Visibility), typeof(ZipCodeViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
-	{
-		AffectsRender = true
-	});
-
 	public int RequiredLength { get; set; }
 
 	public string HeaderLabelText { get; set; }
+
+	public string Header2LabelText { get; set; }
 
 	public string Note1LabelText { get; set; }
 
@@ -70,6 +68,8 @@ public class ZipCodeViewModel : DependencyObject
 			});
 		}
 	}
+
+	public IAdImpression AdImpression { get; set; }
 
 	public Visibility AdImageVisibility
 	{
@@ -141,21 +141,6 @@ public class ZipCodeViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(IsNextButtonEnabledProperty, value);
-			});
-		}
-	}
-
-	public Visibility NextButtonArrowVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(NextButtonArrowVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(NextButtonArrowVisibilityProperty, value);
 			});
 		}
 	}

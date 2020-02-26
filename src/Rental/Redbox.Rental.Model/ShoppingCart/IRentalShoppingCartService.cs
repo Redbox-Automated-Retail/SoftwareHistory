@@ -39,9 +39,11 @@ public interface IRentalShoppingCartService
 
 	List<string> AssignBarcodesToVend(IRentalShoppingCart rentalShoppingCart);
 
-	void RemovePromoOfferFromCart(Guid shoppingSessionId);
+	void RemovePromoOfferFromCart(Guid shoppingSessionId, bool force = false);
 
 	void AddMultiNightOfferToItem(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer);
 
 	void RemoveMultiNightOfferFromItem(IRentalShoppingCartItem rentalShoppingCartItem);
+
+	void SetPurchasePriceForSelectedItem(CustomerOffer selectedOffer, IRentalShoppingCartItem newLineItem, IPromotionService promotionService);
 }

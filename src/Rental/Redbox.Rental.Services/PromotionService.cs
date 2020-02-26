@@ -55,6 +55,8 @@ public class PromotionService : IPromotionService
 
 		public const string FormatIds = "format_ids";
 
+		public const string ActionCode = "action_code";
+
 		public const string GameRequired = "GameRequired";
 	}
 
@@ -241,6 +243,14 @@ public class PromotionService : IPromotionService
 							promoCodeValidationResult.FormatIds.Add(result11);
 						}
 					}
+				}
+				if (result.Properties.ContainsKey("action_code") && Enum.TryParse<PromotionActionCode>(result.Properties["action_code"]?.ToString(), out var result12))
+				{
+					promoCodeValidationResult.ActionCode = result12;
+				}
+				else
+				{
+					promoCodeValidationResult.ActionCode = PromotionActionCode.Rental;
 				}
 			}
 			catch (Exception e)
@@ -743,7 +753,8 @@ public class PromotionService : IPromotionService
 				GetFormat = null,
 				CampaignTitles = null,
 				ProductTypeId = null,
-				FormatIds = null
+				FormatIds = null,
+				ActionCode = PromotionActionCode.Rental
 			};
 			SetPromotion(promotion);
 		}
@@ -772,7 +783,8 @@ public class PromotionService : IPromotionService
 					GetFormat = null,
 					CampaignTitles = null,
 					ProductTypeId = null,
-					FormatIds = null
+					FormatIds = null,
+					ActionCode = ((offer.ActionCode == ActionCode.Purchase) ? PromotionActionCode.Purchase : PromotionActionCode.Rental)
 				};
 				promotion.PromotionItems.Add(new PromotionItem
 				{
@@ -804,7 +816,8 @@ public class PromotionService : IPromotionService
 						Include = offer.IncludeTitles
 					},
 					ProductTypeId = (int)offer.TitleFamily.Value,
-					FormatIds = (offer.IncludeFormats ? offer.FormatIds : GetFilteredFormatIds(offer.FormatIds))
+					FormatIds = (offer.IncludeFormats ? offer.FormatIds : GetFilteredFormatIds(offer.FormatIds)),
+					ActionCode = ((offer.ActionCode == ActionCode.Purchase) ? PromotionActionCode.Purchase : PromotionActionCode.Rental)
 				};
 				SetPromotion(promotion2);
 				IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
@@ -831,7 +844,7 @@ public class PromotionService : IPromotionService
 		return list;
 	}
 
-	private decimal CalcInCartOfferPromoAmount(IRentalShoppingCartItem newLineItem, CustomerOffer offer)
+	public decimal CalcInCartOfferPromoAmount(IRentalShoppingCartItem newLineItem, CustomerOffer offer)
 	{
 		decimal num = 0m;
 		if (newLineItem != null)

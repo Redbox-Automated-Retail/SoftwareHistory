@@ -76,11 +76,11 @@ public partial class VendDiscAnimationUserControl : UserControl, IVendDiscAnimat
 		}
 		set
 		{
-			TitleTextBlock.Text = ((value.Length != 0) ? value[0] : string.Empty);
-			MessageTextBlock.Text = ((value.Length > 1) ? value[1] : string.Empty);
-			MessageTextBlock1.Text = ((value.Length > 2) ? value[2] : string.Empty);
-			MessageTextBlock2.Text = ((value.Length > 3) ? value[3] : string.Empty);
-			MessageTextBlock3.Text = ((value.Length > 4) ? value[4] : string.Empty);
+			TitleTextBlock.Text = ((value != null && value.Length != 0) ? value[0] : string.Empty);
+			MessageTextBlock.Text = ((value != null && value.Length > 1) ? value[1] : string.Empty);
+			MessageTextBlock1.Text = ((value != null && value.Length > 2) ? value[2] : string.Empty);
+			MessageTextBlock2.Text = ((value != null && value.Length > 3) ? value[3] : string.Empty);
+			MessageTextBlock3.Text = ((value != null && value.Length > 4) ? value[4] : string.Empty);
 		}
 	}
 

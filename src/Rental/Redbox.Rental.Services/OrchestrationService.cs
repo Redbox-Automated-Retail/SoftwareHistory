@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Media.Imaging;
 using System.Xml;
+using DeviceService.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
@@ -15,6 +16,8 @@ using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.Session;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
@@ -48,10 +51,6 @@ public static class OrchestrationService
 	private static Func<bool> _getVendJobCompleteCallback;
 
 	public static bool TTSEnabled => ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false;
-
-	private static IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-
-	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
 
 	private static IViewService ViewService => ServiceLocator.Instance.GetService<IViewService>();
 
@@ -89,12 +88,6 @@ public static class OrchestrationService
 
 	public static void CloseAnalytics(Guid sessionId, bool isSessionAbandoned)
 	{
-		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		if (service != null && service.SessionExists(sessionId.ToString()) && service.IsOpen(sessionId.ToString()))
-		{
-			service.AddElement("session", "abandon", isSessionAbandoned.ToString(), sessionId.ToString());
-			service.Close(sessionId.ToString());
-		}
 		AnalyticsService?.End(sessionId.ToString(), isSessionAbandoned);
 	}
 
@@ -490,15 +483,15 @@ public static class OrchestrationService
 
 	public static void ViewShow(string viewName)
 	{
-		ViewShow(viewName, showSafe: false);
+		ViewShow(viewName, showSafe: false, null);
 	}
 
-	private static void ViewShow(string viewName, bool showSafe)
+	private static void ViewShow(string viewName, bool showSafe, object parameter)
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		if (!showSafe || (service != null && service.IsSafeToChangeView()))
 		{
-			service?.Push(viewName);
+			service?.Push(viewName, parameter);
 			service?.Show();
 		}
 		else
@@ -507,9 +500,14 @@ public static class OrchestrationService
 		}
 	}
 
+	public static void ViewShowSafe(string viewName, object parameter)
+	{
+		ViewShow(viewName, showSafe: true, parameter);
+	}
+
 	public static void ViewShowSafe(string viewName)
 	{
-		ViewShow(viewName, showSafe: true);
+		ViewShowSafe(viewName, null);
 	}
 
 	public static void ViewShow(string viewName, object parameter)
@@ -624,6 +622,27 @@ public static class OrchestrationService
 		return list;
 	}
 
+	public static SessionType AnalyticsSessionTypeToKioskClientServiceSessionType(AnalyticsSessionType analyticsSessionType)
+	{
+		SessionType result = SessionType.None;
+		switch (analyticsSessionType)
+		{
+		case AnalyticsSessionType.BrowseVend:
+			result = SessionType.Browse;
+			break;
+		case AnalyticsSessionType.OnlinePickup:
+			result = SessionType.Pickup;
+			break;
+		case AnalyticsSessionType.Return:
+			result = SessionType.Return;
+			break;
+		case AnalyticsSessionType.QuickReturn:
+			result = SessionType.Return;
+			break;
+		}
+		return result;
+	}
+
 	public static void StarteUserInteraction(string userTriggerAction, AnalyticsSessionType sessionType = AnalyticsSessionType.BrowseVend)
 	{
 		LogHelper.Instance.Log($"OrchestrationService.StartUserInteraction - Session Type: {sessionType},  user trigger action: {userTriggerAction}");
@@ -637,21 +656,12 @@ public static class OrchestrationService
 		{
 			Redbox.Rental.Services.Session.Session.Instance.HasReceivedUserInteraction = true;
 			Redbox.Rental.Services.Session.Session.Instance.SessionStartTriggerAction = userTriggerAction;
+			ServiceLocator.Instance.GetService<IKioskClientService>()?.Session?.Start(AnalyticsSessionTypeToKioskClientServiceSessionType(sessionType));
 		}
 		IShoppingSession currentSession = service.GetCurrentSession();
 		if (currentSession != null)
 		{
 			_ = currentSession.Id;
-			ISessionAnalyticsService service2 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-			if (service2 != null && !service2.SessionExists(currentSession.Id.ToString()))
-			{
-				service2.Start(currentSession.Id.ToString(), sessionType);
-				IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
-				if (service3 != null)
-				{
-					service2.AddView(currentSession.Id.ToString(), service3?.GetStartOverViewName());
-				}
-			}
 			AnalyticsConstants.SessionType sessionType2 = AnalyticsConstants.SessionType.None;
 			switch (sessionType)
 			{
@@ -665,44 +675,15 @@ public static class OrchestrationService
 				sessionType2 = AnalyticsConstants.SessionType.Return;
 				break;
 			}
-			IAnalyticsService service4 = ServiceLocator.Instance.GetService<IAnalyticsService>();
-			service4?.Start(currentSession.Id.ToString(), sessionType2);
-			service4?.AddView(ViewService?.GetCurrentViewAnalyticsName());
+			IAnalyticsService service2 = ServiceLocator.Instance.GetService<IAnalyticsService>();
+			service2?.Start(currentSession.Id.ToString(), sessionType2);
+			service2?.AddView(ViewService?.GetCurrentViewAnalyticsName());
 		}
 		RentalRefreshIfNeeded();
 	}
 
-	public static void AnalyticsAddViewEvent(string subItemType, string subItemValue, IAnalyticsData analyticsData = null)
-	{
-		if (SessionAnalyticsService != null)
-		{
-			SessionAnalyticsService.AddViewEvent(subItemType, subItemValue);
-		}
-	}
-
-	public static void AnalyticsAddNode(string parentNodeName, string nodeName)
-	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddNode(parentNodeName, nodeName);
-	}
-
-	public static void AnalyticsAddNode(string parentNodeName, string nodeName, Guid sessionId)
-	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddNode(parentNodeName, nodeName, sessionId.ToString());
-	}
-
-	public static void AnalyticsAddAttribute(string parentNodeName, string attributeName, string attributeValue)
-	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddAttribute(parentNodeName, attributeName, attributeValue);
-	}
-
-	public static void AnalyticsAddAttribute(string parentNodeName, Dictionary<string, string> attributes, Guid sessionId)
-	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddAttributes(parentNodeName, attributes, sessionId.ToString());
-	}
-
 	public static void AnalyticsAddLoggedInCustomerProfileNumber(string customerProfileNumber)
 	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddLoggedInCustomerProfileNumber(customerProfileNumber);
 		AnalyticsService?.AddSessionProperty("LoggedInCustomerProfileNumber", customerProfileNumber);
 	}
 
@@ -812,7 +793,7 @@ public static class OrchestrationService
 		ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
 		if (trackData != null)
 		{
-			return trackData.CardType == CardType.RedboxGiftCard;
+			return trackData.CardType == Redbox.Core.CardType.RedboxGiftCard;
 		}
 		return false;
 	}
@@ -826,6 +807,10 @@ public static class OrchestrationService
 			ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
 			if (trackData != null && trackData.HasValidData())
 			{
+				if (trackData.CardSourceType == CardSourceType.Mobile || trackData.CardSourceType == CardSourceType.EMVContactless || trackData.CardSourceType == CardSourceType.MSDContactless)
+				{
+					return false;
+				}
 				string firstName = trackData.FirstName;
 				string lastName = trackData.LastName;
 				Store store = ServiceLocator.Instance.GetService<IDataService>().GetStore();

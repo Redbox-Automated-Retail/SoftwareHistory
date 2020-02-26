@@ -1,4 +1,5 @@
 using System;
+using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.UI.Models;
@@ -214,7 +215,7 @@ public class StartViewTextToSpeech
 				{
 					Text = "To Rent Movies, Press 1."
 				});
-				if (viewModel.RentGamesEnabled)
+				if (viewModel.RentGamesEnabled && viewModel.RentOrBuyGamesButtonVisibility == Visibility.Visible)
 				{
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
@@ -229,26 +230,11 @@ public class StartViewTextToSpeech
 						Text = "To Rent Games, Press 2."
 					});
 				}
-				if (viewModel.RentTVEnabled)
-				{
-					speechPart.Events.Add(new MapKeyPressToAction
-					{
-						KeyCode = "3",
-						Action = delegate
-						{
-							viewModel.ProcessRentTVButtonClick();
-						}
-					});
-					speechPart.Texts.Add(new TextPart
-					{
-						Text = "To Rent TV, Press 3."
-					});
-				}
 				if (viewModel.BuyMoviesEnabled)
 				{
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						KeyCode = "4",
+						KeyCode = "3",
 						Action = delegate
 						{
 							viewModel.ProcessBuyMoviesButtonClick();
@@ -256,14 +242,14 @@ public class StartViewTextToSpeech
 					});
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "To Purchase Movies, Press 4."
+						Text = "To Purchase Movies, Press 3."
 					});
 				}
-				if (viewModel.BuyGamesEnabled)
+				if (viewModel.BuyGamesEnabled && viewModel.BuyGamesButtonVisibility == Visibility.Visible)
 				{
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						KeyCode = "5",
+						KeyCode = "4",
 						Action = delegate
 						{
 							viewModel.ProcessBuyGamesButtonClick();
@@ -271,12 +257,12 @@ public class StartViewTextToSpeech
 					});
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "To Purchase Games, Press 5."
+						Text = "To Purchase Games, Press 4."
 					});
 				}
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
-					KeyCode = "6",
+					KeyCode = "5",
 					Action = delegate
 					{
 						viewModel.ProcessPickupButtonClick();
@@ -284,11 +270,11 @@ public class StartViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = "For Pick Up, Press 6."
+					Text = "For Pick Up, Press 5."
 				});
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
-					KeyCode = "7",
+					KeyCode = "6",
 					Action = delegate
 					{
 						viewModel.ProcessReturnButtonClicked();
@@ -296,11 +282,11 @@ public class StartViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = "For return, Press 7."
+					Text = "For return, Press 6."
 				});
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
-					KeyCode = "8",
+					KeyCode = "7",
 					Action = delegate
 					{
 						viewModel.ProcessHelpButtonClicked();
@@ -308,13 +294,13 @@ public class StartViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = "For help, Press 8."
+					Text = "For help, Press 7."
 				});
 				if (viewModel.SignInButtonEnabled)
 				{
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						KeyCode = "9",
+						KeyCode = "8",
 						Action = delegate
 						{
 							viewModel.ProcessSignInButtonClicked();
@@ -322,7 +308,7 @@ public class StartViewTextToSpeech
 					});
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "To Sign In, Press 9."
+						Text = "To Sign In, Press 8."
 					});
 				}
 				speechPart.Events.Add(new MapKeyPress

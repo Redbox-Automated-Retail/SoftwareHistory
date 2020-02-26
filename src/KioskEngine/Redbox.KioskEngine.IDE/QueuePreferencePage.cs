@@ -6,7 +6,6 @@ using System.Windows.Forms;
 using Alsing.SourceCode;
 using Alsing.Windows.Forms;
 using Redbox.Core;
-using Redbox.JSONPrettyPrinter;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.IDE.Properties;
 
@@ -100,7 +99,7 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 			{
 				text = string.Empty;
 			}
-			m_syntaxDocument.Text = PrettyPrinter.GetPrettyString(text);
+			m_syntaxDocument.Text = text.ToPrettyJson();
 		}
 		else
 		{

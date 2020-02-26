@@ -54,9 +54,15 @@ public static class ConfigSetting
 
 	public const string KioskDataServicesKey = "KioskDataServicesKey";
 
-	public const string SendKioskAnalyticsToKioskDataService = "SendKioskAnalyticsToKioskDataService";
+	public const string SendXMLKioskAnalyticsToKioskDataService = "SendXMLKioskAnalyticsToKioskDataService";
 
-	public const string KioskAnalyticsJsonEnabled = "KioskAnalyticsJsonEnabled";
+	public const string SendJsonKioskAnalyticsToKioskDataService = "SendJsonKioskAnalyticsToKioskDataService";
+
+	public const string SendKioskAlertsToKioskServices = "SendKioskAlertsToKioskServices";
+
+	public const string SendKioskAlertsToKioskDataService = "SendKioskAlertsToKioskDataService";
+
+	public const string SendKioskVersionsToKioskDataService = "SendKioskVersionsToKioskDataService";
 
 	public const string MaxUnknownSyncs = "MaxUnknownSyncs";
 
@@ -77,6 +83,16 @@ public static class ConfigSetting
 	public const string UseDiscountsForPmnpOffers = "UseDiscountsForPmnpOffers";
 
 	public const string ShowAuthChangeMessage = "ShowAuthChangeMessage";
+
+	public const string ForcedAirExchangerConfigured = "ForcedAirExchangerConfigured";
+
+	public const string SendAuditEventsToKioskServices = "SendAuditEventsToKioskServices";
+
+	public const string SendAuditEventsToKioskDataService = "SendAuditEventsToKioskDataService";
+
+	public const string SendKioskFunctionChecksToKioskServices = "SendKioskAlertsToKioskServices";
+
+	public const string SendKioskFunctionChecksToKioskDataService = "SendKioskAlertsToKioskDataService";
 
 	public const string GameEnableXbox360 = "GameEnableXbox360";
 
@@ -110,13 +126,25 @@ public static class ConfigSetting
 
 	public const string CollectionsPopUpPaddleClicks = "CollectionsPopUpPaddleClicks";
 
+	public const string EndGameRentals = "EndGameRentals";
+
+	public const string EndGames = "EndGames";
+
 	public const string EnableMarketingAds = "EnableMarketingAds";
+
+	public const string EnableVistarAds = "EnableVistarAds";
+
+	public const string VistarGetAdTimeout = "VistarGetAdTimeout";
 
 	public const string EnableFlashDeals = "EnableFlashDeals";
 
 	public const string FlashDealPrices = "FlashDealPrices";
 
 	public const string Show99CentsBrowseFilterButton = "Show99CentsBrowseFilterButton";
+
+	public const string ShowExpandedFormatButtons = "ShowExpandedFormatButtons";
+
+	public const string ShowExpandedFormatButtonsNewText = "ShowExpandedFormatButtonsNewText";
 
 	public const string ShowFAQUpdated = "ShowFAQUpdated";
 
@@ -130,6 +158,10 @@ public static class ConfigSetting
 
 	public const string ShowMobileFaqUpdated = "ShowMobileFAQUpdated";
 
+	public const string ShowCAPrivacyNoticeUpdated = "ShowCAPrivacyNoticeUpdated";
+
+	public const string ShowDoNotSellUpdated = "ShowDoNotSellUpdated";
+
 	public const string FAQDocument = "FAQDocument";
 
 	public const string TermsDocument = "TermsDocument";
@@ -141,6 +173,10 @@ public static class ConfigSetting
 	public const string PerksDocument = "PerksDocument";
 
 	public const string MobileFaqDocument = "MobileFAQDocument";
+
+	public const string CAPrivacyNoticeDocument = "CAPrivacyNoticeDocument";
+
+	public const string DoNotSellDocument = "DoNotSellDocument";
 
 	public const string ABTestOffValue = "OFF";
 
@@ -160,9 +196,7 @@ public static class ConfigSetting
 
 	public const string OutOfStockTitleDetails = "OutOfStockTitleDetails";
 
-	public const string TVEnabled = "TVEnabled";
-
-	public const string TVTitleIds = "TVTitleIds";
+	public const string TitleDetailsLayout = "TitleDetailsLayout";
 
 	public const string ShoppingCartLayout = "ShoppingCartLayout";
 
@@ -244,6 +278,12 @@ public static class ConfigSetting
 
 	public const string DiscoverInsertChipEnabled = "DiscoverInsertChipEnabled";
 
+	public const string HideMobilePayOption = "HideMobilePayOption";
+
+	public const string HideApplePayImage = "HideApplePayImage";
+
+	public const string HideGooglePayImage = "HideGooglePayImage";
+
 	public const string BluefinAutoActivate = "BluefinAutoActivate";
 
 	public const string BluefinServiceUrl = "BluefinServiceUrl";
@@ -251,4 +291,6 @@ public static class ConfigSetting
 	public const string BluefinServiceApiKey = "BluefinServiceApiKey";
 
 	public const string BluefinServiceTimeout = "BluefinServiceTimeout";
+
+	public const string KioskClientServiceBaseUrl = "KioskClientServiceBaseUrl";
 }

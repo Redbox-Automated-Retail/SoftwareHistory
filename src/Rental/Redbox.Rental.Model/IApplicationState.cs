@@ -26,6 +26,8 @@ public interface IApplicationState
 
 	bool IsInMaintenanceMode { get; }
 
+	bool HasMinutesInMaintenanceModeSource { get; }
+
 	bool HasMaintenanceModeReason(MaintenanceModeSource source, string code);
 
 	List<IMaintenanceModeReason> GetMaintenanceModeReasons();

@@ -43,6 +43,8 @@ public class HostForm : Form
 
 	private IClassicTrackDataService _classicTrackDataService;
 
+	private bool windowSizeInitialized;
+
 	private IContainer components;
 
 	private IClassicTrackDataService ClassicTrackDataService
@@ -419,6 +421,35 @@ public class HostForm : Form
 		EngineApplication.Instance.ActivateMouseDoubleClickHandlers(e);
 	}
 
+	private void HostForm_Shown(object sender, EventArgs e)
+	{
+		if (!Debugger.IsAttached || windowSizeInitialized)
+		{
+			return;
+		}
+		windowSizeInitialized = true;
+		string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue<string>("Core", "DebugWindowSize");
+		if (value != null)
+		{
+			string[] array = value.Split(',');
+			if (array != null && array.Length == 2 && int.TryParse(array[0], out var result) && int.TryParse(array[1], out var result2) && result != 0 && result2 != 0)
+			{
+				base.Width = result;
+				base.Height = result2;
+			}
+		}
+	}
+
+	private void HostForm_FormClosing(object sender, FormClosingEventArgs e)
+	{
+		if (Debugger.IsAttached)
+		{
+			IMachineSettingsStore service = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
+			string value = $"{base.Width},{base.Height}";
+			service.SetValue("Core", "DebugWindowSize", value);
+		}
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -432,7 +463,7 @@ public class HostForm : Form
 	{
 		System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Redbox.KioskEngine.Bootstrap.HostForm));
 		base.SuspendLayout();
-		base.AutoScaleDimensions = new System.Drawing.SizeF(7f, 13f);
+		base.AutoScaleDimensions = new System.Drawing.SizeF(9f, 17f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		this.BackColor = System.Drawing.Color.FromArgb(153, 153, 152);
 		base.ClientSize = new System.Drawing.Size(1024, 768);
@@ -447,12 +478,14 @@ public class HostForm : Form
 		base.ShowInTaskbar = false;
 		base.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 		this.Text = "Redbox Kiosk Engine";
-		base.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(OnMouseDoubleClick);
-		base.Paint += new System.Windows.Forms.PaintEventHandler(OnPaint);
-		base.MouseClick += new System.Windows.Forms.MouseEventHandler(OnMouseClick);
 		base.Activated += new System.EventHandler(OnActivated);
-		base.KeyPress += new System.Windows.Forms.KeyPressEventHandler(OnKeyPress);
+		base.FormClosing += new System.Windows.Forms.FormClosingEventHandler(HostForm_FormClosing);
+		base.Shown += new System.EventHandler(HostForm_Shown);
+		base.Paint += new System.Windows.Forms.PaintEventHandler(OnPaint);
 		base.KeyDown += new System.Windows.Forms.KeyEventHandler(OnKeyDown);
+		base.KeyPress += new System.Windows.Forms.KeyPressEventHandler(OnKeyPress);
+		base.MouseClick += new System.Windows.Forms.MouseEventHandler(OnMouseClick);
+		base.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(OnMouseDoubleClick);
 		base.ResumeLayout(false);
 	}
 }

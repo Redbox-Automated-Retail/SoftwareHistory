@@ -6,8 +6,8 @@
     <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="491,0,0,0" TextBlock.Foreground="#FFFFFFFF" Width="520">
       <TextBlock Name="TitleTextBlock" TextWrapping="Wrap" Style="{StaticResource font_museo_slab_700_50}" TextAlignment="Center" Text="{Binding TitleText, FallbackValue=Culture specific insert / tap title goes here at runtime}" />
       <StackPanel Orientation="Horizontal" Height="89" Margin="0,20,0,0" HorizontalAlignment="Center">
-        <Image Name="ApplePayImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Apple_Pay_Payment_Mark_80x51.png" HorizontalAlignment="Center" VerticalAlignment="Center" Width="79" Height="48" Margin="15,0,15,0" />
-        <Image Name="GooglePayImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Google_Pay_Payment_Mark_80x51.png" HorizontalAlignment="Center" VerticalAlignment="Center" Width="79" Height="48" Margin="15,0,15,0" />
+        <Image Name="ApplePayImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Apple_Pay_Payment_Mark_80x51.png" HorizontalAlignment="Center" VerticalAlignment="Center" Width="79" Height="48" Margin="15,0,15,0" Visibility="{Binding ApplePayImageVisibility, FallbackValue=Visible}" />
+        <Image Name="GooglePayImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Google_Pay_Payment_Mark_80x51.png" HorizontalAlignment="Center" VerticalAlignment="Center" Width="79" Height="48" Margin="15,0,15,0" Visibility="{Binding GooglePayImageVisibility, FallbackValue=Visible}" />
       </StackPanel>
     </StackPanel>
   </Grid>

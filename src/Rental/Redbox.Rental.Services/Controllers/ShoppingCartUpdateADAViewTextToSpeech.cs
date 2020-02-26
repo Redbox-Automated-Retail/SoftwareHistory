@@ -104,14 +104,17 @@ public class ShoppingCartUpdateADAViewTextToSpeech
 						shoppingCartUpdateADAViewModel.ProcessAddMovieButtonPress();
 					}
 				});
-				speechPart.Events.Add(new MapKeyPressToAction
+				if (shoppingCartUpdateADAViewModel.AddGameButtonVisibility == Visibility.Visible)
 				{
-					KeyCode = "4",
-					Action = delegate
+					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						shoppingCartUpdateADAViewModel.ProcessAddGameButtonPress();
-					}
-				});
+						KeyCode = "4",
+						Action = delegate
+						{
+							shoppingCartUpdateADAViewModel.ProcessAddGameButtonPress();
+						}
+					});
+				}
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = "Your Cart is Empty."
@@ -169,14 +172,17 @@ public class ShoppingCartUpdateADAViewTextToSpeech
 						shoppingCartUpdateADAViewModel.ProcessAddMovieButtonPress();
 					}
 				});
-				speechPart.Events.Add(new MapKeyPressToAction
+				if (shoppingCartUpdateADAViewModel.AddGameButtonVisibility == Visibility.Visible)
 				{
-					KeyCode = "4",
-					Action = delegate
+					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						shoppingCartUpdateADAViewModel.ProcessAddGameButtonPress();
-					}
-				});
+						KeyCode = "4",
+						Action = delegate
+						{
+							shoppingCartUpdateADAViewModel.ProcessAddGameButtonPress();
+						}
+					});
+				}
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = Resources.this_is_your_chance

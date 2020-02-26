@@ -34,7 +34,6 @@ public class FormatFilterPopupViewController : BaseViewController
 	{
 		BaseViewController.StopIdleTimer();
 		CreateAndStartTimer();
-		OrchestrationService.AnalyticsAddViewEvent("context", "FormatFilterDialog");
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl != null)
 		{
@@ -128,7 +127,6 @@ public class FormatFilterPopupViewController : BaseViewController
 
 	private static void ProcessButtonClick(TitleType filterType, string analysisText)
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", analysisText);
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("FormatFilterPopupFilter", filterType.ToString());
 		BrowseState.TitleType = filterType;
 		BrowseState.BrowseSelectedSort = TitleTypeToSelectedSort(filterType);
@@ -158,7 +156,6 @@ public class FormatFilterPopupViewController : BaseViewController
 		(service?.CreateTimer("FormatFilterPopupViewTimer", timeOut, timeOut, delegate
 		{
 			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
-			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			OrchestrationService.ViewGoBackSafe("FormatFilterPopupViewController time out", popOnly: false);
 		}))?.Start();
 	}

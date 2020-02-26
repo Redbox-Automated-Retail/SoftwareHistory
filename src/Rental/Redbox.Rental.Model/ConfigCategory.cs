@@ -28,5 +28,7 @@ public static class ConfigCategory
 
 	public const string DeviceService = "DeviceService";
 
+	public const string KioskClientService = "KioskClientService";
+
 	public const string KioskHealth = "KioskHealth";
 }

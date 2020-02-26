@@ -22,7 +22,6 @@ public class BulletListPopupViewController : BaseViewController
 			{
 				bulletListPopupViewModel = new BulletListPopupViewModel();
 			}
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("context", "ReserveOnlineDialog");
 			bulletListPopupViewModel.Title = Resources.app_info_title;
 			bulletListPopupViewModel.BulletPoints = new ObservableCollection<string>
 			{
@@ -34,7 +33,6 @@ public class BulletListPopupViewController : BaseViewController
 			};
 			bulletListPopupViewModel.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 			{
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "reserve_online_gotit");
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("BulletListPopupReserveOnlineGotit", parameters?.ViewAnalyticsName);
 				OrchestrationService.ViewGoBackSafe("Bullet Point popup Back", popOnly: false);
 			}, (Func<bool>)null);
@@ -67,7 +65,6 @@ public class BulletListPopupViewController : BaseViewController
 			{
 				bulletListPopupViewModel = new BulletListPopupViewModel();
 			}
-			BaseViewController.SessionAnalyticsService?.AddViewEvent("context", "RedboxPerksDialog");
 			bulletListPopupViewModel.Title = Resources.perks_info_title;
 			bulletListPopupViewModel.BulletPoints = new ObservableCollection<string>
 			{
@@ -79,7 +76,6 @@ public class BulletListPopupViewController : BaseViewController
 			};
 			bulletListPopupViewModel.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 			{
-				OrchestrationService.AnalyticsAddViewEvent("buttonPress", "redbox_perks_gotit");
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("BulletListPopupRedboxPerksGotit", parameters?.ViewAnalyticsName);
 				OrchestrationService.ViewGoBackSafe("Bullet Point popup Back", popOnly: false);
 			}, (Func<bool>)null);

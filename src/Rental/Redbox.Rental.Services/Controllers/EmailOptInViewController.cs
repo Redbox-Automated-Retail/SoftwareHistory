@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using Redbox.Core;
@@ -16,16 +17,16 @@ public class EmailOptInViewController : BaseViewController
 {
 	private static object lockObject = new object();
 
-	public static void ConfigureView()
+	public static void ConfigureView(Action continueAction)
 	{
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl != null)
 		{
 			EmailOptInViewModel emailOptInViewModel = new EmailOptInViewModel();
 			ConfigureTextAndVisibility(emailOptInViewModel);
-			ConfigureCommands(emailOptInViewModel);
+			ConfigureCommands(emailOptInViewModel, continueAction);
 			viewUserControl.DataContext = emailOptInViewModel;
-			ConfigureTimeoutTimer(emailOptInViewModel);
+			ConfigureTimeoutTimer(emailOptInViewModel, continueAction);
 			if (OrchestrationService.InvokeIsVendJobCompletedCallback())
 			{
 				OrchestrationService.ViewGoBackSafe("email_optin_view vend job already completed", popOnly: true);
@@ -33,7 +34,7 @@ public class EmailOptInViewController : BaseViewController
 		}
 	}
 
-	private static void ConfigureTimeoutTimer(EmailOptInViewModel emailOptInViewModel)
+	private static void ConfigureTimeoutTimer(EmailOptInViewModel emailOptInViewModel, Action continueAction)
 	{
 		int timeout = OrchestrationService.TTSGetTimeout("short", 10000);
 		IIdleTimer idleTimer = OrchestrationService.CreateIdleTimer("optin_view_timer");
@@ -46,14 +47,14 @@ public class EmailOptInViewController : BaseViewController
 					emailOptInViewModel.HasActionExecuted = true;
 					LogHelper.Instance.Log("EmailOptInView timed out.");
 					OrchestrationService.ViewGoBackSafe("email_optin_view timeout", popOnly: false);
-					CheckoutFunctions.ContinueVend();
+					continueAction?.Invoke();
 				}
 			}, "EmailOptInView time out action");
 		});
 		idleTimer.Start();
 	}
 
-	private static void ConfigureCommands(EmailOptInViewModel emailOptInViewModel)
+	private static void ConfigureCommands(EmailOptInViewModel emailOptInViewModel, Action continueAction)
 	{
 		emailOptInViewModel.OnNoThanksButtonClicked += delegate
 		{
@@ -62,12 +63,9 @@ public class EmailOptInViewController : BaseViewController
 				if (!emailOptInViewModel.HasActionExecuted)
 				{
 					emailOptInViewModel.HasActionExecuted = true;
-					ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-					service?.AddViewEvent("buttonPress", "reject-optin-button");
-					service?.AddViewEvent("context", $"campaign: {Redbox.Rental.Services.ApplicationState.Instance.EmailOptInCampaign?.CampaignId}");
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("EmailOptInRejectOptIn");
 					OrchestrationService.ViewGoBackSafe("email_optin_view reject button hit", popOnly: false);
-					CheckoutFunctions.ContinueVend();
+					continueAction?.Invoke();
 				}
 			}, "EmailOptInView reject opt in action");
 		};
@@ -78,13 +76,10 @@ public class EmailOptInViewController : BaseViewController
 				if (!emailOptInViewModel.HasActionExecuted)
 				{
 					emailOptInViewModel.HasActionExecuted = true;
-					ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-					service?.AddViewEvent("buttonPress", "accept-optin-button");
-					service?.AddViewEvent("context", $"campaign: {Redbox.Rental.Services.ApplicationState.Instance.EmailOptInCampaign?.CampaignId}");
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("EmailOptInAcceptOptIn");
 					SendKioskOptinForEmailCampaign();
 					OrchestrationService.ViewGoBackSafe("email_optin_view accept button hit", popOnly: false);
-					CheckoutFunctions.ContinueVend();
+					continueAction?.Invoke();
 				}
 			}, "EmailOptInView accept opt in action");
 		};

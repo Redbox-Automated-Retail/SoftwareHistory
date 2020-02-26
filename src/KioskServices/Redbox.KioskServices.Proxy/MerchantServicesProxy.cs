@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
+using Newtonsoft.Json;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -13,11 +14,11 @@ using Redbox.KioskEngine.Environment;
 using Redbox.KioskEngine.Environment.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.KioskServices.Proxy.Request;
-using Redbox.KioskServices.Proxy.Requests;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Model.Transaction;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -375,6 +376,18 @@ public class MerchantServicesProxy : IMerchantServices
 		}
 	}
 
+	public string TransactionEntities
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "TransactionEntities", string.Empty);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Merchant Services", "TransactionEntities", value);
+		}
+	}
+
 	public bool CanSwitch()
 	{
 		return m_working == 0;
@@ -391,58 +404,32 @@ public class MerchantServicesProxy : IMerchantServices
 		}
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().GetRentalShoppingCart(new Guid(sessionId));
 		ISession session2 = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
+		CustomerOffer customerOffer = session2?.PromoOfferState?.SelectedOffer;
+		bool flag = session2?.PromoOfferState?.WasOfferAccepted ?? false;
+		bool flag2 = (session2?.PromoOfferState != null && customerOffer != null && customerOffer.OfferScopeType == OfferScopeType.StoredRedeemable) & flag;
 		IPromotion promo = rentalShoppingCart?.Promotion;
-		bool flag = session.ShoppingCart.Type == ShoppingCartType.Offline;
-		Guid messageId = Guid.NewGuid();
-		bool blocklisted = session.ShoppingCart.Blocklisted;
-		string email = session.ShoppingCart.Email;
-		string engineVersion = service["EngineVersion"];
-		string bundleVersion = service["ProductVersion"];
-		int kioskId = int.Parse(session.StoreNumber);
-		long? referenceNumber = session.ShoppingCart.ReferenceNumber;
-		Dictionary<string, object> creditCardData = ProxyMessageHelper.GetCreditCardData(session, flag);
-		DateTime now = DateTime.Now;
-		bool playPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted;
-		int playPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned;
-		IDictionary<string, string> propertyBag = session.ShoppingCart.PropertyBag;
-		ShoppingCart shoppingCart = ProxyMessageHelper.CreateShoppingCart(rentalShoppingCart, promo);
-		long? redeemedStoredOfferid;
-		if (session2?.PromoOfferState != null)
-		{
-			IPromoOfferState promoOfferState = session2.PromoOfferState;
-			if (promoOfferState != null && promoOfferState.SelectedOffer?.OfferScopeType == OfferScopeType.StoredRedeemable)
-			{
-				IPromoOfferState promoOfferState2 = session2.PromoOfferState;
-				if (promoOfferState2 != null && promoOfferState2.WasOfferAccepted)
-				{
-					redeemedStoredOfferid = session2.PromoOfferState.SelectedOffer.StoredOfferId;
-					goto IL_01aa;
-				}
-			}
-		}
-		redeemedStoredOfferid = null;
-		goto IL_01aa;
-		IL_01aa:
+		bool flag3 = session.ShoppingCart.Type == ShoppingCartType.Offline;
 		var reconcileRequest = new
 		{
 			MessageType = "Reconcile",
-			MessageId = messageId,
-			IsOffline = flag,
-			Blocklisted = blocklisted,
-			Email = email,
-			EngineVersion = engineVersion,
-			BundleVersion = bundleVersion,
-			KioskId = kioskId,
-			ReferenceNumber = referenceNumber,
-			CreditCard = creditCardData,
-			TransactionDate = now,
-			PlayPassPromptAccepted = playPassPromptAccepted,
-			PlayPassPointsEarned = playPassPointsEarned,
-			PropertyBag = propertyBag,
-			ShoppingCart = shoppingCart,
+			MessageId = Guid.NewGuid(),
+			IsOffline = flag3,
+			Blocklisted = session.ShoppingCart.Blocklisted,
+			Email = session.ShoppingCart.Email,
+			EngineVersion = service["EngineVersion"],
+			BundleVersion = service["ProductVersion"],
+			KioskId = int.Parse(session.StoreNumber),
+			ReferenceNumber = session.ShoppingCart.ReferenceNumber,
+			CreditCard = ProxyMessageHelper.GetCreditCardData(session, flag3),
+			TransactionDate = DateTime.Now,
+			PlayPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted,
+			PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned,
+			PropertyBag = session.ShoppingCart.PropertyBag,
+			ShoppingCart = ProxyMessageHelper.CreateShoppingCart(rentalShoppingCart, promo),
 			CustomerProfileNumber = customerProfileNumber,
-			RedeemedStoredOfferid = redeemedStoredOfferid,
+			RedeemedStoredOfferid = (flag2 ? customerOffer.StoredOfferId : ((long?)null)),
 			UtcOffset = ProxyMessageHelper.CalcUtcOffset(DateTime.Now),
+			RedeemedCustomerOffer = (flag ? BuildRedeemedOffer(customerOffer) : null),
 			DiscOfferCodes = session2.PromoOfferState?.DiscOfferCodes
 		};
 		ThreadPool.QueueUserWorkItem(delegate
@@ -488,6 +475,11 @@ public class MerchantServicesProxy : IMerchantServices
 				}
 			}
 		});
+	}
+
+	private object BuildRedeemedOffer(CustomerOffer acceptedOffer)
+	{
+		return new { acceptedOffer.OfferId, acceptedOffer.StoredOfferId, acceptedOffer.CampaignId };
 	}
 
 	public void PreAuth(Guid sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
@@ -829,7 +821,7 @@ public class MerchantServicesProxy : IMerchantServices
 						authorizeResult.ReferenceNumber = TransactionId;
 						authorizeResult.AccountNumber = AccountNumber;
 						authorizeResult.CustomerProfileNumber = CPAccountNumber;
-						authorizeResult.ConfirmationStatus = ConfirmationStatus.DoNotShow.ToString();
+						authorizeResult.ConfirmationStatus = ConfirmationStatus.ToString();
 						if (flag2)
 						{
 							authorizeResult.GiftCardExists = Exists;
@@ -1266,6 +1258,11 @@ public class MerchantServicesProxy : IMerchantServices
 						}
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
+						if (dictionary.ContainsKey("TransactionEntities"))
+						{
+							object transactionEntities = dictionary["TransactionEntities"];
+							AddTransactionEntitiesIntoTransactionDataSession(transactionEntities);
+						}
 						ArrayList arrayList2 = (dictionary.ContainsKey("CancelledReservations") ? (dictionary["CancelledReservations"] as ArrayList) : null);
 						List<long> list = new List<long>();
 						if (arrayList2 != null)
@@ -1368,6 +1365,7 @@ public class MerchantServicesProxy : IMerchantServices
 							}
 						}
 						remoteServiceResult.Properties["validated_reservations"] = list3.ToLuaTable();
+						AddTransactionEntitiesIntoTransactionDataSession(TransactionEntities, transactionEntitiesInJsonFormat: true);
 					}
 				}
 			}
@@ -1397,6 +1395,30 @@ public class MerchantServicesProxy : IMerchantServices
 				}
 			}
 		});
+	}
+
+	private void AddTransactionEntitiesIntoTransactionDataSession(object transactionEntities, bool transactionEntitiesInJsonFormat = false)
+	{
+		try
+		{
+			transactionEntitiesInJsonFormat = false;
+			ISession session = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
+			foreach (TransactionEntity item2 in transactionEntitiesInJsonFormat ? JsonConvert.DeserializeObject<List<TransactionEntity>>(transactionEntities.ToString()) : JsonConvert.DeserializeObject<List<TransactionEntity>>(JsonConvert.SerializeObject(transactionEntities)))
+			{
+				TransactionEntity item = new TransactionEntity
+				{
+					DiscId = item2.DiscId,
+					Name = item2.Name,
+					Value = item2.Value,
+					TitleId = item2.TitleId
+				};
+				session.TransactionData.TransactionEntities.Add(item);
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException($"Exception occured in MerchantServicesProxy.AddTransactionEntitiesIntoTransactionDataSession method. TransactionEntitiesObject: {transactionEntities}, transactionEntitiesInJsonFormat: {transactionEntitiesInJsonFormat}", e);
+		}
 	}
 
 	public void ModResvPickup(string storeNumber, string emailAddress, long referenceNumber, string sessionId, bool modifiedCart, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)

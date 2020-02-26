@@ -10,8 +10,6 @@ public class Commands
 
 	public static readonly RoutedCommand RentOrBuyGamesCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand RentTVCommand = new RoutedCommand();
-
 	public static readonly RoutedCommand BuyMoviesCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand BuyGamesCommand = new RoutedCommand();
@@ -48,11 +46,15 @@ public class Commands
 
 	public static readonly RoutedCommand BluRayCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand SeeFullDetailsCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand BrowseItemSelectedCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand BrowseItemAddCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand BrowseItemCancelCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand MoreLikeThisCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand AddDVDCommand = new RoutedCommand();
 
@@ -81,8 +83,6 @@ public class Commands
 	public static readonly RoutedCommand BrowseGroupSelectedCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand ToggleTitleFamily1Command = new RoutedCommand();
-
-	public static readonly RoutedCommand ToggleTitleFamily2Command = new RoutedCommand();
 
 	public static readonly RoutedCommand MyPerksCommand = new RoutedCommand();
 
@@ -143,6 +143,8 @@ public class Commands
 	public static readonly DynamicRoutedCommand CapButtonCommand = new DynamicRoutedCommand();
 
 	public static readonly DynamicRoutedCommand EmailSelectedCommand = new DynamicRoutedCommand();
+
+	public static readonly DynamicRoutedCommand TermsButtonCommand = new DynamicRoutedCommand();
 
 	public static readonly DynamicRoutedCommand SelectedButtonCommand = new DynamicRoutedCommand();
 

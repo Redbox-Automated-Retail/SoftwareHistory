@@ -20,18 +20,16 @@ public class SubTotalGroup : ISubTotalGroup
 		get
 		{
 			decimal? result = null;
-			if (Action == RentalShoppingCartItemAction.rental)
+			IPromotion promotion = _rentalShoppingCart.Promotion;
+			decimal num = ((promotion?.CartItemAction != Action) ? 0m : (promotion?.Price ?? 0m));
+			decimal num2 = _rentalShoppingCart?.Items?.Where((IRentalShoppingCartItem x) => x.Action == Action && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled) && (x.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.Sum((IRentalShoppingCartItem x) => x.ExtendedPrice) ?? 0m;
+			if (num2 > 0m || num > 0m)
 			{
-				IPromotion promotion = _rentalShoppingCart.Promotion;
-				decimal num = _rentalShoppingCart?.Items?.Where((IRentalShoppingCartItem x) => x.Action == Action && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled) && (x.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.Sum((IRentalShoppingCartItem x) => x.ExtendedPrice) ?? 0m;
-				if (num > 0m || (promotion?.Price ?? 0m) > 0m)
-				{
-					result = Amount - (promotion?.Price ?? 0m) - num;
-				}
-				if (result.HasValue)
-				{
-					result = Math.Max(decimal.Round(result.Value, 16, MidpointRounding.AwayFromZero), 0m);
-				}
+				result = Amount - num - num2;
+			}
+			if (result.HasValue)
+			{
+				result = Math.Max(decimal.Round(result.Value, 16, MidpointRounding.AwayFromZero), 0m);
 			}
 			return result;
 		}

@@ -66,10 +66,12 @@ public class KeyboardLogic : BaseLogic
 
 	private string GetErrorMessage()
 	{
+		BaseLogic.SetCurrentUICulture();
 		switch (KeyboardInfo.KeyboardMode)
 		{
 		case KeyboardMode.EMAIL_COMING_SOON:
 		case KeyboardMode.ACCOUNT_SIGN_IN:
+		case KeyboardMode.PERKS_SIGN_UP:
 			return Resources.email_error_message;
 		case KeyboardMode.EMAIL_RECEIPTS_PROMO:
 			return Resources.receipt_email_error;
@@ -242,6 +244,7 @@ public class KeyboardLogic : BaseLogic
 		{
 			return;
 		}
+		BaseLogic.SetCurrentUICulture();
 		int num = Model.KeyboardText.IndexOf('@');
 		if (num == -1)
 		{
@@ -276,7 +279,6 @@ public class KeyboardLogic : BaseLogic
 
 	public void CancelButtonCommand_Execute()
 	{
-		BaseLogic.AnalyticsAddViewEvent("buttonPress", "startbrowsing");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("KeyboardLogicStartBrowsing");
 		CancelButton_Execute();
 		BaseLogic.HandleWPFHit();
@@ -297,7 +299,6 @@ public class KeyboardLogic : BaseLogic
 
 	public void ContinueButtonCommand_Execute()
 	{
-		BaseLogic.AnalyticsAddViewEvent("buttonPress", "signin");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("KeyboardLogicStartBrowsing");
 		Model.KeyboardError = ContinueButtonExecute();
 		if (!string.IsNullOrEmpty(Model.KeyboardError))

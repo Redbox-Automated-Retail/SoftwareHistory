@@ -96,7 +96,7 @@ public class BrowseState : IBrowseState
 
 	public bool ShoppingCartFullMessagesShown { get; set; }
 
-	public bool EmailOptInCampaignShown { get; set; }
+	public ISignupFlowState SignupFlowState { get; private set; }
 
 	public int PaddleClickCount { get; set; }
 
@@ -286,9 +286,12 @@ public class BrowseState : IBrowseState
 
 	public bool NeedMarketingConfirm { get; set; }
 
+	public bool ExpandedFormatButtonsShown { get; set; }
+
 	public BrowseState()
 	{
 		PushBrowseStateSet();
+		SignupFlowState = new SignupFlowState();
 	}
 
 	private void SetBrowseSelectionSelectedProductLuaTable(LuaTable value)

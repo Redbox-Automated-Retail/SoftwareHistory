@@ -1,32 +1,39 @@
-using System;
-using System.Drawing;
-using System.Windows.Media.Imaging;
+using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Rental.Model.Marketing;
+using Redbox.Rental.Model.Ads;
+using Redbox.Rental.Services.KioskClientService.Ads;
+using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
-using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
 
 public class ReturnViewController : BaseViewController
 {
-	public static void ConfigureReturnView(Action goBackAction)
+	public static void ConfigureReturnView()
 	{
 		OrchestrationService.SuspendIdleTimer("idle_timer");
-		if (BaseViewController.GetViewUserControl() is ReturnViewUserControl returnViewUserControl)
+		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
+		if (viewUserControl != null)
 		{
-			_ = Resources.back_button;
-			string disc_return_message = Resources.disc_return_message;
-			returnViewUserControl.MessageText = disc_return_message;
-			BitmapImage adImage = null;
-			MarketingAd marketingAd = ServiceLocator.Instance.GetService<IMarketingAdService>()?.GetScreenAd(MarketingAdLocation.Return, createImpression: true);
-			if (marketingAd != null && marketingAd.Visible && !string.IsNullOrEmpty(marketingAd.ImageName))
+			OrchestrationService.SetCurrentUICulture();
+			IAd ad = null;
+			if (!BaseViewController.ApplicationState.IsADAAccessible)
 			{
-				Image image = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmap(marketingAd.ImageName);
-				adImage = ServiceLocator.Instance.GetService<IBitmapCacheService>()?.ToBitmapImage(image);
+				ad = ServiceLocator.Instance.GetService<IAdService>()?.GetScreenAd(AdLocation.Return);
 			}
-			returnViewUserControl.AdImage = adImage;
+			ReturnViewModel returnViewModel = (ReturnViewModel)(viewUserControl.DataContext = new ReturnViewModel
+			{
+				MessageText = Resources.disc_return_message,
+				AdImageSource = ad?.Image,
+				AdImageVisibility = ((ad == null) ? Visibility.Collapsed : Visibility.Visible),
+				AdImpression = ((ad != null) ? new AdImpression
+				{
+					Ad = ad,
+					AdLocation = AdLocation.Return
+				} : null)
+			});
+			returnViewModel.AdImpression?.Start();
 		}
 		else
 		{
@@ -34,8 +41,8 @@ public class ReturnViewController : BaseViewController
 		}
 	}
 
-	public static void SetBackButtonIsVisible(bool isEnabled)
+	public static void OnLeave(IViewFrameInstance viewFrameInstance)
 	{
-		_ = BaseViewController.GetViewUserControl() is ReturnViewUserControl;
+		BaseViewController.RecordAdImpression(BaseViewController.GetViewModel<ReturnViewModel>(viewFrameInstance.Id)?.AdImpression);
 	}
 }

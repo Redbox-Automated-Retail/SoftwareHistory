@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.ComponentModel.TrackData;
+using Redbox.Rental.Model.Ads;
 
 namespace Redbox.Rental.UI.Views;
 
@@ -18,6 +19,10 @@ public class SwipeViewModel : DependencyObject
 
 	public static readonly DependencyProperty ImageStackPanelVisibilityProperty = DependencyProperty.Register("ImageStackPanelVisibility", typeof(Visibility), typeof(SwipeViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty ApplePayImageVisibilityProperty = DependencyProperty.Register("ApplePayImageVisibility", typeof(Visibility), typeof(SwipeViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty GooglePayImageVisibilityProperty = DependencyProperty.Register("GooglePayImageVisibility", typeof(Visibility), typeof(SwipeViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
 	public string TitleText { get; set; }
 
 	public string MessageText { get; set; }
@@ -29,6 +34,8 @@ public class SwipeViewModel : DependencyObject
 	public ICardReadAttempt CardReadAttempt { get; set; }
 
 	public BitmapImage AdImage { get; set; }
+
+	public IAdImpression AdImpression { get; set; }
 
 	public Visibility BackButtonVisibility
 	{
@@ -56,6 +63,36 @@ public class SwipeViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ImageStackPanelVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility ApplePayImageVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ApplePayImageVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ApplePayImageVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility GooglePayImageVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(GooglePayImageVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(GooglePayImageVisibilityProperty, value);
 			});
 		}
 	}

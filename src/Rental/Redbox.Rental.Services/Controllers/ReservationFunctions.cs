@@ -18,6 +18,7 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Reservation;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Loyalty;
 using Redbox.Rental.Services.Promotion;
@@ -377,17 +378,10 @@ public class ReservationFunctions
 	public static void AddRecommendedProductsToAnalytics()
 	{
 		List<IKioskProduct> recommendedProducts = GetRecommendedProducts();
-		string elementValue = recommendedProducts.Select((IKioskProduct x) => (x as ITitleProduct)?.ProductId.ToString()).Join(",");
-		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		if (rentalShoppingCart != null && service != null && service.SessionExists(rentalShoppingCart.ShoppingSessionId.ToString()))
-		{
-			service.AddElement("session", "recommendationsFlow", "True", rentalShoppingCart.ShoppingSessionId.ToString());
-			service.AddElement("session", "recommendedTitles", elementValue, rentalShoppingCart.ShoppingSessionId.ToString());
-			service.AddElement("session", "recommendedTitlesShown", recommendedProducts.Count.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
-		}
-		IAnalyticsService service2 = ServiceLocator.Instance.GetService<IAnalyticsService>();
-		if (rentalShoppingCart == null || service2 == null)
+		recommendedProducts.Select((IKioskProduct x) => (x as ITitleProduct)?.ProductId.ToString()).Join(",");
+		IRentalShoppingCart obj = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+		IAnalyticsService service = ServiceLocator.Instance.GetService<IAnalyticsService>();
+		if (obj == null || service == null)
 		{
 			return;
 		}
@@ -400,7 +394,7 @@ public class ReservationFunctions
 				products.Add(ProductData.ToProductData(titleProduct));
 			}
 		});
-		service2?.CurrentSession?.AddData(new ROPRecommendedProducts
+		service?.CurrentSession?.AddData(new ROPRecommendedProducts
 		{
 			RecommendedProducts = products,
 			RecommendationsFlow = true
@@ -517,12 +511,12 @@ public class ReservationFunctions
 
 	public static IReservationDetails PopulateShoppingCartWithReservationItems(IRentalShoppingCart rentalShoppingCart, string referenceNumber = null, bool clearCart = true)
 	{
-		//IL_02f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02fc: Invalid comparison between Unknown and I4
-		//IL_032e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0334: Invalid comparison between Unknown and I4
-		//IL_0458: Unknown result type (might be due to invalid IL or missing references)
-		//IL_045e: Invalid comparison between Unknown and I4
+		//IL_0309: Unknown result type (might be due to invalid IL or missing references)
+		//IL_030f: Invalid comparison between Unknown and I4
+		//IL_0341: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0347: Invalid comparison between Unknown and I4
+		//IL_0474: Unknown result type (might be due to invalid IL or missing references)
+		//IL_047a: Invalid comparison between Unknown and I4
 		IReservationDetails reservationDetails = null;
 		try
 		{
@@ -547,6 +541,7 @@ public class ReservationFunctions
 				decimal num = 0m;
 				decimal value = 0m;
 				List<IPromotionItem> list = new List<IPromotionItem>();
+				RentalShoppingCartItemAction rentalShoppingCartItemAction = RentalShoppingCartItemAction.rental;
 				IDataService service2 = ServiceLocator.Instance.GetService<IDataService>();
 				foreach (IReservedTitle reservedTitle2 in reservationDetails.ReservedTitles)
 				{
@@ -584,8 +579,8 @@ public class ReservationFunctions
 								rentalShoppingCartItem.Quantity = 1m;
 								rentalShoppingCartItem.Status = LineItemStatus.Pending;
 								rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(rentalShoppingCartItem.TitleProduct);
-								rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(rentalShoppingCartItem.TitleProduct);
-								rentalShoppingCartItem.Tags = PersonalizationFunctions.GetTags(rentalShoppingCartItem.TitleProduct);
+								rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(rentalShoppingCartItem.TitleProduct) ?? PersonalizationFunctions.GetTivoQueryIdFromTransactionEntities(rentalShoppingCartItem.TitleProduct);
+								rentalShoppingCartItem.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(rentalShoppingCartItem.TitleProduct);
 								LogHelper.Instance.Log($"Checking discounts for reserved title Id {titleProduct.ProductId}");
 								if ((int)reservedTitle.DiscountType == 2)
 								{
@@ -603,6 +598,7 @@ public class ReservationFunctions
 										RentalShoppingCartItem = rentalShoppingCartItem
 									});
 									value += reservedTitle.Discount;
+									rentalShoppingCartItemAction = reservedTitle.Action;
 								}
 								LogHelper.Instance.Log($"Getting pricing record for reserved title Id {titleProduct.ProductId}");
 								IPricingRecord pricingRecord = reservationDetails.PricingSet?.PriceRecords.FirstOrDefault((IPricingRecord x) => (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType.DVD && x.TitleType == TitleType.DVD && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType.Bluray && x.TitleType == TitleType.Bluray && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Movies && titleProduct.TitleType == TitleType._4KUHD && x.TitleType == TitleType._4KUHD && x.TitleFamily == TitleFamily.Movies) || (titleProduct.TitleFamily == TitleFamily.Games && x.TitleType == TitleType.All && x.TitleFamily == TitleFamily.Games));
@@ -679,7 +675,8 @@ public class ReservationFunctions
 						CampaignTitles = null,
 						ProductTypeId = null,
 						FormatIds = null,
-						PromotionItems = list
+						PromotionItems = list,
+						ActionCode = ((rentalShoppingCartItemAction == RentalShoppingCartItemAction.purchase) ? PromotionActionCode.Purchase : PromotionActionCode.Rental)
 					};
 					PromotionService.Instance.SetPromotion(promotion);
 					if (value != num2)
@@ -712,11 +709,23 @@ public class ReservationFunctions
 		bool flag5 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.IsLoyaltyRedemption);
 		bool flag6 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.ReservedTitles.Any((IReservedTitle w) => w.Action == RentalShoppingCartItemAction.purchase));
 		bool flag7 = OrchestrationService.IsGiftCard();
+		bool flag8 = Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames;
+		bool flag9 = flag8;
+		IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
+		if ((dataService != null) & flag8)
+		{
+			flag9 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.ReservedTitles.Any(delegate(IReservedTitle t)
+			{
+				dataService.GetProductByBarcode(t.Barcode, out var kioskProduct);
+				return ((ITitleProduct)kioskProduct).TitleFamily == TitleFamily.Games;
+			}));
+		}
 		List<string> reservedBarcodesToVend = GetReservedBarcodesToVend(accountReservations);
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() - num_reservations= {reservedBarcodesToVend.Count} num_reserved_titles= {count}");
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 2 - is_gift_card={flag7}   is_gc: {flag2}   is_mnp: {flag3}   is_mdv= {flag4}");
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 3 - is_loyalty_redemption= {flag5}  has_purchase= {flag6}");
-		if (count == 1 && reservedBarcodesToVend.Count < 5 && !flag7 && !flag2 && !flag3 && !flag4 && !flag5 && !flag6 && GetRecommendedProductCount(accountReservations) > 2)
+		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 4 - anyReservationsWithGames = {flag9}  Config.EndGameRentals= {Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals}  Config.EndGames= {Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames}");
+		if (count == 1 && reservedBarcodesToVend.Count < 5 && !flag7 && !flag2 && !flag3 && !flag4 && !flag5 && !flag6 && !(flag9 & flag8) && GetRecommendedProductCount(accountReservations) > 2)
 		{
 			flag = true;
 		}
@@ -846,23 +855,6 @@ public class ReservationFunctions
 					LogHelper.Instance.Log($"Adding {productItem.Barcode} to reset barcode list");
 					list.Add(productItem.Barcode);
 				}
-				if (rentalShoppingCart != null)
-				{
-					OrchestrationService.AnalyticsAddNode("onlinePickup", "cartItem", rentalShoppingCart.ShoppingSessionId);
-					Dictionary<string, string> attributes = new Dictionary<string, string>
-					{
-						{ "barcode", productItem.Barcode },
-						{
-							"multi_disc",
-							productItem.MultiDisc.ToString()
-						},
-						{
-							"status",
-							productItem.Status.ToString()
-						}
-					};
-					OrchestrationService.AnalyticsAddAttribute("cartItem", attributes, rentalShoppingCart.ShoppingSessionId);
-				}
 				string key = eachReservedTitle.Action.ToString();
 				if (!dictionary.TryGetValue(key, out var value))
 				{
@@ -905,7 +897,7 @@ public class ReservationFunctions
 				LogHelper.Instance.Log($"{logHeaderText}: Calling ReservationServices.Pickup()");
 				IReservationServices service3 = ServiceLocator.Instance.GetService<IReservationServices>();
 				bool? obj = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(rentalShoppingCart?.ShoppingSessionId.ToString())?.ShoppingCart.Blocklisted;
-				service3?.Pickup(isBlocklisted: obj ?? false, storeNumber: (service?.GetStore()?.StoreId ?? (-1)).ToString(), emailAddress: accountReservation.ReservationDetails?.EmailAddress, referenceNumber: result2, pickupResults: dictionary2, callback: null, v: rentalShoppingCart?.ShoppingSessionId.ToString());
+				service3?.Pickup(isBlocklisted: obj ?? false, storeNumber: (service?.GetStore()?.StoreId ?? (-1)).ToString(), emailAddress: accountReservation.ReservationDetails?.EmailAddress, referenceNumber: result2, pickupResults: dictionary2, callback: null, sessionId: rentalShoppingCart?.ShoppingSessionId.ToString());
 			}
 			LogHelper.Instance.Log($"{logHeaderText}: Removing reservation for reference nuber... {accountReservation.ReferenceNumber}");
 			DeleteReservation(accountReservation.ReferenceNumber);
@@ -1391,16 +1383,6 @@ public class ReservationFunctions
 				barcodesToReset.Add(item.Barcode);
 			}
 			LogHelper.Instance.Log($"Session update Line Item: {item.Barcode} for {item.Action} Price:" + $" {item.Price} {item.TitleFamily} - {item.TitleType} source type: {item.SourceType}");
-			OrchestrationService.AnalyticsAddNode("onlinePickup", "cartItem", rentalShoppingCart.ShoppingSessionId);
-			Dictionary<string, string> attributes = new Dictionary<string, string>
-			{
-				{ "barcode", item.Barcode },
-				{
-					"status",
-					item.Status.ToString()
-				}
-			};
-			OrchestrationService.AnalyticsAddAttribute("cartItem", attributes, rentalShoppingCart.ShoppingSessionId);
 		}
 	}
 

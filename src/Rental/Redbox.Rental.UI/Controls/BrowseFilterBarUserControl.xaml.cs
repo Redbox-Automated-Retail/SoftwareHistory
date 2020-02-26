@@ -3,11 +3,14 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
+using System.Windows.Media;
 using Redbox.Controls;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
 
 namespace Redbox.Rental.UI.Controls;
 
@@ -60,7 +63,9 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 		{
 			return;
 		}
+		bool flag = ServiceLocator.Instance.GetService<IConfiguration>()?.ShowExpandedFormatButtonsNewText ?? true;
 		ITheme theme = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
+		double num = ((filterBarModel.Filters.Count > 6) ? 8 : 10);
 		foreach (BrowseFilter filter in filterBarModel.Filters)
 		{
 			RoundedButton roundedButton = new RoundedButton
@@ -85,15 +90,37 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 			});
 			TextBlock textBlock = new TextBlock
 			{
-				Text = filter.Text,
-				Style = GetStyle(this, "font_montserrat_regular_14")
+				Text = filter.Text.ToUpper(),
+				Style = GetStyle(this, "font_montserrat_extrabold_14"),
+				Margin = new Thickness(num, 0.0, num, 0.0),
+				VerticalAlignment = VerticalAlignment.Center
 			};
 			textBlock.SetBinding(TextBlock.TextProperty, new Binding
 			{
 				Path = new PropertyPath("Text"),
 				Source = filter
 			});
-			roundedButton.Content = textBlock;
+			if ((filter.ButtonType == BrowseFilterType._4KUHD) & flag)
+			{
+				StackPanel stackPanel = new StackPanel
+				{
+					Orientation = Orientation.Horizontal
+				};
+				stackPanel.Children.Add(textBlock);
+				stackPanel.Children.Add(new TextBlock
+				{
+					Text = Redbox.Rental.UI.Properties.Resources.format_button_new_text,
+					Style = GetStyle(this, "font_montserrat_regular_10"),
+					VerticalAlignment = VerticalAlignment.Center,
+					Padding = new Thickness(4.0, 4.0, 4.0, 4.0),
+					Background = (filter.IsSelected ? ((Brush)FindResource("RubineRedBrush")) : ((Brush)FindResource("WarmPurpleBrush")))
+				});
+				roundedButton.Content = stackPanel;
+			}
+			else
+			{
+				roundedButton.Content = textBlock;
+			}
 			FilterButtonContainer.Children.Add(roundedButton);
 			theme?.SetStyle(roundedButton);
 		}

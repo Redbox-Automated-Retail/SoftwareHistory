@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Browse;
 
 namespace Redbox.Rental.UI.Models;
@@ -40,6 +41,8 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty OneNightReturnTimeProperty = DependencyProperty.Register("OneNightReturnTime", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty OneNightReturnTimeWithTextProperty = DependencyProperty.Register("OneNightReturnTimeWithText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty OneNightReturnTimeLabelProperty = DependencyProperty.Register("OneNightReturnTimeLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty MultiNightReturnTimeProperty = DependencyProperty.Register("MultiNightReturnTime", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
@@ -74,11 +77,17 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty RatingVisibilityProperty = DependencyProperty.Register("RatingVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty RatingBorderThicknessProperty = DependencyProperty.Register("RatingBorderThickness", typeof(Thickness), typeof(DisplayProductModel), new FrameworkPropertyMetadata(new Thickness(0.0, 0.0, 1.0, 0.0)));
+
 	public static readonly DependencyProperty FormatVisibilityProperty = DependencyProperty.Register("FormatVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RunningTimeVisibilityProperty = DependencyProperty.Register("RunningTimeVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty RunningTimeBorderThicknessProperty = DependencyProperty.Register("RunningTimeBorderThickness", typeof(Thickness), typeof(DisplayProductModel), new FrameworkPropertyMetadata(new Thickness(0.0, 0.0, 1.0, 0.0)));
+
 	public static readonly DependencyProperty ReleaseYearVisibilityProperty = DependencyProperty.Register("ReleaseYearVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ReleaseYearBorderThicknessProperty = DependencyProperty.Register("ReleaseYearBorderThickness", typeof(Thickness), typeof(DisplayProductModel), new FrameworkPropertyMetadata(new Thickness(0.0, 0.0, 1.0, 0.0)));
 
 	public static readonly DependencyProperty AdImageProperty = DependencyProperty.Register("AdImage", typeof(BitmapImage), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -94,7 +103,9 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty BuyPriceTextProperty = DependencyProperty.Register("BuyPriceText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty BuyButtonTextStyleProperty = DependencyProperty.Register("BuyButtonTextStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty BuyButtonBuyTextStyleProperty = DependencyProperty.Register("BuyButtonBuyTextStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BuyButtonBuyPriceTextStyleProperty = DependencyProperty.Register("BuyButtonBuyPriceTextStyle", typeof(Style), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty ShowBuyProperty = DependencyProperty.Register("ShowBuy", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -113,6 +124,8 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty OutOfStockLine2TextProperty = DependencyProperty.Register("OutOfStockLine2Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty OutOfStockLine3TextProperty = DependencyProperty.Register("OutOfStockLine3Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty OutOfStockLine4TextProperty = DependencyProperty.Register("OutOfStockLine4Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty NotEmptyCaseVisibilityProperty = DependencyProperty.Register("NotEmptyCaseVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -322,6 +335,16 @@ public class DisplayProductModel : BrowseItemModel
 	});
 
 	public static readonly DependencyProperty RemoveButtonTextProperty = DependencyProperty.Register("RemoveButtonText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MoreLikeThisVisibilityProperty = DependencyProperty.Register("MoreLikeThisVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty DisplayProductMoreLikeThis1Property = DependencyProperty.Register("DisplayProductMoreLikeThis1", typeof(DisplayProductMoreLikeThisModel), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty DisplayProductMoreLikeThis2Property = DependencyProperty.Register("DisplayProductMoreLikeThis2", typeof(DisplayProductMoreLikeThisModel), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty DisplayProductMoreLikeThis3Property = DependencyProperty.Register("DisplayProductMoreLikeThis3", typeof(DisplayProductMoreLikeThisModel), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty DisplayProductMoreLikeThis4Property = DependencyProperty.Register("DisplayProductMoreLikeThis4", typeof(DisplayProductMoreLikeThisModel), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public bool TitleDetailPropertiesInitialized;
 
@@ -1103,6 +1126,21 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public string OneNightReturnTimeWithText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(OneNightReturnTimeWithTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OneNightReturnTimeWithTextProperty, value);
+			});
+		}
+	}
+
 	public string OneNightReturnTimeLabel
 	{
 		get
@@ -1358,6 +1396,21 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public Thickness RatingBorderThickness
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Thickness)GetValue(RatingBorderThicknessProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RatingBorderThicknessProperty, value);
+			});
+		}
+	}
+
 	public Visibility FormatVisibility
 	{
 		get
@@ -1388,6 +1441,21 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public Thickness RunningTimeBorderThickness
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Thickness)GetValue(RunningTimeBorderThicknessProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RunningTimeBorderThicknessProperty, value);
+			});
+		}
+	}
+
 	public Visibility ReleaseYearVisibility
 	{
 		get
@@ -1399,6 +1467,21 @@ public class DisplayProductModel : BrowseItemModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ReleaseYearVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Thickness ReleaseYearBorderThickness
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Thickness)GetValue(ReleaseYearBorderThicknessProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ReleaseYearBorderThicknessProperty, value);
 			});
 		}
 	}
@@ -1613,6 +1696,21 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public string OutOfStockLine4Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(OutOfStockLine4TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OutOfStockLine4TextProperty, value);
+			});
+		}
+	}
+
 	public string BuyText
 	{
 		get
@@ -1643,17 +1741,32 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public Style BuyButtonTextStyle
+	public Style BuyButtonBuyTextStyle
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (Style)GetValue(BuyButtonTextStyleProperty));
+			return base.Dispatcher.Invoke(() => (Style)GetValue(BuyButtonBuyTextStyleProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(BuyButtonTextStyleProperty, value);
+				SetValue(BuyButtonBuyTextStyleProperty, value);
+			});
+		}
+	}
+
+	public Style BuyButtonBuyPriceTextStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(BuyButtonBuyPriceTextStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BuyButtonBuyPriceTextStyleProperty, value);
 			});
 		}
 	}
@@ -1823,7 +1936,84 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public Visibility MoreLikeThisVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MoreLikeThisVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MoreLikeThisVisibilityProperty, value);
+			});
+		}
+	}
+
+	public DisplayProductMoreLikeThisModel DisplayProductMoreLikeThis1
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (DisplayProductMoreLikeThisModel)GetValue(DisplayProductMoreLikeThis1Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DisplayProductMoreLikeThis1Property, value);
+			});
+		}
+	}
+
+	public DisplayProductMoreLikeThisModel DisplayProductMoreLikeThis2
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (DisplayProductMoreLikeThisModel)GetValue(DisplayProductMoreLikeThis2Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DisplayProductMoreLikeThis2Property, value);
+			});
+		}
+	}
+
+	public DisplayProductMoreLikeThisModel DisplayProductMoreLikeThis3
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (DisplayProductMoreLikeThisModel)GetValue(DisplayProductMoreLikeThis3Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DisplayProductMoreLikeThis3Property, value);
+			});
+		}
+	}
+
+	public DisplayProductMoreLikeThisModel DisplayProductMoreLikeThis4
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (DisplayProductMoreLikeThisModel)GetValue(DisplayProductMoreLikeThis4Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DisplayProductMoreLikeThis4Property, value);
+			});
+		}
+	}
+
 	public DisplayProductModelConstants DisplayProductModelConstants { get; set; }
+
+	public IAdImpression AdImpression { get; set; }
 
 	public DisplayProductModel()
 	{

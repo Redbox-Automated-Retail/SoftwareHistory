@@ -1,7 +1,10 @@
 using System;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
+using Redbox.Rental.Services;
 using Redbox.Rental.Services.Controllers;
+using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
 
 namespace Redbox.Rental.Kernel;
 
@@ -23,6 +26,17 @@ public class CheckoutFunctions
 	internal static void DeviceServiceReportAuthorizeResult(bool authorizeSuccessful)
 	{
 		Redbox.Rental.Services.Controllers.CheckoutFunctions.ReportAuthorizeResultToDeviceService(authorizeSuccessful);
+	}
+
+	[KernelFunction(Name = "kernel.show_authorizing_message")]
+	internal static void ShowAuthorizingMessage()
+	{
+		OrchestrationService.ViewShow("general_message_view", new GeneralMessageViewModel
+		{
+			DisableIdleTimerOnEnter = false,
+			EnableIdleTimerOnLeave = false,
+			MessageText = Resources.authorization_message
+		});
 	}
 
 	private static bool GetBooleanValue(LuaTable luaTable, string propertyName, out bool value)

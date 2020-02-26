@@ -21,9 +21,9 @@ public class ApplicationState : IApplicationState
 		public string Code { get; set; }
 	}
 
-	private object _lockObject = new object();
+	private readonly object _lockObject = new object();
 
-	private List<IMaintenanceModeReason> _reasonsForMaintenanceMode = new List<IMaintenanceModeReason>();
+	private readonly List<IMaintenanceModeReason> _reasonsForMaintenanceMode = new List<IMaintenanceModeReason>();
 
 	private bool _needToReloadCarousel;
 
@@ -89,9 +89,7 @@ public class ApplicationState : IApplicationState
 	{
 		get
 		{
-			string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue("Store", "VerboseLogging", "False");
-			bool result = false;
-			bool.TryParse(value, out result);
+			bool.TryParse(ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue("Store", "VerboseLogging", "False"), out var result);
 			return result;
 		}
 	}
@@ -135,15 +133,24 @@ public class ApplicationState : IApplicationState
 		}
 	}
 
+	public bool HasMinutesInMaintenanceModeSource
+	{
+		get
+		{
+			lock (_lockObject)
+			{
+				return _reasonsForMaintenanceMode.Any((IMaintenanceModeReason x) => x.Source == MaintenanceModeSource.CardReader || x.Source == MaintenanceModeSource.Database || x.Source == MaintenanceModeSource.HAL);
+			}
+		}
+	}
+
 	public event OnRemoveMaintenanceModeReason OnRemoveMaintenanceModeReasonHandler;
 
 	public event OnAddMaintenanceModeReason OnAddMaintenanceModeReasonHandler;
 
 	public ApplicationState()
 	{
-		string value = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", "True");
-		bool result = true;
-		bool.TryParse(value, out result);
+		bool.TryParse(ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", "True"), out var result);
 		EnableOfflineBadCardList = result;
 	}
 

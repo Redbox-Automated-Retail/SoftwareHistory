@@ -7,6 +7,7 @@ public enum SwipeViewType
 	EncryptedSwipeRegularCheckOut,
 	EncryptedSwipeReservationPickup,
 	EMVInsertTapRegularCheckout,
+	EMVInsertTapHideMobileRegularCheckout,
 	EMVInsertTapReservationPickup,
 	EMVInsertRegularCheckout,
 	EMVInsertReservationPickup,

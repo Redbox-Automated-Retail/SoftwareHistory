@@ -80,11 +80,11 @@ public class MaintenanceViewController : BaseViewController
 		case "SOFT-FILE01":
 		case "SOFT-FILE02":
 		case "0032RSVB":
-			return Constants.MaintenanceViewBackgroundImages.GreenBackground;
+			return Redbox.Rental.UI.Views.Constants.MaintenanceViewBackgroundImages.GreenBackground;
 		case "0016SYNC":
-			return Constants.MaintenanceViewBackgroundImages.OrangeBackground;
+			return Redbox.Rental.UI.Views.Constants.MaintenanceViewBackgroundImages.OrangeBackground;
 		default:
-			return Constants.MaintenanceViewBackgroundImages.RedBackground;
+			return Redbox.Rental.UI.Views.Constants.MaintenanceViewBackgroundImages.RedBackground;
 		}
 	}
 

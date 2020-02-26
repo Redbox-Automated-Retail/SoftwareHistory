@@ -2,8 +2,10 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy;
+using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.KernelExtension;
 
@@ -51,6 +53,8 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 
 	private Label m_headerLabel;
 
+	private Button m_alertButton;
+
 	public HealthServicesPreferencePage()
 	{
 		InitializeComponent();
@@ -80,6 +84,15 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 		if (m_isLoaded)
 		{
 			HealthServicesProxy.Instance.Ping(StoreServicesProxy.Instance.StoreNumber);
+		}
+	}
+
+	private void OnTestKioskAlert(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			ServiceLocator.Instance.GetService<IHealthServices>().SendAlert(service.Filter["store_number"], "QLM", "TestSubAlertType", "Test Kiosk Alert generated thru the F4 menu", DateTime.Now, null);
 		}
 	}
 
@@ -179,6 +192,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_errorProvider = new System.Windows.Forms.ErrorProvider(this.components);
 		this.m_timer = new System.Windows.Forms.Timer(this.components);
 		this.m_headerLabel = new System.Windows.Forms.Label();
+		this.m_alertButton = new System.Windows.Forms.Button();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		base.SuspendLayout();
 		this.m_pingButton.Location = new System.Drawing.Point(170, 239);
@@ -188,6 +202,13 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_pingButton.Text = "Ping";
 		this.m_pingButton.UseVisualStyleBackColor = true;
 		this.m_pingButton.Click += new System.EventHandler(OnPing);
+		this.m_alertButton.Location = new System.Drawing.Point(170, 350);
+		this.m_alertButton.Name = "m_alertButton";
+		this.m_alertButton.Size = new System.Drawing.Size(152, 23);
+		this.m_alertButton.TabIndex = 16;
+		this.m_alertButton.Text = "Test Kiosk Alert";
+		this.m_alertButton.UseVisualStyleBackColor = true;
+		this.m_alertButton.Click += new System.EventHandler(OnTestKioskAlert);
 		this.m_communicationsStatusTextBox.Location = new System.Drawing.Point(170, 213);
 		this.m_communicationsStatusTextBox.Name = "m_communicationsStatusTextBox";
 		this.m_communicationsStatusTextBox.ReadOnly = true;
@@ -310,6 +331,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 		base.Controls.Add(this.m_pingPeriodTextBox);
 		base.Controls.Add(this.label1);
 		base.Controls.Add(this.m_liveCallCheckBox);
+		base.Controls.Add(this.m_alertButton);
 		base.Name = "HealthServicesPreferencePage";
 		base.Size = new System.Drawing.Size(542, 506);
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).EndInit();

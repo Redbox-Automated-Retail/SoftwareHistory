@@ -39,7 +39,7 @@ public interface IDataService
 
 	ErrorList GetCarouselProducts(bool showCollections, out List<IKioskProduct> products);
 
-	ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, out List<ITitleProduct> products);
+	ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, bool isPurchase, out List<ITitleProduct> products);
 
 	ErrorList GetCollection(long collectionId, out ICollectionProduct collection);
 
@@ -78,4 +78,6 @@ public interface IDataService
 	bool IsMultiDisc(long productId);
 
 	List<string> GetAllUnmatchedMultiDiscBarcodes();
+
+	long GetProductGroupId(IKioskProduct kioskProduct);
 }

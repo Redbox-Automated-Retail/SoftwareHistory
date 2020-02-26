@@ -37,4 +37,6 @@ public class PromoCodeValidationResult : IPromoCodeValidationResult
 	public int? ProductTypeId { get; set; }
 
 	public List<int> FormatIds { get; set; }
+
+	public PromotionActionCode ActionCode { get; set; }
 }

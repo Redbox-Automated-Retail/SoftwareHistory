@@ -1,7 +1,13 @@
+using System;
 using System.Windows;
-using System.Windows.Media.Imaging;
-using Redbox.Rental.Model.Marketing;
+using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.TextToSpeech;
+using Redbox.KioskEngine.Environment.TextToSpeech;
+using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Personalization;
+using Redbox.Rental.Services.KioskClientService.Ads;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -11,7 +17,7 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class SimpleViewController : BaseViewController
 {
-	private static void ConfigureView(SimpleInfo info, bool useIdleTimer)
+	private static void ConfigureView(SimpleInfo info, bool useIdleTimer, Action<SpeechPart> ttsTextRefreshAction = null)
 	{
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl == null)
@@ -22,7 +28,6 @@ public class SimpleViewController : BaseViewController
 		{
 			BaseViewController.StopIdleTimer();
 		}
-		BaseViewController.SetCurrentUICulture();
 		SimpleModel model = info.Model;
 		model.Info = info;
 		model.CancelAction = info.CancelAction;
@@ -49,6 +54,10 @@ public class SimpleViewController : BaseViewController
 			model.OtherButtonCommand = DynamicRouting.RegisterRoutedCommand(Redbox.Rental.UI.Commands.OtherButtonCommand, OtherButtonCommand_Execute);
 		}
 		viewUserControl.DataContext = model;
+		if (ttsTextRefreshAction != null)
+		{
+			ConfigureTTS(model, ttsTextRefreshAction);
+		}
 		if (useIdleTimer)
 		{
 			BaseViewController.StartIdleTimer();
@@ -56,51 +65,9 @@ public class SimpleViewController : BaseViewController
 		InvokeAnalytics(model, AnalyticsTypes.context);
 	}
 
-	public static void ConfigurePromoView(SimpleInfo info)
-	{
-		string arg = string.Empty;
-		if (info.Obj is ILoginEmailProvider)
-		{
-			arg = (info.Obj as ILoginEmailProvider).LoginEmailAddress;
-		}
-		if (info.Model == null)
-		{
-			info.Model = new SimpleModel
-			{
-				ContinueButtonText = Resources.promo_perks_btn1_text,
-				CancelButtonText = Resources.promo_perks_btn2_text,
-				TitleText = Resources.promo_perks_title,
-				MessageText = Resources.promo_perks_message,
-				CommentText = $"{Resources.promo_perks_comment} {arg}",
-				FooterText = Resources.promo_perks_footer,
-				Circle1Text = Resources.promo_perks_circle1,
-				Circle2Text = Resources.promo_perks_circle2,
-				Circle3Text = Resources.promo_perks_circle3,
-				OtherButtonText = Resources.promo_perks_btn_terms,
-				CheckboxChecked = false,
-				CheckboxText = Resources.promo_perks_checkbox_label
-			};
-		}
-		ConfigureView(info, !info.UseIdleTimer.HasValue || info.UseIdleTimer.Value);
-	}
-
-	public static void ConfigurePerksView(SimpleInfo info)
-	{
-		if (info.Model == null)
-		{
-			info.Model = new SimpleModel
-			{
-				ContinueButtonText = Resources.joined_perks_btn_text,
-				FooterText = Resources.joined_perks_footer,
-				MessageText = Resources.joined_perks_message,
-				TitleText = Resources.joined_perks_title
-			};
-		}
-		ConfigureView(info, !info.UseIdleTimer.HasValue || info.UseIdleTimer.Value);
-	}
-
 	public static void ConfigureTextView(SimpleInfo info)
 	{
+		BaseViewController.SetCurrentUICulture();
 		if (info.Model == null)
 		{
 			info.Model = new SimpleModel
@@ -115,20 +82,143 @@ public class SimpleViewController : BaseViewController
 
 	public static void ConfigureEmailReceiptView(EmailReceiptInfo info)
 	{
+		BaseViewController.SetCurrentUICulture();
 		if (info.Model == null)
 		{
-			MarketingAd marketingAd = BaseViewController.GetMarketingAd(MarketingAdLocation.EmailNotification, createImpression: true);
-			BitmapImage bannerImage = ((marketingAd != null && marketingAd.Visible) ? BaseViewController.GetBundleBitmapImage(marketingAd.ImageName) : null);
+			IAd ad = ((!BaseViewController.ApplicationState.IsADAAccessible) ? BaseViewController.GetAd(AdLocation.EmailNotification) : null);
 			info.Model = new SimpleModel
 			{
-				ContinueButtonText = Resources.email_receipt_btn_text,
+				ContinueButtonText = Resources.continue_button_mixed_case,
 				CommentText = Resources.email_receipt_comment,
 				TitleText = Resources.email_receipt_title,
 				MessageText = info.EmailAddress,
-				BannerImage = bannerImage
+				BannerImage = ad?.Image,
+				BannerImageVisibility = ((ad == null) ? Visibility.Collapsed : Visibility.Visible),
+				AdImpression = ((ad != null) ? new AdImpression
+				{
+					Ad = ad,
+					AdLocation = AdLocation.EmailNotification
+				} : null)
 			};
+			info?.Model?.AdImpression?.Start();
 		}
 		ConfigureView(info, info.UseIdleTimer.HasValue && info.UseIdleTimer.Value);
+	}
+
+	public static void OnLeaveEmailReceiptView(IViewFrameInstance viewFrameInstance)
+	{
+		BaseViewController.RecordAdImpression(BaseViewController.GetViewModel<SimpleModel>(viewFrameInstance.Id)?.AdImpression);
+	}
+
+	internal static void ConfigurePerksSignupAlreadymemberView(SimpleInfoWithSignUpFlow info)
+	{
+		BaseViewController.SetCurrentUICulture();
+		if (info.Model == null)
+		{
+			info.Model = new SimpleModel
+			{
+				ContinueButtonText = Resources.continue_button_text,
+				MessageText = ((info.SignUpFlowContext == SignUpFlowContext.AfterPerksEquivalentOffer) ? Resources.perks_signup_already_member_dont_forget_message : Resources.perks_signup_already_member_message),
+				TitleText = Resources.perks_signup_already_member_title
+			};
+		}
+		SimpleModel simpleModel = info.Model;
+		Action<SpeechPart> ttsTextRefreshAction = delegate(SpeechPart speechPart)
+		{
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = simpleModel?.TitleText
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = simpleModel?.MessageText
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "To continue press ENTER"
+			});
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "ENTER",
+				Function = "TTSRepeatSpeechPart",
+				Action = delegate
+				{
+					simpleModel?.ContinueButtonCommand?.Execute(null);
+				}
+			});
+			speechPart.Loop = true;
+		};
+		ConfigureView(info, info.UseIdleTimer.HasValue && info.UseIdleTimer.Value, ttsTextRefreshAction);
+	}
+
+	internal static void ConfigurePerksSignupAlreadymemberOptinView(PerksSignupAlreadyMemberOptInViewInfo info)
+	{
+		if (Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.SignupFlowState.MarketingOptInShown = true;
+		}
+		BaseViewController.SetCurrentUICulture();
+		if (info.Model == null)
+		{
+			info.Model = new SimpleModel
+			{
+				ContinueButtonText = Resources.perks_signup_already_member_optin_accept_button,
+				CancelButtonText = Resources.no_thanks_button_text,
+				MessageText = ((info.SignUpFlowContext == SignUpFlowContext.AfterPerksEquivalentOffer) ? Resources.perks_signup_already_member_new_member_only_optin_message : ((info.PerksDeclined && info.SignUpFlowContext == SignUpFlowContext.AfterSwipe) ? string.Format(Resources.perks_declined_optin_message, info.EmailAddress) : ((!info.PerksDeclined && info.SignUpFlowContext == SignUpFlowContext.AfterSwipe) ? Resources.perks_signup_already_member_optin_message2 : Resources.perks_signup_already_member_optin_message))),
+				TitleText = ((info.PerksDeclined && info.SignUpFlowContext == SignUpFlowContext.AfterSwipe) ? Resources.perks_declined_optin_title : Resources.perks_signup_already_member_optin_title),
+				CommentText = ((info.PerksDeclined && info.SignUpFlowContext == SignUpFlowContext.AfterSwipe) ? Resources.perks_declined_optin_comment : ((!info.PerksDeclined && info.SignUpFlowContext == SignUpFlowContext.AfterSwipe) ? null : Resources.perks_signup_already_member_optin_comment)),
+				FooterText = ((!info.PerksDeclined && info.SignUpFlowContext == SignUpFlowContext.AfterSwipe) ? string.Format(Resources.perks_signup_already_member_optin_footer, info.EmailAddress) : null),
+				OtherButtonText = ((info.PerksDeclined && info.SignUpFlowContext == SignUpFlowContext.AfterSwipe) ? Resources.perks_declined_optin_legal : null)
+			};
+		}
+		SimpleModel simpleModel = info.Model;
+		Action<SpeechPart> ttsTextRefreshAction = delegate(SpeechPart speechPart)
+		{
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = simpleModel?.CommentText
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = simpleModel?.TitleText
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = simpleModel?.MessageText
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = simpleModel?.FooterText
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "To accept press ENTER"
+			});
+			speechPart.Texts.Add(new TextPart
+			{
+				Text = "To go back press CANCEL"
+			});
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "ENTER",
+				Function = "TTSRepeatSpeechPart",
+				Action = delegate
+				{
+					simpleModel?.ContinueButtonCommand?.Execute(null);
+				}
+			});
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "CANCEL",
+				Function = "TTSRepeatSpeechPart",
+				Action = delegate
+				{
+					simpleModel?.CancelButtonCommand?.Execute(null);
+				}
+			});
+			speechPart.Loop = true;
+		};
+		ConfigureView(info, info.UseIdleTimer.HasValue && info.UseIdleTimer.Value, ttsTextRefreshAction);
 	}
 
 	private static void InvokeAnalytics(SimpleModel model, AnalyticsTypes analyticsType)
@@ -192,5 +282,40 @@ public class SimpleViewController : BaseViewController
 			return viewModel.CheckboxChecked;
 		}
 		return true;
+	}
+
+	private static void ConfigureTTS(SimpleModel viewModel, Action<SpeechPart> speechPartRefreshAction)
+	{
+		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		if (service == null || !service.TTSEnabled || viewModel == null)
+		{
+			return;
+		}
+		viewModel.ProcessGetSpeechControl = delegate
+		{
+			SpeechControl obj = new SpeechControl
+			{
+				Name = "tts_simple_view"
+			};
+			SpeechPart part = new SpeechPart
+			{
+				Name = "Intro",
+				Loop = true,
+				StartPause = 250,
+				EndPause = 10000
+			};
+			part.Refresh = delegate
+			{
+				part.Clear();
+				speechPartRefreshAction(part);
+			};
+			obj.SpeechParts.Add(part);
+			int i = 0;
+			obj.SpeechParts.ForEach(delegate(ISpeechPart x)
+			{
+				x.Sequence = i++;
+			});
+			return obj;
+		};
 	}
 }

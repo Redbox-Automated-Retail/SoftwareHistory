@@ -320,6 +320,7 @@ public class PromotionServicesProxy : IPromotionServices
 						}
 						remoteServiceResult.Properties["product_type_id"] = (dictionary.ContainsKey("ProductTypeId") ? dictionary["ProductTypeId"] : null);
 						remoteServiceResult.Properties["format_ids"] = (dictionary.ContainsKey("FormatIds") ? (dictionary["FormatIds"] as ArrayList) : null);
+						remoteServiceResult.Properties["action_code"] = (dictionary.ContainsKey("ActionType") ? dictionary["ActionType"] : PromoActionCode.Rental.ToString());
 						if (!remoteServiceResult.Success)
 						{
 							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
@@ -423,6 +424,7 @@ public class PromotionServicesProxy : IPromotionServices
 					remoteServiceResult.Properties["campaign_titles"] = null;
 					remoteServiceResult.Properties["product_type_id"] = null;
 					remoteServiceResult.Properties["format_ids"] = null;
+					remoteServiceResult.Properties["action_code"] = PromoActionCode.Rental.ToString();
 				}
 				else
 				{
@@ -437,6 +439,7 @@ public class PromotionServicesProxy : IPromotionServices
 					remoteServiceResult.Properties["campaign_titles"] = null;
 					remoteServiceResult.Properties["product_type_id"] = null;
 					remoteServiceResult.Properties["format_ids"] = null;
+					remoteServiceResult.Properties["action_code"] = PromoActionCode.Rental.ToString();
 				}
 			}
 			catch (Exception e)

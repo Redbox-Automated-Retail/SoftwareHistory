@@ -64,7 +64,7 @@ public class OfferAbandonConfirmViewController : BaseViewController
 				viewModel.CallbackExecuted = true;
 				if (fromOkayButton)
 				{
-					BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "okayButton");
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("OfferAbandonConfirmOK");
 				}
 				OrchestrationService.ViewGoBackSafe("OfferAbandonConfirmView Continue", popOnly: false);
 				_continueAction?.Invoke();

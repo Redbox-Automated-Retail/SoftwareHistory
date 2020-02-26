@@ -51,16 +51,11 @@ public class BrowseViewTextToSpeech
 	{
 		get
 		{
-			string result = "Games";
-			if (BrowseState.TitleFamily == TitleFamily.Movies)
+			if (BrowseState.TitleFamily != TitleFamily.Movies)
 			{
-				result = "Movies";
+				return "Games";
 			}
-			else if (BrowseState.TitleFamily == TitleFamily.TV)
-			{
-				result = "TV";
-			}
-			return result;
+			return "Movies";
 		}
 	}
 
@@ -424,25 +419,15 @@ public class BrowseViewTextToSpeech
 					Function = "TTSSkipToSpeechPart",
 					Value = "FilterItems"
 				});
-				speechPart.Events.Add(new MapKeyPressToAction
-				{
-					KeyCode = "4",
-					Text = "Switching",
-					Action = delegate
-					{
-						browseViewModel?.ProcessOnToggleTitleFamilyButton1Clicked();
-					}
-				});
-				BrowseViewModel browseViewModel2 = browseViewModel;
-				if (browseViewModel2 != null && browseViewModel2.SwitchProductFamilyButton2Visibility == Visibility.Visible)
+				if (browseViewModel.SwitchProductFamilyButton1Visibility == Visibility.Visible)
 				{
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						KeyCode = "5",
+						KeyCode = "4",
 						Text = "Switching",
 						Action = delegate
 						{
-							browseViewModel?.ProcessOnToggleTitleFamilyButton2Clicked();
+							browseViewModel?.ProcessOnToggleTitleFamilyButton1Clicked();
 						}
 					});
 				}
@@ -462,27 +447,22 @@ public class BrowseViewTextToSpeech
 				{
 					Text = "To filter your selection choices press 3."
 				});
-				speechPart.Texts.Add(new TextPart
-				{
-					Text = string.Format("To select {0} press 4.", (BrowseState.TitleFamily == TitleFamily.Movies) ? "Games" : "Movies")
-				});
-				BrowseViewModel browseViewModel3 = browseViewModel;
-				if (browseViewModel3 != null && browseViewModel3.SwitchProductFamilyButton2Visibility == Visibility.Visible)
+				if (browseViewModel.SwitchProductFamilyButton1Visibility == Visibility.Visible)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = string.Format("To select {0} press 5.", (BrowseState.TitleFamily == TitleFamily.TV) ? "Games" : "TV")
+						Text = string.Format("To select {0} press 4.", (BrowseState.TitleFamily == TitleFamily.Movies) ? "Games" : "Movies")
 					});
 				}
 				if (browseViewModel.SignInButtonVisibility == Visibility.Visible)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "To sign in press 6."
+						Text = "To sign in press 5."
 					});
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						KeyCode = "6",
+						KeyCode = "5",
 						Action = delegate
 						{
 							browseViewModel?.ProcessOnSignInButtonClicked();
@@ -493,11 +473,11 @@ public class BrowseViewTextToSpeech
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "To sign out press 6."
+						Text = "To sign out press 5."
 					});
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						KeyCode = "6",
+						KeyCode = "5",
 						Action = delegate
 						{
 							browseViewModel?.ProcessOnSignOutButtonClicked();
@@ -508,11 +488,11 @@ public class BrowseViewTextToSpeech
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "To access my Redbox press 7."
+						Text = "To access my Redbox press 6."
 					});
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
-						KeyCode = "7",
+						KeyCode = "6",
 						Action = delegate
 						{
 							browseViewModel?.ProcessOnMyPerksButtonClicked();

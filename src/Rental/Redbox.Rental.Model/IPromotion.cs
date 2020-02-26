@@ -45,4 +45,8 @@ public interface IPromotion
 	bool IsValidatedPostVend { get; set; }
 
 	bool IsExternallyValidated { get; }
+
+	PromotionActionCode ActionCode { get; set; }
+
+	RentalShoppingCartItemAction CartItemAction { get; }
 }

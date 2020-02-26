@@ -19,8 +19,6 @@ public class Constants
 
 		public const string ShoppingCartUpdateADAView = "ShoppingCartUpdateADAView";
 
-		public const string ConfirmEmailView = "ConfirmEmailView";
-
 		public const string ZipCodeView = "ZipCodeView";
 
 		public const string TitleDetailsDevView = "TitleDetailsDevView";
@@ -54,10 +52,6 @@ public class Constants
 		public const string SignInView = "SignInView";
 
 		public const string MultiNightPricingPopupView = "MultiNightPricingPopupView";
-
-		public const string JoinPerksPromoView = "JoinPerksPromoView";
-
-		public const string JoinedPerksView = "JoinedPerksView";
 
 		public const string JoinTextClubPromoView = "JoinTextClubPromoView";
 
@@ -119,13 +113,27 @@ public class Constants
 
 		public const string PresentOffersView = "PresentOffersView";
 
-		public const string OptInThankYouView = "OptInThankYouView";
-
 		public const string EmailOptInView = "EmailOptInView";
 
 		public const string ReservationNotFoundView = "ReservationNotFoundView";
 
 		public const string NewCartConfirmADAActionUpdateView = "NewCartConfirmADAActionUpdateView";
+
+		public const string KeyboardPerksSignupView = "KeyboardPerksSignupView";
+
+		public const string PerksSignUpInfoPopupView = "PerksSignUpInfoPopupView";
+
+		public const string PerksConfirmView = "PerksConfirmView";
+
+		public const string PerksThanksView = "PerksThanksView";
+
+		public const string PerksSignUpAlreadyMemberView = "PerksSignUpAlreadyMemberView";
+
+		public const string PerksSignUpAlreadyMemberOptInView = "PerksSignUpAlreadyMemberOptInView";
+
+		public const string VsmView = "VsmView";
+
+		public const string TitleDetailsFullDetailsPopupView = "TitleDetailsFullDetailsPopupView";
 	}
 
 	public class ViewNames
@@ -180,10 +188,6 @@ public class Constants
 
 		public const string UpsellView = "upsell_view";
 
-		public const string JoinPerksPromoView = "join_perks_promo_view";
-
-		public const string JoinedPerksView = "joined_perks_view";
-
 		public const string JoinTextClubPromoView = "join_text_club_promo_view";
 
 		public const string EmailReceiptView = "email_receipt_view";
@@ -228,13 +232,13 @@ public class Constants
 
 		public const string VendView = "vend_view";
 
+		public const string VsmView = "vsm_view";
+
 		public const string OptionSelectionDialogView = "option_selection_dialog_view";
 
 		public const string ReserveOnlinePopupView = "reserve_online_popup_view";
 
 		public const string PerksInfoPopupView = "perks_info_popup_view";
-
-		public const string ConfirmEmailView = "confirm_email_view";
 
 		public const string MultiDiscVendView = "multi_disc_vend_view";
 
@@ -252,13 +256,27 @@ public class Constants
 
 		public const string PresentOffersView = "PresentOffersView";
 
-		public const string OptinThankYouView = "optin_thank_you_view";
-
 		public const string EmailOptInView = "email_optin_view";
 
 		public const string ReservationNotFoundView = "reservation_not_found_view";
 
 		public const string NewCartConfirmADAActionUpdateView = "new_cart_confirm_ada_action_update_view";
+
+		public const string KeyboardPerksSignupView = "keyboard_perks_signup_view";
+
+		public const string PerksSignUpInfoPopupView = "perks_signup_info_popup_view";
+
+		public const string PerksConfirmView = "perks_confirm_view";
+
+		public const string PerksThanksView = "perks_thanks_view";
+
+		public const string PerksSignUpAlreadyMemberView = "perks_signup_already_member_view";
+
+		public const string PerksSignUpAlreadyMemberOptInView = "perks_signup_already_member_optin_view";
+
+		public const string PerksEmailOptInThanksView = "perks_email_opt_in_thanks_view";
+
+		public const string TitleDetailsFullDetailsPopupView = "title_details_full_details_popup_view";
 	}
 
 	public class ThemeNames

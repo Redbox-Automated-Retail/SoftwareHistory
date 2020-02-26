@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Redbox.Core;
-using Redbox.JSONPrettyPrinter;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
@@ -59,7 +58,7 @@ public class KioskEventService : IKioskEventService
 			_kioskEvents.Add(kioskEvent);
 			try
 			{
-				LogHelper.Instance.Log($"KioskEventService.AddEvent - {PrettyPrinter.GetPrettyString(kioskEvent.ToJson())}");
+				LogHelper.Instance.Log($"KioskEventService.AddEvent - {kioskEvent.ToJson().ToPrettyJson()}");
 			}
 			catch
 			{

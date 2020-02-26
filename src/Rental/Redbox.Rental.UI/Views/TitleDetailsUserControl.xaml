@@ -7,6 +7,7 @@
     <CommandBinding Command="{x:Static localbase:Commands.PrimaryCommand}" Executed="RentProduct_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ResetIdleTimerCommand}" Executed="ResetIdleTimerCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.MoreInfoCommand}" Executed="MoreInfo_Executed" />
+    <CommandBinding Command="{x:Static localbase:Commands.SeeFullDetailsCommand}" Executed="SeeFullDetails_Executed" />
   </UIElement.CommandBindings>
   <Grid Background="#FFFFFFFF">
     <Image Name="BackgroundImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/backgroundTexture.png" HorizontalAlignment="Left" VerticalAlignment="Top" Height="768" Visibility="{Binding Path=BackgroundImageVisibility, FallbackValue=Collapsed}" />

@@ -17,5 +17,9 @@ public class TitleDetailsDefinition : BaseViewDefinition, IViewDefinition
 		{
 			TitleDetailsController.ConfigureView();
 		};
+		base.OnLeave = delegate(IViewFrameInstance viewFrameInstance)
+		{
+			TitleDetailsController.OnLeave(viewFrameInstance);
+		};
 	}
 }

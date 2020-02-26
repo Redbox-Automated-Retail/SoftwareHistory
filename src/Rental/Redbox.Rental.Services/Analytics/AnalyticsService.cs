@@ -18,11 +18,11 @@ namespace Redbox.Rental.Services.Analytics;
 
 public class AnalyticsService : IAnalyticsService
 {
-	private LogHelper _logger;
+	private readonly LogHelper _logger;
 
-	private IConfigurationService _configuration;
+	private readonly IConfigurationService _configuration;
 
-	private IEngineApplication _engine;
+	private readonly IEngineApplication _engine;
 
 	private IStoreManager _storeManager;
 
@@ -32,7 +32,7 @@ public class AnalyticsService : IAnalyticsService
 
 	private readonly string _analyticsSessionsPath = "AnalyticsSessions";
 
-	private IDictionary<string, IAnalyticsSession> _analyticsSessions = new Dictionary<string, IAnalyticsSession>();
+	private readonly IDictionary<string, IAnalyticsSession> _analyticsSessions = new Dictionary<string, IAnalyticsSession>();
 
 	public IStoreManager StoreManager
 	{
@@ -129,10 +129,14 @@ public class AnalyticsService : IAnalyticsService
 				return;
 			}
 			_analyticsSessions[sessionId].End();
-			if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskAnalyticsJsonEnabled)
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.SendJsonKioskAnalyticsToKioskDataService)
 			{
 				WriteToFile(sessionId, ToJson(sessionId), "json");
 				SendToKioskDataService(sessionId);
+			}
+			else
+			{
+				LogHelper.Instance.Log("Bypassing Kiosk Data Services message AddKioskSessionJson due to SendJsonKioskAnalyticsToKioskDataService being turned off.");
 			}
 			Remove(sessionId);
 			if (CurrentSession != null && CurrentSession.SessionId == sessionId)

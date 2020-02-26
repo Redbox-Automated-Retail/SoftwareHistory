@@ -27,8 +27,6 @@ public class CollectionMessageViewController : BaseViewController
 
 	public static void ConfigureCollectionMessageViewController(string reason)
 	{
-		ISessionAnalyticsService sessionAnalyticsService = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		sessionAnalyticsService?.AddViewEvent("collectionspopupreason", reason);
 		BaseViewController.AnalyticsService?.AddData(new NameValueData("CollectionsPopupReason", reason));
 		IBrowseState browseState = Redbox.Rental.Services.Session.Session.Instance?.BrowseState;
 		if (browseState != null)
@@ -67,13 +65,11 @@ public class CollectionMessageViewController : BaseViewController
 		};
 		collectionMessageModel.OnCancelDialog = delegate
 		{
-			sessionAnalyticsService?.AddViewEvent("buttonPress", "cancel-collection-mesage-view");
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("CollectionMessageCancel");
 			viewService?.GoBackSafe("collection message view cancelled", popOnly: false);
 		};
 		collectionMessageModel.OnSeeAllCollections = delegate
 		{
-			sessionAnalyticsService?.AddViewEvent("buttonPress", "see-all-collections");
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("CollectionMessageSeeAll");
 			if (viewService.Peek(1) != "browse_view")
 			{
@@ -90,7 +86,6 @@ public class CollectionMessageViewController : BaseViewController
 		collectionMessageModel.OnCollectionSelected += delegate(IBrowseItemModel browseItemModel, object parameter)
 		{
 			CollectionProduct collectionProduct = browseItemModel?.Data as CollectionProduct;
-			sessionAnalyticsService?.AddViewEvent("buttonPress", $"view-collection,{collectionProduct?.ProductName}");
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("CollectionMessageView")?.AddData(new CollectionData(collectionProduct.Id, collectionProduct.ProductName));
 			if (viewService.Peek(1) != "browse_view")
 			{

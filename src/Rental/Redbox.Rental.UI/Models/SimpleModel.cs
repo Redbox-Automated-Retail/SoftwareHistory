@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using Redbox.Rental.Model.Ads;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.UI.Models;
@@ -8,6 +9,10 @@ namespace Redbox.Rental.UI.Models;
 public class SimpleModel : BaseModel<SimpleModel>
 {
 	public static readonly DependencyProperty BannerImageProperty = BaseModel<SimpleModel>.CreateDependencyProperty("BannerImage", TYPES.BITMAPIMAGE);
+
+	public static readonly DependencyProperty BannerImageVisibilityProperty = BaseModel<SimpleModel>.CreateDependencyProperty("BannerImageVisibility", TYPES.VISIBILITY, Visibility.Visible);
+
+	public static readonly DependencyProperty DisplayImageProperty = BaseModel<SimpleModel>.CreateDependencyProperty("DisplayImage", TYPES.BITMAPIMAGE);
 
 	public static readonly DependencyProperty TitleTextProperty = BaseModel<SimpleModel>.CreateDependencyProperty("TitleText", TYPES.STRING, string.Empty);
 
@@ -60,6 +65,36 @@ public class SimpleModel : BaseModel<SimpleModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(BannerImageProperty, value);
+			});
+		}
+	}
+
+	public Visibility BannerImageVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BannerImageVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BannerImageVisibilityProperty, value);
+			});
+		}
+	}
+
+	public BitmapImage DisplayImage
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (BitmapImage)GetValue(DisplayImageProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DisplayImageProperty, value);
 			});
 		}
 	}
@@ -243,6 +278,8 @@ public class SimpleModel : BaseModel<SimpleModel>
 			});
 		}
 	}
+
+	public IAdImpression AdImpression { get; set; }
 
 	private static void CheckboxPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{

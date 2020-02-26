@@ -5,7 +5,6 @@ using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
-using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Promotion;
@@ -38,6 +37,8 @@ public class NewCartConfirmViewController : BaseViewController
 
 	private static bool _isMultiNightOffer;
 
+	private static bool _isPerksOffer;
+
 	public static void ConfigureView(NewCartConfirmviewParameters parameters)
 	{
 		BaseViewController.StopIdleTimer();
@@ -54,6 +55,7 @@ public class NewCartConfirmViewController : BaseViewController
 			_removeOfferAction = parameters.RemoveOfferAction;
 			_selectedOffer = parameters.SelectedOffer;
 			_isMultiNightOffer = _selectedOffer.DiscountType == OfferDiscountType.MultiNightPrice;
+			_isPerksOffer = _selectedOffer.CustomerSegmentType == CustomerSegmentType.NewMemberPerksSignup;
 			ConfigureTextAndVisibility(newCartConfirmViewModel, parameters);
 			ConfigureCommands(newCartConfirmViewModel, parameters);
 			ConfigureShoppingCartDisplay(newCartConfirmViewModel, parameters);
@@ -162,7 +164,11 @@ public class NewCartConfirmViewController : BaseViewController
 		IPromotionService service2 = ServiceLocator.Instance.GetService<IPromotionService>();
 		bool flag = service2.GetPromotion()?.PromotionItems.Any((IPromotionItem i) => i.RentalShoppingCartItem.ProductId == eachRentalShoppingCartItem.ProductId) ?? false;
 		decimal num = (service2.GetPromotion()?.PromotionItems.FirstOrDefault((IPromotionItem i) => i.RentalShoppingCartItem.ProductId == eachRentalShoppingCartItem.ProductId))?.PromotionAmount ?? 0m;
-		if (isSelectedProduct || (flag && !_isMultiNightOffer))
+		if (isSelectedProduct && eachRentalShoppingCartItem.Action == RentalShoppingCartItemAction.purchase)
+		{
+			displayCheckoutProductModel.ProductDescriptionLine3Text = string.Format(Resources.discount_applied_text, eachRentalShoppingCartItem.PurchasePrice - eachRentalShoppingCartItem.Price);
+		}
+		else if (isSelectedProduct || (flag && !_isMultiNightOffer))
 		{
 			displayCheckoutProductModel.ProductDescriptionLine3Text = string.Format(Resources.discount_applied_text, num);
 		}
@@ -222,14 +228,12 @@ public class NewCartConfirmViewController : BaseViewController
 		{
 			displayCheckoutProductModel.ProductCartPriceText = $"{eachRentalShoppingCartItem.Price - num:C}";
 		}
-		BannerType productBannerType = BrowseFunctions.GetProductBannerType(titleProduct);
-		BrowseFunctions.ConfigureBanner(displayCheckoutProductModel, titleProduct, hideBanner: false, productBannerType, BaseViewController.GetViewUserControl());
 	}
 
 	private static void AddMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer)
 	{
 		BaseViewController.ProcessWPFHit();
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"Remove offer from {rentalShoppingCartItem?.ProductId}");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmAddPMNPOfferToProduct", $"Add offer to {rentalShoppingCartItem?.ProductId}");
 		ServiceLocator.Instance.GetService<IRentalShoppingCartService>().AddMultiNightOfferToItem(rentalShoppingCartItem, selectedOffer);
 		UpdateCartDisplay();
 	}
@@ -237,7 +241,7 @@ public class NewCartConfirmViewController : BaseViewController
 	private static void RemoveMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, long offerId)
 	{
 		BaseViewController.ProcessWPFHit();
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"delete {rentalShoppingCartItem?.ProductId}");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmRemovePMNPOfferToProduct", $"delete {rentalShoppingCartItem?.ProductId}");
 		ServiceLocator.Instance.GetService<IRentalShoppingCartService>().RemoveMultiNightOfferFromItem(rentalShoppingCartItem);
 		UpdateCartDisplay();
 	}
@@ -268,7 +272,7 @@ public class NewCartConfirmViewController : BaseViewController
 	private static void ModifyCartAction_Execute()
 	{
 		BaseViewController.ProcessWPFHit();
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "modify_cart");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmModifyCart");
 		OrchestrationService.ViewShow("new_cart_confirm_ada_action_update_view", _selectedOffer);
 	}
 
@@ -276,7 +280,7 @@ public class NewCartConfirmViewController : BaseViewController
 	{
 		BaseViewController.ProcessWPFHit();
 		object obj = model?.Data;
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", $"delete {(obj as IRentalShoppingCartItem)?.ProductId}");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmRemoveProductOffer", $"delete {(obj as IRentalShoppingCartItem)?.ProductId}");
 		_removeOfferAction();
 		UpdateCartDisplay();
 	}
@@ -290,7 +294,7 @@ public class NewCartConfirmViewController : BaseViewController
 	private static void SubmitCommand_Execute(Action continueAction)
 	{
 		BaseViewController.ProcessWPFHit();
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "submit");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmSubmit");
 		OrchestrationService.ViewGoBackSafe("NewCartConfirm_Submit", popOnly: false);
 		continueAction();
 	}
@@ -298,7 +302,7 @@ public class NewCartConfirmViewController : BaseViewController
 	private static void CancelCommand_Execute(Action cancelAction)
 	{
 		BaseViewController.ProcessWPFHit();
-		BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "skip_offer");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmSkipOffer");
 		OrchestrationService.ViewGoBackSafe("NewCartConfirm_SkipOffer", popOnly: false);
 		CancelWithConfirm(cancelAction);
 	}
@@ -365,7 +369,7 @@ public class NewCartConfirmViewController : BaseViewController
 			viewModel.PricingModel.ServiceFeeValueText = $"{newCart?.Totals?.ServiceFee:C}";
 			viewModel.PricingModel.ServiceFeeLineVisibility = ((!((newCart?.Totals?.ServiceFee ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
 			viewModel.SubmitButtonText = Resources.submit_button;
-			viewModel.SkipOfferButtonVisibility = ((!BaseViewController.IsADAMode && (parameters.promoProduct != null || _isMultiNightOffer)) ? Visibility.Collapsed : Visibility.Visible);
+			viewModel.SkipOfferButtonVisibility = ((!BaseViewController.IsADAMode && (parameters.promoProduct != null || _isMultiNightOffer || _isPerksOffer)) ? Visibility.Collapsed : Visibility.Visible);
 		}
 	}
 
@@ -377,7 +381,6 @@ public class NewCartConfirmViewController : BaseViewController
 		IIdleTimer obj = service?.CreateIdleTimer("NewCartConfirmViewTimer");
 		obj?.Initialize(timeOut, delegate
 		{
-			OrchestrationService.AnalyticsAddViewEvent("context", "timeOut");
 			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			MessagePopupViewController.ShowOfferTimeoutMessage(delegate
 			{

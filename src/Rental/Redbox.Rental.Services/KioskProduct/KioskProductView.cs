@@ -5,6 +5,8 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
+using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
@@ -78,8 +80,6 @@ public class KioskProductView
 
 	private List<ITitleProduct> _movieProducts = new List<ITitleProduct>();
 
-	private List<ITitleProduct> _tvProducts = new List<ITitleProduct>();
-
 	public IProfileDataInstance ProfileDataInstance { get; set; }
 
 	public ICacheDataInstance CacheDataInstance { get; set; }
@@ -117,7 +117,7 @@ public class KioskProductView
 		LoadMDVWorkaroundTitlesWithNoRollup();
 		LoadMovies();
 		LoadGames();
-		LoadTV();
+		LoadMoreLikeThis();
 		LogHelper.Instance.Log("KioskProductView.LoadView complete");
 	}
 
@@ -133,7 +133,6 @@ public class KioskProductView
 			LoadMDVWorkaroundTitlesWithNoRollup();
 			LoadMovies();
 			LoadGames();
-			LoadTV();
 		}
 	}
 
@@ -316,12 +315,6 @@ public class KioskProductView
 				where ApplyMainFilter(item, browseFilter)
 				select (item));
 		}
-		else if (titleFamily == TitleFamily.TV && !flag)
-		{
-			list.AddRange(from item in FilterToFormat(titleTypes, _tvProducts, includeTitleTypes)
-				where ApplyMainFilter(item, browseFilter)
-				select (item));
-		}
 		else
 		{
 			if (titleFamily == TitleFamily.All || titleFamily == TitleFamily.Movies)
@@ -336,12 +329,6 @@ public class KioskProductView
 					where ApplyMainFilter(item, browseFilter)
 					select (item));
 			}
-			if (titleFamily == TitleFamily.TV)
-			{
-				list.AddRange(from item in _tvProducts
-					where ApplyMainFilter(item, browseFilter)
-					select (item));
-			}
 			if (!flag)
 			{
 				list = list.Where((ITitleProduct item) => ApplyTitleTypeFilter(item, titleTypes, includeTitleTypes)).ToList();
@@ -350,18 +337,18 @@ public class KioskProductView
 		return list;
 	}
 
-	public List<ITitleProduct> GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView)
+	public List<ITitleProduct> GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, bool isPurchase)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
 		if (include == null || include.Count == 0)
 		{
-			list = FilterByTitleFamily(BrowseViewFilter.All, titleFamily, titleTypes, list, includeTitleTypes);
+			BrowseViewFilter browseFilter = (isPurchase ? BrowseViewFilter.ForSale : BrowseViewFilter.All);
+			list = FilterByTitleFamily(browseFilter, titleFamily, titleTypes, list, includeTitleTypes);
 		}
 		else
 		{
 			list.AddRange(_movieProducts.Where((ITitleProduct p) => include.Contains(p.ProductId)));
 			list.AddRange(_gamesProducts.Where((ITitleProduct p) => include.Contains(p.ProductId)));
-			list.AddRange(_tvProducts.Where((ITitleProduct p) => include.Contains(p.ProductId)));
 		}
 		if (exclude != null && exclude.Count > 0)
 		{
@@ -373,8 +360,11 @@ public class KioskProductView
 			DateTime cutoffDate = DateTime.Now.Date.AddDays(-includeOlderThan.Value.Days);
 			list = list.Where((ITitleProduct i) => i.ReleaseDate < cutoffDate).ToList();
 		}
-		list.AddRange(list.Where((ITitleProduct i) => i.HasDeal && i is TitleRollupProduct).SelectMany((ITitleProduct r) => ((TitleRollupProduct)r).KioskProducts.Where((ITitleProduct k) => !k.HasDeal)).ToList());
-		list = list.Where((ITitleProduct i) => !i.HasDeal).ToList();
+		if (!isPurchase)
+		{
+			list.AddRange(list.Where((ITitleProduct i) => i.HasDeal && i is TitleRollupProduct).SelectMany((ITitleProduct r) => ((TitleRollupProduct)r).KioskProducts.Where((ITitleProduct k) => !k.HasDeal)).ToList());
+			list = list.Where((ITitleProduct i) => !i.HasDeal).ToList();
+		}
 		if (isAdaView)
 		{
 			list = FilterToTitles(list);
@@ -407,15 +397,18 @@ public class KioskProductView
 				ImageFile = "image_collections_carousel"
 			});
 		}
-		List<ITitleProduct> list = (from x in _gamesProducts.OrderList(BrowseSort.SortDate, browseFilter)
-			where IsCarouselViewable(x, null) && !resultList.Contains(x)
-			select x).Take(2).ToList();
-		if (GetInStockGameCount() >= 3 && list != null && list.Any())
+		if (!Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals && !Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames)
 		{
-			resultList.Insert(Math.Min(6, resultList.Count()), list.FirstOrDefault());
-			if (list.Count() >= 2)
+			List<ITitleProduct> list = (from x in _gamesProducts.OrderList(BrowseSort.SortDate, browseFilter)
+				where IsCarouselViewable(x, null) && !resultList.Contains(x)
+				select x).Take(2).ToList();
+			if (GetInStockGameCount() >= 3 && list != null && list.Any())
 			{
-				resultList.Insert(Math.Min(num, resultList.Count()), list.Skip(1).FirstOrDefault());
+				resultList.Insert(Math.Min(6, resultList.Count()), list.FirstOrDefault());
+				if (list.Count() >= 2)
+				{
+					resultList.Insert(Math.Min(num, resultList.Count()), list.Skip(1).FirstOrDefault());
+				}
 			}
 		}
 		return resultList.Take(num).ToList();
@@ -1048,21 +1041,20 @@ public class KioskProductView
 			select (item));
 	}
 
-	private void LoadTV()
+	private void LoadMoreLikeThis()
 	{
-		_tvProducts.Clear();
-		_tvProducts.AddRange((from a in _titleRollupProducts
-			select a.Value into item
-			where IsTV(item)
-			select item).Select((Func<TitleRollupProduct, ITitleProduct>)((TitleRollupProduct item) => item)));
-		_tvProducts.AddRange(_mdvTitlesWithNoRollup.Where((MDVProduct item) => IsTV(item)).Select((Func<MDVProduct, ITitleProduct>)((MDVProduct item) => item)));
-		_tvProducts.AddRange(from item in _titlesWithNoRollup
-			where IsTV(item)
-			select (item));
-	}
-
-	private bool IsTV(ITitleProduct titleProduct)
-	{
-		return Redbox.Rental.Services.Configuration.Configuration.Instance.TVTitleIds.Contains(titleProduct.ProductId);
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		if (service?.TitleDetailsLayoutABTestVersionIgnoreCulture == "B")
+		{
+			LogHelper.Instance.Log("TitleDetailsLayoutABTestVersion config is set to B. Sending productGroupIds to KCS for morelikethis.");
+			IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
+			IKioskClientService service2 = ServiceLocator.Instance.GetService<IKioskClientService>();
+			List<long> productGroupIds = _movieProducts.Select((ITitleProduct x) => dataService.GetProductGroupId(x)).ToList();
+			service2.ProductGroups.RefreshAllMLTData(productGroupIds);
+		}
+		else
+		{
+			LogHelper.Instance.Log($"TitleDetailsLayoutABTestVersion config is set to {service?.TitleDetailsLayoutABTestVersionIgnoreCulture}. Skipping sending productGroupIds to KCS for morelikethis.");
+		}
 	}
 }

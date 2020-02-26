@@ -1,4 +1,5 @@
 using System;
+using Redbox.Rental.Model.Ads;
 
 namespace Redbox.Rental.Model.Marketing;
 
@@ -24,5 +25,5 @@ public class MarketingAdImpression
 
 	public int Count { get; set; }
 
-	public MarketingAdLocation AdLocation { get; set; }
+	public AdLocation AdLocation { get; set; }
 }

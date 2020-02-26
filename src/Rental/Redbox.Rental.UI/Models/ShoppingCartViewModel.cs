@@ -11,6 +11,8 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public static readonly DependencyProperty PayButtonTextProperty = DependencyProperty.Register("PayButtonText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty AcceptAndPayTextProperty = DependencyProperty.Register("AcceptAndPayText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty PricingModelProperty = DependencyProperty.Register("PricingModel", typeof(PricingModel), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty PromoCodeButtonEnabledProperty = DependencyProperty.Register("PromoCodeButtonEnabled", typeof(bool), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(true));
@@ -19,19 +21,9 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public static readonly DependencyProperty ADASpacerVisibilityProperty = DependencyProperty.Register("ADASpacerVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
-	public static readonly DependencyProperty BackButtonStyleProperty = DependencyProperty.Register("BackButtonStyle", typeof(Style), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
-
 	public static readonly DependencyProperty AddMovieButtonVisibilityProperty = DependencyProperty.Register("AddMovieButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
-	public static readonly DependencyProperty AddMovieButtonStyleProperty = DependencyProperty.Register("AddMovieButtonStyle", typeof(Style), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty AddMovieButtonWidthProperty = DependencyProperty.Register("AddMovieButtonWidth", typeof(int), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(205));
-
 	public static readonly DependencyProperty AddGameButtonVisibilityProperty = DependencyProperty.Register("AddGameButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
-
-	public static readonly DependencyProperty AddGameButtonStyleProperty = DependencyProperty.Register("AddGameButtonStyle", typeof(Style), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty AddGameButtonWidthProperty = DependencyProperty.Register("AddGameButtonWidth", typeof(int), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(205));
 
 	public static readonly DependencyProperty UpdateBagButtonVisibilityProperty = DependencyProperty.Register("UpdateBagButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
@@ -48,30 +40,6 @@ public class ShoppingCartViewModel : DependencyObject
 	public static readonly DependencyProperty ServiceFeeTextVisibilityProperty = DependencyProperty.Register("ServiceFeeTextVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty MDVFootnoteVisibilityProperty = DependencyProperty.Register("MDVFootnoteVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty AcceptAndPayTextVisibilityProperty = DependencyProperty.Register("AcceptAndPayTextVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty TermsTextVisibilityProperty = DependencyProperty.Register("TermsTextVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
-
-	public static readonly DependencyProperty PayButtonVisibilityProperty = DependencyProperty.Register("PayButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
-
-	public static readonly DependencyProperty PromoCodeButtonVisibilityProperty = DependencyProperty.Register("PromoCodeButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
-
-	public static readonly DependencyProperty TermsAndPrivacyButtonVisibilityProperty = DependencyProperty.Register("TermsAndPrivacyButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
-
-	public static readonly DependencyProperty PromoCodeButtonABTestVisibilityProperty = DependencyProperty.Register("PromoCodeButtonABTestVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty SignInButtonABTestVisibilityProperty = DependencyProperty.Register("SignInButtonABTestVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty UsePointsButtonABTestVisibilityProperty = DependencyProperty.Register("UsePointsButtonABTestVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty PayButtonABTestVisibilityProperty = DependencyProperty.Register("PayButtonABTestVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty TermsTextABTestVisibilityProperty = DependencyProperty.Register("TermsTextABTestVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty TermsTextABTestTextProperty = DependencyProperty.Register("TermsTextABTestText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty TermsAndPrivacyButtonABTestVisibilityProperty = DependencyProperty.Register("TermsAndPrivacyButtonABTestVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty PointsEstimateTextProperty = DependencyProperty.Register("PointsEstimateText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
 
@@ -97,7 +65,7 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public string TermsAndPrivacyButtonText { get; set; }
 
-	public string TermsText { get; set; }
+	public string PrivacyText { get; set; }
 
 	public string PromoCodeButtonText { get; set; }
 
@@ -186,6 +154,21 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
+	public string AcceptAndPayText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(AcceptAndPayTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AcceptAndPayTextProperty, value);
+			});
+		}
+	}
+
 	public PricingModel PricingModel
 	{
 		get
@@ -216,21 +199,6 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
-	public Style BackButtonStyle
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Style)GetValue(BackButtonStyleProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(BackButtonStyleProperty, value);
-			});
-		}
-	}
-
 	public Visibility AddMovieButtonVisibility
 	{
 		get
@@ -246,36 +214,6 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
-	public Style AddMovieButtonStyle
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Style)GetValue(AddMovieButtonStyleProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AddMovieButtonStyleProperty, value);
-			});
-		}
-	}
-
-	public int AddMovieButtonWidth
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (int)GetValue(AddMovieButtonWidthProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AddMovieButtonWidthProperty, value);
-			});
-		}
-	}
-
 	public Visibility AddGameButtonVisibility
 	{
 		get
@@ -287,36 +225,6 @@ public class ShoppingCartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(AddGameButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Style AddGameButtonStyle
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Style)GetValue(AddGameButtonStyleProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AddGameButtonStyleProperty, value);
-			});
-		}
-	}
-
-	public int AddGameButtonWidth
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (int)GetValue(AddGameButtonWidthProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AddGameButtonWidthProperty, value);
 			});
 		}
 	}
@@ -437,186 +345,6 @@ public class ShoppingCartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(MDVFootnoteVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility AcceptAndPayTextVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AcceptAndPayTextVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AcceptAndPayTextVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility TermsTextVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(TermsTextVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(TermsTextVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility PayButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PayButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PayButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility PromoCodeButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PromoCodeButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PromoCodeButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility TermsAndPrivacyButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(TermsAndPrivacyButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(TermsAndPrivacyButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility PromoCodeButtonABTestVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PromoCodeButtonABTestVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PromoCodeButtonABTestVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility SignInButtonABTestVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SignInButtonABTestVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(SignInButtonABTestVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility UsePointsButtonABTestVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(UsePointsButtonABTestVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(UsePointsButtonABTestVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility PayButtonABTestVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PayButtonABTestVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PayButtonABTestVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility TermsTextABTestVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(TermsTextABTestVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(TermsTextABTestVisibilityProperty, value);
-			});
-		}
-	}
-
-	public string TermsTextABTestText
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(TermsTextABTestTextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(TermsTextABTestTextProperty, value);
-			});
-		}
-	}
-
-	public Visibility TermsAndPrivacyButtonABTestVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(TermsAndPrivacyButtonABTestVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(TermsAndPrivacyButtonABTestVisibilityProperty, value);
 			});
 		}
 	}

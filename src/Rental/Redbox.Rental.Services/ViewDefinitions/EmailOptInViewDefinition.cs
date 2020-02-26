@@ -1,3 +1,4 @@
+using System;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Services.Controllers;
@@ -11,9 +12,9 @@ public class EmailOptInViewDefinition : BaseViewDefinition, IViewDefinition
 	{
 		base.ViewName = "email_optin_view";
 		base.ControlName = "EmailOptInView";
-		base.OnEnter = delegate
+		base.OnEnter = delegate(IViewFrameInstance viewFrameInstance)
 		{
-			EmailOptInViewController.ConfigureView();
+			EmailOptInViewController.ConfigureView(viewFrameInstance.Parameter as Action);
 		};
 		base.OnLeave = delegate
 		{

@@ -30,8 +30,8 @@
     </Grid>
     <Grid Row="1" Background="{StaticResource RubineToPurpleGradientBrush}">
       <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logo@2x.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,28,0,0" Height="34" />
-      <Redbox:RoundedButton Name="sign_in_button" CornerRadius="8" VerticalAlignment="Center" HorizontalAlignment="Right" Width="auto" Height="40" Focusable="False" Margin="0,0,30,0" Style="{StaticResource white_warmpurple_border_button_style}" Command="{x:Static localbase:Commands.SignInCommand}" IsEnabled="{Binding Path=SignInButtonEnabled, FallbackValue=true}" Visibility="{Binding SignInVisibility}">
-        <TextBlock Margin="24,0" Style="{StaticResource font_montserrat_semibold_18}" Foreground="{StaticResource RubineRedBrush}" Text="{Binding ToggleSignInButtonText, FallbackValue=Sign In}" />
+      <Redbox:RoundedButton Name="sign_in_button" CornerRadius="20" VerticalAlignment="Center" HorizontalAlignment="Right" Width="auto" Height="40" Focusable="False" Margin="0,0,30,0" Style="{StaticResource white_warmpurple_border_button_style}" Command="{x:Static localbase:Commands.SignInCommand}" IsEnabled="{Binding Path=SignInButtonEnabled, FallbackValue=true}" Visibility="{Binding SignInVisibility}">
+        <TextBlock Margin="24,0" Style="{StaticResource font_montserrat_semibold_16}" Foreground="{StaticResource DarkGrayBrush}" Text="{Binding ToggleSignInButtonText, FallbackValue=Sign In  |  Sign Up}" />
       </Redbox:RoundedButton>
     </Grid>
     <Grid Row="3" Background="{StaticResource DeepPurpleBrush}">
@@ -139,11 +139,14 @@
               </UserControl>
             </Grid>
           </Grid>
-          <Redbox:RoundedButton Name="espanol_button" Style="{StaticResource rubine_no_border_button_style}" CornerRadius="25" Margin="20,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="148" Height="50" Command="{x:Static localbase:Commands.ToggleLanguageModeCommand}" Focusable="False">
-            <TextBlock VerticalAlignment="Center" Style="{StaticResource font_montserrat_medium_20}" Text="{Binding Path=ToggleLanguageButtonText, FallbackValue=ESPAÑOL}" />
+          <Redbox:RoundedButton Name="espanol_button" Style="{StaticResource rubine_no_border_button_style}" CornerRadius="25" Margin="20,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="114" Height="50" Command="{x:Static localbase:Commands.ToggleLanguageModeCommand}" Focusable="False">
+            <TextBlock VerticalAlignment="Center" Style="{StaticResource font_montserrat_semibold_18}" Text="{Binding Path=ToggleLanguageButtonText, FallbackValue=ESPAÑOL}" />
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="help_button" Style="{StaticResource rubine_no_border_button_style}" CornerRadius="31" Margin="20,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="50" Height="50" Command="{x:Static localbase:Commands.HelpCommand}" Focusable="False">
+          <Redbox:RoundedButton Name="help_button" Style="{StaticResource rubine_no_border_button_style}" CornerRadius="25" Margin="20,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="50" Height="50" Command="{x:Static localbase:Commands.HelpCommand}" Focusable="False">
             <TextBlock Style="{StaticResource font_montserrat_regular_24}">?</TextBlock>
+          </Redbox:RoundedButton>
+          <Redbox:RoundedButton Name="sign_in_button_ada" CornerRadius="20" VerticalAlignment="Center" HorizontalAlignment="Right" Width="auto" Height="40" Focusable="False" Margin="20,0,0,0" Style="{StaticResource white_warmpurple_border_button_style}" Command="{x:Static localbase:Commands.SignInCommand}" IsEnabled="{Binding Path=SignInButtonEnabled, FallbackValue=true}" Visibility="{Binding AdaSignInVisibility}">
+            <TextBlock Margin="20,0" Style="{StaticResource font_montserrat_semibold_16}" Foreground="{StaticResource DarkGrayBrush}" Text="{Binding ToggleSignInButtonText, FallbackValue=Sign In  |  Sign Up}" />
           </Redbox:RoundedButton>
         </StackPanel>
       </Grid>

@@ -150,7 +150,6 @@ public class MemberPerksLogic : BaseLogic
 		Model.PerksSelected = true;
 		Model.PromosSelected = false;
 		BaseLogic.HandleWPFHit();
-		BaseLogic.AnalyticsAddViewEvent("buttonPress", "perks");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPerksLogicPerks");
 	}
 
@@ -159,27 +158,19 @@ public class MemberPerksLogic : BaseLogic
 		Model.PromosSelected = true;
 		Model.PerksSelected = false;
 		BaseLogic.HandleWPFHit();
-		BaseLogic.AnalyticsAddViewEvent("buttonPress", "promo");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPerksLogicPromo");
-		PromoLogic.AddAnalyticsPromosShown();
 	}
 
 	public void CancelButtonCommand_Execute()
 	{
 		CloseAction?.Invoke();
 		BaseLogic.HandleWPFHit();
-		BaseLogic.AnalyticsAddViewEvent("buttonPress", "back");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPerksLogicBack");
 	}
 
 	public void SelectedButtonCommand_Execute(string buttonValue)
 	{
-		BaseLogic.AnalyticsAddViewEvent("buttonPress", buttonValue);
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPerksLogicButtonValue", buttonValue);
-		if (buttonValue == "PromosButton")
-		{
-			PromoLogic.AddAnalyticsPromosShown();
-		}
 	}
 
 	public MemberPerksLogic(MemberPerksModel perksModel, PerksMemberInfo memberInfo, PromoListLogic promoLogic)

@@ -21,36 +21,56 @@
     <Grid Name="action_zone_background" Margin="0,560,0,0" Width="1024" Height="208" VerticalAlignment="Top" HorizontalAlignment="Left" Background="#380B44">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="1*" />
-        <ColumnDefinition Width="3*" />
-        <ColumnDefinition Width="1*" />
+        <ColumnDefinition Width="4*" />
       </Grid.ColumnDefinitions>
-      <Image Name="redbox_logo" Grid.Column="0" Margin="50,0,0,59" Width="133" Height="40" VerticalAlignment="Bottom" HorizontalAlignment="Left" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite.png">
+      <Image Name="redbox_logo" Grid.Column="0" Margin="40,50,0,0" Width="133" Height="40" VerticalAlignment="Top" HorizontalAlignment="Left" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite.png">
         <UIElement.InputBindings>
           <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.RedboxLogoCommand}" />
         </UIElement.InputBindings>
       </Image>
-      <ItemsControl Name="help_doc_buttons_items_control" Grid.Column="1" ItemsSource="{Binding HelpButtonList}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,15,0,44" />
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <Redbox:RoundedButton Width="175" Height="44" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="13,30,13,0" Style="{StaticResource classic_rubine_radio_button_style}" Command="{x:Static local:HelpViewCommands.ShowDocument}" Visibility="Visible" CornerRadius="22" Tag="{Binding DocumentToShow}" IsEnabled="{Binding IsEnabled}">
-              <Grid Height="44">
-                <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_16}" FontSize="15" Margin="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Text="{Binding ButtonText}" />
-                <Border Name="brdDocUpdated" Style="{StaticResource help_updated_border_style}" Visibility="{Binding Path=ShowUpdatedFlag, Converter={StaticResource BoolToVisibility}, FallbackValue=Visible}">
-                  <TextBlock Style="{StaticResource help_updated_text_style}" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding UpdatedText}" />
-                </Border>
-              </Grid>
-            </Redbox:RoundedButton>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-      <Redbox:RoundedButton Name="back_button" Grid.Column="2" Style="{StaticResource white_rubine_to_warm_purple_border_button_style}" Margin="0,0,18,44" Width="141" VerticalAlignment="Bottom" HorizontalAlignment="Right" Height="44" CornerRadius="22" Command="{x:Static local:HelpViewCommands.GoBack}">
+      <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+        <ItemsControl Name="top_row_buttons_items_control" ItemsSource="{Binding TopRowButtonList}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,35,0" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Redbox:RoundedButton Width="Auto" MinWidth="114" Height="48" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="13,40,13,0" Style="{StaticResource classic_rubine_radio_button_style}" Command="{x:Static local:HelpViewCommands.ShowDocument}" Visibility="Visible" CornerRadius="22" Tag="{Binding DocumentToShow}" IsEnabled="{Binding IsEnabled}">
+                <Grid Height="44">
+                  <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_16}" FontSize="15" Margin="22,0,22,0" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Text="{Binding ButtonText}" />
+                  <Border Name="brdDocUpdated" Style="{StaticResource help_updated_border_style}" Visibility="{Binding Path=ShowUpdatedFlag, Converter={StaticResource BoolToVisibility}, FallbackValue=Visible}">
+                    <TextBlock Style="{StaticResource help_updated_text_style}" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding UpdatedText}" />
+                  </Border>
+                </Grid>
+              </Redbox:RoundedButton>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ItemsControl Name="bottom_row_buttons_items_control" ItemsSource="{Binding BottomRowButtonList}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,35,0" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Redbox:RoundedButton Width="Auto" MinWidth="114" Height="48" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="13,40,13,0" Style="{StaticResource classic_rubine_radio_button_style}" Command="{x:Static local:HelpViewCommands.ShowDocument}" Visibility="Visible" CornerRadius="22" Tag="{Binding DocumentToShow}" IsEnabled="{Binding IsEnabled}">
+                <Grid Height="44">
+                  <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_16}" FontSize="15" Margin="22,0,22,0" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Text="{Binding ButtonText}" />
+                  <Border Name="brdDocUpdated" Style="{StaticResource help_updated_border_style}" Visibility="{Binding Path=ShowUpdatedFlag, Converter={StaticResource BoolToVisibility}, FallbackValue=Visible}">
+                    <TextBlock Style="{StaticResource help_updated_text_style}" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding UpdatedText}" />
+                  </Border>
+                </Grid>
+              </Redbox:RoundedButton>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+      <Redbox:RoundedButton Name="back_button" Grid.Column="0" Style="{StaticResource white_button_style}" Margin="24,0,18,24" MinWidth="101" VerticalAlignment="Bottom" HorizontalAlignment="Left" Height="44" CornerRadius="22" Command="{x:Static local:HelpViewCommands.GoBack}">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
-          <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_target_smaller_overlays}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#E42045" Text="{Binding BackButtonText, FallbackValue=BACK}" />
+          <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_museo_slab_900_20}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#E42045" Text="{Binding BackButtonText, FallbackValue=Back}" />
         </StackPanel>
       </Redbox:RoundedButton>
     </Grid>

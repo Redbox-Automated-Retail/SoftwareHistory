@@ -73,4 +73,10 @@ public static class ApplicationStartupFunctions
 	{
 		ServiceLocator.Instance.GetService<IRedboxRental>()?.StartTheRentalApplication();
 	}
+
+	[KernelFunction(Name = "kernel.setup_the_rental_application")]
+	public static void SetupTheRentalApplication()
+	{
+		ServiceLocator.Instance.GetService<IRedboxRental>()?.SetupTheRentalApplication();
+	}
 }

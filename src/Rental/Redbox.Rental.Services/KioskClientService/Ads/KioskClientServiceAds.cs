@@ -1,0 +1,110 @@
+using System;
+using System.Net;
+using System.Threading.Tasks;
+using Redbox.Core;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.Ads;
+using Redbox.Rental.Model.KioskClientService.Ads;
+
+namespace Redbox.Rental.Services.KioskClientService.Ads;
+
+public class KioskClientServiceAds : BaseKioskClientService, IKioskClientServiceAds
+{
+	private const string _apiPath = "api/ads";
+
+	private const string _analyticsPath = "api/analytics";
+
+	private const int _defaultTimeout = 500;
+
+	private const int _longTimeout = 2000;
+
+	public IGetAdResponse GetAd(AdLocation adLocation)
+	{
+		int timeoutSetting = ServiceLocator.Instance.GetService<IConfiguration>()?.VistarGetAdTimeout ?? 500;
+		WebResult<GetAdResponse> webResult = ExecuteWebRequest<GetAdResponse>(new Uri(string.Format("{0}/{1}?location={2}", base.KioskClientServiceBaseUrl, "api/ads", adLocation)), null, "GET", timeoutSetting);
+		LogKioskClientServiceResponse($"KioskClientServiceAds.GetAd for ad location: {adLocation}", webResult);
+		if (webResult.ExceptionStatus == WebExceptionStatus.Timeout)
+		{
+			Task.Run(() => PostGetAdTimeoutEvent(adLocation, timeoutSetting));
+		}
+		return webResult?.Response;
+	}
+
+	public async Task<IGetAdResponse> GetAdAsync(AdLocation adLocation)
+	{
+		WebResult<GetAdResponse> webResult = await ExecuteAsyncWebRequest<GetAdResponse>(new Uri(string.Format("{0}/{1}?location={2}", base.KioskClientServiceBaseUrl, "api/ads", adLocation)), null, "GET", ServiceLocator.Instance.GetService<IConfiguration>()?.VistarGetAdTimeout ?? 500).ConfigureAwait(continueOnCapturedContext: false);
+		LogKioskClientServiceResponse($"KioskClientServiceAds.GetAd for ad locataion: {adLocation}", webResult);
+		return webResult?.Response;
+	}
+
+	public async Task<bool> ExpireAd(string advertisementId)
+	{
+		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/{2}/expire", base.KioskClientServiceBaseUrl, "api/ads", advertisementId)), null, "POST", 180000).ConfigureAwait(continueOnCapturedContext: false);
+		LogKioskClientServiceResponse($"KioskClientServiceAds.ExpireAd for advertisement id: {advertisementId}", webResult);
+		return webResult?.Response?.Success ?? false;
+	}
+
+	public bool SendProofOfPlay(IAdImpression adImpression)
+	{
+		bool result = false;
+		if (adImpression != null)
+		{
+			if (adImpression.StartDisplayTime.HasValue)
+			{
+				ProofOfPlayRequest requestPayload = new ProofOfPlayRequest
+				{
+					DisplayedTime = adImpression.StartDisplayTime.Value,
+					DisplayedMilliseconds = adImpression.DisplayMilliseconds
+				};
+				IVistarAd vistarAd = adImpression?.Ad as IVistarAd;
+				WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/{2}/proofofplay", base.KioskClientServiceBaseUrl, "api/ads", vistarAd?.AdvertisementId)), requestPayload, "POST", 2000);
+				LogKioskClientServiceResponse($"KioskClientServiceAds.ProofOfPlay for advertisement id: {vistarAd?.AdvertisementId}, Display Duration: {adImpression?.DisplayMilliseconds}, ", webResult);
+				result = webResult?.Response?.Success ?? false;
+			}
+			else
+			{
+				LogHelper.Instance.Log("Error in KioskClientServiceAds.SendProofOfPlay. StartDisplayTime is null.");
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("Error in KioskClientServiceAds.SendProofOfPlay. AdImpression is null.");
+		}
+		return result;
+	}
+
+	public async Task<bool> SendProofOfPlayAsync(IAdImpression adImpression)
+	{
+		bool result = false;
+		if (adImpression != null)
+		{
+			if (adImpression.StartDisplayTime.HasValue)
+			{
+				ProofOfPlayRequest requestPayload = new ProofOfPlayRequest
+				{
+					DisplayedTime = adImpression.StartDisplayTime.Value,
+					DisplayedMilliseconds = adImpression.DisplayMilliseconds
+				};
+				IVistarAd vistarAd = adImpression?.Ad as IVistarAd;
+				WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/{2}/proofofplay", base.KioskClientServiceBaseUrl, "api/ads", vistarAd?.AdvertisementId)), requestPayload, "POST", 2000).ConfigureAwait(continueOnCapturedContext: false);
+				LogKioskClientServiceResponse($"KioskClientServiceAds.ProofOfPlay for advertisement id: {vistarAd?.AdvertisementId}, Display Duration: {adImpression?.DisplayMilliseconds}, ", webResult);
+				result = webResult?.Response?.Success ?? false;
+			}
+			else
+			{
+				LogHelper.Instance.Log("Error in KioskClientServiceAds.SendProofOfPlay. StartDisplayTime is null.");
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("Error in KioskClientServiceAds.SendProofOfPlay. AdImpression is null.");
+		}
+		return result;
+	}
+
+	private bool PostGetAdTimeoutEvent(AdLocation adLocation, int timeoutSetting)
+	{
+		GetAdTimeoutEvent requestPayload = new GetAdTimeoutEvent(adLocation, timeoutSetting);
+		return ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/getadtimeoutevent", base.KioskClientServiceBaseUrl, "api/analytics")), requestPayload, "POST")?.Response?.Success ?? false;
+	}
+}

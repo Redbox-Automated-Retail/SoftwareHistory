@@ -6,12 +6,19 @@ public class DesignHelpViewModel : HelpViewModel
 {
 	public DesignHelpViewModel()
 	{
-		base.HelpButtonList = new ObservableCollection<HelpButtonData>
+		base.TopRowButtonList = new ObservableCollection<HelpButtonData>
 		{
 			new HelpButtonData
 			{
 				ButtonText = "Rental FAQs",
 				IsEnabled = false,
+				UpdatedText = "UPDATED",
+				ShowUpdatedFlag = true
+			},
+			new HelpButtonData
+			{
+				ButtonText = "Mobile FAQs",
+				IsEnabled = true,
 				UpdatedText = "UPDATED",
 				ShowUpdatedFlag = true
 			},
@@ -28,14 +35,10 @@ public class DesignHelpViewModel : HelpViewModel
 				IsEnabled = true,
 				UpdatedText = "UPDATED",
 				ShowUpdatedFlag = true
-			},
-			new HelpButtonData
-			{
-				ButtonText = "Privacy",
-				IsEnabled = true,
-				UpdatedText = "UPDATED",
-				ShowUpdatedFlag = true
-			},
+			}
+		};
+		base.BottomRowButtonList = new ObservableCollection<HelpButtonData>
+		{
 			new HelpButtonData
 			{
 				ButtonText = "Perks",
@@ -45,7 +48,21 @@ public class DesignHelpViewModel : HelpViewModel
 			},
 			new HelpButtonData
 			{
-				ButtonText = "Mobile FAQs",
+				ButtonText = "Privacy Policy",
+				IsEnabled = true,
+				UpdatedText = "UPDATED",
+				ShowUpdatedFlag = true
+			},
+			new HelpButtonData
+			{
+				ButtonText = "CA Privacy Notice",
+				IsEnabled = true,
+				UpdatedText = "UPDATED",
+				ShowUpdatedFlag = true
+			},
+			new HelpButtonData
+			{
+				ButtonText = "Do Not Sell",
 				IsEnabled = true,
 				UpdatedText = "UPDATED",
 				ShowUpdatedFlag = true

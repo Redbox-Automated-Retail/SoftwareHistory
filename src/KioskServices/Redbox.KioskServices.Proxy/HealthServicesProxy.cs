@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Net.Mail;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Redbox.Core;
+using Redbox.KioskDataServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.REDS.Framework;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -57,6 +60,8 @@ public class HealthServicesProxy : IHealthServices
 	private readonly Queue<KeyValuePair<string, string>> m_propertiesQueue = new Queue<KeyValuePair<string, string>>();
 
 	private int m_working;
+
+	private bool m_wasFirstPingSent;
 
 	public static HealthServicesProxy Instance => Singleton<HealthServicesProxy>.Instance;
 
@@ -192,6 +197,8 @@ public class HealthServicesProxy : IHealthServices
 				if (LiveCall)
 				{
 					LogHelper.Instance.Log("Live call to remote IHealthServices.Ping, URL: {0}", KioskServicesProxy.Instance.Url);
+					int store = int.Parse(storeNumber);
+					Dictionary<string, string> versions = CollectVersions();
 					IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
 					var anon = new
 					{
@@ -200,32 +207,10 @@ public class HealthServicesProxy : IHealthServices
 						KioskId = int.Parse(storeNumber),
 						EngineVersion = service2["EngineVersion"],
 						BundleVersion = service2["ProductVersion"],
-						Versions = new Dictionary<string, string>(),
+						Versions = versions,
 						Statistics = new Dictionary<string, string>(),
 						Properties = new Dictionary<string, string>()
 					};
-					anon.Versions["Hal Service"] = service2["HALServiceVersion"] ?? "Not Found";
-					anon.Versions["Hal Client"] = service2["HALVersion"] ?? "Not Found";
-					anon.Versions["Kiosk Engine"] = service2["EngineVersion"];
-					IDeviceServiceClientHelper service3 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-					anon.Versions["Device Service"] = service3?.DeviceServiceVersion?.ToString() ?? "Not Found";
-					anon.Versions["Device Service Client"] = service3?.DeviceServiceClientVersion?.ToString() ?? "Not Found";
-					IKernelExtensionService service4 = ServiceLocator.Instance.GetService<IKernelExtensionService>();
-					if (service4 != null)
-					{
-						foreach (IKernelExtension extension in service4.Extensions)
-						{
-							anon.Versions[extension.Name] = extension.Version;
-						}
-					}
-					IResourceBundleService service5 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-					if (service5 != null)
-					{
-						foreach (IBundleSpecifier bundle in service5.Bundles)
-						{
-							anon.Versions[bundle.Name] = bundle.Version.ToString();
-						}
-					}
 					lock (m_syncLock)
 					{
 						while (m_statisticsQueue.Count > 0)
@@ -240,15 +225,17 @@ public class HealthServicesProxy : IHealthServices
 						}
 					}
 					IDictionary<string, object> response = KioskServicesProxy.Instance.ExecuteMessage(anon);
+					UpdateFirstPingSent(response);
 					UpdateOnlineStatus(response);
 					if (StoreServicesProxy.Instance.SynchronizeTimeToServer)
 					{
-						IEngineApplication service6 = ServiceLocator.Instance.GetService<IEngineApplication>();
-						if (service6 != null && service6.CanShutDown())
+						IEngineApplication service3 = ServiceLocator.Instance.GetService<IEngineApplication>();
+						if (service3 != null && service3.CanShutDown())
 						{
 							SynchronizeToServerTime(response);
 						}
 					}
+					SendKioskVersionsToKioskDataService(store, versions);
 				}
 				else
 				{
@@ -369,7 +356,7 @@ public class HealthServicesProxy : IHealthServices
 				Interlocked.Increment(ref m_working);
 				if (LiveCall)
 				{
-					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendAuditEvent, URL: {0}", KioskServicesProxy.Instance.Url);
+					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendAuditEvent endpoints");
 					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(254, "AuditEvent", new
 					{
@@ -438,11 +425,10 @@ public class HealthServicesProxy : IHealthServices
 				Interlocked.Increment(ref m_working);
 				if (LiveCall)
 				{
-					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendKioskFunctionCheck, URL: {0}", KioskServicesProxy.Instance.Url);
+					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendKioskFunctionCheck endpoints");
 					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(254, "KioskFunctionCheck", new
+					KioskFunctionCheckPayload message = new KioskFunctionCheckPayload
 					{
-						MessageType = "KioskFunctionCheck",
 						MessageId = Guid.NewGuid(),
 						KioskId = int.Parse(storeNumber),
 						EngineVersion = service["EngineVersion"],
@@ -456,7 +442,8 @@ public class HealthServicesProxy : IHealthServices
 						SnapDecode = snapDecode,
 						TouchScreenDriver = touchScreenDriver,
 						CameraDriver = cameraDriver
-					});
+					};
+					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(254, "KioskFunctionCheck", message);
 				}
 				else
 				{
@@ -490,9 +477,9 @@ public class HealthServicesProxy : IHealthServices
 							Message = "Invoking callback from HealthServicesProxy.SendKioskFunctionCheck."
 						});
 					}
-					else if (dotNetCallBack != null)
+					else
 					{
-						dotNetCallBack();
+						dotNetCallBack?.Invoke();
 					}
 				}
 				finally
@@ -602,6 +589,58 @@ public class HealthServicesProxy : IHealthServices
 				Win32Exception e = new Win32Exception();
 				LogHelper.Instance.Log("Unable to set the local time.", e);
 			}
+		}
+	}
+
+	private void UpdateFirstPingSent(IDictionary<string, object> response)
+	{
+		if (!m_wasFirstPingSent)
+		{
+			m_wasFirstPingSent = response.ContainsKey("Success") && (bool)response["Success"];
+		}
+	}
+
+	private Dictionary<string, string> CollectVersions()
+	{
+		Dictionary<string, string> dictionary = new Dictionary<string, string>();
+		if (!m_wasFirstPingSent)
+		{
+			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+			dictionary["Hal Service"] = service["HALServiceVersion"] ?? "Not Found";
+			dictionary["Hal Client"] = service["HALVersion"] ?? "Not Found";
+			dictionary["Kiosk Engine"] = service["EngineVersion"];
+			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+			dictionary["Device Service"] = service2?.DeviceServiceVersion?.ToString() ?? "Not Found";
+			dictionary["Device Service Client"] = service2?.DeviceServiceClientVersion?.ToString() ?? "Not Found";
+			foreach (IBundleSpecifier bundle in ServiceLocator.Instance.GetService<IResourceBundleService>().Bundles)
+			{
+				dictionary[bundle.Name] = bundle.Version.ToString();
+			}
+		}
+		return dictionary;
+	}
+
+	private void SendKioskVersionsToKioskDataService(int store, IDictionary<string, string> versions)
+	{
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskVersionsToKioskDataService)
+		{
+			if (versions.Any())
+			{
+				ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "KioskVersions", new AWSKioskVersionsPayload
+				{
+					KioskId = store,
+					CreatedOn = DateTime.Now,
+					Versions = versions
+				});
+			}
+			else
+			{
+				LogHelper.Instance.Log("HealthServicesProxy.SendKioskVersionsToKioskDataService() - bypassing live call due to no version information to send up");
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("HealthServicesProxy.SendKioskVersionsToKioskDataService() - bypassing live call due to configuration flag being off");
 		}
 	}
 }

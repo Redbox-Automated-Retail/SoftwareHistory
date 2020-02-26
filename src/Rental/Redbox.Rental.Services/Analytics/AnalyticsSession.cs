@@ -14,15 +14,15 @@ namespace Redbox.Rental.Services.Analytics;
 
 public class AnalyticsSession : IAnalyticsSession
 {
-	private LogHelper _logger;
+	private readonly LogHelper _logger;
 
-	private IConfigurationService _configuration;
+	private readonly IConfigurationService _configuration;
 
-	private IStoreManager _storeManager;
+	private readonly IStoreManager _storeManager;
 
-	private IMacroService _macroService;
+	private readonly IMacroService _macroService;
 
-	private IResourceBundleService _bundleService;
+	private readonly IResourceBundleService _bundleService;
 
 	public string SessionId { get; set; }
 
@@ -235,7 +235,7 @@ public class AnalyticsSession : IAnalyticsSession
 	{
 		try
 		{
-			if (!Redbox.Rental.Services.Configuration.Configuration.Instance.KioskAnalyticsJsonEnabled)
+			if (!Redbox.Rental.Services.Configuration.Configuration.Instance.SendJsonKioskAnalyticsToKioskDataService)
 			{
 				return;
 			}

@@ -8,6 +8,8 @@ public class UpdateAccountResult : IUpdateAccountResult
 {
 	public bool Success { get; set; }
 
+	public string CustomerProfileNumber { get; set; }
+
 	public string MobilePhoneNumber { get; set; }
 
 	public UpdateAccountResponseErrors UpdateAccountResponseError { get; set; }

@@ -26,8 +26,8 @@
         <Grid Name="NextPageGrid" Width="{Binding Path=PageGridWidth, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
       </StackPanel>
     </Grid>
-    <Redbox:RoundedButton Name="LeftPaddleButton" Style="{StaticResource left_paddle_button_style}" Command="{x:Static localui:Commands.PageLeftCommand}" Width="54" Height="306" HorizontalAlignment="Left" RenderTransformOrigin="0,0.5" IsClickBeforeAnimation="True" Visibility="{Binding Path=LeftPaddleVisibility, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
-    <Redbox:RoundedButton Name="RightPaddleButton" Style="{StaticResource right_paddle_button_style}" Command="{x:Static localui:Commands.PageRightCommand}" Width="54" Height="306" HorizontalAlignment="Right" Margin="0,0,0,0" RenderTransformOrigin="1,0.5" IsClickBeforeAnimation="True" Visibility="{Binding Path=RightPaddleVisibility, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
+    <Redbox:RoundedButton Name="LeftPaddleButton" Style="{StaticResource left_paddle_button_style}" Command="{x:Static localui:Commands.PageLeftCommand}" Width="66" Height="150" HorizontalAlignment="Left" RenderTransformOrigin="0,0.5" IsClickBeforeAnimation="True" Visibility="{Binding Path=LeftPaddleVisibility, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
+    <Redbox:RoundedButton Name="RightPaddleButton" Style="{StaticResource right_paddle_button_style}" Command="{x:Static localui:Commands.PageRightCommand}" Width="66" Height="150" HorizontalAlignment="Right" RenderTransformOrigin="1,0.5" IsClickBeforeAnimation="True" Visibility="{Binding Path=RightPaddleVisibility, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
     <Grid Name="NoResultsGrid" Visibility="Collapsed">
       <StackPanel Name="NoResultsPanel" Orientation="Vertical" VerticalAlignment="Center">
         <Rectangle Height="20">

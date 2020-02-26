@@ -10,8 +10,6 @@ public class TitleRollupOverlayButtonTextValues : ITitleRollupFormatButtonTextVa
 
 	private string _titleRollupOverlayOosText;
 
-	private string _titleRollupOverlayBuyText;
-
 	private string _titleRollupOverlayAddText;
 
 	private string _currencySymbol;
@@ -52,18 +50,6 @@ public class TitleRollupOverlayButtonTextValues : ITitleRollupFormatButtonTextVa
 		}
 	}
 
-	public string Buy
-	{
-		get
-		{
-			if (_titleRollupOverlayBuyText == null)
-			{
-				_titleRollupOverlayBuyText = Resources.title_rollup_overlay_buy_text;
-			}
-			return _titleRollupOverlayBuyText;
-		}
-	}
-
 	public string Add
 	{
 		get
@@ -87,10 +73,6 @@ public class TitleRollupOverlayButtonTextValues : ITitleRollupFormatButtonTextVa
 			return _currencySymbol;
 		}
 	}
-
-	public string RentalPriceFormat => "{0} {1:C}";
-
-	public string RentalPriceFormatNoCurrency => "{0} {1}";
 
 	public string OutOfStockText => Resources.title_rollup_overlay_oos_text;
 

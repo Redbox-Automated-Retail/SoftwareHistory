@@ -47,13 +47,13 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowLogOutWarning(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Log out warning message");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.sign_out_dialog_title, "message_popup_dialog_title_rbpurple_style", Resources.sign_out_dialog_message, "font_montserrat_small_rbpurple", Resources.back_button, "font_museoslab_900_28_rubine", "message_popup_white_rubine_to_warm_purple_border_button_with_dropshadow_style", Resources.sign_out_button, "font_museoslab_900_28_white", "message_popup_warmpurple_button_style", (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(30000, "long"), backAction, continueAction, timeOutAction, "SignOutWarningMessage", (UserControl)null, "Transparent", new Thickness(233.0, 208.0, 233.0, 208.0), (string)null, (string)null));
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.sign_out_dialog_title, "message_popup_dialog_title_rbpurple_style", Resources.sign_out_dialog_message, "font_montserrat_small_rbpurple", Resources.back_button, "font_museoslab_900_28_rubine", "message_popup_white_rubine_to_warm_purple_border_button_with_dropshadow_style", Resources.sign_out_button, "message_popup_button_text_style", OrchestrationService.IsCultureSpanish() ? "message_popup_warmpurple_button_signout_dialog_style" : "message_popup_warmpurple_button_style", (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(30000, "long"), backAction, continueAction, timeOutAction, "SignOutWarningMessage", (UserControl)null, "Transparent", OrchestrationService.IsCultureSpanish() ? new Thickness(180.0, 208.0, 180.0, 208.0) : new Thickness(233.0, 208.0, 233.0, 208.0), (string)null, (string)null));
 	}
 
 	public static void ShowSimpleOkMessage(string cultureSpecificTitle, string cultureSpecificMessage, Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Ok Message: {0}", cultureSpecificTitle);
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(cultureSpecificTitle, "message_popup_dialog_title_rbpurple_style", cultureSpecificMessage, "font_montserrat_small_rbpurple", (string)null, (string)null, (string)null, Resources.okay, (string)null, "message_popup_warmpurple_button_style", (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(30000, "long"), (Action)null, continueAction, timeOutAction, "OkMessage", (UserControl)null, "Transparent", new Thickness(233.0, 208.0, 233.0, 208.0), (string)null, (string)null));
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(cultureSpecificTitle, "message_popup_dialog_title_rbpurple_style", cultureSpecificMessage, "font_montserrat_small_rbpurple", (string)null, (string)null, (string)null, Resources.okay, "font_museo_slab_900_28", "message_popup_warmpurple_button_style", (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(30000, "long"), (Action)null, continueAction, timeOutAction, "OkMessage", (UserControl)null, "Transparent", new Thickness(233.0, 208.0, 233.0, 208.0), (string)null, (string)null));
 	}
 
 	public static void ShowLoyaltyIsDownOnLoginMessage(Action timeOutAction, Action continueAction)
@@ -258,10 +258,20 @@ public class MessagePopupViewController : BaseViewController
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(null, Resources.invalid_card_message, null, Resources.continue_button, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewCardNotRecognized", "cardNotRecognized"));
 	}
 
-	public static void ShowMessagePopupViewCardReaderTampered(Action timeOutAction, Action continueAction)
+	public static void ShowMessagePopupViewCheckoutCardReaderTampered(Action timeOutAction, Action continueAction)
 	{
-		LogHelper.Instance.Log("Showing Swiped Card is chip enabled message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.card_reader_tampered_message_title, "message_popup_dialog_title_style4", Resources.card_reader_tampered_message_body, "message_popup_dialog_mesg_style4", null, null, null, Resources.got_it_button, "font_museo_slab_900_20", "message_popup_dialog_button_style4", "message_popup_dialog_button_grid_style4", "message_popup_dialog_inner_grid_style4", "message_popup_dialog_floating_button_grid_style4", "message_popup_dialog_message_dock_panel_style4", GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewSwipedCardIsChipEnabled", null, "Transparent", default(Thickness), "swipedCardIsChipEnabled"));
+		ShowMessagePopupViewCardReaderTampered(timeOutAction, continueAction, Resources.card_reader_tampered_checkout_flow_message_body);
+	}
+
+	public static void ShowMessagePopupViewReservationCardReaderTampered(Action timeOutAction, Action continueAction)
+	{
+		ShowMessagePopupViewCardReaderTampered(timeOutAction, continueAction, Resources.card_reader_tampered_reservation_flow_message_body);
+	}
+
+	private static void ShowMessagePopupViewCardReaderTampered(Action timeOutAction, Action continueAction, string message)
+	{
+		LogHelper.Instance.Log("Showing Tampered card reader message popup");
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.card_reader_tampered_message_title, "message_popup_dialog_title_style4", message, "message_popup_dialog_mesg_style4", null, null, null, Resources.got_it_button, "font_museo_slab_900_20", "message_popup_dialog_button_style4", "message_popup_dialog_button_grid_style4", "message_popup_dialog_inner_grid_style4", "message_popup_dialog_floating_button_grid_style4", "message_popup_dialog_message_dock_panel_style4", GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewSwipedCardIsChipEnabled", null, "Transparent", default(Thickness), "swipedCardIsChipEnabled"));
 	}
 
 	public static void ShowMessagePopupViewSwipedCardIsChipEnabled(Action timeOutAction, Action continueAction)
@@ -312,6 +322,13 @@ public class MessagePopupViewController : BaseViewController
 	{
 		LogHelper.Instance.Log("Showing Reserve Online message popup");
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.reserve_online_title, "message_popup_dialog_title_style3", Resources.reserve_online_text, "message_popup_dialog_mesg_style3", Resources.back_button, "font_museo_slab_900_20", "message_popup_white_rubine_to_warm_purple_border_button_with_dropshadow_style", Resources.got_it_button, "font_museo_slab_900_20", "message_popup_warmpurple_button_style", null, null, null, null, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "ReserveOnlineRentDialog", null, "White", new Thickness(180.0, 192.0, 180.0, 192.0), "ReserveOnlineRentDialog"));
+	}
+
+	public static void ShowMachineFullWarning(Action timeOutAction, Action continueAction)
+	{
+		OrchestrationService.SetCurrentUICulture();
+		LogHelper.Instance.Log("Showing machine full warning");
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.machine_full_title, null, Resources.machine_full_message, null, null, null, null, Resources.okay_button, null, null, null, null, null, null, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "MachineFullWarning", null, null, default(Thickness), "machineFullWarning"));
 	}
 
 	public static void HideMessagePopupView(bool popOnly)
@@ -372,7 +389,7 @@ public class MessagePopupViewController : BaseViewController
 		{
 			foreach (string item in parameters.AnalyticsContextList.Where((string c) => !string.IsNullOrWhiteSpace(c)))
 			{
-				BaseViewController.SessionAnalyticsService?.AddViewEvent("context", item);
+				_ = item;
 			}
 		}
 		Thickness thickness = default(Thickness);

@@ -129,6 +129,66 @@ public class CustomerOfferProxy : ICustomerOfferService
 		}
 	}
 
+	public bool IncludePerksFreeRentalOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludePerksFreeRentalOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludePerksFreeRentalOffer", value);
+		}
+	}
+
+	public bool IncludePerksAmountOffOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludePerksAmountOffOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludePerksAmountOffOffer", value);
+		}
+	}
+
+	public bool IncludePerksExtraPointsOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludePerksExtraPointsOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludePerksExtraPointsOffer", value);
+		}
+	}
+
+	public bool IncludePerksReminderMessage
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludePerksReminderMessage", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludePerksReminderMessage", value);
+		}
+	}
+
+	public bool IncludePurchaseOffer
+	{
+		get
+		{
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Customer Offer Services", "IncludePurchaseOffer", defaultValue: false);
+		}
+		set
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Customer Offer Services", "IncludePurchaseOffer", value);
+		}
+	}
+
 	public List<long> MnpProductIds
 	{
 		get
@@ -262,6 +322,7 @@ public class CustomerOfferProxy : ICustomerOfferService
 					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 					remoteServiceResult.Properties["CustomerProfileNumber"] = GetResponseValue(dictionary, "CustomerProfileNumber", null)?.ToString();
 					remoteServiceResult.Properties["AccountNumber"] = GetResponseValue(dictionary, "AccountNumber", null)?.ToString();
+					remoteServiceResult.Properties["EmailAddress"] = GetResponseValue(dictionary, "EmailAddress", null)?.ToString();
 					if (dictionary.ContainsKey("StoredOffers") && dictionary["StoredOffers"] != null)
 					{
 						ArrayList obj = (ArrayList)dictionary["StoredOffers"];
@@ -307,7 +368,7 @@ public class CustomerOfferProxy : ICustomerOfferService
 				}
 				else
 				{
-					LogHelper.Instance.Log("In stand alone mode, skipping call to login user.", LogEntryType.Info);
+					LogHelper.Instance.Log("In stand alone mode, skipping call to get offers.", LogEntryType.Info);
 					remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.LoyaltyIsDown;
 					remoteServiceResult.Properties["is_online"] = false;
 				}
@@ -362,10 +423,16 @@ public class CustomerOfferProxy : ICustomerOfferService
 		{
 			resultOffer.CustomerSegmentType = (CustomerSegmentType)Enum.Parse(typeof(CustomerSegmentType), text2);
 		}
+		string text3 = GetResponseValue(promo, "CampaignId", null)?.ToString();
+		if (text3 != null)
+		{
+			resultOffer.CampaignId = long.Parse(text3.ToString());
+		}
 		resultOffer.TitleFamily = ParseTitileFamily(GetResponseValue(promo, "ProductType", null)?.ToString());
 		resultOffer.ExpirationDate = (DateTime)GetResponseValue(promo, "ExpirationDate", DateTime.Today);
 		resultOffer.IncludeOlderThan = GetResponseTimeSpan(promo, "ExcludeIfWithinRedboxReleaseDate", null);
 		resultOffer.Amount = GetResponseDecimal(promo, "DiscountAmount", 0m);
+		resultOffer.ActionCode = ParseActionCode(GetResponseValue(promo, "ActionCode", null)?.ToString());
 		resultOffer.IncludeFormats = promo.ContainsKey("IncludeFormats") && ((ArrayList)promo["IncludeFormats"]).Count > 0;
 		string key = (resultOffer.IncludeFormats ? "IncludeFormats" : "ExcludeFormats");
 		ArrayList arrayList = (promo.ContainsKey(key) ? (promo[key] as ArrayList) : null);
@@ -409,17 +476,27 @@ public class CustomerOfferProxy : ICustomerOfferService
 		foreach (IDictionary<string, object> item3 in arrayList3)
 		{
 			OfferProduct offerProduct = new OfferProduct();
-			string s = ((item3.ContainsKey("ProductId") && item3["ProductId"] != null) ? item3["ProductId"].ToString() : "-1");
+			string s = GetResponseValue(item3, "ProductId", "-1").ToString();
 			offerProduct.ProductId = long.Parse(s);
-			string text3 = ((item3.ContainsKey("NumberOfNights") && item3["NumberOfNights"] != null) ? item3["NumberOfNights"].ToString() : null);
-			offerProduct.NumberOfNights = (string.IsNullOrWhiteSpace(text3) ? ((byte?)null) : new byte?(byte.Parse(text3)));
-			string text4 = ((item3.ContainsKey("DiscountedPrice") && item3["DiscountedPrice"] != null) ? item3["DiscountedPrice"].ToString() : null);
-			offerProduct.DiscountedPrice = (string.IsNullOrWhiteSpace(text4) ? ((decimal?)null) : new decimal?(decimal.Parse(text4)));
-			string text5 = ((item3.ContainsKey("TotalDiscountAmount") && item3["TotalDiscountAmount"] != null) ? item3["TotalDiscountAmount"].ToString() : null);
-			offerProduct.TotalDiscountAmount = (string.IsNullOrWhiteSpace(text5) ? ((decimal?)null) : new decimal?(decimal.Parse(text5)));
+			string text4 = GetResponseValue(item3, "NumberOfNights", null)?.ToString();
+			offerProduct.NumberOfNights = (string.IsNullOrWhiteSpace(text4) ? ((byte?)null) : new byte?(byte.Parse(text4)));
+			string text5 = GetResponseValue(item3, "DiscountedPrice", null)?.ToString();
+			offerProduct.DiscountedPrice = (string.IsNullOrWhiteSpace(text5) ? ((decimal?)null) : new decimal?(decimal.Parse(text5)));
+			string text6 = GetResponseValue(item3, "TotalDiscountAmount", null)?.ToString();
+			offerProduct.TotalDiscountAmount = (string.IsNullOrWhiteSpace(text6) ? ((decimal?)null) : new decimal?(decimal.Parse(text6)));
 			list3.Add(offerProduct);
 		}
 		resultOffer.OfferProducts = list3;
+	}
+
+	private ActionCode ParseActionCode(string code)
+	{
+		ActionCode result = ActionCode.Rental;
+		if (code == ActionCode.Purchase.ToString())
+		{
+			result = ActionCode.Purchase;
+		}
+		return result;
 	}
 
 	private TitleFamily? ParseTitileFamily(string productTypeString)
@@ -443,6 +520,7 @@ public class CustomerOfferProxy : ICustomerOfferService
 				LogHelper.Instance.Log("Simulate call to remote ICustomerOfferService.GetOffers");
 				remoteServiceResult.Success = SimulateSuccess;
 				remoteServiceResult.Properties["server_name"] = "SimulatedCall";
+				remoteServiceResult.Properties["EmailAddress"] = PersonalizationServicesProxySimulator.Instance.LoginEmail;
 				List<CustomerOffer> list = new List<CustomerOffer>();
 				List<CustomerOffer> list2 = new List<CustomerOffer>();
 				remoteServiceResult.Properties["NewOffers"] = list;
@@ -460,7 +538,8 @@ public class CustomerOfferProxy : ICustomerOfferService
 						ExpirationDate = new DateTime(2019, 7, 25),
 						CustomerSegmentType = CustomerSegmentType.PersonalizedMultiNightPrice,
 						OfferProducts = new List<OfferProduct>(),
-						OfferDiscountCode = "ExtraNight50c"
+						OfferDiscountCode = "ExtraNight50c",
+						CampaignId = 123L
 					};
 					foreach (long mnpProductId in MnpProductIds)
 					{
@@ -484,7 +563,24 @@ public class CustomerOfferProxy : ICustomerOfferService
 						OfferScopeType = OfferScopeType.Session,
 						IncludeOlderThan = TimeSpan.FromDays(35.0),
 						CustomerSegmentType = CustomerSegmentType.BasketStretch,
-						OfferDiscountCode = "MovieDollarOff"
+						OfferDiscountCode = "MovieDollarOff",
+						CampaignId = 123L
+					});
+				}
+				if (IncludePurchaseOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 9L,
+						DiscountType = OfferDiscountType.AmountOff,
+						Amount = 1m,
+						TitleFamily = TitleFamily.Movies,
+						OfferScopeType = OfferScopeType.Session,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						CustomerSegmentType = CustomerSegmentType.BasketStretch,
+						OfferDiscountCode = "PrmDollarOff",
+						CampaignId = 1234L,
+						ActionCode = ActionCode.Purchase
 					});
 				}
 				if (IncludeFreeGameInCartOffer)
@@ -498,7 +594,8 @@ public class CustomerOfferProxy : ICustomerOfferService
 						IncludeOlderThan = TimeSpan.FromDays(35.0),
 						ExpirationDate = new DateTime(2019, 7, 25),
 						PromotionCode = "DVDONME",
-						CustomerSegmentType = CustomerSegmentType.BasketStretch
+						CustomerSegmentType = CustomerSegmentType.BasketStretch,
+						CampaignId = 123L
 					});
 				}
 				if (IncludeFracRedeemableFreeMovieOffer)
@@ -515,8 +612,9 @@ public class CustomerOfferProxy : ICustomerOfferService
 						IncludeFormats = true,
 						IncludeOlderThan = TimeSpan.FromDays(35.0),
 						ExpirationDate = new DateTime(2019, 7, 25),
-						PromotionCode = "DVDONME",
-						CustomerSegmentType = CustomerSegmentType.Frac
+						OfferDiscountCode = "FracRedeemFree",
+						CustomerSegmentType = CustomerSegmentType.Frac,
+						CampaignId = 123L
 					});
 				}
 				if (IncludeFracRedeemableDiscountedDiscOffer)
@@ -531,8 +629,9 @@ public class CustomerOfferProxy : ICustomerOfferService
 						OfferScopeType = OfferScopeType.StoredRedeemable,
 						IncludeOlderThan = TimeSpan.FromDays(35.0),
 						ExpirationDate = new DateTime(2019, 7, 5),
-						PromotionCode = "DVDONME",
-						CustomerSegmentType = CustomerSegmentType.Frac
+						CustomerSegmentType = CustomerSegmentType.Frac,
+						OfferDiscountCode = "FracRedeemDisc",
+						CampaignId = 123L
 					});
 				}
 				if (IncludeFracStorableFreeMovieOffer)
@@ -546,8 +645,9 @@ public class CustomerOfferProxy : ICustomerOfferService
 						OfferScopeType = OfferScopeType.Storeable,
 						IncludeOlderThan = TimeSpan.FromDays(35.0),
 						ExpirationDate = new DateTime(2019, 7, 25),
-						PromotionCode = "DVDONME",
-						CustomerSegmentType = CustomerSegmentType.Frac
+						OfferDiscountCode = "FracStorableFree",
+						CustomerSegmentType = CustomerSegmentType.Frac,
+						CampaignId = 123L
 					});
 				}
 				if (IncludeFracStorableDiscountedDiscOffer)
@@ -561,8 +661,78 @@ public class CustomerOfferProxy : ICustomerOfferService
 						OfferScopeType = OfferScopeType.Storeable,
 						IncludeOlderThan = TimeSpan.FromDays(35.0),
 						ExpirationDate = new DateTime(2019, 7, 5),
-						PromotionCode = "DVDONME",
-						CustomerSegmentType = CustomerSegmentType.Frac
+						PromotionCode = null,
+						OfferDiscountCode = "FracStorableDicount",
+						CustomerSegmentType = CustomerSegmentType.Frac,
+						CampaignId = 123L
+					});
+				}
+				if (IncludePerksFreeRentalOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 7L,
+						DiscountType = OfferDiscountType.Free,
+						Amount = 0m,
+						TitleFamily = TitleFamily.All,
+						OfferScopeType = OfferScopeType.Session,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 7, 5),
+						PromotionCode = null,
+						CustomerSegmentType = CustomerSegmentType.NewMemberPerksSignup,
+						OfferDiscountCode = "PerksFreeRental",
+						CampaignId = 123L
+					});
+				}
+				if (IncludePerksAmountOffOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 7L,
+						DiscountType = OfferDiscountType.AmountOff,
+						Amount = 1.00m,
+						TitleFamily = TitleFamily.All,
+						OfferScopeType = OfferScopeType.Session,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 11, 5),
+						PromotionCode = null,
+						CustomerSegmentType = CustomerSegmentType.NewMemberPerksSignup,
+						OfferDiscountCode = "PerksAmountOff",
+						CampaignId = 123L
+					});
+				}
+				if (IncludePerksExtraPointsOffer)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 7L,
+						DiscountType = OfferDiscountType.Loyalty,
+						Amount = 1500m,
+						TitleFamily = TitleFamily.All,
+						OfferScopeType = OfferScopeType.Session,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 11, 5),
+						PromotionCode = null,
+						CustomerSegmentType = CustomerSegmentType.NewMemberPerksSignup,
+						OfferDiscountCode = "PerksExtraDVDPoints",
+						CampaignId = 123L
+					});
+				}
+				if (IncludePerksReminderMessage)
+				{
+					list.Add(new CustomerOffer
+					{
+						OfferId = 0L,
+						DiscountType = OfferDiscountType.Treatment,
+						Amount = 0m,
+						TitleFamily = TitleFamily.All,
+						OfferScopeType = OfferScopeType.Session,
+						IncludeOlderThan = TimeSpan.FromDays(35.0),
+						ExpirationDate = new DateTime(2019, 11, 5),
+						PromotionCode = null,
+						CustomerSegmentType = CustomerSegmentType.NewMemberPerksSignup,
+						OfferDiscountCode = "NoOffer",
+						CampaignId = 123L
 					});
 				}
 				if (!SimulateSuccess)

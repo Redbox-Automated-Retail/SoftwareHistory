@@ -94,6 +94,13 @@ public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActo
 		HandleWPFHit();
 	}
 
+	private void SeeFullDetails_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		IBrowseItemModel model = GetBrowseItemUserControl(e.OriginalSource)?.DataContext as IBrowseItemModel;
+		Model.ProcessSeeFullDetails(model);
+		HandleWPFHit();
+	}
+
 	private void StatisticsPopup_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 	}

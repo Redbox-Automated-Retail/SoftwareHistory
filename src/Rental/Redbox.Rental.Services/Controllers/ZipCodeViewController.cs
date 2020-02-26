@@ -1,10 +1,9 @@
 using System;
-using System.Drawing;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Rental.Model.Marketing;
+using Redbox.Rental.Model.Ads;
+using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -37,6 +36,7 @@ public class ZipCodeViewController : BaseViewController
 		zipCodeViewModel.RequiredLength = 5;
 		zipCodeViewModel.DisplayText = "";
 		zipCodeViewModel.HeaderLabelText = Resources.zip_code_header_text;
+		zipCodeViewModel.Header2LabelText = Resources.zip_code_header_text2;
 		zipCodeViewModel.Note1LabelText = Resources.zip_code_note_text;
 		string note2LabelText = null;
 		if (Redbox.Rental.Services.Session.Session.Instance?.PreauthorizeResult?.PromptRequired ?? false)
@@ -56,9 +56,14 @@ public class ZipCodeViewController : BaseViewController
 		};
 		ConfigureAdImage(zipCodeViewModel);
 		ConfigureTTS(zipCodeViewModel);
-		OrchestrationService.AnalyticsAddViewEvent("context", "postalCode");
 		OrchestrationService.StartIdleTimer("idle_timer");
 		zipCodeViewUserControl.DataContext = zipCodeViewModel;
+		zipCodeViewModel?.AdImpression?.Start();
+	}
+
+	public static void OnLeave(IViewFrameInstance viewFrameInstance)
+	{
+		BaseViewController.RecordAdImpression(BaseViewController.GetViewModel<ZipCodeViewModel>(viewFrameInstance.Id)?.AdImpression);
 	}
 
 	private static string ConvertAuthorizeDays(int authorizeDays)
@@ -87,16 +92,18 @@ public class ZipCodeViewController : BaseViewController
 
 	private static void ConfigureAdImage(ZipCodeViewModel zipCodeViewModel)
 	{
-		BitmapImage bitmapImage = null;
-		MarketingAd marketingAd = ServiceLocator.Instance.GetService<IMarketingAdService>()?.GetScreenAd(MarketingAdLocation.ZipCode, createImpression: true);
-		if (marketingAd != null && marketingAd.Visible && !string.IsNullOrEmpty(marketingAd.ImageName))
+		if (!BaseViewController.ApplicationState.IsADAAccessible)
 		{
-			Image image = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmap(marketingAd.ImageName);
-			bitmapImage = ServiceLocator.Instance.GetService<IBitmapCacheService>()?.ToBitmapImage(image);
+			IAd ad = ServiceLocator.Instance.GetService<IAdService>()?.GetScreenAd(AdLocation.ZipCode);
+			zipCodeViewModel.AdImpression = ((ad != null) ? new AdImpression
+			{
+				Ad = ad,
+				AdLocation = AdLocation.ZipCode
+			} : null);
+			zipCodeViewModel.AdImageSource = ad?.Image;
+			zipCodeViewModel.AdImageVisibility = ((ad?.Image == null) ? Visibility.Collapsed : Visibility.Visible);
+			zipCodeViewModel.StackPanelMargin = ((ad?.Image != null) ? new Thickness(0.0, 0.0, 0.0, 0.0) : new Thickness(0.0, 49.0, 0.0, 0.0));
 		}
-		zipCodeViewModel.AdImageSource = bitmapImage;
-		zipCodeViewModel.AdImageVisibility = ((bitmapImage == null) ? Visibility.Collapsed : Visibility.Visible);
-		zipCodeViewModel.StackPanelMargin = ((bitmapImage != null) ? new Thickness(0.0, 0.0, 0.0, 0.0) : new Thickness(0.0, 58.0, 0.0, 0.0));
 	}
 
 	private static void ConfigureTTS(ZipCodeViewModel zipCodeViewModel)
@@ -144,7 +151,6 @@ public class ZipCodeViewController : BaseViewController
 		if (zipCodeViewModel != null)
 		{
 			zipCodeViewModel.IsNextButtonEnabled = zipCodeViewModel.DisplayText.Length == zipCodeViewModel.RequiredLength;
-			zipCodeViewModel.NextButtonArrowVisibility = ((!zipCodeViewModel.IsNextButtonEnabled) ? Visibility.Collapsed : Visibility.Visible);
 		}
 	}
 }

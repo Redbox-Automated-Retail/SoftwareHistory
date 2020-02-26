@@ -41,6 +41,12 @@ public interface ITrackData
 
 	bool CardHasChip { get; set; }
 
+	bool ChipEnabledAndSupportsEmv { get; }
+
+	bool ContactlessEnabledAndSupportsEmv { get; }
+
+	bool EmvEnabled { get; }
+
 	bool HasValidData();
 
 	void LockData();

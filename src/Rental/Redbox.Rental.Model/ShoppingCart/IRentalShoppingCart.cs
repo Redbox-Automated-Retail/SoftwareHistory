@@ -91,7 +91,5 @@ public interface IRentalShoppingCart
 
 	void SetDefaultServiceFee(decimal defaultServiceFee);
 
-	void AddCartItemToAnalytics(IRentalShoppingCartItem rentalShoppingCartItem, bool userRemoved, ISessionAnalyticsService analytics);
-
 	IRentalShoppingCart ShallowClone();
 }

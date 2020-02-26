@@ -35,4 +35,6 @@ public interface IPromoCodeValidationResult
 	int? ProductTypeId { get; set; }
 
 	List<int> FormatIds { get; set; }
+
+	PromotionActionCode ActionCode { get; set; }
 }

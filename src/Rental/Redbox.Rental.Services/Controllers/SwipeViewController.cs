@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -16,9 +15,10 @@ using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment.CardDataReader;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
-using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.Session;
+using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
@@ -41,6 +41,7 @@ public class SwipeViewController : BaseViewController
 		SwipeViewType.EncryptedSwipeRegularCheckOut,
 		SwipeViewType.EMVInsertRegularCheckout,
 		SwipeViewType.EMVInsertTapRegularCheckout,
+		SwipeViewType.EMVInsertTapHideMobileRegularCheckout,
 		SwipeViewType.EMVTapRegularCheckout
 	};
 
@@ -123,14 +124,21 @@ public class SwipeViewController : BaseViewController
 		{
 			return;
 		}
-		ServiceLocator.Instance.GetService<IConfiguration>();
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 		if (_regularCheckoutTypes.Contains(_swipeViewType))
 		{
 			if (ChipEnabled && !deviceServiceTrackDataService.IsInTechnicalFallback)
 			{
 				if (ContactlessEnabled)
 				{
-					_swipeViewType = SwipeViewType.EMVInsertTapRegularCheckout;
+					if (service != null && service.HideMobilePayOption)
+					{
+						_swipeViewType = SwipeViewType.EMVInsertTapHideMobileRegularCheckout;
+					}
+					else
+					{
+						_swipeViewType = SwipeViewType.EMVInsertTapRegularCheckout;
+					}
 				}
 				else
 				{
@@ -183,12 +191,6 @@ public class SwipeViewController : BaseViewController
 			});
 			return;
 		}
-		ISessionAnalyticsService service3 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		string text = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetCurrentSession()?.Id.ToString();
-		if (service3 != null && service3.SessionExists(text))
-		{
-			service3.AddNode("authorizations", "cardSwipe", text);
-		}
 		AdjustSwipeViewType();
 		swipeViewUserControl.SwipeType = _swipeViewType;
 		SwipeViewModel swipeViewModel = new SwipeViewModel();
@@ -203,6 +205,7 @@ public class SwipeViewController : BaseViewController
 		}
 		ConfigureTextAndActions(swipeViewModel);
 		swipeViewUserControl.DataContext = swipeViewModel;
+		swipeViewModel?.AdImpression?.Start();
 		BaseViewController.AnalyticsService?.AddData(new SwipeViewData
 		{
 			SwipeViewType = _swipeViewType.ToString(),
@@ -286,6 +289,9 @@ public class SwipeViewController : BaseViewController
 		{
 			return;
 		}
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		swipeViewModel.ApplePayImageVisibility = ((service != null && service.HideApplePayImage) ? Visibility.Collapsed : Visibility.Visible);
+		swipeViewModel.GooglePayImageVisibility = ((service != null && service.HideGooglePayImage) ? Visibility.Collapsed : Visibility.Visible);
 		IDeviceServiceTrackDataService deviceServiceTrackDataService = ServiceLocator.Instance.GetService<ITrackDataService>() as IDeviceServiceTrackDataService;
 		swipeViewModel.ChipNotEnabledText = Resources.chip_not_enabled_text;
 		swipeViewModel.BackButtonText = Resources.back_button;
@@ -355,6 +361,11 @@ public class SwipeViewController : BaseViewController
 			swipeViewModel.TitleText = Resources.regular_checkout_emv_insert_tap_title;
 			swipeViewModel.MessageText = null;
 			break;
+		case SwipeViewType.EMVInsertTapHideMobileRegularCheckout:
+			swipeViewModel.TitleText = Resources.regular_checkout_emv_insert_tap_hide_mobile_title;
+			swipeViewModel.MessageText = Resources.regular_checkout_emv_insert_tap_hide_mobile_message;
+			swipeViewModel.ImageStackPanelVisibility = Visibility.Visible;
+			break;
 		case SwipeViewType.EMVTapRegularCheckout:
 			swipeViewModel.TitleText = Resources.regular_checkout_emv_tap_title;
 			swipeViewModel.MessageText = null;
@@ -367,12 +378,13 @@ public class SwipeViewController : BaseViewController
 		BitmapImage adImage = null;
 		if (flag)
 		{
-			MarketingAd marketingAd = ServiceLocator.Instance.GetService<IMarketingAdService>()?.GetScreenAd(MarketingAdLocation.Pickup, createImpression: true);
-			if (marketingAd != null && marketingAd.Visible && !string.IsNullOrEmpty(marketingAd.ImageName))
+			IAd ad = (BaseViewController.ApplicationState.IsADAAccessible ? null : ServiceLocator.Instance.GetService<IAdService>()?.GetScreenAd(AdLocation.Pickup));
+			adImage = ad?.Image;
+			swipeViewModel.AdImpression = ((ad != null) ? new AdImpression
 			{
-				Image image = ServiceLocator.Instance.GetService<IResourceBundleService>()?.GetBitmap(marketingAd.ImageName);
-				adImage = ServiceLocator.Instance.GetService<IBitmapCacheService>()?.ToBitmapImage(image);
-			}
+				AdLocation = AdLocation.Pickup,
+				Ad = ad
+			} : null);
 		}
 		swipeViewModel.AdImage = adImage;
 	}
@@ -451,7 +463,7 @@ public class SwipeViewController : BaseViewController
 		});
 	}
 
-	public static void LeaveSwipeView()
+	public static void LeaveSwipeView(IViewFrameInstance viewFrameInstance)
 	{
 		ServiceLocator.Instance.GetService<ITrackDataService>()?.StopCardRead();
 		ICardReadAttempt currentCardReadAttempt = GetCurrentCardReadAttempt();
@@ -461,6 +473,7 @@ public class SwipeViewController : BaseViewController
 		}
 		StopTimer();
 		LogCardReadAttemptStatistics();
+		BaseViewController.RecordAdImpression(BaseViewController.GetViewModel<SwipeViewModel>(viewFrameInstance.Id)?.AdImpression);
 	}
 
 	private static void LogCardReadAttemptStatistics()
@@ -538,12 +551,35 @@ public class SwipeViewController : BaseViewController
 		}
 	}
 
-	private static void OnCardReadCompleteHandler(ITrackData trackData, bool chipCardRemovedFromReader)
+	private static void OnCardReadCompleteHandler(ITrackData trackData, bool chipCardRemovedFromReader, Guid? requestId)
 	{
 		try
 		{
 			LogHelper.Instance.Log("Starting SwipeViewController.OnCardReadCompleteHandler");
 			StopTimer();
+			ICardReadAttempt currentCardReadAttempt = GetCurrentCardReadAttempt();
+			if (requestId.HasValue)
+			{
+				bool num;
+				if (currentCardReadAttempt == null)
+				{
+					num = !requestId.HasValue;
+				}
+				else
+				{
+					Guid cardReadJobCommandRequestId = currentCardReadAttempt.CardReadJobCommandRequestId;
+					Guid? guid = requestId;
+					if (!guid.HasValue)
+					{
+						goto IL_010d;
+					}
+					num = cardReadJobCommandRequestId == guid.GetValueOrDefault();
+				}
+				if (!num)
+				{
+					goto IL_010d;
+				}
+			}
 			if (Redbox.Rental.Services.Session.Session.Instance != null)
 			{
 				Redbox.Rental.Services.Session.Session.Instance.TrackData = trackData;
@@ -573,7 +609,6 @@ public class SwipeViewController : BaseViewController
 							if (trackData == null || !trackData.HasValidData())
 							{
 								cardReadEvent.CardReadValid = false;
-								AddAttribute("cardSwipe", "result", "invalid", ShoppingCartSessionId);
 								Action action = delegate
 								{
 									MessagePopupViewController.ReenableTimer();
@@ -616,7 +651,7 @@ public class SwipeViewController : BaseViewController
 											ServiceLocator.Instance.GetService<IRedboxRental>()?.EnterMaintenanceModeBecauseOfTamperedCardReader();
 										};
 										action = action2;
-										showMessage = MessagePopupViewController.ShowMessagePopupViewCardReaderTampered;
+										showMessage = ((!_swipeViewType.IsReservation()) ? new ShowMessage(MessagePopupViewController.ShowMessagePopupViewCheckoutCardReaderTampered) : new ShowMessage(MessagePopupViewController.ShowMessagePopupViewReservationCardReaderTampered));
 									}
 									else if (trackData.CardSourceTypeIsEMVContactOrQuickChip())
 									{
@@ -649,7 +684,6 @@ public class SwipeViewController : BaseViewController
 							}
 							else
 							{
-								AddAttribute("cardSwipe", "result", "valid", ShoppingCartSessionId);
 								cardReadEvent.CardReadValid = true;
 								cardReadEvent.Action = "continue";
 								BaseViewController.AnalyticsService?.AddViewEvent(cardReadEvent);
@@ -682,6 +716,9 @@ public class SwipeViewController : BaseViewController
 			{
 				LogHelper.Instance.Log("ViewService UITaskScheduler is null in SwipeViewController.OnCardReadCompleteHandler");
 			}
+			return;
+			IL_010d:
+			LogHelper.Instance.Log($"ViewService Received a response for request Id {requestId} which is not the current read attempt.");
 		}
 		catch (Exception e)
 		{
@@ -701,9 +738,9 @@ public class SwipeViewController : BaseViewController
 
 	private static void PerformContinue()
 	{
-		if (_continueAction != null)
+		if (Redbox.Rental.Services.Session.Session.Instance?.TrackData != null && _continueAction != null)
 		{
-			if (_swipeViewType == SwipeViewType.RegularCheckOut || _swipeViewType == SwipeViewType.EncryptedSwipeRegularCheckOut || _swipeViewType == SwipeViewType.EMVInsertRegularCheckout || _swipeViewType == SwipeViewType.EMVInsertTapRegularCheckout || _swipeViewType == SwipeViewType.EMVTapRegularCheckout)
+			if (_swipeViewType == SwipeViewType.RegularCheckOut || _swipeViewType == SwipeViewType.EncryptedSwipeRegularCheckOut || _swipeViewType == SwipeViewType.EMVInsertRegularCheckout || _swipeViewType == SwipeViewType.EMVInsertTapRegularCheckout || _swipeViewType == SwipeViewType.EMVInsertTapHideMobileRegularCheckout || _swipeViewType == SwipeViewType.EMVTapRegularCheckout)
 			{
 				ServiceLocator.Instance.GetService<IAfterSwipeOfferService>().StartOfferFlow(delegate(bool c)
 				{
@@ -744,16 +781,6 @@ public class SwipeViewController : BaseViewController
 		ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe(content, popOnly: false);
 	}
 
-	private static void AddViewEvent(string subItemType, string subItemValue)
-	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddViewEvent(subItemType, subItemValue);
-	}
-
-	private static void AddAttribute(string parentNodeName, string attributeName, string attributeValue, string bufferedSessionID)
-	{
-		ServiceLocator.Instance.GetService<ISessionAnalyticsService>()?.AddAttribute(parentNodeName, attributeName, attributeValue, bufferedSessionID);
-	}
-
 	private static void OnBackButtonPressed()
 	{
 		if (BaseViewController.GetViewService().Peek() == "swipe_view")
@@ -766,8 +793,6 @@ public class SwipeViewController : BaseViewController
 				{
 					viewModel.BackButtonVisibility = Visibility.Hidden;
 				}
-				AddViewEvent("buttonPress", "card-swipe-back");
-				AddAttribute("cardSwipe", "result", "cancelled", ShoppingCartSessionId);
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("SwipeCardSwipeBack");
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 				if (service != null)
@@ -797,7 +822,6 @@ public class SwipeViewController : BaseViewController
 
 	private static void SwipeTimerTimeout()
 	{
-		AddAttribute("cardSwipe", "result", "timeout", ShoppingCartSessionId);
 		BaseViewController.AnalyticsService?.AddViewEvent(new CardReadEvent
 		{
 			CardReadValid = false,

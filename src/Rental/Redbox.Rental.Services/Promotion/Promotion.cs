@@ -67,6 +67,20 @@ public class Promotion : IPromotion
 
 	public bool IsExternallyValidated => Intent == PromotionIntentCode.MultiNightItem;
 
+	public PromotionActionCode ActionCode { get; set; }
+
+	public RentalShoppingCartItemAction CartItemAction
+	{
+		get
+		{
+			if (ActionCode != PromotionActionCode.Purchase)
+			{
+				return RentalShoppingCartItemAction.rental;
+			}
+			return RentalShoppingCartItemAction.purchase;
+		}
+	}
+
 	public Promotion()
 	{
 		QualifyingItems = new List<IRentalShoppingCartItem>();

@@ -18,9 +18,9 @@ public class StartViewDefinition : BaseViewDefinition, IViewDefinition
 		{
 			StartViewController.ConfigureStartView();
 		};
-		base.OnLeave = delegate
+		base.OnLeave = delegate(IViewFrameInstance viewFrameInstance)
 		{
-			StartViewController.LeaveStartView();
+			StartViewController.LeaveStartView(viewFrameInstance);
 		};
 	}
 }

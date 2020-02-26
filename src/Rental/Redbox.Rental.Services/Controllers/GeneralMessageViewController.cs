@@ -14,7 +14,7 @@ public class GeneralMessageViewController : BaseViewController
 		{
 			viewUserControl.DataContext = messageViewModel;
 			LogHelper.Instance.Log($"GeneralMessageView Message: {messageViewModel?.MessageText}");
-			if (messageViewModel != null && messageViewModel.DisableIdleTimer)
+			if (messageViewModel != null && messageViewModel.DisableIdleTimerOnEnter)
 			{
 				(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer("idle_timer"))?.Suspend();
 			}
@@ -23,7 +23,7 @@ public class GeneralMessageViewController : BaseViewController
 
 	public static void LeaveMessageView(GeneralMessageViewModel messageViewModel)
 	{
-		if (messageViewModel != null && messageViewModel.DisableIdleTimer)
+		if (messageViewModel != null && messageViewModel.EnableIdleTimerOnLeave)
 		{
 			(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer("idle_timer"))?.Resume();
 		}

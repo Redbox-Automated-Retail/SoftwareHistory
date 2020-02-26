@@ -39,4 +39,59 @@ public class CustomerOffer
 	public List<OfferProduct> OfferProducts { get; set; }
 
 	public string OfferDiscountCode { get; set; }
+
+	public bool RequiresProductInCart
+	{
+		get
+		{
+			if (DiscountType != OfferDiscountType.Free)
+			{
+				return DiscountType == OfferDiscountType.AmountOff;
+			}
+			return true;
+		}
+	}
+
+	public ITitleProduct TargetProductInCart { get; set; }
+
+	public long CampaignId { get; set; }
+
+	public DateTime? RedeemedDateTime { get; set; }
+
+	public ActionCode ActionCode { get; set; }
+
+	public LegalTextType LegalTextType
+	{
+		get
+		{
+			switch (CustomerSegmentType)
+			{
+			case CustomerSegmentType.PersonalizedMultiNightPrice:
+				return LegalTextType.Multinight;
+			case CustomerSegmentType.BasketStretch:
+				if (ActionCode == ActionCode.Purchase)
+				{
+					return LegalTextType.Purchase;
+				}
+				return LegalTextType.RentalShort;
+			case CustomerSegmentType.Frac:
+				return LegalTextType.Expires;
+			default:
+				return LegalTextType.Standard;
+			}
+		}
+	}
+
+	public bool ShouldAdjustPrice(IConfiguration configuration)
+	{
+		if (DiscountType != OfferDiscountType.MultiNightPrice || configuration.UseDiscountsForPmnpOffers)
+		{
+			if (ActionCode == ActionCode.Purchase)
+			{
+				return string.IsNullOrEmpty(PromotionCode);
+			}
+			return false;
+		}
+		return true;
+	}
 }

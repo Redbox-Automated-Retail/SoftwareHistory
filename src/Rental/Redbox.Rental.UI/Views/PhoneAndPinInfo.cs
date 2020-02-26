@@ -1,5 +1,6 @@
 using System;
 using System.Security;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
@@ -18,7 +19,7 @@ public class PhoneAndPinInfo
 
 	public bool IsSignUp { get; set; }
 
-	public bool IsAfterSwipe { get; set; }
+	public SignUpFlowContext SignUpFlowContext { get; set; }
 
 	public bool ShowTextClubOption { get; set; }
 

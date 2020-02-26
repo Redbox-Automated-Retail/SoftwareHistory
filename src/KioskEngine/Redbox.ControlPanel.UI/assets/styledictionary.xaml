@@ -109,6 +109,40 @@
       </Setter.Value>
     </Setter>
   </Style>
+  <Style x:Key="control_panel_glass_rounded_button_style" TargetType="{x:Type Button}">
+    <Setter Property="Background" Value="#990000" />
+    <Setter Property="Foreground" Value="#FFF5F5F5" />
+    <Setter Property="UIElement.SnapsToDevicePixels" Value="True" />
+    <Setter Property="Height" Value="78" />
+    <Setter Property="Width" Value="136" />
+    <Setter Property="FontSize" Value="15.96" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.ControlPanel.UI;component/Assets/Fonts/#Verdana" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type Button}">
+          <Border Name="bd" Background="{TemplateBinding Control.Background}" BorderBrush="#FFFFFFFF" BorderThickness="2" CornerRadius="10,10,10,10">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding Control.HorizontalContentAlignment}" Margin="{TemplateBinding Control.Padding}" VerticalAlignment="{TemplateBinding Control.VerticalContentAlignment}" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" RecognizesAccessKey="True" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+              <Setter Property="FrameworkElement.Cursor" Value="Hand" />
+            </Trigger>
+            <Trigger Property="UIElement.IsFocused" Value="True">
+              <Setter Property="Background" Value="#FFFFA500" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Background" Value="#636363" />
+              <Setter Property="Foreground" Value="#1d1d1d" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="control_panel_display_combobox" TargetType="{x:Type ComboBox}">
+    <Setter Property="FontSize" Value="15.96" />
+  </Style>
   <Style x:Key="wp_rounded_button_style" TargetType="{x:Type Button}">
     <Setter Property="Margin" Value="0,0,10,10" />
     <Setter Property="Background" Value="#990000" />

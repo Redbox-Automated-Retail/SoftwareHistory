@@ -107,7 +107,7 @@ public interface ITitleProduct : IKioskProduct
 
 	string SortName { get; }
 
-	long TitleRollupProductGroupId { get; set; }
+	long TitleRollupProductGroupId { get; }
 
 	decimal? DigitalRentPrice { get; }
 

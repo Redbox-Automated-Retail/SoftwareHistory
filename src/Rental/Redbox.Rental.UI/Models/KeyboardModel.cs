@@ -72,6 +72,8 @@ public class KeyboardModel : BaseModel<KeyboardModel>
 
 	public DynamicRoutedCommand ContinueButtonCommand { get; set; }
 
+	public DynamicRoutedCommand TermsButtonCommand { get; set; }
+
 	public DynamicRoutedCommand EmailSelectedCommand { get; set; }
 
 	public DynamicRoutedCommand CodeSelectedCommand { get; set; }

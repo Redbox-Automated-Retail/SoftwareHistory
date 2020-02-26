@@ -53,7 +53,7 @@ public class ViewService : IViewService
 
 	internal ViewStack InnerStack { get; private set; }
 
-	public event EventHandler ViewStateChanged;
+	public event EventHandler<ViewStateChangedArgs> ViewStateChanged;
 
 	public void Reset()
 	{
@@ -61,7 +61,10 @@ public class ViewService : IViewService
 		ClearCache(clearResourceViewsOnly: true);
 		m_isCriticalErrorViewShown = false;
 		m_isCriticalErrorViewOnStack = false;
-		RaiseViewStateChanged();
+		RaiseViewStateChanged(new ViewStateChangedArgs
+		{
+			Type = ViewStateChangedType.Reset
+		});
 	}
 
 	public void ShowFrameInDebug()
@@ -110,24 +113,16 @@ public class ViewService : IViewService
 			}
 			if (shoppingSession != null && m_viewShownOn.HasValue)
 			{
-				ISessionAnalyticsService service4 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-				if (service4 != null)
-				{
-					service4.AddAttribute("view", "viewEnd", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
-					DateTime now = DateTime.Now;
-					DateTime? viewShownOn = m_viewShownOn;
-					service4.AddAttribute("view", "viewDuration", (now - viewShownOn).ToString());
-				}
 				m_lastShownView = null;
 			}
-			IRenderingService service5 = ServiceLocator.Instance.GetService<IRenderingService>();
+			IRenderingService service4 = ServiceLocator.Instance.GetService<IRenderingService>();
 			if (InnerStack.Peek() == null)
 			{
 				LogHelper.Instance.Log("View stack is empty.");
 				service2.Filter["view_name"] = null;
-				service5.ActiveScene.SuspendDrawing();
-				service5.ActiveScene.Clear();
-				service5.ActiveScene.ResumeDrawing();
+				service4.ActiveScene.SuspendDrawing();
+				service4.ActiveScene.Clear();
+				service4.ActiveScene.ResumeDrawing();
 				shoppingSession?.AddEvent(ShoppingSessionEventType.ShowView, "View stack empty.");
 				return;
 			}
@@ -137,26 +132,6 @@ public class ViewService : IViewService
 			viewFrameInstance.ViewFrame.UpdateScene(viewFrameInstance);
 			if (shoppingSession != null)
 			{
-				ISessionAnalyticsService service6 = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-				if (service6 != null)
-				{
-					IViewFrame viewFrame = viewFrameInstance?.ViewFrame as IViewFrame;
-					Dictionary<string, string> dictionary = new Dictionary<string, string>();
-					string value = viewFrameInstance.ViewFrame.ViewName;
-					if (viewFrameInstance.Parameter != null && (viewFrameInstance.Parameter as IViewAnalyticsName)?.ViewAnalyticsName != null)
-					{
-						value = ((IViewAnalyticsName)viewFrameInstance.Parameter).ViewAnalyticsName;
-					}
-					dictionary.Add("viewName", value);
-					dictionary.Add("viewSequence", shoppingSession.ViewsShown.ToString());
-					dictionary.Add("viewVersion", viewFrame?.ViewVersion ?? "not defined");
-					dictionary.Add("activeFlag", viewFrameInstance?.ViewFrame?.ActiveFlag ?? "not defined");
-					dictionary.Add("viewCulture", service2.Filter["culture"] ?? string.Empty);
-					dictionary.Add("viewStart", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:ms"));
-					service6.AddNode("views", "view");
-					service6.AddAttributes("view", dictionary);
-					service6.AddNode("view", "viewEvents");
-				}
 				ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddView(GetCurrentViewAnalyticsName());
 			}
 			if (!viewFrameInstance.ViewFrame.RaiseOnEnter(viewFrameInstance))
@@ -202,7 +177,10 @@ public class ViewService : IViewService
 			errorForm.Text = $"Errors for view resource: {viewFrameInstance.ViewFrame.ViewName}";
 			errorForm.Show();
 			errorForm.BringToFront();
-			RaiseViewStateChanged();
+			RaiseViewStateChanged(new ViewStateChangedArgs
+			{
+				Type = ViewStateChangedType.ShowErrors
+			});
 		}
 	}
 
@@ -245,7 +223,12 @@ public class ViewService : IViewService
 				}
 			}
 		}
-		RaiseViewStateChanged();
+		RaiseViewStateChanged(new ViewStateChangedArgs
+		{
+			Type = ViewStateChangedType.Pop,
+			FromView = viewFrameInstance.ViewFrame.ViewName,
+			ToView = InnerStack.Peek()?.ViewFrame?.ViewName
+		});
 		return viewFrameInstance.ViewFrame.ViewName;
 	}
 
@@ -295,7 +278,10 @@ public class ViewService : IViewService
 				}
 			}
 		}
-		RaiseViewStateChanged();
+		RaiseViewStateChanged(new ViewStateChangedArgs
+		{
+			Type = ViewStateChangedType.ClearCache
+		});
 	}
 
 	public string PopDiscard()
@@ -305,7 +291,10 @@ public class ViewService : IViewService
 		IViewFrameInstance viewFrameInstance = InnerStack.Pop();
 		if (viewFrameInstance?.ViewFrame != null)
 		{
-			RaiseViewStateChanged();
+			RaiseViewStateChanged(new ViewStateChangedArgs
+			{
+				Type = ViewStateChangedType.PopDiscard
+			});
 			viewFrameInstance.ViewFrame.RaiseOnLeave(viewFrameInstance);
 			return viewFrameInstance.ViewFrame.ViewName;
 		}
@@ -322,7 +311,10 @@ public class ViewService : IViewService
 				viewFrame.Scene.MakeDirty(null);
 			}
 			viewFrameInstance.ViewFrame.RaiseOnEnter(viewFrameInstance);
-			RaiseViewStateChanged();
+			RaiseViewStateChanged(new ViewStateChangedArgs
+			{
+				Type = ViewStateChangedType.EnterTopOfStock
+			});
 		}
 	}
 
@@ -396,7 +388,12 @@ public class ViewService : IViewService
 			InnerStack.Push(guid, viewName, parameter);
 			LogHelper.Instance.Log("Push view '{0}' {1} to TOS.", viewName, guid);
 			LogHelper.Instance.Log(ViewStackContentsToString());
-			RaiseViewStateChanged();
+			RaiseViewStateChanged(new ViewStateChangedArgs
+			{
+				Type = ViewStateChangedType.Push,
+				FromView = viewFrameInstance?.ViewFrame?.ViewName,
+				ToView = viewName
+			});
 		}
 		else
 		{
@@ -573,11 +570,11 @@ public class ViewService : IViewService
 		InnerStack = new ViewStack();
 	}
 
-	private void RaiseViewStateChanged()
+	private void RaiseViewStateChanged(ViewStateChangedArgs e = null)
 	{
 		if (ViewStateChanged != null)
 		{
-			ViewStateChanged(this, EventArgs.Empty);
+			ViewStateChanged(this, e);
 		}
 	}
 }

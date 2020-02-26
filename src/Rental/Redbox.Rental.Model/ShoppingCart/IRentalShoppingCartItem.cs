@@ -11,9 +11,11 @@ public interface IRentalShoppingCartItem
 {
 	long ProductId { get; }
 
+	long TitleRollupProductGroupId { get; }
+
 	string TivoQueryId { get; set; }
 
-	List<string> Tags { get; set; }
+	List<string> PersonalizationTitleTags { get; set; }
 
 	TitleType TitleType { get; }
 

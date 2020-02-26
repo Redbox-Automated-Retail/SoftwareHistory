@@ -13,13 +13,8 @@ public class PhoneAndPinViewController : BaseViewController
 	public static void ConfigurePhoneAndPinView(PhoneAndPinInfo phoneAndPinInfo)
 	{
 		OrchestrationService.SetCurrentUICulture();
-		if (phoneAndPinInfo.IsSignUp)
+		if (!phoneAndPinInfo.IsSignUp)
 		{
-			OrchestrationService.AnalyticsAddViewEvent("context", "EarlyIdTextClubOptIn");
-		}
-		else
-		{
-			OrchestrationService.AnalyticsAddViewEvent("context", "PinSignIn");
 			BaseViewController.StartIdleTimer();
 		}
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
@@ -56,27 +51,17 @@ public class PhoneAndPinViewController : BaseViewController
 		{
 			phoneAndPinViewModel.PhoneDisplayText = phoneAndPinInfo.MobilePhoneNumber;
 		}
+		phoneAndPinViewModel.RightSideButtonBarVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
+		phoneAndPinViewModel.BottomButtonBarVisibility = (Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible ? Visibility.Collapsed : Visibility.Visible);
 		if (phoneAndPinInfo.IsSignUp)
 		{
-			if (phoneAndPinInfo.IsAfterSwipe)
-			{
-				phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_sign_up_after_swipe_header_text;
-				phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sign_up_after_swipe_sub_header_text;
-			}
-			else
-			{
-				phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_sign_up_header_text;
-				phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sign_up_sub_header_text;
-			}
-			phoneAndPinViewModel.ADAPhoneButtonVisibility = Visibility.Collapsed;
-			phoneAndPinViewModel.ADAPinButtonVisibility = Visibility.Collapsed;
-			phoneAndPinViewModel.RightSideButtonBarVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
-			phoneAndPinViewModel.BottomButtonBarVisibility = (Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible ? Visibility.Collapsed : Visibility.Visible);
+			phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_sign_up_header_text;
+			phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sign_up_sub_header_text;
 			phoneAndPinViewModel.StartButtonText = ((phoneAndPinInfo.SignInCancelButtonType == SignInCancelButtonTypes.Back) ? Resources.cancel_button : Resources.phone_and_pin_sign_up_back_button_text);
 			phoneAndPinViewModel.SignInButtonText = Resources.phone_and_pin_sign_up_button_text;
-			phoneAndPinViewModel.TermsTitleText = Resources.phone_and_pin_terms_title_text;
-			phoneAndPinViewModel.TermsText = Resources.phone_and_pin_terms_text;
-			phoneAndPinViewModel.TermsButtonText = Resources.terms_button_text;
+			phoneAndPinViewModel.TermsTitleText = (phoneAndPinInfo.ShowTextClubOption ? Resources.phone_and_pin_terms_title_text : null);
+			phoneAndPinViewModel.TermsText = (phoneAndPinInfo.ShowTextClubOption ? Resources.phone_and_pin_terms_text : null);
+			phoneAndPinViewModel.TermsButtonText = Resources.terms_link_text;
 			phoneAndPinViewModel.TermsBarVisibility = Visibility.Visible;
 			phoneAndPinViewModel.PinConfirmVisibility = Visibility.Visible;
 			phoneAndPinViewModel.TextClubOptionVisibility = ((!phoneAndPinInfo.ShowTextClubOption) ? Visibility.Collapsed : Visibility.Visible);
@@ -91,10 +76,6 @@ public class PhoneAndPinViewController : BaseViewController
 		{
 			phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_header_text;
 			phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sub_header_text;
-			phoneAndPinViewModel.ADAPhoneButtonText = Resources.phone_and_pin_ada_phone_button_text;
-			phoneAndPinViewModel.ADAPhoneButtonVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
-			phoneAndPinViewModel.ADAPinButtonText = Resources.phone_and_pin_ada_pin_button_text;
-			phoneAndPinViewModel.ADAPinButtonVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
 			phoneAndPinViewModel.StartButtonText = ((phoneAndPinInfo.SignInCancelButtonType == SignInCancelButtonTypes.Back) ? Resources.cancel_button : Resources.phone_and_pin_start_button_text);
 			phoneAndPinViewModel.SignInButtonText = Resources.phone_and_pin_sign_in_button_text;
 			phoneAndPinViewModel.OnStartButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnStartButtonClicked, new Action(PhoneAndPinViewModel_OnStartButtonClicked));
@@ -322,7 +303,6 @@ public class PhoneAndPinViewController : BaseViewController
 
 	private static void PhoneAndPinViewModel_OnStartButtonClicked()
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "startbrowsing");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinStartBrowsing");
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		OrchestrationService.ViewGoBackSafe("Phone and pin login cancel", popOnly: false);
@@ -334,7 +314,6 @@ public class PhoneAndPinViewController : BaseViewController
 
 	private static void PhoneAndPinViewModel_OnSignInButtonClicked()
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "signin");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinSignIn");
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.SignInAction != null)
@@ -345,14 +324,12 @@ public class PhoneAndPinViewController : BaseViewController
 
 	private static void PhoneAndPinViewModel_OnTermsButtonClicked(string idleTimerName)
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "terms");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinTerms");
 		HelpViewController.ShowMobileFaqAndPrivacy("perks_terms", idleTimerName);
 	}
 
 	private static void OnMaybeLaterButtonClicked()
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "maybelater");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinMaybeLater");
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.ContinueAction != null)
@@ -363,7 +340,6 @@ public class PhoneAndPinViewController : BaseViewController
 
 	private static void OnSignUpButtonClicked()
 	{
-		OrchestrationService.AnalyticsAddViewEvent("buttonPress", "signup");
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PhoneAndPinSignUp");
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.SignInAction != null)
@@ -377,14 +353,6 @@ public class PhoneAndPinViewController : BaseViewController
 		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
 		if (phoneAndPinViewModel != null)
 		{
-			if (phoneAndPinViewModel.SignUpForTextClub)
-			{
-				OrchestrationService.AnalyticsAddViewEvent("checkBoxSelected", "textcluboptin,true");
-			}
-			else
-			{
-				OrchestrationService.AnalyticsAddViewEvent("checkBoxSelected", "textcluboptin,false");
-			}
 			BaseViewController.AnalyticsService?.AddCheckBoxEvent("PhoneAndPinTextClubOptin", phoneAndPinViewModel.SignUpForTextClub);
 		}
 	}

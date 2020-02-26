@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
 using Redbox.Core;
@@ -8,10 +9,12 @@ using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
+using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Loyalty;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Model.Transaction;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
@@ -63,7 +66,17 @@ public class PersonalizationFunctions
 		}
 	}
 
-	private static ISessionAnalyticsService SessionAnalyticsService => ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
+	public static int? LoyaltyPointsBalance
+	{
+		get
+		{
+			if (!IsSignedIn)
+			{
+				return null;
+			}
+			return Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.PointsBalance;
+		}
+	}
 
 	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
 
@@ -108,15 +121,16 @@ public class PersonalizationFunctions
 			OrchestrationService.ViewGoBackSafe("Message view Timed out.", popOnly: false);
 		}, delegate
 		{
-			SessionAnalyticsService?.AddViewEvent("context", "SignOutDialog");
-			SessionAnalyticsService?.AddViewEvent("buttonPress", "sign_out_back");
 			AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsSignOutBack");
 			OrchestrationService.ViewGoBackSafe("Sign Out view:hide()", popOnly: false);
 		}, delegate
 		{
-			SessionAnalyticsService?.AddViewEvent("buttonPress", "sign_out");
 			AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsSignOut");
 			Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LogOut();
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.EmailConfirmResult = null;
+			}
 			ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart.ClearAllLoyaltyPointsRecords();
 			LogHelper.Instance.Log("User has signed out.  Closing session and returning to welcome screen.");
 			ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession(null);
@@ -186,7 +200,7 @@ public class PersonalizationFunctions
 					};
 					CheckCartForOfferCodes();
 					CheckCartForTivoQueryId();
-					CheckCartForTags();
+					CheckCartForPersonalizationTitleTags();
 					OrchestrationService.AnalyticsAddLoggedInCustomerProfileNumber(loginResult.PersonalizationSession?.CustomerProfileNumber);
 				}
 				OrchestrationService.ResetApplicationIdleTimerTimeout();
@@ -194,10 +208,13 @@ public class PersonalizationFunctions
 				OrchestrationService.ViewGoBackSafe("Login process finished - pop keyboard / phone view", popOnly: false);
 				if (IsSignedIn & flag)
 				{
-					LoyaltySignUpController.BeginAfterSignInLoyaltySignUpFlow(loginResult.PersonalizationSession.CustomerProfileNumber, loginResult.PersonalizationSession.LoginEmailAddress, loginResult.PersonalizationSession.MobilePhoneNumber, loginResult.PersonalizationSession.PromptForPerks, loginResult.PersonalizationSession.PromptForEarlyId, loginResult.PersonalizationSession.TextClubEnabled, delegate
+					OrchestrationService.StopIdleTimer("idle_timer");
+					Action<ISignupFlowResult> action = delegate
 					{
+						OrchestrationService.UnwindToSafe("browse_view", discard: true, "sign_up_flow_return");
 						ShowRecommendedTitlesIfNeeded(loginResult);
-					});
+					};
+					ServiceLocator.Instance.GetService<IPerksSignupService>()?.StartSignupFlow(action, SignUpFlowContext.AfterSignIn, action);
 				}
 				else if (IsSignedIn)
 				{
@@ -257,7 +274,7 @@ public class PersonalizationFunctions
 				recommendedTitlesPopupInfo.RecommendedTitles = recommendedTitles;
 				recommendedTitlesPopupInfo.NumberOfTitlesToShow = numberOfTitlesToShow;
 				recommendedTitlesPopupInfo.ShowOfferText = recommendedTitles.OfferCode == "RC";
-				recommendedTitlesPopupInfo.ShownFromView = "join_perks_promo_view";
+				recommendedTitlesPopupInfo.ShownFromView = "perks_confirm_view";
 				OrchestrationService.ViewShow("recommended_titles_popup_view", recommendedTitlesPopupInfo);
 			}
 		}
@@ -289,7 +306,7 @@ public class PersonalizationFunctions
 		}
 	}
 
-	private static void CheckCartForTags()
+	private static void CheckCartForPersonalizationTitleTags()
 	{
 		IRentalShoppingCart currentRentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart;
 		if (currentRentalShoppingCart == null || currentRentalShoppingCart.Items.Count <= 0)
@@ -298,7 +315,7 @@ public class PersonalizationFunctions
 		}
 		foreach (IRentalShoppingCartItem item in currentRentalShoppingCart.Items)
 		{
-			item.Tags = GetTags(item.TitleProduct);
+			item.PersonalizationTitleTags = GetPersonalizationTitleTags(item.TitleProduct);
 		}
 	}
 
@@ -306,8 +323,6 @@ public class PersonalizationFunctions
 	{
 		MessagePopupViewController.ShowSimpleMessage(Resources.my_points_error_title, Resources.my_points_error_message, Resources.my_points_error_btn_text, delegate
 		{
-			SessionAnalyticsService?.AddViewEvent("context", "NotEnoughPointsDialog");
-			SessionAnalyticsService?.AddViewEvent("buttonPress", "not_enough_points_gotit");
 			AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsNotEnoughPointsGotit");
 			OrchestrationService.ViewGoBackSafe("Message button GotIt pressed", popOnly: false);
 		}, delegate
@@ -327,6 +342,29 @@ public class PersonalizationFunctions
 		});
 	}
 
+	public static string GetTivoQueryIdFromTransactionEntities(ITitleProduct titleProduct)
+	{
+		ITransactionData obj = Redbox.Rental.Services.Session.Session.Instance?.TransactionData;
+		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+		long productGroupId = service.GetProductGroupId(titleProduct);
+		string result = null;
+		List<ITransactionEntity> list = obj?.TransactionEntities.Where((ITransactionEntity x) => x.Name == "TivoQueryId").ToList();
+		if (list != null)
+		{
+			foreach (ITransactionEntity item in list)
+			{
+				service.GetProduct(item.TitleId, excludeTitleRollup: false, out var kioskProduct);
+				long productGroupId2 = service.GetProductGroupId(kioskProduct);
+				if ((productGroupId > 0 && productGroupId2 > 0 && productGroupId == productGroupId2) || item.TitleId == titleProduct.ProductId)
+				{
+					result = item.Value;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
 	public static string GetLoyaltyOfferCode(ITitleProduct titleProduct)
 	{
 		return GetDataFromRecommendedTitlesForGivenTitleProduct(titleProduct, (IRecommendedTitles x, IRecommendedTitleId y) => x.OfferCode);
@@ -337,9 +375,9 @@ public class PersonalizationFunctions
 		return GetDataFromRecommendedTitlesForGivenTitleProduct(titleProduct, (IRecommendedTitles x, IRecommendedTitleId y) => x.TivoQueryId);
 	}
 
-	public static List<string> GetTags(ITitleProduct titleProduct)
+	public static List<string> GetPersonalizationTitleTags(ITitleProduct titleProduct)
 	{
-		return GetDataFromRecommendedTitlesForGivenTitleProduct(titleProduct, (IRecommendedTitles x, IRecommendedTitleId y) => y.Tags);
+		return GetDataFromRecommendedTitlesForGivenTitleProduct(titleProduct, (IRecommendedTitles x, IRecommendedTitleId y) => y.PersonalizationTitleTags);
 	}
 
 	private static T GetDataFromRecommendedTitlesForGivenTitleProduct<T>(ITitleProduct titleProduct, Func<IRecommendedTitles, IRecommendedTitleId, T> dataToGet)
@@ -391,11 +429,7 @@ public class PersonalizationFunctions
 				{
 					hasActionExecuted = true;
 					timerService?.RemoveTimer("email_next_timer");
-					IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-					if (rentalShoppingCart != null)
-					{
-						CheckoutFunctions.MarketingOptInFlow(rentalShoppingCart.MarketingOptInConfirmationStatus);
-					}
+					CheckoutFunctions.PromptUserForSignups();
 				}
 			}
 		});

@@ -297,7 +297,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 		dictionary.Add(CardBrandAndSource.VisaChip, service.VisaInsertChipEnabled);
 		dictionary.Add(CardBrandAndSource.AmexChip, service.AmexInsertChipEnabled);
 		dictionary.Add(CardBrandAndSource.MasterCardChip, service.MasterCardInsertChipEnabled);
-		dictionary.Add(CardBrandAndSource.DiscoverChip, service.AmexInsertChipEnabled);
+		dictionary.Add(CardBrandAndSource.DiscoverChip, service.DiscoverInsertChipEnabled);
 		foreach (KeyValuePair<CardBrandAndSource, bool> item in dictionary)
 		{
 			if (!item.Value)

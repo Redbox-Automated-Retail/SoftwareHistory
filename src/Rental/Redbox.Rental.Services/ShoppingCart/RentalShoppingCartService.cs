@@ -139,7 +139,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 							rentalShoppingCartItem.Quantity = 1m;
 							rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(titleProduct);
 							rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(titleProduct);
-							rentalShoppingCartItem.Tags = PersonalizationFunctions.GetTags(titleProduct);
+							rentalShoppingCartItem.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(titleProduct);
 							rentalShoppingCart.AddItem(rentalShoppingCartItem);
 							LogHelper.Instance.Log("MDV - adding product id {0}", titleProduct.ProductId);
 						}
@@ -203,10 +203,10 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 		LogHelper.Instance.Log("Error in RentalShoppingCartService.RemoveNonReservedProductsFromRentalShoppingCart.  Unable to find rental shopping cart with id: {0}", shoppingCartSessionId);
 	}
 
-	public void RemovePromoOfferFromCart(Guid shoppingSessionId)
+	public void RemovePromoOfferFromCart(Guid shoppingSessionId, bool force = false)
 	{
 		IPromoOfferState promoOfferState = Redbox.Rental.Services.Session.Session.Instance.PromoOfferState;
-		if (promoOfferState != null && promoOfferState.WasOfferAccepted && promoOfferState.SelectedOffer != null)
+		if (promoOfferState != null && promoOfferState.WasOfferAccepted && promoOfferState.SelectedOffer != null && (force || promoOfferState.SelectedOffer.CustomerSegmentType != CustomerSegmentType.NewMemberPerksSignup))
 		{
 			if (promoOfferState.SelectedProduct != null)
 			{
@@ -337,28 +337,13 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 	public void SendRentalShoppingCartToAnalytics(IRentalShoppingCart rentalShoppingCart)
 	{
 		LogHelper.Instance.Log("Gather Up Cart Data for Analytics");
-		decimal num = 0m;
-		decimal num2 = 0m;
-		decimal num3 = 0m;
 		if (!rentalShoppingCart.PickupRecommendationsShown)
 		{
-			num = rentalShoppingCart.Totals.SubTotal;
-			num2 = rentalShoppingCart.Totals.TaxAmount;
-			num3 = rentalShoppingCart.Totals.GrandTotal;
+			_ = rentalShoppingCart.Totals.SubTotal;
+			_ = rentalShoppingCart.Totals.TaxAmount;
+			_ = rentalShoppingCart.Totals.GrandTotal;
 		}
 		ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddShoppingCart(rentalShoppingCart);
-		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		if (service == null || !service.SessionExists(rentalShoppingCart.ShoppingSessionId.ToString()) || !service.IsOpen(rentalShoppingCart.ShoppingSessionId.ToString()))
-		{
-			return;
-		}
-		service.AddElement("shoppingCart", "subTotal", num.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
-		service.AddElement("shoppingCart", "taxAmount", num2.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
-		service.AddElement("shoppingCart", "grandTotal", num3.ToString(), rentalShoppingCart.ShoppingSessionId.ToString());
-		foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
-		{
-			rentalShoppingCart.AddCartItemToAnalytics(item, userRemoved: false, service);
-		}
 	}
 
 	public List<string> AssignBarcodesToVend(IRentalShoppingCart rentalShoppingCart)
@@ -500,6 +485,13 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 		rentalShoppingCartItem.PricingRecord.InitialDays = 1;
 		rentalShoppingCartItem.PricingRecord.InitialNight = rentalShoppingCartItem.PricingRecord.DefaultInitialNightPrice.Value;
 		rentalShoppingCartItem.Price = rentalShoppingCartItem.PricingRecord.InitialNight;
+	}
+
+	public void SetPurchasePriceForSelectedItem(CustomerOffer selectedOffer, IRentalShoppingCartItem newLineItem, IPromotionService promotionService)
+	{
+		decimal num = promotionService.CalcInCartOfferPromoAmount(newLineItem, selectedOffer);
+		newLineItem.PricingRecord.Purchase -= num;
+		newLineItem.Price = newLineItem.PricingRecord.Purchase;
 	}
 
 	private RentalShoppingCartService()

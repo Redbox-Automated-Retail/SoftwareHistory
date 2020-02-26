@@ -7,6 +7,7 @@ using Redbox.FraudServices.Proxy.ComponentModel;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.FraudServices;
+using Redbox.KioskEngine.ComponentModel.HardwareServices;
 using Redbox.KioskEngine.Environment.FraudServices;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
@@ -15,13 +16,37 @@ namespace Redbox.Rental.Services;
 
 public class HardwareHelper
 {
+	public static void TurnOnAirExchangerFanIfConfigured(bool forcedAirExchangerConfigured, string currentBundleName)
+	{
+		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
+		IHardwareState service2 = ServiceLocator.Instance.GetService<IHardwareState>();
+		LogHelper.Instance.Log($"Air Exchanger Configured: {service2.ExchangerStatus}");
+		if (forcedAirExchangerConfigured)
+		{
+			LogHelper.Instance.Log("Forcing Air Exchanger to be Configured.");
+		}
+		if (forcedAirExchangerConfigured || service2.ExchangerStatus == AirExchangerStatus.Ok)
+		{
+			ErrorList errorList = service?.ExecuteImmediate("AIRXCHGR FANON", null, clearStack: false, currentBundleName);
+			if (errorList != null && errorList.Count > 0)
+			{
+				LogHelper.Instance.Log("ERROR: Unable to connect to HAL service: ");
+				errorList.ToLogHelper();
+			}
+			else
+			{
+				LogHelper.Instance.Log("Air Exchanger has been turned ON");
+			}
+		}
+	}
+
 	public static void ProcessResults(string jobId, string jobName)
 	{
 		ReadOnlyCollection<IHardwareResult> results = GetResults(jobId);
 		ProcessResults(jobName, results);
 	}
 
-	public static void ProcessResults(string jobName, ReadOnlyCollection<IHardwareResult> results)
+	private static void ProcessResults(string jobName, ReadOnlyCollection<IHardwareResult> results)
 	{
 		if (results == null || !results.Any())
 		{

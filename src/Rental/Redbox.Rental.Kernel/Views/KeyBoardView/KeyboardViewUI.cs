@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Net.Mail;
 using Redbox.Core;
@@ -470,51 +469,31 @@ internal class KeyboardViewUI
 			LogHelper.Instance.Log("Keyboard - Failed Validation.");
 			return;
 		}
-		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		if (service != null && service2 != null)
+		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		if (service != null && service.GetCurrentSession() != null)
 		{
-			IShoppingSession currentSession = service2.GetCurrentSession();
-			if (currentSession != null)
-			{
-				service.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
-				{
-					{ "subItemType", "buttonPress" },
-					{ "subItemValue", "ok_button" }
-				}, currentSession.Id.ToString());
-				ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent("KeyboardOk");
-			}
+			ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent("KeyboardOk");
 		}
 		_next?.Invoke();
 	}
 
 	private void OnCancelButtonPress(object sender, EventArgs e)
 	{
-		ISessionAnalyticsService service = ServiceLocator.Instance.GetService<ISessionAnalyticsService>();
-		IShoppingSessionService service2 = ServiceLocator.Instance.GetService<IShoppingSessionService>();
-		if (service != null && service2 != null)
+		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
+		if (service != null && service.GetCurrentSession() != null)
 		{
-			IShoppingSession currentSession = service2.GetCurrentSession();
-			if (currentSession != null)
-			{
-				service.AddNode("viewEvents", "viewEvent", new Dictionary<string, string>
-				{
-					{ "subItemType", "buttonPress" },
-					{ "subItemValue", "cancel_button" }
-				}, currentSession.Id.ToString());
-				ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent("KeyboardCancel");
-			}
+			ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent("KeyboardCancel");
 		}
 		if (_cancel != null)
 		{
 			_cancel();
 			return;
 		}
-		IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
-		if (service3.Stack.Count > 1)
+		IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
+		if (service2.Stack.Count > 1)
 		{
-			service3.Pop();
-			service3.Show();
+			service2.Pop();
+			service2.Show();
 		}
 	}
 

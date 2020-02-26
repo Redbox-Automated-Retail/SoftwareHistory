@@ -427,12 +427,17 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 					case KeyboardMode.EMAIL_RECEIPTS_PROMO:
 						text = "EMAIL ADDRESS";
 						text2 = "Please enter your email address if you'd like to receive receipts and promotions.";
-						text3 = "Redbox will never sell your email address to any third parties. We promise. This does not affect any of your coming soon notifications.";
+						text3 = "";
 						break;
 					case KeyboardMode.ACCOUNT_SIGN_IN:
 						text = "";
 						text2 = "Sign in to something awesome.";
 						text3 = "";
+						break;
+					case KeyboardMode.PERKS_SIGN_UP:
+						text = "Sign up for Redbox Perks";
+						text2 = "Please enter the email address you would like to use for Redbox Perks";
+						text3 = "Don't worry, we'll never share your info - it's safe with us";
 						break;
 					default:
 						text = "EMAIL ADDRESS";

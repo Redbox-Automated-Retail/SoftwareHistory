@@ -1,56 +1,57 @@
 using System;
 using System.Windows;
+using System.Windows.Input;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 
 namespace Redbox.Rental.UI.Models;
 
 public class SignInViewModel : DependencyObject
 {
-	public Action OnEmailAndPasswordButtonClicked;
-
-	public Action OnPhoneAndPinButtonClicked;
-
-	public Action OnCancelButtonClicked;
-
-	public Func<ISpeechControl> OnGetSpeechControl;
-
 	public string HeaderLabelText { get; set; }
+
+	public string AlreadyMemberText { get; set; }
+
+	public string SignInLabelText { get; set; }
 
 	public string EmailAndPasswordButtonText { get; set; }
 
-	public string SignInOrLabelText { get; set; }
-
 	public string PhoneAndPinButtonText { get; set; }
 
-	public string SignInPointOnePartOneText { get; set; }
+	public string Bullet1Text { get; set; }
 
-	public string SignInPointOnePartTwoText { get; set; }
+	public string Bullet2Text { get; set; }
 
-	public string SignInPointOnePartThreeText { get; set; }
+	public string Bullet3Text { get; set; }
 
-	public string SignInPointTwoText { get; set; }
+	public string BottomMessageText { get; set; }
 
-	public string SignInPointThreeText { get; set; }
+	public string SignUpButtonText { get; set; }
 
 	public string CancelButtonText { get; set; }
 
-	public void ProcessOnEmailAndPasswordButtonClicked()
-	{
-		if (OnEmailAndPasswordButtonClicked != null)
-		{
-			OnEmailAndPasswordButtonClicked();
-		}
-	}
+	public string InfoButtonText { get; set; }
 
-	public void ProcessOnPhoneAndPinButtonClicked()
-	{
-		OnPhoneAndPinButtonClicked?.Invoke();
-	}
+	public string LegalText { get; set; }
 
-	public void ProcessOnCancelButtonClicked()
-	{
-		OnCancelButtonClicked?.Invoke();
-	}
+	public Style ButtonTextStyle { get; set; }
+
+	public string PrivacyText { get; set; }
+
+	public string TermsButtonText { get; set; }
+
+	public ICommand EmailAndPasswordButtonCommand { get; set; }
+
+	public ICommand PhoneAndPinButtonCommand { get; set; }
+
+	public ICommand CancelButtonCommand { get; set; }
+
+	public ICommand SignUpButtonCommand { get; set; }
+
+	public ICommand InfoButtonCommand { get; set; }
+
+	public ICommand TermsButtonCommand { get; set; }
+
+	public Func<ISpeechControl> OnGetSpeechControl { get; set; }
 
 	public ISpeechControl ProcessGetSpeechControl()
 	{

@@ -37,11 +37,23 @@ public class OfferInfoModel
 
 	public string MessageText { get; set; }
 
+	public Style MessageTextStyle { get; set; }
+
 	public int ControlWidth { get; set; }
 
 	public int ControlHeight { get; set; }
 
+	public int TopMargin { get; set; }
+
 	public HorizontalAlignment TextHorizontalAlignment { get; set; }
 
 	public BitmapImage Image { get; set; }
+
+	public Visibility PerksIconsVisibility { get; set; }
+
+	public string PerksFreeRentalText { get; set; }
+
+	public string PerksDealsText { get; set; }
+
+	public string PerksBdayGiftText { get; set; }
 }

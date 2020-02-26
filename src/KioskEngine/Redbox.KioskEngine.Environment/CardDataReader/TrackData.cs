@@ -2,6 +2,7 @@ using DeviceService.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TrackData;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskEngine.Environment.CardDataReader;
 
@@ -38,6 +39,10 @@ public abstract class TrackData : ITrackData
 	private FallbackType? _lastFallbackReason;
 
 	private FallbackStatusAction _fallbackStatusAction;
+
+	private readonly bool _chipEnabled;
+
+	private readonly bool _contactlessEnabled;
 
 	protected bool _isDataLocked;
 
@@ -277,9 +282,32 @@ public abstract class TrackData : ITrackData
 
 	public ResponseStatus? ReadStatus { get; set; }
 
+	public bool ChipEnabledAndSupportsEmv => _chipEnabled;
+
+	public bool ContactlessEnabledAndSupportsEmv => _contactlessEnabled;
+
+	public bool EmvEnabled
+	{
+		get
+		{
+			if (!ChipEnabledAndSupportsEmv)
+			{
+				return ContactlessEnabledAndSupportsEmv;
+			}
+			return true;
+		}
+	}
+
 	public TrackData()
 	{
 		Errors = new ErrorList();
+		IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+		if (service != null && service.SupportsEMV)
+		{
+			IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
+			_chipEnabled = service2.ChipEnabled;
+			_contactlessEnabled = service2.ContactlessEnabled;
+		}
 	}
 
 	public virtual bool HasValidData()

@@ -46,7 +46,7 @@ public class SignInViewTextToSpeech
 					KeyCode = "CANCEL",
 					Action = delegate
 					{
-						signInViewModel.ProcessOnCancelButtonClicked();
+						signInViewModel.CancelButtonCommand.Execute(null);
 					}
 				});
 				speechPart.Events.Add(new MapKeyPressToAction
@@ -54,7 +54,7 @@ public class SignInViewTextToSpeech
 					KeyCode = "1",
 					Action = delegate
 					{
-						signInViewModel.ProcessOnPhoneAndPinButtonClicked();
+						signInViewModel.PhoneAndPinButtonCommand.Execute(null);
 					}
 				});
 				speechPart.Events.Add(new MapKeyPressToAction
@@ -62,12 +62,28 @@ public class SignInViewTextToSpeech
 					KeyCode = "2",
 					Action = delegate
 					{
-						signInViewModel.ProcessOnEmailAndPasswordButtonClicked();
+						signInViewModel.EmailAndPasswordButtonCommand.Execute(null);
+					}
+				});
+				speechPart.Events.Add(new MapKeyPressToAction
+				{
+					KeyCode = "3",
+					Action = delegate
+					{
+						signInViewModel.SignUpButtonCommand.Execute(null);
+					}
+				});
+				speechPart.Events.Add(new MapKeyPressToAction
+				{
+					KeyCode = "4",
+					Action = delegate
+					{
+						signInViewModel.InfoButtonCommand.Execute(null);
 					}
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = "Sign in to get some points."
+					Text = "Sign in or sign up to get some points."
 				});
 				speechPart.Texts.Add(new TextPart
 				{
@@ -79,7 +95,19 @@ public class SignInViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = "To cancel, without signing in, press cancel."
+					Text = "To sign up for redbox perks and earn free stuff including a free 1 night dvd rental, special offers, and a b-day gift, press 3."
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = "To learn more about how redbox perks works, press 4."
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = "To cancel, without signing in or signing up, press cancel."
+				});
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = signInViewModel.LegalText
 				});
 			}
 		};

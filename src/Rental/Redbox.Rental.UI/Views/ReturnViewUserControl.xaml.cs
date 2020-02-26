@@ -1,45 +1,20 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Markup;
-using System.Windows.Media;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.UI.Controls;
+using Redbox.Rental.UI.Models;
 
 namespace Redbox.Rental.UI.Views;
 
 [ThemedControl(ThemeName = "Redbox Classic", ControlName = "ReturnView")]
 public partial class ReturnViewUserControl : TextToSpeechUserControl, IWPFActor, IComponentConnector
 {
-	public new IActor Actor { get; set; }
-
-	public string MessageText
-	{
-		get
-		{
-			return InsertDiscAnimation.MessageText;
-		}
-		set
-		{
-			InsertDiscAnimation.MessageText = value;
-		}
-	}
-
-	public ImageSource AdImage
-	{
-		get
-		{
-			return ad_image.Source;
-		}
-		set
-		{
-			ad_image.Source = value;
-		}
-	}
-
-	public new event WPFHitHandler OnWPFHit;
+	private ReturnViewModel Model => base.DataContext as ReturnViewModel;
 
 	public ReturnViewUserControl()
 	{
@@ -91,5 +66,10 @@ public partial class ReturnViewUserControl : TextToSpeechUserControl, IWPFActor,
 			});
 		};
 		result.SpeechParts.Add(speechPart);
+	}
+
+	private void TextToSpeechUserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+	{
+		InsertDiscAnimation.MessageText = Model?.MessageText;
 	}
 }

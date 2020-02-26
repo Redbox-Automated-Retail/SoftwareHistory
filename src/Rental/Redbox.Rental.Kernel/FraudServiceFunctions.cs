@@ -69,12 +69,6 @@ public class FraudServiceFunctions
 		return ServiceLocator.Instance.GetService<IFraudService>().SupportsPaperFraud;
 	}
 
-	[KernelFunction(Name = "kernel.create_schedule_fraud_sync_timer")]
-	internal static void CreateFraudSyncTimer()
-	{
-		ServiceLocator.Instance.GetService<IFraudService>().CreateFraudSyncTimer();
-	}
-
 	[KernelFunction(Name = "kernel.upload_disc_image_from_sync")]
 	internal static void UploadDiscImage(string barcode, string filename)
 	{

@@ -17,34 +17,6 @@ namespace Redbox.KioskServices.Proxy.Request;
 
 public class ProxyMessageHelper
 {
-	private static bool ChipEnabled
-	{
-		get
-		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (service != null && service.ChipEnabled)
-			{
-				return service2?.SupportsEMV ?? false;
-			}
-			return false;
-		}
-	}
-
-	private static bool ContactlessEnabled
-	{
-		get
-		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (service != null && service.ContactlessEnabled)
-			{
-				return service2?.SupportsEMV ?? false;
-			}
-			return false;
-		}
-	}
-
 	public static CartMessage CreateCartMessage(string customerProfileNumber, string messageType)
 	{
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
@@ -156,7 +128,7 @@ public class ProxyMessageHelper
 						},
 						VendStatus = ConvertToVendStatus(item2.Status),
 						TivoQueryId = item2.TivoQueryId,
-						Tags = item2.Tags
+						PersonalizationTitleTags = item2.PersonalizationTitleTags
 					});
 				}
 				ISubTotalGroup subTotalGroup = rentalShoppingCart.Totals.SubTotalGroups.FirstOrDefault((ISubTotalGroup y) => item.Key == y.Action);
@@ -284,7 +256,7 @@ public class ProxyMessageHelper
 			},
 			{
 				"EmvEnabledTerminal",
-				ChipEnabled || ContactlessEnabled
+				trackData?.EmvEnabled
 			},
 			{
 				"EmvTags",
@@ -296,9 +268,12 @@ public class ProxyMessageHelper
 			},
 			{
 				"CardSourceType",
-				(!ChipEnabled && !ContactlessEnabled) ? new CardSourceType?(CardSourceType.Unknown) : trackData?.CardSourceType
+				trackData?.CardSourceType ?? CardSourceType.Unknown
 			},
-			{ "ContactlessEnabled", ContactlessEnabled }
+			{
+				"ContactlessEnabled",
+				trackData?.ContactlessEnabledAndSupportsEmv
+			}
 		};
 		if (includeTrack2)
 		{

@@ -18,6 +18,8 @@ public class PromoOfferState : IPromoOfferState
 
 	public bool WasOfferAccepted { get; set; }
 
+	public bool WasPerksSignupCompleted { get; set; }
+
 	public List<IKioskProduct> BrowseProductsShown { get; set; }
 
 	public List<IBrowseItemModel> TTSBrowseItemModelsShown { get; set; }

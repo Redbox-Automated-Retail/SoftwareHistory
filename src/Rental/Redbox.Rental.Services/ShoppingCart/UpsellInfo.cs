@@ -130,7 +130,7 @@ public class UpsellInfo : IUpsellInfo
 			rentalShoppingCartItem2.SourceType = GetUpsellItemSourceType(rentalShoppingCartItem2.TitleType);
 			rentalShoppingCartItem2.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(rentalShoppingCartItem2.TitleProduct);
 			rentalShoppingCartItem2.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(rentalShoppingCartItem2.TitleProduct);
-			rentalShoppingCartItem2.Tags = PersonalizationFunctions.GetTags(rentalShoppingCartItem2.TitleProduct);
+			rentalShoppingCartItem2.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(rentalShoppingCartItem2.TitleProduct);
 			_rentalShoppingCart.AddItem(rentalShoppingCartItem2);
 		}
 	}

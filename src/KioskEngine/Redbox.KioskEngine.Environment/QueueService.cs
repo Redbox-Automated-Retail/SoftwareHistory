@@ -145,28 +145,15 @@ public class QueueService : IQueueService, IDisposable
 				{
 					LogHelper.Instance.Log($"Error in RegisterMessageProcessorService.  Duplicate name {queueMessageProcessorService?.Name}");
 				}
+				else if (queueMessageProcessorService.IsDefault && _queueMessageProcessorServices.Count((IQueueMessageProcessorService x) => x.IsDefault) >= 1)
+				{
+					LogHelper.Instance.Log("Warning: More than one default Queue Message Processor Service.");
+				}
 				else
 				{
-					bool flag2 = false;
-					foreach (string eachMessageType in queueMessageProcessorService.SupportedMessageTypes)
-					{
-						IQueueMessageProcessorService queueMessageProcessorService2 = _queueMessageProcessorServices.FirstOrDefault((IQueueMessageProcessorService x) => x.SupportedMessageTypes.Contains(eachMessageType));
-						if (queueMessageProcessorService2 != null)
-						{
-							LogHelper.Instance.Log($"Error in RegisterMessageProcessorService.  Message type {eachMessageType} already registered by service type {queueMessageProcessorService2?.Name}");
-							flag2 = true;
-						}
-					}
-					if (!flag2)
-					{
-						_queueMessageProcessorServices.Add(queueMessageProcessorService);
-						LogHelper.Instance.Log($"QueueService registerd Queue Message Processor Service {queueMessageProcessorService?.Name}");
-						if (queueMessageProcessorService.IsDefault && _queueMessageProcessorServices.Count((IQueueMessageProcessorService x) => x.IsDefault) > 1)
-						{
-							LogHelper.Instance.Log("Warning: More than one default Queue Message Processor Service.");
-						}
-						flag = true;
-					}
+					_queueMessageProcessorServices.Add(queueMessageProcessorService);
+					LogHelper.Instance.Log($"QueueService registerd Queue Message Processor Service {queueMessageProcessorService?.Name}");
+					flag = true;
 				}
 			}
 		}
@@ -207,49 +194,69 @@ public class QueueService : IQueueService, IDisposable
 			try
 			{
 				m_isProcessingMessage = true;
-				IMessage tempMessage = null;
-				object clientData = null;
-				IDictionary<string, object> response = null;
-				IQueueMessageProcessorService queueMessageProcessorService = null;
 				ErrorList errorList = Dequeue(delegate(IMessage message)
 				{
+					bool errored = false;
+					bool result = true;
 					try
 					{
-						lock (_queueMessageProcessorServices)
+						List<IQueueMessageProcessorService> queueProcessorsForMessageType = GetQueueProcessorsForMessageType(message?.Type);
+						if (queueProcessorsForMessageType.Any())
 						{
-							queueMessageProcessorService = _queueMessageProcessorServices.FirstOrDefault((IQueueMessageProcessorService x) => x.SupportedMessageTypes.Contains(message.Type));
-							if (queueMessageProcessorService == null)
+							queueProcessorsForMessageType.ForEach(delegate(IQueueMessageProcessorService q)
 							{
-								queueMessageProcessorService = _queueMessageProcessorServices.FirstOrDefault((IQueueMessageProcessorService x) => x.IsDefault);
-							}
-						}
-						if (queueMessageProcessorService != null)
-						{
-							try
-							{
-								if (queueMessageProcessorService.BeforeMessageProcessing != null)
+								object clientData = null;
+								try
 								{
-									queueMessageProcessorService.BeforeMessageProcessing(message, out clientData);
+									q.BeforeMessageProcessing?.Invoke(message, out clientData);
 								}
-							}
-							catch (Exception e3)
-							{
-								LogHelper.Instance.Log("An unhandled exception was raised while running BeforeMessageProcessing in QueueService.StartQueueWorker.", e3);
-							}
-							tempMessage = message;
-							return queueMessageProcessorService.ProcessMessage != null && queueMessageProcessorService.ProcessMessage(message, out response);
+								catch (Exception e3)
+								{
+									LogHelper.Instance.Log("An unhandled exception was raised while running BeforeMessageProcessing in QueueService.StartQueueWorker.", e3);
+								}
+								if (q.ProcessMessage != null)
+								{
+									IDictionary<string, object> response = null;
+									try
+									{
+										result &= q.ProcessMessage(message, out response);
+									}
+									catch (Exception e4)
+									{
+										LogHelper.Instance.Log("An unhandled exception was raised while running ProcessMessage in QueueService.StartQueueWorker.", e4);
+										errored = true;
+									}
+									if (result)
+									{
+										try
+										{
+											q.MessageProcessed?.Invoke(message, response, clientData);
+										}
+										catch (Exception e5)
+										{
+											LogHelper.Instance.Log("An unhandled exception was raised while running MessageProcessed in QueueService.StartQueueWorker.", e5);
+											errored = true;
+										}
+									}
+								}
+							});
 						}
-						lock (_queueMessageProcessorServices)
+						else
 						{
-							string[] array = _queueMessageProcessorServices.Select((IQueueMessageProcessorService x) => x.Name).ToArray();
-							LogHelper.Instance.Log(string.Format("Error in QueueService. Unable to find QueueMessageProcessorService for message type {0}.  QueueMessageProcessorServices registered are: {1}", message?.Type, array?.Join(", ")));
+							lock (_queueMessageProcessorServices)
+							{
+								string[] array = _queueMessageProcessorServices.Select((IQueueMessageProcessorService x) => x.Name).ToArray();
+								LogHelper.Instance.Log(string.Format("Error in QueueService. Unable to find QueueMessageProcessorService for message type {0}.  QueueMessageProcessorServices registered are: {1}", message?.Type, array?.Join(", ")));
+							}
+							errored = true;
 						}
-						return false;
 					}
-					catch
+					catch (Exception e2)
 					{
-						return false;
+						LogHelper.Instance.Log($"Exception in Dequeue predicate processing message type {message?.Type}!", e2);
+						errored = true;
 					}
+					return !errored && result;
 				});
 				if (errorList.ContainsError())
 				{
@@ -262,19 +269,6 @@ public class QueueService : IQueueService, IDisposable
 						return;
 					}
 				}
-				if (queueMessageProcessorService?.MessageProcessed != null && tempMessage != null)
-				{
-					try
-					{
-						queueMessageProcessorService?.MessageProcessed(tempMessage, response, clientData);
-						return;
-					}
-					catch (Exception e)
-					{
-						LogHelper.Instance.Log("An unhandled exception was raised while running MessageProcessed in QueueService.StartQueueWorker.", e);
-						return;
-					}
-				}
 			}
 			finally
 			{
@@ -283,9 +277,9 @@ public class QueueService : IQueueService, IDisposable
 					int randomNumber = GetRandomNumber(QueueReadPeriodMin, QueueReadPeriodMax);
 					m_queueTimer.Change(randomNumber, randomNumber);
 				}
-				catch (Exception e2)
+				catch (Exception e)
 				{
-					LogHelper.Instance.Log("An unhandled exception was raised during m_queueTimer.Change in QueueService.StartQueueWorker.", e2);
+					LogHelper.Instance.Log("An unhandled exception was raised during m_queueTimer.Change in QueueService.StartQueueWorker.", e);
 				}
 				finally
 				{
@@ -579,7 +573,7 @@ public class QueueService : IQueueService, IDisposable
 		}
 		try
 		{
-			var instance = new
+			var data = new
 			{
 				MessageType = "KioskAlert",
 				MessageId = Guid.NewGuid(),
@@ -591,22 +585,25 @@ public class QueueService : IQueueService, IDisposable
 				Type = "ApplicationCrash",
 				Time = DateTime.Now
 			};
-			IQueueMessageProcessorService queueMessageProcessorService = null;
+			IEnumerable<IQueueMessageProcessorService> items;
 			lock (_queueMessageProcessorServices)
 			{
-				queueMessageProcessorService = _queueMessageProcessorServices.FirstOrDefault((IQueueMessageProcessorService x) => x.IsDefault);
+				items = _queueMessageProcessorServices.Where((IQueueMessageProcessorService x) => x.Name.Equals("KSKioskAlertMessageProcessorService") || x.Name.Equals("AWSKioskAlertMessageProcessorService"));
 			}
-			if (queueMessageProcessorService != null && queueMessageProcessorService.ProcessMessage != null)
+			items.ForEach(delegate(IQueueMessageProcessorService q)
 			{
-				queueMessageProcessorService?.ProcessMessage(new QueueMessage
+				if (q != null && q.ProcessMessage != null)
 				{
-					ID = 0,
-					Type = "KioskAlert",
-					CreatedOn = DateTime.Now,
-					Data = Encoding.ASCII.GetBytes(instance.ToJson()),
-					Priority = 200
-				}, out var _);
-			}
+					q?.ProcessMessage(new QueueMessage
+					{
+						ID = 0,
+						Type = "KioskAlert",
+						CreatedOn = DateTime.Now,
+						Data = Encoding.ASCII.GetBytes(data.ToJson()),
+						Priority = byte.MaxValue
+					}, out var _);
+				}
+			});
 		}
 		catch (Exception e)
 		{
@@ -659,5 +656,23 @@ public class QueueService : IQueueService, IDisposable
 			}
 		}
 		return data;
+	}
+
+	private List<IQueueMessageProcessorService> GetQueueProcessorsForMessageType(string type)
+	{
+		List<IQueueMessageProcessorService> list = new List<IQueueMessageProcessorService>();
+		lock (_queueMessageProcessorServices)
+		{
+			list.AddRange(_queueMessageProcessorServices.Where((IQueueMessageProcessorService x) => x.SupportedMessageTypes.Contains(type)));
+			if (!list.Any())
+			{
+				IQueueMessageProcessorService queueMessageProcessorService = _queueMessageProcessorServices.FirstOrDefault((IQueueMessageProcessorService x) => x.IsDefault);
+				if (queueMessageProcessorService != null)
+				{
+					list.Add(queueMessageProcessorService);
+				}
+			}
+		}
+		return list;
 	}
 }

@@ -1,8 +1,10 @@
+using Redbox.Rental.Model.Ads;
+
 namespace Redbox.Rental.Model.Marketing;
 
 public class Ad
 {
-	public MarketingAdLocation Location { get; set; }
+	public AdLocation Location { get; set; }
 
 	public string ImageName { get; set; }
 

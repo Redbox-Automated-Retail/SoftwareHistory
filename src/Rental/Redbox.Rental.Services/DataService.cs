@@ -408,7 +408,7 @@ public class DataService : IDataService
 		return errorList;
 	}
 
-	public ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, out List<ITitleProduct> products)
+	public ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, bool isPurchase, out List<ITitleProduct> products)
 	{
 		WaitForFirstLoad();
 		products = null;
@@ -417,7 +417,7 @@ public class DataService : IDataService
 		{
 			lock (_lock)
 			{
-				products = _kioskProductView.GetProductsForCustomerOffer(titleFamily, titleTypes, includeTitleTypes, include, exclude, includeOlderThan, isAdaView);
+				products = _kioskProductView.GetProductsForCustomerOffer(titleFamily, titleTypes, includeTitleTypes, include, exclude, includeOlderThan, isAdaView, isPurchase);
 			}
 		}
 		catch (Exception e)
@@ -707,6 +707,22 @@ public class DataService : IDataService
 			LogHelper.Instance.LogError("DataService.RefreshView", "Store is not set in the registry.");
 		}
 		return store;
+	}
+
+	public long GetProductGroupId(IKioskProduct kioskProduct)
+	{
+		long result = 0L;
+		ITitleRollupProduct titleRollupProduct = kioskProduct as ITitleRollupProduct;
+		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
+		if (titleRollupProduct != null)
+		{
+			result = ((titleRollupProduct.ProductGroupId > 0) ? titleRollupProduct.ProductGroupId : titleRollupProduct.TitleRollupProductGroupId);
+		}
+		else if (titleProduct != null)
+		{
+			result = titleProduct.TitleRollupProductGroupId;
+		}
+		return result;
 	}
 
 	private ErrorList PerformActionWhileLocked(Action action)

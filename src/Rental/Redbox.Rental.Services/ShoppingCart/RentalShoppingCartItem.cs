@@ -17,6 +17,8 @@ public class RentalShoppingCartItem : IRentalShoppingCartItem
 
 	public long ProductId => _titleProduct.ProductId;
 
+	public long TitleRollupProductGroupId => _titleProduct.TitleRollupProductGroupId;
+
 	public TitleType TitleType => _titleProduct.TitleType;
 
 	public Ratings Rating => (Ratings)(_titleProduct.RatingId ?? 0);
@@ -51,7 +53,7 @@ public class RentalShoppingCartItem : IRentalShoppingCartItem
 
 	public string TivoQueryId { get; set; }
 
-	public List<string> Tags { get; set; }
+	public List<string> PersonalizationTitleTags { get; set; }
 
 	public decimal Price { get; set; }
 

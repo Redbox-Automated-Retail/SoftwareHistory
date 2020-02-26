@@ -21,7 +21,6 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		ApplyTheme();
 		RegisterRoutedCommand("RentOrBuyMoviesCommand", Redbox.Rental.UI.Commands.RentOrBuyMoviesCommand);
 		RegisterRoutedCommand("RentOrBuyGamesCommand", Redbox.Rental.UI.Commands.RentOrBuyGamesCommand);
-		RegisterRoutedCommand("RentTVCommand", Redbox.Rental.UI.Commands.RentTVCommand);
 		RegisterRoutedCommand("BuyMoviesCommand", Redbox.Rental.UI.Commands.BuyMoviesCommand);
 		RegisterRoutedCommand("BuyGamesCommand", Redbox.Rental.UI.Commands.BuyGamesCommand);
 		RegisterRoutedCommand("PickupProductCommand", Redbox.Rental.UI.Commands.PickupProductCommand);
@@ -57,20 +56,6 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 	private void RentOrBuyMoviesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 	{
 		e.CanExecute = all_movies_button.Visibility == Visibility.Visible;
-	}
-
-	private void RentTVCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		RunCommandOnce(delegate
-		{
-			StartViewModel?.ProcessRentTVButtonClick();
-			HandleWPFHit();
-		});
-	}
-
-	private void RentTVCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = tv_button.Visibility == Visibility.Visible;
 	}
 
 	private void ToggleLanguageModeCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)

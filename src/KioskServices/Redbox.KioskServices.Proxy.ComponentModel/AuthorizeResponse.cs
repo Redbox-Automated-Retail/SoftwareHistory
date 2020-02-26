@@ -45,5 +45,7 @@ public enum AuthorizeResponse
 	[ResponseCode(Name = "(A028)")]
 	NewCustomerRentalLimitExceeded,
 	[ResponseCode(Name = "(A029)")]
-	ReservationForOtherCustomer
+	ReservationForOtherCustomer,
+	[ResponseCode(Name = "(TBS004)")]
+	BlockedMobileOrEMVContactless
 }

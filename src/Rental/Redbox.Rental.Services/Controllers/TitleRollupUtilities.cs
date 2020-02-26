@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Windows;
 using Redbox.Core;
@@ -7,6 +6,7 @@ using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -22,8 +22,6 @@ public class TitleRollupUtilities
 		private string _titleRollupOverlayCartText;
 
 		private string _titleRollupOverlayOosText;
-
-		private string _titleRollupOverlayBuyText;
 
 		private string _titleRollupOverlayAddText;
 
@@ -69,18 +67,6 @@ public class TitleRollupUtilities
 			}
 		}
 
-		public string Buy
-		{
-			get
-			{
-				if (_titleRollupOverlayBuyText == null)
-				{
-					_titleRollupOverlayBuyText = Resources.title_rollup_format_selection_buy_text;
-				}
-				return _titleRollupOverlayBuyText;
-			}
-		}
-
 		public string Add
 		{
 			get
@@ -104,10 +90,6 @@ public class TitleRollupUtilities
 				return _currencySymbol;
 			}
 		}
-
-		public string RentalPriceFormat => "{0}\n{1:C}";
-
-		public string RentalPriceFormatNoCurrency => "{0}\n{1}";
 
 		public string OutOfStockText
 		{
@@ -214,15 +196,8 @@ public class TitleRollupUtilities
 		}
 		else if (service?.CurrentRentalShoppingCart?.HasItem(titleProduct.ProductId) ?? false)
 		{
-			if (string.IsNullOrEmpty(buttonTextValues.InCartText))
-			{
-				titleRollupFormatButtonProperties.ButtonText = string.Format(buttonTextValues.InCartFormat, titleTypeText);
-			}
-			else
-			{
-				titleRollupFormatButtonProperties.ButtonText = titleTypeText;
-				titleRollupFormatButtonProperties.ButtonTextLine2 = buttonTextValues.InCartText;
-			}
+			titleRollupFormatButtonProperties.ButtonText = titleTypeText;
+			titleRollupFormatButtonProperties.ButtonTextLine2 = (string.IsNullOrEmpty(buttonTextValues.InCartText) ? buttonTextValues.InCartFormat : buttonTextValues.InCartText);
 			titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
 		}
 		else if (!titleProduct.InStock & showOutOfStock)
@@ -234,55 +209,59 @@ public class TitleRollupUtilities
 			}
 			else
 			{
-				if (string.IsNullOrEmpty(buttonTextValues.OutOfStockText))
-				{
-					titleRollupFormatButtonProperties.ButtonText = string.Format(buttonTextValues.OutOfStockFormat, titleTypeText);
-				}
-				else
-				{
-					titleRollupFormatButtonProperties.ButtonText = titleTypeText;
-					titleRollupFormatButtonProperties.ButtonTextLine2 = buttonTextValues.OutOfStockText;
-				}
+				titleRollupFormatButtonProperties.ButtonText = titleTypeText;
+				titleRollupFormatButtonProperties.ButtonTextLine2 = (string.IsNullOrEmpty(buttonTextValues.OutOfStockText) ? buttonTextValues.OutOfStockFormat : buttonTextValues.OutOfStockText);
 				titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
 			}
 		}
 		else if (isPurchase)
 		{
-			titleRollupFormatButtonProperties.ButtonText = string.Format(buttonTextValues.Buy, titleTypeText, buttonTextValues.CurrencySymbol, $"{purchasePrice:N2}");
+			titleRollupFormatButtonProperties.ButtonText = titleTypeText;
+			if (discountedPriceCalc == null)
+			{
+				titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{purchasePrice:N2}"}";
+			}
+			else
+			{
+				decimal num = discountedPriceCalc(purchasePrice);
+				if (num > 0m)
+				{
+					titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{num:N2}"}";
+				}
+				else
+				{
+					titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{Resources.offer_info_free:N2}"}";
+				}
+			}
 			titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
 			titleRollupFormatButtonProperties.IsEnabled = true;
 		}
 		else if (titleProduct.IsAvailable && (titleProduct.InStock || !showOutOfStock))
 		{
+			titleRollupFormatButtonProperties.ButtonText = string.Format(buttonTextValues.Add, titleTypeText);
 			IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(titleProduct.ProductId);
 			if (pricingRecord != null)
 			{
 				decimal initialNight = pricingRecord.InitialNight;
 				if (discountedPriceCalc == null)
 				{
-					titleRollupFormatButtonProperties.ButtonText = string.Format(CultureInfo.CurrentUICulture, buttonTextValues.RentalPriceFormat, string.Format(buttonTextValues.Add, titleTypeText), initialNight);
+					titleRollupFormatButtonProperties.ButtonTextLine2 = $"{initialNight:C}";
 				}
 				else
 				{
-					decimal num = discountedPriceCalc(initialNight);
-					if (num > 0m)
-					{
-						titleRollupFormatButtonProperties.ButtonText = string.Format(CultureInfo.CurrentUICulture, buttonTextValues.RentalPriceFormat, string.Format(buttonTextValues.Add, titleTypeText), num);
-					}
-					else
-					{
-						titleRollupFormatButtonProperties.ButtonText = string.Format(CultureInfo.CurrentUICulture, buttonTextValues.RentalPriceFormatNoCurrency, string.Format(buttonTextValues.Add, titleTypeText), Resources.offer_info_free);
-					}
+					decimal num2 = discountedPriceCalc(initialNight);
+					titleRollupFormatButtonProperties.ButtonTextLine2 = ((num2 > 0m) ? $"{num2:C}" : Resources.offer_info_free);
 				}
-			}
-			else
-			{
-				titleRollupFormatButtonProperties.ButtonText = string.Format(buttonTextValues.Add, titleTypeText);
 			}
 			titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
 			titleRollupFormatButtonProperties.IsEnabled = true;
 		}
 		if (titleProduct.TitleType == TitleType.DigitalCode && !isPurchase)
+		{
+			titleRollupFormatButtonProperties.Visibility = Visibility.Hidden;
+			titleRollupFormatButtonProperties.IsEnabled = false;
+		}
+		if (titleProduct.TitleFamily == TitleFamily.Games && (Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames))
 		{
 			titleRollupFormatButtonProperties.Visibility = Visibility.Hidden;
 			titleRollupFormatButtonProperties.IsEnabled = false;
@@ -296,16 +275,16 @@ public class TitleRollupUtilities
 		switch (type)
 		{
 		case TitleType.DVD:
-			result = Resources.title_type_name_dvd;
+			result = Resources.title_type_name_dvd.ToUpper();
 			break;
 		case TitleType.Bluray:
-			result = Resources.title_type_name_bluray;
+			result = Resources.title_type_name_bluray.ToUpper();
 			break;
 		case TitleType._4KUHD:
-			result = Resources.title_type_name_4kuhd;
+			result = Resources.title_type_name_4kuhd.ToUpper();
 			break;
 		case TitleType.DigitalCode:
-			result = Resources.title_type_name_digital_code;
+			result = Resources.title_type_name_digital_code.ToUpper();
 			break;
 		}
 		return result;

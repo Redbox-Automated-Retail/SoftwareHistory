@@ -1,3 +1,5 @@
+using System;
+
 namespace Redbox.KioskEngine.ComponentModel.TrackData;
 
-public delegate void CardReadCompleteHandler(ITrackData trackData, bool chipCardRemovedFromReader);
+public delegate void CardReadCompleteHandler(ITrackData trackData, bool chipCardRemovedFromReader, Guid? requestId);

@@ -20,7 +20,7 @@ public class KioskEvent
 
 	public string Data { get; set; }
 
-	private KioskEvent()
+	public KioskEvent()
 	{
 		Id = Guid.NewGuid();
 		EventTime = DateTime.UtcNow;

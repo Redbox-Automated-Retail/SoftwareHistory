@@ -103,10 +103,6 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 		Flag.Width = ImageBorder.ActualWidth * 0.9;
 		double num = (0.0 - Flag.Height) / 2.0;
 		Flag.Margin = new Thickness(num * 2.0 / 3.0, num, 0.0, 0.0);
-		AddButton.Width = ImageBorder.ActualWidth * 0.8328;
-		AddButton.Height = ImageBorder.ActualWidth * 0.2574;
-		AddButton.CornerRadius = AddButton.Height / 2.0;
-		AddButton.Margin = new Thickness(0.0, 0.0, ImageBorder.ActualWidth * -0.0945, AddButton.Height / -2.0);
 		AddButton.IsEnabled = true;
 	}
 }

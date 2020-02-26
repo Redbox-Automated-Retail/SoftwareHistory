@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Media;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
@@ -344,9 +345,9 @@ public partial class ConfigureKioskViewUserControl : UserControl, IComponentConn
 		Spinner.IsAnimated = true;
 		try
 		{
-			string kaseyainiPath = ProcessFunctions.GetKaseyainiPath();
+			string kaseyaIniDPath = KaseyaMethods.GetKaseyaIniDPath();
 			string newvalue = "Redbox-" + _selectedStoreId + _kaseyaMarketName;
-			ProcessFunctions.ReplaceInFile(kaseyainiPath, "User_Name\\s+(?<KaseyaId>[\\w|\\-|\\.]+)", "KaseyaId", newvalue);
+			ProcessFunctions.ReplaceInFile(kaseyaIniDPath, "User_Name\\s+(?<KaseyaId>[\\w|\\-|\\.]+)", "KaseyaId", newvalue);
 			ProcessFunctions.SetMachineSettingValue("Store", "ID", _selectedStoreId.ToString());
 			LogHelper.Instance.Log(string.Format("Configuring Kiosk, {0}", "prior_kiosk_id: " + ProcessFunctions.kioskId));
 			LogHelper.Instance.Log(string.Format("Configuring Kiosk, {0}", "new_kiosk_id: " + _selectedStoreId));

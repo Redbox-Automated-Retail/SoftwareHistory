@@ -44,23 +44,23 @@
         <localControls:BrowseUserControl x:Name="BrowseProductControl" Margin="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="210" Width="1024" ShowPaddles="False" BorderShadowVisibility="Collapsed" DataContext="{Binding Path=BrowseProductControlModel}" />
       </Grid>
       <Grid Name="ViewFooter" Background="#f5f3f3">
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="40,45" Visibility="{Binding Path=PayButtonVisibility}">
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="40,45" Visibility="{Binding Path=PayButtonVisibility}">
           <TextBlock Name="ServiceFeeMessage" Width="195" TextWrapping="Wrap" TextAlignment="Center" Style="{StaticResource font_montserrat_bold_12}" Margin="0,10" Foreground="#4a4a4a" Text="{Binding Path=ServiceFeeMessage, FallbackValue=All checkouts may be subject to a service fee of 10¢}" />
-          <Redbox:RoundedButton Name="TermsAndPrivacyButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Height="37" Width="210" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.TermsAndPrivacyCommand}" Margin="0,6,0,0">
-            <TextBlock Name="TermsAndPrivacyButtonText" Style="{StaticResource font_museo_slab_900_16}" Text="{Binding Path=TermsAndPrivacyButtonText, FallbackValue=Terms &amp; Privacy}" />
-          </Redbox:RoundedButton>
         </StackPanel>
         <Grid VerticalAlignment="Top" HorizontalAlignment="Left" Width="250" Margin="325,5,0,0" Visibility="{Binding Path=PayButtonVisibility}">
           <localControls:PricingUserControl DataContext="{Binding Path=PricingModel}" />
         </Grid>
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="40,30" MinWidth="300">
-          <TextBlock Name="ChargedOnceText" TextAlignment="Center" Style="{StaticResource font_montserrat_bold_13}" Foreground="{StaticResource LightBlackBrush}" Margin="10,5" Text="{Binding ChargedOnceText, FallbackValue=Your card will only be charged once.}" Visibility="{Binding Path=PayButtonVisibility}" />
-          <TextBlock Name="AgreeToTermsText" TextAlignment="Center" Style="{StaticResource font_montserrat_bold_13}" Foreground="{StaticResource LightBlackBrush}" Margin="10,5" Text="{Binding AgreeToTermsText, FallbackValue=By pressing Pay Now you agree to the Terms}" Visibility="{Binding Path=PayButtonVisibility}" />
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="40,20,34,16" MinWidth="306">
+          <TextBlock Name="ChargedOnceText" TextAlignment="Center" Style="{StaticResource font_montserrat_medium_12}" Foreground="{StaticResource LightBlackBrush}" Margin="10,5,0,0" Text="{Binding ChargedOnceText, FallbackValue=Your card will only be charged once.}" Visibility="{Binding Path=PayButtonVisibility}" />
+          <TextBlock Name="AgreeToTermsText" TextAlignment="Center" Style="{StaticResource font_montserrat_medium_12}" Foreground="{StaticResource LightBlackBrush}" Margin="10,0,0,5" Text="{Binding AgreeToTermsText, FallbackValue=By pressing Pay Now you agree to the Terms}" Visibility="{Binding Path=PayButtonVisibility}" />
           <Redbox:RoundedButton Name="PickupButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Height="59" Width="200" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.PickupCommand}" Visibility="{Binding Path=PickupButtonVisibility}">
             <TextBlock Name="PickupButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PickupButtonText, FallbackValue=Pick Up}" />
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="PayButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Height="59" Width="300" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.PayCommand}" Visibility="{Binding Path=PayButtonVisibility}">
+          <Redbox:RoundedButton Name="PayButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Height="59" Width="297" UsedDefaultCornerRadius="True" Margin="0,6,0,6" Command="{x:Static localbase:Commands.PayCommand}" Visibility="{Binding Path=PayButtonVisibility}">
             <TextBlock Name="PayButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PayButtonText, FallbackValue=Pay Now}" />
+          </Redbox:RoundedButton>
+          <Redbox:RoundedButton Name="TermsAndPrivacyButton" Style="{StaticResource TransparentButton}" Height="37" Width="270" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.TermsAndPrivacyCommand}" Margin="0,6,0,0" HorizontalAlignment="Center">
+            <TextBlock Name="TermsAndPrivacyButtonText" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_underline_16}" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=TermsAndPrivacyButtonText, FallbackValue=Terms &amp; Privacy}" />
           </Redbox:RoundedButton>
         </StackPanel>
       </Grid>

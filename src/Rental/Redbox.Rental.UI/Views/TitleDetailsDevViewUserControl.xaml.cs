@@ -15,10 +15,6 @@ public partial class TitleDetailsDevViewUserControl : RentalUserControl, IWPFAct
 {
 	private TitleDetailDevModel Model => base.DataContext as TitleDetailDevModel;
 
-	public new IActor Actor { get; set; }
-
-	public new event WPFHitHandler OnWPFHit;
-
 	public TitleDetailsDevViewUserControl()
 	{
 		InitializeComponent();

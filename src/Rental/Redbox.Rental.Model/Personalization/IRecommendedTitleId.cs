@@ -8,7 +8,7 @@ public interface IRecommendedTitleId
 
 	RecommendedTitlesIdType IdType { get; set; }
 
-	List<string> Tags { get; set; }
+	List<string> PersonalizationTitleTags { get; set; }
 
 	bool IsWishList { get; }
 }

@@ -27,8 +27,6 @@ public class PricingService : IPricingService
 
 	private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
-	private int _lockTimeout = 3000;
-
 	private Timer _changeTimer;
 
 	private int _inRefresh;

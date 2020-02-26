@@ -26,45 +26,26 @@ public class PromoListLogic : BaseLogic
 	public void AddPageNumberPressedAnalytics(int pageNumber)
 	{
 		BaseLogic.ProcessWPFHit();
-		BaseLogic.AnalyticsAddViewEvent("pageChange", $"promos-page-{pageNumber.ToString()}");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicPageChangeNumber");
-		AddAnalyticsPromosShown();
 	}
 
 	public void AddPreviousPagePressedAnalytics()
 	{
 		BaseLogic.ProcessWPFHit();
-		BaseLogic.AnalyticsAddViewEvent("pageChange", "promos-page-back");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicPageBack");
-		AddAnalyticsPromosShown();
 	}
 
 	public void AddNextPagePressedAnalytics()
 	{
 		BaseLogic.ProcessWPFHit();
-		BaseLogic.AnalyticsAddViewEvent("pageChange", "promos-page-next");
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicPageNext");
-		AddAnalyticsPromosShown();
 	}
 
 	public void AddRemovePromoButtonPressedAnalytics(StoredPromoCodeModel promoCodeModel)
 	{
 		BaseLogic.ProcessWPFHit();
-		if (promoCodeModel.IsAdded)
-		{
-			BaseLogic.AnalyticsAddViewEvent("buttonPress", "cancelredeem," + promoCodeModel.PromoCode);
-			BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicCancelRedeem").AddData(new NameValueData("PromoCode", promoCodeModel.PromoCode));
-		}
-		else
-		{
-			BaseLogic.AnalyticsAddViewEvent("buttonPress", "redeem," + promoCodeModel.PromoCode);
-			BaseLogic.AnalyticsService?.AddButtonPressEvent("PromoListLogicRedeem").AddData(new NameValueData("PromoCode", promoCodeModel.PromoCode));
-		}
-	}
-
-	public void AddAnalyticsPromosShown()
-	{
-		BaseLogic.AnalyticsAddViewEvent("productsShown", (_model?.CurrentPagePromos?.Count ?? 0).ToString());
+		string name = (promoCodeModel.IsAdded ? "PromoListLogicCancelRedeem" : "PromoListLogicRedeem");
+		BaseLogic.AnalyticsService?.AddButtonPressEvent(name).AddData(new NameValueData("PromoCode", promoCodeModel.PromoCode));
 	}
 
 	public static List<IPerksOfferListItem> CreateOfferListItemModels(IPromoListModel model, IPersonalizationSession personalizationSession, string activePromoCode, char maskCharacter, bool includeOffers)

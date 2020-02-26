@@ -71,6 +71,10 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 
 	private Label label10;
 
+	private Label lblTransactionEntities;
+
+	private TextBox txtTransactionEntities;
+
 	public MerchantServicesPreferencePage()
 	{
 		InitializeComponent();
@@ -263,6 +267,14 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		MerchantServicesProxy.Instance.InvalidReservations = (string.IsNullOrWhiteSpace(m_InvalidReservations.Text) ? string.Empty : m_InvalidReservations.Text);
 	}
 
+	private void TransactionEntitiesTextBox_Leave(object sender, EventArgs e)
+	{
+		if (m_isLoaded)
+		{
+			MerchantServicesProxy.Instance.TransactionEntities = txtTransactionEntities.Text;
+		}
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing && components != null)
@@ -303,6 +315,8 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_CancelledReservations = new System.Windows.Forms.TextBox();
 		this.label10 = new System.Windows.Forms.Label();
 		this.m_InvalidReservations = new System.Windows.Forms.TextBox();
+		this.txtTransactionEntities = new System.Windows.Forms.TextBox();
+		this.lblTransactionEntities = new System.Windows.Forms.Label();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		base.SuspendLayout();
 		this.m_enableOfflineBadCardListCheckBox.AutoSize = true;
@@ -478,8 +492,23 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 		this.m_InvalidReservations.Size = new System.Drawing.Size(317, 20);
 		this.m_InvalidReservations.TabIndex = 74;
 		this.m_InvalidReservations.Leave += new System.EventHandler(m_InvalidReservations_Leave);
+		this.txtTransactionEntities.Location = new System.Drawing.Point(169, 429);
+		this.txtTransactionEntities.Name = "txtTransactionEntities";
+		this.txtTransactionEntities.Size = new System.Drawing.Size(317, 20);
+		this.txtTransactionEntities.TabIndex = 75;
+		string text = "//RC//".Replace('/', '"');
+		this.txtTransactionEntities.Text = "[{\"DiscId\":16336447,\"Name\":\"TivoQueryId\",\"Value\":\"132ghlp4rasdf23gqrfjasdfio\",\"TitleId\":6686}, {\"DiscId\":16336447,\"Name\":\"OfferCode\",\"Value\":" + text + ",\"TitleId\":6686}]";
+		this.txtTransactionEntities.Leave += new System.EventHandler(TransactionEntitiesTextBox_Leave);
+		this.lblTransactionEntities.AutoSize = true;
+		this.lblTransactionEntities.Location = new System.Drawing.Point(31, 432);
+		this.lblTransactionEntities.Name = "lblTransactionEntities";
+		this.lblTransactionEntities.Size = new System.Drawing.Size(97, 13);
+		this.lblTransactionEntities.TabIndex = 76;
+		this.lblTransactionEntities.Text = "TransactionEntities";
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.lblTransactionEntities);
+		base.Controls.Add(this.txtTransactionEntities);
 		base.Controls.Add(this.m_InvalidReservations);
 		base.Controls.Add(this.label10);
 		base.Controls.Add(this.label9);

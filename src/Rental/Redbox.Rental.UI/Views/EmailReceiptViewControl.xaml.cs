@@ -24,7 +24,7 @@ public partial class EmailReceiptViewControl : ViewUserControl, IComponentConnec
 	protected override void DataContextHasChanged()
 	{
 		bool flag = GetModel<SimpleModel>()?.BannerImage != null;
-		AdBannerGrid.Visibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
+		AdImage.Visibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
 	}
 
 	protected override void InitSpeechPart(ISpeechPart speechPart)

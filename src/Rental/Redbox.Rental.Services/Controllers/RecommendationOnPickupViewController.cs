@@ -46,6 +46,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		{
 			OrchestrationService.StopIdleTimer("idle_timer");
 			RecommendationOnPickupViewModel recommendationOnPickupViewModel = new RecommendationOnPickupViewModel();
+			OrchestrationService.SetCurrentUICulture();
 			ConfigureShoppingCart(recommendationOnPickupViewModel, clearCart: false);
 			if (string.IsNullOrEmpty(_reservationValues?.ReferenceNumber))
 			{
@@ -83,7 +84,6 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 					PickupOnlyReservedTitlesFromTimeoutDialog();
 				}, delegate
 				{
-					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "keep_browsing_button");
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupKeepBrowsing");
 					OrchestrationService.ViewGoBackSafe("recommendation on pickup prompt - keep browsing", popOnly: false);
 				});
@@ -323,7 +323,6 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 				if (!recommendationOnPickupViewModel.HasPickupOrPayActionExecuted)
 				{
 					recommendationOnPickupViewModel.HasPickupOrPayActionExecuted = true;
-					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "pickup_button");
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupPickup");
 					AddSecondaryMdvDiscsBackToShoppingCart(RentalShoppingCart, recommendationOnPickupViewModel);
 					if (_reservationValues.AuthorizeAtPickup)
@@ -348,7 +347,6 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 				if (!recommendationOnPickupViewModel.HasPickupOrPayActionExecuted)
 				{
 					recommendationOnPickupViewModel.HasPickupOrPayActionExecuted = true;
-					OrchestrationService.AnalyticsAddViewEvent("buttonPress", "pay_button");
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupPay");
 					AddSecondaryMdvDiscsBackToShoppingCart(RentalShoppingCart, recommendationOnPickupViewModel);
 					if (_reservationValues.AuthorizeAtPickup)
@@ -487,7 +485,6 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 			IRentalShoppingCartItem rentalShoppingCartItem2 = RentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem x) => x.ProductId == rentalShoppingCartItem.ProductId);
 			if (rentalShoppingCartItem2 != null)
 			{
-				BaseViewController.SessionAnalyticsService?.AddViewEvent("buttonPress", "shopping-cart-remove-item");
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupShoppingCartRemoveItem");
 				RentalShoppingCart.RemoveItem(rentalShoppingCartItem2, userRemoved: true);
 			}
@@ -552,7 +549,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		}
 		OrchestrationService.SetCurrentUICulture();
 		recommendationOnPickupViewModel.AddMoreText = Resources.add_more;
-		recommendationOnPickupViewModel.TermsAndPrivacyButtonText = Resources.terms_privacy;
+		recommendationOnPickupViewModel.TermsAndPrivacyButtonText = Resources.terms_link_text;
 		recommendationOnPickupViewModel.ChargedOnceText = Resources.charged_once;
 		recommendationOnPickupViewModel.AgreeToTermsText = Resources.by_pressing_pay;
 		int num = RentalShoppingCart?.Items.Count((IRentalShoppingCartItem x) => x.SourceType != ItemSourceType.Reservation) ?? 0;
