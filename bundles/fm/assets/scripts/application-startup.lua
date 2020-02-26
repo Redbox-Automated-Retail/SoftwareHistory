@@ -146,46 +146,13 @@ local current_string = string.format( "%4d%02d%02d", current.year, current.month
 
 kernel.refresh_hardware_state()
 
-if max_decks ~= nil 
-and max_slots ~= nil 
-and last_hardware_check == current_string 
-then
-	get_excluded_slots()
-	start_the_application()
-else
-	HardwareManager:get_machine_info(
-		function( results )
-			qlm_deck = nil
-			max_decks = nil
-			max_slots = nil
-			for _, v in ipairs( results ) do
-				if v.code == "DeckInfo" then
-					max_slots = v.slot
-					if max_decks == nil then
-						max_decks = v.deck
-					else
-						if v.deck > max_decks then
-							max_decks = v.deck
-						end
-					end
-				elseif v.code == "QlmInfo" then
-					qlm_deck = v.deck
-				end
-			end
-			if qlm_deck ~= nil then
-				max_decks = qlm_deck - 1
-			end
-
-			-- Save these to the registry, they are not likely to ever change again on this machine
-			kernel.setmachinevalue( "Store", "QlmDeck", tostring( qlm_deck ))
-			kernel.setmachinevalue( "Store", "MaxDecks", tostring( max_decks ))
-			kernel.setmachinevalue( "Store", "MaxSlots", tostring( max_slots ))
-			
-			kernel.setmachinevalue( "Store", "LastHardwareCheck", current_string )
-
-			get_excluded_slots()
-			start_the_application()
-		end
-	)
+if max_decks == nil or max_slots == nil or last_hardware_check ~= current_string then
+	kernel.log("application-startup: Updating hardware check values...")
+	local result = kernel.hardwaregetmachineinfo()
+	qlm_deck = result["QlmDeck"]
+	max_decks = result["MaxDecks"]
+	max_slots = result["MaxSlots"]
+	kernel.setmachinevalue( "Store", "LastHardwareCheck", current_string )
 end
-
+get_excluded_slots()
+start_the_application()

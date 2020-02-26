@@ -81,9 +81,7 @@ swipe_view_next_func = function()
 
 		local continue_func = function()
 			view_show_safe( "vend_view" )
-			if quick_return_is_running == false then
-				ReservationManager.vend_manager:show_movie_or_coming_soon()
-			end
+			ReservationManager.vend_manager:show_movie_or_coming_soon()
 
 			kernel.log( "pickup_reserved_product: Vending reserved items" )
 			ReservationManager:vend()
@@ -99,18 +97,14 @@ swipe_view_next_func = function()
 	        kernel.log( "recommendation_on_pickup_view:vend_only_reserved_titles" )
 	        kernel.rental_shopping_cart_remove_non_reserved_products(ShoppingCart.session_id)
 	        view_show_safe( "vend_view" )
-	        if quick_return_is_running == false then
-		        ShoppingCart.vend_manager:show_movie_or_coming_soon()
-	        end
+	        ShoppingCart.vend_manager:show_movie_or_coming_soon()
 	        ShoppingCart:vend_reservation_cart( email_address, reference_number, false )
         end
 
         local vend_all_titles = function(email_address, reference_number)
 	        kernel.log( "recommendation_on_pickup_view:vend_all_titles" )
 	        view_show_safe( "vend_view" )
-	        if quick_return_is_running == false then
-		        ShoppingCart.vend_manager:show_movie_or_coming_soon()
-	        end
+	        ShoppingCart.vend_manager:show_movie_or_coming_soon()
 	        ShoppingCart:vend_reservation_cart( email_address, reference_number, true )
         end
 

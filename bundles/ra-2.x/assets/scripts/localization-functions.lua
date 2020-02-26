@@ -8,9 +8,6 @@ function localization_reload_resources()
     kernel.log("localization reload resources")
 	strings = kernel.getdictionary( "strings" )
 	LoadStringsMacros()
-	if SetESRBRatings ~= nil then
-		SetESRBRatings()
-	end
 end
 
 

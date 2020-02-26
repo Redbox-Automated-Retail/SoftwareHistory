@@ -56,13 +56,10 @@ local function display_rebalances()
 		local current_index = i - start_index + 1
 		if i <= #titles then
 			local product = _master_product_catalaog[titles[i].TitleId]
-				if titles[i].Quantity ~= nil and titles[i].Quantity > 0 then
-					kernel.setactortext( "rebalance_quantity_text_line" .. tostring( current_index ), 
-										tostring( product ~= nil and titles[i].Quantity or "0" ) )
-					kernel.setactortext( "rebalance_title_text_line" .. tostring( current_index ), 
-										tostring( product ~= nil and product.long_name 
-											or "**Title Information Not Found**"  ) )
-				end
+			if titles[i].Quantity ~= nil and titles[i].Quantity > 0 then
+				kernel.setactortext( "rebalance_quantity_text_line" .. tostring( current_index ), tostring( product ~= nil and titles[i].Quantity or "0" ) )
+				kernel.setactortext( "rebalance_title_text_line" .. tostring( current_index ), tostring( product ~= nil and product.long_name .. tostring( ( ProductTypes[product.product_type_id] ~= nil and ProductTypes[product.product_type_id].product_family_id == 2 ) and " (" .. ProductTypes[product.product_type_id].product_type_name .. ")" or "" ) or "**Title Information Not Found**" ) )
+			end
 		else 
 			--clear text
 			kernel.setactortext( "rebalance_quantity_text_line" .. tostring( current_index ), "" )

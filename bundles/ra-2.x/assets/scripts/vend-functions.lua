@@ -11,7 +11,6 @@ function newvendmanager()
 	t.aborted_jobs = {}
 	t.job_id = nil
     t.vend_job_completed = false
-	t.vsm_shown_counter = 0
 
     t.show_wait_screen = false
     t.arcus_reset = false
@@ -22,6 +21,13 @@ function newvendmanager()
 	kernel.register_is_vend_job_completed_callback( 
 		function() 
 			return t.vend_job_completed
+		end
+	)
+
+	kernel.register_update_vsm_impression_callback(
+		function(vsm_program_name)
+			kernel.log("Calling UpdateVSMImpression with program name: " .. tostring(vsm_program_name))
+			UpdateVSMImpression( vsm_program_name )
 		end
 	)
 
@@ -46,14 +52,12 @@ function newvendmanager()
             -- would close the current session and start a new one.  If so we don't want to show VSM, coming  soon or vend animiation
             kernel.callbackflush()
             if self.vend_job_completed == false then
-                local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
-                local show_ad = ad ~= nil and ad.visible == true
-			    if (show_ad == true or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil )
+			    if (kernel.is_vsm_ad_available() == true or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil )
                     and t.show_wait_screen == false
                 then
                     if kernel.peekview() ~= "vsm_view"  then
                         kernel.log( "Show VSM" )
-                        t.show_vsm_view(ad)
+                        t.show_vsm_view()
                     end
                 elseif coming_soon_product_list ~= nil and t.show_wait_screen == false then
                     view_show_safe( "coming_soon_view" )
@@ -75,10 +79,6 @@ function newvendmanager()
                 kernel.log( "Show Animation RentalsOnTheirWay (PickupGraphicDisplay)" )
                 kernel.vend_view_show_animation("RentalsOnTheirWay")
 			end
-		end
-		if quick_return_is_running == true then
-			t.message_view_manager:hide()
-			t.show_movie_or_coming_soon( barcodes_to_vend )
 		end
 
 		HardwareManager:prepos_vend_continue( self.job_id )
@@ -281,20 +281,6 @@ function newvendmanager()
 			end,
 			function()
 				--OnBusy
-
-				-- MINGLE #2625 MIGHT HAVE TO NUKE THIS ENTIRE BLOCK, NOT SURE YET
-				if quick_return_is_running == true then
-					local hardwarejobs =
-						HardwareManager:get_hardware_jobs_by_program(
-							{"quick-return" },
-							{"Pending", "Stopped", "Completed", "Suspended", "Errored", "Garbage" } )
-					if #hardwarejobs > 0 then
-						t.message_view_manager:show()
-						t.message_view_manager:hide_title()
-						t.message_view_manager:set_message( strings.vend_quick_return_wait )
-						t.message_view_manager:hide_first_button()
-					end
-				end
 			end )
 		if result.success == nil or result.success == false then
 			kernel.log( "WARNING: Call to VendManager:prepos_vend failed." )
@@ -305,29 +291,8 @@ function newvendmanager()
 		self.vending = true
 	end
 
-    t.show_vsm_view = function(ad)
-        local show_ad = ad ~= nil and ad.visible == true
+    t.show_vsm_view = function()
 		view_show_safe( "vsm_view" )
-         if show_ad == true then
-            kernel.marketing_ad_get_screen_ad( "VSM", true )
-            kernel.setactorimage( "vsm_image_placeholder", ad.image_name )
-         else
-		    kernel.setactorimage( "vsm_image_placeholder", "vsm_image" )
-         end
-    end
-
-    t.setup_vsm_view = function()
-		local vsm_program_name = kernel.getresourceproperty( "vsm_image", "program_name" )
-        local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
-        local show_ad = ad ~= nil and ad.visible == true
-		if show_ad == true or vsm_program_name ~= nil then
-            t.show_vsm_view(ad)
-            if show_ad == false then
-			    UpdateVSMImpression( vsm_program_name )
-			    kernel.analyticsaddattribute( "vendingMovie", "type", "Marketing", ShoppingCart.session_id )
-			    kernel.analyticsaddattribute( "vendingMovie", "programName", vsm_program_name, ShoppingCart.session_id )
-            end
-        end
     end
 
 	t.show_animation = function()
@@ -357,12 +322,11 @@ function newvendmanager()
 
 			kernel.analyticsaddnode( "session", "vendingMovie", ShoppingCart.session_id )
 
-            local ad = kernel.marketing_ad_get_screen_ad( "VSM", false )
-			if ( ad ~= nil and ad.visible == true ) 
+			if ( kernel.is_vsm_ad_available() == true) 
                 or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil
 			    or ( kernel.current_rental_shopping_cart_item_count == 0 and (barcodes_to_vend == nil or #barcodes_to_vend == 0 ))
 			then
-                t.setup_vsm_view()
+                t.show_vsm_view()
 			else
 				kernel.timercreate(
 					"coming-soon-timer",

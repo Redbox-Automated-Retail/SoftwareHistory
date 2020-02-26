@@ -25,7 +25,6 @@ function newstoremanager()
 			"ID",
 			"N/A" )
 		self:update_store()
-		self.PricingManager = newpricingmanager()
 	end
 
 	t.get_number = function( self )
@@ -77,13 +76,6 @@ function newstoremanager()
 		end
 	end
 
-	t.get_purchase_price = function( self )
-		if self.store == nil then
-			return 0
-		end
-		return self.PricingManager:get_adjusted_price( self.store.purchase_price, "purchase" )
-	end
-
 	t.is_sell_thru_enabled = function( self )
         return kernel.get_can_sell_used()
 	end
@@ -125,7 +117,7 @@ function newstoremanager()
 	
 	t.reload_pricing_data = function( self, ui_version )
 		-- Product Pricing
-		self.PricingManager:reload()
+		kernel.reload_pricing_service()
 		-- In cart promotion
 		kernel.rental_promotion_load_incart_data()
 		-- Email Opt In Campaign

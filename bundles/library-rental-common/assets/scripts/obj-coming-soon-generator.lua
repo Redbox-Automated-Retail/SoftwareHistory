@@ -286,18 +286,8 @@ function newcomingsoongenerator()
 		local add_count = 0
 		for _, product in _MasterProductCatalog:pairs() do
 			if product.coming_soon_days ~= nil
-			and product.coming_soon_days > 0 then
-				if VerboseLogging == true then
-					kernel.log( "> PID:" .. tostring( product.product_id ) ..
-						", CSDays:" .. tostring( product.coming_soon_days ) ..
-						", ReleaseDate:" .. StoreManager.PricingManager:get_early_release_date( product ) ..
-						", is_in_date_range2:" .. tostring( is_in_date_range2( StoreManager.PricingManager:get_early_release_date( product ), product.coming_soon_days )))
-				end
-			end
-		
-			if product.coming_soon_days ~= nil
 			and product.coming_soon_days > 0
-			and is_in_date_range2( StoreManager.PricingManager:get_early_release_date( product ), product.coming_soon_days ) 
+			and is_in_date_range2( product.merchandise_date, product.coming_soon_days ) 
 			then
 				if _ProductCatalog[ product.product_id ] == nil then
 					add_title_without_barcodes( product.product_id )

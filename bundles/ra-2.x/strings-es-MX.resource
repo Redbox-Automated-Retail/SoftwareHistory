@@ -256,16 +256,16 @@
       <column name="recommendations_new_movies">¡NUEVO! ¡PELICULAS&#10;EN VENTA!</column>
       <column name="recommendations_more_new_movies">¡MÁS PELÍCULAS&#10;DE JUSTO</column>
 
-      <column name="flag_out_of_stock">AGOTADO</column>
-      <column name="flag_coming_soon">PRÓXIMAMENTE</column>
-      <column name="flag_new">NUEVO</column>
-      <column name="flag_last_chance">ÚLTIMA CHANCE</column>
-      <column name="flag_back_again">REVIENE</column>
-      <column name="flag_price_test">{0} PRIMICIAS</column>
-      <column name="flag_award_winner">GANADOR</column>
-      <column name="flag_classics">CLÁSICO</column>
-	    <column name="flag_hot_deal">REBAJA</column>
-      <column name="flag_award_nominee">NOMINADO</column>
+      <column name="flag_out_of_stock">Agotado</column>
+      <column name="flag_coming_soon">Próximamente</column>
+      <column name="flag_new">Nuevo</column>
+      <column name="flag_last_chance">Última Chance</column>
+      <column name="flag_back_again">Reviene</column>
+      <column name="flag_price_test">{0} Primicias</column>
+      <column name="flag_award_winner">Ganador</column>
+      <column name="flag_classics">Clásico</column>
+	    <column name="flag_hot_deal">Rebaja</column>
+      <column name="flag_award_nominee">Nominado</column>
 
       <column name="products_used">Disco Previavisto En Caja</column>
       <column name="products_new">Nuevos Productos</column>

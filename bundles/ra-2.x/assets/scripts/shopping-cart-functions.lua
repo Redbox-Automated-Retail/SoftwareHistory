@@ -69,9 +69,7 @@ function newshoppingcart()
 			)
 		end
 		
-		local error_message_view_manager = newerrormessageviewmanager()
-		error_message_view_manager:show()
-		error_message_view_manager:set_message( strings.authorization_message )
+		kernel.show_authorizing_message()
 		kernel.analyticsaddnode( "authorizations", "resvAuthorize", self.session_id )
 
         local customer_profile_number = kernel.get_session_value("PersonalizationSession.CustomerProfileNumber")
@@ -105,9 +103,7 @@ function newshoppingcart()
 	end
 	
 	t.validatepickup = function( self, reference_numbers, on_complete )
-		local error_message_view_manager = newerrormessageviewmanager()
-		error_message_view_manager:show()
-		error_message_view_manager:set_message( strings.authorization_message )
+		kernel.show_authorizing_message()
 
 		kernel.log("Pickup Validation for Session ID: " .. self.session_id )
 		--[[Vaibhav - Uncomment below line if there is no change at the server side to exclude
@@ -164,10 +160,7 @@ function newshoppingcart()
 			kernel.sessionsetpostalcode2( self.session_id, kernel.get_session_value("UserInfo.PostalCode") )
 		end
 
-		local error_message_view_manager = newerrormessageviewmanager()
-		error_message_view_manager:show()
-		error_message_view_manager:set_message( strings.authorization_message )
-
+		kernel.show_authorizing_message()
 		kernel.log( "Pickup Authorize for Session ID: " .. self.session_id )
 		-- updated cart with barcodes and status
 		self:get_barcodes_to_vend()

@@ -1,17 +1,17 @@
-# Primus (2019-11-05)
+# Sublime (2020-02-26)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2019-11-05
-- Store labels: kop-rental-bundles-Primus
+- Date (first download in the snapshots): 2020-02-26
+- Store labels: kop-rental-bundles-Sublime
 - Package revisions:
-  - `kop-rental-bundles` revision 116 (`02499EB3D5CE8BAFDF04A216710D1D77DFAA7BDF`)
+  - `kop-rental-bundles` revision 125 (`790ACCE25288957CD60C3EAB1B0ABA18778DB2E8`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `A1CF9C95CB9CE0906371B8B059F8CFA245C9C09C` | exact |
-| `fm.bundle` |  |  | `7C8788E867CD6BA98333D59799DD8B5A1FB0EBF2` | exact |
-| `library-rental-common.bundle` |  |  | `4D77402E3F74C8A247FBF5FE5918566634065DBC` | exact |
-| `ra-2.x.bundle` |  |  | `31CB3522D77A5989580E81D4A085381919ED6CE0` | exact |
+| `cp.bundle` |  |  | `658EDB1168EFBB2188A8CABBA24854FA8C1981AC` | exact |
+| `fm.bundle` |  |  | `49381BBF7A7AB35F3A148D7FDE914058F4DA757B` | exact |
+| `library-rental-common.bundle` |  |  | `01E94A3B2C8098AACAFF3572EE0D4C875E3C5D24` | exact |
+| `ra-2.x.bundle` |  |  | `64135C0A4B978D49763FE9D281F073E1985AC23C` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

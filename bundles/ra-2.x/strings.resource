@@ -256,16 +256,16 @@
       <column name="recommendations_new_movies">NEW! MOVIES&#10;FOR SALE!</column>
       <column name="recommendations_more_new_movies">MORE MOVIES&#10;FOR JUST</column>
 
-      <column name="flag_out_of_stock">OUT OF STOCK</column>
-      <column name="flag_coming_soon">COMING SOON</column>
-      <column name="flag_new">NEW</column>
-      <column name="flag_last_chance">LAST CHANCE</column>
-      <column name="flag_back_again">BACK AGAIN</column>
-      <column name="flag_price_test">{0} FIRSTS</column>
-      <column name="flag_award_winner">AWARD WINNER</column>
-      <column name="flag_classics">CLASSICS</column>
-      <column name="flag_hot_deal">HOT DEAL</column>
-      <column name="flag_award_nominee">AWARD NOMINEE</column>
+      <column name="flag_out_of_stock">Out Of Stock</column>
+      <column name="flag_coming_soon">Coming Soon</column>
+      <column name="flag_new">New</column>
+      <column name="flag_last_chance">Last Chance</column>
+      <column name="flag_back_again">Back Again</column>
+      <column name="flag_price_test">{0} Firsts</column>
+      <column name="flag_award_winner">Award Winner</column>
+      <column name="flag_classics">Classics</column>
+      <column name="flag_hot_deal">Hot Deal</column>
+      <column name="flag_award_nominee">Award Nominee</column>
 
       <column name="products_used">Used Disc in Your Cart</column>
       <column name="products_new">New Products</column>

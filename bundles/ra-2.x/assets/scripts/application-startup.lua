@@ -10,6 +10,7 @@
 -- Do NOT allow the app to run if OutOfOrder mode is set
 --
 --************************************************
+kernel.log( "Starting application-startup for rental application." )
 
 if kernel.getmachinevalueordefault( "Store", "OutOfOrder", "false" ) == "true" then
 	kernel.applyunsafeshutdown()
@@ -50,19 +51,7 @@ local function initialize_scheduled_tasks()
 
 	start_sync_timers()
 
-	if quick_return_is_running == true then
-		QuickReturnTimer = newquickreturntimer()
-	end
-end
-
-local function quick_return_daemon_running()
-	local is_running = false
-	local qr_status = kernel.hardwaregetquickreturnstatus()
-	if qr_status["status"] == "ACTIVE" then
-		is_running = true
-	end
-	kernel.log( "Quick Return running = " .. tostring( is_running ))
-	return ( is_running )
+	kernel.sync_unknowns(false)
 end
 
 function idle_timer_expire_session()
@@ -193,80 +182,29 @@ local function get_hardware_info_then_start_application()
 		kernel.hardwarenotifymaintmodestate( false )
 	end
 
-	-- Do not check any sooner as the HAL will not be ready yet
-	quick_return_is_running = quick_return_daemon_running()
-
 	-- Ask HAL for deck/slot config if not already set; otherwise go ahead and start the application
 	local current = os.date( "*t" )
 	local current_string = string.format( "%4d%02d%02d", current.year, current.month, current.day )
 	local last_hardware_check = kernel.getmachinevalueordefault( "Store", "LastHardwareCheck", "" )
 
-	if max_decks ~= nil
-	and max_slots ~= nil
-	and last_hardware_check == current_string
-	then
-		get_excluded_slots()
-		start_the_application()
-	else
-		HardwareManager:get_machine_info(
-			function( results )
-				qlm_deck = nil
-				max_decks = nil
-				max_slots = nil
-				merch_type = nil
-				buffer_slots = 1
-				for _, v in ipairs( results ) do
-					if v.code == "DeckInfo" then
-						max_slots = v.slot
-						if max_decks == nil then
-							max_decks = v.deck
-						else
-							if v.deck > max_decks then
-								max_decks = v.deck
-							end
-						end
-					elseif v.code == "QlmInfo" then
-						qlm_deck = v.deck
-					elseif v.code == "BufferSlot" then
-						buffer_slots = v.message
-					elseif v.code == "MerchType" then
-						merch_type = v.message
-					end
-				end
-				if qlm_deck ~= nil then
-					max_decks = qlm_deck - 1
-				end
-				-- Save these to the registry, they are not likely to ever change again on this machine
-				kernel.setmachinevalue( "Store", "QlmDeck", tostring( qlm_deck ))
-				kernel.setmachinevalue( "Store", "MaxDecks", tostring( max_decks ))
-				kernel.setmachinevalue( "Store", "MaxSlots", tostring( max_slots ))
-				kernel.setmachinevalue( "Store", "LastHardwareCheck", current_string )
-
-				if merch_type == nil then
-					kernel.log("Infering MerchType from qlm deck existence. " .. tostring( qlm_deck ) )
-					merch_type = qlm_deck ~= nil and "QLM" or "VMZ1"
-				end
-				kernel.healthsvcs_enqueuestatistic( "MerchType", tostring( merch_type ) )
-				
-				if buffer_slots == nil then
-					kernel.log("Use default buffer slot value.")
-					buffer_slots = 1
-				end
-				kernel.healthsvcs_enqueuestatistic( "BufferSlot", tostring( buffer_slots ) )
-
-				get_excluded_slots()
-				start_the_application()
-			end
-		)
+	if max_decks == nil or max_slots == nil or last_hardware_check ~= current_string then
+		kernel.log("application-startup: Updating hardware check values...")
+		local result = kernel.hardwaregetmachineinfo()
+		qlm_deck = result["QlmDeck"]
+		max_decks = result["MaxDecks"]
+		max_slots = result["MaxSlots"]
+		merch_type = result["MerchType"]
+		buffer_slots = result["BufferSlot"]
+		kernel.setmachinevalue( "Store", "LastHardwareCheck", current_string )
+		kernel.healthsvcs_enqueuestatistic( "MerchType", tostring( merch_type ) )
+		kernel.healthsvcs_enqueuestatistic( "BufferSlot", tostring( buffer_slots ) )
 	end
+	get_excluded_slots()
+	start_the_application()
 end
 
 local function load_registry_key_values()
 	-- Load registry values into global variables
-	EnableOutOfStockDisplay = kernel.getmachinevalueordefault(
-		"Remote Services\\Inventory Services",
-		"EnableOutOfStockDisplay",
-		"False" ) == "True"
 	PricingReloadTimeout = tonumber(kernel.getmachinevalueordefault(
 		"Store",
 		"PricingReloadTimeout",
@@ -279,25 +217,10 @@ local function load_registry_key_values()
 		"Field Maintenance",
 		"MaintenanceMode",
 		"False" ) == "true"
-	ComingSoonOptIn = kernel.config_getvalue(
-		"system",
-		"General",
-		"ComingSoonOptIn" ) == true
-    HowItWorksToggle = kernel.config_getvalue(
-		"system",
-		"General",
-		"HowItWorksToggle" )
-	if HowItWorksToggle == nil then
-		HowItWorksToggle = true
-	end
 	MakeRoomBuffer = tonumber( kernel.config_getvalue(
 		"system",
 		"General",
 		"MakeRoomBuffer" ) or 5 )
-	GiftCardsEnabled = kernel.config_getvalue(
-		"system",
-		"General",
-		"GiftCardsEnabled" ) == true
 	GameEnableXbox360 = kernel.config_getvalue(
 		"system",
 		"Games",
@@ -358,10 +281,6 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"ForceAirExchangerConfiguration" ) == true
-	BluRayUpsellEnabled = kernel.config_getvalue(
-		"system",
-		"General",
-		"BluRayUpsellEnabled" ) == true
     SoftSyncTimer = kernel.config_getvalue(
 		"system",
 		"General",
@@ -424,10 +343,6 @@ local function register_default_hardware_handlers()
 					StoreManager:set_number( value )
 					ReservationManager:init()
 					kernel.sync_reservations()
-				elseif path == "Remote Services\\Inventory Services" and key == "EnableOutOfStockDisplay" then
-					kernel.log( "Configuration value changed for EnableOutOfStockDisplay: " .. value )
-					EnableOutOfStockDisplay = value == "True"
-					kernel.reenterview()
 				end
 			end
 		end )
@@ -526,7 +441,7 @@ local function start_new_rental_session_callback()
                 local isAvailable = product_catalog.is_available
                 local isComingSoon = product_catalog.is_coming_soon
 
-			    local newIsAvailable = current_date > release_date or StoreManager.PricingManager:is_early_released( product )
+			    local newIsAvailable = current_date > release_date
 			    local newIsComingSoon = not (release_date <= current_date	or kernel.getelapseddays( current_date, release_date ) > product.coming_soon_days)
 
                 if ( (isAvailable ~= newIsAvailable) or (isComingSoon ~= newIsComingSoon)) then
@@ -633,7 +548,6 @@ register_get_coming_soon_products_callback()
 -- Set Global variable values
 --
 --************************************************
-quick_return_is_running = false
 
 -- Nothing will work correctly if these values are not accurate
 qlm_deck = tonumber( kernel.getmachinevalueordefault( "Store", "QlmDeck", "0" ) )
@@ -655,7 +569,6 @@ max_reco_cart_items = 5
 load_registry_key_values()
 kernel.setculture( DefaultCulture )
 localization_reload_resources()
-SetESRBRatings()
 config = kernel.getdictionary( "config" )
 create_coming_soon_cache_tables()
 register_default_hardware_handlers()
@@ -764,6 +677,11 @@ kernel.timercreate("inventory-check-for-new-files-timer",
 	26000,
 	120000,
 	function()
+		if qlm_deck == nil then
+			kernel.log( "inventory-check-for-new-files-timer - qlm_deck value set to nil" )
+		else
+			kernel.log( "inventory-check-for-new-files-timer - qlm_deck value set to " .. qlm_deck )
+		end
 		kernel.rental_inventory_check_for_new_files(
 		function()
 			if qlm_deck == nil then
@@ -820,37 +738,4 @@ kernel.timercreate("blocklist-check-timer",
 )
 kernel.timerstart("blocklist-check-timer")
 
---Check if Air Exchanger is Configured
-HardwareManager:executeimmediate(
-	"AIRXCHGR ISCONFIGURED",
-	false,
-	function( command, success, stack )
-		if success then
-			kernel.log( "Air Exchanger Configured:".. tostring( stack[1] ) )
-			if ForcedAirExchangerConfigured then
-				kernel.log( "Forcing Air Exchanger to be Configured." )
-			end
-			if string.lower(tostring(stack[1])) == "true"
-			or ForcedAirExchangerConfigured == true then
-				HardwareManager:executeimmediate("AIRXCHGR FANON", false, nil)
-				kernel.log( "Air Exchanger has been turned ON" )
-			end
-		end
-	end
-)
-
-kernel.queuekioskfunctioncheck()
-
-kernel.marketing_ad_start_application()
-
--- force load of first xps help document to speed up load of help screen
-kernel.load_xps_document("document-faqs")
-
--- force load of product images
-kernel.cache_product_images()
-
-kernel.create_schedule_fraud_sync_timer()
-
-kernel.checkreadervalidation()
-
-kernel.sync_unknowns(qlm_deck, false)
+kernel.setup_the_rental_application()

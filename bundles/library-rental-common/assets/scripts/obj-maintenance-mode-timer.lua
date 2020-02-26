@@ -4,7 +4,6 @@
 -- All Rights Reserved
 --
 
-
 function newmaintenancemodetimer()
 
 	local t = {}
@@ -25,7 +24,7 @@ function newmaintenancemodetimer()
 	t.on_timer = function()
 		kernel.timerstop( "minutes-in-maintenance" )
 		kiosk_minutes_in_maint_mode = kiosk_minutes_in_maint_mode + ((frequency or 600000)/60000)
-		kernel.healthsvcs_enqueuestatistic( "MinutesInMaintenance", kiosk_minutes_in_maint_mode )
+		kernel.update_minutes_in_maintenance_mode( kiosk_minutes_in_maint_mode )
 		kernel.timerstart( "minutes-in-maintenance" )
 	end
 	

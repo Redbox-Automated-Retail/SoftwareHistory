@@ -107,7 +107,7 @@ function create_or_update_product_catalog_entry( product_id, history )
 	end
 	local function product_is_available()
 		if master == nil then return false end
-		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > master.merchandise_date or StoreManager.PricingManager:is_early_released( master )
+		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > master.merchandise_date
 	end
 	local function get_type_name()
 		if master == nil then return nil end

@@ -23,8 +23,6 @@ end
 
 function show_hardware_busy_message() 
 	if not in_maintenance_mode() then
-        -- The back button cannot cancel the job now because it is already scheduled, so hide the button
-        kernel.set_return_view_back_button_isvisible(false)
         -- show please wait message
 		return_manager_error_message_view_manager:show()
 		return_manager_error_message_view_manager:set_message( strings.hardware_busy_message )

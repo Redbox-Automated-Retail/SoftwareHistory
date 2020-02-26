@@ -6,9 +6,7 @@
 
 function finish_vend()
 	view_show_safe( "vend_view" )
-	if quick_return_is_running == false then
-		ShoppingCart.vend_manager:show_movie_or_coming_soon()
-	end
+	ShoppingCart.vend_manager:show_movie_or_coming_soon()
 	if in_maintenance_mode() then
 		ShoppingCart:prepos_vend_abort()
 	else

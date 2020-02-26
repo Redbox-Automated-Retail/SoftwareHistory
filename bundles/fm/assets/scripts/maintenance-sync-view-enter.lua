@@ -9,6 +9,7 @@ local zip = split(Stores[store_id].zip, "-", 1)
 kernel.setmacro("StoreNumber", store_id)
 kernel.setmacro("MaintenanceView:ZipCode", tostring(zip[1]))
 kernel.setmacro( "MaintenanceView:ErrorCode", "0016SYNC" )
+kernel.add_maintenance_mode_reason( "InventorySync", "0016SYNC" )
 idle_timer:stop()
 
 kernel.timercreate(
@@ -18,6 +19,7 @@ kernel.timercreate(
 	function()
 		if #newhardwaremanager():get_hardware_jobs_by_label_contains_text( "maintenance sync by ", { "Stopped", "Errored", "Garbage", "Suspended", "Completed" } ) == 0
 		and kernel.peekview() == "maintenance_sync_view" then 
+			kernel.clear_inventory_sync_maintenance_mode()
 			kernel.activatedefaultbundle()
 		end
 	end )

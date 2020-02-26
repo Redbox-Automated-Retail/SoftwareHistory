@@ -58,13 +58,6 @@ function show_maintenance_view( script_name, alert_type, jobid, sub_type, screen
 	if show_maint_view then
 		view_unwindtobottom( "show_maintenance_view" ) -- ok to unwind to bottom here because we are about to show the maintenance_view
 		kernel.add_maintenance_mode_reason(maintenance_mode_source, screen_code)
-
-		if quick_return_is_running == true then
-			local hardwarejobs = HardwareManager:get_hardware_jobs_by_program( { "quick-return-daemon" }, { } )
-			for k, v in ipairs(hardwarejobs) do
-				HardwareManager:suspend_job(v.id)
-		    end
-		end
 	end
 end
 
@@ -753,26 +746,6 @@ function newhardwaremanager()
 			return false
 		end
 
-		return true
-	end
-
-	t.get_machine_info = function( self, on_complete )
-		local result = kernel.hardwaregetmachineinfo(
-			nil,
-			function( jobid, status )
-				if( has_job_ended( status ) ) then
-					local job_result = kernel.hardwaregetprogramresults( jobid )
-					if on_complete ~= nil then
-						on_complete( job_result.results )
-					end
-					kernel.hardwaretrashjob( jobid )
-				end
-			end )
-
-		if result.success == false then
-			self:show_hardware_errors( result )
-			return false
-		end
 		return true
 	end
 

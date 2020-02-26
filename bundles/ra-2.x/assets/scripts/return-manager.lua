@@ -16,9 +16,9 @@ function newreturnmanager( shopping_cart )
 		kernel.log( "ReturnManager:init()" )
 		self.has_ended = false
         self.has_shown_return_view = false;
+		self.is_machine_full = false;
         kernel.set_session_value("BrowseState.InReturnFlow", true)
 		self.did_show_success_message = false
-		--self.error_message_view_manager = newerrormessageviewmanager()
 	end
 
 	t.show_message = function( self, message, unwind_views )
@@ -167,8 +167,9 @@ function newreturnmanager( shopping_cart )
 				kernel.log("ReturnManager event responder for MachineFull")
 				kernel.analyticsaddelement( "return", "failureReason", "MachineFull", return_manager.shopping_cart.session_id )
 				--return_manager.shopping_cart:close_analytics( "True" ) -- should be handled by the close timer now
-				view_show_safe( "machine_full_view" )
-			end
+				self.is_machine_full = true
+				kernel.show_machine_full_warning()
+		end
 
 			hardware_manager.hardware_event_responders.NoEmptySlot = function( args, jobid )
                 if last_return_job_id ~= jobid then 
@@ -246,8 +247,6 @@ function newreturnmanager( shopping_cart )
                     kernel.log("hardware_event_responders.DisableCancel not executed.  Jobid does not match. last_return_job = " .. tostring(last_return_job_id).. " jobid " .. tostring(jobid))
                     return 
                 end
-
-                kernel.set_return_view_back_button_isvisible(false)
 			end
 
 			hardware_manager.hardware_event_responders.MaxPutAwayAttemptsExceeded = function( args, jobid )
@@ -303,26 +302,6 @@ function newreturnmanager( shopping_cart )
 					    return_manager_error_message_view_manager:hide( true )
 				    end
 				    view_show_safe( "return_view" )
-                    kernel.configure_return_view(
-			            function()
---                          the return button code was disabled to simplify solving timing issues with the HAL / Return manager events - now return jobs will finish normally and
---                          won't be aborted which means the on complete will always fire for a return job
-
---				            view_analytics_event2( "buttonPress", "return-product-cancel", self.shopping_cart.session_id )
---				            local return_end_time = os.time()
---				            local return_table = {
---					            success = "False",
---					            endTime = tostring( os.date( "%c", return_end_time ) ),
---					            duration = tostring( os.difftime( return_end_time, return_start_time) )
---				            }
---				            kernel.analyticsaddelements( "return", return_table, self.shopping_cart.session_id )
---				            self.shopping_cart:close_analytics( "True" )
-
---				            kernel.log( "User cancelled return: " .. tostring( job_id ) )
---				            kernel.hardwareterminatejob( job_id )
---				            kernel.close_open_session_and_start_new_rental_session( "ReturnManager: return_back_button pressed" )
-			            end 
-                    )
 				    self.has_ended = false
 				    -- Analytic session is only started AFTER the view changes
 				    kernel.analyticsaddnode( "session", "return", self.shopping_cart.session_id )
@@ -498,6 +477,7 @@ function newreturnmanager( shopping_cart )
 				if ( current_view == "return_view"
                 or current_view == "error_message_view"
 				or kernel.is_message_popup_view_showing() )
+				and self.is_machine_full == false
 				and not self.has_ended then
                     kernel.log("Return flow complete catch all processing for job id" .. tostring(job_result.job_id))
                     return_pending = false  -- since the last return didn't succeed don't start another one 
