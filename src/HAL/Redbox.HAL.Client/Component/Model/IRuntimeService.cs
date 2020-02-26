@@ -41,6 +41,8 @@ public interface IRuntimeService
 
 	bool SafeCopy(TextWriter writer, string source, string dest);
 
+	bool SafeMove(string file, string fullPath);
+
 	bool SafeMove(TextWriter writer, string source, string dest);
 
 	bool SafeDelete(string path);

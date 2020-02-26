@@ -196,6 +196,11 @@ public sealed class RuntimeService : IRuntimeService
 		return OnCopy(writer, source, dest, force: false);
 	}
 
+	public bool SafeMove(string source, string dest)
+	{
+		return SafeMove(TextWriter.Null, source, dest);
+	}
+
 	public bool SafeMove(TextWriter writer, string source, string dest)
 	{
 		string arg = $"move {source} -> {dest}";
