@@ -5,6 +5,4 @@ public interface IFraudService
 	bool IsConfigured { get; }
 
 	string FraudImagesPath { get; }
-
-	bool CanTakeFraudImages { get; }
 }
