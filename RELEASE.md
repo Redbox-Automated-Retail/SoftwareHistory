@@ -1,12 +1,12 @@
-# Oasis SR (1.12.1.56)
+# Queen SR6 (1.12.1.64)
 
-- Product: HAL 1.12.1.56
-- Date (first download in the snapshots): 2019-09-16
-- Store labels: kop-hal-install-OasisSR
+- Product: MS HAL Tester 1.12.1.64
+- Date (first download in the snapshots): 2020-02-26
+- Store labels: kop-ms-hal-tester-QueenSR6
 - Package revisions:
   - `kop-tools` revision 52 (`6D9C0BE246480B98976B16A827E80B635F3DF80D`)
   - `kop-hal-install` revision 68 (`D53259D6FC556C29D455E7A9C0FA6ED57D158921`)
-  - `kop-ms-hal-tester` revision 53 (`29AE51BA3CA4E35A4243585FA7CEF68BA349A9ED`)
+  - `kop-ms-hal-tester` revision 54 (`AC7C40DF71EB63D8644CC9A7D171A6BD602DC70B`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | `thin.hs` |  |  | `40C02B351415A67E6ED3A89531D4371BA5C43CE1` | exact |
 | `unload-thin.hs` |  |  | `0B7D62C05BE821D5A86907BA9236451D0C8D7B3F` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.12.1.52 | `41FABB6D4855094E24FEB362196FB636A7999D84` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.12.1.64 | `4571FE82463BEB4D0554FB37D83735C08369CE18` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |

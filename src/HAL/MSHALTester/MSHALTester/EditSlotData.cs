@@ -447,6 +447,8 @@ public class EditSlotData : Form
 	{
 		int deltaY = CurrentEY - OriginalEY;
 		int deltaX = CurrentEX - OriginalEX;
+		OriginalEX = CurrentEX;
+		OriginalEY = CurrentEY;
 		if (m_preferredDeck.HasValue)
 		{
 			return UpdateDeckNode(DeckNode, deltaX, deltaY, applyBlind: false);

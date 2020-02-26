@@ -1632,7 +1632,7 @@ public class ConfiguredDevicesForm : Form
 			bool flag = !m_irConfigured;
 			DateTime dateTime = DateTime.Now.ToUniversalTime();
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(string.Format("SETCFG \"IRHardwareInstallDate\" \"{0}\" TYPE=CAMERA", flag ? dateTime.ToString() : "NONE"));
+			stringBuilder.AppendLine(string.Format("SETCFG \"IRHardwareInstallDate\" \"{0}\" TYPE=KIOSK", flag ? dateTime.ToString() : "NONE"));
 			stringBuilder.AppendLine("CLEAR");
 			HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediateProgram(Encoding.ASCII.GetBytes(stringBuilder.ToString()), out var _);
 			if (!hardwareCommandResult.Success)
@@ -2837,7 +2837,7 @@ public class ConfiguredDevicesForm : Form
 		this.m_engineeringOutput.Size = new System.Drawing.Size(392, 407);
 		this.m_engineeringOutput.TabIndex = 0;
 		this.m_exitButton.BackColor = System.Drawing.Color.GreenYellow;
-		this.m_exitButton.Location = new System.Drawing.Point(12, 644);
+		this.m_exitButton.Location = new System.Drawing.Point(466, 644);
 		this.m_exitButton.Name = "m_exitButton";
 		this.m_exitButton.Size = new System.Drawing.Size(135, 59);
 		this.m_exitButton.TabIndex = 14;
