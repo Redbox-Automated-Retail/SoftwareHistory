@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -11,17 +12,19 @@ namespace DeviceService.WebApi.Services;
 
 public class HttpService : IHttpService
 {
-	public HttpRequestMessage GenerateRequest(string endpoint, object requestObject, HttpMethod method, string authHeader, string apiKey, string baseUrl)
+	public HttpRequestMessage GenerateRequest(string endpoint, object requestObject, HttpMethod method, string baseUrl, List<Header> headers = null)
 	{
 		Uri requestUri = new Uri(baseUrl + "/" + endpoint);
-		return new HttpRequestMessage(method, requestUri)
+		HttpRequestMessage httpRequest = new HttpRequestMessage(method, requestUri);
+		headers?.ForEach(delegate(Header header)
 		{
-			Headers = { { authHeader, apiKey } },
-			Content = new StringContent(JsonConvert.SerializeObject(requestObject, Formatting.None, new JsonSerializerSettings
-			{
-				NullValueHandling = NullValueHandling.Ignore
-			}), Encoding.UTF8, "application/json")
-		};
+			httpRequest.Headers.Add(header.Key, header.Value);
+		});
+		httpRequest.Content = new StringContent(JsonConvert.SerializeObject(requestObject, Formatting.None, new JsonSerializerSettings
+		{
+			NullValueHandling = NullValueHandling.Ignore
+		}), Encoding.UTF8, "application/json");
+		return httpRequest;
 	}
 
 	public async Task<HttpResponseMessage> SendRequest(HttpRequestMessage request, int timeout)

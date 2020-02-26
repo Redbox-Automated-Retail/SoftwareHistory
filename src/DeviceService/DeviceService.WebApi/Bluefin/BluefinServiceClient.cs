@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DeviceService.ComponentModel;
@@ -29,7 +30,7 @@ public class BluefinServiceClient : IBluefinServiceClient
 			InjectedSerialNumber = injectedSerialNumber,
 			LocalDateTime = InstallDate
 		};
-		HttpRequestMessage request2 = _httpService.GenerateRequest("device/activate", requestObject, HttpMethod.Post, "x-api-key", request.ApiKey, request.BluefinServiceUrl);
+		HttpRequestMessage request2 = _httpService.GenerateRequest("device/activate", requestObject, HttpMethod.Post, request.BluefinServiceUrl, new List<Header> { GetAuthHeader(request.ApiKey) });
 		return JsonConvert.DeserializeObject<StandardResponse>(await ((await _httpService.SendRequest(request2, request.Timeout)).Content?.ReadAsStringAsync()));
 	}
 
@@ -40,7 +41,12 @@ public class BluefinServiceClient : IBluefinServiceClient
 			KioskId = request.KioskId,
 			ReaderSerialNumber = mfgSerialNumber
 		};
-		HttpRequestMessage request2 = _httpService.GenerateRequest("device/deactivate", requestObject, HttpMethod.Post, "x-api-key", request.ApiKey, request.BluefinServiceUrl);
+		HttpRequestMessage request2 = _httpService.GenerateRequest("device/deactivate", requestObject, HttpMethod.Post, request.BluefinServiceUrl, new List<Header> { GetAuthHeader(request.ApiKey) });
 		return JsonConvert.DeserializeObject<StandardResponse>(await ((await _httpService.SendRequest(request2, request.Timeout)).Content?.ReadAsStringAsync()));
+	}
+
+	private Header GetAuthHeader(string apiKey)
+	{
+		return new Header("x-api-key", apiKey);
 	}
 }

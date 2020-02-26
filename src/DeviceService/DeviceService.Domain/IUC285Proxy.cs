@@ -1154,7 +1154,7 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 				string[] subKeyNames3 = registryKey3.GetSubKeyNames();
 				foreach (string name2 in subKeyNames3)
 				{
-					RegistryKey? obj = registryKey3?.OpenSubKey(name2);
+					RegistryKey obj = registryKey3?.OpenSubKey(name2);
 					_ = (string)obj?.GetValue("LocationInformation");
 					RegistryKey registryKey4 = obj.OpenSubKey("Device Parameters");
 					string value = (string)registryKey4?.GetValue("PortName");
@@ -1323,6 +1323,11 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			eMVCardReadModel.FallbackStatusAction = parseTags.Fallback;
 			eMVCardReadModel.FallbackReason = parseTags.FallbackReason;
 			eMVCardReadModel.ErrorCode = parseTags.ErrorCode;
+			if (!string.IsNullOrWhiteSpace(ReadCardContextData.ResponseDataModel?.Name))
+			{
+				eMVCardReadModel.Name = ReadCardContextData.ResponseDataModel.Name;
+				eMVCardReadModel.NameLength = ReadCardContextData.ResponseDataModel.NameLength;
+			}
 			ReadCardContextData.ResponseDataModel = eMVCardReadModel;
 			ReadCardContextData.CardBrand = parseTags.CardBrand;
 			_rba_api.ResetParam(PARAMETER_ID.P_ALL_PARAMS);

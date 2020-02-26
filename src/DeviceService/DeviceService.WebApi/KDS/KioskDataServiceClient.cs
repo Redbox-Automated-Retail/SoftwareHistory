@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DeviceService.ComponentModel;
@@ -14,11 +15,13 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 {
 	private const string AUTHHEADER = "Authorization";
 
+	private const string KIOSKIDHEADER = "x-redbox-kioskid";
+
 	private readonly IHttpService _httpService;
 
 	private readonly string _apiUrl;
 
-	private readonly string _apiKey;
+	private readonly List<Header> _headers = new List<Header>();
 
 	private readonly ILogger _logger;
 
@@ -27,8 +30,12 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		_httpService = httpService;
 		_logger = logger;
 		KioskData fileData = DataFileHelper.GetFileData<KioskData>(settings.DataFilePath, "KioskData.json", LogException);
-		_apiUrl = fileData?.ApiUrl;
-		_apiKey = fileData?.ApiKey;
+		if (fileData != null)
+		{
+			_apiUrl = fileData.ApiUrl;
+			_headers.Add(new Header("Authorization", "Bearer " + fileData.ApiKey));
+			_headers.Add(new Header("x-redbox-kioskid", fileData.KioskId.ToString()));
+		}
 	}
 
 	public void LogException(string message, Exception e)
@@ -42,7 +49,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		StandardResponse standardResponse;
 		try
 		{
-			HttpRequestMessage request = _httpService.GenerateRequest("DeviceStatus", deviceStatus, HttpMethod.Post, "Authorization", "Bearer " + _apiKey, _apiUrl + "/api/KioskData");
+			HttpRequestMessage request = _httpService.GenerateRequest("DeviceStatus", deviceStatus, HttpMethod.Post, _apiUrl + "/api/KioskData", _headers);
 			standardResponse = JsonConvert.DeserializeObject<StandardResponse>(await ((await _httpService.SendRequest(request, 5000)).Content?.ReadAsStringAsync()));
 		}
 		catch (Exception e)
@@ -59,7 +66,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		StandardResponse standardResponse;
 		try
 		{
-			HttpRequestMessage request = _httpService.GenerateRequest("RebootStatus", rebootStatus, HttpMethod.Post, "Authorization", "Bearer " + _apiKey, _apiUrl + "/api/KioskData");
+			HttpRequestMessage request = _httpService.GenerateRequest("RebootStatus", rebootStatus, HttpMethod.Post, _apiUrl + "/api/KioskData", _headers);
 			standardResponse = JsonConvert.DeserializeObject<StandardResponse>(await ((await _httpService.SendRequest(request, 5000)).Content?.ReadAsStringAsync()));
 		}
 		catch (Exception e)
@@ -77,7 +84,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		try
 		{
 			_logger.LogInformation("Preparing to send PostCardStats to Kiosk Data Service");
-			HttpRequestMessage request = _httpService.GenerateRequest("CardStats", cardStats, HttpMethod.Post, "Authorization", "Bearer " + _apiKey, _apiUrl + "/api/KioskData");
+			HttpRequestMessage request = _httpService.GenerateRequest("CardStats", cardStats, HttpMethod.Post, _apiUrl + "/api/KioskData", _headers);
 			standardResponse = JsonConvert.DeserializeObject<StandardResponse>(await ((await _httpService.SendRequest(request, 5000)).Content?.ReadAsStringAsync()));
 		}
 		catch (Exception e)

@@ -3341,9 +3341,8 @@ public class ParseTags
 			}
 			else if (Tag == "5F20")
 			{
-				string text260 = ConvertHexToString(TagDataStr);
-				IUC285Proxy.Log($"Name Formatted: {text260}");
-				CardHolderName = text260;
+				string cardHolderName = ConvertHexToString(TagDataStr);
+				CardHolderName = cardHolderName;
 			}
 			else if (Tag == "FF1F")
 			{
