@@ -204,6 +204,7 @@ public class HALService : ServiceBase, ILogger
 			string configFile = runtimeService.RuntimePath("HAL.xml");
 			ConfigurationService configurationService = ConfigurationService.Make(configFile);
 			ServiceLocator.Instance.AddService<IConfigurationService>(configurationService);
+			Redbox.HAL.Controller.Framework.KioskConfiguration.Instance.Initialize(errorList);
 			ControllerService controllerService = new ControllerService();
 			ServiceLocator.Instance.AddService<IControllerService>(controllerService);
 			controllerService.Initialize(errorList, initProperties);

@@ -49,7 +49,7 @@ public sealed class ExecutionResult : IExecutionResult
 		Errors.Add(item);
 	}
 
-	internal ExecutionResult()
+	public ExecutionResult()
 	{
 		Errors = new ErrorList();
 	}

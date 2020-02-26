@@ -918,7 +918,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		}
 	}
 
-	internal ExecutionContext(string id, string programName, DateTime? startTime, ProgramPriority p, string label)
+	public ExecutionContext(string id, string programName, DateTime? startTime, ProgramPriority p, string label)
 	{
 		IsHydrating = true;
 		ID = id;

@@ -15,9 +15,9 @@ public sealed class FraudValidatorService : IFraudService
 		get
 		{
 			IScannerDeviceService service = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-			BarcodeConfiguration barcodeConfiguration = BarcodeConfiguration.NewInstance();
+			BarcodeConfiguration.NewInstance();
 			IScannerDevice configuredDevice = service.GetConfiguredDevice();
-			LogHelper.Instance.Log($"IsLegacy: {configuredDevice.IsLegacy}, Camera Generation: {configuredDevice.CurrentCameraGeneration.ToString()}, UseInliteForFraudValidation: {barcodeConfiguration.UseInliteForFraudValidation}");
+			LogHelper.Instance.Log($"IsLegacy: {configuredDevice.IsLegacy}, Camera Generation: {configuredDevice.CurrentCameraGeneration.ToString()}");
 			LogHelper.Instance.Log($"Device.SupportsSecureReads: {configuredDevice.SupportsSecureReads}, EnablePhotocopyScan: {ControllerConfiguration.Instance.EnablePhotocopyScan} - IsConfigured: {configuredDevice.SupportsSecureReads && ControllerConfiguration.Instance.EnablePhotocopyScan}");
 			if (configuredDevice.SupportsSecureReads)
 			{

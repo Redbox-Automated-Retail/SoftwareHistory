@@ -2,7 +2,7 @@
         # SYNC Aggregate Instruction
         # Copyright (C) 2011 Redbox Automated Retail, LLC
         # All Rights Reserved
-	# VERSION 1.12.1.56
+	# VERSION 1.12.1.64
         #
 
 	LOG			"Begin sync request."

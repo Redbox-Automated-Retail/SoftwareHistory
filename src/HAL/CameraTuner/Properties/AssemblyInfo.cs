@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyFileVersion("1.12.1.56")]
+[assembly: AssemblyFileVersion("1.12.1.64")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyTitle("Redbox.HAL.CameraTuner")]
 [assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2016")]
@@ -12,4 +12,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyCompany("Redbox DVD Automated Retail")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.12.1.56")]
+[assembly: AssemblyVersion("1.12.1.64")]

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Redbox.HAL.Component.Model;
+using Redbox.HAL.Controller.Framework;
 
 namespace Redbox.HAL.DataMatrix.Framework;
 
@@ -18,27 +19,7 @@ public sealed class ScannerDeviceFactory : IScannerDeviceService, IConfiguration
 
 	private readonly NilScanner m_nilInstance = new NilScanner();
 
-	public DateTime? IRHardwareInstall
-	{
-		get
-		{
-			string iRHardwareInstallDate = BarcodeConfiguration.Instance.IRHardwareInstallDate;
-			if ("NONE" == iRHardwareInstallDate)
-			{
-				return null;
-			}
-			DateTime? dateTime = null;
-			try
-			{
-				return DateTime.Parse(iRHardwareInstallDate);
-			}
-			catch
-			{
-				dateTime = null;
-			}
-			return dateTime;
-		}
-	}
+	public DateTime? IRHardwareInstall => Redbox.HAL.Controller.Framework.KioskConfiguration.Instance.IRHardwareInstallDate;
 
 	public CameraGeneration CurrentCameraGeneration
 	{

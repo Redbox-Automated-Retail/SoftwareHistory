@@ -28,11 +28,11 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			IBarcodeReaderFactory service2 = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>();
 			IBarcodeReader configuredReader = service2.GetConfiguredReader();
 			bool flag = configuredReader.Service == BarcodeServices.Cortex;
-			if (service.IRHardwareInstall.HasValue)
+			if (service.IRHardwareInstall.HasValue && flag)
 			{
-				if (!flag && CurrentCameraGeneration != CameraGeneration.Fifth)
+				if (CurrentCameraGeneration != CameraGeneration.Fifth)
 				{
-					return BarcodeConfiguration.Instance.UseInliteForFraudValidation;
+					return CurrentCameraGeneration == CameraGeneration.Fourth;
 				}
 				return true;
 			}

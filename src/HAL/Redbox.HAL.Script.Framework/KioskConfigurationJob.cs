@@ -65,6 +65,7 @@ internal sealed class KioskConfigurationJob : NativeJobAdapter
 		{
 			base.Context.CreateInfoResult("NoExcludedSlots", "There are no excluded slots.");
 		}
+		base.Context.CreateInfoResult("BufferSlot", ControllerConfiguration.Instance.ReturnSlotBuffer.ToString());
 	}
 
 	internal KioskConfigurationJob(ExecutionResult result, ExecutionContext ctx)
