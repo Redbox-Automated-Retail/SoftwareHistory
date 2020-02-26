@@ -61,8 +61,6 @@ public sealed class MachineConfiguration : JobExecutor
 
 	public int MaxSlot { get; set; }
 
-	public int BufferSlot { get; set; }
-
 	protected override string JobName => "kiosk-configuration-job";
 
 	public MachineConfiguration(HardwareService service)
@@ -152,12 +150,6 @@ public sealed class MachineConfiguration : JobExecutor
 				MaxDeck = result.Deck;
 				MaxSlot = result.Slot;
 				break;
-			case "BufferSlot":
-			{
-				int result2 = 1;
-				BufferSlot = ((!int.TryParse(result.Message, out result2)) ? 1 : result2);
-				break;
-			}
 			}
 		});
 	}
