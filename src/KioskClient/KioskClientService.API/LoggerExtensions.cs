@@ -17,4 +17,10 @@ public static class LoggerExtensions
 		string name = typeof(T).Name;
 		logger.LogError(ex, name + "." + memberName + " -> " + message);
 	}
+
+	public static void LogErrorWithSource<T>(this ILogger<T> logger, string message, [CallerMemberName] string memberName = "")
+	{
+		string name = typeof(T).Name;
+		logger.LogError(name + "." + memberName + " -> " + message);
+	}
 }

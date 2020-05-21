@@ -143,7 +143,7 @@ public class ConfigurationClient
 			_activateAction = activateAction;
 			_filePath = filepath;
 			_defaultCategory = defaultCategory;
-			ActivateConfigFile();
+			ActivateConfigFile(suppressAction: true);
 		}
 
 		internal bool TryGetValue<T>(string setting, out T value)
@@ -422,13 +422,13 @@ public class ConfigurationClient
 			return File.Exists(path);
 		}
 
-		private void ActivateConfigFile()
+		private void ActivateConfigFile(bool suppressAction = false)
 		{
 			LoadConfigFile();
 			if (NeedsActivation())
 			{
 				InternalActivateFile();
-				if (_activateAction != null)
+				if (_activateAction != null && !suppressAction)
 				{
 					_activateAction();
 				}
@@ -783,9 +783,9 @@ public class ConfigurationClient
 			byte[] buffer = new byte[1024];
 			int num = stream.Read(buffer, 0, 1024);
 		}
-		catch (Exception exception)
+		catch (Exception)
 		{
-			_logger?.LogError(exception, $"ConfigurationClient - Unhandled exception occurred activating config file {configFileId}");
+			_logger?.LogError($"ConfigurationClient - Unhandled exception occurred activating config file {configFileId}. This usually means update manager is not running.");
 		}
 	}
 

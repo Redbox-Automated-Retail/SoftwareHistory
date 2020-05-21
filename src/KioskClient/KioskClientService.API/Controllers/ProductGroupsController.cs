@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
+using KioskClientService.API.Services.Inventory;
+using KioskClientService.API.Services.ProductGroup;
 using KioskClientService.API.Services.Products.MoreLikeThis;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +15,15 @@ public class ProductGroupsController : ControllerBase
 {
 	private readonly IMoreLikeThisService _moreLikeThisService;
 
-	public ProductGroupsController(IMoreLikeThisService moreLikeThisService)
+	private readonly IInventoryService _inventoryService;
+
+	private readonly IProductGroupSortOrderService _productGroupOrderService;
+
+	public ProductGroupsController(IMoreLikeThisService moreLikeThisService, IInventoryService inventoryService, IProductGroupSortOrderService productGroupOrderService)
 	{
 		_moreLikeThisService = moreLikeThisService;
+		_inventoryService = inventoryService;
+		_productGroupOrderService = productGroupOrderService;
 	}
 
 	[HttpGet("{id}/morelikethis")]
@@ -37,6 +45,46 @@ public class ProductGroupsController : ControllerBase
 	public async Task<ActionResult<BaseResponse>> CacheMoreLikeThisTitle([FromBody] List<long> productGroupIds)
 	{
 		Task.Run(() => _moreLikeThisService.RefreshMoreLikeThisAsync(productGroupIds));
+		return Ok();
+	}
+
+	[HttpGet("sortorder")]
+	[ProducesResponseType(404)]
+	[ProducesResponseType(typeof(GetSortOrderResponse), 200)]
+	public async Task<ActionResult<GetSortOrderResponse>> GetProductGroupSortOrder()
+	{
+		ProductGroupSortOrder productGroupSortOrder = await _productGroupOrderService.GetSortOrder();
+		if (productGroupSortOrder == null || productGroupSortOrder.SortOrders.Count == 0)
+		{
+			return new NotFoundResult();
+		}
+		return new OkObjectResult(new GetSortOrderResponse
+		{
+			ProductGroupSortOrder = productGroupSortOrder
+		});
+	}
+
+	[HttpPost("sortorder/refresh")]
+	[ProducesResponseType(200)]
+	public async Task<ActionResult<BaseResponse>> RefreshSortOrder()
+	{
+		await _productGroupOrderService.RefreshSortOrder();
+		return Ok();
+	}
+
+	[HttpPost("sortorder/refreshifneeded")]
+	[ProducesResponseType(200)]
+	public async Task<ActionResult<BaseResponse>> RefreshSortOrderIfNeeded()
+	{
+		await _productGroupOrderService.RefreshIfNeeded();
+		return Ok();
+	}
+
+	[HttpDelete("sortorder")]
+	[ProducesResponseType(200)]
+	public async Task<ActionResult<BaseResponse>> DeleteSortOrder()
+	{
+		await _productGroupOrderService.DeleteSortOrder();
 		return Ok();
 	}
 }

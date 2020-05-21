@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using KioskClientService.API.Ads;
 using KioskClientService.API.Services.Analytics.KioskDataService;
 using KioskClientService.API.Services.Analytics.Vistar;
+using KioskClientService.API.Services.Inventory.API;
 using KioskClientService.API.Services.Products.ProductReelsApi;
 
 namespace KioskClientService.API.Services.Configuration;
@@ -31,4 +32,8 @@ public interface IApplicationConfiguration
 	KioskDataServiceConfigs KioskDataService { get; }
 
 	ProductReelsApiConfigs ProductReelsApi { get; }
+
+	InventoryApiConfigs InventoryApi { get; }
+
+	int ProductGroupSortOrderType { get; }
 }

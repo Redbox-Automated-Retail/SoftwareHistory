@@ -2,6 +2,14 @@ namespace KioskClientService.API.Services.Configuration;
 
 public static class KioskClientSettings
 {
+	public const string InventoryApiUrl = "InventoryApiUrl";
+
+	public const string InventoryApiTimeout = "InventoryApiTimeout";
+
+	public const string InventoryApiKey = "InventoryApiKey";
+
+	public const string ProductGroupSortOrderType = "ProductGroupSortOrderType";
+
 	public const string AdsActive = "AdsActive";
 
 	public const string AdsToPreload = "AdsToPreload";

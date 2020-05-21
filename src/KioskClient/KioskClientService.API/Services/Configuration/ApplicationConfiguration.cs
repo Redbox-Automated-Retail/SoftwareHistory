@@ -4,6 +4,7 @@ using System.Linq;
 using KioskClientService.API.Ads;
 using KioskClientService.API.Services.Analytics.KioskDataService;
 using KioskClientService.API.Services.Analytics.Vistar;
+using KioskClientService.API.Services.Inventory.API;
 using KioskClientService.API.Services.Products.ProductReelsApi;
 using Newtonsoft.Json;
 
@@ -25,6 +26,10 @@ public class ApplicationConfiguration : IApplicationConfiguration
 				AdLocation.Welcome
 			};
 			string settingValue = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdsToPreload", null);
+			if (string.IsNullOrWhiteSpace(settingValue))
+			{
+				return new List<AdLocation>();
+			}
 			return GetEnumList(settingValue, defaultValue);
 		}
 	}
@@ -45,6 +50,10 @@ public class ApplicationConfiguration : IApplicationConfiguration
 				}
 			};
 			string settingValue = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdsToPreloadByView", null);
+			if (string.IsNullOrWhiteSpace(settingValue))
+			{
+				return result;
+			}
 			try
 			{
 				return JsonConvert.DeserializeObject<Dictionary<string, List<AdLocation>>>(settingValue);
@@ -91,6 +100,15 @@ public class ApplicationConfiguration : IApplicationConfiguration
 		Url = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "ProductReelsApiUrl", null),
 		Timeout = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "ProductReelsApiTimeout", 60000)
 	};
+
+	public InventoryApiConfigs InventoryApi => new InventoryApiConfigs
+	{
+		Url = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "InventoryApiUrl", null),
+		Timeout = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "InventoryApiTimeout", 60000),
+		APIKey = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "InventoryApiKey", null)
+	};
+
+	public int ProductGroupSortOrderType => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "ProductGroupSortOrderType", 0);
 
 	public ApplicationConfiguration(IConfigurationService configurationService)
 	{
