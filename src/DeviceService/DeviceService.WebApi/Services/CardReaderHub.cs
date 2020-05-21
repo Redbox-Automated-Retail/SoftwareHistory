@@ -20,6 +20,8 @@ public class CardReaderHub : Hub
 	{
 		public BaseCommandRequest Command { get; set; }
 
+		public string ConnectionId { get; set; }
+
 		public IClientProxy Caller { get; set; }
 
 		public bool Cancelled { get; set; }
@@ -43,6 +45,8 @@ public class CardReaderHub : Hub
 
 	private static int _configureOccurred = 0;
 
+	private static QueuedCommand ActiveCommand = null;
+
 	private static Task _processCommandQueue;
 
 	private static Dictionary<string, Action<QueuedCommand>> _commandProcessors;
@@ -50,8 +54,6 @@ public class CardReaderHub : Hub
 	private static ConcurrentQueue<QueuedCommand> _commandQueue = new ConcurrentQueue<QueuedCommand>();
 
 	private static bool _commandQueuePaused = false;
-
-	private ConcurrentDictionary<Guid, IClientProxy> _activeReadCards = new ConcurrentDictionary<Guid, IClientProxy>();
 
 	public static bool IsProcessingCommands
 	{
@@ -129,6 +131,10 @@ public class CardReaderHub : Hub
 
 	private void AddQueuedCommand(QueuedCommand queuedCommand)
 	{
+		if (queuedCommand != null)
+		{
+			queuedCommand.ConnectionId = base.Context.ConnectionId;
+		}
 		lock (_syncObject)
 		{
 			_commandQueue.Enqueue(queuedCommand);
@@ -173,7 +179,7 @@ public class CardReaderHub : Hub
 
 	private void ProcessQueuedCommands()
 	{
-		QueuedCommand result = null;
+		ActiveCommand = null;
 		int num = 0;
 		lock (_syncObject)
 		{
@@ -182,23 +188,23 @@ public class CardReaderHub : Hub
 				num = _commandQueue.Count;
 				if (num > 0)
 				{
-					_commandQueue.TryDequeue(out result);
+					_commandQueue.TryDequeue(out ActiveCommand);
 				}
 			}
 		}
-		while (num > 0 && result != null)
+		while (num > 0 && ActiveCommand != null)
 		{
-			_logger?.LogInformation($"Begining processing for queued command {result?.Command?.CommandName} with ID {result?.Command.RequestId}");
-			if (_commandProcessors.TryGetValue(result?.Command?.CommandName, out var value))
+			_logger?.LogInformation($"Begining processing for queued command {ActiveCommand?.Command?.CommandName} with ID {ActiveCommand?.Command.RequestId}");
+			if (_commandProcessors.TryGetValue(ActiveCommand?.Command?.CommandName, out var value))
 			{
 				_proxy.StopHealthTimer();
-				value(result);
+				value(ActiveCommand);
 			}
 			else
 			{
-				_logger?.LogInformation($"ProcessQueuedCommands - error.  No handler for command {result?.Command?.CommandName}");
+				_logger?.LogInformation($"ProcessQueuedCommands - error.  No handler for command {ActiveCommand?.Command?.CommandName}");
 			}
-			_logger?.LogInformation($"Finished processing for queued command {result?.Command?.CommandName} with ID {result?.Command.RequestId}");
+			_logger?.LogInformation($"Finished processing for queued command {ActiveCommand?.Command?.CommandName} with ID {ActiveCommand?.Command.RequestId}");
 			lock (_syncObject)
 			{
 				if (_commandQueuePaused)
@@ -217,9 +223,10 @@ public class CardReaderHub : Hub
 				}
 				string arg = string.Join(", ", list.ToArray());
 				_logger?.LogInformation($"Queued Command count: {num}   Commands: {arg}");
-				_commandQueue.TryDequeue(out result);
+				_commandQueue.TryDequeue(out ActiveCommand);
 			}
 		}
+		ActiveCommand = null;
 		string arg2 = (_commandQueuePaused ? $"paused.  Command queue count = {_commandQueue.Count}" : "empty");
 		_logger?.LogInformation($"Command queue is {arg2}.");
 		_proxy.StartHealthTimer();
@@ -385,11 +392,10 @@ public class CardReaderHub : Hub
 		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 		_cancellationTokenSources[command.RequestId] = cancellationTokenSource;
 		CancellationToken cancellationToken = cancellationTokenSource.Token;
-		_activeReadCards[command.RequestId] = queuedCommand.Caller;
 		await _proxy.ReadCard(command.Request, cancellationToken, delegate(Base87CardReadModel cardResult)
 		{
-			IClientProxy value3 = null;
-			if (_activeReadCards.TryGetValue(command.RequestId, out value3))
+			IClientProxy caller = queuedCommand.Caller;
+			if (caller != null)
 			{
 				BaseResponseEvent baseResponseEvent = null;
 				if (cardResult is EMVCardReadModel data)
@@ -416,7 +422,7 @@ public class CardReaderHub : Hub
 					};
 					ProcessCardReadModel(baseResponseEvent, cancellationToken);
 				}
-				value3.SendAsync(baseResponseEvent.EventName, baseResponseEvent);
+				caller.SendAsync(baseResponseEvent.EventName, baseResponseEvent);
 			}
 			else
 			{
@@ -424,16 +430,16 @@ public class CardReaderHub : Hub
 			}
 		}, delegate(string eventName, string eventData)
 		{
-			IClientProxy value3 = null;
-			if (_activeReadCards.TryGetValue(command.RequestId, out value3))
+			IClientProxy caller = queuedCommand.Caller;
+			if (caller != null)
 			{
 				if (eventName == "CardRemovedResponseEvent")
 				{
-					value3.SendAsync("CardRemovedResponseEvent", new CardRemoveResponseEvent(command));
+					caller.SendAsync("CardRemovedResponseEvent", new CardRemoveResponseEvent(command));
 				}
 				else
 				{
-					value3.SendAsync(eventName, new SimpleResponseEvent(command, eventName, eventData));
+					caller.SendAsync(eventName, new SimpleResponseEvent(command, eventName, eventData));
 				}
 			}
 			else
@@ -441,7 +447,6 @@ public class CardReaderHub : Hub
 				_logger.LogInformation($"Unable to find remove card client proxy for {command?.RequestId}.");
 			}
 		});
-		_activeReadCards.TryRemove(command.RequestId, out var _);
 		_cancellationTokenSources.TryRemove(command.RequestId, out var _);
 	}
 
@@ -756,6 +761,29 @@ public class CardReaderHub : Hub
 		{
 			_logger.LogError(exception, "CardReaderHub.OnDisconnectedAsync - Unhandled exception.");
 		}
+		CommandQueuePaused = true;
+		ConcurrentQueue<QueuedCommand> concurrentQueue = new ConcurrentQueue<QueuedCommand>();
+		foreach (QueuedCommand item in _commandQueue)
+		{
+			if (item.ConnectionId != base.Context.ConnectionId)
+			{
+				concurrentQueue.Enqueue(item);
+				continue;
+			}
+			_cancellationTokenSources.TryRemove(item.Command.RequestId, out var value);
+			value?.Cancel();
+		}
+		_commandQueue = concurrentQueue;
+		if (ActiveCommand?.ConnectionId == base.Context.ConnectionId)
+		{
+			_cancellationTokenSources[ActiveCommand.Command.RequestId].Cancel();
+			ActiveCommand.Cancelled = true;
+			if (ActiveCommand.Command.SignalRCommand == "ExecuteReadCardCommand")
+			{
+				_proxy.ReadCancel();
+			}
+		}
+		CommandQueuePaused = false;
 		return base.OnDisconnectedAsync(exception);
 	}
 }

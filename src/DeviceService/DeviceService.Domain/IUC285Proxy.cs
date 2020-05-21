@@ -450,6 +450,16 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		bool flag = currentRebootStatus != null && currentRebootStatus.DisconnectTime.HasValue && DateTime.Now >= _currentRebootStatus.DisconnectTime.Value.AddDays(1.0) - REBOOT_THRESHOLD && DateTime.Now <= _currentRebootStatus.DisconnectTime.Value.AddDays(1.0) + REBOOT_THRESHOLD;
 		_rebootType = ((_rebootType == RebootType.ServiceStart || _rebootType == RebootType.Scheduled || _rebootType == RebootType.Manual || _rebootType == RebootType.FileUpdate) ? _rebootType : (flag ? RebootType.Automatic : RebootType.Disconnect));
 		_currentRebootStatus.DisconnectTime = DateTime.Now;
+		if (ReadCardContextData != null)
+		{
+			ReadCardContextData.State = ReadCardContextState.Cancelled;
+			ReadCardContextData.Errors.Add(new Error
+			{
+				Code = "READERDISCONNECT",
+				Message = "The Reader was disconnected, automatically cancelling job"
+			});
+			ReadCancel();
+		}
 		_iuc285Notifier?.SendCardReaderDisconnectedEvent(exception);
 		StopHealthTimer();
 	}
@@ -729,6 +739,12 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		return false;
 	}
 
+	private bool SendCardIsBeingProcessed(ReadCardContext context)
+	{
+		context.SendCardProcessing();
+		return true;
+	}
+
 	private void PerformActionAndCheckSuccess<T>(Func<ReadCardContext, T> action, Predicate<T> checkSuccess, ReadCardContext context)
 	{
 		if (typeof(T) == typeof(bool) && checkSuccess == null)
@@ -787,7 +803,7 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			PerformActionAndCheckSuccess(SetAmount, null, readCardContext2);
 			_are.WaitOne(100);
 			PerformActionAndCheckSuccess(CardReadRequestEncrypted, null, readCardContext2);
-			readCardContext2.SendCardProcessing();
+			PerformActionAndCheckSuccess(SendCardIsBeingProcessed, null, readCardContext2);
 			switch (readCardContext2.CardSource)
 			{
 			case CardSourceType.Swipe:
@@ -859,7 +875,10 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 		{
 			readCardContext2.CardStats.KioskId = _kioskData.KioskId;
 		}
-		_statusClient?.PostCardStats(readCardContext2.CardStats);
+		if (readCardContext2.TimeRemainingUntilTimeout >= 0 && readCardContext2.State != ReadCardContextState.Timeout && readCardContext2.State != ReadCardContextState.Cancelled)
+		{
+			_statusClient?.PostCardStats(readCardContext2.CardStats);
+		}
 		return true;
 	}
 
