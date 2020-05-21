@@ -1,16 +1,16 @@
-# Queen SR6 (1.12.1.64)
+# U2 (1.12.1.65)
 
-- Product: HAL 1.12.1.64
-- Date (first download in the snapshots): 2020-02-26
-- Store labels: kop-hal-install-QueenSR6
+- Product: HAL Utilities 1.12.1.65
+- Date (first download in the snapshots): 2020-05-21
+- Store labels: kop-tools-U2
 - Package revisions:
-  - `kop-tools` revision 52 (`6D9C0BE246480B98976B16A827E80B635F3DF80D`)
+  - `kop-tools` revision 53 (`2B7B649EEB1A549EF695FE099CE347A46383F3D5`)
   - `kop-hal-install` revision 70 (`3E57686AE4F7B716558869F9D07275FED293F95F`)
   - `kop-ms-hal-tester` revision 54 (`AC7C40DF71EB63D8644CC9A7D171A6BD602DC70B`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.12.1.52 | `DC4CEB842B1EB8D9E0A61E8CB01FD8EEE680653A` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.12.1.65 | `AA2B0AAB091014D1590D8BEA955FCC3398B44BB5` | exact |
 | `beforeactivate.lua` |  |  | `C82CE7CEC1353205286FE664F99249430FF08AF3` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.12.1.64 | `9253DB869F122FE183EBD8AACD4D0F99B129B360` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |
