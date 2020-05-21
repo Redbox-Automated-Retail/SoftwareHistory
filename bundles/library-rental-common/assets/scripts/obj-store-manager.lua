@@ -188,6 +188,7 @@ function newstoremanager()
 			end
 			
 			if #barcodes_to_unmerchandize > 0 then
+				kernel.report_unmerchandized_barcodes(barcodes_to_unmerchandize);
 				local hardware_manager = newhardwaremanager()
 				kernel.log( "Calling clear_merch_status on " .. tostring( #barcodes_to_unmerchandize ) .. " barcodes" )
 				hardware_manager:clear_merch_status( barcodes_to_unmerchandize, nil )

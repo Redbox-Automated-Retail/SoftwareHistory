@@ -1,17 +1,17 @@
-# Sublime (2020-02-26)
+# Van Halen (2020-05-21)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2020-02-26
-- Store labels: kop-rental-bundles-Sublime
+- Date (first download in the snapshots): 2020-05-21
+- Store labels: kop-rental-bundles-VanHalen
 - Package revisions:
-  - `kop-rental-bundles` revision 125 (`790ACCE25288957CD60C3EAB1B0ABA18778DB2E8`)
+  - `kop-rental-bundles` revision 130 (`5CBDCF2803EB0C48AC29BE5B1EA240B759569ABE`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `658EDB1168EFBB2188A8CABBA24854FA8C1981AC` | exact |
-| `fm.bundle` |  |  | `49381BBF7A7AB35F3A148D7FDE914058F4DA757B` | exact |
-| `library-rental-common.bundle` |  |  | `01E94A3B2C8098AACAFF3572EE0D4C875E3C5D24` | exact |
-| `ra-2.x.bundle` |  |  | `64135C0A4B978D49763FE9D281F073E1985AC23C` | exact |
+| `cp.bundle` |  |  | `53CBAB55AE345F5AB102035DA27BA2D095AD60C2` | exact |
+| `fm.bundle` |  |  | `A41DE710FB7442B39084C7ABD287DFDDF3465803` | exact |
+| `library-rental-common.bundle` |  |  | `764E7BA26634AA3D08B18CB9D4F7B8FC3192E4DB` | exact |
+| `ra-2.x.bundle` |  |  | `2C8BBD600511BD2F50B7E9FEEDA9F54D6C3B78A0` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

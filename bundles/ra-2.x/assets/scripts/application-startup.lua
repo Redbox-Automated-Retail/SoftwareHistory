@@ -739,3 +739,4 @@ kernel.timercreate("blocklist-check-timer",
 kernel.timerstart("blocklist-check-timer")
 
 kernel.setup_the_rental_application()
+kernel.register_zero_touch_pickup_callbacks( swipe_view_next_func )

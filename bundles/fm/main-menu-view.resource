@@ -109,7 +109,7 @@
 				horizontalAlignment="far"
 				optionFlags="Text, TextShadow"
 				foregroundColor="white"
-				visible="true"
+				visible="false"
 				enabled="true" />
 
 			<actor
@@ -124,7 +124,7 @@
 				horizontalAlignment="near"
 				optionFlags="Text, TextShadow"
 				foregroundColor="white"
-				visible="true"
+				visible="false"
 				enabled="true" />
 
 			<actor

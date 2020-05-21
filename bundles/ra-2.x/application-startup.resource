@@ -27,7 +27,8 @@
 	lib_datetime,
 	obj_progress_manager,
 	swipe_functions,
-	lib_inventory_functions">
+	lib_inventory_functions,
+  pickup_next">
     <property name="name" value="application_startup" />
     <aspect name="content" file="assets/scripts/application-startup.lua" />
 </resource>
