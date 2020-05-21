@@ -89,6 +89,8 @@ public class Session : ISession
 
 	public ITransactionData TransactionData { get; set; }
 
+	public bool IsInZeroTouchMode { get; set; }
+
 	public Session()
 	{
 		BrowseState = new BrowseState();

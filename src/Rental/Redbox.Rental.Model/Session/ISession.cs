@@ -49,5 +49,7 @@ public interface ISession
 
 	ITransactionData TransactionData { get; set; }
 
+	bool IsInZeroTouchMode { get; set; }
+
 	void ClearTrackData();
 }

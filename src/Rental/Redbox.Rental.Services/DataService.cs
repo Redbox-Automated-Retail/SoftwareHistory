@@ -408,6 +408,27 @@ public class DataService : IDataService
 		return errorList;
 	}
 
+	public List<ITitleProduct> GetMovieBrowseProducts()
+	{
+		WaitForFirstLoad();
+		List<ITitleProduct> result = new List<ITitleProduct>();
+		new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				result = (from x in _kioskProductView.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, TitleType.All, BrowseSort.SortDate, null, null, null, isADAView: false, null, null)
+					where x is ITitleProduct
+					select x as ITitleProduct).ToList();
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("DataService.GetMovieBrowseProducts - Unhandled exception occurred", e);
+		}
+		return result;
+	}
+
 	public ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, bool isPurchase, out List<ITitleProduct> products)
 	{
 		WaitForFirstLoad();

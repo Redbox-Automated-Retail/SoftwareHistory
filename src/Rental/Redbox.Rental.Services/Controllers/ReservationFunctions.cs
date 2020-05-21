@@ -73,6 +73,8 @@ public class ReservationFunctions
 
 	private static Action<string, bool> _authorizeOnPickupCallback;
 
+	private static Action _zeroTouchContinueCallback;
+
 	public static int GetRecommendedProductCount(List<Redbox.Rental.Model.Reservation.IReservation> reservations)
 	{
 		return GetRecommendedProducts(reservations).Count();
@@ -326,6 +328,16 @@ public class ReservationFunctions
 		{
 			LogHelper.Instance.Log("ReservationFunctions.SyncReservations: reservations already downloaded from server.");
 		}
+	}
+
+	public static void RegisterZeroTouchPickupCallbacks(Action continueReservation)
+	{
+		_zeroTouchContinueCallback = continueReservation;
+	}
+
+	public static void InvokeZeroTouchContinueReservation()
+	{
+		_zeroTouchContinueCallback?.Invoke();
 	}
 
 	public static void SetValidatedReservations(List<string> validatedRefNumbers)
@@ -709,6 +721,7 @@ public class ReservationFunctions
 		bool flag5 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.IsLoyaltyRedemption);
 		bool flag6 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.ReservedTitles.Any((IReservedTitle w) => w.Action == RentalShoppingCartItemAction.purchase));
 		bool flag7 = OrchestrationService.IsGiftCard();
+		bool isInZeroTouchMode = Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode;
 		bool flag8 = Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames;
 		bool flag9 = flag8;
 		IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
@@ -723,9 +736,9 @@ public class ReservationFunctions
 		List<string> reservedBarcodesToVend = GetReservedBarcodesToVend(accountReservations);
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() - num_reservations= {reservedBarcodesToVend.Count} num_reserved_titles= {count}");
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 2 - is_gift_card={flag7}   is_gc: {flag2}   is_mnp: {flag3}   is_mdv= {flag4}");
-		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 3 - is_loyalty_redemption= {flag5}  has_purchase= {flag6}");
+		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 3 - is_loyalty_redemption= {flag5}  has_purchase= {flag6}  is_zero_touch= {isInZeroTouchMode}");
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 4 - anyReservationsWithGames = {flag9}  Config.EndGameRentals= {Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals}  Config.EndGames= {Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames}");
-		if (count == 1 && reservedBarcodesToVend.Count < 5 && !flag7 && !flag2 && !flag3 && !flag4 && !flag5 && !flag6 && !(flag9 & flag8) && GetRecommendedProductCount(accountReservations) > 2)
+		if (count == 1 && reservedBarcodesToVend.Count < 5 && !flag7 && !isInZeroTouchMode && !flag2 && !flag3 && !flag4 && !flag5 && !flag6 && !(flag9 & flag8) && GetRecommendedProductCount(accountReservations) > 2)
 		{
 			flag = true;
 		}

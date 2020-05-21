@@ -14,5 +14,7 @@ public interface IQueueMessageProcessorService
 
 	ProcessMessageDelegate ProcessMessage { get; }
 
-	MessageProcessedDelegate MessageProcessed { get; }
+	MessageProcessedSuccessfullyDelegate MessageProcessedSuccessfully { get; }
+
+	AfterMessageProcessedDelegate AfterMessageProcessed { get; }
 }

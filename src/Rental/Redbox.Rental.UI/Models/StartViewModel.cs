@@ -109,6 +109,16 @@ public class StartViewModel : DependencyObject
 
 	public static readonly DependencyProperty RentAndBuyMoviesGamesTextVisibilityProperty = DependencyProperty.Register("RentAndBuyMoviesGamesTextVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
+	public static readonly DependencyProperty ZeroTouchLine1TextProperty = DependencyProperty.Register("ZeroTouchLine1Text", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ZeroTouchLine2TextProperty = DependencyProperty.Register("ZeroTouchLine2Text", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ZeroTouchNewTextProperty = DependencyProperty.Register("ZeroTouchNewText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ZeroTouchActionToBeginTextProperty = DependencyProperty.Register("ZeroTouchActionToBeginText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ZeroTouchSpoilerVisibilityProperty = DependencyProperty.Register("ZeroTouchSpoilerVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
 	public bool BurnInModeEnabled { get; set; }
 
 	public bool UseClassicStartView
@@ -842,6 +852,81 @@ public class StartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ReturnButtonEnabledProperty, value);
+			});
+		}
+	}
+
+	public string ZeroTouchLine1Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ZeroTouchLine1TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ZeroTouchLine1TextProperty, value);
+			});
+		}
+	}
+
+	public string ZeroTouchLine2Text
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ZeroTouchLine2TextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ZeroTouchLine2TextProperty, value);
+			});
+		}
+	}
+
+	public string ZeroTouchActionToBeginText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ZeroTouchActionToBeginTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ZeroTouchActionToBeginTextProperty, value);
+			});
+		}
+	}
+
+	public string ZeroTouchNewText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ZeroTouchNewTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ZeroTouchNewTextProperty, value);
+			});
+		}
+	}
+
+	public Visibility ZeroTouchSpoilerVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ZeroTouchSpoilerVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ZeroTouchSpoilerVisibilityProperty, value);
 			});
 		}
 	}

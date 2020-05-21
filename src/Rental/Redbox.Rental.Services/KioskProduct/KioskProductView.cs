@@ -11,7 +11,6 @@ using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
@@ -86,6 +85,8 @@ public class KioskProductView
 
 	public IKioskDataInstance KioskDataInstance { get; set; }
 
+	public List<Title> MovieTitles { get; } = new List<Title>();
+
 	public Dictionary<long, ITitleProduct> TitleProducts => _titleProducts;
 
 	public Dictionary<long, MDVProduct> MDVProducts => _mdvProducts;
@@ -117,6 +118,7 @@ public class KioskProductView
 		LoadMDVWorkaroundTitlesWithNoRollup();
 		LoadMovies();
 		LoadGames();
+		LoadMovieTitles();
 		LoadMoreLikeThis();
 		LogHelper.Instance.Log("KioskProductView.LoadView complete");
 	}
@@ -278,6 +280,53 @@ public class KioskProductView
 		return !string.IsNullOrEmpty(barcodeForProductResult?.Barcode);
 	}
 
+	private void LoadMovieTitles()
+	{
+		try
+		{
+			MovieTitles.Clear();
+			List<Title> outer = (from pair in ProfileDataInstance.Titles.Where(delegate(KeyValuePair<long, Title> pair)
+				{
+					TitleType titleTypeFromProductTypeId = TitleProduct.GetTitleTypeFromProductTypeId(pair.Value.ProductTypeId);
+					if (titleTypeFromProductTypeId.ToFamily() != TitleFamily.Movies)
+					{
+						return false;
+					}
+					return titleTypeFromProductTypeId != TitleType.DigitalCode;
+				})
+				select pair.Value).ToList();
+			var inner = (from pair in ProfileDataInstance.ProductGroups
+				where pair.Value.ProductGroupTypeId == 1
+				select pair.Value).ToList().SelectMany((ProductGroup tr) => tr.ProductIds, (ProductGroup pg, long p) => new { pg, p });
+			var list = (from t in outer
+				join tr in inner on t.ProductId equals tr.p
+				orderby t.SortDate ?? DateTime.Now descending, t.BoxOfficeGross descending, t.SortName.ToLower() descending
+				select new { t, tr.pg }).ToList();
+			list.ForEach(tpg =>
+			{
+				tpg.t.ProductGroup = tpg.pg;
+			});
+			MovieTitles.AddRange((from tpg in list
+				select tpg.t into t
+				where t.IsRentable
+				select t).ToList());
+			Dictionary<long, int> ProductGroupOrder = new Dictionary<long, int>();
+			int position = 1;
+			MovieTitles.ForEach(delegate(Title mt)
+			{
+				if (!ProductGroupOrder.ContainsKey(mt.ProductGroup.ProductGroupId))
+				{
+					ProductGroupOrder[mt.ProductGroup.ProductGroupId] = position++;
+				}
+				mt.ProductGroup.SortOrderPosition = ProductGroupOrder[mt.ProductGroup.ProductGroupId];
+			});
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("KioskProductView.LoadMovieTitles - an unhandled exception occurred", e);
+		}
+	}
+
 	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
@@ -303,7 +352,7 @@ public class KioskProductView
 			list = list.Where((ITitleProduct item) => FilterByRentalPrice(item, priceRangeLow, priceRangeHigh)).ToList();
 		}
 		list = ApplyMainFilter(list, browseFilter);
-		return ((IEnumerable<ITitleProduct>)list.OrderList(browseSort, browseFilter)).Select((Func<ITitleProduct, IKioskProduct>)((ITitleProduct item) => item)).ToList();
+		return ((IEnumerable<ITitleProduct>)list.OrderList(browseSort, browseFilter, MovieTitles)).Select((Func<ITitleProduct, IKioskProduct>)((ITitleProduct item) => item)).ToList();
 	}
 
 	private List<ITitleProduct> FilterByTitleFamily(BrowseViewFilter browseFilter, TitleFamily titleFamily, List<TitleType> titleTypes, List<ITitleProduct> list, bool includeTitleTypes = true)
@@ -369,7 +418,7 @@ public class KioskProductView
 		{
 			list = FilterToTitles(list);
 		}
-		return list.OrderList(BrowseSort.SortDate, BrowseViewFilter.All);
+		return list.OrderList(BrowseSort.SortDate, BrowseViewFilter.All, MovieTitles);
 	}
 
 	public List<IKioskProduct> GetCarouselProducts(bool showCollections)
@@ -377,15 +426,10 @@ public class KioskProductView
 		BrowseViewFilter browseFilter = BrowseViewFilter.All;
 		List<IKioskProduct> resultList = new List<IKioskProduct>();
 		int num = 11;
-		(from x in _movieProducts.OrderList(BrowseSort.SortDate, browseFilter)
-			where IsCarouselViewable(x, Genres.HitMovies) && !resultList.Contains(x)
-			select x).Take(num)?.ForEach(resultList.Add);
-		(from x in _movieProducts.OrderList(BrowseSort.SortDate, browseFilter)
-			where IsCarouselViewable(x, Genres.Top20Movies) && !resultList.Contains(x)
-			select x).Take(num - resultList.Count)?.ForEach(resultList.Add);
-		(from x in _movieProducts.OrderList(BrowseSort.SortDate, browseFilter)
-			where IsCarouselViewable(x, Genres.ActionAndAdventure) && !resultList.Contains(x)
-			select x).Take(num - resultList.Count)?.ForEach(resultList.Add);
+		List<ITitleProduct> source = _movieProducts.OrderList(BrowseSort.SortDate, browseFilter, MovieTitles).ToList();
+		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.HitMovies) && !resultList.Contains(x)).Take(num)?.ForEach(resultList.Add);
+		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.Top20Movies) && !resultList.Contains(x)).Take(num - resultList.Count)?.ForEach(resultList.Add);
+		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.ActionAndAdventure) && !resultList.Contains(x)).Take(num - resultList.Count)?.ForEach(resultList.Add);
 		if (showCollections)
 		{
 			resultList.Insert(Math.Min(5, resultList.Count()), new CollectionProduct(new Collection
@@ -396,20 +440,6 @@ public class KioskProductView
 			{
 				ImageFile = "image_collections_carousel"
 			});
-		}
-		if (!Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals && !Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames)
-		{
-			List<ITitleProduct> list = (from x in _gamesProducts.OrderList(BrowseSort.SortDate, browseFilter)
-				where IsCarouselViewable(x, null) && !resultList.Contains(x)
-				select x).Take(2).ToList();
-			if (GetInStockGameCount() >= 3 && list != null && list.Any())
-			{
-				resultList.Insert(Math.Min(6, resultList.Count()), list.FirstOrDefault());
-				if (list.Count() >= 2)
-				{
-					resultList.Insert(Math.Min(num, resultList.Count()), list.Skip(1).FirstOrDefault());
-				}
-			}
 		}
 		return resultList.Take(num).ToList();
 	}
@@ -1043,18 +1073,25 @@ public class KioskProductView
 
 	private void LoadMoreLikeThis()
 	{
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-		if (service?.TitleDetailsLayoutABTestVersionIgnoreCulture == "B")
+		try
 		{
-			LogHelper.Instance.Log("TitleDetailsLayoutABTestVersion config is set to B. Sending productGroupIds to KCS for morelikethis.");
-			IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
-			IKioskClientService service2 = ServiceLocator.Instance.GetService<IKioskClientService>();
-			List<long> productGroupIds = _movieProducts.Select((ITitleProduct x) => dataService.GetProductGroupId(x)).ToList();
-			service2.ProductGroups.RefreshAllMLTData(productGroupIds);
+			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+			if (service?.TitleDetailsLayoutABTestVersionIgnoreCulture == "B")
+			{
+				LogHelper.Instance.Log("TitleDetailsLayoutABTestVersion config is set to B. Sending productGroupIds to KCS for morelikethis.");
+				IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
+				IKioskClientService service2 = ServiceLocator.Instance.GetService<IKioskClientService>();
+				List<long> productGroupIds = _movieProducts.Select((ITitleProduct x) => dataService.GetProductGroupId(x)).ToList();
+				service2.ProductGroups.RefreshAllMLTData(productGroupIds);
+			}
+			else
+			{
+				LogHelper.Instance.Log($"TitleDetailsLayoutABTestVersion config is set to {service?.TitleDetailsLayoutABTestVersionIgnoreCulture}. Skipping sending productGroupIds to KCS for morelikethis.");
+			}
 		}
-		else
+		catch (Exception e)
 		{
-			LogHelper.Instance.Log($"TitleDetailsLayoutABTestVersion config is set to {service?.TitleDetailsLayoutABTestVersionIgnoreCulture}. Skipping sending productGroupIds to KCS for morelikethis.");
+			LogHelper.Instance.LogException("KioskProductView.LoadMoreLikeThis - an unhandled exception occurred", e);
 		}
 	}
 }

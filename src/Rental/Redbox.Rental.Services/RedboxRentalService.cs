@@ -102,6 +102,7 @@ public class RedboxRentalService : IRedboxRental
 			ServiceLocator.Instance.GetService<IEMVReaderHealth>()?.SessionWasInTechnicalFallback(cardReadAttemptCollection.IsInTrackableTechnicalFallback);
 		}
 		Redbox.Rental.Services.Session.Session.Instance?.ClearTrackData();
+		ServiceLocator.Instance.GetService<ITrackDataService>()?.StopAllSessionCardReads(rentalShoppingCart?.ShoppingSessionId ?? default(Guid), CancelReason.EndingSession);
 		ServiceLocator.Instance.GetService<IKioskClientService>()?.Session?.End();
 		StartNewRentalSession(newSessionContext);
 	}
@@ -422,7 +423,16 @@ public class RedboxRentalService : IRedboxRental
 					return;
 				}
 			}
-			ApplicationState.Instance.RemoveMaintenanceModeReason(MaintenanceModeSource.CardReader, "0072CDRR");
+			bool? flag = ServiceLocator.Instance?.GetService<IConfiguration>()?.ZeroTouchEnabled;
+			if (flag.HasValue && flag == true && OrchestrationService.PeekView() == "start_view")
+			{
+				LogHelper.Instance.Log(string.Format("Done waiting for card reader connection.  Starting zero touch card read on {0}", "start_view"));
+				StartViewController.OnCardReaderConnected();
+			}
+			else
+			{
+				ApplicationState.Instance.RemoveMaintenanceModeReason(MaintenanceModeSource.CardReader, "0072CDRR");
+			}
 		}, CancellationToken.None, TaskCreationOptions.None, ViewService.UITaskScheduler).Wait();
 	}
 

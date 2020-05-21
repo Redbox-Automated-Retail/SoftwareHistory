@@ -28,6 +28,8 @@ public class ProfileData : IProfileData
 
 	private string _keyValueSql = "SELECT [Key], [Value] FROM {0}";
 
+	private string _keyValueSqlKey = "SELECT [Key], [Value] FROM {0} WHERE [Key] = '{1}'";
+
 	public ProfileData(string dataPath, string imagesDirectoryName)
 	{
 		_dataPath = dataPath;
@@ -324,8 +326,9 @@ public class ProfileData : IProfileData
 
 	private void LoadStore(VistaDBDatabaseProvider db, ProfileDataInstance instance)
 	{
-		DataTable sqlData = db.GetSqlData(string.Format(_keyValueSql, "Store"));
-		ConvertToList(sqlData, "LoadStore", delegate(string key, string value)
+		long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
+		DataTable data = ((num <= 0) ? db.GetSqlData(string.Format(_keyValueSql, "Store")) : db.GetSqlData(string.Format(_keyValueSqlKey, "Store", num)));
+		ConvertToList(data, "LoadStore", delegate(string key, string value)
 		{
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			Store store = new Store
@@ -355,10 +358,10 @@ public class ProfileData : IProfileData
 				ServiceFeeTaxRate = dictionary.ToDecimal("service_fee_tax_rate"),
 				ReturnOnlyModeDate = dictionary.ToDateTime("return_only_mode_date", null)
 			};
-			decimal? num = dictionary.ToDecimal("digital_purchase_tax_rate", null);
-			if (num.HasValue)
+			decimal? num2 = dictionary.ToDecimal("digital_purchase_tax_rate", null);
+			if (num2.HasValue)
 			{
-				store.DigitalPurchaseTaxRate = num.Value;
+				store.DigitalPurchaseTaxRate = num2.Value;
 			}
 			else
 			{

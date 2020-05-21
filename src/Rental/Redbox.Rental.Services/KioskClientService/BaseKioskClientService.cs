@@ -41,7 +41,7 @@ public class BaseKioskClientService
 			return;
 		}
 		StringBuilder stringBuilder = new StringBuilder();
-		foreach (IError error in webResult.Response.Errors)
+		foreach (Redbox.Rental.Model.KioskClientService.Error error in webResult.Response.Errors)
 		{
 			stringBuilder.AppendLine($"Error code {error.Code}, Message {error.Message}");
 		}

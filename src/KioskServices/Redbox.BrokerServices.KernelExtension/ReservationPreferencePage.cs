@@ -194,6 +194,14 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 
 	private CheckBox cbNewHash;
 
+	private TextBox tb_last4;
+
+	private TextBox tb_first6;
+
+	private Label label17;
+
+	private Label label15;
+
 	private IDataService DataService
 	{
 		get
@@ -421,10 +429,10 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 
 	public void SimulateCreateReservation()
 	{
-		//IL_01c0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e1: Expected O, but got Unknown
+		//IL_020b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0210: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0218: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0226: Expected O, but got Unknown
 		Dictionary<string, List<int>> dictionary = new Dictionary<string, List<int>>();
 		List<ReservationTitle3> list = new List<ReservationTitle3>();
 		bool flag = false;
@@ -462,10 +470,12 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 				}
 			}
 		}
+		string sourcString = ((!string.IsNullOrWhiteSpace(tb_first6.Text)) ? tb_first6.Text : "1111");
+		string last = ((!string.IsNullOrWhiteSpace(tb_last4.Text)) ? tb_last4.Text : "411111");
 		ReservationCardHash val = new ReservationCardHash
 		{
-			Last4 = "1111",
-			CardBinHash = CardHelper.GenerateHash("411111")
+			Last4 = last,
+			CardBinHash = CardHelper.GenerateHash(sourcString)
 		};
 		string text = "tE+xZHoxAjrOrueI34+SXg4Q+xwchyIQu8vdRMSTz3k=";
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
@@ -593,12 +603,16 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.label14 = new System.Windows.Forms.Label();
 		this.nudSvcFeeActual = new System.Windows.Forms.NumericUpDown();
 		this.panel1 = new System.Windows.Forms.Panel();
+		this.cbNewHash = new System.Windows.Forms.CheckBox();
 		this.cbAuthorizeAtPickup = new System.Windows.Forms.CheckBox();
 		this.lblSvcFeeTax = new System.Windows.Forms.Label();
 		this.label16 = new System.Windows.Forms.Label();
 		this.lblServiceFee = new System.Windows.Forms.Label();
 		this.label13 = new System.Windows.Forms.Label();
-		this.cbNewHash = new System.Windows.Forms.CheckBox();
+		this.label15 = new System.Windows.Forms.Label();
+		this.label17 = new System.Windows.Forms.Label();
+		this.tb_first6 = new System.Windows.Forms.TextBox();
+		this.tb_last4 = new System.Windows.Forms.TextBox();
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).BeginInit();
 		((System.ComponentModel.ISupportInitialize)this.dgvTitles).BeginInit();
 		((System.ComponentModel.ISupportInitialize)this.nudTaxRate).BeginInit();
@@ -870,6 +884,10 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.nudSvcFeeActual.TabIndex = 34;
 		this.nudSvcFeeActual.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
 		this.nudSvcFeeActual.ValueChanged += new System.EventHandler(nudSvcFeeActual_ValueChanged);
+		this.panel1.Controls.Add(this.tb_last4);
+		this.panel1.Controls.Add(this.tb_first6);
+		this.panel1.Controls.Add(this.label17);
+		this.panel1.Controls.Add(this.label15);
 		this.panel1.Controls.Add(this.cbNewHash);
 		this.panel1.Controls.Add(this.cbAuthorizeAtPickup);
 		this.panel1.Controls.Add(this.lblSvcFeeTax);
@@ -909,6 +927,13 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.panel1.Name = "panel1";
 		this.panel1.Size = new System.Drawing.Size(539, 233);
 		this.panel1.TabIndex = 12;
+		this.cbNewHash.AutoSize = true;
+		this.cbNewHash.Location = new System.Drawing.Point(4, 199);
+		this.cbNewHash.Name = "cbNewHash";
+		this.cbNewHash.Size = new System.Drawing.Size(123, 17);
+		this.cbNewHash.TabIndex = 42;
+		this.cbNewHash.Text = "Use New Card Hash";
+		this.cbNewHash.UseVisualStyleBackColor = true;
 		this.cbAuthorizeAtPickup.AutoSize = true;
 		this.cbAuthorizeAtPickup.Location = new System.Drawing.Point(4, 179);
 		this.cbAuthorizeAtPickup.Name = "cbAuthorizeAtPickup";
@@ -940,13 +965,26 @@ public class ReservationPreferencePage : UserControl, IPreferencePageHost
 		this.label13.Size = new System.Drawing.Size(64, 13);
 		this.label13.TabIndex = 29;
 		this.label13.Text = "Service Fee";
-		this.cbNewHash.AutoSize = true;
-		this.cbNewHash.Location = new System.Drawing.Point(4, 199);
-		this.cbNewHash.Name = "cbNewHash";
-		this.cbNewHash.Size = new System.Drawing.Size(123, 17);
-		this.cbNewHash.TabIndex = 42;
-		this.cbNewHash.Text = "Use New Card Hash";
-		this.cbNewHash.UseVisualStyleBackColor = true;
+		this.label15.AutoSize = true;
+		this.label15.Location = new System.Drawing.Point(445, 5);
+		this.label15.Name = "label15";
+		this.label15.Size = new System.Drawing.Size(38, 13);
+		this.label15.TabIndex = 43;
+		this.label15.Text = "First 6:";
+		this.label17.AutoSize = true;
+		this.label17.Location = new System.Drawing.Point(444, 49);
+		this.label17.Name = "label17";
+		this.label17.Size = new System.Drawing.Size(39, 13);
+		this.label17.TabIndex = 44;
+		this.label17.Text = "Last 4:";
+		this.tb_first6.Location = new System.Drawing.Point(444, 21);
+		this.tb_first6.Name = "tb_first6";
+		this.tb_first6.Size = new System.Drawing.Size(92, 20);
+		this.tb_first6.TabIndex = 45;
+		this.tb_last4.Location = new System.Drawing.Point(444, 65);
+		this.tb_last4.Name = "tb_last4";
+		this.tb_last4.Size = new System.Drawing.Size(92, 20);
+		this.tb_last4.TabIndex = 46;
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		base.Controls.Add(this.btnRemove);

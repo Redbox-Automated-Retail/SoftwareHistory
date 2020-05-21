@@ -14,15 +14,28 @@ namespace Redbox.KioskDataServices.Proxy;
 
 internal class KioskDataServicesProxy
 {
+	private Uri _kioskDataServicesBaseUri;
+
+	private string _kioskDataServicesKey;
+
 	public static KioskDataServicesProxy Instance => Singleton<KioskDataServicesProxy>.Instance;
 
-	private Uri KioskDataServicesBaseUri => new Uri(ServiceLocator.Instance.GetService<IConfiguration>()?.KioskDataServicesUrl?.TrimEnd('/') + "/");
-
-	private string AuthorizationKey => ServiceLocator.Instance.GetService<IConfiguration>()?.KioskDataServicesKey;
-
-	public IDictionary<string, object> AddKioskSession(byte[] payload)
+	private Uri KioskDataServicesBaseUri
 	{
-		return ExecuteMessage("AddKioskSession", "api/KioskData/AddKioskSession", payload);
+		get
+		{
+			LoadUriAndKey();
+			return _kioskDataServicesBaseUri;
+		}
+	}
+
+	private string KioskDataServicesKey
+	{
+		get
+		{
+			LoadUriAndKey();
+			return _kioskDataServicesKey;
+		}
 	}
 
 	public IDictionary<string, object> AddKioskSessionJson(byte[] payload)
@@ -65,6 +78,26 @@ internal class KioskDataServicesProxy
 		return ExecuteMessage("KioskVersions", "api/KioskData/KioskVersion", payload);
 	}
 
+	public IDictionary<string, object> KioskStatistics(byte[] payload)
+	{
+		return ExecuteMessage("KioskStatistics", "api/KioskData/KioskStatistics", payload);
+	}
+
+	public IDictionary<string, object> KioskProperties(byte[] payload)
+	{
+		return ExecuteMessage("KioskProperties", "api/KioskData/KioskProperties", payload);
+	}
+
+	public IDictionary<string, object> KioskEvents(byte[] payload)
+	{
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskEventsToKioskDataService)
+		{
+			return ExecuteMessage("KioskEvents", "api/KioskData/KioskEvents", payload);
+		}
+		LogHelper.Instance.Log("KioskDataServicesProxy.KioskEvents() - bypassing live call to AWS due to configuration flag being off");
+		return new Dictionary<string, object> { { "success", true } };
+	}
+
 	private IDictionary<string, object> ExecuteMessage(string messageType, string apiUri, byte[] payload)
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
@@ -74,7 +107,7 @@ internal class KioskDataServicesProxy
 			string text = Encoding.ASCII.GetString(payload);
 			string text2 = text.ToPrettyJson();
 			LogHelper.Instance.Log($"KioskDataServicesProxy JSON request: type {messageType}; body: {((text2.Length <= 10000) ? text2 : text)}");
-			string text3 = PerformRemoteMessage(apiUri, text, AuthorizationKey);
+			string text3 = PerformRemoteMessage(apiUri, text, KioskDataServicesKey);
 			LogHelper.Instance.Log($"KioskDataServicesProxy JSON response: type {messageType}; response: {text3.ToPrettyJson()}");
 			LogHelper.Instance.Log($"KioskDataServicesProxy call execution time: {executionTimer.Elapsed}");
 			if (!string.IsNullOrEmpty(text3))
@@ -137,6 +170,43 @@ internal class KioskDataServicesProxy
 		{
 			LogHelper.Instance.Log($"Unable get sessionId from body: {body}", e);
 			return null;
+		}
+	}
+
+	private void LoadUriAndKey()
+	{
+		if (!(_kioskDataServicesBaseUri == null) && _kioskDataServicesKey != null)
+		{
+			return;
+		}
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		if (service == null)
+		{
+			return;
+		}
+		LogHelper.Instance.Log("KioskDataServicesProxy.LoadUriAndKey() - config valid");
+		Uri uri = null;
+		string kioskDataServicesUrl = service.KioskDataServicesUrl;
+		string kioskDataServicesKey = service.KioskDataServicesKey;
+		LogHelper.Instance.Log($"KioskDataServicesProxy.LoadUriAndKey() - config url: '{kioskDataServicesUrl}'");
+		if (!string.IsNullOrEmpty(kioskDataServicesUrl))
+		{
+			kioskDataServicesUrl = kioskDataServicesUrl.TrimEnd('/') + "/";
+			LogHelper.Instance.Log($"KioskDataServicesProxy.LoadUriAndKey() - config value trimmed: '{kioskDataServicesUrl}'");
+			try
+			{
+				uri = new Uri(kioskDataServicesUrl);
+				LogHelper.Instance.Log($"KioskDataServicesProxy.LoadUriAndKey() - created uri: '{uri}'");
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.LogException("KioskDataServicesProxy.LoadUriAndKey() - exception creating Uri!", e);
+			}
+		}
+		if (uri != null && !string.IsNullOrEmpty(kioskDataServicesKey))
+		{
+			_kioskDataServicesBaseUri = uri;
+			_kioskDataServicesKey = kioskDataServicesKey;
 		}
 	}
 

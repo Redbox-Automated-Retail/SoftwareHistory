@@ -31,4 +31,29 @@ public class KioskClientServiceProductGroups : BaseKioskClientService, IKioskCli
 	{
 		Task.Run(() => ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/morelikethis/refresh", base.KioskClientServiceBaseUrl, "api/productgroups")), productGroupIds, "POST", 180000));
 	}
+
+	public ProductGroupSortOrder GetSortOrder()
+	{
+		LogHelper.Instance.Log("KCS ProductGroups.GetSortOrder");
+		WebResult<GetSortOrderResponse> webResult = ExecuteWebRequest<GetSortOrderResponse>(new Uri(string.Format("{0}/{1}/sortorder", base.KioskClientServiceBaseUrl, "api/productgroups")), null, "GET", 500);
+		LogKioskClientServiceResponse("KCS ProductGroups.GetSortOrder", webResult);
+		if (webResult == null || webResult.Response == null)
+		{
+			LogHelper.Instance.Log("KCS.GetSortOrder returned null");
+			return null;
+		}
+		if (!webResult.Response.Success)
+		{
+			LogHelper.Instance.Log($"KCS.GetSortOrder not ok {webResult.Response.StatusCode}");
+			return null;
+		}
+		ProductGroupSortOrder productGroupSortOrder = webResult?.Response?.ProductGroupSortOrder;
+		if (productGroupSortOrder == null)
+		{
+			LogHelper.Instance.Log("KCS.GetSortOrder ProductGroupSortOrder is null");
+			return null;
+		}
+		LogHelper.Instance.Log($"KCS SortOrderTest Retrieved Type: {productGroupSortOrder.SortOrderType}, Count: {productGroupSortOrder.SortOrders?.Count}");
+		return productGroupSortOrder;
+	}
 }

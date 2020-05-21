@@ -64,4 +64,45 @@ public class Title : ILuaKeyValue
 	public decimal? DigitalSDRentPrice { get; set; }
 
 	public decimal? DigitalHDRentPrice { get; set; }
+
+	public ProductGroup ProductGroup { get; set; }
+
+	public int SortOrderPosition => ProductGroup?.SortOrderPosition ?? 0;
+
+	public bool IsEmptyCase => ProductId == 1139;
+
+	public bool IsRentable
+	{
+		get
+		{
+			if (IsEmptyCase)
+			{
+				return false;
+			}
+			if (DoNotRent)
+			{
+				return false;
+			}
+			return IsAvailable;
+		}
+	}
+
+	public bool DoNotRent
+	{
+		get
+		{
+			if (!DoNotRentDate.HasValue)
+			{
+				return false;
+			}
+			return DoNotRentDate <= DateTime.Now;
+		}
+	}
+
+	public bool IsAvailable => DateTime.Now > (MerchandiseDate ?? DateTime.Today);
+
+	public override string ToString()
+	{
+		return $"MovieTitle:{ProductId} {SortName} SortOrder: {SortOrderPosition} Group: {ProductGroup?.ProductGroupId} {ProductGroup?.ProductGroupName}";
+	}
 }

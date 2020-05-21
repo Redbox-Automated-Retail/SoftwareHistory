@@ -27,6 +27,7 @@ using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Controllers;
 using Redbox.Rental.Services.EmailOptinCampaign;
+using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Views;
 
@@ -416,6 +417,7 @@ public static class OrchestrationService
 			bool result = ServiceLocator.Instance.GetService<IDataService>().RefreshIfNeeded();
 			LogHelper.Instance.Log("OrchestrationService.RentalRefreshIfNeeded - PricingService");
 			ServiceLocator.Instance.GetService<IPricingService>().UpdatePricingInstance();
+			ServiceLocator.Instance.GetService<IProductGroupService>()?.StartSession();
 			return result;
 		}
 		catch (Exception e)
@@ -527,6 +529,11 @@ public static class OrchestrationService
 	public static string PeekView()
 	{
 		return ServiceLocator.Instance.GetService<IViewService>()?.Peek();
+	}
+
+	public static string PeekView(int index)
+	{
+		return ServiceLocator.Instance.GetService<IViewService>()?.Peek(index);
 	}
 
 	public static void ViewGoBack(object context, bool popOnly)
@@ -677,6 +684,10 @@ public static class OrchestrationService
 			}
 			IAnalyticsService service2 = ServiceLocator.Instance.GetService<IAnalyticsService>();
 			service2?.Start(currentSession.Id.ToString(), sessionType2);
+			if (Redbox.Rental.Services.Session.Session.Instance != null && Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode)
+			{
+				service2?.AddSessionProperty("IsZeroTouch", Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode);
+			}
 			service2?.AddView(ViewService?.GetCurrentViewAnalyticsName());
 		}
 		RentalRefreshIfNeeded();
@@ -786,6 +797,11 @@ public static class OrchestrationService
 	public static void StartTimer(string name)
 	{
 		(ServiceLocator.Instance.GetService<ITimerService>()?.GetTimer(name))?.Start();
+	}
+
+	public static void StopTimer(string timerName)
+	{
+		(ServiceLocator.Instance.GetService<ITimerService>()?.GetTimer(timerName))?.Stop();
 	}
 
 	public static bool IsGiftCard()

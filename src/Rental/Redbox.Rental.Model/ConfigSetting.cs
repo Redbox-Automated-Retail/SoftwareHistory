@@ -62,6 +62,10 @@ public static class ConfigSetting
 
 	public const string SendKioskAlertsToKioskDataService = "SendKioskAlertsToKioskDataService";
 
+	public const string SendKioskStatisticsToKioskDataService = "SendKioskStatisticsToKioskDataService";
+
+	public const string SendKioskPropertiesToKioskDataService = "SendKioskPropertiesToKioskDataService";
+
 	public const string SendKioskVersionsToKioskDataService = "SendKioskVersionsToKioskDataService";
 
 	public const string MaxUnknownSyncs = "MaxUnknownSyncs";
@@ -93,6 +97,10 @@ public static class ConfigSetting
 	public const string SendKioskFunctionChecksToKioskServices = "SendKioskAlertsToKioskServices";
 
 	public const string SendKioskFunctionChecksToKioskDataService = "SendKioskAlertsToKioskDataService";
+
+	public const string SendKioskEventsToKioskServices = "SendKioskEventsToKioskServices";
+
+	public const string SendKioskEventsToKioskDataService = "SendKioskEventsToKioskDataService";
 
 	public const string GameEnableXbox360 = "GameEnableXbox360";
 
@@ -293,4 +301,20 @@ public static class ConfigSetting
 	public const string BluefinServiceTimeout = "BluefinServiceTimeout";
 
 	public const string KioskClientServiceBaseUrl = "KioskClientServiceBaseUrl";
+
+	public const string UseMerchOrdersForThinning = "UseMerchOrdersForThinning";
+
+	public const string KioskClientServiceGetMerchandizingOrdersTimeout = "KioskClientServiceGetMerchandizingOrdersTimeout";
+
+	public const string ThinJobTimeRange = "ThinJobTimeRange";
+
+	public const string ZeroTouchEnabled = "ZeroTouchEnabled";
+
+	public const string ZeroTouchPickupEnabled = "ZeroTouchPickupEnabled";
+
+	public const string ZeroTouchReturnEnabled = "ZeroTouchReturnEnabled";
+
+	public const string ZeroTouchContactlessEnabled = "ZeroTouchContactlessEnabled";
+
+	public const string ZeroTouchReadTimeout = "ZeroTouchReadTimeout";
 }

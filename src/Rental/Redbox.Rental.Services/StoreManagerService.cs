@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using Microsoft.Win32;
 using Redbox.Core;
@@ -21,6 +22,8 @@ public class StoreManagerService : IStoreManager
 	private string _banner;
 
 	private bool _kioskSellThru = true;
+
+	public string _applicationDataPath;
 
 	public Country Country => _country;
 
@@ -148,6 +151,22 @@ public class StoreManagerService : IStoreManager
 	}
 
 	public decimal PurchasePrice { get; set; }
+
+	public string ApplicationDataPath
+	{
+		get
+		{
+			if (!string.IsNullOrWhiteSpace(_applicationDataPath))
+			{
+				return _applicationDataPath;
+			}
+			string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create), "Redbox\\KioskEngine");
+			_applicationDataPath = Path.GetFullPath(path);
+			return _applicationDataPath;
+		}
+	}
+
+	public string RunningPath => Path.GetDirectoryName(typeof(StoreManagerService).Assembly.Location);
 
 	public StoreManagerService(Country country, IConfigurationService configService)
 	{

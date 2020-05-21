@@ -89,6 +89,8 @@ public class RentalShoppingCartItem : IRentalShoppingCartItem
 		}
 	}
 
+	public int RentalPosition { get; set; }
+
 	public RentalShoppingCartItem(ITitleProduct titleProduct)
 	{
 		_titleProduct = titleProduct;

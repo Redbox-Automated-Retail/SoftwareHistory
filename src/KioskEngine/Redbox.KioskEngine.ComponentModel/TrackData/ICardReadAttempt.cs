@@ -22,5 +22,7 @@ public interface ICardReadAttempt : ITechnicalFallbackTracking
 
 	bool AttemptedCancel { get; set; }
 
+	CancelReason CancelReason { get; set; }
+
 	IAuthorizeResult AuthorizeResult { get; set; }
 }

@@ -40,6 +40,14 @@ public static class AnalyticsConstants
 		public const string CurrentCulture = "CurrentCulture";
 
 		public const string SessionType = "SessionType";
+
+		public const string IsAda = "IsADA";
+
+		public const string IsAbe = "IsABE";
+
+		public const string SortOrderType = "SortOrderType";
+
+		public const string IsZeroTouch = "IsZeroTouch";
 	}
 
 	public static class EventProperties

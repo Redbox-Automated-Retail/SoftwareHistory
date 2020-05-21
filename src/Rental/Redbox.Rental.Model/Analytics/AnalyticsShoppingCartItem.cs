@@ -56,9 +56,15 @@ public class AnalyticsShoppingCartItem
 
 	public decimal? DefaultExtraNightPrice { get; set; }
 
+	public int? SortOrderType { get; set; }
+
+	public int? SortOrderPosition { get; set; }
+
+	public int? RentalPosition { get; set; }
+
 	public static AnalyticsShoppingCartItem ToShoppingCartItem(IRentalShoppingCartItem rentalShoppingCartItem)
 	{
-		return new AnalyticsShoppingCartItem
+		AnalyticsShoppingCartItem analyticsShoppingCartItem = new AnalyticsShoppingCartItem
 		{
 			ProductId = rentalShoppingCartItem.ProductId,
 			TitleRollupProductGroupId = rentalShoppingCartItem.TitleRollupProductGroupId,
@@ -79,5 +85,12 @@ public class AnalyticsShoppingCartItem
 			OfferCode = rentalShoppingCartItem.OfferCode,
 			PersonalizationTitleTags = rentalShoppingCartItem.PersonalizationTitleTags
 		};
+		if (rentalShoppingCartItem.Action == RentalShoppingCartItemAction.rental)
+		{
+			analyticsShoppingCartItem.SortOrderType = rentalShoppingCartItem.TitleProduct.SortOrderType;
+			analyticsShoppingCartItem.SortOrderPosition = rentalShoppingCartItem.TitleProduct.SortOrderPosition;
+			analyticsShoppingCartItem.RentalPosition = rentalShoppingCartItem.RentalPosition;
+		}
+		return analyticsShoppingCartItem;
 	}
 }

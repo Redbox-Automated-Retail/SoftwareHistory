@@ -421,6 +421,7 @@ public class PersonalizationFunctions
 		ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
 		object lockObject = new object();
 		bool hasActionExecuted = false;
+		ITimer emailNextTimer = null;
 		Action continueAction = (continueAction = delegate
 		{
 			lock (lockObject)
@@ -428,15 +429,18 @@ public class PersonalizationFunctions
 				if (!hasActionExecuted)
 				{
 					hasActionExecuted = true;
+					OrchestrationService.ViewGoBackSafe("email view continue", popOnly: false);
+					emailNextTimer.Stop();
 					timerService?.RemoveTimer("email_next_timer");
 					CheckoutFunctions.PromptUserForSignups();
 				}
 			}
 		});
-		(timerService?.CreateTimer("email_next_timer", num, num, delegate
+		emailNextTimer = timerService?.CreateTimer("email_next_timer", num, num, delegate
 		{
 			continueAction();
-		}))?.Start();
+		});
+		emailNextTimer?.Start();
 		OrchestrationService.ViewShow("email_receipt_view", new EmailReceiptInfo
 		{
 			ContinueAction = continueAction,

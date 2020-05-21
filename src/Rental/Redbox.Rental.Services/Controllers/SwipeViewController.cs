@@ -254,13 +254,13 @@ public class SwipeViewController : BaseViewController
 			}
 			swipeViewModel.CardReadAttempt.DeviceInputType = deviceInputType;
 			swipeViewModel.CardReadAttempt.CardReadAttemptStatus = CardReadAttemptStatus.Active;
-			service2.StartCardRead(timeout, deviceInputType, delegate(IReadCardJob cardReadJob)
+			service2.StartCardRead(timeout, isZeroTouchRead: false, deviceInputType, delegate(IReadCardJob cardReadJob)
 			{
 				if (cardReadJob != null && swipeViewModel?.CardReadAttempt != null)
 				{
 					swipeViewModel.CardReadAttempt.CardReadJobCommandRequestId = cardReadJob.RequestId;
 				}
-			});
+			}, BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ShoppingSessionId ?? default(Guid));
 		}
 		else
 		{
@@ -268,7 +268,7 @@ public class SwipeViewController : BaseViewController
 		}
 	}
 
-	private static void OnCardReadStartedHandler()
+	private static void OnCardReadStartedHandler(Guid cardReadJobCommandRequestId)
 	{
 		LogHelper.Instance.Log("SwipeViewController card read started.");
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
@@ -465,7 +465,7 @@ public class SwipeViewController : BaseViewController
 
 	public static void LeaveSwipeView(IViewFrameInstance viewFrameInstance)
 	{
-		ServiceLocator.Instance.GetService<ITrackDataService>()?.StopCardRead();
+		ServiceLocator.Instance.GetService<ITrackDataService>()?.StopCardRead(CancelReason.LeavingSwipeView);
 		ICardReadAttempt currentCardReadAttempt = GetCurrentCardReadAttempt();
 		if (currentCardReadAttempt != null && currentCardReadAttempt.CardReadAttemptStatus == CardReadAttemptStatus.Active)
 		{
@@ -492,7 +492,7 @@ public class SwipeViewController : BaseViewController
 			stringBuilder.Append($" Status: {item.CardReadAttemptStatus}, ");
 			if (item.AttemptedCancel)
 			{
-				stringBuilder.Append(" AttemptedCancel: True, ");
+				stringBuilder.Append($" AttemptedCancel: True, CancelReason: {item.CancelReason}, ");
 			}
 			stringBuilder.Append($" Start Time: {item.StartDateTime}, ");
 			stringBuilder.Append($" Available Input Type(s): {item.DeviceInputType}, ");

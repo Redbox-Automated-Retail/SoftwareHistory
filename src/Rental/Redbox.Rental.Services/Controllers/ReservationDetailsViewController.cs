@@ -12,6 +12,7 @@ using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Reservation;
 using Redbox.Rental.Services.KioskProduct;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
 
@@ -42,8 +43,13 @@ public class ReservationDetailsViewController : BaseViewController
 			PopulateModelText(reservationDetailsViewModel);
 			ConfigureTTS(reservationDetailsViewModel);
 			viewUserControl.DataContext = reservationDetailsViewModel;
+			reservationDetailsViewModel.OkayButtonVisibility = (Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode ? Visibility.Hidden : Visibility.Visible);
 			ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
 			int value = ((service != null && service.TTSEnabled) ? 25000 : 15000);
+			if (Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode)
+			{
+				value = 5000;
+			}
 			(ServiceLocator.Instance.GetService<ITimerService>()?.CreateTimer("reservation_details_view_timer", value, value, delegate
 			{
 				LogHelper.Instance.Log(string.Format("{0} executed", "reservation_details_view_timer"));

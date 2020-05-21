@@ -21,6 +21,10 @@ public class ClassicTrackDataService : IClassicTrackDataService, ITrackDataServi
 
 	private bool _receivingTrackData;
 
+	public bool IsOlderReader => true;
+
+	public bool IsNewReader => false;
+
 	public bool AllowTrackDataParsing => _allowTrackDataParsing;
 
 	private SecureString _trackDataBuffer { get; set; }
@@ -40,14 +44,14 @@ public class ClassicTrackDataService : IClassicTrackDataService, ITrackDataServi
 		OnCardReadStarted = null;
 	}
 
-	public void StartCardRead(int timeout, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction)
+	public void StartCardRead(int timeout, bool isZeroTouchRead, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction, Guid sessionId)
 	{
 		LogHelper.Instance.Log("ClassicTrackDataService start card read");
 		_allowTrackDataParsing = true;
 		ClearData();
 	}
 
-	public void StopCardRead()
+	public void StopCardRead(CancelReason cancelReason)
 	{
 		LogHelper.Instance.Log("ClassicTrackDataService stop card read");
 		if (_allowTrackDataParsing)
@@ -55,10 +59,17 @@ public class ClassicTrackDataService : IClassicTrackDataService, ITrackDataServi
 			_allowTrackDataParsing = false;
 			ICCReaderHealth service = ServiceLocator.Instance.GetService<ICCReaderHealth>();
 			ITrackData trackData = (ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession())?.TrackData;
-			bool flag = trackData != null || (trackData?.HasValidData() ?? false);
-			bool hasError = !flag;
-			service?.EventOccurred(flag, hasError);
+			if (cancelReason == CancelReason.LeavingSwipeView)
+			{
+				bool flag = trackData != null || (trackData?.HasValidData() ?? false);
+				bool hasError = !flag;
+				service?.EventOccurred(flag, hasError);
+			}
 		}
+	}
+
+	public void StopAllSessionCardReads(Guid sessionId, CancelReason cancelReason)
+	{
 	}
 
 	public bool ProcessKey(char keyChar, Action onTrackEnd)

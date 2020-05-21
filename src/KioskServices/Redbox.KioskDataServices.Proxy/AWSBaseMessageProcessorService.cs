@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 using Redbox.Core;
@@ -15,7 +14,7 @@ internal abstract class AWSBaseMessageProcessorService<S, D> : BaseMessageProces
 
 	public override BeforeMessageProcessingDelegate BeforeMessageProcessing => OnBeforeMessageProcessing;
 
-	public override MessageProcessedDelegate MessageProcessed => OnMessageProcessed;
+	public override AfterMessageProcessedDelegate AfterMessageProcessed => OnAfterMessageProcessed;
 
 	protected abstract void CopyFields(D destination, S source);
 
@@ -28,7 +27,7 @@ internal abstract class AWSBaseMessageProcessorService<S, D> : BaseMessageProces
 		message.Data = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(val, serializerSettings));
 	}
 
-	private static void OnMessageProcessed(IMessage message, IDictionary<string, object> result, object clientData)
+	private static void OnAfterMessageProcessed(IMessage message, object clientData)
 	{
 		message.Data = clientData as byte[];
 	}

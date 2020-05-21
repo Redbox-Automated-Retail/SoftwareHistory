@@ -1253,8 +1253,8 @@ public class MerchantServicesProxy : IMerchantServices
 						}
 						if (dictionary.ContainsKey("ValidReservations"))
 						{
-							ArrayList value = (ArrayList)dictionary["ValidReservations"];
-							remoteServiceResult.Properties["validated_reservations"] = value.ToLuaTable();
+							ArrayList arrayList2 = (ArrayList)dictionary["ValidReservations"];
+							remoteServiceResult.Properties["validated_reservations"] = arrayList2?.ToLuaTable();
 						}
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
@@ -1263,25 +1263,25 @@ public class MerchantServicesProxy : IMerchantServices
 							object transactionEntities = dictionary["TransactionEntities"];
 							AddTransactionEntitiesIntoTransactionDataSession(transactionEntities);
 						}
-						ArrayList arrayList2 = (dictionary.ContainsKey("CancelledReservations") ? (dictionary["CancelledReservations"] as ArrayList) : null);
+						ArrayList arrayList3 = (dictionary.ContainsKey("CancelledReservations") ? (dictionary["CancelledReservations"] as ArrayList) : null);
 						List<long> list = new List<long>();
-						if (arrayList2 != null)
+						if (arrayList3 != null)
 						{
 							int num = 1;
-							foreach (int item2 in arrayList2)
+							foreach (int item2 in arrayList3)
 							{
 								list.Add(item2);
 								num++;
 							}
 						}
-						remoteServiceResult.Properties["cancelled_reservations"] = list.ToLuaTable();
+						remoteServiceResult.Properties["cancelled_reservations"] = list?.ToLuaTable();
 						remoteServiceResult.Properties["allow_rop"] = (dictionary.ContainsKey("AllowRop") ? dictionary["AllowRop"] : ((object)remoteServiceResult.Success));
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
 						{
-							ArrayList arrayList3 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
-							if (arrayList3 != null && arrayList3.Count > 0)
+							ArrayList arrayList4 = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList4 != null && arrayList4.Count > 0)
 							{
-								if (arrayList3[0] is Dictionary<string, object> dictionary2)
+								if (arrayList4[0] is Dictionary<string, object> dictionary2)
 								{
 									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(AuthorizeResponse?), (string)dictionary2["Code"]);
 									remoteServiceResult.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : AuthorizeResponse.Error.ToString());
@@ -1365,7 +1365,10 @@ public class MerchantServicesProxy : IMerchantServices
 							}
 						}
 						remoteServiceResult.Properties["validated_reservations"] = list3.ToLuaTable();
-						AddTransactionEntitiesIntoTransactionDataSession(TransactionEntities, transactionEntitiesInJsonFormat: true);
+						if (!string.IsNullOrWhiteSpace(TransactionEntities))
+						{
+							AddTransactionEntitiesIntoTransactionDataSession(TransactionEntities, transactionEntitiesInJsonFormat: true);
+						}
 					}
 				}
 			}

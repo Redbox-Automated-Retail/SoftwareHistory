@@ -128,7 +128,20 @@ public class AnalyticsService : IAnalyticsService
 				_logger.Log("Session {0} doesn't exist", sessionId);
 				return;
 			}
-			_analyticsSessions[sessionId].End();
+			IAnalyticsSession analyticsSession = _analyticsSessions[sessionId];
+			IApplicationState service = ServiceLocator.Instance.GetService<IApplicationState>();
+			if (service != null)
+			{
+				if (service.IsADAAccessible)
+				{
+					analyticsSession.AddProperty("IsADA", service.IsADAAccessible);
+				}
+				if (service.IsABEOn)
+				{
+					analyticsSession.AddProperty("IsABE", service.IsABEOn);
+				}
+			}
+			analyticsSession.End();
 			if (Redbox.Rental.Services.Configuration.Configuration.Instance.SendJsonKioskAnalyticsToKioskDataService)
 			{
 				WriteToFile(sessionId, ToJson(sessionId), "json");

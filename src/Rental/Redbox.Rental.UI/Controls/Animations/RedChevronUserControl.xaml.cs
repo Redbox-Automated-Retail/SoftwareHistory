@@ -9,6 +9,10 @@ namespace Redbox.Rental.UI.Controls.Animations;
 
 public partial class RedChevronUserControl : UserControl, IComponentConnector
 {
+	private static DependencyProperty ChevronColorProperty = DependencyProperty.Register("ChevronColor", typeof(Brush), typeof(RedChevronUserControl), new PropertyMetadata((SolidColorBrush)new BrushConverter().ConvertFrom("#D01D3E")));
+
+	private static DependencyProperty ChevronOpacityProperty = DependencyProperty.Register("ChevronOpacity", typeof(double), typeof(RedChevronUserControl), new PropertyMetadata(1.0));
+
 	private bool m_isAnimated;
 
 	public bool IsAnimated
@@ -31,6 +35,36 @@ public partial class RedChevronUserControl : UserControl, IComponentConnector
 					StopAnimation();
 				}
 			}
+		}
+	}
+
+	public Brush ChevronColor
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(ChevronColorProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ChevronColorProperty, value);
+			});
+		}
+	}
+
+	public double ChevronOpacity
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (double)GetValue(ChevronOpacityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ChevronOpacityProperty, value);
+			});
 		}
 	}
 

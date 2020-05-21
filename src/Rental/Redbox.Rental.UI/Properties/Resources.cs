@@ -1564,11 +1564,23 @@ public class Resources
 
 	public static string return_another_button => ResourceManager.GetString("return_another_button", resourceCulture);
 
+	public static string return_bullet_1 => ResourceManager.GetString("return_bullet_1", resourceCulture);
+
+	public static string return_bullet_2 => ResourceManager.GetString("return_bullet_2", resourceCulture);
+
 	public static string return_button_label => ResourceManager.GetString("return_button_label", resourceCulture);
 
 	public static string return_error => ResourceManager.GetString("return_error", resourceCulture);
 
 	public static string return_time_label => ResourceManager.GetString("return_time_label", resourceCulture);
+
+	public static string return_touchless_banner_contactless_message => ResourceManager.GetString("return_touchless_banner_contactless_message", resourceCulture);
+
+	public static string return_touchless_banner_insert_message => ResourceManager.GetString("return_touchless_banner_insert_message", resourceCulture);
+
+	public static string return_touchless_banner_swipe_message => ResourceManager.GetString("return_touchless_banner_swipe_message", resourceCulture);
+
+	public static string return_touchless_banner_title => ResourceManager.GetString("return_touchless_banner_title", resourceCulture);
 
 	public static string rop_auth_fail_header => ResourceManager.GetString("rop_auth_fail_header", resourceCulture);
 
@@ -1885,6 +1897,18 @@ public class Resources
 	public static string yes_button => ResourceManager.GetString("yes_button", resourceCulture);
 
 	public static string yes_button_mixed_case => ResourceManager.GetString("yes_button_mixed_case", resourceCulture);
+
+	public static string zero_touch_action_to_begin_contactless_enabled => ResourceManager.GetString("zero_touch_action_to_begin_contactless_enabled", resourceCulture);
+
+	public static string zero_touch_action_to_begin_insert => ResourceManager.GetString("zero_touch_action_to_begin_insert", resourceCulture);
+
+	public static string zero_touch_action_to_begin_swipe => ResourceManager.GetString("zero_touch_action_to_begin_swipe", resourceCulture);
+
+	public static string zero_touch_line_1 => ResourceManager.GetString("zero_touch_line_1", resourceCulture);
+
+	public static string zero_touch_line_2 => ResourceManager.GetString("zero_touch_line-2", resourceCulture);
+
+	public static string zero_touch_new => ResourceManager.GetString("zero_touch_new", resourceCulture);
 
 	public static string zip_code_auth_text => ResourceManager.GetString("zip_code_auth_text", resourceCulture);
 

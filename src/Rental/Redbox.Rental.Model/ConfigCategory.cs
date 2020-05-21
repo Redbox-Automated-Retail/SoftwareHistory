@@ -30,5 +30,7 @@ public static class ConfigCategory
 
 	public const string KioskClientService = "KioskClientService";
 
+	public const string ZeroTouch = "ZeroTouch";
+
 	public const string KioskHealth = "KioskHealth";
 }

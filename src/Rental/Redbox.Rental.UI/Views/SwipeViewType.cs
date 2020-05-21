@@ -12,5 +12,6 @@ public enum SwipeViewType
 	EMVInsertRegularCheckout,
 	EMVInsertReservationPickup,
 	EMVTapRegularCheckout,
-	EMVTapReservationPickup
+	EMVTapReservationPickup,
+	ZeroTouchReservationPickup
 }

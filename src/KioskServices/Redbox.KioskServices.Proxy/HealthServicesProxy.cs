@@ -236,6 +236,8 @@ public class HealthServicesProxy : IHealthServices
 						}
 					}
 					SendKioskVersionsToKioskDataService(store, versions);
+					SendKioskStatisticsToKioskDataService(store, anon.Statistics);
+					SendKioskPropertiesToKioskDataService(store, anon.Properties);
 				}
 				else
 				{
@@ -618,6 +620,54 @@ public class HealthServicesProxy : IHealthServices
 			}
 		}
 		return dictionary;
+	}
+
+	private void SendKioskPropertiesToKioskDataService(int store, IDictionary<string, string> properties)
+	{
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskPropertiesToKioskDataService)
+		{
+			if (properties.Any())
+			{
+				ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "KioskProperties", new AWSKioskPropertiesPayload
+				{
+					KioskId = store,
+					CreatedOn = DateTime.UtcNow,
+					Properties = properties
+				});
+			}
+			else
+			{
+				LogHelper.Instance.Log("HealthServicesProxy.SendKioskPropertiesToKioskDataService() - bypassing live call due to no properties information to send up");
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("HealthServicesProxy.SendKioskPropertiesToKioskDataService() - bypassing live call due to configuration flag being off");
+		}
+	}
+
+	private void SendKioskStatisticsToKioskDataService(int store, IDictionary<string, string> statistics)
+	{
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskStatisticsToKioskDataService)
+		{
+			if (statistics.Any())
+			{
+				ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "KioskStatistics", new AWSKioskStatisticsPayload
+				{
+					KioskId = store,
+					CreatedOn = DateTime.UtcNow,
+					Statistics = statistics
+				});
+			}
+			else
+			{
+				LogHelper.Instance.Log("HealthServicesProxy.SendKioskStatisticsToKioskDataService() - bypassing live call due to no statistics information to send up");
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("HealthServicesProxy.SendKioskStatisticsToKioskDataService() - bypassing live call due to configuration flag being off");
+		}
 	}
 
 	private void SendKioskVersionsToKioskDataService(int store, IDictionary<string, string> versions)

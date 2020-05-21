@@ -1,5 +1,6 @@
 using Redbox.Rental.Model.KioskClientService.Ads;
 using Redbox.Rental.Model.KioskClientService.Application;
+using Redbox.Rental.Model.KioskClientService.Inventory;
 using Redbox.Rental.Model.KioskClientService.Products;
 using Redbox.Rental.Model.KioskClientService.Session;
 
@@ -14,4 +15,6 @@ public interface IKioskClientService
 	IKioskClientServiceSession Session { get; }
 
 	IKioskClientServiceProductGroups ProductGroups { get; }
+
+	IKioskClientServiceInventory Inventory { get; }
 }

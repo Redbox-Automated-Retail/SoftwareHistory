@@ -6,13 +6,19 @@ namespace Redbox.KioskEngine.ComponentModel.TrackData;
 
 public interface ITrackDataService
 {
+	bool IsOlderReader { get; }
+
+	bool IsNewReader { get; }
+
 	event CardReadCompleteHandler OnCardReadComplete;
 
 	event CardReadStartedEventHandler OnCardReadStarted;
 
-	void StartCardRead(int timeout, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction);
+	void StartCardRead(int timeout, bool isZeroTouchRead, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction, Guid sessionId);
 
-	void StopCardRead();
+	void StopCardRead(CancelReason cancelReason);
+
+	void StopAllSessionCardReads(Guid sessionId, CancelReason cancelReason);
 
 	void ClearCardReadHandlers();
 }

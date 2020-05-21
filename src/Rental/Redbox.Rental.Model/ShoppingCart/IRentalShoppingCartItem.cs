@@ -63,5 +63,7 @@ public interface IRentalShoppingCartItem
 
 	bool HasDeal { get; }
 
+	int RentalPosition { get; set; }
+
 	new string ToString();
 }

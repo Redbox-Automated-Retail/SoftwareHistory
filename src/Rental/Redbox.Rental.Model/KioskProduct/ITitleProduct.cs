@@ -109,6 +109,10 @@ public interface ITitleProduct : IKioskProduct
 
 	long TitleRollupProductGroupId { get; }
 
+	int SortOrderType { get; set; }
+
+	int SortOrderPosition { get; set; }
+
 	decimal? DigitalRentPrice { get; }
 
 	List<long> RequiredAdditionalTitles { get; }

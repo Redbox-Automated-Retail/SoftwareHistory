@@ -15,4 +15,6 @@ public class ProductGroup : ILuaKeyValue
 	public int ProductGroupTypeId { get; set; }
 
 	public List<long> ProductIds { get; set; }
+
+	public int SortOrderPosition { get; set; }
 }

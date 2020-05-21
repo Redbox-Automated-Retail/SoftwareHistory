@@ -34,6 +34,8 @@ public class BrowseViewController
 
 	private static List<long> _configuredBrowseItemModels = new List<long>();
 
+	private static List<long> _configuredADAMiniCartBrowseItemModels = new List<long>();
+
 	private const decimal _lowRangeTop = 3.99m;
 
 	private const decimal _midRangeBottom = 4.99m;
@@ -960,7 +962,11 @@ public class BrowseViewController
 				IncrementPaddleClickCount();
 			}
 			int pageNumber = ((newPageNumber < prevPageNumber) ? (newPageNumber - 1) : (newPageNumber + 1));
-			ConfigureDisplayProductModelsForPage(browseProductControl, pageNumber);
+			ConfigureDisplayProductModelsForPage(browseProductControl, pageNumber, isADAMiniCart: false, _configuredBrowseItemModels);
+			if (IsADAMode)
+			{
+				ConfigureDisplayProductModelsForPage(browseViewModel.MiniCartControlModel, pageNumber, isADAMiniCart: true, _configuredADAMiniCartBrowseItemModels);
+			}
 		};
 		if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 		{
@@ -1037,7 +1043,7 @@ public class BrowseViewController
 			BrowseControlModel browseControlModel = browseProductControl;
 			List<IKioskProduct> kioskProducts = list;
 			IBrowseState browseState2 = BrowseState;
-			browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(kioskProducts, browseState2 != null && browseState2.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: false, browseProductControl.VisibleItemCount, browseProductControl.PageNumber);
+			browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(kioskProducts, browseState2 != null && browseState2.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: false, browseProductControl.VisibleItemCount, browseProductControl.PageNumber, _configuredBrowseItemModels);
 		}
 		else
 		{
@@ -1045,7 +1051,7 @@ public class BrowseViewController
 			BrowseControlModel browseControlModel2 = browseProductControl;
 			List<IKioskProduct> browseProducts = ApplicationState.Instance.BrowseProducts;
 			IBrowseState browseState3 = BrowseState;
-			browseControlModel2.BrowseItems = CreateBrowseItemsFromKioskProducts(browseProducts, browseState3 != null && browseState3.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: false, browseProductControl.VisibleItemCount, browseProductControl.PageNumber);
+			browseControlModel2.BrowseItems = CreateBrowseItemsFromKioskProducts(browseProducts, browseState3 != null && browseState3.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: false, browseProductControl.VisibleItemCount, browseProductControl.PageNumber, _configuredBrowseItemModels);
 		}
 		if (BrowseState != null)
 		{
@@ -1481,7 +1487,7 @@ public class BrowseViewController
 			{
 				List<IKioskProduct> browseProducts = ApplicationState.Instance.BrowseProducts;
 				IBrowseState browseState = BrowseState;
-				browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(browseProducts, browseState != null && browseState.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: true, RentalShoppingCartService?.CurrentRentalShoppingCart?.MaximumCapacity ?? 0, 1);
+				browseControlModel.BrowseItems = CreateBrowseItemsFromKioskProducts(browseProducts, browseState != null && browseState.BrowseSelectedSort == BrowseSelectedSort.Alpha, isADAMiniCart: true, num, 1, _configuredADAMiniCartBrowseItemModels);
 				browseControlModel.SetPageNumber(BrowseState.PageNumber, PageChangeSource.None);
 			}
 			else
@@ -1671,11 +1677,11 @@ public class BrowseViewController
 		return obj;
 	}
 
-	private static List<IBrowseItemModel> CreateBrowseItemsFromKioskProducts(List<IKioskProduct> kioskProducts, bool createAlphaGroups, bool isADAMiniCart, int visibleItemCount, int pageNumber)
+	private static List<IBrowseItemModel> CreateBrowseItemsFromKioskProducts(List<IKioskProduct> kioskProducts, bool createAlphaGroups, bool isADAMiniCart, int visibleItemCount, int pageNumber, List<long> configuredBrowseItemModels)
 	{
 		DisplayGroupModel displayGroupModel = null;
 		List<IBrowseItemModel> list = new List<IBrowseItemModel>();
-		_configuredBrowseItemModels.Clear();
+		configuredBrowseItemModels?.Clear();
 		if (kioskProducts != null)
 		{
 			DisplayProductModelConstants displayProductModelConstants = GetDisplayProductModelConstants();
@@ -1748,7 +1754,7 @@ public class BrowseViewController
 				if (num3 >= num && num3 < num2)
 				{
 					ConfigureDisplayProductModel(kioskProduct, displayProductModel, isADAMiniCart, displayProductModelConstants);
-					_configuredBrowseItemModels.Add(titleProduct.ProductId);
+					configuredBrowseItemModels?.Add(titleProduct.ProductId);
 				}
 				num3++;
 				if (createAlphaGroups)
@@ -1775,7 +1781,7 @@ public class BrowseViewController
 		return list;
 	}
 
-	private static void ConfigureDisplayProductModelsForPage(BrowseControlModel browseControlModel, int pageNumber)
+	private static void ConfigureDisplayProductModelsForPage(BrowseControlModel browseControlModel, int pageNumber, bool isADAMiniCart, List<long> configuredBrowseItemModels)
 	{
 		if (browseControlModel?.BrowseItems == null || pageNumber < 0 || pageNumber > browseControlModel.TotalPages)
 		{
@@ -1794,14 +1800,14 @@ public class BrowseViewController
 			IKioskProduct kioskProduct = browseItemModel?.Data as IKioskProduct;
 			ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 			DisplayProductModel browseItemModel2 = browseItemModel as DisplayProductModel;
-			if (titleProduct != null && (_configuredBrowseItemModels == null || !_configuredBrowseItemModels.Contains(titleProduct.ProductId)))
+			if (titleProduct != null && (configuredBrowseItemModels == null || !configuredBrowseItemModels.Contains(titleProduct.ProductId)))
 			{
 				if (displayProductModelConstants == null)
 				{
 					displayProductModelConstants = GetDisplayProductModelConstants();
 				}
-				ConfigureDisplayProductModel(kioskProduct, browseItemModel2, isADAMiniCart: false, displayProductModelConstants);
-				_configuredBrowseItemModels?.Add(titleProduct.ProductId);
+				ConfigureDisplayProductModel(kioskProduct, browseItemModel2, isADAMiniCart, displayProductModelConstants);
+				configuredBrowseItemModels?.Add(titleProduct.ProductId);
 			}
 		}
 	}

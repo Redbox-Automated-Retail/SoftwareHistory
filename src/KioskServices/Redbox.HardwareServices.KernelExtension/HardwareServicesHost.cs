@@ -51,7 +51,9 @@ public class HardwareServicesHost : IKernelExtensionHost, IDisposable
 		{
 			service.AddPreferencePage("HardwareServices_General", "Local Services\\Hardware Services", "Hardware Services/General", PreferencePageTarget.LocalSystem, new GeneralPreferencePage());
 			service.AddPreferencePage("HardwareServices_CardReader", "Local Services\\Hardware Services", "Hardware Services/Credit Card Reader", PreferencePageTarget.LocalSystem, new CardReaderPage());
+			service.AddPreferencePage("HardwareServices_DeviceServiceGeneral", "Local Services\\Hardware Services", "Device Service/General", PreferencePageTarget.LocalSystem, new DeviceServiceGeneralPage());
 			service.AddPreferencePage("HardwareServices_DeviceService", "Local Services\\Hardware Services", "Device Service/Device Service", PreferencePageTarget.LocalSystem, new DeviceServicePage());
+			service.AddPreferencePage("HardwareServices_DeviceServiceSimulator", "Local Services\\Hardware Services", "Device Service/Device Service Simulator", PreferencePageTarget.LocalSystem, new DeviceServiceSimulatorPage());
 			if (_hardwareService.IsTest())
 			{
 				service.AddPreferencePage("HardwareServices_Return", "Local Services\\Hardware Services", "Hardware Services/Return", PreferencePageTarget.LocalSystem, new ReturnPreferencePage());

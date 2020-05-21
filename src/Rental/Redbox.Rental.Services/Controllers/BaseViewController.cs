@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Redbox.Core;
@@ -49,7 +50,13 @@ public class BaseViewController
 
 	protected static T GetViewModel<T>() where T : class
 	{
-		return GetViewUserControl()?.DataContext as T;
+		Control control = GetViewUserControl() as Control;
+		T dataContext = null;
+		control?.Dispatcher.Invoke(delegate
+		{
+			dataContext = control?.DataContext as T;
+		});
+		return dataContext;
 	}
 
 	protected static T GetViewModel<T>(Guid userControlId) where T : class
@@ -122,7 +129,7 @@ public class BaseViewController
 	{
 		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
 		BitmapImage result = null;
-		Image image = null;
+		System.Drawing.Image image = null;
 		image = ((!resourceName.StartsWith("cache:")) ? ServiceLocator.Instance.GetService<IResourceBundleService>().GetBitmap(resourceName) : service?.GetImage(resourceName.Substring(6)));
 		if (image != null)
 		{

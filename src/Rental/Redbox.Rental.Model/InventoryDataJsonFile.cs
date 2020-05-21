@@ -7,4 +7,6 @@ public class InventoryDataJsonFile
 	public DateTime? LastCompletedDate { get; set; }
 
 	public DateTime? LastRunThinJobDate { get; set; }
+
+	public DateTime? LastMerchOrderDate { get; set; }
 }

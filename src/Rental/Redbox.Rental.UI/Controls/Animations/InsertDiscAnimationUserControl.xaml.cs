@@ -10,18 +10,6 @@ public partial class InsertDiscAnimationUserControl : UserControl, IComponentCon
 {
 	private bool m_isAnimated;
 
-	public string MessageText
-	{
-		get
-		{
-			return MessageTextBlock.Text;
-		}
-		set
-		{
-			MessageTextBlock.Text = value;
-		}
-	}
-
 	public bool IsAnimated
 	{
 		get
@@ -48,23 +36,16 @@ public partial class InsertDiscAnimationUserControl : UserControl, IComponentCon
 	public InsertDiscAnimationUserControl()
 	{
 		InitializeComponent();
-		RedboxDisc.AnimationScrollDirection = RedboxDiscUserControl.ScrollDirection.Left;
-		if (MessageTextBlock.Text.StartsWith("Culture specific title"))
-		{
-			MessageTextBlock.Text = "Please insert your disc.";
-		}
 		IsAnimated = true;
 	}
 
 	public void BeginAnimation()
 	{
 		RedChevron.IsAnimated = true;
-		RedboxDisc.IsAnimated = true;
 	}
 
 	public void StopAnimation()
 	{
 		RedChevron.IsAnimated = false;
-		RedboxDisc.IsAnimated = false;
 	}
 }

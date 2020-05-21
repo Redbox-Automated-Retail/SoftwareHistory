@@ -37,6 +37,4 @@ public interface IHardwareState
 	void Initialize();
 
 	void Refresh();
-
-	void EnqueueProperties();
 }

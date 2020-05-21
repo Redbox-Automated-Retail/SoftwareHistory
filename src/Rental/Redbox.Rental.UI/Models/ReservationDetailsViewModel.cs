@@ -14,6 +14,8 @@ public class ReservationDetailsViewModel
 
 	public Visibility MDVVisibility { get; set; }
 
+	public Visibility OkayButtonVisibility { get; set; }
+
 	public string DiscVendText { get; set; }
 
 	public string NoteHeaderText { get; set; }

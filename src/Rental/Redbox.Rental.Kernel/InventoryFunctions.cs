@@ -172,6 +172,25 @@ public static class InventoryFunctions
 		}
 	}
 
+	[KernelFunction(Name = "kernel.report_unmerchandized_barcodes")]
+	internal static void ReportUnmerchandizedBarcodes(LuaTable unmerchandizedBarcodesTable)
+	{
+		try
+		{
+			IInventory service = ServiceLocator.Instance.GetService<IInventory>();
+			List<string> list = new List<string>();
+			foreach (LuaTable value in unmerchandizedBarcodesTable.Values)
+			{
+				list.Add(value["barcode"].ToString());
+			}
+			service?.ReportUnmerchandizedBarcodes(list);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("InventoryFunctions.ReportUnmerchandizedBarcodes - an unhanded exception occurred.", e);
+		}
+	}
+
 	private static Dictionary<string, object> GetAllRapidStatusAsLuaFormat(string filter)
 	{
 		IInventory service = ServiceLocator.Instance.GetService<IInventory>();

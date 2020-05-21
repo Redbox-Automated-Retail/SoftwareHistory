@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Redbox.Core;
+using Redbox.Rental.Model.Analytics;
+using Redbox.Rental.Model.KioskClientService.Products;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.Configuration;
 
@@ -108,19 +112,81 @@ public static class KioskProductExtensions
 		return titleProduct.Genres.Contains(genreFilter);
 	}
 
-	public static List<ITitleProduct> OrderList(this List<ITitleProduct> source, BrowseSort browseSort, BrowseViewFilter browseFilter)
+	public static List<ITitleProduct> OrderList(this List<ITitleProduct> source, BrowseSort browseSort, BrowseViewFilter browseFilter, List<Title> sortedMovieTitles)
 	{
+		LogHelper.Instance.Log($"KioskProduct.OrderList - Product Count: {source.Count}, BrowseSort: {browseSort.ToString()}, BrowseViewFilter: {browseFilter.ToString()}");
 		string outOfStockTitleDetailsABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.OutOfStockTitleDetailsABTestVersion;
-		return browseSort switch
+		switch (browseSort)
 		{
-			BrowseSort.MerchandiseDate => (from item in source
+		case BrowseSort.MerchandiseDate:
+			return (from item in source
 				orderby (!(outOfStockTitleDetailsABTestVersion == "B") || item.TitleFamily != TitleFamily.Movies) && !InStock(item, browseFilter), item.SortMerchandise, item.SortBoxOfficeGross descending, item.SortName descending
-				select item).ToList(), 
-			BrowseSort.Alpha => source.OrderBy((ITitleProduct item) => item.SortAlpha).ToList(), 
-			_ => (from item in source
-				orderby (!(outOfStockTitleDetailsABTestVersion == "B") || item.TitleFamily != TitleFamily.Movies) && browseFilter != BrowseViewFilter.ForSale && item.ShowOutOfStock, item.SortDate descending, item.SortBoxOfficeGross descending, item.SortName descending
-				select item).ToList(), 
-		};
+				select item).ToList();
+		case BrowseSort.Alpha:
+			return source.OrderBy((ITitleProduct item) => item.SortAlpha).ToList();
+		default:
+		{
+			ProductGroupSortOrder sortOrder = ServiceLocator.Instance.GetService<IProductGroupService>()?.GetSortOrder();
+			IAnalyticsService service = ServiceLocator.Instance.GetService<IAnalyticsService>();
+			try
+			{
+				if (sortOrder != null && sortOrder.SortOrderType > 0 && sortOrder.SortOrders != null && sortOrder.SortOrders.Count > 0)
+				{
+					source.ForEach(delegate(ITitleProduct item)
+					{
+						item.SortOrderPosition = 0;
+						item.SortOrderType = 0;
+					});
+					service?.AddSessionProperty("SortOrderType", sortOrder.SortOrderType);
+					var list = (from p in source
+						join so in sortOrder.SortOrders on p.TitleRollupProductGroupId equals so.ProductGroupId into xso
+						from subso in xso.DefaultIfEmpty()
+						select new
+						{
+							p = p,
+							Position = subso?.Position
+						}).ToList();
+					list.ForEach(item =>
+					{
+						item.p.SortOrderPosition = item.Position ?? 0;
+						item.p.SortOrderType = sortOrder.SortOrderType;
+					});
+					return (from item in list
+						orderby item.p.ShowOutOfStock, item.p.IsEmptyCase, item.Position ?? int.MaxValue, item.p.SortMerchandise descending, item.p.SortBoxOfficeGross descending, item.p.SortName descending
+						select item.p).ToList();
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("KioskProduct.OrderList - an exception occurred, skipping SortOrderTest", e);
+			}
+			source.ForEach(delegate(ITitleProduct item)
+			{
+				item.SortOrderPosition = 0;
+				item.SortOrderType = 0;
+			});
+			try
+			{
+				if (sortedMovieTitles != null && sortedMovieTitles.Count > 0)
+				{
+					(from p in source
+						join smt in sortedMovieTitles on p.ProductId equals smt.ProductId
+						select new { p, smt }).ForEach(x =>
+					{
+						x.p.SortOrderPosition = x.smt.SortOrderPosition;
+					});
+				}
+			}
+			catch (Exception e2)
+			{
+				LogHelper.Instance.Log("KioskProduct.OrderList - an exception occurred, skipping SortOrderPosition", e2);
+			}
+			service?.AddSessionProperty("SortOrderType", 0);
+			return (from item in source
+				orderby item.ShowOutOfStock, item.SortDate descending, item.SortBoxOfficeGross descending, item.SortName descending
+				select item).ToList();
+		}
+		}
 	}
 
 	private static bool InStock(ITitleProduct titleProduct, BrowseViewFilter browseFilter)

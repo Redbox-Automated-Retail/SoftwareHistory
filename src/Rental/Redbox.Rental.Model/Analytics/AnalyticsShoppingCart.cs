@@ -1,5 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Redbox.Core;
+using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Model.Analytics;
@@ -49,6 +53,38 @@ public class AnalyticsShoppingCart
 					ApplyOnlyToProduct = (sc.Promotion.IsValidatedPostVend ? new bool?(sc.Promotion.IsProductSpecific) : ((bool?)null))
 				});
 			});
+		}
+		try
+		{
+			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+			if (service != null)
+			{
+				List<ITitleProduct> movieBrowseProducts = service.GetMovieBrowseProducts();
+				List<ITitleRollupProduct> rollupOnly = (from x in movieBrowseProducts
+					where x is ITitleRollupProduct
+					select x as ITitleRollupProduct).ToList();
+				sc.Items.ToList().ForEach(delegate(IRentalShoppingCartItem item)
+				{
+					ITitleRollupProduct titleRollupProduct = rollupOnly.Where((ITitleRollupProduct tr) => tr.KioskProducts.Contains(item.TitleProduct)).FirstOrDefault();
+					if (titleRollupProduct != null)
+					{
+						int num = movieBrowseProducts.IndexOf(titleRollupProduct);
+						item.RentalPosition = num + 1;
+					}
+					else
+					{
+						int num2 = movieBrowseProducts.IndexOf(item.TitleProduct);
+						if (num2 > -1)
+						{
+							item.RentalPosition = num2 + 1;
+						}
+					}
+				});
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("AnalyticsShoppingCart.ToShoppingCart - unhandled exception occurred", e);
 		}
 		sc.Items.ToList().ForEach(delegate(IRentalShoppingCartItem item)
 		{

@@ -7,4 +7,6 @@ public interface IKioskClientServiceProductGroups
 	List<long> GetMoreLikeThis(long productGroupId);
 
 	void RefreshAllMLTData(List<long> productGroupIds);
+
+	ProductGroupSortOrder GetSortOrder();
 }

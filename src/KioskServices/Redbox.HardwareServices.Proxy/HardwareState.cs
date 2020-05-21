@@ -8,7 +8,6 @@ using Redbox.HAL.Client.Executors;
 using Redbox.HAL.Component.Model;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.HardwareServices;
-using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.HardwareServices.Proxy;
 
@@ -268,21 +267,6 @@ public class HardwareState : IHardwareState
 		{
 			Redbox.Core.LogHelper.Instance.LogException("Exception running the RefreshePropertiesCallback for HardwareState refresh!  Setting initialized flag to false.", e);
 			IsInitialized = false;
-		}
-	}
-
-	public void EnqueueProperties()
-	{
-		Redbox.Core.LogHelper.Instance.Log("Enqueue Hardware State properties.", Redbox.HAL.Component.Model.LogEntryType.Info);
-		Redbox.Core.LogHelper.Instance.Log($"Camera: {CurrentCameraGeneration.ToString()}, Decoder: {BarcodeDecoder.ToString()}");
-		IHealthServices service = Redbox.HAL.Component.Model.ServiceLocator.Instance.GetService<IHealthServices>();
-		if (service == null)
-		{
-			Redbox.Core.LogHelper.Instance.Log("Hardware State can't locate health services to enqueue properties.");
-		}
-		else if (_cameraGeneration >= CameraGeneration.Third)
-		{
-			service.EnqueueProperty("CameraType", CurrentCameraGeneration.ToString());
 		}
 	}
 }

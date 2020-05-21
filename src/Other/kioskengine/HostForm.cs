@@ -382,16 +382,19 @@ public class HostForm : Form
 				break;
 			}
 		}
-		goto IL_0179;
-		IL_0179:
+		else if (DeviceServiceClientHelperSimulator.Instance.UseSimulatedCardReader)
+		{
+			e.Handled = DeviceServiceClientHelperSimulator.Instance.ProcessKey(e.KeyChar);
+		}
+		goto IL_019d;
+		IL_00ea:
+		e.Handled = true;
+		goto IL_019d;
+		IL_019d:
 		if (DateTime.Now > _keyPressStartAfter)
 		{
 			EngineApplication.Instance.ActivateKeyPressHandlers(new KeyPressEventArgsEx(e, System.Windows.Forms.Control.ModifierKeys));
 		}
-		return;
-		IL_00ea:
-		e.Handled = true;
-		goto IL_0179;
 	}
 
 	private void OnActivated(object sender, EventArgs e)

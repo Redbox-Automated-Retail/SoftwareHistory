@@ -12,7 +12,17 @@ public class ReturnViewModel : DependencyObject
 
 	public string MessageText { get; set; }
 
+	public string Bullet1Text { get; set; }
+
+	public string Bullet2Text { get; set; }
+
 	public IAdImpression AdImpression { get; set; }
+
+	public Visibility TouchlessBannerVisibility { get; set; }
+
+	public string TouchlessBannerHeaderText { get; set; }
+
+	public string TouchlessBannerMessageText { get; set; }
 
 	public BitmapImage AdImageSource
 	{

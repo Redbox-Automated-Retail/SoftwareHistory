@@ -8,7 +8,7 @@ public class BaseResponse : IBaseResponse
 {
 	public bool Success { get; set; }
 
-	public IList<IError> Errors { get; set; } = new List<IError>();
+	public IList<Error> Errors { get; set; } = new List<Error>();
 
 	public string HostName => Environment.MachineName;
 

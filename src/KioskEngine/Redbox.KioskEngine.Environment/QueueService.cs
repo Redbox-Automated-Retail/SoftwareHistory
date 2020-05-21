@@ -230,13 +230,21 @@ public class QueueService : IQueueService, IDisposable
 									{
 										try
 										{
-											q.MessageProcessed?.Invoke(message, response, clientData);
+											q.MessageProcessedSuccessfully?.Invoke(message, response, clientData);
 										}
 										catch (Exception e5)
 										{
 											LogHelper.Instance.Log("An unhandled exception was raised while running MessageProcessed in QueueService.StartQueueWorker.", e5);
 											errored = true;
 										}
+									}
+									try
+									{
+										q.AfterMessageProcessed?.Invoke(message, clientData);
+									}
+									catch (Exception e6)
+									{
+										LogHelper.Instance.Log("An unhandled exception was raised while running AfterMessageProcessed in QueueService.StartQueueWorker.", e6);
 									}
 								}
 							});

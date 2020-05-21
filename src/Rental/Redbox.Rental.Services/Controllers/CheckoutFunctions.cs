@@ -1036,6 +1036,10 @@ public class CheckoutFunctions
 		}
 		else
 		{
+			if (Redbox.Rental.Services.Session.Session.Instance?.UserInfo != null && string.IsNullOrEmpty(Redbox.Rental.Services.Session.Session.Instance.UserInfo?.Email) && !string.IsNullOrEmpty(authorizeResult?.Email))
+			{
+				Redbox.Rental.Services.Session.Session.Instance.UserInfo.Email = authorizeResult.Email;
+			}
 			PromptUserForSignups();
 		}
 	}

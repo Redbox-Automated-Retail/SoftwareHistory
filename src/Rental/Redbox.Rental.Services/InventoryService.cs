@@ -4,6 +4,7 @@ using System.Globalization;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services;
 
@@ -172,8 +173,12 @@ public class InventoryService : IInventory
 				LogHelper.Instance.Log("InventoryService.CheckForNewFiles - no inventory action completed file exists.");
 				return;
 			}
-			DateTime dateTime = DateTime.ParseExact(inventoryActionFile.CompletedDate, "yyyyMMddHHmmss", CultureInfo.CurrentCulture);
 			DateTime? lastCompletedDate = _inventoryData.GetLastCompletedDate();
+			DateTime dateTime = DateTime.MinValue;
+			if (inventoryActionFile.CompletedDate != null)
+			{
+				dateTime = DateTime.ParseExact(inventoryActionFile.CompletedDate, "yyyyMMddHHmmss", CultureInfo.CurrentCulture);
+			}
 			if (lastCompletedDate.HasValue)
 			{
 				DateTime value = dateTime;
@@ -186,7 +191,11 @@ public class InventoryService : IInventory
 			LogHelper.Instance.Log("InventoryService.CheckForNewFiles - New completed date found, running thinjob now.");
 			_inventoryData.SetLastCompletedDate(dateTime);
 			_inventoryData.SetLastRunThinJobDate(DateTime.Now);
-			inventoryCompletion?.Invoke();
+			if (inventoryCompletion != null)
+			{
+				_inventoryData.ReportMerchandizedBarcodes();
+				inventoryCompletion();
+			}
 		}
 		catch (Exception e)
 		{
@@ -203,7 +212,7 @@ public class InventoryService : IInventory
 	{
 		try
 		{
-			DateTime dateTime = DateTime.Today.AddHours(3.0).AddMinutes(30 + _random);
+			DateTime dateTime = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.UseMerchOrdersForThinning) ? DateTime.Today.AddHours(3.0).AddMinutes(30 + _random) : (DateTime.Today + Redbox.Rental.Services.Configuration.Configuration.Instance.ThinJobRangeEnd).AddMinutes(-_random));
 			DateTime? lastRunThinJobDate = _inventoryData.GetLastRunThinJobDate();
 			if (dateTime.DayOfWeek == DayOfWeek.Saturday || dateTime.DayOfWeek == DayOfWeek.Sunday)
 			{
@@ -215,7 +224,11 @@ public class InventoryService : IInventory
 			{
 				LogHelper.Instance.Log("InventoryService.RunByDeadline - Thinjob has not run by deadine, running now.");
 				_inventoryData.SetLastRunThinJobDate(DateTime.Now);
-				inventoryCompletion?.Invoke();
+				if (inventoryCompletion != null)
+				{
+					_inventoryData.ReportMerchandizedBarcodes();
+					inventoryCompletion();
+				}
 			}
 			else
 			{
@@ -230,5 +243,10 @@ public class InventoryService : IInventory
 		{
 			LogHelper.Instance.Log("InventoryService.RunByDeadline - finished");
 		}
+	}
+
+	public void ReportUnmerchandizedBarcodes(List<string> barcodesToReport)
+	{
+		_inventoryData.ReportUnmerchandizedBarcodes(barcodesToReport);
 	}
 }

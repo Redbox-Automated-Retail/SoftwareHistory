@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -292,6 +293,12 @@ public class MessagePopupViewController : BaseViewController
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.bad_contactless_read_title, "message_popup_dialog_title_style4", Resources.bad_contactless_read_message, "message_popup_dialog_mesg_style4", null, null, null, Resources.got_it_button, "font_museo_slab_900_20", "message_popup_dialog_button_style4", "message_popup_dialog_button_grid_style4", "message_popup_dialog_inner_grid_style4", "message_popup_dialog_floating_button_grid_style4", "message_popup_dialog_message_dock_panel_style4", GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewBadContactlessReadError", null, "Transparent", default(Thickness), "badContactlessReadError"));
 	}
 
+	public static void ShowMessagePopupViewReservationMobileWalletError(Action timeOutAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing Reservation Mobile Wallet error message popup");
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.bad_contactless_read_title, "message_popup_dialog_title_style4", Resources.bad_contactless_read_message, "message_popup_dialog_mesg_style4", null, null, null, Resources.got_it_button, "font_museo_slab_900_20", "message_popup_dialog_button_style4", "message_popup_dialog_button_grid_style4", "message_popup_dialog_inner_grid_style4", "message_popup_dialog_floating_button_grid_style4", "message_popup_dialog_message_dock_panel_style4", GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewReservationMobileWalletError", null, "Transparent", default(Thickness), "reservationMobileWalletError"));
+	}
+
 	public static void ShowMessagePopupViewCardNotRecognizedTechnicalFallback(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Card Not Recognized Technical Fallback message popup");
@@ -407,12 +414,12 @@ public class MessagePopupViewController : BaseViewController
 				Button1Text = parameters.Button1Text,
 				Button1TextStyle = WPFFunctions.GetStyle(messagePopupViewUserControl, parameters.Button1TextStyle ?? "button1_text_style"),
 				Button1Style = WPFFunctions.GetStyle(messagePopupViewUserControl, parameters.Button1Style ?? "button1_style"),
-				Button1Visibility = (string.IsNullOrEmpty(parameters.Button1Text) ? Visibility.Collapsed : Visibility.Visible),
+				Button1Visibility = ((Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode || string.IsNullOrEmpty(parameters.Button1Text)) ? Visibility.Collapsed : Visibility.Visible),
 				Button2Text = parameters.Button2Text,
 				Button2TextStyle = WPFFunctions.GetStyle(messagePopupViewUserControl, parameters.Button2TextStyle ?? "button2_text_style"),
 				Button2Style = WPFFunctions.GetStyle(messagePopupViewUserControl, parameters.Button2Style ?? "button2_style"),
 				ButtonGridStyle = WPFFunctions.GetStyle(messagePopupViewUserControl, parameters.ButtonGridStyle ?? "message_popup_dialog_button_grid_style"),
-				Button2Visibility = (string.IsNullOrEmpty(parameters.Button2Text) ? Visibility.Collapsed : Visibility.Visible),
+				Button2Visibility = ((Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode || string.IsNullOrEmpty(parameters.Button2Text)) ? Visibility.Collapsed : Visibility.Visible),
 				InnerGridStyle = WPFFunctions.GetStyle(messagePopupViewUserControl, parameters.InnerGridStyle ?? null),
 				FloatingButtonGridStyle = WPFFunctions.GetStyle(messagePopupViewUserControl, parameters.FloatingButtonGridStyle ?? "message_popup_dialog_floating_button_grid_style"),
 				MessageDockPanelStyle = WPFFunctions.GetStyle(messagePopupViewUserControl, parameters.MessageDockPanelStyle ?? "message_popup_dialog_message_dock_panel_style"),

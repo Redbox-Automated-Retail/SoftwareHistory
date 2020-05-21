@@ -4,16 +4,15 @@ using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.KioskDataServices.Proxy;
 
-public class KioskSessionAnalyticsService : IKioskSessionAnalyticsService
+public class KioskSessionJsonAnalyticsService : IKioskSessionJsonAnalyticsService
 {
-	public static KioskSessionAnalyticsService Instance => Singleton<KioskSessionAnalyticsService>.Instance;
+	public static KioskSessionJsonAnalyticsService Instance => Singleton<KioskSessionJsonAnalyticsService>.Instance;
 
-	private KioskSessionAnalyticsService()
+	private KioskSessionJsonAnalyticsService()
 	{
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 		if (service != null)
 		{
-			service.RegisterMessageProcessorService(new AddKioskSessionMessageProcessorService());
 			service.RegisterMessageProcessorService(new AddKioskSessionJsonMessageProcessorService());
 		}
 		else

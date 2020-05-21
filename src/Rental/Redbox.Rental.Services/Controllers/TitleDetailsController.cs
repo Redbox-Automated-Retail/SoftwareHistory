@@ -680,7 +680,7 @@ public class TitleDetailsController : BaseViewController
 		long? num = kioskProduct?.SubPlatformId;
 		if (num.HasValue && num > 0)
 		{
-			result = Constants.SubPlatformImages.GetSubPlatformImage((Constants.SubPlatforms)num.Value);
+			result = Redbox.Rental.UI.Views.Constants.SubPlatformImages.GetSubPlatformImage((Redbox.Rental.UI.Views.Constants.SubPlatforms)num.Value);
 		}
 		return result;
 	}

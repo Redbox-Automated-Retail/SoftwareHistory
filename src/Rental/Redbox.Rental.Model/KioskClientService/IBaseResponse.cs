@@ -6,7 +6,7 @@ public interface IBaseResponse
 {
 	bool Success { get; set; }
 
-	IList<IError> Errors { get; set; }
+	IList<Error> Errors { get; set; }
 
 	string HostName { get; }
 

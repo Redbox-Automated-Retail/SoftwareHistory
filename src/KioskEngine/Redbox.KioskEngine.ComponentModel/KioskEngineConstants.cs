@@ -8,9 +8,15 @@ public static class KioskEngineConstants
 
 		public const string KioskAlert = "KioskAlert";
 
+		public const string KioskEvents = "KioskEvents";
+
 		public const string KioskFunctionCheck = "KioskFunctionCheck";
 
 		public const string KioskPing = "KioskPing";
+
+		public const string KioskProperties = "KioskProperties";
+
+		public const string KioskStatistics = "KioskStatistics";
 
 		public const string KioskVersions = "KioskVersions";
 	}

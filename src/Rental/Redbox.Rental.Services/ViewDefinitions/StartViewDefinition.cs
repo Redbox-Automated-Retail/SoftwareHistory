@@ -13,7 +13,7 @@ public class StartViewDefinition : BaseViewDefinition, IViewDefinition
 		base.ActiveFlag = true;
 		base.IsStartOverView = true;
 		base.ControlName = "StartView";
-		base.Clear = false;
+		base.Clear = true;
 		base.OnEnter = delegate
 		{
 			StartViewController.ConfigureStartView();

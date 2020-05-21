@@ -40,11 +40,11 @@
           </UIElement.InputBindings>
         </Image>
       </Grid>
-      <Grid Name="navigation_side_bar" Background="#E42045" Width="265" Height="768" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="1.0" />
+      <Grid Name="navigation_side_bar" Background="#E42045" Width="265" Height="768" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="1.0" Margin="0,5,0,0" />
       <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logo@2x.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="35,40,0,0" Height="50" />
-      <Grid Margin="20,180,0,0" Height="390" VerticalAlignment="Top">
-        <StackPanel VerticalAlignment="Center">
-          <Redbox:RoundedButton Name="all_movies_button" Style="{StaticResource white_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Height="80" Width="225" CornerRadius="40" Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Focusable="False" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}}">
+      <Grid Margin="20,188,0,0" Height="425" VerticalAlignment="Top">
+        <StackPanel VerticalAlignment="Top">
+          <Redbox:RoundedButton Name="all_movies_button" Style="{StaticResource white_button_style}" Margin="0,90,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="80" Width="225" CornerRadius="40" Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Focusable="False" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}}">
             <Grid>
               <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}">
                 <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/movieicon.png" HorizontalAlignment="Left" Margin="20,0,0,1" Width="53" />
@@ -79,9 +79,23 @@
           <Redbox:RoundedButton Name="buy_games_button" Style="{StaticResource white_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,16,0,0" Height="48" Width="225" CornerRadius="25" Command="{x:Static localbase:Commands.BuyGamesCommand}" Focusable="False" Visibility="{Binding Path=BuyGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding BuyGamesEnabled}">
             <Grid>
               <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}" />
-              <TextBlock Name="buy_games_button_text_line1" HorizontalAlignment="Center" Style="{Binding Path=BuyGamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=BuyGamesButtonTextLine1, FallbackValue=BUY GAMES}" />
+              <TextBlock Name="buy_games_button_text_line1" HorizontalAlignment="Center" Margin="56,-1,55,1" Style="{Binding Path=BuyGamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=BuyGamesButtonTextLine1, FallbackValue=BUY GAMES}" />
             </Grid>
           </Redbox:RoundedButton>
+          <Grid HorizontalAlignment="Left" Visibility="{Binding Path=ZeroTouchSpoilerVisibility, FallbackValue=Visible}">
+            <StackPanel Width="225" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,25,0,0">
+              <Border Width="225" HorizontalAlignment="center" Margin="0,0,0,0" Background="#FFFFFFFF" CornerRadius="8,8,0,0">
+                <StackPanel Margin="0,10,0,10 ">
+                  <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_montserrat_bold_20}" Background="#FFFFFFFF" Foreground="#E42045" TextAlignment="Center" Margin="0,2,0,0" Text="{Binding Path=ZeroTouchLine1Text, FallbackValue=Touch-free}" />
+                  <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_montserrat_bold_20}" Background="#FFFFFFFF" Foreground="#E42045" TextAlignment="Center" Margin="0,2,0,0" Text="{Binding Path=ZeroTouchLine2Text, FallbackValue=Pick Up &amp; Returns}" />
+                </StackPanel>
+              </Border>
+              <Border Height="20" HorizontalAlignment="Center" Background="#E42045" CornerRadius="4,4,4,4" Margin="0,-150,0,0" BorderThickness="1" BorderBrush="#FFFFFFFF" Padding="5,0,5,0">
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_montserrat_bold_12}" Height="12" FontFamily="Monserrant" Foreground="#FFFFFFFF" Background="#E42045" TextAlignment="Center" Text="{Binding Path=ZeroTouchNewText, FallbackValue=New}" />
+              </Border>
+              <TextBlock HorizontalAlignment="Center" Style="{StaticResource font_montserrat_bold_16}" Foreground="#FFFFFFFF" Background="#E42045" TextAlignment="Center" VerticalAlignment="Top" Margin="0,7,0,0" TextWrapping="Wrap" Grid.Row="0" Text="{Binding Path=ZeroTouchActionToBeginText, FallbackValue=Swipe To Begin}" />
+            </StackPanel>
+          </Grid>
         </StackPanel>
       </Grid>
       <StackPanel Margin="21,620,0,0">

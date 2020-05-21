@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
 using DeviceService.ComponentModel;
@@ -16,9 +17,24 @@ namespace Redbox.KioskEngine.Environment.CardDataReader;
 
 public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITrackDataService
 {
-	private IReadCardJob _readCardJob;
+	private class ReadCardJobEntry
+	{
+		public IReadCardJob ReadCardJob { get; set; }
 
-	private bool _cardReadAborted;
+		public bool AttemptedCancel { get; set; }
+
+		public bool IsZeroTouchRead { get; set; }
+
+		public Guid SessionId { get; set; }
+	}
+
+	private List<ReadCardJobEntry> _readCardJobs = new List<ReadCardJobEntry>();
+
+	private object _lockObject = new object();
+
+	public bool IsOlderReader => false;
+
+	public bool IsNewReader => true;
 
 	public bool IsInTechnicalFallback
 	{
@@ -38,8 +54,6 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 
 	public FallbackType? NextFallbackReason { get; set; }
 
-	private bool IsCardReadInProgress => _readCardJob != null;
-
 	public event CardReadCompleteHandler OnCardReadComplete;
 
 	public event CardReadStartedEventHandler OnCardReadStarted;
@@ -50,20 +64,29 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		OnCardReadStarted = null;
 	}
 
-	public void StartCardRead(int timeout, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction)
+	public void StartCardRead(int timeout, bool isZeroTouchRead, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction, Guid sessionId)
 	{
 		IDeviceServiceClientHelper deviceServiceClientHelper = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
 		if (deviceServiceClientHelper == null)
 		{
 			return;
 		}
-		_cardReadAborted = false;
 		Task.Run(delegate
 		{
 			try
 			{
-				_readCardJob = deviceServiceClientHelper.StartCardRead(deviceInputType, CardReadResponseHandler, CardReadEventHandler, timeout);
-				cardReadStartedAction?.Invoke(_readCardJob);
+				IReadCardJob readCardJob = deviceServiceClientHelper.StartCardRead(deviceInputType, CardReadResponseHandler, CardReadEventHandler, timeout);
+				lock (_lockObject)
+				{
+					_readCardJobs.Add(new ReadCardJobEntry
+					{
+						ReadCardJob = readCardJob,
+						SessionId = sessionId,
+						IsZeroTouchRead = isZeroTouchRead
+					});
+					LogHelper.Instance.Log($"Adding ReadCardJobEntry {readCardJob.RequestId}.  list count= {_readCardJobs?.Count}");
+				}
+				cardReadStartedAction?.Invoke(readCardJob);
 			}
 			catch (Exception e)
 			{
@@ -72,29 +95,33 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		});
 	}
 
-	public void StopCardRead()
+	public void StopCardRead(CancelReason cancelReason)
 	{
-		_cardReadAborted = true;
-		if (!IsCardReadInProgress)
+		lock (_lockObject)
 		{
-			return;
-		}
-		IReadCardJob tempReadCardJob = _readCardJob;
-		ISession session = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
-		if (tempReadCardJob != null)
-		{
-			ICardReadAttempt cardReadAttempt = session?.CardReadAttemptCollection?.GetByCardReadJobCommandRequestId(tempReadCardJob.RequestId);
-			if (cardReadAttempt != null)
+			ReadCardJobEntry activeCardReadJobEntry = GetActiveCardReadJobEntry();
+			if (activeCardReadJobEntry != null)
 			{
-				cardReadAttempt.AttemptedCancel = true;
-				LogHelper.Instance.Log($"Setting CardReadAttempt.AttemptedCancel = true for card read command {tempReadCardJob.RequestId}");
+				CancelReadCardJobEntry(cancelReason, activeCardReadJobEntry);
 			}
 		}
+	}
+
+	private static void CancelReadCardJobEntry(CancelReason cancelReason, ReadCardJobEntry activeCardReadJobEntry)
+	{
+		ICardReadAttempt cardReadAttempt = (ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession())?.CardReadAttemptCollection?.GetByCardReadJobCommandRequestId(activeCardReadJobEntry.ReadCardJob.RequestId);
+		if (cardReadAttempt != null)
+		{
+			cardReadAttempt.AttemptedCancel = true;
+			cardReadAttempt.CancelReason = cancelReason;
+			LogHelper.Instance.Log($"Setting CardReadAttempt.AttemptedCancel = true for card read command {activeCardReadJobEntry.ReadCardJob.RequestId}.  CancelReason = {cancelReason}");
+		}
+		activeCardReadJobEntry.AttemptedCancel = true;
 		Task.Run(delegate
 		{
 			try
 			{
-				tempReadCardJob.Cancel(delegate(BaseResponseEvent baseResponseEvent)
+				activeCardReadJobEntry.ReadCardJob.Cancel(delegate(BaseResponseEvent baseResponseEvent)
 				{
 					LogHelper.Instance.Log($"DeviceServiceTrackDataService.StopCardRead - cancel card read success = {(baseResponseEvent as CancelCommandResponseEvent)?.Success ?? false}");
 				});
@@ -106,17 +133,94 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		});
 	}
 
+	public void StopAllSessionCardReads(Guid sessionId, CancelReason cancelReason)
+	{
+		lock (_lockObject)
+		{
+			if (_readCardJobs == null)
+			{
+				return;
+			}
+			List<ReadCardJobEntry> readCardJobEntriesToCancelAndRemove = new List<ReadCardJobEntry>();
+			_readCardJobs.Where((ReadCardJobEntry x) => x.SessionId == sessionId).ForEach(delegate(ReadCardJobEntry x)
+			{
+				readCardJobEntriesToCancelAndRemove.Add(x);
+			});
+			if (readCardJobEntriesToCancelAndRemove.Count <= 0)
+			{
+				return;
+			}
+			LogHelper.Instance.Log($"Removing all Card Read Jobs for session {sessionId}");
+			foreach (ReadCardJobEntry item in readCardJobEntriesToCancelAndRemove)
+			{
+				if (!item.AttemptedCancel)
+				{
+					CancelReadCardJobEntry(cancelReason, item);
+				}
+				RemoveReadCardJobEntry(item);
+			}
+		}
+	}
+
+	private ReadCardJobEntry GetActiveCardReadJobEntry()
+	{
+		ReadCardJobEntry result = null;
+		lock (_lockObject)
+		{
+			foreach (ReadCardJobEntry readCardJob in _readCardJobs)
+			{
+				if (!readCardJob.AttemptedCancel && readCardJob.ReadCardJob != null)
+				{
+					result = readCardJob;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
 	private void CardReadEventHandler(BaseResponseEvent baseResponseEvent)
 	{
 		if (baseResponseEvent?.EventName == "CardProcessingStartedResponseEvent")
 		{
-			OnCardReadStarted?.Invoke();
+			OnCardReadStarted?.Invoke(baseResponseEvent.RequestId);
+		}
+	}
+
+	private ReadCardJobEntry RemoveReadCardJobEntry(Guid requestId)
+	{
+		ReadCardJobEntry readCardJobEntry = null;
+		lock (_lockObject)
+		{
+			ReadCardJobEntry readCardJobEntry2 = _readCardJobs.FirstOrDefault((ReadCardJobEntry x) => x.ReadCardJob != null && x.ReadCardJob.RequestId == requestId);
+			if (readCardJobEntry2 != null)
+			{
+				readCardJobEntry = readCardJobEntry2;
+				RemoveReadCardJobEntry(readCardJobEntry2);
+			}
+		}
+		if (readCardJobEntry == null)
+		{
+			LogHelper.Instance.Log($"Unable to find/remove ReadCardJobEntry {readCardJobEntry.ReadCardJob.RequestId}.  list count= {_readCardJobs?.Count}");
+		}
+		return readCardJobEntry;
+	}
+
+	private void RemoveReadCardJobEntry(ReadCardJobEntry readCardJobEntry)
+	{
+		lock (_lockObject)
+		{
+			if (readCardJobEntry != null)
+			{
+				_readCardJobs.Remove(readCardJobEntry);
+				LogHelper.Instance.Log($"Removing ReadCardJobEntry  RequestId: {readCardJobEntry.ReadCardJob.RequestId},  SessionId: {readCardJobEntry.SessionId}, IsZeroTouch: {readCardJobEntry.IsZeroTouchRead},  list count= {_readCardJobs?.Count}");
+			}
 		}
 	}
 
 	private void CardReadResponseHandler(BaseResponseEvent baseResponseEvent)
 	{
-		_readCardJob = null;
+		ReadCardJobEntry readCardJobEntry = RemoveReadCardJobEntry(baseResponseEvent.RequestId);
 		bool chipCardRemovedFromReader = true;
 		ITrackData trackData = GetTrackDataFromEMVCardReadResponseEvent(baseResponseEvent, ref chipCardRemovedFromReader);
 		if (trackData == null)
@@ -137,16 +241,20 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		UpdateCardReadTechnicalFallbackInfo(trackData);
 		UpdateNextCardReadTechnicalFallbackState(trackData);
 		CardHelper.CheckForTrackDataErrors(trackData);
-		UpdateCreditCardHealthService(trackData, baseResponseEvent);
-		if (!_cardReadAborted)
+		UpdateCreditCardHealthService(trackData, baseResponseEvent, readCardJobEntry);
+		if (readCardJobEntry != null && !readCardJobEntry.AttemptedCancel)
 		{
 			OnCardReadComplete?.Invoke(trackData, chipCardRemovedFromReader, baseResponseEvent?.RequestId);
 		}
+		else
+		{
+			LogHelper.Instance.Log($"Not calling OnCardReadComplete because CardReadJob was cancelled for {readCardJobEntry?.ReadCardJob?.RequestId}");
+		}
 	}
 
-	private static void UpdateCreditCardHealthService(ITrackData trackData, BaseResponseEvent responseEvent)
+	private static void UpdateCreditCardHealthService(ITrackData trackData, BaseResponseEvent responseEvent, ReadCardJobEntry readEntry)
 	{
-		if (ResponseEventIsTimedOut(responseEvent) || GetCardReadAttemptCancelled(responseEvent) || GetCardReadResponseCancelledOrBlocked(responseEvent))
+		if (ResponseEventIsTimedOut(responseEvent) || (readEntry != null && readEntry.IsZeroTouchRead) || GetCardReadAttemptCancelled(responseEvent) || GetCardReadResponseCancelledOrBlocked(responseEvent))
 		{
 			LogHelper.Instance.Log("Card Read Cancelled or Blocked or Timed Out, Don't Notify Health Service.");
 			return;
@@ -276,6 +384,14 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		if (trackData != null && !trackData.IsInTechnicalFallback && trackData.CardSourceType == CardSourceType.Swipe && trackData.CardHasChip && trackData != null && trackData.ChipEnabledAndSupportsEmv)
 		{
 			trackData.Errors.Add(CardHelper.ErrorCodes.NewSwipedCardIsChipEnabledError());
+		}
+	}
+
+	private void DeclineReservationMobileWallet(ITrackData trackData)
+	{
+		if (trackData != null && (ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession()).IsInZeroTouchMode && trackData.CardSourceType == CardSourceType.Mobile)
+		{
+			trackData.Errors.Add(CardHelper.ErrorCodes.NewReservationMobileDeviceError());
 		}
 	}
 

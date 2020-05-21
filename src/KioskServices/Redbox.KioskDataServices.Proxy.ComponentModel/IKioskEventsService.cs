@@ -1,5 +1,5 @@
 namespace Redbox.KioskDataServices.Proxy.ComponentModel;
 
-public interface IKioskSessionAnalyticsService
+public interface IKioskEventsService
 {
 }

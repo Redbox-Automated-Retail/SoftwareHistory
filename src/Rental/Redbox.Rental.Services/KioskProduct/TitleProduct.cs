@@ -25,6 +25,8 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	private IPricingService _pricingService;
 
+	private long _titleRollupProductGroupId;
+
 	private List<string> _availableStatuses = new List<string> { "Known", "Thinned", "Redeployment", "Rebalancing" };
 
 	public Dictionary<string, BarcodeProduct> BarCodeProducts => _titleCache.BarcodeProducts;
@@ -357,15 +359,18 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	{
 		get
 		{
-			long productGroupId = 0L;
+			if (_titleRollupProductGroupId > 0)
+			{
+				return _titleRollupProductGroupId;
+			}
 			_profile?.ProductGroups?.Where((KeyValuePair<long, ProductGroup> pair) => pair.Value.ProductGroupTypeId == 1).ForEach(delegate(KeyValuePair<long, ProductGroup> pair)
 			{
 				if (pair.Value.ProductIds.Contains(ProductId))
 				{
-					productGroupId = pair.Value.ProductGroupId;
+					_titleRollupProductGroupId = pair.Value.ProductGroupId;
 				}
 			});
-			return productGroupId;
+			return _titleRollupProductGroupId;
 		}
 	}
 
@@ -512,6 +517,10 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			return result;
 		}
 	}
+
+	public int SortOrderType { get; set; }
+
+	public int SortOrderPosition { get; set; }
 
 	public TitleProduct(Title title, TitleCache titleCache, TitleType titleType, IProfileDataInstance profile, Store store, IStoreManager storeManager)
 		: base(store)

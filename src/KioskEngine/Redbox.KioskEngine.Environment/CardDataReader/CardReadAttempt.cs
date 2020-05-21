@@ -56,4 +56,6 @@ public class CardReadAttempt : ICardReadAttempt, ITechnicalFallbackTracking
 	public bool SupportsTechnicalFallbackTracking { get; private set; }
 
 	public bool IsInTrackableTechnicalFallback { get; private set; }
+
+	public CancelReason CancelReason { get; set; }
 }

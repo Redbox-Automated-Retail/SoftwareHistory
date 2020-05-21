@@ -45,6 +45,10 @@ public class Configuration : IConfiguration
 
 	private bool? _cachedIsDefaultCulture;
 
+	private TimeSpan _thinJobStartTime;
+
+	private TimeSpan _thinJobEndTime;
+
 	public static IConfiguration Instance => Singleton<Configuration>.Instance;
 
 	public Dictionary<TitleType, bool> EnabledGameTypes
@@ -317,11 +321,23 @@ public class Configuration : IConfiguration
 
 	public bool SendKioskAlertsToKioskDataService { get; private set; }
 
+	public bool SendAuditEventsToKioskServices { get; private set; }
+
+	public bool SendAuditEventsToKioskDataService { get; private set; }
+
 	public bool SendKioskFunctionChecksToKioskServices { get; private set; }
 
 	public bool SendKioskFunctionChecksToKioskDataService { get; private set; }
 
 	public bool SendKioskVersionsToKioskDataService { get; private set; }
+
+	public bool SendKioskStatisticsToKioskDataService { get; private set; }
+
+	public bool SendKioskPropertiesToKioskDataService { get; private set; }
+
+	public bool SendKioskEventsToKioskServices { get; private set; }
+
+	public bool SendKioskEventsToKioskDataService { get; private set; }
 
 	public bool ForcedAirExchangerConfigured { get; private set; }
 
@@ -357,9 +373,23 @@ public class Configuration : IConfiguration
 
 	public bool ShowDoNotSellUpdated { get; private set; }
 
-	public bool SendAuditEventsToKioskServices { get; private set; }
+	public bool ZeroTouchEnabled { get; private set; }
 
-	public bool SendAuditEventsToKioskDataService { get; private set; }
+	public bool ZeroTouchPickupEnabled { get; private set; }
+
+	public bool ZeroTouchReturnEnabled { get; private set; }
+
+	public bool ZeroTouchContactlessEnabled { get; private set; }
+
+	public int ZeroTouchReadTimeout { get; private set; }
+
+	public bool UseMerchOrdersForThinning { get; private set; }
+
+	public int KioskClientServiceGetMerchandizingOrdersTimeout { get; private set; }
+
+	public TimeSpan ThinJobRangeStart => _thinJobStartTime;
+
+	public TimeSpan ThinJobRangeEnd => _thinJobEndTime;
 
 	private string GetCultureBasedValue(string defaultCultureValue, string alternateCultureValue)
 	{
@@ -421,8 +451,8 @@ public class Configuration : IConfiguration
 		GiftCardsEnabled = ConfigGetValue(service, "system", "General", "GiftCardsEnabled", defaultValue: true);
 		ShowAuthChangeMessage = ConfigGetValue(service, "system", "General", "ShowAuthChangeMessage", defaultValue: true);
 		UseLowestPriceSortOrder = ConfigGetValue(service, "system", "General", "UserLowestPriceSortOrder", defaultValue: false);
-		EndGameRentals = ConfigGetValue(service, "marketing", "MarketingGeneral", "EndGameRentals", defaultValue: false);
-		EndGames = ConfigGetValue(service, "marketing", "MarketingGeneral", "EndGames", defaultValue: false);
+		EndGameRentals = ConfigGetValue(service, "marketing", "MarketingGeneral", "EndGameRentals", defaultValue: true);
+		EndGames = ConfigGetValue(service, "marketing", "MarketingGeneral", "EndGames", defaultValue: true);
 		EnableVistarAds = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableVistarAds", defaultValue: false);
 		VistarGetAdTimeout = ConfigGetValue(service, "marketing", "MarketingGeneral", "VistarGetAdTimeout", 500);
 		EnableFlashDeals = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableFlashDeals", defaultValue: false);
@@ -493,6 +523,10 @@ public class Configuration : IConfiguration
 		SendKioskFunctionChecksToKioskServices = ConfigGetValue(service, "system", "General", "SendKioskAlertsToKioskServices", defaultValue: true);
 		SendKioskFunctionChecksToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskAlertsToKioskDataService", defaultValue: true);
 		SendKioskVersionsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskVersionsToKioskDataService", defaultValue: true);
+		SendKioskStatisticsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskStatisticsToKioskDataService", defaultValue: true);
+		SendKioskPropertiesToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskPropertiesToKioskDataService", defaultValue: true);
+		SendKioskEventsToKioskServices = ConfigGetValue(service, "system", "General", "SendKioskEventsToKioskServices", defaultValue: true);
+		SendKioskEventsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskEventsToKioskDataService", defaultValue: true);
 		ForcedAirExchangerConfigured = ConfigGetValue(service, "system", "General", "ForcedAirExchangerConfigured", defaultValue: true);
 		FAQDocument = ConfigGetValue(service, "system", "Documents", "FAQDocument", "document-faqs");
 		TermsDocument = ConfigGetValue(service, "system", "Documents", "TermsDocument", "document-terms");
@@ -510,6 +544,15 @@ public class Configuration : IConfiguration
 		ShowPerksUpdated = ConfigGetValue(service, "system", "Documents", "ShowPerksUpdated", defaultValue: false);
 		ShowCAPrivacyNoticeUpdated = ConfigGetValue(service, "system", "Documents", "ShowCAPrivacyNoticeUpdated", defaultValue: false);
 		ShowDoNotSellUpdated = ConfigGetValue(service, "system", "Documents", "ShowDoNotSellUpdated", defaultValue: false);
+		UseMerchOrdersForThinning = ConfigGetValue(service, "system", "General", "UseMerchOrdersForThinning", defaultValue: false);
+		KioskClientServiceGetMerchandizingOrdersTimeout = ConfigGetValue(service, "system", "General", "KioskClientServiceGetMerchandizingOrdersTimeout", 60000);
+		string timeSpan3 = ConfigGetValue(service, "system", "General", "ThinJobTimeRange", "03:00:00-04:30:00");
+		ParseTimeRange(timeSpan3, out _thinJobStartTime, out _thinJobEndTime, "ThinJobTimeRange");
+		ZeroTouchReadTimeout = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchReadTimeout", 600000);
+		ZeroTouchPickupEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchPickupEnabled", defaultValue: true);
+		ZeroTouchReturnEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchReturnEnabled", defaultValue: true);
+		ZeroTouchContactlessEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchContactlessEnabled", defaultValue: true) && ContactlessEnabled;
+		ZeroTouchEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchEnabled", defaultValue: false) && (ZeroTouchPickupEnabled || ZeroTouchReturnEnabled);
 	}
 
 	private bool GetMachineSetting(IMachineSettingsStore machineSettingStore, string key)

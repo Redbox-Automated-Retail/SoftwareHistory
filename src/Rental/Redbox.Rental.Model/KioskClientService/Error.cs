@@ -1,4 +1,4 @@
-namespace Redbox.Rental.Services.KioskClientService;
+namespace Redbox.Rental.Model.KioskClientService;
 
 public class Error
 {

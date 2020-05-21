@@ -27,6 +27,8 @@ public interface IDataService
 
 	ErrorList GetProduct(long productId, bool excludeTitleRollup, out IKioskProduct kioskProduct);
 
+	List<ITitleProduct> GetMovieBrowseProducts();
+
 	ErrorList GetProductByBarcode(string barcode, out IKioskProduct kioskProduct);
 
 	ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, out List<IKioskProduct> products);

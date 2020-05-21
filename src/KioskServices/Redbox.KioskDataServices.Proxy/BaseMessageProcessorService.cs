@@ -22,7 +22,9 @@ internal abstract class BaseMessageProcessorService : IQueueMessageProcessorServ
 
 	public virtual ProcessMessageDelegate ProcessMessage => OnProcessMessage;
 
-	public virtual MessageProcessedDelegate MessageProcessed => null;
+	public virtual MessageProcessedSuccessfullyDelegate MessageProcessedSuccessfully => null;
+
+	public virtual AfterMessageProcessedDelegate AfterMessageProcessed => null;
 
 	private bool OnProcessMessage(IMessage message, out IDictionary<string, object> response)
 	{

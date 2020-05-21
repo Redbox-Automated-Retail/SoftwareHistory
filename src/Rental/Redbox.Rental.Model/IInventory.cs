@@ -29,4 +29,6 @@ public interface IInventory
 	string GetInventoryDataCreatedOn();
 
 	long GetInventoryDataCount();
+
+	void ReportUnmerchandizedBarcodes(List<string> barcodesToReport);
 }

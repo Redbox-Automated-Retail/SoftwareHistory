@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Redbox.Rental.Model.KioskProduct;
 
@@ -179,6 +180,10 @@ public interface IConfiguration
 
 	bool SendKioskVersionsToKioskDataService { get; }
 
+	bool SendKioskStatisticsToKioskDataService { get; }
+
+	bool SendKioskPropertiesToKioskDataService { get; }
+
 	bool EnableVistarAds { get; }
 
 	int VistarGetAdTimeout { get; }
@@ -190,6 +195,10 @@ public interface IConfiguration
 	bool SendKioskFunctionChecksToKioskServices { get; }
 
 	bool SendKioskFunctionChecksToKioskDataService { get; }
+
+	bool SendKioskEventsToKioskServices { get; }
+
+	bool SendKioskEventsToKioskDataService { get; }
 
 	string FAQDocument { get; }
 
@@ -223,9 +232,27 @@ public interface IConfiguration
 
 	bool ShowDoNotSellUpdated { get; }
 
+	bool ZeroTouchEnabled { get; }
+
+	bool ZeroTouchPickupEnabled { get; }
+
+	bool ZeroTouchReturnEnabled { get; }
+
+	bool ZeroTouchContactlessEnabled { get; }
+
+	int ZeroTouchReadTimeout { get; }
+
 	bool SendAuditEventsToKioskServices { get; }
 
 	bool SendAuditEventsToKioskDataService { get; }
+
+	bool UseMerchOrdersForThinning { get; }
+
+	int KioskClientServiceGetMerchandizingOrdersTimeout { get; }
+
+	TimeSpan ThinJobRangeStart { get; }
+
+	TimeSpan ThinJobRangeEnd { get; }
 
 	void SessionReload();
 

@@ -35,8 +35,32 @@ public partial class ReturnViewUserControl : TextToSpeechUserControl, IWPFActor,
 		return result;
 	}
 
-	private static void AddSpeechPartInstructions(ISpeechControl result)
+	private void AddSpeechPartInstructions(ISpeechControl result)
 	{
+		if (Model.TouchlessBannerVisibility == Visibility.Visible)
+		{
+			ISpeechPart noTouchPart = new SpeechPart
+			{
+				Sequence = 0,
+				Name = "ZeroTouch",
+				Loop = false,
+				StartPause = 500,
+				EndPause = 1000
+			};
+			noTouchPart.Refresh = delegate
+			{
+				noTouchPart.Clear();
+				noTouchPart.Texts.Add(new TextPart
+				{
+					Text = "If you were trying to do Touch-free pickup"
+				});
+				noTouchPart.Texts.Add(new TextPart
+				{
+					Text = "then " + Model.TouchlessBannerMessageText
+				});
+			};
+			result.SpeechParts.Add(noTouchPart);
+		}
 		ISpeechPart speechPart = new SpeechPart
 		{
 			Sequence = 1,
@@ -70,6 +94,5 @@ public partial class ReturnViewUserControl : TextToSpeechUserControl, IWPFActor,
 
 	private void TextToSpeechUserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
 	{
-		InsertDiscAnimation.MessageText = Model?.MessageText;
 	}
 }

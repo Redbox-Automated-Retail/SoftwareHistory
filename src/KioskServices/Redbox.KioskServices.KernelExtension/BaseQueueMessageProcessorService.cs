@@ -18,7 +18,9 @@ internal abstract class BaseQueueMessageProcessorService : IQueueMessageProcesso
 
 	public BeforeMessageProcessingDelegate BeforeMessageProcessing => OnBeforeMessageProcessing;
 
-	public MessageProcessedDelegate MessageProcessed => OnMessageProcessed;
+	public MessageProcessedSuccessfullyDelegate MessageProcessedSuccessfully => OnMessageProcessedSuccessfully;
+
+	public AfterMessageProcessedDelegate AfterMessageProcessed => null;
 
 	private static void OnBeforeMessageProcessing(IMessage message, out object clientData)
 	{
@@ -28,7 +30,7 @@ internal abstract class BaseQueueMessageProcessorService : IQueueMessageProcesso
 		clientData = clientData2;
 	}
 
-	private static void OnMessageProcessed(IMessage message, IDictionary<string, object> result, object clientData)
+	private static void OnMessageProcessedSuccessfully(IMessage message, IDictionary<string, object> result, object clientData)
 	{
 		ServiceLocator.Instance.GetService<IFraudService>()?.ProcessReturnResponse(message, result, clientData);
 		ServiceLocator.Instance.GetService<IReservationServices>()?.ProcessValidationResponse(message, result, clientData);

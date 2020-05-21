@@ -368,6 +368,12 @@ public class ReservationFunctions
 		Redbox.Rental.Services.Controllers.ReservationFunctions.SetValidatedReservations(list);
 	}
 
+	[KernelFunction(Name = "kernel.register_zero_touch_pickup_callbacks")]
+	internal static void RegisterZeroTouchPickupCallbacks(Action continueReservation)
+	{
+		Redbox.Rental.Services.Controllers.ReservationFunctions.RegisterZeroTouchPickupCallbacks(continueReservation);
+	}
+
 	public static void ConvertLuaReservation(LuaTable reservationLuaTable, IReservation reservation)
 	{
 		try

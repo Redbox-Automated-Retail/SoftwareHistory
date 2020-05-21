@@ -18,6 +18,10 @@ public interface IStoreManager
 
 	bool CanSellUsedGames { get; }
 
+	string ApplicationDataPath { get; }
+
+	string RunningPath { get; }
+
 	string GetDefaultCulture();
 
 	string GetAlternateCulture();

@@ -35,4 +35,8 @@ public interface IInventoryData
 	DateTime? GetInventoryActionModificationTime();
 
 	DateTime? GetRapidStatusModificationTime();
+
+	void ReportUnmerchandizedBarcodes(List<string> barcodesToReport);
+
+	void ReportMerchandizedBarcodes();
 }

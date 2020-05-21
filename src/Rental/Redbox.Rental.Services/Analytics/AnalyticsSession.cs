@@ -150,7 +150,17 @@ public class AnalyticsSession : IAnalyticsSession
 	{
 		try
 		{
-			Properties[name] = value;
+			if (value == null)
+			{
+				if (Properties.ContainsKey(name))
+				{
+					Properties.Remove(name);
+				}
+			}
+			else
+			{
+				Properties[name] = value;
+			}
 			return this;
 		}
 		finally

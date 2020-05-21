@@ -23,6 +23,10 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 
 	private ITitleProduct _primaryTitle;
 
+	private int _sortOrderType;
+
+	private int _sortOrderPosition;
+
 	public Dictionary<string, BarcodeProduct> BarCodeProducts
 	{
 		get
@@ -477,6 +481,44 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 	public string TivoQueryId { get; set; }
 
 	public decimal? DigitalRentPrice => KioskProducts.FirstOrDefault()?.DigitalRentPrice;
+
+	public int SortOrderType
+	{
+		get
+		{
+			return _sortOrderType;
+		}
+		set
+		{
+			_sortOrderType = value;
+			KioskProducts.ForEach(delegate(ITitleProduct p)
+			{
+				if (p != null)
+				{
+					p.SortOrderType = value;
+				}
+			});
+		}
+	}
+
+	public int SortOrderPosition
+	{
+		get
+		{
+			return _sortOrderPosition;
+		}
+		set
+		{
+			_sortOrderPosition = value;
+			KioskProducts.ForEach(delegate(ITitleProduct p)
+			{
+				if (p != null)
+				{
+					p.SortOrderPosition = value;
+				}
+			});
+		}
+	}
 
 	public TitleRollupProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, Dictionary<long, MDVProduct> mdvProducts, IProfileDataInstance profile, Store store)
 		: base(store)

@@ -557,6 +557,10 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public string TivoQueryId { get; set; }
 
+	public int SortOrderType { get; set; }
+
+	public int SortOrderPosition { get; set; }
+
 	public MDVProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, IProfileDataInstance profile, Store store)
 		: base(store)
 	{

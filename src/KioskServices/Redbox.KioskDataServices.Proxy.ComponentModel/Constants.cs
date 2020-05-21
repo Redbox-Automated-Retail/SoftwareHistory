@@ -19,7 +19,13 @@ public class Constants
 
 		public const string AuditEvent = "api/KioskData/AuditEvent";
 
+		public const string KioskEvents = "api/KioskData/KioskEvents";
+
 		public const string KioskFunctionCheck = "api/KioskData/KioskFunctionCheck";
+
+		public const string KioskProperties = "api/KioskData/KioskProperties";
+
+		public const string KioskStatistics = "api/KioskData/KioskStatistics";
 
 		public const string KioskVersion = "api/KioskData/KioskVersion";
 	}

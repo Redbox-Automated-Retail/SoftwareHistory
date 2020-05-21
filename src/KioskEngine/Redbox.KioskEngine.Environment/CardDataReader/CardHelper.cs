@@ -35,6 +35,8 @@ public static class CardHelper
 
 		public const string AmexCannotFallback = "T021";
 
+		public const string ReservationMobileDevice = "T022";
+
 		public static Redbox.KioskEngine.ComponentModel.Error NewInvalidPANError()
 		{
 			return Redbox.KioskEngine.ComponentModel.Error.NewError("T001", "Invalid PAN provided in track data stream.", "A valid PAN is required.");
@@ -83,6 +85,11 @@ public static class CardHelper
 		public static Redbox.KioskEngine.ComponentModel.Error NewAmexCannotFallbackError()
 		{
 			return Redbox.KioskEngine.ComponentModel.Error.NewError("T021", "Amex Cannot Fallback", "Amex Cannot Fallback");
+		}
+
+		public static Redbox.KioskEngine.ComponentModel.Error NewReservationMobileDeviceError()
+		{
+			return Redbox.KioskEngine.ComponentModel.Error.NewError("T022", "Cannot use a mobile wallet for a reservation", "Cannot use a mobile wallet for a reservation");
 		}
 	}
 

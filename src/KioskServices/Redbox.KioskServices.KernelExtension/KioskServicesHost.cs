@@ -18,6 +18,8 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 
 	private IQueueMessageProcessorService _kioskFunctionCheckMessageProcessorService;
 
+	private IQueueMessageProcessorService _kioskEventsMessageProcessorService;
+
 	public IKernelExtension Extension { get; set; }
 
 	public void Dispose()
@@ -154,6 +156,8 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			service.RegisterMessageProcessorService(_auditEventMessageProcessorService);
 			_kioskFunctionCheckMessageProcessorService = new KSKioskFunctionCheckMessageProcessorService();
 			service.RegisterMessageProcessorService(_kioskFunctionCheckMessageProcessorService);
+			_kioskEventsMessageProcessorService = new KSKioskEventsMessageProcessorService();
+			service.RegisterMessageProcessorService(_kioskEventsMessageProcessorService);
 		}
 		HealthServicesProxy.Instance.StartPingTimer();
 		return result;
@@ -174,6 +178,8 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			_auditEventMessageProcessorService = null;
 			service.UnRegisterMessageProcessorService(_kioskFunctionCheckMessageProcessorService);
 			_kioskFunctionCheckMessageProcessorService = null;
+			service.UnRegisterMessageProcessorService(_kioskEventsMessageProcessorService);
+			_kioskEventsMessageProcessorService = null;
 		}
 		InventoryServicesProxy.Instance.Deactivate();
 		HealthServicesProxy.Instance.StopPingTimer();
