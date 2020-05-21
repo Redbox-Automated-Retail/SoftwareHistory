@@ -487,7 +487,7 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	public bool TrackHardwareCorrections { get; set; }
 
 	[Category("Behavior")]
-	[XmlConfiguration(DefaultValue = "false")]
+	[XmlConfiguration(DefaultValue = "true")]
 	[Description("If true, will schedule a healing test.")]
 	[DisplayName("Enable Hardware Healing")]
 	[Browsable(false)]
@@ -497,20 +497,20 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Browsable(false)]
 	[DisplayName("Enable Arcus Healing")]
 	[Description("Sets the mask of options for the hardware healer.")]
-	[XmlConfiguration(DefaultValue = "false")]
+	[XmlConfiguration(DefaultValue = "true")]
 	public bool EnableArcusHealing { get; set; }
 
 	[Description("Sets the mask of options for the hardware healer.")]
 	[Category("Behavior")]
 	[DisplayName("Enable Camera Healing")]
 	[Browsable(false)]
-	[XmlConfiguration(DefaultValue = "false")]
+	[XmlConfiguration(DefaultValue = "true")]
 	public bool EnableCameraHealing { get; set; }
 
 	[Browsable(false)]
 	[Category("Behavior")]
 	[DisplayName("Enable Leiwe Healing")]
-	[XmlConfiguration(DefaultValue = "false")]
+	[XmlConfiguration(DefaultValue = "true")]
 	[Description("Sets the mask of options for the hardware healer.")]
 	public bool EnableLeiweHealing { get; set; }
 

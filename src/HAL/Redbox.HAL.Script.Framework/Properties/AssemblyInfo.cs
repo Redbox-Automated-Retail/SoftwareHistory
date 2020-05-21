@@ -12,6 +12,6 @@ using System.Security.Permissions;
 [assembly: AssemblyCopyright("Copyright © 2018 Redbox Automated Retail, LLC")]
 [assembly: AssemblyConfiguration("")]
 [assembly: Guid("f7cef224-bfdb-4b52-830a-0d99503c6bcc")]
-[assembly: AssemblyFileVersion("1.12.1.64")]
+[assembly: AssemblyFileVersion("1.12.1.65")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.12.1.64")]
+[assembly: AssemblyVersion("1.12.1.65")]

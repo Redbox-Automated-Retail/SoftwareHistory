@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Permissions;
 
-[assembly: AssemblyFileVersion("1.12.1.64")]
+[assembly: AssemblyFileVersion("1.12.1.65")]
 [assembly: AssemblyTrademark("")]
 [assembly: Guid("349250ef-7c1c-4914-bce5-b1b0a4014a98")]
 [assembly: AssemblyTitle("Redbox.HAL.DataMatrix.Framework")]
@@ -14,4 +14,4 @@ using System.Security.Permissions;
 [assembly: AssemblyProduct("Redbox.HAL.DataMatrix.Framework")]
 [assembly: AssemblyCopyright("Copyright © 2018 Redbox Automated Retail, LLC")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.12.1.64")]
+[assembly: AssemblyVersion("1.12.1.65")]
