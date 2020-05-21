@@ -1,12 +1,12 @@
 # U2 (1.12.1.65)
 
-- Product: HAL Utilities 1.12.1.65
+- Product: MS HAL Tester 1.12.1.65
 - Date (first download in the snapshots): 2020-05-21
-- Store labels: kop-tools-U2
+- Store labels: kop-ms-hal-tester-U2
 - Package revisions:
   - `kop-tools` revision 53 (`2B7B649EEB1A549EF695FE099CE347A46383F3D5`)
   - `kop-hal-install` revision 70 (`3E57686AE4F7B716558869F9D07275FED293F95F`)
-  - `kop-ms-hal-tester` revision 54 (`AC7C40DF71EB63D8644CC9A7D171A6BD602DC70B`)
+  - `kop-ms-hal-tester` revision 55 (`BF8D4696A150D1F166B49B9C196A15623DB4E459`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | `thin.hs` |  |  | `941B9DDA2BFF6E080F4B97C0EF1CEE4C7EAE5C10` | exact |
 | `unload-thin.hs` |  |  | `988F52CE1064F102E753BB8DF71E889B32F70FE7` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.12.1.64 | `4571FE82463BEB4D0554FB37D83735C08369CE18` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.12.1.65 | `D0716526D447A182E9A8EAC0BC4B5EDD49624260` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |
