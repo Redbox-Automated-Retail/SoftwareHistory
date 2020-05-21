@@ -2,6 +2,7 @@ namespace DeviceService.ComponentModel;
 
 public enum CardBrandEnum
 {
+	Unknown,
 	VISA,
 	Mastercard,
 	Amex,
@@ -9,6 +10,5 @@ public enum CardBrandEnum
 	DinersClub,
 	ExpressPay,
 	DPASCL,
-	UnionPay,
-	Unknown
+	UnionPay
 }
