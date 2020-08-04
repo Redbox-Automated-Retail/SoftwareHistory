@@ -1,7 +1,7 @@
 ﻿	# sync-locations.hs
 	# Copyright (C) 2011 Redbox Automated Retail, LLC
 	# All Rights Reserved
-	# VERSION 1.12.1.65
+	# VERSION 1.12.1.71
 	#
 		
 	LOG			"Begin sync-locations request."

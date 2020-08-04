@@ -66,6 +66,12 @@ internal sealed class KioskConfigurationJob : NativeJobAdapter
 			base.Context.CreateInfoResult("NoExcludedSlots", "There are no excluded slots.");
 		}
 		base.Context.CreateInfoResult("BufferSlot", ControllerConfiguration.Instance.ReturnSlotBuffer.ToString());
+		base.Context.CreateInfoResult("DisableKFCCheckDrivers", ControllerConfiguration.Instance.DisableKFCCheckDrivers.ToString());
+		base.Context.CreateInfoResult("DisableKFCDecodeTest", ControllerConfiguration.Instance.DisableKFCDecodeTest.ToString());
+		base.Context.CreateInfoResult("DisableKFCTestVendDoor", ControllerConfiguration.Instance.DisableKFCTestVendDoor.ToString());
+		base.Context.CreateInfoResult("DisableKFCInit", ControllerConfiguration.Instance.DisableKFCInit.ToString());
+		base.Context.CreateInfoResult("DisableKFCVerticalSlotTest", ControllerConfiguration.Instance.DisableKFCVerticalSlotTest.ToString());
+		base.Context.CreateInfoResult("DisableKFCUnknownCount", ControllerConfiguration.Instance.DisableKFCUnknownCount.ToString());
 	}
 
 	internal KioskConfigurationJob(ExecutionResult result, ExecutionContext ctx)

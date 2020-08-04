@@ -10,6 +10,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("Redbox.HAL.Directshow.Frame.Plugin")]
 [assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2018")]
 [assembly: Guid("c1c7a498-31a7-4827-9fa5-b82841e6b3d8")]
-[assembly: AssemblyFileVersion("1.12.1.65")]
+[assembly: AssemblyFileVersion("1.12.1.71")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.12.1.65")]
+[assembly: AssemblyVersion("1.12.1.71")]

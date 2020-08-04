@@ -437,11 +437,11 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Description("If set to true, will check the door sensors during the hardware status job.")]
 	public bool EnableDoorCheckInStatus { get; set; }
 
-	[Category("Behavior")]
-	[Description("If set to true, will establish the correct driver is loaded and the device is enabled.")]
 	[XmlConfiguration(DefaultValue = "true")]
-	[Browsable(false)]
 	[DisplayName("Check Gen4 Camera On Init")]
+	[Description("If set to true, will establish the correct driver is loaded and the device is enabled.")]
+	[Browsable(false)]
+	[Category("Behavior")]
 	public bool CheckGen4CameraOnInit { get; set; }
 
 	[Browsable(false)]
@@ -528,11 +528,11 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[Description("In days, the age of images to be deleted.")]
 	public int WatchdogImageDayAge { get; set; }
 
-	[DisplayName("Applog Day Age")]
-	[Category("Configuration")]
-	[Description("In days, the age of applogs to be deleted.")]
-	[Browsable(false)]
 	[XmlConfiguration(DefaultValue = "60")]
+	[Description("In days, the age of applogs to be deleted.")]
+	[Category("Configuration")]
+	[Browsable(false)]
+	[DisplayName("Applog Day Age")]
 	public int ApplogDayAge { get; set; }
 
 	[Browsable(false)]
@@ -542,25 +542,25 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	[XmlConfiguration(DefaultValue = "false")]
 	public bool FixArcusDuringStatusJob { get; set; }
 
-	[Category("Behavior")]
 	[Description("If true, will enable secure disk check in security service.")]
-	[Browsable(false)]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
 	[DisplayName("Enable Secure Disk Validator")]
+	[Category("Behavior")]
 	public bool EnableSecureDiskValidator { get; set; }
 
-	[Description("If true, will PEEK slot during vend.")]
-	[Browsable(false)]
 	[DisplayName("Peek During Vend")]
-	[Category("Behavior")]
+	[Description("If true, will PEEK slot during vend.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Behavior")]
+	[Browsable(false)]
 	public bool PeekDuringVend { get; set; }
 
+	[Browsable(false)]
 	[DisplayName("Test Slot During Removal")]
+	[Category("Behavior")]
 	[XmlConfiguration(DefaultValue = "false")]
 	[Description("If true, will PEEK slot during vend-unknown.")]
-	[Browsable(false)]
-	[Category("Behavior")]
 	public bool TestSlotDuringRemoval { get; set; }
 
 	[Browsable(false)]
@@ -578,169 +578,205 @@ public sealed class ControllerConfiguration : AttributeXmlConfiguration
 	public bool ClearPickerOnHome { get; set; }
 
 	[Category("Behavior")]
-	[XmlConfiguration(DefaultValue = "false")]
 	[DisplayName("Lower Limit As Error")]
+	[XmlConfiguration(DefaultValue = "false")]
 	[Description("If true, will treat lower limit as error during normal moves.")]
 	[Browsable(false)]
 	public bool LowerLimitAsError { get; set; }
 
 	[XmlConfiguration(DefaultValue = "true")]
 	[Browsable(false)]
-	[Category("Behavior")]
-	[DisplayName("Enable Unrecognized Barcode Reject")]
 	[Description("If true, will reject disks not recognized as Redbox barcodes during return.")]
+	[DisplayName("Enable Unrecognized Barcode Reject")]
+	[Category("Behavior")]
 	public bool EnableUnrecognizedBarcodeReject { get; set; }
 
 	[XmlConfiguration(DefaultValue = "false")]
-	[Browsable(false)]
 	[Category("Behavior")]
-	[DisplayName("Arcus Smooth Move")]
 	[Description("If true, will use smooth move motion.")]
+	[Browsable(false)]
+	[DisplayName("Arcus Smooth Move")]
 	public bool ArcusSmoothMove { get; set; }
 
+	[Description("If true, move below the vend door until auth signal arrives.")]
+	[Browsable(false)]
 	[DisplayName("Preposition Vend Fraud Move")]
 	[XmlConfiguration(DefaultValue = "true")]
-	[Browsable(false)]
 	[Category("Behavior")]
-	[Description("If true, move below the vend door until auth signal arrives.")]
 	public bool PrepositionVendFraudMove { get; set; }
 
-	[Category("Configuration")]
-	[Browsable(false)]
-	[Description("In ms, the time the hw healer job will pause between checks.")]
 	[XmlConfiguration(DefaultValue = "900000")]
+	[Category("Configuration")]
+	[Description("In ms, the time the hw healer job will pause between checks.")]
 	[DisplayName("Hardware Healer Pause Time")]
+	[Browsable(false)]
 	public int HardwareHealerPauseTime { get; set; }
 
+	[Description("In ms, the pause between router power cycle.")]
+	[Browsable(false)]
 	[DisplayName("Router Power Cycle Pause")]
 	[XmlConfiguration(DefaultValue = "0")]
 	[Category("Configuration")]
-	[Description("In ms, the pause between router power cycle.")]
-	[Browsable(false)]
 	public int RouterPowerCyclePause { get; set; }
 
-	[XmlConfiguration(DefaultValue = "300")]
 	[DisplayName("Clear Sensor Pause Delay")]
-	[Description("In ms, the pause between sensor reads during clear sensor.")]
-	[Browsable(false)]
 	[Category("Configuration")]
+	[XmlConfiguration(DefaultValue = "300")]
+	[Browsable(false)]
+	[Description("In ms, the pause between sensor reads during clear sensor.")]
 	public int ClearSensorPauseDelay { get; set; }
 
-	[DisplayName("Track Dirty Shutdown")]
-	[Description("If true will test for dirty shutdown & capture the event.")]
-	[XmlConfiguration(DefaultValue = "true")]
-	[Browsable(false)]
 	[Category("Behavior")]
+	[DisplayName("Track Dirty Shutdown")]
+	[Browsable(false)]
+	[XmlConfiguration(DefaultValue = "true")]
+	[Description("If true will test for dirty shutdown & capture the event.")]
 	public bool TrackDirtyShutdown { get; set; }
 
-	[Browsable(false)]
-	[Category("Behavior")]
 	[XmlConfiguration(DefaultValue = "true")]
-	[DisplayName("Handle Hardware Correction Events")]
 	[Description("If true will allow contexts to handle correction events.")]
+	[Category("Behavior")]
+	[DisplayName("Handle Hardware Correction Events")]
+	[Browsable(false)]
 	public bool HandleHardwareCorrectionEvents { get; set; }
 
+	[Description("If true, will attempt response validation from controller.")]
+	[DisplayName("Validate Inputs Read Response")]
 	[XmlConfiguration(DefaultValue = "true")]
 	[Browsable(false)]
-	[DisplayName("Validate Inputs Read Response")]
-	[Description("If true, will attempt response validation from controller.")]
 	[Category("Behavior")]
 	public bool ValidateInputsReadResponse { get; set; }
 
-	[Description("In ms, the time to spin during a picker sensor read.")]
+	[DisplayName("Picker Sensor Spin Time")]
 	[Browsable(false)]
+	[Description("In ms, the time to spin during a picker sensor read.")]
 	[XmlConfiguration(DefaultValue = "20")]
 	[Category("Configuration")]
-	[DisplayName("Picker Sensor Spin Time")]
 	public int PickerSensorSpinTime { get; set; }
 
-	[Browsable(false)]
 	[DisplayName("Enable Inventory Database Check")]
-	[Description("If true, will monitor the status of the inventory datastore.")]
 	[XmlConfiguration(DefaultValue = "false")]
+	[Browsable(false)]
+	[Description("If true, will monitor the status of the inventory datastore.")]
 	[Category("Behavior")]
 	public bool EnableInventoryDatabaseCheck { get; set; }
 
-	[Category("Configuration")]
-	[Browsable(false)]
-	[DisplayName("CCR Watchdog Sleep")]
-	[Description("In ms, the amount of time the CCR watchdog sleeps before checking the CCR.")]
 	[XmlConfiguration(DefaultValue = "1800000")]
+	[DisplayName("CCR Watchdog Sleep")]
+	[Category("Configuration")]
+	[Description("In ms, the amount of time the CCR watchdog sleeps before checking the CCR.")]
+	[Browsable(false)]
 	public int CCRWatchdogSleep { get; set; }
 
+	[XmlConfiguration(DefaultValue = "0")]
+	[Description("In ms, the amount of time the inventory backup watchdog will pause between backups.")]
+	[DisplayName("Inventory Backup Pause")]
 	[Browsable(false)]
 	[Category("Configuration")]
-	[DisplayName("Inventory Backup Pause")]
-	[Description("In ms, the amount of time the inventory backup watchdog will pause between backups.")]
-	[XmlConfiguration(DefaultValue = "0")]
 	public int InventoryBackupPause { get; set; }
 
 	[XmlConfiguration(DefaultValue = "false")]
+	[Description("If true, will write detailed info about VMZ operations.")]
 	[Category("Behavior")]
 	[Browsable(false)]
-	[Description("If true, will write detailed info about VMZ operations.")]
 	[DisplayName("Enable VMZ Trace")]
 	public bool EnableVMZTrace { get; set; }
 
-	[XmlConfiguration(DefaultValue = "6000")]
-	[Browsable(false)]
-	[Category("Configuration")]
 	[Description("In ms, the default timeout for roll to sensor operations.")]
+	[Browsable(false)]
+	[XmlConfiguration(DefaultValue = "6000")]
+	[Category("Configuration")]
 	[DisplayName("Default Roll Sensor Timeout")]
 	public int DefaultRollSensorTimeout { get; set; }
 
-	[Description("In ms, the default timeout for accepting the disk at the door.")]
+	[Category("Configuration")]
+	[Browsable(false)]
 	[XmlConfiguration(DefaultValue = "15000")]
 	[DisplayName("Accept Disk Timeout")]
-	[Category("Configuration")]
-	[Browsable(false)]
+	[Description("In ms, the default timeout for accepting the disk at the door.")]
 	public int AcceptDiskTimeout { get; set; }
 
-	[DisplayName("Enable Photocopy Scan")]
 	[Description("If true, will perform a scan for photocopy disks.")]
 	[Category("Behavior")]
-	[Browsable(false)]
 	[XmlConfiguration(DefaultValue = "true")]
+	[DisplayName("Enable Photocopy Scan")]
+	[Browsable(false)]
 	public bool EnablePhotocopyScan { get; set; }
 
-	[XmlConfiguration(DefaultValue = "false")]
-	[DisplayName("Disable Auto Exposure At Init")]
 	[Description("If true, will disable auto exposure on gen 4 cameras if set.")]
 	[Browsable(false)]
+	[XmlConfiguration(DefaultValue = "false")]
 	[Category("Behavior")]
+	[DisplayName("Disable Auto Exposure At Init")]
 	public bool DisableAutoExposureAtInit { get; set; }
 
-	[Browsable(false)]
-	[XmlConfiguration(DefaultValue = "true")]
 	[DisplayName("Auto License Cortex Decoder")]
-	[Description("If true, will attempt to license the Cortex decoding software automatically.")]
+	[Browsable(false)]
 	[Category("Behavior")]
+	[XmlConfiguration(DefaultValue = "true")]
+	[Description("If true, will attempt to license the Cortex decoding software automatically.")]
 	public bool AutoLicenseCortexDecoder { get; set; }
 
+	[XmlConfiguration(DefaultValue = "500")]
+	[DisplayName("Ringlight Shutdown Pause")]
 	[Description("If value is greater than 0, wait value ms after turning off the ringlight.")]
 	[Category("Configuration")]
-	[DisplayName("Ringlight Shutdown Pause")]
-	[XmlConfiguration(DefaultValue = "500")]
 	public int IRRinglightShutdownPause { get; set; }
 
 	[Category("Configuration")]
+	[DisplayName("Signal Wait Timeout")]
 	[Description("The time to wait for a signal from a client.")]
 	[XmlConfiguration(DefaultValue = "30000")]
-	[DisplayName("Signal Wait Timeout")]
 	public int SignalWaitTimeout { get; set; }
 
-	[Description("If true, will retake image and scan for fraud markers.  Depends on EnableCameraReset to be set to true.")]
-	[XmlConfiguration(DefaultValue = "true")]
-	[Browsable(false)]
-	[Category("Behavior")]
 	[DisplayName("Retry Read On No Markers Found")]
+	[XmlConfiguration(DefaultValue = "true")]
+	[Category("Behavior")]
+	[Description("If true, will retake image and scan for fraud markers.  Depends on EnableCameraReset to be set to true.")]
+	[Browsable(false)]
 	public bool RetryReadOnNoMarkersFound { get; set; }
 
-	[DisplayName("Additional Fraud Read Attempts")]
-	[XmlConfiguration(DefaultValue = "1")]
-	[Description("The number of attempts to try and read a disc without fraud markers. will recenter in some scenarios.")]
 	[Category("Behavior")]
+	[Description("The number of attempts to try and read a disc without fraud markers. will recenter in some scenarios.")]
+	[XmlConfiguration(DefaultValue = "1")]
+	[DisplayName("Additional Fraud Read Attempts")]
 	public int AdditionalFraudReadAttempts { get; set; }
+
+	[Category("Configuration")]
+	[XmlConfiguration(DefaultValue = "false")]
+	[Description("MS Hal Tester KFC Tab Disable Check Drivers Button")]
+	[DisplayName("Disable KFC Check Drivers")]
+	public bool DisableKFCCheckDrivers { get; set; }
+
+	[Category("Configuration")]
+	[Description("MS Hal Tester KFC Tab Disable Decode Test Button")]
+	[XmlConfiguration(DefaultValue = "false")]
+	[DisplayName("Disable KFC Decode Test")]
+	public bool DisableKFCDecodeTest { get; set; }
+
+	[XmlConfiguration(DefaultValue = "false")]
+	[Category("Configuration")]
+	[DisplayName("Disable KFC Test Vend Door")]
+	[Description("MS Hal Tester KFC Tab Disable Test Vend Door Button")]
+	public bool DisableKFCTestVendDoor { get; set; }
+
+	[XmlConfiguration(DefaultValue = "false")]
+	[Description("MS Hal Tester KFC Tab Disable Init Button")]
+	[Category("Configuration")]
+	[DisplayName("Disable KFC Init")]
+	public bool DisableKFCInit { get; set; }
+
+	[Description("MS Hal Tester KFC Tab Disable Vertical Slot Test Button")]
+	[Category("Configuration")]
+	[DisplayName("Disable KFC Vertical Slot Test")]
+	[XmlConfiguration(DefaultValue = "false")]
+	public bool DisableKFCVerticalSlotTest { get; set; }
+
+	[Description("MS Hal Tester KFC Tab Disable Unknown Count Button")]
+	[XmlConfiguration(DefaultValue = "false")]
+	[DisplayName("Disable KFC Unknown Count")]
+	[Category("Configuration")]
+	public bool DisableKFCUnknownCount { get; set; }
 
 	[Browsable(false)]
 	public bool IsVMZMachine => MerchandizingMode.QLM != MerchMode;
