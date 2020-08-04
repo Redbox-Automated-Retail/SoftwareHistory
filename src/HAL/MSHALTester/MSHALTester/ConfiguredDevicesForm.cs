@@ -235,15 +235,15 @@ public class ConfiguredDevicesForm : Form
 
 	private GroupBox groupBox2;
 
-	private Button button8;
+	private Button btn_KFCCheckDrivers;
 
-	private Button button9;
+	private Button btn_KFCInit;
 
-	private Button button12;
+	private Button btn_KFCTestVendDoor;
 
-	private Button button17;
+	private Button btn_KFCVerticalSlotTest;
 
-	private Button button18;
+	private Button btn_KFCUnknownCount;
 
 	private Button button19;
 
@@ -259,7 +259,7 @@ public class ConfiguredDevicesForm : Form
 
 	private TextBox m_cameraSnapTB;
 
-	private Button button20;
+	private Button btn_KFCDecodeTest;
 
 	private ErrorProvider errorProvider1;
 
@@ -487,6 +487,12 @@ public class ConfiguredDevicesForm : Form
 			HasRouterPowerRelay = machineConfiguration.HasRouterPowerRelay;
 			ArcusResetConfigured = machineConfiguration.ArcusResetConfigured;
 			m_irConfigured = machineConfiguration.HasIRHardware;
+			btn_KFCCheckDrivers.Enabled = !machineConfiguration.KFCDisableCheckDrivers;
+			btn_KFCDecodeTest.Enabled = !machineConfiguration.KFCDisableDecodeTest;
+			btn_KFCTestVendDoor.Enabled = !machineConfiguration.KFCDisableVendDoorTest;
+			btn_KFCInit.Enabled = !machineConfiguration.KFCDisableInit;
+			btn_KFCVerticalSlotTest.Enabled = !machineConfiguration.KFCDisableVerticalSlotTest;
+			btn_KFCUnknownCount.Enabled = !machineConfiguration.KFCDisableUnknownCount;
 		}
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.AppendLine("ROLLER POS=6 TIMEOUT=4000 WAIT=TRUE ");
@@ -969,7 +975,7 @@ public class ConfiguredDevicesForm : Form
 
 	private void button9_Click(object sender, EventArgs e)
 	{
-		button9.BackColor = Color.Red;
+		btn_KFCInit.BackColor = Color.Red;
 		ToggleKfcButtons(enable: false);
 		m_runInitWorker.RunWorkerAsync();
 	}
@@ -984,7 +990,7 @@ public class ConfiguredDevicesForm : Form
 			return;
 		}
 		ToggleKfcButtons(enable: false);
-		button17.BackColor = Color.Red;
+		btn_KFCVerticalSlotTest.BackColor = Color.Red;
 		m_verticalSyncWorker.RunWorkerAsync(integer);
 	}
 
@@ -1033,7 +1039,7 @@ public class ConfiguredDevicesForm : Form
 			return;
 		}
 		ToggleKfcButtons(enable: false);
-		button20.BackColor = Color.Red;
+		btn_KFCDecodeTest.BackColor = Color.Red;
 		m_runDecodeWorker.RunWorkerAsync(new Location
 		{
 			Deck = integer,
@@ -1574,12 +1580,12 @@ public class ConfiguredDevicesForm : Form
 
 	private void ToggleKfcButtons(bool enable)
 	{
-		Button button = button8;
-		Button button2 = button20;
-		Button button3 = button12;
-		Button button4 = button9;
-		Button button5 = button17;
-		bool flag = (button18.Enabled = enable);
+		Button button = btn_KFCCheckDrivers;
+		Button button2 = btn_KFCDecodeTest;
+		Button button3 = btn_KFCTestVendDoor;
+		Button button4 = btn_KFCInit;
+		Button button5 = btn_KFCVerticalSlotTest;
+		bool flag = (btn_KFCUnknownCount.Enabled = enable);
 		bool flag3 = (button5.Enabled = flag);
 		bool flag5 = (button4.Enabled = flag3);
 		bool flag7 = (button3.Enabled = flag5);
@@ -1597,7 +1603,7 @@ public class ConfiguredDevicesForm : Form
 	{
 		ToggleKfcButtons(enable: true);
 		m_verticalTestTB.Text = e.Result as string;
-		button17.BackColor = Color.LightGray;
+		btn_KFCVerticalSlotTest.BackColor = Color.LightGray;
 	}
 
 	private void m_runInitWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -1608,7 +1614,7 @@ public class ConfiguredDevicesForm : Form
 	private void m_runInitWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 	{
 		ToggleKfcButtons(enable: true);
-		button9.BackColor = Color.LightGray;
+		btn_KFCInit.BackColor = Color.LightGray;
 		m_initTB.Text = e.Result as string;
 	}
 
@@ -1621,7 +1627,7 @@ public class ConfiguredDevicesForm : Form
 	private void m_runDecodeWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 	{
 		ToggleKfcButtons(enable: true);
-		button20.BackColor = Color.LightGray;
+		btn_KFCDecodeTest.BackColor = Color.LightGray;
 		m_cameraSnapTB.Text = e.Result as string;
 	}
 
@@ -1773,16 +1779,16 @@ public class ConfiguredDevicesForm : Form
 		this.groupBox2 = new System.Windows.Forms.GroupBox();
 		this.m_unknownCountTB = new System.Windows.Forms.TextBox();
 		this.m_cameraSnapTB = new System.Windows.Forms.TextBox();
-		this.button20 = new System.Windows.Forms.Button();
+		this.btn_KFCDecodeTest = new System.Windows.Forms.Button();
 		this.m_verticalTestTB = new System.Windows.Forms.TextBox();
 		this.m_initTB = new System.Windows.Forms.TextBox();
 		this.m_testVendDoorTB = new System.Windows.Forms.TextBox();
 		this.m_checkDriversStatusTB = new System.Windows.Forms.TextBox();
-		this.button18 = new System.Windows.Forms.Button();
-		this.button17 = new System.Windows.Forms.Button();
-		this.button12 = new System.Windows.Forms.Button();
-		this.button9 = new System.Windows.Forms.Button();
-		this.button8 = new System.Windows.Forms.Button();
+		this.btn_KFCUnknownCount = new System.Windows.Forms.Button();
+		this.btn_KFCVerticalSlotTest = new System.Windows.Forms.Button();
+		this.btn_KFCTestVendDoor = new System.Windows.Forms.Button();
+		this.btn_KFCInit = new System.Windows.Forms.Button();
+		this.btn_KFCCheckDrivers = new System.Windows.Forms.Button();
 		this.m_userName = new System.Windows.Forms.TextBox();
 		this.button21 = new System.Windows.Forms.Button();
 		this.label1 = new System.Windows.Forms.Label();
@@ -2276,16 +2282,16 @@ public class ConfiguredDevicesForm : Form
 		this.button22.Click += new System.EventHandler(button22_Click);
 		this.groupBox2.Controls.Add(this.m_unknownCountTB);
 		this.groupBox2.Controls.Add(this.m_cameraSnapTB);
-		this.groupBox2.Controls.Add(this.button20);
+		this.groupBox2.Controls.Add(this.btn_KFCDecodeTest);
 		this.groupBox2.Controls.Add(this.m_verticalTestTB);
 		this.groupBox2.Controls.Add(this.m_initTB);
 		this.groupBox2.Controls.Add(this.m_testVendDoorTB);
 		this.groupBox2.Controls.Add(this.m_checkDriversStatusTB);
-		this.groupBox2.Controls.Add(this.button18);
-		this.groupBox2.Controls.Add(this.button17);
-		this.groupBox2.Controls.Add(this.button12);
-		this.groupBox2.Controls.Add(this.button9);
-		this.groupBox2.Controls.Add(this.button8);
+		this.groupBox2.Controls.Add(this.btn_KFCUnknownCount);
+		this.groupBox2.Controls.Add(this.btn_KFCVerticalSlotTest);
+		this.groupBox2.Controls.Add(this.btn_KFCTestVendDoor);
+		this.groupBox2.Controls.Add(this.btn_KFCInit);
+		this.groupBox2.Controls.Add(this.btn_KFCCheckDrivers);
 		this.groupBox2.Location = new System.Drawing.Point(9, 118);
 		this.groupBox2.Name = "groupBox2";
 		this.groupBox2.Size = new System.Drawing.Size(325, 437);
@@ -2302,13 +2308,13 @@ public class ConfiguredDevicesForm : Form
 		this.m_cameraSnapTB.ReadOnly = true;
 		this.m_cameraSnapTB.Size = new System.Drawing.Size(129, 20);
 		this.m_cameraSnapTB.TabIndex = 16;
-		this.button20.Location = new System.Drawing.Point(12, 89);
-		this.button20.Name = "button20";
-		this.button20.Size = new System.Drawing.Size(100, 60);
-		this.button20.TabIndex = 2;
-		this.button20.Text = "Decode Test";
-		this.button20.UseVisualStyleBackColor = true;
-		this.button20.Click += new System.EventHandler(button20_Click);
+		this.btn_KFCDecodeTest.Location = new System.Drawing.Point(12, 89);
+		this.btn_KFCDecodeTest.Name = "btn_KFCDecodeTest";
+		this.btn_KFCDecodeTest.Size = new System.Drawing.Size(100, 60);
+		this.btn_KFCDecodeTest.TabIndex = 2;
+		this.btn_KFCDecodeTest.Text = "Decode Test";
+		this.btn_KFCDecodeTest.UseVisualStyleBackColor = true;
+		this.btn_KFCDecodeTest.Click += new System.EventHandler(button20_Click);
 		this.m_verticalTestTB.Location = new System.Drawing.Point(133, 338);
 		this.m_verticalTestTB.Name = "m_verticalTestTB";
 		this.m_verticalTestTB.ReadOnly = true;
@@ -2329,41 +2335,41 @@ public class ConfiguredDevicesForm : Form
 		this.m_checkDriversStatusTB.ReadOnly = true;
 		this.m_checkDriversStatusTB.Size = new System.Drawing.Size(129, 20);
 		this.m_checkDriversStatusTB.TabIndex = 9;
-		this.button18.Location = new System.Drawing.Point(12, 371);
-		this.button18.Name = "button18";
-		this.button18.Size = new System.Drawing.Size(100, 60);
-		this.button18.TabIndex = 7;
-		this.button18.Text = "Unknown Count";
-		this.button18.UseVisualStyleBackColor = true;
-		this.button18.Click += new System.EventHandler(button18_Click);
-		this.button17.Location = new System.Drawing.Point(12, 298);
-		this.button17.Name = "button17";
-		this.button17.Size = new System.Drawing.Size(100, 60);
-		this.button17.TabIndex = 6;
-		this.button17.Text = "Vertical Slot Test";
-		this.button17.UseVisualStyleBackColor = true;
-		this.button17.Click += new System.EventHandler(button17_Click);
-		this.button12.Location = new System.Drawing.Point(12, 155);
-		this.button12.Name = "button12";
-		this.button12.Size = new System.Drawing.Size(100, 60);
-		this.button12.TabIndex = 4;
-		this.button12.Text = "Test Vend Door";
-		this.button12.UseVisualStyleBackColor = true;
-		this.button12.Click += new System.EventHandler(button12_Click);
-		this.button9.Location = new System.Drawing.Point(12, 232);
-		this.button9.Name = "button9";
-		this.button9.Size = new System.Drawing.Size(100, 60);
-		this.button9.TabIndex = 5;
-		this.button9.Text = "Init";
-		this.button9.UseVisualStyleBackColor = true;
-		this.button9.Click += new System.EventHandler(button9_Click);
-		this.button8.Location = new System.Drawing.Point(12, 19);
-		this.button8.Name = "button8";
-		this.button8.Size = new System.Drawing.Size(100, 60);
-		this.button8.TabIndex = 0;
-		this.button8.Text = "Check Drivers";
-		this.button8.UseVisualStyleBackColor = true;
-		this.button8.Click += new System.EventHandler(button8_Click);
+		this.btn_KFCUnknownCount.Location = new System.Drawing.Point(12, 371);
+		this.btn_KFCUnknownCount.Name = "btn_KFCUnknownCount";
+		this.btn_KFCUnknownCount.Size = new System.Drawing.Size(100, 60);
+		this.btn_KFCUnknownCount.TabIndex = 7;
+		this.btn_KFCUnknownCount.Text = "Unknown Count";
+		this.btn_KFCUnknownCount.UseVisualStyleBackColor = true;
+		this.btn_KFCUnknownCount.Click += new System.EventHandler(button18_Click);
+		this.btn_KFCVerticalSlotTest.Location = new System.Drawing.Point(12, 298);
+		this.btn_KFCVerticalSlotTest.Name = "btn_KFCVerticalSlotTest";
+		this.btn_KFCVerticalSlotTest.Size = new System.Drawing.Size(100, 60);
+		this.btn_KFCVerticalSlotTest.TabIndex = 6;
+		this.btn_KFCVerticalSlotTest.Text = "Vertical Slot Test";
+		this.btn_KFCVerticalSlotTest.UseVisualStyleBackColor = true;
+		this.btn_KFCVerticalSlotTest.Click += new System.EventHandler(button17_Click);
+		this.btn_KFCTestVendDoor.Location = new System.Drawing.Point(12, 155);
+		this.btn_KFCTestVendDoor.Name = "btn_KFCTestVendDoor";
+		this.btn_KFCTestVendDoor.Size = new System.Drawing.Size(100, 60);
+		this.btn_KFCTestVendDoor.TabIndex = 4;
+		this.btn_KFCTestVendDoor.Text = "Test Vend Door";
+		this.btn_KFCTestVendDoor.UseVisualStyleBackColor = true;
+		this.btn_KFCTestVendDoor.Click += new System.EventHandler(button12_Click);
+		this.btn_KFCInit.Location = new System.Drawing.Point(12, 232);
+		this.btn_KFCInit.Name = "btn_KFCInit";
+		this.btn_KFCInit.Size = new System.Drawing.Size(100, 60);
+		this.btn_KFCInit.TabIndex = 5;
+		this.btn_KFCInit.Text = "Init";
+		this.btn_KFCInit.UseVisualStyleBackColor = true;
+		this.btn_KFCInit.Click += new System.EventHandler(button9_Click);
+		this.btn_KFCCheckDrivers.Location = new System.Drawing.Point(12, 19);
+		this.btn_KFCCheckDrivers.Name = "btn_KFCCheckDrivers";
+		this.btn_KFCCheckDrivers.Size = new System.Drawing.Size(100, 60);
+		this.btn_KFCCheckDrivers.TabIndex = 0;
+		this.btn_KFCCheckDrivers.Text = "Check Drivers";
+		this.btn_KFCCheckDrivers.UseVisualStyleBackColor = true;
+		this.btn_KFCCheckDrivers.Click += new System.EventHandler(button8_Click);
 		this.m_userName.Location = new System.Drawing.Point(6, 31);
 		this.m_userName.Name = "m_userName";
 		this.m_userName.ReadOnly = true;
@@ -2404,6 +2410,7 @@ public class ConfiguredDevicesForm : Form
 		this.tabPage1.Size = new System.Drawing.Size(1049, 566);
 		this.tabPage1.TabIndex = 7;
 		this.tabPage1.Text = "Hardware Survey";
+		this.listView1.HideSelection = false;
 		this.listView1.Location = new System.Drawing.Point(20, 35);
 		this.listView1.Name = "listView1";
 		this.listView1.Size = new System.Drawing.Size(502, 378);

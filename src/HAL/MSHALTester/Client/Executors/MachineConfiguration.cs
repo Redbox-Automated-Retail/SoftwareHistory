@@ -63,6 +63,18 @@ public sealed class MachineConfiguration : JobExecutor
 
 	public int BufferSlot { get; set; }
 
+	public bool KFCDisableCheckDrivers { get; set; }
+
+	public bool KFCDisableDecodeTest { get; set; }
+
+	public bool KFCDisableVendDoorTest { get; set; }
+
+	public bool KFCDisableInit { get; set; }
+
+	public bool KFCDisableVerticalSlotTest { get; set; }
+
+	public bool KFCDisableUnknownCount { get; set; }
+
 	protected override string JobName => "kiosk-configuration-job";
 
 	public MachineConfiguration(HardwareService service)
@@ -154,8 +166,44 @@ public sealed class MachineConfiguration : JobExecutor
 				break;
 			case "BufferSlot":
 			{
-				int result2 = 1;
-				BufferSlot = ((!int.TryParse(result.Message, out result2)) ? 1 : result2);
+				int result8 = 1;
+				BufferSlot = ((!int.TryParse(result.Message, out result8)) ? 1 : result8);
+				break;
+			}
+			case "DisableKFCCheckDrivers":
+			{
+				bool result7 = false;
+				KFCDisableCheckDrivers = bool.TryParse(result.Message, out result7) && result7;
+				break;
+			}
+			case "DisableKFCDecodeTest":
+			{
+				bool result6 = false;
+				KFCDisableDecodeTest = bool.TryParse(result.Message, out result6) && result6;
+				break;
+			}
+			case "DisableKFCTestVendDoor":
+			{
+				bool result5 = false;
+				KFCDisableVendDoorTest = bool.TryParse(result.Message, out result5) && result5;
+				break;
+			}
+			case "DisableKFCInit":
+			{
+				bool result4 = false;
+				KFCDisableInit = bool.TryParse(result.Message, out result4) && result4;
+				break;
+			}
+			case "DisableKFCVerticalSlotTest":
+			{
+				bool result3 = false;
+				KFCDisableVerticalSlotTest = bool.TryParse(result.Message, out result3) && result3;
+				break;
+			}
+			case "DisableKFCUnknownCount":
+			{
+				bool result2 = false;
+				KFCDisableUnknownCount = bool.TryParse(result.Message, out result2) && result2;
 				break;
 			}
 			}

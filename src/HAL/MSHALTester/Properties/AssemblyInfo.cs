@@ -5,7 +5,7 @@ using log4net.Config;
 
 [assembly: AssemblyTrademark("")]
 [assembly: Guid("70818cfb-39ea-4683-8b89-17b10dae2861")]
-[assembly: AssemblyFileVersion("1.12.1.65")]
+[assembly: AssemblyFileVersion("1.12.1.71")]
 [assembly: XmlConfigurator(Watch = true)]
 [assembly: AssemblyTitle("Redbox.HAL.MSHALTester")]
 [assembly: AssemblyDescription("")]
@@ -14,4 +14,4 @@ using log4net.Config;
 [assembly: AssemblyProduct("Redbox.HAL.MSHALTester")]
 [assembly: AssemblyCopyright("Copyright © Redbox DVD Automated Retail 2018")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.12.1.65")]
+[assembly: AssemblyVersion("1.12.1.71")]
