@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace KioskClientService.API.Services.Ads;
 
 public class Advertisement
@@ -38,5 +40,5 @@ public class Advertisement
 
 	public string CreativeCategory { get; set; }
 
-	public CreativeCompanion CreativeCompanion { get; set; }
+	public List<CreativeCompanionKVP> CreativeCompanion { get; set; }
 }

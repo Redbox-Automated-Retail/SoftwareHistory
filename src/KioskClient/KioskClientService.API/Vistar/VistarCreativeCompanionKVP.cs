@@ -1,6 +1,6 @@
 namespace KioskClientService.API.Vistar;
 
-public class VistarCreativeCompanion
+public class VistarCreativeCompanionKVP
 {
 	public string name { get; set; }
 

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace KioskClientService.API.Vistar;
 
 public class VistarAdvertisement
@@ -38,5 +40,5 @@ public class VistarAdvertisement
 
 	public string creative_category { get; set; }
 
-	public VistarCreativeCompanion creative_companion { get; set; }
+	public List<VistarCreativeCompanionKVP> creative_companion { get; set; }
 }

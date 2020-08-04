@@ -30,11 +30,7 @@ public static class AdvertisementExtensions
 		};
 		if (va.creative_companion != null)
 		{
-			advertisement.CreativeCompanion = new CreativeCompanion
-			{
-				Name = va.creative_companion.name,
-				Value = va.creative_companion.value
-			};
+			advertisement.CreativeCompanion = va.creative_companion.ToCreativeCompanion();
 		}
 		return advertisement;
 	}
@@ -67,5 +63,19 @@ public static class AdvertisementExtensions
 			CampaignId = string.Empty,
 			CreativeName = string.Empty
 		};
+	}
+
+	public static List<CreativeCompanionKVP> ToCreativeCompanion(this List<VistarCreativeCompanionKVP> vistarCreativeCompanion)
+	{
+		List<CreativeCompanionKVP> creativeCompanion = new List<CreativeCompanionKVP>();
+		vistarCreativeCompanion.ForEach(delegate(VistarCreativeCompanionKVP c)
+		{
+			creativeCompanion.Add(new CreativeCompanionKVP
+			{
+				Name = c.name,
+				Value = c.value
+			});
+		});
+		return creativeCompanion;
 	}
 }
