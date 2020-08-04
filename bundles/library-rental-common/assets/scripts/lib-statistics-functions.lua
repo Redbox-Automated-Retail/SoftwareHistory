@@ -203,14 +203,16 @@ update_profile_inventory_stats = function()
 	and InventoryVersion.origin_machine ~= nil
 	and InventoryVersion.generated_on ~= nil then
 		local gen_date = InventoryVersion.generated_on.date
-		kernel.healthsvcs_enqueuestatistic(
-			"InventoryData",
-			string.sub(gen_date, 1, 4) .. "/" ..
-			string.sub(gen_date, 5, 6) .. "/" ..
-			string.sub(gen_date, 7, 8) .. " " ..
-			string.sub(gen_date, 9, 10) .. ":" ..
-			string.sub(gen_date, 11, 12) .. ":" ..
-			string.sub(gen_date, 13, 14) )
+		if string.len(gen_date) == 14 and tonumber(gen_date) ~= nil then
+			kernel.healthsvcs_enqueuestatistic(
+				"InventoryData",
+				string.sub(gen_date, 1, 4) .. "/" ..
+				string.sub(gen_date, 5, 6) .. "/" ..
+				string.sub(gen_date, 7, 8) .. " " ..
+				string.sub(gen_date, 9, 10) .. ":" ..
+				string.sub(gen_date, 11, 12) .. ":" ..
+				string.sub(gen_date, 13, 14) )
+		end
 	end
 end
 

@@ -49,8 +49,9 @@ local function display_rebalances()
 	local _master_product_catalaog = MasterProductCatalog
 	local quantity_text = ""
 	local title_text = ""
+	local format_text = ""
 	
-	-- Determine wich Quantities and Titles to show for this page
+	-- Determine which Quantities, Titles, and Formats to show for this page
 	local start_index = current_page * titles_per_page + 1
 	for i = start_index, start_index + titles_per_page do
 		local current_index = i - start_index + 1
@@ -58,12 +59,14 @@ local function display_rebalances()
 			local product = _master_product_catalaog[titles[i].TitleId]
 			if titles[i].Quantity ~= nil and titles[i].Quantity > 0 then
 				kernel.setactortext( "rebalance_quantity_text_line" .. tostring( current_index ), tostring( product ~= nil and titles[i].Quantity or "0" ) )
-				kernel.setactortext( "rebalance_title_text_line" .. tostring( current_index ), tostring( product ~= nil and product.long_name .. tostring( ( ProductTypes[product.product_type_id] ~= nil and ProductTypes[product.product_type_id].product_family_id == 2 ) and " (" .. ProductTypes[product.product_type_id].product_type_name .. ")" or "" ) or "**Title Information Not Found**" ) )
+				kernel.setactortext( "rebalance_title_text_line" .. tostring( current_index ), tostring( product ~= nil and product.long_name or "*Title Information Not Found*" ) )
+				kernel.setactortext( "rebalance_format_text_line" .. tostring( current_index ), tostring( product ~= nil and ProductTypes[product.product_type_id] ~= nil and ProductTypes[product.product_type_id].product_type_name or "*NA*" ) )
 			end
 		else 
 			--clear text
 			kernel.setactortext( "rebalance_quantity_text_line" .. tostring( current_index ), "" )
 			kernel.setactortext( "rebalance_title_text_line" .. tostring( current_index ), "" )
+			kernel.setactortext( "rebalance_format_text_line" .. tostring( current_index ), "" )
 		end
 	end
 
@@ -136,5 +139,6 @@ kernel.setmacro( "VMZRebalance:Title", tostring(strings["rebalance_header"]) )
 kernel.setmacro( "VMZRebalance:CloseButton", tostring(strings["rebalance_close_button"]) )
 kernel.setmacro( "VMZRebalance:QuantityHeader", tostring(strings["rebalance_column_quantity"]) )
 kernel.setmacro( "VMZRebalance:TitleHeader", tostring(strings["rebalance_column_title"]) )
+kernel.setmacro( "VMZRebalance:FormatHeader", tostring(strings["rebalance_column_format"]) )
 
 display_rebalances()

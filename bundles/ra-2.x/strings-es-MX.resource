@@ -266,6 +266,7 @@
       <column name="flag_classics">Clásico</column>
 	    <column name="flag_hot_deal">Rebaja</column>
       <column name="flag_award_nominee">Nominado</column>
+      <column name="flag_sony_sweepstakes">$15k Sweeps</column>
 
       <column name="products_used">Disco Previavisto En Caja</column>
       <column name="products_new">Nuevos Productos</column>

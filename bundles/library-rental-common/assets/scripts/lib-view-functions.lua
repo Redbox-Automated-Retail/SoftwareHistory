@@ -64,7 +64,7 @@ function view_unwindto_safe( name, discard, context )
 	if safe_to_change_view() == true then			
 		view_unwindto( name, discard, context )
 	else
-		kernel.log( "view_unwindto_safe( " .. name .. ", " .. context .. " ) denied." )
+		kernel.log( "view_unwindto_safe( " .. tostring( name ) .. ", " .. tostring( context ) .. " ) denied." )
 	end
 end
 

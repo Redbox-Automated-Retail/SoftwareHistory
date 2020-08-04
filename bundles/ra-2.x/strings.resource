@@ -266,6 +266,7 @@
       <column name="flag_classics">Classics</column>
       <column name="flag_hot_deal">Hot Deal</column>
       <column name="flag_award_nominee">Award Nominee</column>
+      <column name="flag_sony_sweepstakes">$15k Sweeps</column>
 
       <column name="products_used">Used Disc in Your Cart</column>
       <column name="products_new">New Products</column>

@@ -11,9 +11,5 @@
 			<column name="title">------------Field Visit Form------------</column>
 			<column name="url">http://qafvf/default.aspx?kioskId=${StoreNumber}</column>
 		</row>
-		<row>
-			<column name="title">------------Install Check List------------</column>
-			<column name="url">http://qaicl/default.aspx?kioskId=${StoreNumber}</column>
-		</row>
-	</aspect>
+  </aspect>
 </resource>

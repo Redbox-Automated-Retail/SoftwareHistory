@@ -7,4 +7,4 @@
 local log_value = kernel.getlasthitactortag() or kernel.getlasthitactorname()
 kernel.logto( "FieldMaintenanceActionLog", log_value )
 
-view_unwindto_safe( "main_menu_view" )
+view_unwindto( "main_menu_view", true, "return_to_main" )

@@ -197,8 +197,21 @@
 		verticalAlignment="center"
 		font="medium_large_font"
 		visible="true" />
-
-	<actor
+    
+    <actor
+      name="rebalance_format_header_text"
+      x="660"
+      y="190"
+      width="105"
+      height="40"
+      text="${VMZRebalance:FormatHeader}"
+      foregroundColor="White"
+      optionFlags="Text, TextShadow"
+      verticalAlignment="center"
+      font="medium_large_font"
+      visible="true" />
+    
+    <actor
 		name="rebalance_quantity_text_line1"
 		x="145"
 		y="242"
@@ -358,7 +371,7 @@
 		name="rebalance_title_text_line1"
 		x="260"
 		y="242"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -371,7 +384,7 @@
 		name="rebalance_title_text_line2"
 		x="260"
 		y="267"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -384,7 +397,7 @@
 		name="rebalance_title_text_line3"
 		x="260"
 		y="292"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -397,7 +410,7 @@
 		name="rebalance_title_text_line4"
 		x="260"
 		y="317"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -410,7 +423,7 @@
 		name="rebalance_title_text_line5"
 		x="260"
 		y="342"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -423,7 +436,7 @@
 		name="rebalance_title_text_line6"
 		x="260"
 		y="367"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -436,7 +449,7 @@
 		name="rebalance_title_text_line7"
 		x="260"
 		y="392"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -449,7 +462,7 @@
 		name="rebalance_title_text_line8"
 		x="260"
 		y="417"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -462,7 +475,7 @@
 		name="rebalance_title_text_line9"
 		x="260"
 		y="442"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -475,7 +488,7 @@
 		name="rebalance_title_text_line10"
 		x="260"
 		y="467"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -488,7 +501,7 @@
 		name="rebalance_title_text_line11"
 		x="260"
 		y="492"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -501,7 +514,7 @@
 		name="rebalance_title_text_line12"
 		x="260"
 		y="517"
-		width="580"
+		width="370"
 		height="25"
 		foregroundColor="Black"
 		optionFlags="Text, ElideText"
@@ -509,8 +522,164 @@
 		horizontalAlignment="near"
 		font="medium_large_font"
 		visible="true" />
+    
+    <actor
+      name="rebalance_format_text_line1"
+      x="660"
+      y="242"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
 
-	<actor
+    <actor
+      name="rebalance_format_text_line2"
+      x="660"
+      y="267"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line3"
+      x="660"
+      y="292"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line4"
+      x="660"
+      y="317"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line5"
+      x="660"
+      y="342"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line6"
+      x="660"
+      y="367"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line7"
+      x="660"
+      y="392"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line8"
+      x="660"
+      y="417"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line9"
+      x="660"
+      y="442"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line10"
+      x="660"
+      y="467"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line11"
+      x="660"
+      y="492"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+
+    <actor
+      name="rebalance_format_text_line12"
+      x="660"
+      y="517"
+		  width="180"
+      height="25"
+      foregroundColor="Black"
+      optionFlags="Text, ElideText"
+      verticalAlignment="center"
+      horizontalAlignment="near"
+      font="medium_large_font"
+      visible="true" />
+    
+    <actor
 		name="rebalance_instructions_area"
 		x="140"
 		y="575"

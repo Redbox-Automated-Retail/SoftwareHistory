@@ -9,9 +9,5 @@
 			<column name="title">------------Field Visit Form------------</column>
 			<column name="url">https://fieldvisit.accessredbox.net/default.aspx?kioskId=${StoreNumber}</column>
 		</row>
-		<row>
-			<column name="title">------------Install Check List------------</column>
-			<column name="url">https://installchecklist.accessredbox.net/default.aspx?kioskId=${StoreNumber}</column>
-		</row>
-	</aspect>
+  </aspect>
 </resource>

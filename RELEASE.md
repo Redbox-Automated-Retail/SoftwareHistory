@@ -1,17 +1,17 @@
-# Van Halen (2020-05-21)
+# Yes SR3 (2020-08-04)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2020-05-21
-- Store labels: kop-rental-bundles-VanHalen
+- Date (first download in the snapshots): 2020-08-04
+- Store labels: kop-rental-bundles-YesSR3
 - Package revisions:
-  - `kop-rental-bundles` revision 130 (`5CBDCF2803EB0C48AC29BE5B1EA240B759569ABE`)
+  - `kop-rental-bundles` revision 134 (`786F33AACFD33A817F597A8BC36779F0EF1BF20E`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `53CBAB55AE345F5AB102035DA27BA2D095AD60C2` | exact |
-| `fm.bundle` |  |  | `A41DE710FB7442B39084C7ABD287DFDDF3465803` | exact |
-| `library-rental-common.bundle` |  |  | `764E7BA26634AA3D08B18CB9D4F7B8FC3192E4DB` | exact |
-| `ra-2.x.bundle` |  |  | `2C8BBD600511BD2F50B7E9FEEDA9F54D6C3B78A0` | exact |
+| `cp.bundle` |  |  | `47C8132E6B642553A721FB8D7E943FC3423C110F` | exact |
+| `fm.bundle` |  |  | `0CDBA880AE12029FC3376581018BEBFD3E265E58` | exact |
+| `library-rental-common.bundle` |  |  | `5F74FECEAA5D9DC328E6DD02AA0C9D9DF09FE24B` | exact |
+| `ra-2.x.bundle` |  |  | `BB3193DC2C65D4A26177314A0FB8AC3D92C02C7E` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

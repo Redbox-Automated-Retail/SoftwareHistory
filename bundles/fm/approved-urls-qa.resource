@@ -7,14 +7,10 @@
 		<value>Integration</value>
 	</property>
 	<aspect name="content">
-		<row>
-			<column name="title">---------Merchandising Visit Checklist(QA)-----</column>
-			<column name="url">http://qafvf/MerchandisingVisitChecklist.aspx?kioskId=${FMA:StoreNumber}&#38;userId=${FMA:UserName}</column>
-		</row>		
-		<row>
-			<column name="title">-----------------Kiosk Survey(QA)--------------</column>
-			<column name="url">http://qakiosksurvey/default.aspx?kioskId=${FMA:StoreNumber}</column>
-		</row>
+    <row>
+      <column name="title">---------Merchandising Visit Checklist(QA)-----</column>
+      <column name="url">http://qafvf/MerchandisingVisitChecklist.aspx?kioskId=${FMA:StoreNumber}&#38;userId=${FMA:UserName}</column>
+    </row>
     <row>
       <column name="title">------------Kiosk Accessibility Hours(QA)------------</column>
       <column name="url">http://qafvf/accessiblehours/default.aspx?kioskId=${FMA:StoreNumber}</column>

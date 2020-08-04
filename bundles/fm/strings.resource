@@ -64,6 +64,7 @@
 			<column name="rebalance_header">Load any projected rebalances per your supply</column>
 			<column name="rebalance_column_quantity">Quantity</column>
 			<column name="rebalance_column_title">Title</column>
+			<column name="rebalance_column_format">Format</column>
 			<column name="rebalance_instructions">Load these titles in all open slots starting from top of VMZ moving left to right.&#10;* Consult SOP or ROS if not enough slots available</column>
 			<column name="rebalance_close_button">Close</column>
 			

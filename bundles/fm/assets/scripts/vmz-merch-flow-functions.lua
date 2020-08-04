@@ -1473,7 +1473,7 @@ function newvmzmerchflowfunctions()
 			if on_complete ~= nil then
 				on_complete()
 			else 
-				view_unwindto_safe( "vmz_view" )
+				view_unwindto( "vmz_view", true, "vmz_merch_flow_functions" )
                 view_show( "card_reader_popup_view" )
 			end
 		end)
