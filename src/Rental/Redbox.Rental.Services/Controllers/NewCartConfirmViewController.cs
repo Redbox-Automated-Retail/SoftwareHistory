@@ -336,11 +336,11 @@ public class NewCartConfirmViewController : BaseViewController
 			viewModel.PriceHeaderText = Resources.summary;
 			if (_isMultiNightOffer)
 			{
-				viewModel.BackButtonText = Resources.update_bag;
+				viewModel.BackButtonText = Resources.update_bag.ToUpper();
 			}
 			else
 			{
-				viewModel.BackButtonText = Resources.skip_offer_button_text;
+				viewModel.BackButtonText = Resources.skip_offer_button_text.ToUpper();
 			}
 			viewModel.PassiveSaleNote = Resources.passive_sale_note;
 			viewModel.MDVFootnoteVisibility = ((!newCart.Items.Any((IRentalShoppingCartItem x) => x.MultiDisc)) ? Visibility.Collapsed : Visibility.Visible);

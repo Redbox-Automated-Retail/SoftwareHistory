@@ -522,6 +522,8 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public int SortOrderPosition { get; set; }
 
+	public string Studio => _title.Studio;
+
 	public TitleProduct(Title title, TitleCache titleCache, TitleType titleType, IProfileDataInstance profile, Store store, IStoreManager storeManager)
 		: base(store)
 	{

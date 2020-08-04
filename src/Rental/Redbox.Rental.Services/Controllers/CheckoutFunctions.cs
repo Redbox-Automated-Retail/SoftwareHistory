@@ -918,7 +918,12 @@ public class CheckoutFunctions
 		{
 			authorizeResult.HasProfile = true;
 		}
-		if (authorizeResult != null && authorizeResult.HasProfile && !string.IsNullOrEmpty(text))
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes && rentalShoppingCart != null && rentalShoppingCart.Items.Any((IRentalShoppingCartItem x) => x.TitleProduct.Studio.ToLower() == "sony"))
+		{
+			PersonalizationFunctions.ShowSonySweepstakesConfirmationView(authorizeResult, text);
+		}
+		else if (authorizeResult != null && authorizeResult.HasProfile && !string.IsNullOrEmpty(text))
 		{
 			ShowEmailReceiptIfNeeded(authorizeResult);
 		}
@@ -928,7 +933,7 @@ public class CheckoutFunctions
 		}
 	}
 
-	private static void PromptForEmailAddress(IAuthorizeResult authorizeResult, string defaultEmailAddress, string errorMessage)
+	public static void PromptForEmailAddress(IAuthorizeResult authorizeResult, string defaultEmailAddress, string errorMessage)
 	{
 		Action<string> continueCallback = delegate(string enteredEmailAddress)
 		{
@@ -1024,7 +1029,7 @@ public class CheckoutFunctions
 		});
 	}
 
-	private static void ShowEmailReceiptIfNeeded(IAuthorizeResult authorizeResult)
+	public static void ShowEmailReceiptIfNeeded(IAuthorizeResult authorizeResult)
 	{
 		if (authorizeResult != null && authorizeResult.HasProfile && !string.IsNullOrEmpty(authorizeResult.Email))
 		{

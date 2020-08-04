@@ -10,5 +10,7 @@ public class MaintenanceModeCodes
 
 	public const string CreditCardReaderErrorCode = "0072CDRR";
 
+	public const string DisconnectedCardReaderOverThresholdErrorCode = "0073CDRR";
+
 	public const string CreditCardReaderCardNotRemovedErrorCode = "0100CDRR";
 }

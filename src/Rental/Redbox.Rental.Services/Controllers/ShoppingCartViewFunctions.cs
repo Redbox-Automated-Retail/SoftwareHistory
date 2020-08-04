@@ -129,6 +129,7 @@ public class ShoppingCartViewFunctions
 					BrowseState.TitleType = inCartPromoActionRule.TitleType;
 					BrowseState.BrowseMode = BrowseViewFilter.All;
 					BrowseState.BrowsePriceRangeFilter = null;
+					BrowseState.BrowseStudio = null;
 					if (inCartPromoActionRule.OfferAction == PromotionRule.Constants.OfferActionTitleMarketing)
 					{
 						rentalShoppingCart.InCartTitleMarketing = true;

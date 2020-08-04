@@ -12,13 +12,13 @@
       </Grid.RowDefinitions>
       <Grid Name="Header">
         <Panel.Background>
-          <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-            <GradientStop Color="#722D7A" Offset="-2.5" />
-            <GradientStop Color="#E42045" Offset="0.5" />
-            <GradientStop Color="#722D7A" Offset="2.5" />
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#E42045" Offset="0.0" />
+            <GradientStop Color="#902A7d" Offset="0.5" />
+            <GradientStop Color="#491E54" Offset="1.0" />
           </LinearGradientBrush>
         </Panel.Background>
-        <TextBlock Name="LabelTop" Style="{StaticResource font_museo_slab_900_36}" Foreground="#FFFFFFFF" Margin="42,18,0,0" Text="{Binding Path=LabelTop, FallbackValue=My bag}" />
+        <TextBlock Name="LabelTop" Style="{StaticResource font_montserrat_semibold_36}" Foreground="#FFFFFFFF" Margin="32,12,0,0" Text="{Binding Path=LabelTop, FallbackValue=My Bag}" />
       </Grid>
       <Grid Name="SubDividerGrid" Row="1">
         <Grid.ColumnDefinitions>
@@ -40,25 +40,23 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <TextBlock Name="PassiveSaleNote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,3,0,1" Text="{Binding Path=PassiveSaleNote, FallbackValue=*Daily rental charges dont include tax.}" />
-            <TextBlock Name="ServiceFeeText" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,1,0,1" Text="{Binding Path=ServiceFeeText, FallbackValue=All checkouts may be subject to a service fee of 10¢.}" Visibility="{Binding Path=ServiceFeeTextVisibility}" />
-            <TextBlock Name="MDVFootnote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#4a4a4a" TextWrapping="Wrap" Margin="0,1,0,1" Text="{Binding Path=MDVFootnote, FallbackValue=**Your card will be charged the full nightly fee plus applicable taxes until both discs are returned.}" Visibility="{Binding Path=MDVFootnoteVisibility}" />
+            <TextBlock Name="PassiveSaleNote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#481b54" TextWrapping="Wrap" Margin="0,3,0,1" Text="{Binding Path=PassiveSaleNote, FallbackValue=*Daily rental charges dont include tax.}" />
+            <TextBlock Name="ServiceFeeText" Style="{StaticResource font_montserrat_regular_11}" Foreground="#481b54" TextWrapping="Wrap" Margin="0,1,0,1" Text="{Binding Path=ServiceFeeText, FallbackValue=All checkouts may be subject to a service fee of 10¢.}" Visibility="{Binding Path=ServiceFeeTextVisibility}" />
+            <TextBlock Name="MDVFootnote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#481b54" TextWrapping="Wrap" Margin="0,1,0,1" Text="{Binding Path=MDVFootnote, FallbackValue=**Your card will be charged the full nightly fee plus applicable taxes until both discs are returned.}" Visibility="{Binding Path=MDVFootnoteVisibility}" />
             <Line Name="PassiveSaleNoteBottomLine" X2="1000" Fill="#979797" Margin="0,3,0,3" Stroke="#979797" StrokeThickness="2" Opacity="0.22" />
           </StackPanel>
         </DockPanel>
         <DockPanel Name="RightSideDockPanel" Grid.Column="1" LastChildFill="True">
           <StackPanel Name="RightSideTopPanel" Orientation="Vertical" DockPanel.Dock="Top">
-            <TextBlock Name="PriceHeaderText" Margin="24,24,24,7" Style="{StaticResource font_museo_slab_900_18}" Foreground="#4a4a4a" Text="{Binding Path=PriceHeaderText, FallbackValue=Payment Summary}" />
+            <TextBlock Name="PriceHeaderText" Margin="24,24,24,7" Style="{StaticResource font_montserrat_semibold_24}" Foreground="#481b54" Text="{Binding Path=PriceHeaderText, FallbackValue=Payment Summary}" />
             <localControls:PricingUserControl Grid.Column="1" VerticalAlignment="Top" Margin="24,0,24,0" DataContext="{Binding Path=PricingModel}" />
           </StackPanel>
           <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" DockPanel.Dock="Bottom">
-            <Redbox:RoundedButton Name="PayButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Height="59" Width="330" UsedDefaultCornerRadius="True" Margin="0,6,0,0" HorizontalAlignment="Center" Command="{Binding SubmitButtonCommand}">
-              <Viewbox MaxHeight="30" Margin="10,0,10,0">
-                <TextBlock Name="PayButtonText" TextAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=PayButtonText, FallbackValue=Submit}" />
-              </Viewbox>
+            <Redbox:RoundedButton Name="PayButton" Style="{StaticResource warm_purple_no_border_button_style}" Height="56" Width="330" UsedDefaultCornerRadius="True" Margin="0,6,0,0" HorizontalAlignment="Center" Command="{Binding SubmitButtonCommand}">
+              <TextBlock Name="PayButtonText" TextAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=PayButtonText, FallbackValue=SUBMIT}" />
             </Redbox:RoundedButton>
-            <Redbox:RoundedButton Name="BackButton" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Width="330" Height="59" UsedDefaultCornerRadius="True" Margin="0,32,0,0" VerticalAlignment="Bottom" HorizontalAlignment="Center" Command="{Binding CancelButtonCommand}" Visibility="{Binding SkipOfferButtonVisibility}">
-              <TextBlock Name="BackButtonText" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_25}" Text="{Binding Path=BackButtonText, FallbackValue=Skip Offer}" />
+            <Redbox:RoundedButton Name="BackButton" Style="{StaticResource thin_border_button_style}" Width="330" Height="56" UsedDefaultCornerRadius="True" Margin="0,32,0,0" VerticalAlignment="Bottom" HorizontalAlignment="Center" Command="{Binding CancelButtonCommand}" Visibility="{Binding SkipOfferButtonVisibility}">
+              <TextBlock Name="BackButtonText" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=BackButtonText, FallbackValue=SKIP OFFER}" />
             </Redbox:RoundedButton>
           </StackPanel>
         </DockPanel>

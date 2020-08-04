@@ -203,6 +203,12 @@ public class Configuration : IConfiguration
 
 	public bool ShowExpandedFormatButtonsNewText { get; private set; }
 
+	public bool EnableBrowseMessagePopup { get; private set; }
+
+	public int BrowseMessagePopupDuration { get; private set; }
+
+	public bool EnableSonySweepstakes { get; private set; }
+
 	public bool LoyaltySignUpAfterSwipeEnabled
 	{
 		get
@@ -288,10 +294,6 @@ public class Configuration : IConfiguration
 	public int ScreenSaverTimeout { get; private set; }
 
 	public string OutOfStockTitleDetailsABTestVersion => GetCultureBasedValue(_oosTitleDetailsABTestVersion, "A");
-
-	public string TitleDetailsLayoutABTestVersion => GetCultureBasedValue(TitleDetailsLayoutABTestVersionIgnoreCulture, "A");
-
-	public string TitleDetailsLayoutABTestVersionIgnoreCulture { get; private set; }
 
 	public bool ShowAfterSwipePersonalizedOffers { get; private set; }
 
@@ -391,6 +393,8 @@ public class Configuration : IConfiguration
 
 	public TimeSpan ThinJobRangeEnd => _thinJobEndTime;
 
+	public int MerchOrderExpirationDays { get; private set; }
+
 	private string GetCultureBasedValue(string defaultCultureValue, string alternateCultureValue)
 	{
 		if (!_cachedIsDefaultCulture.HasValue)
@@ -463,6 +467,9 @@ public class Configuration : IConfiguration
 		ShowAfterSwipePersonalizedOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowAfterSwipePersonalizedOffers", defaultValue: false);
 		ShowKMTInCartOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowKMTInCartOffers", defaultValue: true);
 		UseDiscountsForPmnpOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "UseDiscountsForPmnpOffers", defaultValue: false);
+		EnableBrowseMessagePopup = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableBrowseMessagePopup", defaultValue: false);
+		BrowseMessagePopupDuration = ConfigGetValue(service, "marketing", "MarketingGeneral", "BrowseMessagePopupDuration", 15000);
+		EnableSonySweepstakes = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableSonySweepstakes", defaultValue: false);
 		_loyaltySignupEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltySignUpEnabled", defaultValue: false);
 		_loyaltySignupAfterSwipeEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltySignUpAfterSwipeEnabled", defaultValue: false);
 		string timeSpan = ConfigGetValue<string>(service, "system", "Personalization", "SignUpStartEndTime", null);
@@ -491,7 +498,6 @@ public class Configuration : IConfiguration
 		_priceFiltersOnBrowseABTestVersion = GetABTestValue(service, "PriceFiltersOnBrowse", "MarketingGeneral");
 		_oosTitleDetailsABTestVersion = GetABTestValue(service, "OutOfStockTitleDetails", "AB Testing");
 		ScreenSaverTimeout = ConfigGetValue(service, "marketing", "AB Test Parameters", "ScreenSaverTimer", 25000);
-		TitleDetailsLayoutABTestVersionIgnoreCulture = GetABTestValue(service, "TitleDetailsLayout", "AB Testing");
 		AuthorizeAtPickup = ConfigGetValue(service, "system", "General", "AuthorizeAtPickup", defaultValue: false);
 		ChipEnabled = ConfigGetValue(service, "system", "DeviceService", "ChipEnabled", defaultValue: false);
 		ContactlessEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessEnabled", defaultValue: false);
@@ -548,6 +554,7 @@ public class Configuration : IConfiguration
 		KioskClientServiceGetMerchandizingOrdersTimeout = ConfigGetValue(service, "system", "General", "KioskClientServiceGetMerchandizingOrdersTimeout", 60000);
 		string timeSpan3 = ConfigGetValue(service, "system", "General", "ThinJobTimeRange", "03:00:00-04:30:00");
 		ParseTimeRange(timeSpan3, out _thinJobStartTime, out _thinJobEndTime, "ThinJobTimeRange");
+		MerchOrderExpirationDays = ConfigGetValue(service, "system", "General", "MerchOrderExpirationDays", 7);
 		ZeroTouchReadTimeout = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchReadTimeout", 600000);
 		ZeroTouchPickupEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchPickupEnabled", defaultValue: true);
 		ZeroTouchReturnEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchReturnEnabled", defaultValue: true);

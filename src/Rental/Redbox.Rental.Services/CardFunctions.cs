@@ -142,7 +142,7 @@ public class CardFunctions
 										};
 										action4 = MessagePopupViewController.ShowMessagePopupViewSwipedCardIsChipEnabled;
 									}
-									else if (trackData.CardSourceType == CardSourceType.Mobile && swipeType.IsReservation())
+									else if (swipeType.IsReservation() && trackData.HasReservationMobileDeviceError())
 									{
 										cardReadEvent.Action = "reservation_with_mobile_wallet";
 										action3 = delegate

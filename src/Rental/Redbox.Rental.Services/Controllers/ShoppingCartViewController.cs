@@ -498,6 +498,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		BrowseState.BrowseMode = ((titleFamily == TitleFamily.Games && Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals) ? BrowseViewFilter.ForSale : BrowseViewFilter.All);
 		BrowseState.PageNumber = 1;
 		BrowseState.BrowsePriceRangeFilter = null;
+		BrowseState.BrowseStudio = null;
 		OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 	}
 
@@ -510,7 +511,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			IRentalShoppingCart rentalShoppingCart = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart;
 			shoppingCartViewModel.LabelTop = Resources.my_bag;
 			shoppingCartViewModel.PriceHeaderText = Resources.summary;
-			shoppingCartViewModel.BackButtonText = Resources.back_button;
+			shoppingCartViewModel.BackButtonText = Resources.back_button.ToUpper();
 			shoppingCartViewModel.PassiveSaleNote = Resources.passive_sale_note;
 			shoppingCartViewModel.PrivacyText = (string.IsNullOrEmpty(Redbox.Rental.Services.Configuration.Configuration.Instance.CAPrivacyNoticeDocument) ? null : Resources.privacy_notice_text);
 			shoppingCartViewModel.MDVFootnoteVisibility = ((!rentalShoppingCart.Items.Any((IRentalShoppingCartItem x) => x.MultiDisc)) ? Visibility.Collapsed : Visibility.Visible);
@@ -519,14 +520,14 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			shoppingCartViewModel.ServiceFeeText = string.Format(Resources.service_fee_text, num);
 			shoppingCartViewModel.ServiceFeeTextVisibility = ((num <= 0) ? Visibility.Collapsed : Visibility.Visible);
 			shoppingCartViewModel.TermsAndPrivacyButtonText = Resources.terms_link_text;
-			shoppingCartViewModel.PromoCodeButtonText = Resources.promo_code_button;
+			shoppingCartViewModel.PromoCodeButtonText = Resources.promo_code_button.ToUpper();
 			if ((personalizationSession?.StoredPromoCodes?.Count ?? 0) > 0)
 			{
 				shoppingCartViewModel.PromoCodeButtonText += $" ({personalizationSession.StoredPromoCodes.Count})";
 			}
-			shoppingCartViewModel.SignInButtonText = Resources.use_and_earn_points;
+			shoppingCartViewModel.SignInButtonText = Resources.use_and_earn_points.ToUpper();
 			shoppingCartViewModel.SignInButtonVisibility = ((!PersonalizationFunctions.IsSignInEnabled) ? Visibility.Collapsed : Visibility.Visible);
-			shoppingCartViewModel.UsePointsButtonText = Resources.use_points;
+			shoppingCartViewModel.UsePointsButtonText = Resources.use_points.ToUpper();
 			shoppingCartViewModel.UsePointsButtonVisibility = ((!PersonalizationFunctions.IsLoyaltySignedIn) ? Visibility.Collapsed : Visibility.Visible);
 			shoppingCartViewModel.UsePointsButtonEnabled = (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0) > 0;
 			shoppingCartViewModel.DontMissYourPerksText = Resources.sign_in;
@@ -535,8 +536,6 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			shoppingCartViewModel.PricingModel.SubtotalLabelText = Resources.subtotal_label;
 			shoppingCartViewModel.PricingModel.TaxLabelText = Resources.tax_label;
 			shoppingCartViewModel.PricingModel.TotalLabelText = Resources.total_label;
-			shoppingCartViewModel.PointsEstimateIntroText = Resources.points_estimate_intro;
-			shoppingCartViewModel.PointsEstimateEndText = Resources.points_estimate_end;
 			shoppingCartViewModel.PricingModel.SubtotalValueText = $"{rentalShoppingCart?.Totals?.SubTotal:C}";
 			string text = (ServiceLocator.Instance.GetService<IDataService>()?.GetStore())?.State;
 			shoppingCartViewModel.PricingModel.TaxLineVisibility = ((text == "SC" || text == "MD") ? Visibility.Collapsed : Visibility.Visible);
@@ -553,12 +552,12 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			shoppingCartViewModel.PricingModel.ServiceFeeValueText = $"{rentalShoppingCart?.Totals?.ServiceFee:C}";
 			shoppingCartViewModel.PricingModel.ServiceFeeLineVisibility = ((!((rentalShoppingCart?.Totals?.ServiceFee ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
 			shoppingCartViewModel.PayButtonEnabled = rentalShoppingCart != null && rentalShoppingCart.Count > 0;
-			shoppingCartViewModel.PayButtonText = Resources.shopping_cart_pay_button_text;
-			shoppingCartViewModel.AcceptAndPayText = Resources.shopping_cart_accept_and_pay_text;
+			shoppingCartViewModel.PayButtonText = Resources.shopping_cart_pay_button_text.ToUpper();
+			shoppingCartViewModel.AcceptAndPayText = ((Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes && rentalShoppingCart != null && rentalShoppingCart.Items.Any((IRentalShoppingCartItem x) => x.TitleProduct.Studio.ToLower() == "sony")) ? string.Format($"{Resources.shopping_cart_accept_and_pay_text} {Resources.sony_sweepstakes_legal_text}") : Resources.shopping_cart_accept_and_pay_text);
 			BaseViewController.GetViewUserControl();
-			shoppingCartViewModel.AddMovieButtonText = Resources.add_movie_button_text;
-			shoppingCartViewModel.AddGameButtonText = Resources.add_game_button_text;
-			shoppingCartViewModel.UpdateBagButtonText = Resources.update_bag;
+			shoppingCartViewModel.AddMovieButtonText = Resources.add_movie_button_text.ToUpper();
+			shoppingCartViewModel.AddGameButtonText = Resources.add_game_button_text.ToUpper();
+			shoppingCartViewModel.UpdateBagButtonText = Resources.update_bag.ToUpper();
 			shoppingCartViewModel.UpdateBagButtonVisibility = ((!BaseViewController.IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 			UpdateLoyaltyStatus(shoppingCartViewModel, rentalShoppingCart);
 		}

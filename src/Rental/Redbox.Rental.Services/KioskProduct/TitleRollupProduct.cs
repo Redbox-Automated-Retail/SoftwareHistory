@@ -520,6 +520,18 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 		}
 	}
 
+	public string Studio
+	{
+		get
+		{
+			if (_primaryTitle != null)
+			{
+				return _primaryTitle.Studio;
+			}
+			return string.Empty;
+		}
+	}
+
 	public TitleRollupProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, Dictionary<long, MDVProduct> mdvProducts, IProfileDataInstance profile, Store store)
 		: base(store)
 	{

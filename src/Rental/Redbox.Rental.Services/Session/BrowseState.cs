@@ -174,6 +174,8 @@ public class BrowseState : IBrowseState
 		}
 	}
 
+	public string BrowseStudio { get; set; }
+
 	public int PageNumber
 	{
 		get
@@ -288,6 +290,14 @@ public class BrowseState : IBrowseState
 
 	public bool ExpandedFormatButtonsShown { get; set; }
 
+	public bool EnableBrowseMessagePopup { get; set; }
+
+	public int BrowseMessagePopupDuration { get; set; }
+
+	public bool ShowBrowseMessagePopup { get; set; }
+
+	public bool ShowingBrowseMessagePopup { get; set; }
+
 	public BrowseState()
 	{
 		PushBrowseStateSet();
@@ -393,5 +403,6 @@ public class BrowseState : IBrowseState
 		SelectedAlphaGroupName = null;
 		Genre = null;
 		BrowsePriceRangeFilter = null;
+		BrowseStudio = null;
 	}
 }

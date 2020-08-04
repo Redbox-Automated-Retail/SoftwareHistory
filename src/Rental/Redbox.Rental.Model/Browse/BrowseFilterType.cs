@@ -24,5 +24,6 @@ public enum BrowseFilterType
 	Comedy,
 	Family,
 	PriceRange,
-	_99Cents
+	_99Cents,
+	SonySweepstakes
 }

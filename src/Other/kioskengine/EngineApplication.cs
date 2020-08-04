@@ -52,6 +52,7 @@ using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services;
 using Redbox.Rental.Services.Ads;
 using Redbox.Rental.Services.Analytics;
+using Redbox.Rental.Services.App;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskClientService;
 using Redbox.Rental.Services.KioskEvents;
@@ -742,6 +743,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			RedboxRentalService redboxRentalService = new RedboxRentalService();
 			ServiceLocator.Instance.AddService(typeof(IRedboxRental), redboxRentalService);
 			errorList.AddRange(redboxRentalService.Initialize());
+			ServiceLocator.Instance.AddService(typeof(IPersistentDataCacheService), new PersistentDataCacheService());
 			KioskHealthService kioskHealthService = new KioskHealthService(kioskHealthConfiguration, kioskEventService);
 			ServiceLocator.Instance.AddService(typeof(IKioskHealthService), kioskHealthService);
 			TouchScreenHealth touchScreenHealth = new TouchScreenHealth(kioskHealthConfiguration, kioskEventService);

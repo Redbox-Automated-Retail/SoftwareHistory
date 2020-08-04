@@ -81,7 +81,7 @@ public class InventoryData : IInventoryData
 
 	private InventoryDataJsonFile _inventoryDataJsonFile;
 
-	private Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> _merchOrderBarcodes;
+	private Dictionary<string, MerchOrderBarcode> _merchOrderBarcodes;
 
 	private List<MerchandizingOrder> _merchOrders;
 
@@ -630,18 +630,23 @@ public class InventoryData : IInventoryData
 			return;
 		}
 		List<MerchStatusUpdate> list = new List<MerchStatusUpdate>();
-		foreach (KeyValuePair<string, Redbox.KioskEngine.ComponentModel.Inventory> merchOrderBarcode in _merchOrderBarcodes)
+		foreach (KeyValuePair<string, MerchOrderBarcode> item in _merchOrderBarcodes.Where((KeyValuePair<string, MerchOrderBarcode> b) => !b.Value.WasSent))
 		{
 			list.Add(new MerchStatusUpdate
 			{
-				Barcode = merchOrderBarcode.Key,
+				Barcode = item.Key,
 				MerchandStatus = 2L,
-				ThinReasonCode = ConvertToThinReasonCode(merchOrderBarcode.Value.Code),
+				ThinReasonCode = ConvertToThinReasonCode(item.Value.Code),
 				ThinDateUTC = DateTime.UtcNow,
 				UpdateDateTimeUTC = DateTime.UtcNow
 			});
+			item.Value.WasSent = true;
 		}
-		ServiceLocator.Instance.GetService<IQueueService>().Enqueue(105, "UpdateMerchandizingStatus", list);
+		if (list.Count > 0)
+		{
+			ServiceLocator.Instance.GetService<IQueueService>().Enqueue(105, "UpdateMerchandizingStatus", list);
+			WriteMerchOrderBarcodeData();
+		}
 	}
 
 	public void ReportUnmerchandizedBarcodes(List<string> barcodesToReport)
@@ -724,16 +729,19 @@ public class InventoryData : IInventoryData
 			IGetMerchandizingOrdersResponse currentMerchandizingOrders = service.Inventory.GetCurrentMerchandizingOrders();
 			if (currentMerchandizingOrders != null && currentMerchandizingOrders.Success)
 			{
+				LogHelper.Instance.Log($"InventoryData.CheckForNewMerchandizingOrders - retrieved new merch orders. {currentMerchandizingOrders.MerchandizingOrders?.Count ?? 0} orders received.");
 				_lastMerchOrderDate = DateTime.UtcNow.Date;
 				_inventoryDataJsonFile.LastMerchOrderDate = _lastMerchOrderDate;
 				if ((currentMerchandizingOrders.MerchandizingOrders?.Count ?? 0) > 0)
 				{
 					result = true;
 					_merchOrders = currentMerchandizingOrders.MerchandizingOrders;
+					_inventoryDataJsonFile.LastMerchOrdersReceivedDate = DateTime.Now;
 					_inventoryActionFile = LoadInventoryActionFileFromMercOrders(DateTime.Now);
 					SetMerchandizingBarcodes(currentMerchandizingOrders.MerchandizingOrders);
 					WriteMerchOrderBarcodeData();
 					WriteMerchOrderData(_merchOrders);
+					WriteInventoryData();
 				}
 			}
 		}
@@ -763,7 +771,7 @@ public class InventoryData : IInventoryData
 			Redbox.KioskEngine.ComponentModel.InventoryStatusCode.Rebalancing,
 			Redbox.KioskEngine.ComponentModel.InventoryStatusCode.Known
 		});
-		_merchOrderBarcodes = new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
+		_merchOrderBarcodes = new Dictionary<string, MerchOrderBarcode>();
 		foreach (BarcodeForProductResult item in barcodesForMerchOrders)
 		{
 			_merchOrderBarcodes.Add(item.Barcode, ConvertToPlcInventory(item, Redbox.KioskEngine.ComponentModel.InventoryStatusCode.Rebalancing));
@@ -774,13 +782,14 @@ public class InventoryData : IInventoryData
 		}
 	}
 
-	private Redbox.KioskEngine.ComponentModel.Inventory ConvertToPlcInventory(BarcodeForProductResult barcodeResult, Redbox.KioskEngine.ComponentModel.InventoryStatusCode statusCode)
+	private MerchOrderBarcode ConvertToPlcInventory(BarcodeForProductResult barcodeResult, Redbox.KioskEngine.ComponentModel.InventoryStatusCode statusCode)
 	{
-		return new Redbox.KioskEngine.ComponentModel.Inventory
+		return new MerchOrderBarcode
 		{
 			Barcode = barcodeResult.Barcode,
 			TitleId = (uint)barcodeResult.ProductId,
-			Code = statusCode
+			Code = statusCode,
+			WasSent = false
 		};
 	}
 
@@ -871,7 +880,7 @@ public class InventoryData : IInventoryData
 			return;
 		}
 		RemoveOldThinAndRebalanceFromPlc();
-		foreach (KeyValuePair<string, Redbox.KioskEngine.ComponentModel.Inventory> merchOrderBarcode in _merchOrderBarcodes)
+		foreach (KeyValuePair<string, MerchOrderBarcode> merchOrderBarcode in _merchOrderBarcodes)
 		{
 			if (_plcModel.Barcodes.ContainsKey(merchOrderBarcode.Key))
 			{
@@ -882,6 +891,16 @@ public class InventoryData : IInventoryData
 				_plcModel.Barcodes.Add(merchOrderBarcode.Key, merchOrderBarcode.Value);
 			}
 		}
+	}
+
+	private bool MerchandizingOrdersAreNotExpired()
+	{
+		int num = ServiceLocator.Instance.GetService<IConfiguration>()?.MerchOrderExpirationDays ?? 7;
+		if (_inventoryDataJsonFile.LastMerchOrdersReceivedDate.HasValue)
+		{
+			return _inventoryDataJsonFile.LastMerchOrdersReceivedDate > DateTime.Now.AddDays(-num);
+		}
+		return true;
 	}
 
 	private void RemoveOldThinAndRebalanceFromPlc()
@@ -901,15 +920,18 @@ public class InventoryData : IInventoryData
 			CompletedDate = lastCompletedDate?.ToString("yyyyMMddHHmmss"),
 			RebalancesIn = new List<RebalancesIn>()
 		};
-		foreach (MerchandizingOrder item in _merchOrders.Where((MerchandizingOrder o) => o.MerchandizingOrderType == MerchandizingOrderType.Fill))
+		if (MerchandizingOrdersAreNotExpired())
 		{
-			inventoryActionFile.RebalancesIn.Add(new RebalancesIn
+			foreach (MerchandizingOrder item in _merchOrders.Where((MerchandizingOrder o) => o.MerchandizingOrderType == MerchandizingOrderType.Fill))
 			{
-				Id = item.TitleId,
-				Qty = item.UnitCount
-			});
+				inventoryActionFile.RebalancesIn.Add(new RebalancesIn
+				{
+					Id = item.TitleId,
+					Qty = item.UnitCount
+				});
+			}
+			inventoryActionFile.FillQty = 0;
 		}
-		inventoryActionFile.FillQty = 0;
 		return inventoryActionFile;
 	}
 
@@ -990,9 +1012,9 @@ public class InventoryData : IInventoryData
 		}
 	}
 
-	private Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> LoadMerchOrderBarcodeData()
+	private Dictionary<string, MerchOrderBarcode> LoadMerchOrderBarcodeData()
 	{
-		Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory> dictionary = new Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>();
+		Dictionary<string, MerchOrderBarcode> dictionary = new Dictionary<string, MerchOrderBarcode>();
 		try
 		{
 			if (!File.Exists(_thinBarcodesJsonPath))
@@ -1000,7 +1022,7 @@ public class InventoryData : IInventoryData
 				LogHelper.Instance.Log("InventoryData.LoadMerchOrderBarcodeData - Merchandising Order file ({0}) does not exist", _thinBarcodesJsonPath);
 				return dictionary;
 			}
-			dictionary = Encoding.ASCII.GetString(File.ReadAllBytes(_thinBarcodesJsonPath)).ToObject<Dictionary<string, Redbox.KioskEngine.ComponentModel.Inventory>>();
+			dictionary = Encoding.ASCII.GetString(File.ReadAllBytes(_thinBarcodesJsonPath)).ToObject<Dictionary<string, MerchOrderBarcode>>();
 			LogHelper.Instance.Log("InventoryData.LoadMerchOrderBarcodeData - InventoryData file contains {0} barcodes.", dictionary.Count);
 		}
 		catch (Exception e)

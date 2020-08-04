@@ -561,6 +561,18 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 
 	public int SortOrderPosition { get; set; }
 
+	public string Studio
+	{
+		get
+		{
+			if (_primaryTitle != null)
+			{
+				return _primaryTitle.Studio;
+			}
+			return string.Empty;
+		}
+	}
+
 	public MDVProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, IProfileDataInstance profile, Store store)
 		: base(store)
 	{

@@ -65,6 +65,8 @@ public class Title : ILuaKeyValue
 
 	public decimal? DigitalHDRentPrice { get; set; }
 
+	public string Studio { get; set; }
+
 	public ProductGroup ProductGroup { get; set; }
 
 	public int SortOrderPosition => ProductGroup?.SortOrderPosition ?? 0;

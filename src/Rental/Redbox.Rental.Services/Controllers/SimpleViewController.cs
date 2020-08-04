@@ -110,6 +110,26 @@ public class SimpleViewController : BaseViewController
 		BaseViewController.RecordAdImpression(BaseViewController.GetViewModel<SimpleModel>(viewFrameInstance.Id)?.AdImpression);
 	}
 
+	public static void ConfigureSonySweepstakesConfirmationView(SonySweepstakesConfirmationViewInfo info)
+	{
+		BaseViewController.SetCurrentUICulture();
+		if (info.Model == null)
+		{
+			info.Model = new SimpleModel
+			{
+				TitleText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? Resources.sony_sweepstakes_confirmation_email_title_text : Resources.sony_sweepstakes_confirmation_title_text),
+				MessageText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? string.Empty : Resources.sony_sweepstakes_confirmation_message_text),
+				ContinueButtonText = Resources.got_it_button.ToUpper(),
+				CommentText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? Resources.sony_sweepstakes_confirmation_email_comment_text : Resources.sony_sweepstakes_confirmation_comment_text)
+			};
+		}
+		ConfigureView(info, info.UseIdleTimer.HasValue && info.UseIdleTimer.Value);
+	}
+
+	public static void OnLeaveSonySweepstakesConfirmationView(IViewFrameInstance viewFrameInstance)
+	{
+	}
+
 	internal static void ConfigurePerksSignupAlreadymemberView(SimpleInfoWithSignUpFlow info)
 	{
 		BaseViewController.SetCurrentUICulture();

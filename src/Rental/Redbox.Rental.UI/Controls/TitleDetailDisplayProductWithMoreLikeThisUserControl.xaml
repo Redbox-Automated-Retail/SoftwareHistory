@@ -20,27 +20,27 @@
     <StackPanel>
       <Grid>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="512" />
-          <ColumnDefinition Width="460" />
+          <ColumnDefinition Width="{Binding Path=BoxArtGridWidth, FallbackValue=529}" />
+          <ColumnDefinition Width="{Binding Path=DetailsGridWidth, FallbackValue=495}" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
           <RowDefinition MinHeight="0" MaxHeight="98" Height="{Binding AdHeight}" />
           <RowDefinition MinHeight="530" MaxHeight="628" Height="{Binding MainHeight}" />
           <RowDefinition Height="140" />
         </Grid.RowDefinitions>
-        <Grid Name="AdBanner" Row="0" ColumnSpan="2" Margin="0,0,-52,0">
+        <Grid Name="AdBanner" Row="0" ColumnSpan="2">
           <Border Width="1024" Height="98" Background="#060208" Visibility="{Binding AdImageVisibility, FallbackValue=Collapsed}" />
           <Image Name="AdImage" Height="90" Width="728" Source="{Binding AdImage}" Visibility="{Binding AdImageVisibility, FallbackValue=Collapsed}" />
         </Grid>
         <Grid Column="0" Row="1" Background="#FFFFFFFF">
-          <Grid Margin="20,30,0,0">
+          <Grid Margin="101,35,0,0">
             <Grid Margin="{Binding FlagMargin, FallbackValue=0}">
-              <localControls:DisplayProductUserControl Margin="44,0,0,2" VerticalAlignment="Bottom" HorizontalAlignment="Center" ClipToBounds="False" />
+              <localControls:DisplayProductUserControl VerticalAlignment="Bottom" HorizontalAlignment="Center" ClipToBounds="False" />
             </Grid>
           </Grid>
         </Grid>
         <Grid Column="1" Row="1" Background="#FFFFFFFF">
-          <DockPanel LastChildFill="True" Margin="20,30,0,0">
+          <DockPanel LastChildFill="True" Margin="35,35,66,0">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
               <Border Padding="0,0,12,0" Margin="0,0,12,0" BorderBrush="#060208" BorderThickness="{Binding RatingBorderThickness, FallbackValue='0,0,1,0'}" Visibility="{Binding RatingVisibility, FallbackValue=Visible}">
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#060208" Text="{Binding Rating}" />
@@ -55,28 +55,28 @@
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#060208" Text="CC" />
               </Border>
             </StackPanel>
-            <TextBlock Style="{StaticResource font_montserrat_semibold_32}" DockPanel.Dock="Top" Margin="0,6,100,6" Foreground="#060208" LineHeight="40" MaxHeight="80" TextWrapping="Wrap" TextTrimming="WordEllipsis" Text="{Binding Header, FallbackValue=HEADER}" />
-            <TextBlock Style="{StaticResource font_montserrat_medium_16}" DockPanel.Dock="Top" Margin="0,0,50,6" Foreground="#060208" LineHeight="24" MaxHeight="72" TextWrapping="Wrap" TextTrimming="WordEllipsis" Text="{Binding Description, FallbackValue=DESCRIPTION}" />
+            <TextBlock Style="{StaticResource font_montserrat_semibold_32}" DockPanel.Dock="Top" Margin="0,6,0,6" Foreground="#060208" LineHeight="40" MaxHeight="80" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding Header, FallbackValue=HEADER}" />
+            <TextBlock Style="{StaticResource font_montserrat_medium_16}" DockPanel.Dock="Top" Margin="0,0,0,6" Foreground="#060208" LineHeight="24" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="{Binding Path=DescriptionMaxHeight, FallbackValue=144}" Text="{Binding Description, FallbackValue=DESCRIPTION}" />
             <StackPanel Name="ProductDetails" DockPanel.Dock="Top" Visibility="{Binding NotEmptyCaseVisibility, FallbackValue=Visible}">
               <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top">
-                  <TextBlock Name="starring" Margin="0,0,0,4" Style="{StaticResource font_montserrat_regular_14}" Height="20" LineHeight="20" Foreground="#060208" TextWrapping="Wrap" TextTrimming="WordEllipsis" Visibility="{Binding StarringVisibility, FallbackValue=Visible}">
+                  <TextBlock Name="starring" Margin="0,0,0,4" Style="{StaticResource font_montserrat_regular_14}" LineHeight="20" MaxHeight="20" Foreground="#060208" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Visibility="{Binding StarringVisibility, FallbackValue=Visible}">
                     <TextBlock.Inlines>
                       <Run FontWeight="Bold" Text="{Binding StarringLabel, FallbackValue=Starring:}" /> <Run FontWeight="Medium" Text="{Binding Starring}" /></TextBlock.Inlines>
                   </TextBlock>
                   <Redbox:RoundedButton Name="see_full_details_button" Style="{StaticResource transparent_button_style}" HorizontalAlignment="Left" Command="{x:Static localbase:Commands.SeeFullDetailsCommand}" Focusable="False">
-                    <TextBlock Margin="0,0,16,16" Style="{StaticResource font_montserrat_extrabold_14}" Foreground="#E42045" LineHeight="20" TextDecorations="Underline" Text="SEE FULL DETAILS" />
+                    <TextBlock Margin="0,0,16,4" Style="{StaticResource font_montserrat_extrabold_14}" Foreground="#E42045" LineHeight="20" TextDecorations="Underline" Text="{Binding Path=SeeFullDetailsText, FallbackValue=SEE FULL DETAILS}" />
                   </Redbox:RoundedButton>
                   <TextBlock Style="{StaticResource font_montserrat_semibold_20}" Foreground="#060208" LineHeight="28" Text="{Binding GenresLabel, FallbackValue=Genres}" />
-                  <TextBlock Style="{StaticResource font_montserrat_medium_14}" Foreground="#060208" Height="20" LineHeight="20" TextWrapping="Wrap" TextTrimming="WordEllipsis" Text="{Binding Genres, FallbackValue=ACTION}" />
+                  <TextBlock Style="{StaticResource font_montserrat_medium_14}" Foreground="#060208" LineHeight="20" MaxHeight="20" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding Genres, FallbackValue=ACTION}" />
                 </StackPanel>
               </DockPanel>
             </StackPanel>
             <StackPanel Name="ProductDetails2" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Visibility="{Binding NotEmptyCaseVisibility, FallbackValue=Visible}">
               <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top">
-                  <TextBlock Style="{StaticResource font_montserrat_semibold_20}" Foreground="#060208" LineHeight="28" TextWrapping="NoWrap" Text="More Like This" Visibility="{Binding MoreLikeThisVisibility, FallbackValue=Collapsed}" />
-                  <StackPanel Orientation="Horizontal" Margin="0,8,0,16" Visibility="{Binding MoreLikeThisVisibility, FallbackValue=Collapsed}">
+                  <TextBlock Style="{StaticResource font_montserrat_semibold_20}" Foreground="#060208" LineHeight="28" TextWrapping="NoWrap" Text="{Binding Path=MoreLikeThisText, FallbackValue=More Like This}" Visibility="{Binding MoreLikeThisVisibility, FallbackValue=Collapsed}" />
+                  <StackPanel Orientation="Horizontal" Margin="0,8,-66,16" Visibility="{Binding MoreLikeThisVisibility, FallbackValue=Collapsed}">
                     <localControls:DisplayProductMoreLikeThisUserControl x:Name="DisplayProductMoreLikeThis1" Height="130" Width="87" Margin="0,0,20,0" DataContext="{Binding Path=DisplayProductMoreLikeThis1}" />
                     <localControls:DisplayProductMoreLikeThisUserControl x:Name="DisplayProductMoreLikeThis2" Height="130" Width="87" Margin="0,0,20,0" DataContext="{Binding Path=DisplayProductMoreLikeThis2}" />
                     <localControls:DisplayProductMoreLikeThisUserControl x:Name="DisplayProductMoreLikeThis3" Height="130" Width="87" Margin="0,0,20,0" DataContext="{Binding Path=DisplayProductMoreLikeThis3}" />
@@ -88,7 +88,7 @@
             </StackPanel>
           </DockPanel>
         </Grid>
-        <Grid Name="Buttons" ColumnSpan="2" Row="3" Margin="0,0,-52,-34" Height="104" Background="#EBEBEB">
+        <Grid Name="Buttons" ColumnSpan="2" Row="3" Margin="0,0,0,-34" Height="104" Background="#EBEBEB">
           <DockPanel>
             <StackPanel Name="leftButtons" Orientation="Horizontal" DockPanel.Dock="Left" Margin="24,0,0,0">
               <Redbox:RoundedButton Name="go_back_button" Style="{StaticResource thin_border_button_style}" Height="56" Width="118" CornerRadius="28" Command="{x:Static localbase:Commands.GoBackCommand}" Focusable="False">

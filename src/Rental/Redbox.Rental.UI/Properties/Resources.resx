@@ -106,6 +106,7 @@ Update your bag to continue.</value></data>
   <data name="perks_thanks_extra_rental_points_message" xml:space="preserve"><value>You scored 2 FREE 1-night DVD rentals to use later</value></data>
   <data name="esrb_teen" xml:space="preserve"><value>TEEN</value></data>
   <data name="offer_info_percent_off" xml:space="preserve"><value>{0}% OFF</value></data>
+  <data name="flag_sony_sweepstakes" xml:space="preserve"><value>$15k Sweeps</value></data>
   <data name="upsell_from_Bluray_message" xml:space="preserve"><value>Don’t forget – you’ll need a 4K UHD Player for it to work. 
 With the right setup, you’re ready for exceptional image quality 
 that’s four times better than Blu-ray.</value></data>
@@ -158,6 +159,7 @@ To confirm that you're at least 17 years of age, press OK to continue.</value></
   <data name="extra_night" xml:space="preserve"><value>Extra night</value></data>
   <data name="apply_promo_title" xml:space="preserve"><value>Apply a promo code</value></data>
   <data name="keyboard_continue_button_text" xml:space="preserve"><value>Sign In</value></data>
+  <data name="title_details_see_full_details_text" xml:space="preserve"><value>SEE FULL DETAILS</value></data>
   <data name="rop_auth_fail_message_line_two" xml:space="preserve"><value>Your reserved discs are on their way out right now.</value></data>
   <data name="rop_auth_fail_message_line_one" xml:space="preserve"><value>New discs can’t be added to your cart at this time.</value></data>
   <data name="Thursday" xml:space="preserve"><value>Thursday</value></data>
@@ -168,7 +170,8 @@ To confirm that you're at least 17 years of age, press OK to continue.</value></
   <data name="four_k_uhd" xml:space="preserve"><value>4K UHD</value></data>
   <data name="promo_code_already_used_message_title" xml:space="preserve"><value>That code's already been used.</value></data>
   <data name="perks_perks_btn_text" xml:space="preserve"><value>My Perks</value></data>
-  <data name="points_estimate_text" xml:space="preserve"><value>{0}+ points</value></data>
+  <data name="points_estimate_text" xml:space="preserve"><value>You’re earning
+{0}+ points on this visit</value></data>
   <data name="perks_thanks_promo_comment_text" xml:space="preserve"><value>Look for an email with more info</value></data>
   <data name="genre_1000" xml:space="preserve"><value>ACTION</value></data>
   <data name="genre_1004" xml:space="preserve"><value>COMEDY</value></data>
@@ -235,6 +238,8 @@ Sorry for the inconvenience.</value></data>
   <data name="title_detail_format_rent_text" xml:space="preserve"><value>RENT {0}</value></data>
   <data name="continue_with_current_cart_message" xml:space="preserve"><value>Your original order total has not
 changed and is vending now</value></data>
+  <data name="reservation_emv_insert_tap_hide_mobile_message" xml:space="preserve"><value>Mobile Pay
+not supported</value></data>
   <data name="terms_redbox_card_button" xml:space="preserve"><value>Redbox Card Terms</value></data>
   <data name="dvd_button" xml:space="preserve"><value>DVD</value></data>
   <data name="terms_link_text" xml:space="preserve"><value>Terms &amp; Privacy</value></data>
@@ -255,7 +260,7 @@ Card or Phone</value></data>
   <data name="screen_saver_start_button_text" xml:space="preserve"><value>Press To Start</value></data>
   <data name="play_pass_title_abe" xml:space="preserve"><value>Perks</value></data>
   <data name="keyboard_clear_button_text" xml:space="preserve"><value>Clear All</value></data>
-  <data name="total_label" xml:space="preserve"><value>Total:</value></data>
+  <data name="total_label" xml:space="preserve"><value>Total</value></data>
   <data name="perks_thanks_title_youre_in_text" xml:space="preserve"><value>You're in!</value></data>
   <data name="coming_soon_continue_btn" xml:space="preserve"><value>Next</value></data>
   <data name="flag_new" xml:space="preserve"><value>New</value></data>
@@ -329,6 +334,7 @@ Please call customer service at
   <data name="format_button_new_text" xml:space="preserve"><value>NEW</value></data>
   <data name="backward_insert_error" xml:space="preserve"><value>Please try again with the big Redbox logo facing you and the arrow pointing toward the kiosk.</value></data>
   <data name="close_button" xml:space="preserve"><value>Close</value></data>
+  <data name="sony_sweepstakes_filter_button" xml:space="preserve"><value>$15K SUMMER SWEEPS</value></data>
   <data name="Sunday" xml:space="preserve"><value>Sunday</value></data>
   <data name="regular_checkout_emv_insert_tap_hide_mobile_message" xml:space="preserve"><value>Mobile Pay coming soon</value></data>
   <data name="flag_out_of_stock" xml:space="preserve"><value>Out Of Stock</value></data>
@@ -393,7 +399,6 @@ FOR JUST</value></data>
   <data name="return_touchless_banner_title" xml:space="preserve"><value>Were you trying to do Touch-free pickup?</value></data>
   <data name="home_button" xml:space="preserve"><value>HOME</value></data>
   <data name="email_optin_reminder_set_button_text" xml:space="preserve"><value>REMINDER SET</value></data>
-  <data name="points_estimate_end" xml:space="preserve"><value>for the stuff in your bag</value></data>
   <data name="remove_card_view_title" xml:space="preserve"><value>Please remove your card or your disc will not vend</value></data>
   <data name="personalization_service_error_KLI0002_phone" xml:space="preserve"><value>Something’s up with your mobile number or PIN – try again.</value></data>
   <data name="offer_info_amount_off" xml:space="preserve"><value>{0:C} OFF</value></data>
@@ -472,6 +477,7 @@ for this deal!</value></data>
   <data name="confirm_button" xml:space="preserve"><value>CONFIRM</value></data>
   <data name="startup_perks_points" xml:space="preserve"><value>{0} Points</value></data>
   <data name="keyboard_change_marketing" xml:space="preserve"><value>Redbox will never sell your email to third parties, so no worries there. And since all Coming Soon notifications come directly from us, you can still count on getting those.</value></data>
+  <data name="reservation_mobile_device_error_title" xml:space="preserve"><value>Sorry, we can’t process this payment method</value></data>
   <data name="offer_info_free_1_night" xml:space="preserve"><value>FREE 1-NIGHT</value></data>
   <data name="coming_label" xml:space="preserve"><value>Coming</value></data>
   <data name="multi_disc_warning_multiple_disc_message" xml:space="preserve"><value>you must also rent {0} and {1} for a total of ${2} a night. You'll need all of the discs to play this game.
@@ -498,6 +504,10 @@ Be sure to add the other discs to your bag now.</value></data>
 By the way, we'd love to have you as a customer, so stick around and browse what's At the Box or visit redbox.com anytime.</value></data>
   <data name="cancel_signup_button" xml:space="preserve"><value>CANCEL SIGNUP</value></data>
   <data name="offer_timeout_message" xml:space="preserve"><value>If not, tap “No Thanks” and your original order will be processed.</value></data>
+  <data name="browse_message_popup_text1" xml:space="preserve"><value>There's another Box at this store</value></data>
+  <data name="browse_message_popup_text2" xml:space="preserve"><value>Can't find what you're looking for here? Try the other Box.</value></data>
+  <data name="browse_message_popup_text3" xml:space="preserve"><value>LEARN MORE</value></data>
+  <data name="browse_message_popup_title" xml:space="preserve"><value>Don’t miss the other Box</value></data>
   <data name="perks_signup_info_use_points_1" xml:space="preserve"><value>1,500 pts</value></data>
   <data name="perks_signup_info_use_points_3" xml:space="preserve"><value>2,000 pts</value></data>
   <data name="perks_signup_info_use_points_2" xml:space="preserve"><value>1,750 pts</value></data>
@@ -521,6 +531,7 @@ By the way, we'd love to have you as a customer, so stick around and browse what
   <data name="my_points_error_title" xml:space="preserve"><value>Bummer, you don’t have enough points for that</value></data>
   <data name="horror_filter_button" xml:space="preserve"><value>Horror</value></data>
   <data name="multi_night_pricing_popup_disclaimer_text" xml:space="preserve"><value>Our multi-night deal can't be combined with other offers. Your awesome rental rate is good during the multi-night period. If you keep your rental longer, that's totally fine - extra nights are {0:C}.</value></data>
+  <data name="sony_sweepstakes_legal_text" xml:space="preserve"><value>Providing your email on the next screen (if not already provided), will enter you into the Redbox $15k Summer Sweepstakes for a chance to win $15,000 and you agree to the Official Rules at redbox.com/15k-sweeps. NO PURCHASE NECESSARY. Open to 18+; 50 U.S. &amp; DC only. Ends 8/24/20 CT. Limit 3 entries per day; Free email entry available; see rules for more details.</value></data>
   <data name="offline_game_rental_limit_exceeded_message_header" xml:space="preserve"><value>You're at the limit!</value></data>
   <data name="StartView_Movies_ALL" xml:space="preserve"><value>ALL MOVIES</value></data>
   <data name="multi_night_pricing_popup_disclaimer_c_text" xml:space="preserve"><value>If you keep your rental longer, that's totally fine - extra nights are {0:C}.</value></data>
@@ -528,7 +539,6 @@ By the way, we'd love to have you as a customer, so stick around and browse what
   <data name="maintenance_view_zip_string" xml:space="preserve"><value>ZIP code: {0}</value></data>
   <data name="out_of_stock_video_explanation" xml:space="preserve"><value>We're sorry, all copies of %s have been checked out.  Next time, reserve it on Redbox.com to guarantee it's here!</value></data>
   <data name="email_tag" xml:space="preserve"><value>EMAIL ADDRESS</value></data>
-  <data name="genres_label" xml:space="preserve"><value>Category: </value></data>
   <data name="app_info_bullet_3" xml:space="preserve"><value>See how your Redbox Perks points are powering up</value></data>
   <data name="app_info_bullet_2" xml:space="preserve"><value>Load your library and watch On Demand
 (anywhere you want!)</value></data>
@@ -538,7 +548,7 @@ By the way, we'd love to have you as a customer, so stick around and browse what
   <data name="points_notice" xml:space="preserve"><value>Please wait while points are being retrieved.</value></data>
   <data name="promo_expires_tomorrow" xml:space="preserve"><value>1 DAY LEFT</value></data>
   <data name="title_detail_buy" xml:space="preserve"><value>OWN IT</value></data>
-  <data name="reservation_emv_insert_tap_title" xml:space="preserve"><value>Tap or insert your card to pick up your reservation</value></data>
+  <data name="reservation_emv_insert_tap_title" xml:space="preserve"><value>Insert or tap your card to pick up your reservation</value></data>
   <data name="carousel_add_button_label" xml:space="preserve"><value>RENT IT NOW!</value></data>
   <data name="offer_legal_text_short" xml:space="preserve"><value>Payment card required. Charges apply for add'l nights. Can't be combined with other offers. Subject to additional terms.</value></data>
   <data name="Collections" xml:space="preserve"><value>COLLECTIONS</value></data>
@@ -551,10 +561,13 @@ By the way, we'd love to have you as a customer, so stick around and browse what
 FOR SALE!</value></data>
   <data name="abe_purchase_price_message" xml:space="preserve"><value>Do you want to buy this {0} for {1}{2}?</value></data>
   <data name="totals_reserved_discs" xml:space="preserve"><value>Reserved discs:</value></data>
+  <data name="title_details_more_like_this_text" xml:space="preserve"><value>More Like This</value></data>
   <data name="promo_code_already_used_message" xml:space="preserve"><value>Sorry about that. The promo code you entered has already been used.</value></data>
+  <data name="title_details_directors_text" xml:space="preserve"><value>Director:</value></data>
   <data name="multi_night_pricing_popup_disclaimer_b_text" xml:space="preserve"><value>Our multi-night deal can't be combined with other offers. Remember: if you keep your rental for additional nights, you'll be charged per night.</value></data>
   <data name="or" xml:space="preserve"><value>or</value></data>
   <data name="promo_applied" xml:space="preserve"><value>PROMO APPLIED</value></data>
+  <data name="sony_sweepstakes_confirmation_comment_text" xml:space="preserve"><value>Providing your email address on the next screen (if not already provided), you will be entered into the Redbox $15k Summer Sweepstakes for a chance to win $15,000 and you agree to the Official Rules at redbox.com/15k-sweeps. NO PURCHASE NECESSARY. PURCHASE WILL NOT INCREASE ODDS OF WINNING. Open to 18+; 50 U.S. &amp; DC only. Ends 8/24/20 CT. Limit 3 entries per day; Free email entry available; see rules for more details.</value></data>
   <data name="mobile_faq_button" xml:space="preserve"><value>Mobile FAQs</value></data>
   <data name="promo_code_first_night_free_movie" xml:space="preserve"><value>Movie</value></data>
   <data name="reservation_pickup_note_body_single_mdv" xml:space="preserve"><value>{0} of your picks has {1} discs! Be sure to grab them both before leaving.</value></data>
@@ -582,6 +595,7 @@ To confirm that you're at least 17 years of age, press OK to continue.</value></
   <data name="starring_label" xml:space="preserve"><value>Starring: </value></data>
   <data name="points_cancel_btn" xml:space="preserve"><value>Cancel</value></data>
   <data name="email_receipt_title" xml:space="preserve"><value>Your receipt will be sent to:</value></data>
+  <data name="sony_sweepstakes_confirmation_email_title_text" xml:space="preserve"><value>You got a movie that entered you into the Redbox $15k Summer Sweepstakes!</value></data>
   <data name="do_not_sell_button" xml:space="preserve"><value>Do Not Sell My Info</value></data>
   <data name="no_products_available" xml:space="preserve"><value>Sorry, but Redbox doesn't have what you're looking for right now.</value></data>
   <data name="offer_legal_text_purchase" xml:space="preserve"><value>Choose from select titles at this location. Your payment card is charged the discounted price + tax (except where tax isn’t charged). Can’t be combined with other offers.</value></data>
@@ -633,6 +647,7 @@ If not, please call customer service at
   <data name="perks_signup_info_earn_desc_1" xml:space="preserve"><value>Rent DVD:</value></data>
   <data name="perks_signup_info_earn_desc_2" xml:space="preserve"><value>Rent Blu-ray™:</value></data>
   <data name="perks_signup_info_earn_desc_3" xml:space="preserve"><value>Rent 4K UHD:</value></data>
+  <data name="sony_sweepstakes_confirmation_title_text" xml:space="preserve"><value>You got a movie that qualifies you for the Redbox $15k Summer Sweepstakes!</value></data>
   <data name="format_button" xml:space="preserve"><value>FORMAT</value></data>
   <data name="buy_games_button_text" xml:space="preserve"><value>BUY GAMES</value></data>
   <data name="not_enough_points" xml:space="preserve"><value>You don't have enough points to get free stuff now, but keep on renting to earn more.</value></data>
@@ -650,7 +665,7 @@ for signing up</value></data>
   <data name="okay_button" xml:space="preserve"><value>OK</value></data>
   <data name="loyalty_earning_points" xml:space="preserve"><value> | Earning {0}+ pts</value></data>
   <data name="redbox_card_terms_title_abe" xml:space="preserve"><value>Redbox Card Terms</value></data>
-  <data name="return_touchless_banner_contactless_message" xml:space="preserve"><value>After this screen goes away, try inserting/tapping the card you used to reserve your disc</value></data>
+  <data name="return_touchless_banner_contactless_message" xml:space="preserve"><value>After this screen goes away, try inserting/tapping the physical card you used to reserve your disc</value></data>
   <data name="cart_offer_add_button_text" xml:space="preserve"><value>Undo</value></data>
   <data name="joined_texing_message" xml:space="preserve"><value>Reply to our text to finish up</value></data>
   <data name="esrb_everyone" xml:space="preserve"><value>EVERYONE</value></data>
@@ -677,7 +692,7 @@ for signing up</value></data>
   <data name="zip_code_header_text" xml:space="preserve"><value>Enter ZIP code</value></data>
   <data name="regular_checkout_emv_swipe_message" xml:space="preserve"><value>Tapping and inserting chip 
 coming soon</value></data>
-  <data name="points_estimate_intro" xml:space="preserve"><value>You'll earn</value></data>
+  <data name="sony_sweepstakes_confirmation_message_text" xml:space="preserve"><value>Enter your email address on the next page to finalize your entry</value></data>
   <data name="out_of_stock_game_explanation" xml:space="preserve"><value>We're sorry, all copies of %s have been checked out.  Please check back again soon.</value></data>
   <data name="in_cart_remove_item_warning_header" xml:space="preserve"><value>Are You Sure?</value></data>
   <data name="apply_promo_enter_promo_button_text" xml:space="preserve"><value>Enter Promo Code</value></data>
@@ -740,6 +755,7 @@ special deals</value></data>
   <data name="reserve_online" xml:space="preserve"><value>Reserve Online</value></data>
   <data name="promo_percent_off_browse_title_text" xml:space="preserve"><value>Add a {0} below for {1}% OFF your 1-night rental</value></data>
   <data name="flag_flash_deal_price_cents" xml:space="preserve"><value>{0:F0}¢ Deal</value></data>
+  <data name="reservation_mobile_device_error_message" xml:space="preserve"><value>Please insert or swipe the card used to reserve</value></data>
   <data name="joined_texing_title" xml:space="preserve"><value>Let’s verify</value></data>
   <data name="rental_limit_exceeded_new_customer_message" xml:space="preserve"><value>You can rent 3 discs – and only 1 of those can be a game. (If you use the same card, you can rent more next time!) 
  
@@ -811,7 +827,7 @@ To confirm that you would like make this purchase, press OK to continue. If not,
 a FREE 1-night DVD rental!</value></data>
   <data name="select_a_platform" xml:space="preserve"><value>Select a platform</value></data>
   <data name="vending_serving_discs" xml:space="preserve"><value>Serving up your discs</value></data>
-  <data name="promo_code_button" xml:space="preserve"><value>Add Promos</value></data>
+  <data name="promo_code_button" xml:space="preserve"><value>APPLY PROMO</value></data>
   <data name="flag_wish_list" xml:space="preserve"><value>Wish List</value></data>
   <data name="promo_code_validation_failure_message" xml:space="preserve"><value>We can't process this promo code right now. It's our fault, not yours.
 
@@ -853,6 +869,10 @@ These temporary authorizations will disappear in 7-30 days.</value></data>
   <data name="accertify_enforce_accertify_header" xml:space="preserve"><value>Card not approved for games.</value></data>
   <data name="promo_code_input_prompt" xml:space="preserve"><value>promo code</value></data>
   <data name="confirm_promo_legal_text" xml:space="preserve"><value>Exp. {0} at 11:59:59 pm. Valid for stated discount off the fee for a 1 day rental of a disc. 1 use, 1 code/per transaction. Your payment card, necessary for a rental, is charged the balance of the daily rental fee for a disc and the full daily rental fee for add’l discs + tax (except where tax isn’t charged) for the 1st rental day. You’re charged the full daily rental fee + tax for add’l days you keep each disc. Can’t be combined with other offers,  prior rentals or redeemed for cash. May be cancelled/changed at any time. Void where prohibited.</value></data>
+  <data name="browse_message_popup_message" xml:space="preserve"><value>It might have a different selection!
+Look next to this Box or near another entrance.
+
+You could also visit redbox.com or our app to reserve for pickup at a different location.</value></data>
   <data name="perks_level0_message3" xml:space="preserve"><value>Free 1-night DVD rental in your b-day month</value></data>
   <data name="perks_level0_message2" xml:space="preserve"><value>Additional promos for special savings</value></data>
   <data name="perks_level0_message1" xml:space="preserve"><value>Free 1-night DVD rental as a welcome gift</value></data>
@@ -890,6 +910,7 @@ Let us find it for you!</value></data>
   <data name="skip_offer_button_text" xml:space="preserve"><value>Skip Offer</value></data>
   <data name="keep_browsing_1" xml:space="preserve"><value>Keep</value></data>
   <data name="keep_browsing_2" xml:space="preserve"><value>Browsing</value></data>
+  <data name="sony_sweepstakes_confirmation_email_comment_text" xml:space="preserve"><value>You will be entered into the Redbox $15k Summer Sweepstakes for a chance to win $15,000 and you agree to the Official Rules at redbox.com/15k-sweeps. NO PURCHASE NECESSARY. PURCHASE WILL NOT INCREASE ODDS OF WINNING. Open to 18+; 50 U.S.&amp;DC only. Ends 8/24/20 CT. Limit 3 entries per day; Free email entry available; see rules for more details.</value></data>
   <data name="totals_credit" xml:space="preserve"><value>Credit:</value></data>
   <data name="offline_game_rental_limit_exceeded_message" xml:space="preserve"><value>You can have up to {0} discs, and only {1} can be {2}.
 
@@ -925,7 +946,7 @@ but don’t miss your b-day gift, special offers and much more.</value></data>
       to reserve than you're using now.
 </value></data>
   <data name="esrb_mature_name" xml:space="preserve"><value>{0}-rated movie in cart</value></data>
-  <data name="shopping_cart_accept_and_pay_text" xml:space="preserve"><value>By pressing "Accept &amp; Pay" you are agreeing to the Redbox Terms of Use and Transaction Terms and Conditions.</value></data>
+  <data name="shopping_cart_accept_and_pay_text" xml:space="preserve"><value>By pressing "Accept &amp; Pay" you agree to the Redbox Terms of Use and Transaction Terms &amp; Conditions.</value></data>
   <data name="gc_not_available" xml:space="preserve"><value>Your card could not be authorized.
 
 Please swipe another card or try again later.</value></data>
@@ -944,7 +965,7 @@ ALL</value></data>
   <data name="title_type_name_nintendo_switch" xml:space="preserve"><value>Nintendo Switch</value></data>
   <data name="games_button_rent_label" xml:space="preserve"><value>Rent</value></data>
   <data name="title_rollup_overlay_digital_code_info" xml:space="preserve"><value>What's a Digital Code?</value></data>
-  <data name="my_bag" xml:space="preserve"><value>My bag</value></data>
+  <data name="my_bag" xml:space="preserve"><value>My Bag</value></data>
   <data name="first_day_price" xml:space="preserve"><value>First Day Price:</value></data>
   <data name="phone_and_pin_default_pin_display" xml:space="preserve"><value>_ _ _ _</value></data>
   <data name="blu_ray_button" xml:space="preserve"><value>Blu-ray</value></data>

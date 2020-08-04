@@ -388,7 +388,7 @@ public class DataService : IDataService
 		return result;
 	}
 
-	public ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, out List<IKioskProduct> products)
+	public ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, out List<IKioskProduct> products, string studio = null)
 	{
 		WaitForFirstLoad();
 		products = null;
@@ -397,7 +397,7 @@ public class DataService : IDataService
 		{
 			lock (_lock)
 			{
-				products = _kioskProductView.GetProducts(browseFilter, titleFamily, titleType, browseSort, genreFilter, include, exclude, isADAView, priceRangeLow, priceRangeHigh);
+				products = _kioskProductView.GetProducts(browseFilter, titleFamily, titleType, browseSort, genreFilter, include, exclude, isADAView, priceRangeLow, priceRangeHigh, studio);
 			}
 		}
 		catch (Exception e)

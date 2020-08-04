@@ -54,6 +54,8 @@ public class ProductFlag
 		public const string AwardNomineeKey = "flag_award_nominee";
 
 		public const string WishListKey = "flag_wish_list";
+
+		public const string SonySweepstakesKey = "flag_sony_sweepstakes";
 	}
 
 	public ProductFlags Flag { get; set; }

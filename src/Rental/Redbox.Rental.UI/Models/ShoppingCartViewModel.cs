@@ -75,8 +75,6 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public string UpdateBagButtonText { get; set; }
 
-	public string PointsEstimateIntroText { get; set; }
-
 	public string PointsEstimateText
 	{
 		get
@@ -91,8 +89,6 @@ public class ShoppingCartViewModel : DependencyObject
 			});
 		}
 	}
-
-	public string PointsEstimateEndText { get; set; }
 
 	public Visibility PointsEstimateVisibility
 	{

@@ -52,6 +52,12 @@ public interface IConfiguration
 
 	bool ShowExpandedFormatButtonsNewText { get; }
 
+	bool EnableBrowseMessagePopup { get; }
+
+	int BrowseMessagePopupDuration { get; }
+
+	bool EnableSonySweepstakes { get; }
+
 	int OfflineItemsLimit { get; }
 
 	int OfflineGameRentalLimit { get; }
@@ -83,10 +89,6 @@ public interface IConfiguration
 	int ScreenSaverTimeout { get; }
 
 	string OutOfStockTitleDetailsABTestVersion { get; }
-
-	string TitleDetailsLayoutABTestVersion { get; }
-
-	string TitleDetailsLayoutABTestVersionIgnoreCulture { get; }
 
 	bool MonitorBarcodeTracking { get; }
 
@@ -253,6 +255,8 @@ public interface IConfiguration
 	TimeSpan ThinJobRangeStart { get; }
 
 	TimeSpan ThinJobRangeEnd { get; }
+
+	int MerchOrderExpirationDays { get; }
 
 	void SessionReload();
 

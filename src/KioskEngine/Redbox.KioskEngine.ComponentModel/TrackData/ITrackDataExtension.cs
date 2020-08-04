@@ -9,6 +9,8 @@ public static class ITrackDataExtension
 	private static class ErrorCodes
 	{
 		public const string SwipedCardIsChipEnabled = "T020";
+
+		public const string ReservationMobileDevice = "T022";
 	}
 
 	public static bool CardSourceTypeIsEMVContactOrQuickChip(this ITrackData td)
@@ -51,6 +53,15 @@ public static class ITrackDataExtension
 		if (td.HasErrors())
 		{
 			return td.Errors.ContainsCode("T020");
+		}
+		return false;
+	}
+
+	public static bool HasReservationMobileDeviceError(this ITrackData td)
+	{
+		if (td.HasErrors())
+		{
+			return td.Errors.ContainsCode("T022");
 		}
 		return false;
 	}

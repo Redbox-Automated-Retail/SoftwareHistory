@@ -59,6 +59,8 @@ public class BrowseViewModel : DependencyObject
 
 	public static readonly DependencyProperty EmptyCartAddItemMessageVisibilityProperty = DependencyProperty.Register("EmptyCartAddItemMessageVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty BrowseMessagePopupModelProperty = DependencyProperty.Register("BrowseMessagePopupModel", typeof(BrowseMessagePopupModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
+
 	public string SignInButtonText { get; set; }
 
 	public string SignUpButtonText { get; set; }
@@ -354,6 +356,21 @@ public class BrowseViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(EmptyCartAddItemMessageVisibilityProperty, value);
+			});
+		}
+	}
+
+	public BrowseMessagePopupModel BrowseMessagePopupModel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (BrowseMessagePopupModel)GetValue(BrowseMessagePopupModelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BrowseMessagePopupModelProperty, value);
 			});
 		}
 	}

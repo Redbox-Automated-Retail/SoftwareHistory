@@ -690,6 +690,9 @@ public static class OrchestrationService
 			}
 			service2?.AddView(ViewService?.GetCurrentViewAnalyticsName());
 		}
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.EnableBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableBrowseMessagePopup;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMessagePopupDuration = Redbox.Rental.Services.Configuration.Configuration.Instance.BrowseMessagePopupDuration;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ShowBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableBrowseMessagePopup;
 		RentalRefreshIfNeeded();
 	}
 

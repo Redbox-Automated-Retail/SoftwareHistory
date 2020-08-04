@@ -118,4 +118,6 @@ public interface ITitleProduct : IKioskProduct
 	List<long> RequiredAdditionalTitles { get; }
 
 	string TivoQueryId { get; set; }
+
+	string Studio { get; }
 }

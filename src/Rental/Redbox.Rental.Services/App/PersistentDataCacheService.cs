@@ -9,11 +9,11 @@ namespace Redbox.Rental.Services.App;
 
 public class PersistentDataCacheService : IPersistentDataCacheService
 {
-	private LogHelper _logger;
+	private readonly LogHelper _logger = LogHelper.Instance;
 
-	private IStoreManager _storeManager;
+	private readonly IStoreManager _storeManager = ServiceLocator.Instance.GetService<IStoreManager>();
 
-	private Dictionary<string, object> _cache = new Dictionary<string, object>();
+	private readonly Dictionary<string, object> _cache = new Dictionary<string, object>();
 
 	private string _dataCachePath;
 
@@ -29,12 +29,6 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 			}
 			return _dataCachePath;
 		}
-	}
-
-	public PersistentDataCacheService(IStoreManager storeManager, LogHelper logger)
-	{
-		_storeManager = storeManager;
-		_logger = logger;
 	}
 
 	public PersistentDataWrapper<T> Read<T>(string fileName, bool useCache = false) where T : IPersistentData
@@ -110,6 +104,20 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		catch (Exception e)
 		{
 			_logger?.LogException("PersistentDataCacheService.Delete - unhandled exception occurred", e);
+			return false;
+		}
+	}
+
+	public bool Exists(string fileName)
+	{
+		try
+		{
+			_logger?.LogInformation($"PersistentDataCacheService.Exists({fileName})");
+			return File.Exists(GetDataFilePath(fileName));
+		}
+		catch (Exception e)
+		{
+			_logger?.LogException("PersistentDataCacheService.Read - unhandled exception occurred", e);
 			return false;
 		}
 	}

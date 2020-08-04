@@ -135,6 +135,10 @@ public static class AnalyticsConstants
 
 		public const string BrowseShoppingCartRemoveItem = "BrowseShoppingCartRemoveItem";
 
+		public const string BrowseBrowseMessagePopupInfo = "BrowseBrowseMessagePopupInfo";
+
+		public const string BrowseBrowseMessagePopupClose = "BrowseBrowseMessagePopupClose";
+
 		public const string BulletListPopupReserveOnlineGotit = "BulletListPopupReserveOnlineGotit";
 
 		public const string BulletListPopupRedboxPerksGotit = "BulletListPopupRedboxPerksGotit";

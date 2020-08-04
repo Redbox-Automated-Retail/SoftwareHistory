@@ -21,6 +21,7 @@ using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.Personalization;
@@ -160,6 +161,20 @@ public class StartViewController : BaseViewController
 
 	private static bool IsClassicScreenSaverSelected => !IsTestScreenSaverSelected;
 
+	private static bool UseContactless
+	{
+		get
+		{
+			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+			IEMVReaderHealth service2 = ServiceLocator.Instance.GetService<IEMVReaderHealth>();
+			if (service.ZeroTouchContactlessEnabled)
+			{
+				return !service2.ContactlessOffDueToDisconnectThresholdReached;
+			}
+			return false;
+		}
+	}
+
 	public static void ConfigureStartView()
 	{
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
@@ -252,8 +267,10 @@ public class StartViewController : BaseViewController
 
 	private static void ZeroTouchCardRead()
 	{
-		if (OrchestrationService.PeekView() != "start_view")
+		string text = OrchestrationService.PeekView();
+		if (text != "start_view")
 		{
+			BaseViewController.Log($"ZeroTouch Skipped - Current View is Not Start View: {text}");
 			return;
 		}
 		ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
@@ -273,8 +290,7 @@ public class StartViewController : BaseViewController
 					service.ClearCardReadHandlers();
 					service.OnCardReadComplete += OnCardReadComplete;
 					service.OnCardReadStarted += OnCardReadUserInteractionStarted;
-					IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
-					DeviceInputType deviceInputType = ((service2 != null && service2.ZeroTouchContactlessEnabled) ? DeviceInputType.CS : DeviceInputType.S);
+					DeviceInputType deviceInputType = (UseContactless ? DeviceInputType.CS : DeviceInputType.S);
 					if (service is ClassicTrackDataService)
 					{
 						deviceInputType = DeviceInputType.M;
@@ -285,16 +301,31 @@ public class StartViewController : BaseViewController
 						StartDateTime = DateTime.Now
 					};
 					Redbox.Rental.Services.Session.Session.Instance.CardReadAttemptCollection.Add(cardReadAttempt);
-					service.StartCardRead(service2?.ZeroTouchReadTimeout ?? 600000, isZeroTouchRead: true, deviceInputType, delegate(IReadCardJob readCardJob)
+					service.StartCardRead(ServiceLocator.Instance.GetService<IConfiguration>()?.ZeroTouchReadTimeout ?? 600000, isZeroTouchRead: true, deviceInputType, delegate(IReadCardJob readCardJob)
 					{
+						LogHelper.Instance.Log($"Card read Starting - RequestId: {readCardJob.RequestId}");
 						cardReadAttempt.CardReadJobCommandRequestId = readCardJob.RequestId;
-					}, BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ShoppingSessionId ?? default(Guid));
+					}, BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.ShoppingSessionId ?? default(Guid));
 				}
+				return;
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.LogException("Exception occurred in ZeroTouchCardRead!", e);
 				return;
 			}
 			finally
 			{
 				_startingCardReadFlag = 0;
+				Task.Factory.StartNew(delegate
+				{
+					StartViewModel startViewModelFromView = GetStartViewModelFromView();
+					FrameworkElement startViewUserControl = GetStartViewUserControl();
+					if (startViewModelFromView != null && startViewUserControl != null)
+					{
+						SetCultureSpecificText(startViewModelFromView, startViewUserControl, hasInstockGames: false);
+					}
+				}, CancellationToken.None, TaskCreationOptions.None, BaseViewController.GetViewService()?.UITaskScheduler);
 			}
 		}
 		LogHelper.Instance.Log("TrackDataService not Connected - Creating ZeroTouchDisconnectedCardReaderTimer");
@@ -321,35 +352,40 @@ public class StartViewController : BaseViewController
 
 	private static void OnCardReadComplete(ITrackData trackData, bool chipCardRemovedFromReader, Guid? requestId)
 	{
+		BaseViewController.Log($"StartViewController.OnCardReadComplete - RequestId {requestId}");
 		if (trackData != null && trackData.ReadStatus != ResponseStatus.Timeout)
 		{
 			ResponseStatus? readStatus = trackData.ReadStatus;
 			ResponseStatus responseStatus = ResponseStatus.Errored;
 			if (readStatus.GetValueOrDefault() != responseStatus || !readStatus.HasValue || (!trackData.Errors.Any((Redbox.KioskEngine.ComponentModel.Error x) => string.Compare(x.Description, "TimeOut", ignoreCase: true) == 0) && !trackData.Errors.Any((Redbox.KioskEngine.ComponentModel.Error x) => string.Compare(x.Description, "READERDISCONNECT", ignoreCase: true) == 0)))
 			{
-				if (trackData == null || trackData.ReadStatus != ResponseStatus.Cancelled)
+				if (trackData != null && trackData.ReadStatus == ResponseStatus.Cancelled)
 				{
-					Redbox.Rental.Services.Session.Session.Instance.TrackData = trackData;
-					Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = true;
-					CardFunctions.CardReadComplete(SwipeViewType.ZeroTouchReservationPickup, trackData, chipCardRemovedFromReader, requestId, delegate
-					{
-						LogHelper.Instance.Log("CONTINUE");
-						OnContinueCardReadComplete();
-					}, delegate
-					{
-						LogHelper.Instance.Log("TIMEOUT");
-						OrchestrationService.UnwindToSafe("start_view", discard: false, "zerotouch error timeout");
-						OnContinueCardReadComplete();
-					});
+					BaseViewController.Log("ZeroTouch Card Read Was Cancelled");
+					return;
 				}
+				Redbox.Rental.Services.Session.Session.Instance.TrackData = trackData;
+				Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = true;
+				CardFunctions.CardReadComplete(SwipeViewType.ZeroTouchReservationPickup, trackData, chipCardRemovedFromReader, requestId, delegate
+				{
+					LogHelper.Instance.Log("CONTINUE");
+					OnContinueCardReadComplete();
+				}, delegate
+				{
+					LogHelper.Instance.Log("TIMEOUT");
+					OrchestrationService.UnwindToSafe("start_view", discard: false, "zerotouch error timeout");
+					OnContinueCardReadComplete();
+				});
 				return;
 			}
 		}
+		BaseViewController.Log($"OnCardReadComplete Start New Read - TrackData.ReadStatus: {trackData?.ReadStatus}");
 		ZeroTouchCardRead();
 	}
 
 	private static void OnContinueCardReadComplete()
 	{
+		LogHelper.Instance.Log("StartViewController.OnContinueCardReadComplete BEGIN");
 		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 		IList<IReservation> list = null;
 		if (service != null && service.ZeroTouchPickupEnabled)
@@ -1486,7 +1522,7 @@ public class StartViewController : BaseViewController
 		{
 			return Resources.zero_touch_action_to_begin_swipe;
 		}
-		if (!ServiceLocator.Instance.GetService<IConfiguration>().ZeroTouchContactlessEnabled)
+		if (!UseContactless)
 		{
 			return Resources.zero_touch_action_to_begin_insert;
 		}

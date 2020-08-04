@@ -17,6 +17,7 @@ using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
+using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.Session;
@@ -72,13 +73,15 @@ public class SwipeViewController : BaseViewController
 	{
 		get
 		{
+			bool flag = false;
 			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (service != null && service.ContactlessEnabled)
+			flag = service != null && service.ContactlessEnabled && (service2?.SupportsEMV ?? false);
+			if (ServiceLocator.Instance.GetService<IEMVReaderHealth>().ContactlessOffDueToDisconnectThresholdReached)
 			{
-				return service2?.SupportsEMV ?? false;
+				flag = false;
 			}
-			return false;
+			return flag;
 		}
 	}
 
@@ -154,11 +157,22 @@ public class SwipeViewController : BaseViewController
 				_swipeViewType = SwipeViewType.EncryptedSwipeRegularCheckOut;
 			}
 		}
-		else if (_reservationPickupTypes.Contains(_swipeViewType))
+		else
 		{
+			if (!_reservationPickupTypes.Contains(_swipeViewType))
+			{
+				return;
+			}
 			if (ChipEnabled && !deviceServiceTrackDataService.IsInTechnicalFallback)
 			{
-				_swipeViewType = SwipeViewType.EMVInsertReservationPickup;
+				if (ContactlessEnabled)
+				{
+					_swipeViewType = SwipeViewType.EMVInsertTapReservationPickup;
+				}
+				else
+				{
+					_swipeViewType = SwipeViewType.EMVInsertReservationPickup;
+				}
 			}
 			else
 			{
@@ -239,7 +253,11 @@ public class SwipeViewController : BaseViewController
 			DeviceInputType deviceInputType = DeviceInputType.M;
 			if (service2 is IDeviceServiceTrackDataService)
 			{
-				if (ChipEnabled && (!ContactlessEnabled || _reservationPickupTypes.Contains(_swipeViewType)))
+				if (ChipEnabled && ContactlessEnabled && _reservationPickupTypes.Contains(_swipeViewType))
+				{
+					deviceInputType = DeviceInputType.MCS;
+				}
+				else if (ChipEnabled && (!ContactlessEnabled || _reservationPickupTypes.Contains(_swipeViewType)))
 				{
 					deviceInputType = DeviceInputType.MS;
 				}
@@ -289,12 +307,13 @@ public class SwipeViewController : BaseViewController
 		{
 			return;
 		}
+		swipeViewModel.GridBackground = WPFFunctions.GetBrush(BaseViewController.GetViewUserControl(), (_swipeViewType == SwipeViewType.EMVInsertTapReservationPickup) ? "RubineToDarkPurpleGradientBrush" : "RubineRedBrush");
 		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 		swipeViewModel.ApplePayImageVisibility = ((service != null && service.HideApplePayImage) ? Visibility.Collapsed : Visibility.Visible);
 		swipeViewModel.GooglePayImageVisibility = ((service != null && service.HideGooglePayImage) ? Visibility.Collapsed : Visibility.Visible);
 		IDeviceServiceTrackDataService deviceServiceTrackDataService = ServiceLocator.Instance.GetService<ITrackDataService>() as IDeviceServiceTrackDataService;
 		swipeViewModel.ChipNotEnabledText = Resources.chip_not_enabled_text;
-		swipeViewModel.BackButtonText = Resources.back_button;
+		swipeViewModel.BackButtonText = Resources.back_button.ToUpper();
 		swipeViewModel.BackButtonVisibility = Visibility.Visible;
 		swipeViewModel.ImageStackPanelVisibility = Visibility.Collapsed;
 		swipeViewModel.OnBackButtonClicked = OnBackButtonPressed;
@@ -327,7 +346,8 @@ public class SwipeViewController : BaseViewController
 			break;
 		case SwipeViewType.EMVInsertTapReservationPickup:
 			swipeViewModel.TitleText = Resources.reservation_emv_insert_tap_title;
-			swipeViewModel.MessageText = null;
+			swipeViewModel.MessageText = Resources.reservation_emv_insert_tap_hide_mobile_message;
+			swipeViewModel.ImageStackPanelVisibility = Visibility.Visible;
 			flag = true;
 			break;
 		case SwipeViewType.EMVTapReservationPickup:
@@ -641,6 +661,15 @@ public class SwipeViewController : BaseViewController
 											GoBackSafe("swiped_card_is_chip_enabled");
 										};
 										showMessage = MessagePopupViewController.ShowMessagePopupViewSwipedCardIsChipEnabled;
+									}
+									else if (_swipeViewType.IsReservation() && trackData.HasReservationMobileDeviceError())
+									{
+										cardReadEvent.Action = "reservation_with_mobile_wallet";
+										action2 = delegate
+										{
+											GoBackSafe("reservation_with_mobile_wallet");
+										};
+										showMessage = MessagePopupViewController.ShowMessagePopupViewReservationMobileWalletError;
 									}
 									else if (trackData.HasTamperedError())
 									{

@@ -88,6 +88,10 @@ public class Commands
 
 	public static readonly RoutedCommand HomeCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand BrowseMessagePopupInfoCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand BrowseMessagePopupCloseCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand TermsAndPrivacyCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand PromoCodeCommand = new RoutedCommand();

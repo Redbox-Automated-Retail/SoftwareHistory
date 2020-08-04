@@ -134,6 +134,8 @@ public class Constants
 		public const string VsmView = "VsmView";
 
 		public const string TitleDetailsFullDetailsPopupView = "TitleDetailsFullDetailsPopupView";
+
+		public const string SonySweepstakesConfirmationView = "SonySweepstakesConfirmationView";
 	}
 
 	public class ViewNames
@@ -277,6 +279,8 @@ public class Constants
 		public const string PerksEmailOptInThanksView = "perks_email_opt_in_thanks_view";
 
 		public const string TitleDetailsFullDetailsPopupView = "title_details_full_details_popup_view";
+
+		public const string SonySweepstakesConfirmationView = "sony_sweepstakes_confirmation_view";
 	}
 
 	public class ThemeNames

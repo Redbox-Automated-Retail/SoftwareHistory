@@ -327,7 +327,7 @@ public class KioskProductView
 		}
 	}
 
-	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh)
+	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, string studio = null)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
 		list = FilterByTitleFamily(browseFilter, titleFamily, new List<TitleType> { titleType }, list);
@@ -350,6 +350,10 @@ public class KioskProductView
 		if (browseFilter == BrowseViewFilter.All && priceRangeLow.HasValue && priceRangeHigh.HasValue)
 		{
 			list = list.Where((ITitleProduct item) => FilterByRentalPrice(item, priceRangeLow, priceRangeHigh)).ToList();
+		}
+		if (browseFilter == BrowseViewFilter.All && studio != null)
+		{
+			list = list.Where((ITitleProduct item) => FilterByStudio(item, studio)).ToList();
 		}
 		list = ApplyMainFilter(list, browseFilter);
 		return ((IEnumerable<ITitleProduct>)list.OrderList(browseSort, browseFilter, MovieTitles)).Select((Func<ITitleProduct, IKioskProduct>)((ITitleProduct item) => item)).ToList();
@@ -669,6 +673,11 @@ public class KioskProductView
 			flag = item.IsRentableAndInStock && num2 >= (priceRangeLow ?? 0.01m) && num2 <= (priceRangeHigh ?? decimal.MaxValue);
 		}
 		return flag;
+	}
+
+	private bool FilterByStudio(ITitleProduct titleProduct, string studio)
+	{
+		return titleProduct.Studio.ToLower() == studio.ToLower();
 	}
 
 	private List<ITitleProduct> ApplyMainFilter(List<ITitleProduct> list, BrowseViewFilter browseFilter)
@@ -1075,19 +1084,11 @@ public class KioskProductView
 	{
 		try
 		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			if (service?.TitleDetailsLayoutABTestVersionIgnoreCulture == "B")
-			{
-				LogHelper.Instance.Log("TitleDetailsLayoutABTestVersion config is set to B. Sending productGroupIds to KCS for morelikethis.");
-				IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
-				IKioskClientService service2 = ServiceLocator.Instance.GetService<IKioskClientService>();
-				List<long> productGroupIds = _movieProducts.Select((ITitleProduct x) => dataService.GetProductGroupId(x)).ToList();
-				service2.ProductGroups.RefreshAllMLTData(productGroupIds);
-			}
-			else
-			{
-				LogHelper.Instance.Log($"TitleDetailsLayoutABTestVersion config is set to {service?.TitleDetailsLayoutABTestVersionIgnoreCulture}. Skipping sending productGroupIds to KCS for morelikethis.");
-			}
+			LogHelper.Instance.Log("Sending productGroupIds to KCS for morelikethis.");
+			IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
+			IKioskClientService service = ServiceLocator.Instance.GetService<IKioskClientService>();
+			List<long> productGroupIds = _movieProducts.Select((ITitleProduct x) => dataService.GetProductGroupId(x)).ToList();
+			service.ProductGroups.RefreshAllMLTData(productGroupIds);
 		}
 		catch (Exception e)
 		{

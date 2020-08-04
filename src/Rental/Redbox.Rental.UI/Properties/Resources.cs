@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.Rental.UI.Properties;
 
-[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
 [DebuggerNonUserCode]
 [CompilerGenerated]
 public class Resources
@@ -157,6 +157,16 @@ public class Resources
 	public static string browse_family_games => ResourceManager.GetString("browse_family_games", resourceCulture);
 
 	public static string browse_family_movies => ResourceManager.GetString("browse_family_movies", resourceCulture);
+
+	public static string browse_message_popup_message => ResourceManager.GetString("browse_message_popup_message", resourceCulture);
+
+	public static string browse_message_popup_text1 => ResourceManager.GetString("browse_message_popup_text1", resourceCulture);
+
+	public static string browse_message_popup_text2 => ResourceManager.GetString("browse_message_popup_text2", resourceCulture);
+
+	public static string browse_message_popup_text3 => ResourceManager.GetString("browse_message_popup_text3", resourceCulture);
+
+	public static string browse_message_popup_title => ResourceManager.GetString("browse_message_popup_title", resourceCulture);
 
 	public static string browse_view_control_page_mask => ResourceManager.GetString("browse_view_control_page_mask", resourceCulture);
 
@@ -468,6 +478,8 @@ public class Resources
 
 	public static string flag_price_test => ResourceManager.GetString("flag_price_test", resourceCulture);
 
+	public static string flag_sony_sweepstakes => ResourceManager.GetString("flag_sony_sweepstakes", resourceCulture);
+
 	public static string flag_wish_list => ResourceManager.GetString("flag_wish_list", resourceCulture);
 
 	public static string flash_deal_text => ResourceManager.GetString("flash_deal_text", resourceCulture);
@@ -565,8 +577,6 @@ public class Resources
 	public static string genre_1093b => ResourceManager.GetString("genre_1093b", resourceCulture);
 
 	public static string genre_1094 => ResourceManager.GetString("genre_1094", resourceCulture);
-
-	public static string genres_label => ResourceManager.GetString("genres_label", resourceCulture);
 
 	public static string get_started_button_text => ResourceManager.GetString("get_started_button_text", resourceCulture);
 
@@ -1314,10 +1324,6 @@ public class Resources
 
 	public static string points_cannot_redeem => ResourceManager.GetString("points_cannot_redeem", resourceCulture);
 
-	public static string points_estimate_end => ResourceManager.GetString("points_estimate_end", resourceCulture);
-
-	public static string points_estimate_intro => ResourceManager.GetString("points_estimate_intro", resourceCulture);
-
 	public static string points_estimate_text => ResourceManager.GetString("points_estimate_text", resourceCulture);
 
 	public static string points_marketing => ResourceManager.GetString("points_marketing", resourceCulture);
@@ -1520,6 +1526,8 @@ public class Resources
 
 	public static string reservation_details_okay => ResourceManager.GetString("reservation_details_okay", resourceCulture);
 
+	public static string reservation_emv_insert_tap_hide_mobile_message => ResourceManager.GetString("reservation_emv_insert_tap_hide_mobile_message", resourceCulture);
+
 	public static string reservation_emv_insert_tap_title => ResourceManager.GetString("reservation_emv_insert_tap_title", resourceCulture);
 
 	public static string reservation_emv_insert_title => ResourceManager.GetString("reservation_emv_insert_title", resourceCulture);
@@ -1529,6 +1537,10 @@ public class Resources
 	public static string reservation_emv_tap_title => ResourceManager.GetString("reservation_emv_tap_title", resourceCulture);
 
 	public static string reservation_error_message => ResourceManager.GetString("reservation_error_message", resourceCulture);
+
+	public static string reservation_mobile_device_error_message => ResourceManager.GetString("reservation_mobile_device_error_message", resourceCulture);
+
+	public static string reservation_mobile_device_error_title => ResourceManager.GetString("reservation_mobile_device_error_title", resourceCulture);
 
 	public static string reservation_not_found_view_image => ResourceManager.GetString("reservation_not_found_view_image", resourceCulture);
 
@@ -1656,6 +1668,20 @@ public class Resources
 
 	public static string sold_out_message => ResourceManager.GetString("sold_out_message", resourceCulture);
 
+	public static string sony_sweepstakes_confirmation_comment_text => ResourceManager.GetString("sony_sweepstakes_confirmation_comment_text", resourceCulture);
+
+	public static string sony_sweepstakes_confirmation_email_comment_text => ResourceManager.GetString("sony_sweepstakes_confirmation_email_comment_text", resourceCulture);
+
+	public static string sony_sweepstakes_confirmation_email_title_text => ResourceManager.GetString("sony_sweepstakes_confirmation_email_title_text", resourceCulture);
+
+	public static string sony_sweepstakes_confirmation_message_text => ResourceManager.GetString("sony_sweepstakes_confirmation_message_text", resourceCulture);
+
+	public static string sony_sweepstakes_confirmation_title_text => ResourceManager.GetString("sony_sweepstakes_confirmation_title_text", resourceCulture);
+
+	public static string sony_sweepstakes_filter_button => ResourceManager.GetString("sony_sweepstakes_filter_button", resourceCulture);
+
+	public static string sony_sweepstakes_legal_text => ResourceManager.GetString("sony_sweepstakes_legal_text", resourceCulture);
+
 	public static string sorry => ResourceManager.GetString("sorry", resourceCulture);
 
 	public static string sorted_label => ResourceManager.GetString("sorted_label", resourceCulture);
@@ -1732,9 +1758,15 @@ public class Resources
 
 	public static string title_details_cc_text => ResourceManager.GetString("title_details_cc_text", resourceCulture);
 
+	public static string title_details_directors_text => ResourceManager.GetString("title_details_directors_text", resourceCulture);
+
 	public static string title_details_genres_text => ResourceManager.GetString("title_details_genres_text", resourceCulture);
 
+	public static string title_details_more_like_this_text => ResourceManager.GetString("title_details_more_like_this_text", resourceCulture);
+
 	public static string title_details_return_time_text => ResourceManager.GetString("title_details_return_time_text", resourceCulture);
+
+	public static string title_details_see_full_details_text => ResourceManager.GetString("title_details_see_full_details_text", resourceCulture);
 
 	public static string title_rollup_format_add_text => ResourceManager.GetString("title_rollup_format_add_text", resourceCulture);
 

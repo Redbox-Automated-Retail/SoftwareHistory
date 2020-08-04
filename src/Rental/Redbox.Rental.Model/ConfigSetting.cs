@@ -154,6 +154,12 @@ public static class ConfigSetting
 
 	public const string ShowExpandedFormatButtonsNewText = "ShowExpandedFormatButtonsNewText";
 
+	public const string EnableBrowseMessagePopup = "EnableBrowseMessagePopup";
+
+	public const string BrowseMessagePopupDuration = "BrowseMessagePopupDuration";
+
+	public const string EnableSonySweepstakes = "EnableSonySweepstakes";
+
 	public const string ShowFAQUpdated = "ShowFAQUpdated";
 
 	public const string ShowTermsUpdated = "ShowTermsUpdated";
@@ -203,8 +209,6 @@ public static class ConfigSetting
 	public const string ScreenSaverTimer = "ScreenSaverTimer";
 
 	public const string OutOfStockTitleDetails = "OutOfStockTitleDetails";
-
-	public const string TitleDetailsLayout = "TitleDetailsLayout";
 
 	public const string ShoppingCartLayout = "ShoppingCartLayout";
 
@@ -307,6 +311,8 @@ public static class ConfigSetting
 	public const string KioskClientServiceGetMerchandizingOrdersTimeout = "KioskClientServiceGetMerchandizingOrdersTimeout";
 
 	public const string ThinJobTimeRange = "ThinJobTimeRange";
+
+	public const string MerchOrderExpirationDays = "MerchOrderExpirationDays";
 
 	public const string ZeroTouchEnabled = "ZeroTouchEnabled";
 

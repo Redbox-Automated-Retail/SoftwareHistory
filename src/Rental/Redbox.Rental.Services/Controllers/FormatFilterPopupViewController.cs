@@ -133,6 +133,7 @@ public class FormatFilterPopupViewController : BaseViewController
 		BrowseState.BrowseMode = ((filterType == TitleType.DigitalCode) ? BrowseViewFilter.ForSale : BrowseViewFilter.All);
 		BrowseState.PageNumber = 1;
 		BrowseState.BrowsePriceRangeFilter = null;
+		BrowseState.BrowseStudio = null;
 		OrchestrationService.ViewGoBackSafe($"FormatFilterPopupViewController {analysisText}", popOnly: false);
 	}
 

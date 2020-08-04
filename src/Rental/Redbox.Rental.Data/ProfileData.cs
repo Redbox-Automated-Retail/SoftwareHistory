@@ -190,7 +190,8 @@ public class ProfileData : IProfileData
 				SellThruPrice = dictionary.ToDecimal("sellthru_price", null),
 				DiscNumber = dictionary.ToInt32("disc_number", null),
 				DigitalHDRentPrice = dictionary.ToDecimal("digital_hd_rent_price", null),
-				DigitalSDRentPrice = dictionary.ToDecimal("digital_sd_rent_price", null)
+				DigitalSDRentPrice = dictionary.ToDecimal("digital_sd_rent_price", null),
+				Studio = dictionary.ToString("studio")
 			};
 			item.Genres = new List<long>();
 			dictionary.ToDictionaryObject("genres").ForEach(delegate(object g)

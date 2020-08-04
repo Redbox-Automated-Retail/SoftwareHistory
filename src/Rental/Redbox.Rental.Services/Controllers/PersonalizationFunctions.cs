@@ -5,6 +5,7 @@ using System.Security;
 using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
@@ -442,6 +443,51 @@ public class PersonalizationFunctions
 		});
 		emailNextTimer?.Start();
 		OrchestrationService.ViewShow("email_receipt_view", new EmailReceiptInfo
+		{
+			ContinueAction = continueAction,
+			EmailAddress = emailAddress
+		});
+	}
+
+	public static void ShowSonySweepstakesConfirmationView(IAuthorizeResult authorizeResult, string emailAddress)
+	{
+		int num = 10000;
+		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+		if (service != null)
+		{
+			num = service.GetTimeout("shorter", num);
+		}
+		ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
+		object lockObject = new object();
+		bool hasActionExecuted = false;
+		ITimer sonySweepstakesConfirmationViewNextTimer = null;
+		Action continueAction = (continueAction = delegate
+		{
+			lock (lockObject)
+			{
+				if (!hasActionExecuted)
+				{
+					hasActionExecuted = true;
+					OrchestrationService.ViewGoBackSafe("sony sweepstakes confirmation view continue", popOnly: false);
+					sonySweepstakesConfirmationViewNextTimer.Stop();
+					timerService?.RemoveTimer("sony_sweepstakes_confirmation_view_next_timer");
+					if (authorizeResult != null && authorizeResult.HasProfile && !string.IsNullOrEmpty(emailAddress))
+					{
+						CheckoutFunctions.ShowEmailReceiptIfNeeded(authorizeResult);
+					}
+					else
+					{
+						CheckoutFunctions.PromptForEmailAddress(authorizeResult, emailAddress, null);
+					}
+				}
+			}
+		});
+		sonySweepstakesConfirmationViewNextTimer = timerService?.CreateTimer("sony_sweepstakes_confirmation_view_next_timer", num, num, delegate
+		{
+			continueAction();
+		});
+		sonySweepstakesConfirmationViewNextTimer?.Start();
+		OrchestrationService.ViewShow("sony_sweepstakes_confirmation_view", new SonySweepstakesConfirmationViewInfo
 		{
 			ContinueAction = continueAction,
 			EmailAddress = emailAddress

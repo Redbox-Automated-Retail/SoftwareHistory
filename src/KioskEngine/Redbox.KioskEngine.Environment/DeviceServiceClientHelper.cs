@@ -451,7 +451,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 			{
 				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 				long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
-				var message = new
+				var anon = new
 				{
 					MessageType = "KioskAlert",
 					MessageId = Guid.NewGuid(),
@@ -463,7 +463,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 					Type = "ApplicationCrash",
 					Time = DateTime.Now
 				};
-				ServiceLocator.Instance.GetService<IQueueService>()?.EnqueueKioskEvent(message);
+				ServiceLocator.Instance.GetService<IQueueService>()?.Enqueue(byte.MaxValue, anon.MessageType, anon);
 			}
 			catch (Exception e)
 			{

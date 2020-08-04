@@ -57,6 +57,8 @@ public interface IBrowseState
 
 	Genres? Genre { get; set; }
 
+	string BrowseStudio { get; set; }
+
 	List<IBrowseItemModel> BrowseItemModels { get; set; }
 
 	IKioskProduct CenterCarouselProduct { get; set; }
@@ -84,6 +86,14 @@ public interface IBrowseState
 	bool NeedMarketingConfirm { get; set; }
 
 	bool ExpandedFormatButtonsShown { get; set; }
+
+	bool EnableBrowseMessagePopup { get; set; }
+
+	int BrowseMessagePopupDuration { get; set; }
+
+	bool ShowBrowseMessagePopup { get; set; }
+
+	bool ShowingBrowseMessagePopup { get; set; }
 
 	void PushBrowseStateSet();
 

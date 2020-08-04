@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.ComponentModel.TrackData;
@@ -22,6 +23,8 @@ public class SwipeViewModel : DependencyObject
 	public static readonly DependencyProperty ApplePayImageVisibilityProperty = DependencyProperty.Register("ApplePayImageVisibility", typeof(Visibility), typeof(SwipeViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public static readonly DependencyProperty GooglePayImageVisibilityProperty = DependencyProperty.Register("GooglePayImageVisibility", typeof(Visibility), typeof(SwipeViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public Brush GridBackground { get; set; }
 
 	public string TitleText { get; set; }
 

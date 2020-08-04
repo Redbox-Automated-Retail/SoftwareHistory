@@ -181,7 +181,11 @@ public class BrowseFunctions
 		if (titleProduct != null)
 		{
 			ServiceLocator.Instance.GetService<IConfiguration>();
-			if (titleProduct.HasDeal && BrowseState.BrowseMode != BrowseViewFilter.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.DigitalCode)
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes && titleProduct.Studio.ToLower() == "sony")
+			{
+				result = ProductFlags.SonySweepstakes;
+			}
+			else if (titleProduct.HasDeal && BrowseState.BrowseMode != BrowseViewFilter.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.DigitalCode)
 			{
 				result = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.EnableFlashDeals) ? ProductFlags.HotDeal : ProductFlags.FlashDeal);
 			}

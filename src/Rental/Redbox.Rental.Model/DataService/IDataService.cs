@@ -31,7 +31,7 @@ public interface IDataService
 
 	ErrorList GetProductByBarcode(string barcode, out IKioskProduct kioskProduct);
 
-	ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, out List<IKioskProduct> products);
+	ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, out List<IKioskProduct> products, string studio = null);
 
 	ErrorList GetUnfilteredNonTitleRollupProducts(out IEnumerable<IKioskProduct> products);
 

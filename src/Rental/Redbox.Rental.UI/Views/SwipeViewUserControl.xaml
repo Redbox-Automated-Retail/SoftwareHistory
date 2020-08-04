@@ -3,17 +3,17 @@
   <UIElement.CommandBindings>
     <CommandBinding Command="{x:Static local:SwipeViewCommands.GoBack}" Executed="GoBackCommandBinding_Executed" />
   </UIElement.CommandBindings>
-  <Grid Background="#E42045">
-    <Grid Name="AnimationContainer">
+  <Grid Background="{Binding Path=GridBackground, FallbackValue={StaticResource RubineRedBrush}}">
+    <Grid Name="AnimationContainer" Height="536">
       <animations:EMVInsertAndTapRegularCheckoutUserControl VerticalAlignment="Center" />
     </Grid>
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-      <redbox_controls:RoundedButton Name="back_button" Style="{StaticResource white_purple_border_gradient_button_style}" Command="{x:Static local:SwipeViewCommands.GoBack}" Width="194" Height="66" CornerRadius="34" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="35,665,0,0">
+      <redbox_controls:RoundedButton Name="back_button" Style="{StaticResource white_button_style}" Command="{x:Static local:SwipeViewCommands.GoBack}" Width="118" Height="48" CornerRadius="24" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="32,0,0,34">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
-          <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_museo_slab_900_25}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#E42045" Text="{Binding BackButtonText, FallbackValue=Back}" />
+          <TextBlock Name="ButtonGoBack_Text" Style="{StaticResource font_montserrat_extrabold_20}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#E71A41" Text="{Binding BackButtonText, FallbackValue=BACK}" />
         </StackPanel>
       </redbox_controls:RoundedButton>
-      <Image Name="ad_image" Width="728" Height="90" VerticalAlignment="Bottom" Margin="43,0,0,13" Source="{Binding AdImage}" />
+      <Image Name="ad_image" Width="728" Height="90" VerticalAlignment="Bottom" Margin="114,0,0,13" Source="{Binding AdImage}" />
     </StackPanel>
   </Grid>
 </controls:TextToSpeechUserControl>

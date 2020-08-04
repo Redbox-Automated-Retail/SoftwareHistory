@@ -296,7 +296,7 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowMessagePopupViewReservationMobileWalletError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Reservation Mobile Wallet error message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.bad_contactless_read_title, "message_popup_dialog_title_style4", Resources.bad_contactless_read_message, "message_popup_dialog_mesg_style4", null, null, null, Resources.got_it_button, "font_museo_slab_900_20", "message_popup_dialog_button_style4", "message_popup_dialog_button_grid_style4", "message_popup_dialog_inner_grid_style4", "message_popup_dialog_floating_button_grid_style4", "message_popup_dialog_message_dock_panel_style4", GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewReservationMobileWalletError", null, "Transparent", default(Thickness), "reservationMobileWalletError"));
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.reservation_mobile_device_error_title, "message_popup_dialog_title_style4", Resources.reservation_mobile_device_error_message, "message_popup_dialog_mesg_style4", null, null, null, Resources.got_it_button, "font_museo_slab_900_20", "message_popup_dialog_button_style4", "message_popup_dialog_button_grid_style4", "message_popup_dialog_inner_grid_style4", "message_popup_dialog_floating_button_grid_style4", "message_popup_dialog_message_dock_panel_style4", GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "ViewReservationMobileWalletError", null, "Transparent", default(Thickness), "reservationMobileWalletError"));
 	}
 
 	public static void ShowMessagePopupViewCardNotRecognizedTechnicalFallback(Action timeOutAction, Action continueAction)
@@ -336,6 +336,12 @@ public class MessagePopupViewController : BaseViewController
 		OrchestrationService.SetCurrentUICulture();
 		LogHelper.Instance.Log("Showing machine full warning");
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.machine_full_title, null, Resources.machine_full_message, null, null, null, null, Resources.okay_button, null, null, null, null, null, null, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "MachineFullWarning", null, null, default(Thickness), "machineFullWarning"));
+	}
+
+	public static void ShowBrowseMessagePopup(Action timeOutAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing Browse Message Popup");
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.browse_message_popup_title, "message_popup_dialog_title_style5", Resources.browse_message_popup_message, "message_popup_dialog_mesg_style5", null, null, null, Resources.close_button.ToUpper(), "font_montserrat_bold_20", "message_popup_dialog_button_style5", "message_popup_dialog_button_grid_style4", "message_popup_dialog_inner_grid_style4", "message_popup_dialog_floating_button_grid_style4", "message_popup_dialog_message_dock_panel_style4", GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "BrowseMessagePopup", null, "Transparent", default(Thickness), "browseMessagePopup"));
 	}
 
 	public static void HideMessagePopupView(bool popOnly)

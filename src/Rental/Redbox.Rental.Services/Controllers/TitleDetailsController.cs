@@ -142,14 +142,7 @@ public class TitleDetailsController : BaseViewController
 			displayProductModel.ComingSoonButtonText = Resources.title_detail_coming_soon_button_text;
 		}
 		browseProductControl.BrowseControls = new List<Control>();
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion == "B")
-		{
-			browseProductControl.BrowseControls.Add(new TitleDetailDisplayProductWithMoreLikeThisUserControl());
-		}
-		else
-		{
-			browseProductControl.BrowseControls.Add(new TitleDetailDisplayProductUserControl());
-		}
+		browseProductControl.BrowseControls.Add(new TitleDetailDisplayProductWithMoreLikeThisUserControl());
 		return browseProductControl;
 	}
 
@@ -386,17 +379,17 @@ public class TitleDetailsController : BaseViewController
 		{
 			if (titleProduct.TitleFamily == TitleFamily.Games)
 			{
-				ratingLabel = "ESRB Rating: ";
+				ratingLabel = "ESRB Rating:";
 				ratingDescription = $"{value.Name} - {value.Description}";
 			}
 			else if (titleProduct.Genres.Contains(1017L))
 			{
-				ratingLabel = "TV Rating: ";
+				ratingLabel = "TV Rating:";
 				ratingDescription = value.Name;
 			}
 			else
 			{
-				ratingLabel = "MPAA Rating: ";
+				ratingLabel = "MPAA Rating:";
 				ratingDescription = ((value.Code == Ratings.NR.ToString()) ? "Not rated by the MPAA" : value.Name);
 			}
 		}
@@ -418,6 +411,7 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.CCSupported = ((titleProduct == null || titleProduct.IsEmptyCase || titleProduct == null || !titleProduct.IsMovie || titleProduct == null || !titleProduct.ClosedCaptioned) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.Starring = string.Join(", ", titleProduct?.Starring ?? new List<string>());
 		displayProductModel.StarringLabel = displayProductModel.DisplayProductModelConstants?.StarringLabel;
+		displayProductModel.SeeFullDetailsText = Resources.title_details_see_full_details_text;
 		displayProductModel.Genres = GetGenreText(titleProduct?.Genres);
 		displayProductModel.GenresLabel = displayProductModel.DisplayProductModelConstants?.GenresLabel;
 		displayProductModel.DirectedBy = string.Join(", ", titleProduct?.Directors ?? new List<string>());
@@ -427,13 +421,12 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.MultiNightPriceLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModel.DisplayProductModelConstants.MultiNightPriceLabel : null);
 		displayProductModel.MultiNightPriceVisibility = ((!flag || flag2 || titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.ServiceFeeTextVisibility = ((num <= 0) ? Visibility.Collapsed : Visibility.Visible);
-		displayProductModel.ServiceFeeLabel = Resources.service_fee_label;
 		displayProductModel.ServiceFeeText = string.Format(Resources.service_fee_text, num);
 		displayProductModel.RatingLabel = ratingLabel;
 		displayProductModel.RatingDescription = ratingDescription;
 		displayProductModel.RatingVisibility = ratingVisibility;
 		displayProductModel.OneNightReturnTime = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? GetReturnTimeText(titleProduct, 0, displayProductModel.DisplayProductModelConstants) : null);
-		displayProductModel.OneNightReturnTimeWithText = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode && displayProductModel.DisplayProductModelConstants.TitleDetailsLayoutABTestVersion == "B") ? string.Format(Resources.title_details_return_time_text, DateTime.Now.AddDays(1.0).ToShortDateString()) : null);
+		displayProductModel.OneNightReturnTimeWithText = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? string.Format(Resources.title_details_return_time_text, DateTime.Now.AddDays(1.0).ToShortDateString()) : null);
 		displayProductModel.OneNightReturnTimeLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModel.DisplayProductModelConstants.OneNightReturnTimeLabel : null);
 		displayProductModel.MultiNightReturnTime = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? GetReturnTimeText(titleProduct, 1, displayProductModel.DisplayProductModelConstants) : null);
 		displayProductModel.MultiNightReturnTimeLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModel.DisplayProductModelConstants.MultiNightReturnTimeLabel : null);
@@ -451,22 +444,20 @@ public class TitleDetailsController : BaseViewController
 				if (true)
 				{
 					releaseYearVisibility = 0;
-					goto IL_05bf;
+					goto IL_05a8;
 				}
 			}
 		}
 		releaseYearVisibility = 2;
-		goto IL_05bf;
-		IL_05bf:
+		goto IL_05a8;
+		IL_05a8:
 		displayProductModel.ReleaseYearVisibility = (Visibility)releaseYearVisibility;
 		displayProductModel.RatingBorderThickness = ((displayProductModel.RunningTimeVisibility == Visibility.Visible || displayProductModel.ReleaseYearVisibility == Visibility.Visible || displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 		displayProductModel.RunningTimeBorderThickness = ((displayProductModel.ReleaseYearVisibility == Visibility.Visible || displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 		displayProductModel.ReleaseYearBorderThickness = ((displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
-		displayProductModel.FormatVisibility = ((titleProduct == null || titleProduct.IsEmptyCase || titleProduct == null || !titleProduct.IsGame) ? Visibility.Collapsed : Visibility.Visible);
+		displayProductModel.MoreLikeThisText = Resources.title_details_more_like_this_text;
 		displayProductModel.MainHeight = displayProductModel.DisplayProductModelConstants.MainHeight;
 		displayProductModel.NotEmptyCaseVisibility = ((titleProduct != null && titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
-		displayProductModel.SubPlatformImage = ((titleProduct != null && titleProduct.IsGame) ? GetSubPlatformBitmapImage(titleProduct) : null);
-		displayProductModel.SubPlatformVisibility = ((titleProduct == null || !titleProduct.IsGame || titleProduct == null || !titleProduct.SubPlatformId.HasValue) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.ShowCollections = showCollections;
 		displayProductModel.CollectionsEnabled = titleProduct?.Collections?.Any() ?? false;
 		displayProductModel.CollectionTextLine1 = displayProductModel.DisplayProductModelConstants.CollectionTextLine1;
@@ -482,7 +473,7 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.OutOfStockLine4Text = displayProductModel.DisplayProductModelConstants.OutOfStockLine4Text;
 		IAd ad = ((!loadAd || BaseViewController.ApplicationState.IsADAAccessible) ? null : ServiceLocator.Instance.GetService<IAdService>()?.GetScreenAd(AdLocation.TitleDetail));
 		PopulateModelAdImage(displayProductModel, ad);
-		if (displayProductModel.DisplayProductModelConstants.TitleDetailsLayoutABTestVersion == "B" && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily == TitleFamily.Movies && Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort != BrowseSelectedSort.ComingSoon && !BaseViewController.ApplicationState.IsADAAccessible)
+		if (Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily == TitleFamily.Movies && Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort != BrowseSelectedSort.ComingSoon && !BaseViewController.ApplicationState.IsADAAccessible)
 		{
 			PopulateModelMoreLikeThis(displayProductModel, titleProduct);
 		}
@@ -499,6 +490,18 @@ public class TitleDetailsController : BaseViewController
 			Ad = ad,
 			AdLocation = AdLocation.TitleDetail
 		} : null);
+		if (displayProductModel.AdImageVisibility == Visibility.Visible)
+		{
+			displayProductModel.BoxArtGridWidth = 459;
+			displayProductModel.DetailsGridWidth = 565;
+			displayProductModel.DescriptionMaxHeight = 72;
+		}
+		else
+		{
+			displayProductModel.BoxArtGridWidth = 529;
+			displayProductModel.DetailsGridWidth = 495;
+			displayProductModel.DescriptionMaxHeight = 144;
+		}
 	}
 
 	private static void PopulateModelMoreLikeThis(DisplayProductModel displayProductModel, ITitleProduct titleProduct)

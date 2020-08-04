@@ -67,4 +67,10 @@ public interface IKioskHealthConfiguration
 	bool EMVReaderTrackMultipleFallbacks { get; }
 
 	int EMVReaderMultipleFallbacksThreshold { get; }
+
+	bool EMVReaderDisconnectAlertActive { get; }
+
+	int EMVReaderDisconnectAlertVelocity { get; }
+
+	int EMVReaderDisconnectSampleSizeHours { get; }
 }

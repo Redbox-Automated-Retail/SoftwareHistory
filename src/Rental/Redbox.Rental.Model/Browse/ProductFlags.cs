@@ -15,5 +15,6 @@ public enum ProductFlags
 	Points,
 	Excluded,
 	AwardNominee,
-	WishList
+	WishList,
+	SonySweepstakes
 }

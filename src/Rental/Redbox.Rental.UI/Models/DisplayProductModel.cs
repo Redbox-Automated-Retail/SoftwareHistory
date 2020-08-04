@@ -19,6 +19,8 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty DescriptionProperty = DependencyProperty.Register("Description", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty DescriptionMaxHeightProperty = DependencyProperty.Register("DescriptionMaxHeight", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(144));
+
 	public static readonly DependencyProperty RatingProperty = DependencyProperty.Register("Rating", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty FormatProperty = DependencyProperty.Register("Format", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
@@ -63,11 +65,9 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty ServiceFeeTextProperty = DependencyProperty.Register("ServiceFeeText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty ServiceFeeLabelProperty = DependencyProperty.Register("ServiceFeeeLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
 	public static readonly DependencyProperty ServiceFeeTextVisibilityProperty = DependencyProperty.Register("ServiceFeeTextVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty HotDealTextProperty = DependencyProperty.Register("HotDealText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty DealTextProperty = DependencyProperty.Register("DealText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty HotDealTextVisibilityProperty = DependencyProperty.Register("HotDealTextVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -79,8 +79,6 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty RatingBorderThicknessProperty = DependencyProperty.Register("RatingBorderThickness", typeof(Thickness), typeof(DisplayProductModel), new FrameworkPropertyMetadata(new Thickness(0.0, 0.0, 1.0, 0.0)));
 
-	public static readonly DependencyProperty FormatVisibilityProperty = DependencyProperty.Register("FormatVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
 	public static readonly DependencyProperty RunningTimeVisibilityProperty = DependencyProperty.Register("RunningTimeVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RunningTimeBorderThicknessProperty = DependencyProperty.Register("RunningTimeBorderThickness", typeof(Thickness), typeof(DisplayProductModel), new FrameworkPropertyMetadata(new Thickness(0.0, 0.0, 1.0, 0.0)));
@@ -88,6 +86,10 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty ReleaseYearVisibilityProperty = DependencyProperty.Register("ReleaseYearVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty ReleaseYearBorderThicknessProperty = DependencyProperty.Register("ReleaseYearBorderThickness", typeof(Thickness), typeof(DisplayProductModel), new FrameworkPropertyMetadata(new Thickness(0.0, 0.0, 1.0, 0.0)));
+
+	public static readonly DependencyProperty BoxArtGridWidthProperty = DependencyProperty.Register("BoxArtGridWidth", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(529));
+
+	public static readonly DependencyProperty DetailsGridWidthProperty = DependencyProperty.Register("DetailsGridWidth", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(495));
 
 	public static readonly DependencyProperty AdImageProperty = DependencyProperty.Register("AdImage", typeof(BitmapImage), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -130,10 +132,6 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty NotEmptyCaseVisibilityProperty = DependencyProperty.Register("NotEmptyCaseVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty StarringVisibilityProperty = DependencyProperty.Register("StarringVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty SubPlatformVisibilityProperty = DependencyProperty.Register("SubPlatformVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty SubPlatformImageProperty = DependencyProperty.Register("SubPlatformImage", typeof(BitmapImage), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty ComingSoonVisibilityProperty = DependencyProperty.Register("ComingSoonVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -333,6 +331,10 @@ public class DisplayProductModel : BrowseItemModel
 	{
 		AffectsRender = true
 	});
+
+	public static readonly DependencyProperty SeeFullDetailsTextProperty = DependencyProperty.Register("SeeFullDetailsText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MoreLikeThisTextProperty = DependencyProperty.Register("MoreLikeThisText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RemoveButtonTextProperty = DependencyProperty.Register("RemoveButtonText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -961,6 +963,21 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public int DescriptionMaxHeight
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(DescriptionMaxHeightProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DescriptionMaxHeightProperty, value);
+			});
+		}
+	}
+
 	public string Rating
 	{
 		get
@@ -1291,21 +1308,6 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public string ServiceFeeLabel
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(ServiceFeeLabelProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(ServiceFeeLabelProperty, value);
-			});
-		}
-	}
-
 	public Visibility ServiceFeeTextVisibility
 	{
 		get
@@ -1325,13 +1327,13 @@ public class DisplayProductModel : BrowseItemModel
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(HotDealTextProperty));
+			return base.Dispatcher.Invoke(() => (string)GetValue(DealTextProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(HotDealTextProperty, value);
+				SetValue(DealTextProperty, value);
 			});
 		}
 	}
@@ -1411,21 +1413,6 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public Visibility FormatVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(FormatVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(FormatVisibilityProperty, value);
-			});
-		}
-	}
-
 	public Visibility RunningTimeVisibility
 	{
 		get
@@ -1482,6 +1469,36 @@ public class DisplayProductModel : BrowseItemModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ReleaseYearBorderThicknessProperty, value);
+			});
+		}
+	}
+
+	public int BoxArtGridWidth
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(BoxArtGridWidthProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BoxArtGridWidthProperty, value);
+			});
+		}
+	}
+
+	public int DetailsGridWidth
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(DetailsGridWidthProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DetailsGridWidthProperty, value);
 			});
 		}
 	}
@@ -1801,36 +1818,6 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public Visibility SubPlatformVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SubPlatformVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(SubPlatformVisibilityProperty, value);
-			});
-		}
-	}
-
-	public BitmapImage SubPlatformImage
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (BitmapImage)GetValue(SubPlatformImageProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(SubPlatformImageProperty, value);
-			});
-		}
-	}
-
 	public Visibility ComingSoonVisibility
 	{
 		get
@@ -1917,6 +1904,36 @@ public class DisplayProductModel : BrowseItemModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(CornerExcludeButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string SeeFullDetailsText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(SeeFullDetailsTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(SeeFullDetailsTextProperty, value);
+			});
+		}
+	}
+
+	public string MoreLikeThisText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(MoreLikeThisTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MoreLikeThisTextProperty, value);
 			});
 		}
 	}

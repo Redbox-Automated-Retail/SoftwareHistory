@@ -291,7 +291,7 @@ public class ShoppingCartViewTextToSpeech
 				{
 					speechPart2.Texts.Add(new TextPart
 					{
-						Text = string.Format($"You'll earn {shoppingCartViewModel?.PointsEstimateText} for the stuff in your bag.")
+						Text = shoppingCartViewModel?.PointsEstimateText
 					});
 				}
 			}

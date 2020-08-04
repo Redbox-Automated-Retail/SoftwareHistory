@@ -7,4 +7,6 @@ public interface IPersistentDataCacheService
 	bool Write<T>(T persistentData, string fileName) where T : IPersistentData;
 
 	bool Delete(string fileName);
+
+	bool Exists(string fileName);
 }

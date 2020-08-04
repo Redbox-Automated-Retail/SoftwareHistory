@@ -331,6 +331,7 @@ public class RedboxRentalService : IRedboxRental
 		if (previousTrackDataService is IDeviceServiceTrackDataService)
 		{
 			arg = "The Device Service card reader was disconnected.";
+			ServiceLocator.Instance.GetService<IEMVReaderHealth>()?.TrackCardReaderDisconnects();
 		}
 		else if (previousTrackDataService is IClassicTrackDataService)
 		{

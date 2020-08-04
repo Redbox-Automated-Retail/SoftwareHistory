@@ -50,7 +50,7 @@ public static class KioskEventSubType
 
 	public const int KioskHealth_EMVReaderTechnicalFallbackSessionReset = 701;
 
-	private static IDictionary<int, string> Map = new Dictionary<int, string>
+	private static readonly IDictionary<int, string> Map = new Dictionary<int, string>
 	{
 		{ 100, "KioskHealth_TouchScreenInactivity" },
 		{ 101, "KioskHealth_TouchScreenReset" },

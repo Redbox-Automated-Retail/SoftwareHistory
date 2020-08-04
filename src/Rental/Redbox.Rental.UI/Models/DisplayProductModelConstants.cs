@@ -70,7 +70,5 @@ public class DisplayProductModelConstants
 
 	public string OutOfStockTitleDetailsABTestVersion { get; set; }
 
-	public string TitleDetailsLayoutABTestVersion { get; set; }
-
 	public List<decimal> FlashDealPrices { get; set; }
 }

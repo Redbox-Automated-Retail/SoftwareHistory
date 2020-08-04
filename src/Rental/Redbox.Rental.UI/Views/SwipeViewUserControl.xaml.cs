@@ -182,7 +182,7 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 			},
 			{
 				SwipeViewType.EMVInsertTapReservationPickup,
-				typeof(EMVInsertAndTapRegularCheckoutUserControl)
+				typeof(EMVInsertAndTapHideMobilePickupUserControl)
 			},
 			{
 				SwipeViewType.EMVTapRegularCheckout,

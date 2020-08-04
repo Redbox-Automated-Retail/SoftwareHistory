@@ -65,4 +65,10 @@ public static class KioskHealthSettings
 	public const string EMVReaderTrackMultipleFallbacks = "EMVReaderTrackMultipleFallbacks";
 
 	public const string EMVReaderMultipleFallbacksThreshold = "EMVReaderMultipleFallbacksThreshold";
+
+	public const string EMVReaderDisconnectAlertActive = "EMVReaderDisconnectAlertActive";
+
+	public const string EMVReaderDisconnectAlertVelocity = "EMVReaderDisconnectAlertVelocity";
+
+	public const string EMVReaderDisconnectSampleSizeHours = "EMVReaderDisconnectSampleSizeHours";
 }

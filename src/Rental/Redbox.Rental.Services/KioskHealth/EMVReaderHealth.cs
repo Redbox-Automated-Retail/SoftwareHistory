@@ -1,15 +1,81 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using Newtonsoft.Json;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.App;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
 public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 {
+	private class EMVDisconnectData : IPersistentData
+	{
+		public bool InMaintentanceMode { get; set; }
+
+		public bool ContactlessOff { get; set; }
+
+		public string DeviceSerialNumber { get; set; }
+
+		public List<DateTime> RebootEvents { get; private set; } = new List<DateTime>();
+
+		[JsonConstructor]
+		private EMVDisconnectData()
+		{
+		}
+
+		private EMVDisconnectData(string serialNumber)
+		{
+			DeviceSerialNumber = serialNumber;
+		}
+
+		public static EMVDisconnectData CreateFor(string serialNumber)
+		{
+			return new EMVDisconnectData(serialNumber);
+		}
+
+		public bool SerialNumberSameAs(string right)
+		{
+			return DeviceSerialNumber.Equals(right, StringComparison.OrdinalIgnoreCase);
+		}
+
+		public void Increment()
+		{
+			RebootEvents.Add(DateTime.Now);
+		}
+
+		public void Trim(int hoursToHold)
+		{
+			RebootEvents.RemoveAll((DateTime dt) => dt < DateTime.Now.AddHours(-hoursToHold));
+		}
+
+		public void ReplaceReader(string newSerialNumber)
+		{
+			DeviceSerialNumber = newSerialNumber;
+			InMaintentanceMode = false;
+			ContactlessOff = false;
+			RebootEvents.Clear();
+		}
+
+		public void UpdateSerialNumber(string serialNumber)
+		{
+			if (!string.IsNullOrEmpty(serialNumber) && !SerialNumberSameAs(serialNumber))
+			{
+				DeviceSerialNumber = serialNumber;
+				InMaintentanceMode = false;
+				ContactlessOff = false;
+				RebootEvents.Clear();
+			}
+		}
+	}
+
+	private const string CardReaderDisconnectCachFile = "EMVDisconnectData";
+
 	private readonly IKioskHealthConfiguration _configuration;
 
 	private readonly IKioskEventService _kioskEvents;
@@ -24,9 +90,51 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 
 	private int _EMVReaderMultipleFallbacksThreshold;
 
+	private bool _EMVReaderDisconnectAlertActive;
+
+	private int _EMVReaderDisconnectAlertVelocity = 50;
+
+	private int _EMVReaderDisconnectSampleSizeHours = 48;
+
 	private int _technicalFallbackSessionCount;
 
 	private Guid? _firstTechnicalFallbackEventId;
+
+	public bool ContactlessOffDueToDisconnectThresholdReached
+	{
+		get
+		{
+			bool result = false;
+			if (!_lock.TryEnterWriteLock(_lockTimeout))
+			{
+				LogHelper.Instance.LogError("EMVReaderHealth.ContactlessOffDueToDisconnectThresholdReached", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
+			}
+			try
+			{
+				if (_EMVReaderActive)
+				{
+					IPersistentDataCacheService service = ServiceLocator.Instance.GetService<IPersistentDataCacheService>();
+					if (service != null && service.Exists("EMVDisconnectData"))
+					{
+						PersistentDataWrapper<EMVDisconnectData> persistentDataWrapper = service.Read<EMVDisconnectData>("EMVDisconnectData");
+						if (persistentDataWrapper != null && persistentDataWrapper.Data.SerialNumberSameAs(FetchReaderSerialNumber()))
+						{
+							result = _EMVReaderDisconnectAlertActive && persistentDataWrapper.Data.ContactlessOff;
+						}
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.LogException("EMVReaderHealth.TrackCardReaderDisconnects - exception occurred", e);
+			}
+			finally
+			{
+				_lock.ExitWriteLock();
+			}
+			return result;
+		}
+	}
 
 	private string KioskId => ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId.ToString() ?? "0";
 
@@ -173,7 +281,7 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 				_technicalFallbackSessionCount++;
 				if (_technicalFallbackSessionCount % _EMVReaderMultipleFallbacksThreshold == 0)
 				{
-					SendAlert(kioskEvent, "MultipleTechnicalFallbackTransactions");
+					SendAlert(kioskEvent.Data, "MultipleTechnicalFallbackTransactions");
 				}
 				_kioskEvents.AddEvent(kioskEvent);
 			}
@@ -196,9 +304,60 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 		}
 	}
 
-	private void SendAlert(KioskEvent kioskEvent, string subType)
+	public void TrackCardReaderDisconnects()
 	{
-		ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(KioskId, "HardwareError", subType, kioskEvent.Data, DateTime.Now, null);
+		if (!_lock.TryEnterWriteLock(_lockTimeout))
+		{
+			LogHelper.Instance.LogError("EMVReaderHealth.TrackCardReaderDisconnects", "TryEnterWriteLock timeout expired prior to acquiring the lock.");
+			return;
+		}
+		try
+		{
+			if (!_EMVReaderActive)
+			{
+				return;
+			}
+			LogHelper.Instance.Log("EMVReaderHealth.TrackCardReaderDisconnects - Start");
+			string text = FetchReaderSerialNumber();
+			if (string.IsNullOrEmpty(text))
+			{
+				return;
+			}
+			LogHelper.Instance.Log("EMVReaderHealth.TrackCardReaderDisconnects - Found serial number");
+			IPersistentDataCacheService service = ServiceLocator.Instance.GetService<IPersistentDataCacheService>();
+			if (service != null)
+			{
+				EMVDisconnectData eMVDisconnectData;
+				if (service.Exists("EMVDisconnectData"))
+				{
+					LogHelper.Instance.Log("EMVReaderHealth.TrackCardReaderDisconnects - cache file exists");
+					eMVDisconnectData = service.Read<EMVDisconnectData>("EMVDisconnectData").Data;
+				}
+				else
+				{
+					LogHelper.Instance.Log("EMVReaderHealth.TrackCardReaderDisconnects - creating cache data");
+					eMVDisconnectData = EMVDisconnectData.CreateFor(text);
+				}
+				eMVDisconnectData.UpdateSerialNumber(text);
+				eMVDisconnectData.Trim(_EMVReaderDisconnectSampleSizeHours);
+				eMVDisconnectData.Increment();
+				CheckDisconnectAlertAndContactlessOffThreshold(eMVDisconnectData);
+				service.Write(eMVDisconnectData, "EMVDisconnectData");
+			}
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("EMVReaderHealth.TrackCardReaderDisconnects - exception occurred", e);
+		}
+		finally
+		{
+			_lock.ExitWriteLock();
+		}
+	}
+
+	private void SendAlert(string message, string subType)
+	{
+		ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(KioskId, "HardwareError", subType, message, DateTime.Now, null);
 	}
 
 	private void Reset()
@@ -212,8 +371,32 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 		_EMVReaderActive = _configuration.EMVReaderActive;
 		_EMVReaderTrackMultipleFallbacks = _configuration.EMVReaderTrackMultipleFallbacks;
 		_EMVReaderMultipleFallbacksThreshold = _configuration.EMVReaderMultipleFallbacksThreshold;
+		_EMVReaderDisconnectAlertActive = _configuration.EMVReaderDisconnectAlertActive;
+		_EMVReaderDisconnectAlertVelocity = _configuration.EMVReaderDisconnectAlertVelocity;
+		_EMVReaderDisconnectSampleSizeHours = _configuration.EMVReaderDisconnectSampleSizeHours;
 		LogHelper.Instance.Log($"EMVReaderHealth Active {_EMVReaderActive}");
 		LogHelper.Instance.Log($"EMVReaderHealth Track Multiple Technical Fallback Sessions Over Threshold {_EMVReaderTrackMultipleFallbacks}");
 		LogHelper.Instance.Log($"EMVReaderHealth Multiple Technical Fallback Sessions Threshold {_EMVReaderMultipleFallbacksThreshold}");
+		LogHelper.Instance.Log($"EMVReaderHealth Disconnect Alert Velocity {_EMVReaderDisconnectAlertVelocity}");
+		LogHelper.Instance.Log($"EMVReaderHealth Disconnect Sample Size Hours {_EMVReaderDisconnectSampleSizeHours}");
+	}
+
+	private void CheckDisconnectAlertAndContactlessOffThreshold(EMVDisconnectData data)
+	{
+		LogHelper.Instance.Log("EMVReaderHealth.CheckDisconnectAlertAndContactlessOffThreshold - start");
+		if (!data.ContactlessOff && data.RebootEvents.Count >= _EMVReaderDisconnectAlertVelocity)
+		{
+			LogHelper.Instance.Log("EMVReaderHealth.CheckDisconnectAlertAndContactlessOffThreshold - over contactless disconnect threshold");
+			data.ContactlessOff = true;
+			if (_EMVReaderDisconnectAlertActive)
+			{
+				SendAlert("EMV reader disconnect alert threshold reached.", "EMVReaderDisconnectAlertVelocityReached");
+			}
+		}
+	}
+
+	private string FetchReaderSerialNumber()
+	{
+		return ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue("Store", "ReaderSerialNumber", "");
 	}
 }

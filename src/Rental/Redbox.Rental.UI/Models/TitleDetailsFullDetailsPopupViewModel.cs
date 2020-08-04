@@ -25,25 +25,41 @@ public class TitleDetailsFullDetailsPopupViewModel : BrowseItemModel
 
 	public string Description { get; set; }
 
+	public string StarringLabel { get; set; }
+
 	public string Starring { get; set; }
+
+	public string DirectorsLabel { get; set; }
 
 	public string Directors { get; set; }
 
+	public string RatingLabel { get; set; }
+
 	public string Rating { get; set; }
 
-	public string FormatInfo { get; set; }
+	public string ClosedCaptionedText { get; set; }
+
+	public string OneNightPriceLabel { get; set; }
 
 	public string OneNightPrices { get; set; }
 
+	public string OneNightReturnTimeLabel { get; set; }
+
 	public string OneNightReturnTimes { get; set; }
 
+	public string MultiNightPriceLabel { get; set; }
+
 	public string MultiNightPrices { get; set; }
+
+	public string MultiNightReturnTimeLabel { get; set; }
 
 	public string MultiNightReturnTimes { get; set; }
 
 	public string ServiceFeeMessage { get; set; }
 
 	public string DealMessage { get; set; }
+
+	public string CloseButtonText { get; set; }
 
 	public Visibility StarringVisibility
 	{

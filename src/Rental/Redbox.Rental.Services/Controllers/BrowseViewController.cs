@@ -133,6 +133,7 @@ public class BrowseViewController
 			ConfigureTopMenu(browseViewModel);
 			ConfigureBrowseFilterBar(viewUserControl, browseViewModel);
 			ConfigureCheckOutBar(browseViewModel);
+			ConfigureBrowseMessagePopupUserControl(browseViewModel);
 			ConfigureTTS(browseViewModel);
 			viewUserControl.DataContext = browseViewModel;
 			CommandManager.InvalidateRequerySuggested();
@@ -250,11 +251,12 @@ public class BrowseViewController
 			BrowseState.BrowseCollections = false;
 			BrowseState.PageNumber = 1;
 			BrowseState.BrowsePriceRangeFilter = null;
+			BrowseState.BrowseStudio = null;
 			ServiceLocator.Instance.GetService<IMacroService>();
 			BrowseState.Genre = null;
 			if (BrowseState.TitleFamily == TitleFamily.Games)
 			{
-				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Bluray || BrowseState.BrowseSelectedSort == BrowseSelectedSort.DigitalCode || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Dvd || BrowseState.BrowseSelectedSort == BrowseSelectedSort._4KUHD || BrowseState.BrowseSelectedSort == BrowseSelectedSort._99Cents)
+				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Bluray || BrowseState.BrowseSelectedSort == BrowseSelectedSort.DigitalCode || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Dvd || BrowseState.BrowseSelectedSort == BrowseSelectedSort._4KUHD || BrowseState.BrowseSelectedSort == BrowseSelectedSort._99Cents || BrowseState.BrowseSelectedSort == BrowseSelectedSort.SonySweepstakes)
 				{
 					BrowseState.BrowseSelectedSort = (Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals ? BrowseSelectedSort.ForSale : BrowseSelectedSort.Newest);
 					BrowseState.BrowseMode = (Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals ? BrowseViewFilter.ForSale : BrowseViewFilter.All);
@@ -470,6 +472,7 @@ public class BrowseViewController
 			BrowseState.Genre = null;
 			BrowseState.PageNumber = 1;
 			BrowseState.BrowsePriceRangeFilter = null;
+			BrowseState.BrowseStudio = null;
 			AnalyticsService?.AddButtonPressEvent("browse-filter-change", BrowseState.TitleFamily.ToString());
 			ConfigureBrowseView(BrowseFunctions.GetBrowseViewparameters());
 		};
@@ -730,9 +733,9 @@ public class BrowseViewController
 
 	private static bool ShouldShowExpandedFormatButtons()
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowExpandedFormatButtons && !BrowseState.ExpandedFormatButtonsShown && !IsADAMode && BrowseState.TitleFamily == TitleFamily.Movies && BrowseState.BrowseSelectedSort != BrowseSelectedSort.Alpha && BrowseState.BrowseSelectedSort != BrowseSelectedSort.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.ComingSoon && !BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowExpandedFormatButtons && !BrowseState.ExpandedFormatButtonsShown && !IsADAMode && BrowseState.TitleFamily == TitleFamily.Movies && BrowseState.BrowseSelectedSort != BrowseSelectedSort.Alpha && BrowseState.BrowseSelectedSort != BrowseSelectedSort.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.ComingSoon && !BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null && !InTitleMarketingMode)
 		{
-			return !InTitleMarketingMode;
+			return !Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes;
 		}
 		return false;
 	}
@@ -759,6 +762,19 @@ public class BrowseViewController
 		if (BrowseState.BrowseSelectedSort != BrowseSelectedSort.ForSale)
 		{
 			return !ShouldShowPriceRangeFilterButton();
+		}
+		return false;
+	}
+
+	private static bool ShouldShowComingSoon()
+	{
+		if (!IsADAMode && (BrowseState.TitleFamily != TitleFamily.Games || !Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals) && (BrowseState.TitleFamily != TitleFamily.Games || !Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames))
+		{
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes || Redbox.Rental.Services.Configuration.Configuration.Instance.Show99CentsBrowseFilterButton)
+			{
+				return BrowseState.BrowseSelectedSort != BrowseSelectedSort.ForSale;
+			}
+			return true;
 		}
 		return false;
 	}
@@ -858,6 +874,9 @@ public class BrowseViewController
 				SetBrowseFilters(BrowseViewFilter.All, BrowseSelectedSort._99Cents, TitleType.All, "browse-filter-family,$.99", 1, priceRange);
 			}
 			break;
+		case BrowseFilterType.SonySweepstakes:
+			SetBrowseFilters(BrowseViewFilter.All, BrowseSelectedSort.SonySweepstakes, TitleType.All, "browse-filter-family,Sony Sweepstakes", 1, null, "Sony");
+			break;
 		}
 		BrowseViewModel browseViewModelFromView = GetBrowseViewModelFromView();
 		if (browseViewModelFromView == null)
@@ -882,6 +901,10 @@ public class BrowseViewController
 				filter.IsVisible = ShouldShowExpandedFormatButtons();
 				browseViewModelFromView.BrowseFilterBarModel.SelectedFormat = BrowseState.TitleType;
 			}
+			else if (filter.ButtonType == BrowseFilterType.ComingSoon)
+			{
+				filter.IsVisible = ShouldShowComingSoon();
+			}
 		}
 		browseViewModelFromView.BrowseFilterBarModel.FormatFilterButtonVisibility = ((!ShouldShowFormatFilterButton()) ? Visibility.Collapsed : Visibility.Visible);
 		browseViewModelFromView.BrowseFilterBarModel.PriceRangeFilterButtonVisibility = ((!ShouldShowPriceRangeFilterButton()) ? Visibility.Collapsed : Visibility.Visible);
@@ -896,7 +919,7 @@ public class BrowseViewController
 		return BrowseViewFilter.ForSale;
 	}
 
-	internal static void SetBrowseFilters(BrowseViewFilter browseMode, BrowseSelectedSort browseSelectedSort, TitleType titleType, string analyticAttributeValue, int? pageNumber, BrowsePriceRangeParameter priceRange = null)
+	internal static void SetBrowseFilters(BrowseViewFilter browseMode, BrowseSelectedSort browseSelectedSort, TitleType titleType, string analyticAttributeValue, int? pageNumber, BrowsePriceRangeParameter priceRange = null, string studio = null)
 	{
 		BrowseState.BrowseMode = browseMode;
 		BrowseState.BrowseSelectedSort = browseSelectedSort;
@@ -906,6 +929,7 @@ public class BrowseViewController
 		{
 			BrowseState.PageNumber = pageNumber.Value;
 		}
+		BrowseState.BrowseStudio = studio;
 		if (!string.IsNullOrEmpty(analyticAttributeValue))
 		{
 			AnalyticsService?.AddButtonPressEvent("browse-filter-change", analyticAttributeValue);
@@ -967,6 +991,7 @@ public class BrowseViewController
 			{
 				ConfigureDisplayProductModelsForPage(browseViewModel.MiniCartControlModel, pageNumber, isADAMiniCart: true, _configuredADAMiniCartBrowseItemModels);
 			}
+			ConfigureBrowseMessagePopupUserControl(browseViewModel);
 		};
 		if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 		{
@@ -1542,6 +1567,7 @@ public class BrowseViewController
 				UpdateDisplayProductModels(browseViewModelFromView.MiniCartControlModel.BrowseItems, isADAMiniCart: true);
 			}
 		}
+		ConfigureBrowseMessagePopupUserControl(browseViewModelFromView);
 	}
 
 	private static void UpdateDisplayProductModels(List<IBrowseItemModel> displayProductModels, bool isADAMiniCart)
@@ -1643,7 +1669,7 @@ public class BrowseViewController
 		DisplayProductModelConstants obj = new DisplayProductModelConstants
 		{
 			StarringLabel = Resources.starring_label,
-			GenresLabel = ((Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion == "B") ? Resources.title_details_genres_text : Resources.genres_label),
+			GenresLabel = Resources.title_details_genres_text,
 			OneNightPriceLabel = Resources.one_night_price_label,
 			OneNightReturnTimeLabel = Resources.return_time_label,
 			MultiNightPriceLabel = Resources.multi_night_price_label,
@@ -1672,7 +1698,6 @@ public class BrowseViewController
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
 		obj.IsInCartBrowse = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
 		obj.OutOfStockTitleDetailsABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.OutOfStockTitleDetailsABTestVersion;
-		obj.TitleDetailsLayoutABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion;
 		obj.FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices;
 		return obj;
 	}
@@ -2032,7 +2057,7 @@ public class BrowseViewController
 	private static List<IKioskProduct> GetBrowseKioskProducts()
 	{
 		IBrowseState browseState = Redbox.Rental.Services.Session.Session.Instance.BrowseState;
-		LogHelper.Instance.Log("RentalGetProducts by browseMode: {0} family: {1} familyType: {2} selectedSort: {3} selectedGenere: {4}, isADAView: {5}, priceFilterLow: {6}, priceFilterHigh {7} ", browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseState.BrowseSelectedSort, browseState.Genre, ApplicationState.Instance.IsADAAccessible, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh);
+		LogHelper.Instance.Log("RentalGetProducts by browseMode: {0} family: {1} familyType: {2} selectedSort: {3} selectedGenere: {4}, isADAView: {5}, priceFilterLow: {6}, priceFilterHigh {7}, studio {8} ", browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseState.BrowseSelectedSort, browseState.Genre, ApplicationState.Instance.IsADAAccessible, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, browseState.BrowseStudio);
 		try
 		{
 			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
@@ -2045,7 +2070,7 @@ public class BrowseViewController
 				include = PromotionService.Instance.GetInCartIncludeTitleList();
 				exclude = PromotionService.Instance.GetInCartExcludeTitleList();
 			}
-			ErrorList products = service.GetProducts(browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseSort, (long?)browseState.Genre, include, exclude, ApplicationState.Instance.IsADAAccessible, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, out var products2);
+			ErrorList products = service.GetProducts(browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseSort, (long?)browseState.Genre, include, exclude, ApplicationState.Instance.IsADAAccessible, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, out var products2, browseState.BrowseStudio);
 			if (products.Count > 0)
 			{
 				products.ToLogHelper();
@@ -2423,12 +2448,21 @@ public class BrowseViewController
 		}
 		list.Add(new BrowseFilter
 		{
+			ButtonType = BrowseFilterType.SonySweepstakes,
+			Name = "sony_sweepstakes_filter_button",
+			Height = height,
+			Width = width,
+			IsSelected = (browseState.BrowseSelectedSort == BrowseSelectedSort.SonySweepstakes),
+			IsVisible = (configuration.EnableSonySweepstakes && !IsADAMode && browseState.TitleFamily == TitleFamily.Movies)
+		});
+		list.Add(new BrowseFilter
+		{
 			ButtonType = BrowseFilterType._99Cents,
 			Name = "_99_cents_filter_button",
 			Height = height,
 			Width = width,
 			IsSelected = (browseState.BrowseSelectedSort == BrowseSelectedSort._99Cents),
-			IsVisible = (browseState.TitleFamily == TitleFamily.Movies && configuration.Show99CentsBrowseFilterButton),
+			IsVisible = (configuration.Show99CentsBrowseFilterButton && !IsADAMode && browseState.TitleFamily == TitleFamily.Movies && !configuration.EnableSonySweepstakes),
 			Parameter = new BrowsePriceRangeParameter
 			{
 				PriceRangeLow = 0.99m,
@@ -2478,7 +2512,7 @@ public class BrowseViewController
 				IsSelected = IsGenreButtonSelected(BrowseSelectedSort.Family, Genres.FamilyMovies)
 			});
 		}
-		if (!IsADAMode && (BrowseState.TitleFamily != TitleFamily.Games || !configuration.EndGameRentals) && (BrowseState.TitleFamily != TitleFamily.Games || !configuration.EndGames))
+		if (ShouldShowComingSoon())
 		{
 			list.Add(new BrowseFilter
 			{
@@ -2532,5 +2566,69 @@ public class BrowseViewController
 			return initialNight == num.GetValueOrDefault() && num.HasValue;
 		});
 		return string.Format("${0:F2}{1}", price, flag ? "" : "+");
+	}
+
+	private static void ConfigureBrowseMessagePopupUserControl(BrowseViewModel browseViewModel)
+	{
+		if (!BrowseState.EnableBrowseMessagePopup || browseViewModel == null)
+		{
+			return;
+		}
+		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
+		if (((BrowseState.ShowBrowseMessagePopup && BrowseState.PageNumber >= 2) || BrowseState.ShowingBrowseMessagePopup) && rentalShoppingCart != null && rentalShoppingCart.Count == 0)
+		{
+			BrowseState.ShowBrowseMessagePopup = false;
+			BrowseState.ShowingBrowseMessagePopup = true;
+			BrowseMessagePopupModel browseMessagePopupModel = new BrowseMessagePopupModel();
+			browseMessagePopupModel.Text1 = Resources.browse_message_popup_text1;
+			browseMessagePopupModel.Text2 = Resources.browse_message_popup_text2;
+			browseMessagePopupModel.Text3 = Resources.browse_message_popup_text3;
+			BrowseMessagePopupModel browseMessagePopupModel2 = browseMessagePopupModel;
+			browseMessagePopupModel2.OnBrowseMessagePopupInfoClicked = (Action<BrowseMessagePopupModel>)Delegate.Combine(browseMessagePopupModel2.OnBrowseMessagePopupInfoClicked, new Action<BrowseMessagePopupModel>(OnBrowseMessagePopupInfoClicked));
+			BrowseMessagePopupModel browseMessagePopupModel3 = browseMessagePopupModel;
+			browseMessagePopupModel3.OnBrowseMessagePopupCloseClicked = (Action<BrowseMessagePopupModel>)Delegate.Combine(browseMessagePopupModel3.OnBrowseMessagePopupCloseClicked, new Action<BrowseMessagePopupModel>(OnBrowseMessagePopupCloseClicked));
+			browseMessagePopupModel.BrowseMessagePopupUserControlVisibility = Visibility.Visible;
+			browseViewModel.BrowseMessagePopupModel = browseMessagePopupModel;
+			(ServiceLocator.Instance.GetService<ITimerService>()?.CreateTimer("browse_message_popup", BrowseState.BrowseMessagePopupDuration, BrowseState.BrowseMessagePopupDuration, delegate
+			{
+				CloseBrowseMessagePopupUserControl(browseMessagePopupModel);
+			}))?.Start();
+		}
+		else
+		{
+			CloseBrowseMessagePopupUserControl(browseViewModel.BrowseMessagePopupModel);
+		}
+	}
+
+	private static void CloseBrowseMessagePopupUserControl(BrowseMessagePopupModel browseMessagePopupModel)
+	{
+		if (browseMessagePopupModel != null)
+		{
+			ITimerService service = ServiceLocator.Instance.GetService<ITimerService>();
+			(service?.GetTimer("browse_message_popup"))?.Stop();
+			service?.RemoveTimer("browse_message_popup");
+			BrowseState.ShowBrowseMessagePopup = false;
+			BrowseState.ShowingBrowseMessagePopup = false;
+			browseMessagePopupModel.BrowseMessagePopupUserControlVisibility = Visibility.Collapsed;
+		}
+	}
+
+	private static void OnBrowseMessagePopupInfoClicked(BrowseMessagePopupModel browseMessagePopupModel)
+	{
+		AnalyticsService?.AddButtonPressEvent("BrowseBrowseMessagePopupInfo");
+		CloseBrowseMessagePopupUserControl(browseMessagePopupModel);
+		MessagePopupViewController.ShowBrowseMessagePopup(delegate
+		{
+			OrchestrationService.ViewGoBackSafe("OnBrowseMessagePopupInfoClicked timeOutAction", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.ViewGoBackSafe("OnBrowseMessagePopupInfoClicked continueAction", popOnly: false);
+		});
+	}
+
+	private static void OnBrowseMessagePopupCloseClicked(BrowseMessagePopupModel browseMessagePopupModel)
+	{
+		AnalyticsService?.AddButtonPressEvent("BrowseBrowseMessagePopupClose");
+		CloseBrowseMessagePopupUserControl(browseMessagePopupModel);
 	}
 }

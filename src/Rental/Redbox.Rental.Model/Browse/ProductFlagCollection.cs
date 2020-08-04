@@ -91,6 +91,12 @@ public class ProductFlagCollection : List<ProductFlag>
 						Flag = ProductFlags.WishList,
 						TextKeyName = "flag_wish_list",
 						FlagStyleName = "rubine_flag_style"
+					},
+					new ProductFlag
+					{
+						Flag = ProductFlags.SonySweepstakes,
+						TextKeyName = "flag_sony_sweepstakes",
+						FlagStyleName = "rubine_flag_style"
 					}
 				};
 			}

@@ -72,6 +72,12 @@ public class KioskHealthConfiguration : IKioskHealthConfiguration
 
 	public int EMVReaderMultipleFallbacksThreshold => GetInt("kioskhealth", "KioskHealth", "EMVReaderMultipleFallbacksThreshold", 3);
 
+	public bool EMVReaderDisconnectAlertActive => GetBoolean("kioskhealth", "KioskHealth", "EMVReaderDisconnectAlertActive", defaultValue: false);
+
+	public int EMVReaderDisconnectAlertVelocity => GetInt("kioskhealth", "KioskHealth", "EMVReaderDisconnectAlertVelocity", 20);
+
+	public int EMVReaderDisconnectSampleSizeHours => GetInt("kioskhealth", "KioskHealth", "EMVReaderDisconnectSampleSizeHours", 48);
+
 	public KioskHealthConfiguration(IConfigurationService configService)
 	{
 		_configService = configService;

@@ -407,7 +407,7 @@ public class PromoOfferBrowseViewController : BaseViewController
 		return new DisplayProductModelConstants
 		{
 			StarringLabel = Resources.starring_label,
-			GenresLabel = ((Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion == "B") ? Resources.title_details_genres_text : Resources.genres_label),
+			GenresLabel = Resources.title_details_genres_text,
 			OneNightPriceLabel = Resources.one_night_price_label,
 			OneNightReturnTimeLabel = Resources.return_time_label,
 			MultiNightPriceLabel = Resources.multi_night_price_label,
@@ -436,7 +436,6 @@ public class PromoOfferBrowseViewController : BaseViewController
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
 			IsInCartBrowse = false,
-			TitleDetailsLayoutABTestVersion = Redbox.Rental.Services.Configuration.Configuration.Instance.TitleDetailsLayoutABTestVersion,
 			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices
 		};
 	}

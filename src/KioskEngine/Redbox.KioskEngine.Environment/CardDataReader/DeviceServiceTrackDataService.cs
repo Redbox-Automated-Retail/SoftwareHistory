@@ -201,7 +201,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		}
 		if (readCardJobEntry == null)
 		{
-			LogHelper.Instance.Log($"Unable to find/remove ReadCardJobEntry {readCardJobEntry.ReadCardJob.RequestId}.  list count= {_readCardJobs?.Count}");
+			LogHelper.Instance.Log($"Unable to find/remove ReadCardJobEntry {requestId}.  list count= {_readCardJobs?.Count}");
 		}
 		return readCardJobEntry;
 	}
@@ -238,13 +238,21 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		UpdateTechnicalFallbackState(trackData);
 		DeclineChipEnabledCardThatWasSwiped(trackData);
 		DeclineAmexFallback(trackData);
+		DeclineReservationMobileWallet(trackData);
 		UpdateCardReadTechnicalFallbackInfo(trackData);
 		UpdateNextCardReadTechnicalFallbackState(trackData);
 		CardHelper.CheckForTrackDataErrors(trackData);
 		UpdateCreditCardHealthService(trackData, baseResponseEvent, readCardJobEntry);
 		if (readCardJobEntry != null && !readCardJobEntry.AttemptedCancel)
 		{
-			OnCardReadComplete?.Invoke(trackData, chipCardRemovedFromReader, baseResponseEvent?.RequestId);
+			if (OnCardReadComplete == null)
+			{
+				LogHelper.Instance.Log("Unable to Process OnCardReadComplete, no actions are registered.");
+			}
+			else
+			{
+				OnCardReadComplete(trackData, chipCardRemovedFromReader, baseResponseEvent?.RequestId);
+			}
 		}
 		else
 		{
@@ -389,7 +397,8 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 
 	private void DeclineReservationMobileWallet(ITrackData trackData)
 	{
-		if (trackData != null && (ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession()).IsInZeroTouchMode && trackData.CardSourceType == CardSourceType.Mobile)
+		ISession session = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
+		if (trackData != null && session != null && !session.IsInZeroTouchMode && trackData.CardSourceType == CardSourceType.Mobile)
 		{
 			trackData.Errors.Add(CardHelper.ErrorCodes.NewReservationMobileDeviceError());
 		}
@@ -438,6 +447,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 			{
 				LogHelper.Instance.Log("DeviceServiceTrackDataService.PopulateEncryptedTrackDataFields error: encrypted card read model is null.");
 			}
+			UpdateDeviceSerialNumber(encryptedTrackData.MfgSerialNumber);
 		}
 		else
 		{
@@ -566,5 +576,13 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 			secureString.Dispose();
 		}
 		return result;
+	}
+
+	private void UpdateDeviceSerialNumber(string current)
+	{
+		if (!string.IsNullOrWhiteSpace(current))
+		{
+			ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.SetValue("Store", "ReaderSerialNumber", current);
+		}
 	}
 }
