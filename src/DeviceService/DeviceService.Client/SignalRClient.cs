@@ -152,11 +152,11 @@ public class SignalRClient
 				}
 				else if (timedout)
 				{
-					Log("DeviceServiceClient SignalRCleint connection attempt timed out. ");
+					Log("DeviceServiceClient SignalRClient connection attempt timed out. ");
 				}
 				else
 				{
-					Log("DeviceServiceClient SignalRCleint connection failed. ");
+					Log("DeviceServiceClient SignalRClient connection failed. ");
 				}
 				return;
 			}

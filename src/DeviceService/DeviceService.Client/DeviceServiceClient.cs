@@ -801,6 +801,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 						{
 							removedCommandData?.CommandCompleteCallback(timeoutResponseEvent);
 						});
+						CancelCommand(removedCommandData.CommandRequest.RequestId, null);
 						Log($"DeviceServiceClient removing timed out aync command {JsonConvert.SerializeObject(removedCommandData.CommandRequest)}");
 					}
 				}
