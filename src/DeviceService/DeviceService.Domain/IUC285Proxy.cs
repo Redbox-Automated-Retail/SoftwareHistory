@@ -2337,6 +2337,15 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			DisconnectTime = disconnectTime,
 			Type = _rebootType
 		};
+		KioskData kioskData = _kioskData;
+		if (kioskData != null)
+		{
+			_ = kioskData.KioskId;
+			if (true)
+			{
+				_currentRebootStatus.KioskId = _kioskData.KioskId;
+			}
+		}
 		_logger?.LogInformation($"Reboot Status: {JsonConvert.SerializeObject(_currentRebootStatus)}");
 		return _currentRebootStatus;
 	}

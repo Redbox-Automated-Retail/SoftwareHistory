@@ -15,4 +15,6 @@ public class RebootStatus
 	public DateTime? ExpectedTime { get; set; }
 
 	public DateTime? DeviceTime { get; set; }
+
+	public long KioskId { get; set; }
 }
