@@ -1,0 +1,140 @@
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+
+namespace UpdateClientService.API.App;
+
+public class APIResponse<T>
+{
+	private ILogger _logger;
+
+	public HttpRequestMessage HttpRequest { get; set; }
+
+	public HttpResponseMessage HttpResponse { get; set; }
+
+	public T Response { get; set; }
+
+	public string RequestContent { get; set; }
+
+	public string ResponseContent { get; set; }
+
+	public int? ResponseTime { get; set; }
+
+	public int ResponseLength { get; set; }
+
+	public string HostName => Environment.MachineName;
+
+	public HttpStatusCode StatusCode { get; set; }
+
+	public bool IsSuccessStatusCode
+	{
+		get
+		{
+			if (HttpResponse == null)
+			{
+				return false;
+			}
+			if (StatusCode >= HttpStatusCode.OK)
+			{
+				return StatusCode <= (HttpStatusCode)299;
+			}
+			return false;
+		}
+	}
+
+	public Exception Exception { get; set; }
+
+	public List<Error> Errors { get; set; } = new List<Error>();
+
+	public APIResponse(HttpRequestMessage request, ILogger logger)
+	{
+		HttpRequest = request;
+		_logger = logger;
+	}
+
+	public void SetAPIResponse(HttpResponseMessage responseMessage, string content, int requestTime)
+	{
+		HttpResponse = responseMessage;
+		Response = default(T);
+		StatusCode = HttpResponse?.StatusCode ?? HttpStatusCode.InternalServerError;
+		ResponseContent = content;
+		ResponseTime = requestTime;
+		ResponseLength = content?.Length ?? 0;
+		try
+		{
+			if (!string.IsNullOrWhiteSpace(content))
+			{
+				Response = JsonConvert.DeserializeObject<T>(content);
+				ResponseContent = JsonConvert.SerializeObject(Response, Formatting.None, new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				});
+			}
+		}
+		catch (Exception exception)
+		{
+			SetException(exception, requestTime);
+		}
+	}
+
+	public void SetAPIResponse(HttpResponseMessage responseMessage, T content, int requestTime)
+	{
+		HttpResponse = responseMessage;
+		Response = default(T);
+		StatusCode = HttpResponse?.StatusCode ?? HttpStatusCode.InternalServerError;
+		ResponseTime = requestTime;
+		ResponseLength = ((content is byte[] array) ? array.Length : 0);
+		try
+		{
+			if (ResponseLength != 0)
+			{
+				Response = content;
+				ResponseContent = JsonConvert.SerializeObject(Response, Formatting.Indented, new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				});
+			}
+		}
+		catch (Exception exception)
+		{
+			SetException(exception, requestTime);
+		}
+	}
+
+	public void SetException(Exception exception, int requestTime)
+	{
+		ResponseTime = requestTime;
+		StatusCode = HttpStatusCode.InternalServerError;
+		Exception = exception;
+		string text = $"StatusCode: {HttpStatusCode.InternalServerError}, Message: {exception.Message}";
+		if (exception.InnerException != null)
+		{
+			text = text + ", Inner: " + exception.InnerException.Message;
+		}
+		Errors.Add(new Error
+		{
+			Code = StatusCode.ToString(),
+			Message = text
+		});
+		_logger?.LogError(exception, text);
+	}
+
+	public void Log(bool responseContentLoggingEnabled = true)
+	{
+		if (HttpRequest != null)
+		{
+			_logger?.LogInformation($"Request: {HttpRequest.Method},Uri: {HttpRequest.RequestUri}, Status: {StatusCode}({(int)StatusCode}), Time:{ResponseTime}, Length:{ResponseLength}");
+			if (RequestContent != null)
+			{
+				_logger?.LogInformation("Request Content: " + RequestContent);
+			}
+			if (responseContentLoggingEnabled && ResponseContent != null)
+			{
+				_logger?.LogInformation("Response Content: " + ResponseContent);
+			}
+		}
+	}
+}
