@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using KioskClientService.API.Ads;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.Ads;
+using KioskClientService.API.Services.Analytics;
 using KioskClientService.API.Services.Analytics.KioskDataService;
 using KioskClientService.API.Services.Analytics.Vistar.Request;
 using KioskClientService.API.Vistar;
@@ -11,7 +12,7 @@ namespace KioskClientService.API.Models;
 
 public interface IAnalyticsService
 {
-	Task ServiceEvent(KioskClientEvent eventType);
+	Task ServiceEvent(KioskClientEvent eventType, DateTime? eventTime = null);
 
 	Task VistarGetAd(AdLocation location, APIResponse<VistarGetAdResponse> response);
 
@@ -26,4 +27,10 @@ public interface IAnalyticsService
 	Task GetAdTimeoutEvent(GetAdTimeoutEvent timeoutEvent);
 
 	void PurgeOldAnalytics(TimeSpan age);
+
+	void PurgeServiceEvents();
+
+	void SaveServiceEvent(ServiceEvent serviceEvent);
+
+	ServiceEvent LoadServiceEvent(KioskClientEvent eventType);
 }

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace KioskClientService.API.Services.App;
 
@@ -45,7 +47,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 			PersistentDataWrapper<T> persistentDataWrapper = null;
 			if (useCache && _cache.TryGetValue(fileName, out var value) && value != null)
 			{
-				_logger?.LogInformation("Found cached value");
+				_logger?.LogInformation("Found cached value for file: " + fileName);
 				return value as PersistentDataWrapper<T>;
 			}
 			string dataFilePath = GetDataFilePath(fileName);
@@ -79,7 +81,11 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 			PersistentDataWrapper<T> value = persistentDataWrapper;
 			string contents = JsonConvert.SerializeObject(value, Formatting.Indented, new JsonSerializerSettings
 			{
-				NullValueHandling = NullValueHandling.Ignore
+				NullValueHandling = NullValueHandling.Ignore,
+				Converters = new List<JsonConverter>
+				{
+					new StringEnumConverter()
+				}
 			});
 			await File.WriteAllTextAsync(GetDataFilePath(fileName), contents);
 			ClearCache(fileName);
@@ -92,7 +98,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		}
 	}
 
-	public async Task<bool> Delete(string fileName)
+	public bool Delete(string fileName)
 	{
 		try
 		{

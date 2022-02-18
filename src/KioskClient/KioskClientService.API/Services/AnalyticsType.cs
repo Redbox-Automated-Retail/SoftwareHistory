@@ -8,5 +8,6 @@ public enum AnalyticsType
 	VistarCache,
 	VistarDownloadAsset,
 	GetAsset,
-	GetAdTimeoutEvent
+	GetAdTimeoutEvent,
+	ServiceEvent
 }

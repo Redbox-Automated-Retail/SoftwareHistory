@@ -8,5 +8,5 @@ public interface IPersistentDataCacheService
 
 	Task<bool> Write<T>(T persistentData, string fileName) where T : IPersistentData;
 
-	Task<bool> Delete(string fileName);
+	bool Delete(string fileName);
 }

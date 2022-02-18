@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -12,6 +11,8 @@ namespace KioskClientService.API.App;
 
 public class HttpService : IHttpService
 {
+	private delegate HttpContent ContentGenerator(object source);
+
 	private readonly ILogger<HttpService> _logger;
 
 	private readonly HttpClient _httpClient;
@@ -24,7 +25,7 @@ public class HttpService : IHttpService
 		_httpClient = httpClient;
 	}
 
-	public HttpRequestMessage GenerateRequest(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null)
+	private HttpRequestMessage GenerateRequest(ContentGenerator generator, string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null)
 	{
 		Uri requestUri;
 		if (string.IsNullOrEmpty(baseUrl))
@@ -43,21 +44,30 @@ public class HttpService : IHttpService
 		});
 		if (requestObject != null)
 		{
-			httpRequest.Content = new StringContent(JsonConvert.SerializeObject(requestObject, Formatting.None, new JsonSerializerSettings
-			{
-				NullValueHandling = NullValueHandling.Ignore
-			}), Encoding.UTF8, "application/json");
+			httpRequest.Content = generator(requestObject);
 		}
 		return httpRequest;
 	}
 
 	public async Task<APIResponse<T>> SendRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null)
 	{
-		using HttpRequestMessage genRequest = GenerateRequest(baseUrl, endpoint, requestObject, method, headers);
-		return await SendRequest<T>(genRequest, requestObject);
+		using HttpRequestMessage genRequest = GenerateRequest(HttpExtensions.ToStandardPayloadContent, baseUrl, endpoint, requestObject, method, headers);
+		return await SendRequest<T>(genRequest);
 	}
 
-	public async Task<APIResponse<T>> SendRequest<T>(HttpRequestMessage request, object requestObject)
+	public async Task<APIResponse<T>> SendGZipRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null)
+	{
+		using HttpRequestMessage genRequest = GenerateRequest(HttpExtensions.ToGZipPayloadContent, baseUrl, endpoint, requestObject, method, headers);
+		return await SendRequest<T>(genRequest);
+	}
+
+	public async Task<APIResponse<T>> SendDeflateRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null)
+	{
+		using HttpRequestMessage genRequest = GenerateRequest(HttpExtensions.ToDeflatePayloadContent, baseUrl, endpoint, requestObject, method, headers);
+		return await SendRequest<T>(genRequest);
+	}
+
+	public async Task<APIResponse<T>> SendRequest<T>(HttpRequestMessage request)
 	{
 		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 		cancellationTokenSource.CancelAfter(Timeout);
@@ -66,7 +76,14 @@ public class HttpService : IHttpService
 		sw.Start();
 		try
 		{
-			apiResponse.RequestContent = JsonConvert.SerializeObject(requestObject, Formatting.None);
+			if (request.Content == null)
+			{
+				apiResponse.RequestContent = null;
+			}
+			else
+			{
+				apiResponse.RequestContent = ((!(request.Content is IMessageScrub)) ? JsonConvert.SerializeObject(request.Content, Formatting.None) : (request.Content as IMessageScrub).Scrub()?.ToString());
+			}
 			HttpResponseMessage result = await _httpClient.SendAsync(request, cancellationTokenSource.Token);
 			sw.Stop();
 			apiResponse.SetAPIResponse(requestTime: (int)sw.ElapsedMilliseconds, responseMessage: result, content: await (result.Content?.ReadAsStringAsync()));

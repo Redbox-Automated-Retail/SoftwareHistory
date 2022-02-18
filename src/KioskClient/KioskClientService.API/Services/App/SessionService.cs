@@ -1,6 +1,8 @@
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using KioskClientService.API.Ads;
 using KioskClientService.API.App;
+using KioskClientService.API.Services.Ads.AdServer;
+using KioskClientService.API.Services.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.App;
@@ -11,20 +13,20 @@ public class SessionService : ISessionService
 
 	private IAdService _adService;
 
-	public SessionService(ILogger<SessionService> logger, IAdService adService)
+	public SessionService(ILogger<SessionService> logger, IEnumerable<IAdService> adServices, IApplicationConfiguration config)
 	{
 		_logger = logger;
-		_adService = adService;
+		_adService = (config.UseAdServer ? adServices.GetImplementation<AdServerService>() : adServices.GetImplementation<AdService>());
 	}
 
-	public async Task<ApplicationResponse> Start(SessionType sessionType)
+	public ApplicationResponse Start(SessionType sessionType)
 	{
 		_logger?.LogInformation($"SessionService.Start - SessionType:{sessionType}");
 		_adService.StartSession();
 		return new ApplicationResponse();
 	}
 
-	public async Task<ApplicationResponse> End()
+	public ApplicationResponse End()
 	{
 		_logger?.LogInformation("SessionService.End");
 		_adService.EndSession();

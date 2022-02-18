@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using KioskClientService.API.Services.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 
@@ -10,8 +9,6 @@ namespace KioskClientService.API.Services;
 
 public class StoreService : IStoreService
 {
-	private IConfigurationService _configService;
-
 	private ILogger<StoreService> _logger;
 
 	private long _kioskId;
@@ -34,13 +31,22 @@ public class StoreService : IStoreService
 				{
 					string text = "ID";
 					string text2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store";
-					object value = Registry.GetValue(text2, text, "");
-					if (value == null || string.IsNullOrEmpty(value.ToString()))
+					object value = Registry.GetValue(text2, text, null);
+					if (value == null)
 					{
 						_logger.LogInformation("Kiosk ID is not set in the registry at {0}\\{1}", text2, text);
-						return 0L;
 					}
-					_kioskId = Convert.ToInt32(value);
+					else
+					{
+						try
+						{
+							_kioskId = Convert.ToInt32(value);
+						}
+						catch (FormatException)
+						{
+							_logger.LogError($"Store ID key value: '{value}' is not a valid number");
+						}
+					}
 				}
 			}
 			catch (Exception exception)
@@ -122,10 +128,9 @@ public class StoreService : IStoreService
 
 	public string RunningPath => Path.GetDirectoryName(typeof(StoreService).Assembly.Location);
 
-	public StoreService(ILogger<StoreService> logger, IConfigurationService configService)
+	public StoreService(ILogger<StoreService> logger)
 	{
 		_logger = logger;
-		_configService = configService;
 	}
 
 	private string GetDefaultCultureByCountry()

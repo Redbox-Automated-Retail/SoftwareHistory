@@ -27,7 +27,7 @@ public class ProductGroupsController : ControllerBase
 	}
 
 	[HttpGet("{id}/morelikethis")]
-	public async Task<ActionResult<GetMoreLikeThisResponse>> MoreLikeThis(long id)
+	public ActionResult<GetMoreLikeThisResponse> MoreLikeThis(long id)
 	{
 		GetMoreLikeThisResponse mLT = _moreLikeThisService.GetMLT(id);
 		if (mLT.Errors.Any())
@@ -82,9 +82,9 @@ public class ProductGroupsController : ControllerBase
 
 	[HttpDelete("sortorder")]
 	[ProducesResponseType(200)]
-	public async Task<ActionResult<BaseResponse>> DeleteSortOrder()
+	public ActionResult<BaseResponse> DeleteSortOrder()
 	{
-		await _productGroupOrderService.DeleteSortOrder();
+		_productGroupOrderService.DeleteSortOrder();
 		return Ok();
 	}
 }

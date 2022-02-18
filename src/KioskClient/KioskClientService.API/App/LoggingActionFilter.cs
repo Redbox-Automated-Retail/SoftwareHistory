@@ -23,8 +23,8 @@ public class LoggingActionFilter : IAsyncActionFilter, IFilterMetadata
 	public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
 	{
 		ControllerActionDescriptor controllerActionDescriptor = (ControllerActionDescriptor)context.ActionDescriptor;
-		string controllerName = controllerActionDescriptor.ControllerName;
-		string actionName = controllerActionDescriptor.ActionName;
+		string controllerName = controllerActionDescriptor.ControllerName.Trim();
+		string actionName = controllerActionDescriptor.ActionName.Trim();
 		StringBuilder scrubbedRequest = new StringBuilder();
 		context.ActionArguments.ToList().ForEach(delegate(KeyValuePair<string, object> arg)
 		{

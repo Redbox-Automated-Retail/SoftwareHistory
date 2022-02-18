@@ -1,20 +1,20 @@
 using System.Collections.Generic;
+using System.Net;
 using KioskClientService.API.App;
 
 namespace KioskClientService.API.Ads;
 
-public class GetAdsResponse : BaseResponse, IMessageScrub
+public class GetAdsResponse : ApiBaseResponse, IMessageScrub
 {
 	public List<GetAdResponse> GetAdResponses { get; set; }
 
 	public GetAdsResponse()
-		: base(200)
+		: base(HttpStatusCode.OK)
 	{
-		base.Success = true;
 		GetAdResponses = new List<GetAdResponse>();
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
 		return this.ToJsonIndented();
 	}

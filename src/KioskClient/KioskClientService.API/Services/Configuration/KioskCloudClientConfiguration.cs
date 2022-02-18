@@ -6,18 +6,18 @@ namespace KioskClientService.API.Services.Configuration;
 
 public class KioskCloudClientConfiguration
 {
-	private const string ACTIVITY_ID_HEADER_KEY = "x-redbox-activityid";
+	internal const string ACTIVITY_ID_HEADER_KEY = "x-redbox-activityid";
 
-	private const string KIOSK_ID_HEADER_KEY = "x-redbox-kioskid";
+	internal const string KIOSK_ID_HEADER_KEY = "x-redbox-kioskid";
 
 	public string AuthHeader { get; set; }
 
 	public string APIKey { get; set; }
 
-	public List<Header> GetKioskCloudHeaders(long? kioskId = null)
+	public List<Header> GetKioskCloudHeaders(Guid? activityId = null, long? kioskId = null)
 	{
 		List<Header> list = new List<Header>();
-		list.Add(new Header("x-redbox-activityid", Guid.NewGuid().ToString()));
+		list.Add(new Header("x-redbox-activityid", (!activityId.HasValue) ? Guid.NewGuid().ToString() : activityId.ToString()));
 		if (kioskId.HasValue)
 		{
 			list.Add(new Header("x-redbox-kioskid", kioskId.ToString()));

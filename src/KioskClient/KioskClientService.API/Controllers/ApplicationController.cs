@@ -1,7 +1,5 @@
 using System.Threading.Tasks;
-using KioskClientService.API.Ads;
 using KioskClientService.API.App;
-using KioskClientService.API.Services.Ads;
 using KioskClientService.API.Services.App;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -16,10 +14,6 @@ public class ApplicationController : ControllerBase
 
 	private readonly IApplicationService _applicationService;
 
-	private readonly IAdService _adService;
-
-	private readonly IAssetService _assetService;
-
 	public ApplicationController(ILogger<ApplicationController> logger, IApplicationService applicationService)
 	{
 		_logger = logger;
@@ -30,7 +24,7 @@ public class ApplicationController : ControllerBase
 	public async Task<ActionResult<ApplicationResponse>> StartApplication()
 	{
 		_logger?.LogInformation("ApplicationController.StartApplication");
-		_applicationService.Start();
+		await _applicationService.Start();
 		return new OkObjectResult(new ApplicationResponse());
 	}
 
@@ -38,7 +32,7 @@ public class ApplicationController : ControllerBase
 	public async Task<ActionResult<ApplicationResponse>> EndApplication()
 	{
 		_logger?.LogInformation("ApplicationController.EndApplication");
-		_applicationService.End();
+		await _applicationService.End();
 		return new OkObjectResult(new ApplicationResponse());
 	}
 

@@ -11,7 +11,7 @@ public class AnalyticsResponse : BaseResponse, IMessageScrub
 	{
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
 		return this.ToJson();
 	}

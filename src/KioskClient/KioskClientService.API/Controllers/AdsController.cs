@@ -1,7 +1,12 @@
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Net;
 using System.Threading.Tasks;
 using KioskClientService.API.Ads;
+using KioskClientService.API.App;
 using KioskClientService.API.Services.Ads;
+using KioskClientService.API.Services.Ads.AdServer;
+using KioskClientService.API.Services.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -15,23 +20,30 @@ public class AdsController : ControllerBase
 
 	private readonly IAdService _adService;
 
-	private readonly IAssetService _assetService;
-
-	public AdsController(ILogger<AdsController> logger, IAdService adService, IAssetService assetService)
+	public AdsController(ILogger<AdsController> logger, IEnumerable<IAdService> adServices, IApplicationConfiguration config)
 	{
 		_logger = logger;
-		_adService = adService;
-		_assetService = assetService;
+		_adService = (config.UseAdServer ? adServices.GetImplementation<AdServerService>() : adServices.GetImplementation<AdService>());
 	}
 
 	[HttpGet]
 	public async Task<ActionResult<GetAdResponse>> GetAd(AdLocation location)
 	{
 		_logger?.LogInformation("AdController.GetAd");
-		return new OkObjectResult(await _adService.GetAd(new GetAdRequest
+		GetAdResponse getAdResponse = await _adService.GetAd(new GetAdRequest
 		{
 			AdLocation = location
-		}));
+		});
+		dynamic baseResponse = GetBaseResponse(getAdResponse);
+		baseResponse.AdLocation = getAdResponse.AdLocation;
+		baseResponse.AdvertisementId = getAdResponse.AdvertisementId;
+		baseResponse.AssetPath = getAdResponse.AssetPath;
+		baseResponse.Height = getAdResponse.Height;
+		baseResponse.MimeType = getAdResponse.MimeType;
+		baseResponse.Width = getAdResponse.Width;
+		ObjectResult objectResult = new ObjectResult(baseResponse);
+		objectResult.StatusCode = baseResponse?.StatusCode;
+		return objectResult;
 	}
 
 	[HttpPost]
@@ -39,15 +51,15 @@ public class AdsController : ControllerBase
 	public async Task<ActionResult<List<GetAdsResponse>>> PostPreload([FromBody] List<AdLocation> locations)
 	{
 		_logger?.LogInformation("AdController.Preload - " + string.Join(',', locations));
-		return new OkObjectResult(await _adService.GetAds(locations, isPreload: true));
+		return (await _adService.GetAds(locations, isPreload: true)).ToObjectResult();
 	}
 
-	[HttpPost]
+	[HttpGet]
 	[Route("cache")]
-	public async Task<ActionResult<CacheResponse>> PostCache([FromBody] CacheRequest cacheRequest)
+	public async Task<ActionResult<CacheResponse>> GetCache()
 	{
-		_logger?.LogInformation("AdController.PostCache");
-		return new OkObjectResult(await _assetService.Cache());
+		_logger?.LogInformation("AdController.GetCache");
+		return (await _adService.Cache()).ToObjectResult();
 	}
 
 	[HttpPost]
@@ -55,7 +67,10 @@ public class AdsController : ControllerBase
 	public async Task<ActionResult<ProofOfPlayResponse>> PostProofOfPlay(string advertisementId, [FromBody] ProofOfPlayRequest proofOfPlayRequest)
 	{
 		_logger?.LogInformation("AdController.PostProofOfPlay");
-		return new OkObjectResult(await _adService.ProofOfPlay(advertisementId, proofOfPlayRequest));
+		dynamic baseResponse = GetBaseResponse(await _adService.PostProofOfPlay(advertisementId, proofOfPlayRequest));
+		ObjectResult objectResult = new ObjectResult(baseResponse);
+		objectResult.StatusCode = baseResponse.StatusCode;
+		return objectResult;
 	}
 
 	[HttpPost]
@@ -63,6 +78,27 @@ public class AdsController : ControllerBase
 	public async Task<ActionResult<ExpireResponse>> PostExpire(string advertisementId)
 	{
 		_logger?.LogInformation("AdController.PostExpire");
-		return new OkObjectResult(await _adService.Expire(advertisementId));
+		dynamic baseResponse = GetBaseResponse(await _adService.Expire(advertisementId));
+		ObjectResult objectResult = new ObjectResult(baseResponse);
+		objectResult.StatusCode = baseResponse.StatusCode;
+		return objectResult;
+	}
+
+	private ExpandoObject GetBaseResponse<T>(T response) where T : ApiBaseResponse
+	{
+		dynamic val = new ExpandoObject();
+		val.StatusCode = (int)(response?.StatusCode ?? HttpStatusCode.InternalServerError);
+		val.Success = response != null && response.StatusCode == HttpStatusCode.OK;
+		if (!string.IsNullOrEmpty(response?.Error))
+		{
+			val.Errors = new List<Error>
+			{
+				new Error
+				{
+					Message = response.Error
+				}
+			};
+		}
+		return val;
 	}
 }

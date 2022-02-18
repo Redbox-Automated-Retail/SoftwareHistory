@@ -4,30 +4,26 @@ using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.Analytics.Vistar.Summaries;
 using KioskClientService.API.Services.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.Analytics.Vistar;
 
-public class AdServerClient : IAdServerClient
+public class AdServerAnalyticsClient : IAdServerAnalyticsClient
 {
 	private readonly IHttpService _httpService;
-
-	private ILogger<AdServerClient> _logger;
 
 	private readonly AdServerConfigs _adServerConfigs;
 
 	private readonly List<Header> _requestHeaders = new List<Header>();
 
-	public AdServerClient(IStoreService store, IHttpService httpService, ILogger<AdServerClient> logger, IApplicationConfiguration applicationConfiguration)
+	public AdServerAnalyticsClient(IStoreService store, IHttpService httpService, IApplicationConfiguration applicationConfiguration)
 	{
 		_httpService = httpService;
-		_logger = logger;
 		_adServerConfigs = applicationConfiguration.AdServer;
 		if (_adServerConfigs.Timeout.HasValue)
 		{
 			_httpService.Timeout = _adServerConfigs.Timeout.Value;
 		}
-		_requestHeaders = _adServerConfigs.GetKioskCloudHeaders(store?.KioskId);
+		_requestHeaders = _adServerConfigs.GetKioskCloudHeaders(null, store?.KioskId);
 	}
 
 	public async Task<APIResponse<AnalyticsResponse>> PostGetAdAnalytics(VistarGetAdSummary request)

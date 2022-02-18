@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using KioskClientService.API.Ads;
 using KioskClientService.API.App;
@@ -56,7 +57,6 @@ public class AssetService : IAssetService
 		_httpService = httpService;
 		_analytics = analytics;
 		_adsActive = _applicationConfiguration.AdsActive;
-		_logger?.LogInformation($"AssetService - AdsActive - {_adsActive}");
 	}
 
 	public async Task<CacheResponse> Cache()
@@ -66,14 +66,14 @@ public class AssetService : IAssetService
 		{
 			return new CacheResponse
 			{
-				Success = false,
-				StatusCode = 503
+				StatusCode = HttpStatusCode.ServiceUnavailable
 			};
 		}
 		GetAssetsRequest getAssetsRequest = new GetAssetsRequest(_storeService.KioskId, DisplayArea.GetAllDisplayAreas.ToVistar());
 		APIResponse<VistarGetAssetsResponse> aPIResponse = await _vistarAPI.GetAssets(getAssetsRequest.KioskId, getAssetsRequest.DisplayAreas);
 		CacheResponse cacheResponse = new CacheResponse();
 		aPIResponse.CopyTo(cacheResponse);
+		cacheResponse.ResponseTime = aPIResponse.ResponseTime;
 		if (aPIResponse.IsSuccessStatusCode)
 		{
 			List<VistarAsset> asset = aPIResponse.Response.asset;
@@ -82,7 +82,7 @@ public class AssetService : IAssetService
 				_logger.LogInformation("AssetService.Cache - GetAssets response did not contain any assets");
 				return cacheResponse;
 			}
-			ManageAssets(asset.ToAssets());
+			ManageAssets(((IEnumerable<Asset>)asset.ToAssets()).Select((Func<Asset, BaseAsset>)((Asset a) => a)).ToList());
 			cacheResponse.AssetCacheCount = asset.Count;
 			return cacheResponse;
 		}
@@ -102,9 +102,9 @@ public class AssetService : IAssetService
 		return result;
 	}
 
-	private async Task<bool> ManageAssets(List<Asset> list)
+	public async Task<bool> ManageAssets(List<BaseAsset> list)
 	{
-		list.ForEach(async delegate(Asset a)
+		list.ForEach(async delegate(BaseAsset a)
 		{
 			await DownloadAsset(a);
 		});
@@ -112,7 +112,7 @@ public class AssetService : IAssetService
 		return true;
 	}
 
-	private void PurgeOldAssets(List<Asset> currentAssets)
+	public void PurgeOldAssets(List<BaseAsset> currentAssets)
 	{
 		_logger?.LogInformation("AssetService - Checking for old assets to purge.");
 		DirectoryInfo directoryInfo = new DirectoryInfo(AssetPath);
@@ -122,7 +122,7 @@ public class AssetService : IAssetService
 		foreach (FileInfo item in enumerable)
 		{
 			string assetId = Asset.GetAssetIdFromFileName(item.Name);
-			if (!currentAssets.Any((Asset a) => a.AssetId == assetId))
+			if (!currentAssets.Any((BaseAsset a) => a.AssetId == assetId))
 			{
 				_logger?.LogInformation($"AssetService - Asset id {assetId} is {(DateTime.Now.Date - item.LastWriteTime.Date).Days} days old.  Deleting the asset files.");
 				foreach (FileInfo item2 in directoryInfo.EnumerateFiles(assetId + ".*"))
@@ -144,7 +144,7 @@ public class AssetService : IAssetService
 		}
 	}
 
-	public async Task<bool> DownloadAsset(Asset asset)
+	public async Task<bool> DownloadAsset(BaseAsset asset)
 	{
 		_logger?.LogInformation("AssetService.DownloadAsset");
 		string adAsset = JsonConvert.SerializeObject(asset, Formatting.Indented, new JsonSerializerSettings
@@ -172,7 +172,7 @@ public class AssetService : IAssetService
 		return true;
 	}
 
-	private string GetAssetFilePath(Asset asset)
+	private string GetAssetFilePath(BaseAsset asset)
 	{
 		return Path.Combine(AssetPath, asset.GetAssetFileName());
 	}
@@ -182,7 +182,7 @@ public class AssetService : IAssetService
 		return Path.Combine(AssetPath, Asset.GetAssetFileName(assetId));
 	}
 
-	public string GetAssetCreativeFilePath(Asset asset)
+	public string GetAssetCreativeFilePath(BaseAsset asset)
 	{
 		return Path.Combine(AssetPath, asset.GetAssetCreativeFileName());
 	}

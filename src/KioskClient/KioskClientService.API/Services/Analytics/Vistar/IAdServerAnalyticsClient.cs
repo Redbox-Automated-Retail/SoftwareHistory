@@ -4,7 +4,7 @@ using KioskClientService.API.Services.Analytics.Vistar.Summaries;
 
 namespace KioskClientService.API.Services.Analytics.Vistar;
 
-public interface IAdServerClient
+public interface IAdServerAnalyticsClient
 {
 	Task<APIResponse<AnalyticsResponse>> PostGetAdAnalytics(VistarGetAdSummary request);
 

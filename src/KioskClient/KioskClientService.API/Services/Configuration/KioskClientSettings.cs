@@ -10,6 +10,16 @@ public static class KioskClientSettings
 
 	public const string ProductGroupSortOrderType = "ProductGroupSortOrderType";
 
+	public const string TransactionApiUrl = "TransactionApiUrl";
+
+	public const string TransactionApiTimeout = "TransactionApiTimeout";
+
+	public const string TransactionApiKey = "TransactionApiKey";
+
+	public const string PricingActive = "PricingActive";
+
+	public const string PlanogramSyncEnabled = "PlanogramSyncEnabled";
+
 	public const string AdsActive = "AdsActive";
 
 	public const string AdsToPreload = "AdsToPreload";
@@ -34,6 +44,8 @@ public static class KioskClientSettings
 
 	public const string AdServerAuthHeader = "AdServerAuthHeader";
 
+	public const string UseAdServer = "UseAdServer";
+
 	public const string KioskDataServiceEnabled = "KioskDataServiceEnabled";
 
 	public const string KioskDataServiceUrl = "KioskDataServiceUrl";
@@ -48,7 +60,31 @@ public static class KioskClientSettings
 
 	public const string ProductReelsApiTimeout = "ProductReelsApiTimeout";
 
+	public const string RedboxPlusApiUrl = "RedboxPlusApiUrl";
+
+	public const string RedboxPlusApiKey = "RedboxPlusApiKey";
+
+	public const string RedboxPlusApiTimeout = "RedboxPlusApiTimeout";
+
 	public const string MoreLikeThisDataRefreshFrequency = "MoreLikeThisDataRefreshFrequency";
 
 	public const string TestDataEnabled = "TestDataEnabled";
+
+	public const string ProxyApiUrl = "ProxyApiUrl";
+
+	public const string ProxyApiTimeout = "ProxyApiTimeout";
+
+	public const string ProxyApiKey = "ProxyApiKey";
+
+	public const string SubscriptionPlansActive = "SubscriptionPlansActive";
+
+	public const string BrowseStarzSubscriptionPlan = "BrowseStarzSubscriptionPlan";
+
+	public const string MyBagStarzSubscriptionPlan = "MyBagStarzSubscriptionPlan";
+
+	public const string CustomerProfileApiUrl = "CustomerProfileApiUrl";
+
+	public const string CustomerProfileApiTimeout = "CustomerProfileApiTimeout";
+
+	public const string CustomerProfileApiKey = "CustomerProfileApiKey";
 }

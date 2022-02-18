@@ -11,9 +11,9 @@ public interface IAdService
 
 	Task<ApplicationResponse> EndApplication();
 
-	Task<SessionResponse> StartSession();
+	SessionResponse StartSession();
 
-	Task<SessionResponse> EndSession();
+	SessionResponse EndSession();
 
 	Task<GetAdResponse> GetAd(GetAdRequest request);
 
@@ -21,7 +21,9 @@ public interface IAdService
 
 	Task<GetAdsResponse> GetAds(string viewName, bool isPreload = false);
 
-	Task<ProofOfPlayResponse> ProofOfPlay(string advertisementId, ProofOfPlayRequest proofOfPlayRequest);
+	Task<ProofOfPlayResponse> PostProofOfPlay(string advertisementId, ProofOfPlayRequest proofOfPlayRequest);
 
 	Task<ExpireResponse> Expire(string advertisementId);
+
+	Task<CacheResponse> Cache();
 }

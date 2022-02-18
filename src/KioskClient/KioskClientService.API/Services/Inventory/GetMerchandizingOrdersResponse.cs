@@ -17,11 +17,12 @@ public class GetMerchandizingOrdersResponse : BaseResponse, IMessageScrub
 	{
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
-		if (MerchandizingOrders.Count != 1)
+		List<MerchandizingOrder> merchandizingOrders = MerchandizingOrders;
+		if (merchandizingOrders == null || merchandizingOrders.Count != 1)
 		{
-			return $"{MerchandizingOrders.Count} orders found";
+			return $"{MerchandizingOrders?.Count ?? 0} orders found";
 		}
 		return this.ToJson();
 	}

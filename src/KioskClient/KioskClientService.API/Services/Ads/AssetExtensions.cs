@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using KioskClientService.API.Services.Ads.AdServer;
 using KioskClientService.API.Vistar;
 
 namespace KioskClientService.API.Services.Ads;
@@ -22,6 +23,16 @@ public static class AssetExtensions
 			CreativeCategory = va.creative_category,
 			Advertiser = va.advertiser,
 			CreativeName = va.creative_name
+		};
+	}
+
+	public static AdServerAsset ToAdServerAsset(this Ad ad)
+	{
+		return new AdServerAsset
+		{
+			AssetId = ad.Id,
+			AssetUrl = ad.AssetUrl,
+			MimeType = ad.MimeType
 		};
 	}
 

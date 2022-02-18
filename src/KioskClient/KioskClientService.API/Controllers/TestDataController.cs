@@ -34,4 +34,12 @@ public class TestDataController : ControllerBase
 		_logger?.LogInformation("TestDataController.ReadPropertyValueAsync");
 		return new OkObjectResult(await (_testDataService?.ReadTestDataValueAsync(category, propertyName)));
 	}
+
+	[HttpGet]
+	[Route("istestdataenabled")]
+	public async Task<ActionResult<IsTestDataEnabledResponse>> GetIsTestDataEnabledAsync()
+	{
+		_logger?.LogInformation("TestDataController.GetIsTestDataEnabledAsync");
+		return new OkObjectResult(await (_testDataService?.GetIsTestDataEnabledAsync()));
+	}
 }

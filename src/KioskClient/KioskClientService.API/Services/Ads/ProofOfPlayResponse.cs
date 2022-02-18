@@ -1,16 +1,18 @@
+using System.Net;
 using KioskClientService.API.App;
 
 namespace KioskClientService.API.Services.Ads;
 
-public class ProofOfPlayResponse : BaseResponse, IMessageScrub
+public class ProofOfPlayResponse : ApiBaseResponse, IMessageScrub
 {
+	public int? ResponseTime { get; set; }
+
 	public ProofOfPlayResponse()
-		: base(200)
+		: base(HttpStatusCode.OK)
 	{
-		base.Success = true;
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
 		return this.ToJsonIndented();
 	}

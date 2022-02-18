@@ -1,14 +1,18 @@
-using KioskClientService.API.Models;
+using Microsoft.Extensions.Options;
 
 namespace KioskClientService.API;
 
 public class ApplicationSettings : IApplicationSettings
 {
-	public string DataFilePath { get; set; }
+	public AppSettings AppSettings { get; set; }
 
-	public string ServiceUrl { get; set; }
+	public ApplicationSettings(IOptionsMonitor<AppSettings> settings)
+	{
+		AppSettings = settings.CurrentValue;
+	}
 
-	public string UpdateManagerAddress { get; set; }
-
-	public int UpdateManagerPort { get; set; }
+	public ApplicationSettings(AppSettings settings)
+	{
+		AppSettings = settings;
+	}
 }

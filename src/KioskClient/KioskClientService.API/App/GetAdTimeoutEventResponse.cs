@@ -8,7 +8,7 @@ public class GetAdTimeoutEventResponse : BaseResponse, IMessageScrub
 		base.Success = true;
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
 		return this.ToJson();
 	}

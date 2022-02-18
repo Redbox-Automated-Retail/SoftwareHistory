@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace KioskClientService.API.Services.Ads;
@@ -8,7 +9,11 @@ public interface IAssetService
 
 	Asset GetAsset(string assetId);
 
-	string GetAssetCreativeFilePath(Asset asset);
+	string GetAssetCreativeFilePath(BaseAsset asset);
 
-	Task<bool> DownloadAsset(Asset asset);
+	Task<bool> DownloadAsset(BaseAsset asset);
+
+	void PurgeOldAssets(List<BaseAsset> currentAssets);
+
+	Task<bool> ManageAssets(List<BaseAsset> list);
 }

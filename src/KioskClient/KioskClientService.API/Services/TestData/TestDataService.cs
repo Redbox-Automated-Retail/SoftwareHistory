@@ -84,6 +84,19 @@ public class TestDataService : ITestDataService
 		_storeService = storeService;
 	}
 
+	public async Task<IsTestDataEnabledResponse> GetIsTestDataEnabledAsync()
+	{
+		Stopwatch stopwatch = new Stopwatch();
+		stopwatch.Start();
+		IsTestDataEnabledResponse result = new IsTestDataEnabledResponse();
+		await Task.Run(delegate
+		{
+			result.IsTestDataEnabled = _applicationConfiguration?.TestDataEnabled ?? false;
+		});
+		result.ResponseTime = GetStopwatchMilliseconds(stopwatch);
+		return result;
+	}
+
 	public async Task<WriteTestDataResponse> WriteTestDataValueAsync(string category, string propertyName, string propertyValue)
 	{
 		Stopwatch stopwatch = new Stopwatch();

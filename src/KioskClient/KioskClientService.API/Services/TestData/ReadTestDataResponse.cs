@@ -20,6 +20,10 @@ public class ReadTestDataResponse : BaseResponse
 		if (underlyingType != null)
 		{
 			conversionType = underlyingType;
+			if (PropertyValue == null)
+			{
+				return default(T);
+			}
 		}
 		T result;
 		try

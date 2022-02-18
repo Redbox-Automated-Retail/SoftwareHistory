@@ -48,7 +48,7 @@ public class ProductGroupSortOrderService : IProductGroupSortOrderService
 		if (_productGroupSortOrderType == 0)
 		{
 			_logger?.LogInfoWithSource("ProducutGroupSortOrderType is 0, deleting cache", "RefreshIfNeeded");
-			await _persistentDataCacheService.Delete(_cacheFileName);
+			_persistentDataCacheService.Delete(_cacheFileName);
 			return;
 		}
 		PersistentDataWrapper<ProductGroupSortOrder> persistentDataWrapper = await _persistentDataCacheService.Read<ProductGroupSortOrder>(_cacheFileName, useCache: true);
@@ -74,10 +74,10 @@ public class ProductGroupSortOrderService : IProductGroupSortOrderService
 		await ForceRefreshSortOrder();
 	}
 
-	public async Task DeleteSortOrder()
+	public void DeleteSortOrder()
 	{
 		_logger?.LogInfoWithSource("Deleting cache", "DeleteSortOrder");
-		await _persistentDataCacheService.Delete(_cacheFileName);
+		_persistentDataCacheService.Delete(_cacheFileName);
 	}
 
 	private async Task ForceRefreshSortOrder()
@@ -86,7 +86,7 @@ public class ProductGroupSortOrderService : IProductGroupSortOrderService
 		if (_productGroupSortOrderType == 0)
 		{
 			_logger?.LogInfoWithSource("ProducutGroupSortOrderType is 0, deleting cache", "ForceRefreshSortOrder");
-			await _persistentDataCacheService.Delete(_cacheFileName);
+			_persistentDataCacheService.Delete(_cacheFileName);
 			return;
 		}
 		ProductGroupSortOrder productGroupSortOrder = await GetProductGroupSortOrder();

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -12,6 +13,10 @@ public class DisplayArea
 	public static readonly Size AdSize1024x576 = new Size(1024, 576);
 
 	public static readonly List<string> StandardSupportedMedia = new List<string> { "image/jpeg", "image/png" };
+
+	public static List<AdLocation> AdLocations = (from AdLocation l in Enum.GetValues(typeof(AdLocation))
+		where l != AdLocation.Unknown && l != AdLocation.Multiple
+		select l).ToList();
 
 	public AdLocation AdLocation { get; set; }
 

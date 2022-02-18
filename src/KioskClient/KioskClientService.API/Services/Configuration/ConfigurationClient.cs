@@ -102,14 +102,6 @@ public class ConfigurationClient
 
 		private string _filePath;
 
-		private DateTime _lastCheckup;
-
-		private TimeSpan _checkTime;
-
-		private Func<bool> _canActivate;
-
-		private Action _activateAction;
-
 		private string _defaultCategory;
 
 		private int _inCheckup;
@@ -124,26 +116,12 @@ public class ConfigurationClient
 
 		internal string FilePath => _filePath;
 
-		internal TimeSpan CheckTime => _checkTime;
-
-		internal bool HasCanActivate => _canActivate != null;
-
-		internal bool HasActivateAction => _activateAction != null;
-
-		internal InternalClientConfigFile(ILogger logger, string filepath, string defaultCategory, TimeSpan checkTime, Func<bool> canActivate, Action activateAction)
+		internal InternalClientConfigFile(ILogger logger, string filepath, string defaultCategory)
 		{
 			_logger = logger;
-			_lastCheckup = DateTime.Now;
-			_checkTime = checkTime;
-			if (canActivate == null)
-			{
-				canActivate = () => true;
-			}
-			_canActivate = canActivate;
-			_activateAction = activateAction;
 			_filePath = filepath;
 			_defaultCategory = defaultCategory;
-			ActivateConfigFile(suppressAction: true);
+			ActivateConfigFile();
 		}
 
 		internal bool TryGetValue<T>(string setting, out T value)
@@ -368,23 +346,20 @@ public class ConfigurationClient
 			}
 		}
 
-		internal void CheckForUpdates()
+		internal bool CheckForUpdates()
 		{
+			bool result = false;
 			try
 			{
 				if (Interlocked.CompareExchange(ref _inCheckup, 1, 0) == 1)
 				{
-					return;
+					return false;
 				}
 				try
 				{
-					if (IsExpired())
+					if (NeedsActivation())
 					{
-						if (NeedsActivation() && _canActivate())
-						{
-							ActivateConfigFile();
-						}
-						UpdateLastCheckup();
+						result = ActivateConfigFile();
 					}
 				}
 				finally
@@ -396,16 +371,7 @@ public class ConfigurationClient
 			{
 				_logger?.LogError(exception, "There was an exception in ConfigurationClient.CheckForUpdates");
 			}
-		}
-
-		internal void UpdateLastCheckup()
-		{
-			_lastCheckup = DateTime.Now;
-		}
-
-		private bool IsExpired()
-		{
-			return _lastCheckup.Add(_checkTime) < DateTime.Now;
+			return result;
 		}
 
 		private void InternalActivateFile()
@@ -422,17 +388,15 @@ public class ConfigurationClient
 			return File.Exists(path);
 		}
 
-		private void ActivateConfigFile(bool suppressAction = false)
+		private bool ActivateConfigFile()
 		{
 			LoadConfigFile();
-			if (NeedsActivation())
+			if (!NeedsActivation())
 			{
-				InternalActivateFile();
-				if (_activateAction != null && !suppressAction)
-				{
-					_activateAction();
-				}
+				return false;
 			}
+			InternalActivateFile();
+			return true;
 		}
 
 		private void LoadConfigFile()
@@ -466,25 +430,17 @@ public class ConfigurationClient
 		}
 	}
 
-	private static ConfigurationClient _instance;
-
 	private ILogger _logger;
 
 	private string _updateManagerAddress = "127.0.0.1";
 
 	private int _updateManagerPort = 7004;
 
+	private static ConfigurationClient _instance;
+
 	private readonly Dictionary<string, InternalClientConfigFile> _clientConfigFileList = new Dictionary<string, InternalClientConfigFile>();
 
 	private readonly object _lock = new object();
-
-	private Timer _changeTimer;
-
-	private bool _isRunning;
-
-	private string _url;
-
-	private int _timeout;
 
 	public static ConfigurationClient Instance
 	{
@@ -500,11 +456,6 @@ public class ConfigurationClient
 
 	public void Initialize(ILogger logger, string updateManagerAddress, int updateManagerPort)
 	{
-		Initialize(logger, updateManagerAddress, updateManagerPort, 60000);
-	}
-
-	public void Initialize(ILogger logger, string updateManagerAddress, int updateManagerPort, int timeout)
-	{
 		_logger = logger;
 		if (!string.IsNullOrWhiteSpace(updateManagerAddress))
 		{
@@ -514,39 +465,9 @@ public class ConfigurationClient
 		{
 			_updateManagerPort = updateManagerPort;
 		}
-		_timeout = timeout;
-		if (_changeTimer == null)
-		{
-			_changeTimer = new Timer(delegate
-			{
-				CheckAllForUpdates();
-			});
-			_isRunning = false;
-		}
-		else
-		{
-			Stop();
-		}
-	}
-
-	public void Start()
-	{
-		_changeTimer.Change(new TimeSpan(0L), new TimeSpan(0, 0, 120));
-		_isRunning = true;
-	}
-
-	public void Stop()
-	{
-		_changeTimer.Change(-1, -1);
-		_isRunning = false;
 	}
 
 	public void Add(string key, string filepath, string defaultCategory)
-	{
-		Add(key, filepath, defaultCategory, null, null, null);
-	}
-
-	public void Add(string key, string filepath, string defaultCategory, TimeSpan? checkTime, Func<bool> canActivate, Action activateAction)
 	{
 		lock (_lock)
 		{
@@ -554,7 +475,7 @@ public class ConfigurationClient
 			{
 				throw new Exception($"Exception occurred when trying to add a health item with a duplicate key {key}");
 			}
-			_clientConfigFileList.Add(key, new InternalClientConfigFile(_logger, filepath, defaultCategory, checkTime ?? new TimeSpan(0, 0, 120), canActivate, activateAction));
+			_clientConfigFileList.Add(key, new InternalClientConfigFile(_logger, filepath, defaultCategory));
 		}
 	}
 
@@ -582,10 +503,7 @@ public class ConfigurationClient
 				{
 					Key = clientConfigFile.Key,
 					DefaultCategory = clientConfigFile.Value.DefaultCategory,
-					FilePath = clientConfigFile.Value.FilePath,
-					CheckTime = clientConfigFile.Value.CheckTime,
-					HasCanActivate = clientConfigFile.Value.HasCanActivate,
-					HasActivateAction = clientConfigFile.Value.HasActivateAction
+					FilePath = clientConfigFile.Value.FilePath
 				});
 			}
 			return list;
@@ -600,18 +518,19 @@ public class ConfigurationClient
 		}
 	}
 
-	public void CheckAllForUpdates()
+	public Dictionary<string, string> CheckAllForUpdates()
 	{
-		if (!_isRunning)
-		{
-			return;
-		}
+		Dictionary<string, string> dictionary = new Dictionary<string, string>();
 		lock (_lock)
 		{
 			foreach (KeyValuePair<string, InternalClientConfigFile> clientConfigFile in _clientConfigFileList)
 			{
-				clientConfigFile.Value.CheckForUpdates();
+				if (clientConfigFile.Value.CheckForUpdates())
+				{
+					dictionary.Add(clientConfigFile.Key, clientConfigFile.Value.FilePath);
+				}
 			}
+			return dictionary;
 		}
 	}
 
@@ -783,9 +702,9 @@ public class ConfigurationClient
 			byte[] buffer = new byte[1024];
 			int num = stream.Read(buffer, 0, 1024);
 		}
-		catch (Exception)
+		catch (Exception exception)
 		{
-			_logger?.LogError($"ConfigurationClient - Unhandled exception occurred activating config file {configFileId}. This usually means update manager is not running.");
+			_logger?.LogError(exception, $"ConfigurationClient - Unhandled exception occurred activating config file {configFileId}. This usually means update manager is not running.");
 		}
 	}
 

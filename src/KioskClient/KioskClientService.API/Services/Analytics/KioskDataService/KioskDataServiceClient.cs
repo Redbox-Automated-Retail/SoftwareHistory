@@ -26,7 +26,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		{
 			_httpService.Timeout = _kdsConfigs.Timeout.Value;
 		}
-		_requestHeaders = _kdsConfigs.GetKioskCloudHeaders(store?.KioskId);
+		_requestHeaders = _kdsConfigs.GetKioskCloudHeaders(null, store?.KioskId);
 	}
 
 	public async Task<APIResponse<AnalyticsResponse>> PostKioskClientEvent(KioskClientEventRequest request)

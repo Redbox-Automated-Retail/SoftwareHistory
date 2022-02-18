@@ -1,9 +1,11 @@
+using System.Net;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.Ads;
+using KioskClientService.API.Services.Ads.AdServer;
 
 namespace KioskClientService.API.Ads;
 
-public class GetAdResponse : BaseResponse, IMessageScrub
+public class GetAdResponse : ApiBaseResponse, IMessageScrub
 {
 	public string AdvertisementId { get; set; }
 
@@ -18,12 +20,11 @@ public class GetAdResponse : BaseResponse, IMessageScrub
 	public AdLocation AdLocation { get; set; }
 
 	public GetAdResponse()
-		: base(200)
+		: base(HttpStatusCode.OK)
 	{
-		base.Success = true;
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
 		return this.ToJsonIndented();
 	}
@@ -42,6 +43,14 @@ public class GetAdResponse : BaseResponse, IMessageScrub
 		AdLocation = ca.AdLocation;
 		AssetPath = ca.AssetPath;
 		CopyFrom(ca.Advertisement);
+		return this;
+	}
+
+	public GetAdResponse CopyFrom(AdServerCachedAdvertisement ca)
+	{
+		AdvertisementId = ca.Ad.Id;
+		AdLocation = ca.Ad.Location;
+		AssetPath = ca.AssetPath;
 		return this;
 	}
 }

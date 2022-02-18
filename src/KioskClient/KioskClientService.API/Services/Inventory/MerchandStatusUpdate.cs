@@ -4,6 +4,8 @@ namespace KioskClientService.API.Services.Inventory;
 
 public class MerchandStatusUpdate
 {
+	public Guid? MessageId { get; set; }
+
 	public DateTime? ThinDateUTC { get; set; }
 
 	public long? ThinReasonCode { get; set; }

@@ -1,0 +1,33 @@
+using System.Threading.Tasks;
+using KioskClientService.API.Services.Configuration;
+using KioskClientService.API.Services.CustomerProfile;
+using KioskClientService.API.Services.ProxyApi;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+
+namespace KioskClientService.API.Controllers;
+
+[Route("api/customerprofile")]
+[ApiController]
+public class CustomerProfileController : ControllerBase
+{
+	private readonly IApplicationConfiguration _applicationConfiguration;
+
+	private readonly ILogger _logger;
+
+	private readonly ICustomerProfileService _customerProfileService;
+
+	public CustomerProfileController(IApplicationConfiguration applicationConfiguration, ILogger<CustomerProfileController> logger, ICustomerProfileService customerProfileService)
+	{
+		_logger = logger;
+		_customerProfileService = customerProfileService;
+		_applicationConfiguration = applicationConfiguration;
+	}
+
+	[HttpPost("login")]
+	public async Task<ActionResult<CustomerProfileKioskLoginResponse>> Login([FromBody] CustomerProfileLoginRequest request)
+	{
+		_logger?.LogInformation("CustomerProfileController.Login");
+		return new ObjectResult((await _customerProfileService.Login(request))?.Response);
+	}
+}

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
-using System.Net.Http;
 using Coravel;
 using Coravel.Scheduling.Schedule.Interfaces;
 using KioskClientService.API.Ads;
@@ -9,25 +9,41 @@ using KioskClientService.API.App;
 using KioskClientService.API.Models;
 using KioskClientService.API.Services;
 using KioskClientService.API.Services.Ads;
+using KioskClientService.API.Services.Ads.AdServer;
 using KioskClientService.API.Services.Analytics;
 using KioskClientService.API.Services.Analytics.KioskDataService;
 using KioskClientService.API.Services.Analytics.Vistar;
 using KioskClientService.API.Services.App;
 using KioskClientService.API.Services.Configuration;
+using KioskClientService.API.Services.CustomerProfile;
+using KioskClientService.API.Services.Data;
+using KioskClientService.API.Services.HttpQueue;
 using KioskClientService.API.Services.Inventory;
 using KioskClientService.API.Services.Inventory.API;
+using KioskClientService.API.Services.Loyalty;
+using KioskClientService.API.Services.Personalization;
+using KioskClientService.API.Services.Planograms;
+using KioskClientService.API.Services.Pricing;
 using KioskClientService.API.Services.ProductGroup;
 using KioskClientService.API.Services.Products.MoreLikeThis;
 using KioskClientService.API.Services.Products.ProductReelsApi;
+using KioskClientService.API.Services.Promotion;
+using KioskClientService.API.Services.ProxyApi;
+using KioskClientService.API.Services.Subscription;
 using KioskClientService.API.Services.TestData;
+using KioskClientService.API.Services.Transaction;
+using KioskClientService.API.Services.Transaction.API;
+using KioskClientService.API.Services.Utilities;
 using KioskClientService.API.Vistar;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -49,9 +65,36 @@ public class Startup
 		MvcJsonMvcBuilderExtensions.AddJsonOptions(services.AddMvc(delegate(MvcOptions options)
 		{
 			options.AddLoggingActionFilter();
-		}).SetCompatibilityVersion(CompatibilityVersion.Version_2_1), (Action<MvcJsonOptions>)delegate(MvcJsonOptions options)
+		}).SetCompatibilityVersion(CompatibilityVersion.Version_2_2), (Action<MvcJsonOptions>)delegate(MvcJsonOptions options)
 		{
 			options.SerializerSettings.Converters.Add(new StringEnumConverter());
+			options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+		});
+		services.PostConfigure(delegate(ApiBehaviorOptions options)
+		{
+			Func<ActionContext, IActionResult> builtInFactory = options.InvalidModelStateResponseFactory;
+			options.InvalidModelStateResponseFactory = delegate(ActionContext context)
+			{
+				IActionResult actionResult = builtInFactory(context);
+				ILogger<Startup> requiredService = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+				try
+				{
+					ControllerActionDescriptor controllerActionDescriptor = (ControllerActionDescriptor)context.ActionDescriptor;
+					string text = controllerActionDescriptor.ControllerName.Trim();
+					string text2 = controllerActionDescriptor.ActionName.Trim();
+					requiredService.LogInformation("START: " + text + "." + text2);
+					string text3 = ((actionResult as BadRequestObjectResult)?.Value)?.ToJson();
+					string text4 = ((!string.IsNullOrEmpty(text3)) ? text3 : string.Join("; ", from x in context.ModelState.Values.SelectMany((ModelStateEntry x) => x.Errors)
+						select x.ErrorMessage));
+					requiredService.LogError(text + "." + text2 + ",ValidationProblemDetails=" + text4);
+					requiredService.LogInformation($"END: {text}.{text2},statuscode={HttpStatusCode.BadRequest}");
+				}
+				catch (Exception exception)
+				{
+					requiredService?.LogError(exception, "Exception in logging of badrequest");
+				}
+				return actionResult;
+			};
 		});
 		services.AddSwaggerGen(delegate(SwaggerGenOptions c)
 		{
@@ -61,19 +104,14 @@ public class Startup
 				Version = "v1"
 			});
 		});
-		services.Configure<ApplicationSettings>(Configuration.GetSection("AppSettings"));
-		ServiceProvider provider = services.BuildServiceProvider();
-		ApplicationSettings value = provider.GetRequiredService<IOptionsSnapshot<ApplicationSettings>>().Value;
-		services.AddSingleton((IApplicationSettings)value);
+		services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+		services.AddSingleton<IApplicationSettings, ApplicationSettings>();
+		services.AddKioskConfiguration(Configuration);
 		services.AddSingleton<IConfigurationService, ConfigurationService>();
+		services.AddScoped<ConfigurationJob>();
 		services.AddScoped<IApplicationConfiguration, ApplicationConfiguration>();
-		ILogger<Startup> requiredService = provider.GetRequiredService<ILogger<Startup>>();
-		services.AddHttpClient<IHttpService, HttpService>().ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-		{
-			AllowAutoRedirect = true,
-			UseCookies = true,
-			CookieContainer = new CookieContainer()
-		});
+		services.AddHttpService();
+		services.AddHttpQueueService();
 		services.AddSingleton<IApplicationControl, ApplicationControl>();
 		services.AddSingleton<IStoreService, StoreService>();
 		services.AddSingleton<IAnalyticsQueue, AnalyticsQueue>();
@@ -85,51 +123,76 @@ public class Startup
 		services.AddScoped<IApplicationService, ApplicationService>();
 		services.AddScoped<ISessionService, SessionService>();
 		services.AddScoped<IAdService, AdService>();
+		services.AddScoped<IAdService, AdServerService>();
+		services.AddScoped<IAdServerClient, AdServerClient>();
 		services.AddScoped<IAssetService, AssetService>();
 		services.AddScoped<IVistarAPIClient, VistarAPIClient>();
-		services.AddScoped<IAdServerClient, AdServerClient>();
+		services.AddScoped<IAdServerAnalyticsClient, AdServerAnalyticsClient>();
 		services.AddScoped<IKioskDataServiceClient, KioskDataServiceClient>();
 		services.AddScoped<IProductReelsApiClient, ProductReelsApiClient>();
 		services.AddScoped<IMoreLikeThisService, MoreLikeThisService>();
+		services.AddScoped<IPersonalizationService, PersonalizationService>();
 		services.AddScoped<ITestDataService, TestDataService>();
+		services.AddScoped<IPersonalizationService, PersonalizationService>();
 		services.AddScoped<IInventoryApiClient, InventoryApiClient>();
 		services.AddScoped<IInventoryService, InventoryService>();
+		services.AddScoped<IQRCodeUtilitiesService, QRCodeUtilitiesService>();
+		services.AddScoped<ITransactionApiClient, TransactionApiClient>();
+		services.AddScoped<ITransactionService, TransactionService>();
 		services.AddScoped<IProductGroupSortOrderService, ProductGroupSortOrderService>();
 		services.AddScoped<ProductGroupSortOrderJob>();
-		ServiceProvider serviceProvider = services.BuildServiceProvider();
-		InitializeConfiguration(serviceProvider.GetService<IConfigurationService>(), serviceProvider.GetRequiredService<IStoreService>(), serviceProvider.GetService<ILogger<Startup>>(), serviceProvider);
-		LogSettings(requiredService, value, serviceProvider.GetService<IApplicationConfiguration>());
+		services.AddScoped<IProxyApi, ProxyApi>();
+		services.AddScoped<ISubscriptionService, SubscriptionService>();
+		services.AddScoped<SubscriptionJob>();
+		services.AddPromotionService();
+		services.AddScoped<ICustomerProfileService, CustomerProfileService>();
+		services.AddPricingService();
+		services.AddPricingJob();
+		services.AddPlanogramService();
+		services.AddSyncPlanogramsJob();
+		services.AddLoyaltyService();
+		services.AddDataService();
 	}
 
-	private void LogSettings(ILogger<Startup> logger, IApplicationSettings settings, IApplicationConfiguration applicationConfiguration)
+	public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime, ILogger<Startup> logger, IApplicationSettings applicationSettings, IApplicationConfiguration applicationConfiguration, IConfigurationService configuration, IStoreService store, IProductGroupSortOrderService productGroupSortOrderService, ISubscriptionService subscriptionService)
 	{
-		logger.LogInformation($"Assembly Version: {GetType().Assembly.GetName().Version}");
-		logger.LogInformation("AppSettings - DataFilePath: " + settings.DataFilePath);
-		logger.LogInformation("AppSettings - ServiceUrl: " + settings.ServiceUrl);
-		logger.LogInformation("AppSettings - UpdateManagerAddress: " + settings.UpdateManagerAddress);
-		logger.LogInformation($"AppSettings - UpdateManagerPort: {settings.UpdateManagerPort}");
-		logger.LogInformation($"AppConfig - AdsActive: {applicationConfiguration.AdsActive}");
-		VistarConfigs configs = VistarConfigs.GetConfigs(applicationConfiguration);
-		logger.LogInformation("AppConfig.VistarSettings - Url: " + configs.Url);
-		logger.LogInformation($"AppConfig.VistarSettings - Timeout: {configs.Timeout}");
-		logger.LogInformation("AppConfig.VistarSettings - NetworkId: " + configs.NetworkId.MaskLogValue(4));
-		logger.LogInformation("AppConfig.VistarSettings - APIKey: " + configs.APIKey.MaskLogValue(4));
-		AdServerConfigs adServer = applicationConfiguration.AdServer;
-		logger.LogInformation("AppConfig.AdServerSettings - Url: " + adServer.Url);
-		logger.LogInformation($"AppConfig.AdServerSettings - Timeout: {adServer.Timeout}");
-		logger.LogInformation("AppConfig.AdServerSettings - APIKey: " + adServer.APIKey.MaskLogValue(4));
-		KioskDataServiceConfigs kioskDataService = applicationConfiguration.KioskDataService;
-		logger.LogInformation("AppConfig.KioskDataServiceSettings - Url: " + kioskDataService.Url);
-		logger.LogInformation($"AppConfig.KioskDataServiceSettings - Timeout: {kioskDataService.Timeout}");
-		logger.LogInformation("AppConfig.KioskDataServiceSettings - APIKey: " + kioskDataService.APIKey.MaskLogValue(4));
-		InventoryApiConfigs inventoryApi = applicationConfiguration.InventoryApi;
-		logger.LogInformation("AppConfig.InventoryApi - Url: " + inventoryApi.Url);
-		logger.LogInformation($"AppConfig.InventoryApi - Timeout: {inventoryApi.Timeout}");
-		logger.LogInformation("AppConfig.InventoryApi - APIKey: " + inventoryApi.APIKey.MaskLogValue(4));
-		logger.LogInformation($"AppConfig.ProductGroupSortOrderType: {applicationConfiguration.ProductGroupSortOrderType}");
+		if (env.IsDevelopment())
+		{
+			app.UseDeveloperExceptionPage();
+		}
+		else
+		{
+			app.UseHsts();
+		}
+		app.ConfigureExceptionMiddleware();
+		app.AddCompressedRequestPayloadMiddleware();
+		app.AddUpdateMerchandizingMiddleware();
+		app.UseHttpsRedirection();
+		app.UseSwagger();
+		app.UseSwaggerUI(delegate(SwaggerUIOptions c)
+		{
+			c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+		});
+		InitializeConfiguration(logger, configuration, store, productGroupSortOrderService, subscriptionService);
+		app.ApplicationServices.UseScheduler(delegate(IScheduler scheduler)
+		{
+			Random random = new Random();
+			scheduler.Schedule<ConfigurationJob>().Cron("*/3 * * * *").PreventOverlapping("kiosk");
+			scheduler.Schedule<ProductGroupSortOrderJob>().Cron("*/10 * * * *").PreventOverlapping("kiosk");
+			scheduler.Schedule<SubscriptionJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
+			scheduler.Schedule<PricingJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
+			scheduler.Schedule<SyncPlanogramsJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
+			logger.LogInformation("Scheduling ConfigurationJob at */3");
+			logger.LogInformation("Scheduling ProductGroupSortOrderJob at */10");
+			logger.LogInformation("Scheduling SubscriptionJob at */5");
+			logger.LogInformation("Scheduling PricingJob at */5");
+			logger.LogInformation("Scheduling SyncPlanogramsJob at */5");
+		});
+		app.UseMvc();
+		LogAppSettings(logger, applicationSettings, applicationConfiguration);
 	}
 
-	private ServiceResult InitializeConfiguration(IConfigurationService configuration, IStoreService store, ILogger<Startup> logger, ServiceProvider serviceProvider)
+	private ServiceResult InitializeConfiguration(ILogger<Startup> logger, IConfigurationService configuration, IStoreService store, IProductGroupSortOrderService productGroupSortOrderService, ISubscriptionService subscriptionService)
 	{
 		if (configuration == null)
 		{
@@ -155,21 +218,13 @@ public class Startup
 		DirectoryInfo directoryInfo = new DirectoryInfo(fullPath);
 		try
 		{
-			FileInfo[] files = directoryInfo.GetFiles("*.config");
-			FileInfo[] array = files;
-			foreach (FileInfo file in array)
+			string text = Path.Combine(fullPath, "kioskclient.config");
+			logger.LogInformation("Startup.InitializeConfiguration manually adding " + text);
+			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(text);
+			serviceResult = configuration.Add(fileNameWithoutExtension, text, "default");
+			if (!serviceResult.Success)
 			{
-				logger.LogInformation("Startup.InitializeConfiguration adding " + file.Name);
-				string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.Name);
-				serviceResult = configuration.Add(fileNameWithoutExtension, file.FullName, "default", null, null, delegate
-				{
-					logger.LogInformation("Startup.InitializeConfiguration new {0} file was loaded.", Path.GetFileName(file.Name));
-					serviceProvider.GetService<IProductGroupSortOrderService>()?.RefreshIfNeeded();
-				});
-				if (!serviceResult.Success)
-				{
-					return serviceResult;
-				}
+				return serviceResult;
 			}
 		}
 		catch (Exception exception)
@@ -180,34 +235,40 @@ public class Startup
 		return new ServiceResult(success: true);
 	}
 
-	public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime, ILogger<Startup> logger)
+	private void LogAppSettings(ILogger<Startup> logger, IApplicationSettings applicationSettings, IApplicationConfiguration applicationConfiguration)
 	{
-		if (env.IsDevelopment())
-		{
-			app.UseDeveloperExceptionPage();
-		}
-		else
-		{
-			app.UseHsts();
-		}
-		app.ConfigureExceptionMiddleware();
-		app.UseHttpsRedirection();
-		app.UseSwagger();
-		app.UseSwaggerUI(delegate(SwaggerUIOptions c)
-		{
-			c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-		});
-		app.ApplicationServices.UseScheduler(delegate(IScheduler scheduler)
-		{
-			if (env.IsDevelopment())
-			{
-				scheduler.Schedule<ProductGroupSortOrderJob>().EveryThirtySeconds();
-			}
-			else
-			{
-				scheduler.Schedule<ProductGroupSortOrderJob>().EveryTenMinutes();
-			}
-		});
-		app.UseMvc();
+		AppSettings appSettings = applicationSettings.AppSettings;
+		logger.LogInformation($"Assembly Version: {GetType().Assembly.GetName().Version}");
+		logger.LogInformation("AppSettings - DataFilePath: " + appSettings.DataFilePath);
+		logger.LogInformation("AppSettings - ServiceUrl: " + appSettings.ServiceUrl);
+		logger.LogInformation("AppSettings - UpdateManagerAddress: " + appSettings.UpdateManagerAddress);
+		logger.LogInformation($"AppSettings - UpdateManagerPort: {appSettings.UpdateManagerPort}");
+		logger.LogInformation($"AppConfig - AdsActive: {applicationConfiguration.AdsActive}");
+		logger.LogInformation($"AppConfig - UseAdServer: {applicationConfiguration.UseAdServer}");
+		VistarConfigs configs = VistarConfigs.GetConfigs(applicationConfiguration);
+		logger.LogInformation("AppConfig.VistarSettings - Url: " + configs.Url);
+		logger.LogInformation($"AppConfig.VistarSettings - Timeout: {configs.Timeout}");
+		logger.LogInformation("AppConfig.VistarSettings - NetworkId: " + configs.NetworkId.MaskLogValue(4));
+		logger.LogInformation("AppConfig.VistarSettings - APIKey: " + configs.APIKey.MaskLogValue(4));
+		AdServerConfigs adServer = applicationConfiguration.AdServer;
+		logger.LogInformation("AppConfig.AdServerSettings - Url: " + adServer.Url);
+		logger.LogInformation($"AppConfig.AdServerSettings - Timeout: {adServer.Timeout}");
+		logger.LogInformation("AppConfig.AdServerSettings - APIKey: " + adServer.APIKey.MaskLogValue(4));
+		KioskDataServiceConfigs kioskDataService = applicationConfiguration.KioskDataService;
+		logger.LogInformation("AppConfig.KioskDataServiceSettings - Url: " + kioskDataService.Url);
+		logger.LogInformation($"AppConfig.KioskDataServiceSettings - Timeout: {kioskDataService.Timeout}");
+		logger.LogInformation("AppConfig.KioskDataServiceSettings - APIKey: " + kioskDataService.APIKey.MaskLogValue(4));
+		InventoryApiConfigs inventoryApi = applicationConfiguration.InventoryApi;
+		logger.LogInformation("AppConfig.InventoryApi - Url: " + inventoryApi.Url);
+		logger.LogInformation($"AppConfig.InventoryApi - Timeout: {inventoryApi.Timeout}");
+		logger.LogInformation("AppConfig.InventoryApi - APIKey: " + inventoryApi.APIKey.MaskLogValue(4));
+		logger.LogInformation($"AppConfig.ProductGroupSortOrderType: {applicationConfiguration.ProductGroupSortOrderType}");
+		ProxyApiConfigs proxyApi = applicationConfiguration.ProxyApi;
+		logger.LogInformation("AppConfig.ProxyApi - Url: " + proxyApi.Url);
+		logger.LogInformation($"AppConfig.ProxyApi - Timeout: {proxyApi.Timeout}");
+		logger.LogInformation("AppConfig.ProxyApi - APIKey: " + proxyApi.APIKey.MaskLogValue(4));
+		logger.LogInformation("Subscription Configs:");
+		logger.LogInformation(JsonConvert.SerializeObject(applicationConfiguration.SubscriptionConfigs, Formatting.Indented));
+		logger.LogInformation($"AppConfig.PricingActive: {applicationConfiguration.PricingActive}");
 	}
 }

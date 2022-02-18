@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using KioskClientService.API.Services.HttpQueue;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -9,7 +12,7 @@ namespace KioskClientService.API.App;
 
 public class APIResponse<T>
 {
-	private ILogger _logger;
+	private readonly ILogger _logger;
 
 	public HttpRequestMessage HttpRequest { get; set; }
 
@@ -68,10 +71,10 @@ public class APIResponse<T>
 			if (!string.IsNullOrWhiteSpace(content))
 			{
 				Response = JsonConvert.DeserializeObject<T>(content);
-				ResponseContent = JsonConvert.SerializeObject(Response, Formatting.None, new JsonSerializerSettings
+				ResponseContent = ((!(Response is IMessageScrub)) ? JsonConvert.SerializeObject(Response, Formatting.None, new JsonSerializerSettings
 				{
 					NullValueHandling = NullValueHandling.Ignore
-				});
+				}) : (Response as IMessageScrub)?.Scrub()?.ToString());
 			}
 		}
 		catch (Exception exception)
@@ -126,7 +129,7 @@ public class APIResponse<T>
 	{
 		if (HttpRequest != null)
 		{
-			_logger?.LogInformation($"Request: {HttpRequest.Method},Uri: {HttpRequest.RequestUri}, Status: {StatusCode}({(int)StatusCode}), Time:{ResponseTime}, Length:{ResponseLength}");
+			_logger?.LogInformation($"Request: {HttpRequest.Method}, Uri: {HttpRequest.RequestUri}, Status: {StatusCode}({(int)StatusCode}), Time:{ResponseTime}, Length:{ResponseLength}");
 			if (RequestContent != null)
 			{
 				_logger?.LogInformation("Request Content: " + RequestContent);
@@ -135,6 +138,50 @@ public class APIResponse<T>
 			{
 				_logger?.LogInformation("Response Content: " + ResponseContent);
 			}
+		}
+	}
+
+	internal void CheckAndReplay(Guid messageId, HttpRequest source, IHttpQueueService queueService)
+	{
+		if (!typeof(IReplayableApiCall).IsAssignableFrom(typeof(T)))
+		{
+			return;
+		}
+		if (messageId == default(Guid))
+		{
+			_logger?.LogInformation("ApiResponse.CheckAndReplay - messageId is not set; not replaying");
+			return;
+		}
+		bool flag;
+		if (IsSuccessStatusCode)
+		{
+			flag = false;
+		}
+		else if (Response == null)
+		{
+			flag = true;
+		}
+		else
+		{
+			T response = Response;
+			flag = response is IReplayableApiCall replayableApiCall && replayableApiCall.Replayable;
+		}
+		_logger?.LogInformation($"APIResponse.CheckAndReplay - id: {messageId}, api: {source.GetDisplayUrl()}, replay: {flag}");
+		HttpQueueServiceRequest request = new HttpQueueServiceRequest
+		{
+			Id = messageId,
+			Request = HttpRequestMetadata.FromHttpRequest(source)
+		};
+		if (flag)
+		{
+			if (!queueService.Enqueue(request))
+			{
+				_logger?.LogError($"ApiResponse.CheckAndReplay - unable to replay message id: {messageId}!");
+			}
+		}
+		else
+		{
+			queueService.Finalize(request);
 		}
 	}
 }

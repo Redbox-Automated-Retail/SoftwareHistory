@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using KioskClientService.API.Services.Ads;
 using KioskClientService.API.Services.App;
 using Microsoft.AspNetCore.Mvc;
@@ -21,18 +20,18 @@ public class SessionController : ControllerBase
 	}
 
 	[HttpPost("start")]
-	public async Task<ActionResult<SessionResponse>> StartSession(SessionType sessionType)
+	public ActionResult<SessionResponse> StartSession(SessionType sessionType)
 	{
 		_logger?.LogInformation("SessionController.StartSession");
-		await (_sessionService?.Start(sessionType));
+		_sessionService?.Start(sessionType);
 		return new OkObjectResult(new SessionResponse());
 	}
 
 	[HttpPost("end")]
-	public async Task<ActionResult<SessionResponse>> EndSession()
+	public ActionResult<SessionResponse> EndSession()
 	{
 		_logger?.LogInformation("SessionController.EndSession");
-		await (_sessionService?.End());
+		_sessionService?.End();
 		return new OkObjectResult(new SessionResponse());
 	}
 }

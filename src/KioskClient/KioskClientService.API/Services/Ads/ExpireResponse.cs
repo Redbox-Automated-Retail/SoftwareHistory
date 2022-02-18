@@ -1,16 +1,18 @@
+using System.Net;
 using KioskClientService.API.App;
 
 namespace KioskClientService.API.Services.Ads;
 
-public class ExpireResponse : BaseResponse, IMessageScrub
+public class ExpireResponse : ApiBaseResponse, IMessageScrub
 {
+	public int? ResponseTime { get; set; }
+
 	public ExpireResponse()
-		: base(200)
+		: base(HttpStatusCode.OK)
 	{
-		base.Success = true;
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
 		return this.ToJsonIndented();
 	}

@@ -12,9 +12,9 @@ public interface IConfigurationService
 
 	ServiceResult Stop();
 
-	ServiceResult Add(string key, string filepath, string defaultCategory);
+	ServiceResult CheckForUpdates(out Dictionary<string, string> dict);
 
-	ServiceResult Add(string key, string filepath, string defaultCategory, TimeSpan? checkTime, Func<bool> canActivate, Action activateAction);
+	ServiceResult Add(string key, string filepath, string defaultCategory);
 
 	ServiceResult Remove(string key);
 

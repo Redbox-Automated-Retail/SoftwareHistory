@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
@@ -32,8 +33,6 @@ public class AdService : IAdService
 
 	private List<AdLocation> _preloadedAds;
 
-	private List<DisplayArea> _displayAreas;
-
 	private static Timer _timer;
 
 	private static AdService _adService;
@@ -52,13 +51,12 @@ public class AdService : IAdService
 		_analytics = analytics;
 		_adsActive = _applicationConfiguration.AdsActive;
 		_preloadedAds = _applicationConfiguration.AdsToPreload;
-		_logger?.LogInformation($"AdService - AdsActive - {_adsActive}");
 	}
 
 	public async Task<ApplicationResponse> StartApplication()
 	{
 		_logger?.LogInformation("AdService.StartApplication");
-		_assetService.Cache();
+		await _assetService.Cache();
 		if (_timer == null)
 		{
 			_logger?.LogInformation("AdService.EndApplication - creating and starting timer");
@@ -76,7 +74,7 @@ public class AdService : IAdService
 	public async Task<ApplicationResponse> EndApplication()
 	{
 		_logger?.LogInformation("AdService.EndApplication");
-		await ExpireAll();
+		ExpireAll();
 		if (_timer != null)
 		{
 			_logger?.LogInformation("AdService.EndApplication - stopping timer");
@@ -86,7 +84,7 @@ public class AdService : IAdService
 		return new ApplicationResponse();
 	}
 
-	public async Task<SessionResponse> StartSession()
+	public SessionResponse StartSession()
 	{
 		_logger?.LogInformation("AdService.StartSession");
 		_adService = this;
@@ -95,29 +93,30 @@ public class AdService : IAdService
 		return new SessionResponse();
 	}
 
-	public async Task<SessionResponse> EndSession()
+	public SessionResponse EndSession()
 	{
 		_inSession = false;
 		_logger?.LogInformation("AdService.EndSession");
 		return new SessionResponse();
 	}
 
-	public async Task<ProofOfPlayResponse> ProofOfPlay(string advertisementId, ProofOfPlayRequest proofOfPlayRequest)
+	public async Task<ProofOfPlayResponse> PostProofOfPlay(string advertisementId, ProofOfPlayRequest proofOfPlayRequest)
 	{
 		_logger?.LogInformation("AdService.ProofOfPlay");
 		ProofOfPlayResponse result = new ProofOfPlayResponse();
 		CachedAdvertisement ad = GetAdvertisement(advertisementId, remove: true);
 		if (ad == null)
 		{
-			result.Success = false;
-			result.StatusCode = 404;
+			result.StatusCode = HttpStatusCode.NotFound;
 			_analytics.VistarProofOfPlay(proofOfPlayRequest, result);
 			return result;
 		}
-		(await _vistarAPI.GetProofOfPlay(new VistarProofOfPlayRequest
+		APIResponse<VistarProofOfPlayResponse> aPIResponse = await _vistarAPI.GetProofOfPlay(new VistarProofOfPlayRequest
 		{
 			ProofOfPlayUrl = ad.Advertisement.ProofOfPlayUrl
-		})).CopyTo(result);
+		});
+		aPIResponse.CopyTo(result);
+		result.ResponseTime = aPIResponse.ResponseTime;
 		_analytics.VistarProofOfPlay(proofOfPlayRequest, result, ad);
 		return result;
 	}
@@ -129,8 +128,7 @@ public class AdService : IAdService
 		CachedAdvertisement ad = GetAdvertisement(advertisementId, remove: true);
 		if (ad == null)
 		{
-			result.Success = false;
-			result.StatusCode = 404;
+			result.StatusCode = HttpStatusCode.NotFound;
 			_analytics.VistarExpire(new VistarExpirationRequest(), result, null, AdExpirationSource.Controller);
 			return result;
 		}
@@ -138,7 +136,9 @@ public class AdService : IAdService
 		{
 			ExpirationUrl = ad.Advertisement.ExpirationUrl
 		};
-		(await _vistarAPI.GetExpiration(request)).CopyTo(result);
+		APIResponse<VistarExpirationResponse> aPIResponse = await _vistarAPI.GetExpiration(request);
+		aPIResponse.CopyTo(result);
+		result.ResponseTime = aPIResponse.ResponseTime;
 		_analytics.VistarExpire(request, result, ad, AdExpirationSource.Controller);
 		return result;
 	}
@@ -154,22 +154,14 @@ public class AdService : IAdService
 			};
 			if (!_adsActive)
 			{
-				result.Success = false;
-				return result;
-			}
-			CachedAdvertisement advertisement = GetAdvertisement(request.AdLocation);
-			if (advertisement != null)
-			{
-				advertisement.Requested = true;
-				result.CopyFrom(advertisement);
+				result.StatusCode = HttpStatusCode.ServiceUnavailable;
 				return result;
 			}
 			if (!(await GetAdAndCache(request.AdLocation)))
 			{
-				result.Success = false;
 				return result;
 			}
-			advertisement = GetAdvertisement(request.AdLocation);
+			CachedAdvertisement advertisement = GetAdvertisement(request.AdLocation);
 			if (advertisement != null)
 			{
 				advertisement.Requested = true;
@@ -192,7 +184,6 @@ public class AdService : IAdService
 			GetAdsResponse result = new GetAdsResponse();
 			if (!_adsActive)
 			{
-				result.Success = false;
 				return result;
 			}
 			Dictionary<AdLocation, CachedAdvertisement> advertisements = GetAdvertisements(locations, isPreload);
@@ -222,7 +213,7 @@ public class AdService : IAdService
 					}
 				}
 			}
-			result.Success = result.GetAdResponses.Any();
+			result.StatusCode = (result.GetAdResponses.Any() ? HttpStatusCode.OK : HttpStatusCode.NotFound);
 			return result;
 		}
 		finally
@@ -241,7 +232,7 @@ public class AdService : IAdService
 		{
 			return new GetAdsResponse
 			{
-				StatusCode = 204
+				StatusCode = HttpStatusCode.NoContent
 			};
 		}
 		return await GetAds(adLocations, isPreload);
@@ -280,6 +271,11 @@ public class AdService : IAdService
 			}
 		});
 		return result;
+	}
+
+	public async Task<CacheResponse> Cache()
+	{
+		return await _assetService.Cache();
 	}
 
 	private async Task<bool> GetAdsAndCache(List<AdLocation> adLocations)
@@ -337,11 +333,12 @@ public class AdService : IAdService
 		};
 		APIResponse<VistarExpirationResponse> aPIResponse = await _vistarAPI.GetExpiration(request);
 		aPIResponse.CopyTo(result);
+		result.ResponseTime = result.ResponseTime;
 		_analytics.VistarExpire(request, result, ad, AdExpirationSource.ClientService);
 		return aPIResponse.IsSuccessStatusCode;
 	}
 
-	private async Task<bool> ExpireAll()
+	private bool ExpireAll()
 	{
 		_logger?.LogInformation("AdService.ExpireAll");
 		Cached.Values.ToList().ForEach(async delegate(CachedAdvertisement x)

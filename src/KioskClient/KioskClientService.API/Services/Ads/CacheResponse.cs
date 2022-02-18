@@ -1,19 +1,21 @@
+using System.Net;
 using KioskClientService.API.App;
 using Newtonsoft.Json;
 
 namespace KioskClientService.API.Services.Ads;
 
-public class CacheResponse : BaseResponse, IMessageScrub
+public class CacheResponse : ApiBaseResponse, IMessageScrub
 {
+	public int? ResponseTime { get; set; }
+
 	public int AssetCacheCount { get; set; }
 
 	public CacheResponse()
-		: base(200)
+		: base(HttpStatusCode.OK)
 	{
-		base.Success = true;
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
 		return JsonConvert.SerializeObject(this);
 	}

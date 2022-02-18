@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using KioskClientService.API.Services.Configuration;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +16,7 @@ public class Program
 {
 	private const string ASPNETCORE_ENVIRONMENT = "ASPNETCORE_ENVIRONMENT";
 
-	public static IConfiguration Configuration { get; } = GetConfiguration();
+	public static IConfiguration Configuration { get; } = GetConfiguration(new ConfigurationBuilder()).Build();
 
 	public static void Main(string[] args)
 	{
@@ -57,15 +58,21 @@ public class Program
 		}
 	}
 
-	public static IWebHostBuilder CreateWebHostBuilder(string[] args, IConfiguration config)
+	public static IWebHostBuilder CreateWebHostBuilder(string[] args, IConfiguration config = null)
 	{
-		Uri serviceUri = GetServiceUri(config);
-		Log.Information($"CreateWebHostBuilder: url={serviceUri.AbsoluteUri}  port={serviceUri.Port}");
-		return WebHost.CreateDefaultBuilder(args).UseContentRoot(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)).UseUrls(serviceUri.AbsoluteUri)
-			.UseSetting("Port", serviceUri.Port.ToString())
-			.UseConfiguration(Configuration)
+		IWebHostBuilder webHostBuilder = WebHost.CreateDefaultBuilder(args).UseContentRoot(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)).ConfigureAppConfiguration(delegate(WebHostBuilderContext builder, IConfigurationBuilder conf)
+		{
+			GetConfiguration(conf);
+		})
 			.UseSerilog()
 			.UseStartup<Startup>();
+		if (config != null)
+		{
+			Uri serviceUri = GetServiceUri(config);
+			Log.Information($"CreateWebHostBuilder: url={serviceUri.AbsoluteUri}  port={serviceUri.Port}");
+			webHostBuilder.UseUrls(serviceUri.AbsoluteUri).UseSetting("Port", serviceUri.Port.ToString());
+		}
+		return webHostBuilder;
 	}
 
 	public static Uri GetServiceUri(IConfiguration config)
@@ -73,13 +80,13 @@ public class Program
 		return new Uri(config.GetValue<string>("AppSettings:ServiceUrl"));
 	}
 
-	private static IConfiguration GetConfiguration()
+	private static IConfigurationBuilder GetConfiguration(IConfigurationBuilder builder)
 	{
-		IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+		builder.SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddJsonFile(KioskConfigurationConstants.ConfigurationFilePath, optional: true, reloadOnChange: true);
 		if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null)
 		{
-			configurationBuilder.AddJsonFile("appsettings." + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") + ".json", optional: true, reloadOnChange: true);
+			builder.AddJsonFile("appsettings." + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") + ".json", optional: true, reloadOnChange: true);
 		}
-		return configurationBuilder.Build();
+		return builder;
 	}
 }

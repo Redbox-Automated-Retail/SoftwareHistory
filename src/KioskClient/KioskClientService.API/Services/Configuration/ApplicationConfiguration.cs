@@ -5,7 +5,11 @@ using KioskClientService.API.Ads;
 using KioskClientService.API.Services.Analytics.KioskDataService;
 using KioskClientService.API.Services.Analytics.Vistar;
 using KioskClientService.API.Services.Inventory.API;
+using KioskClientService.API.Services.Personalization;
 using KioskClientService.API.Services.Products.ProductReelsApi;
+using KioskClientService.API.Services.ProxyApi;
+using KioskClientService.API.Services.Subscription;
+using KioskClientService.API.Services.Transaction.API;
 using Newtonsoft.Json;
 
 namespace KioskClientService.API.Services.Configuration;
@@ -13,6 +17,8 @@ namespace KioskClientService.API.Services.Configuration;
 public class ApplicationConfiguration : IApplicationConfiguration
 {
 	private IConfigurationService _configurationService;
+
+	private readonly IApplicationSettings _applicationSettings;
 
 	public bool AdsActive => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdsActive", defaultValue: false);
 
@@ -65,6 +71,8 @@ public class ApplicationConfiguration : IApplicationConfiguration
 		}
 	}
 
+	public bool UseAdServer => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "UseAdServer", defaultValue: false);
+
 	public string VistarUrl => _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "VistarUrl", null);
 
 	public int VistarTimeout => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "VistarTimeout", 5000);
@@ -80,7 +88,7 @@ public class ApplicationConfiguration : IApplicationConfiguration
 	public AdServerConfigs AdServer => new AdServerConfigs
 	{
 		Enabled = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdServerEnabled", defaultValue: true),
-		Url = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdServerUrl", null),
+		Url = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdServerUrl", "http://localhost:5005/api"),
 		Timeout = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdServerTimeout", 20000),
 		APIKey = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdServerAPIKey", null),
 		AuthHeader = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdServerAuthHeader", "x-api-key")
@@ -108,11 +116,44 @@ public class ApplicationConfiguration : IApplicationConfiguration
 		APIKey = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "InventoryApiKey", null)
 	};
 
+	public PersonalizationConfigs PersonalizationService => new PersonalizationConfigs
+	{
+		Url = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "CustomerProfileApiUrl", null),
+		Timeout = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "CustomerProfileApiTimeout", 60000),
+		ApiKey = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "CustomerProfileApiKey", null)
+	};
+
 	public int ProductGroupSortOrderType => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "ProductGroupSortOrderType", 0);
 
-	public ApplicationConfiguration(IConfigurationService configurationService)
+	public ProxyApiConfigs ProxyApi => new ProxyApiConfigs
+	{
+		Url = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientProxyApi, "ProxyApiUrl", _applicationSettings.AppSettings.DefaultProxyServiceUrl),
+		Timeout = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientProxyApi, "ProxyApiTimeout", 60000),
+		APIKey = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientProxyApi, "ProxyApiKey", null)
+	};
+
+	public SubscriptionConfigs SubscriptionConfigs => new SubscriptionConfigs
+	{
+		SubscriptionPlansActive = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientSubscriptions, "SubscriptionPlansActive", defaultValue: true),
+		BrowseStarzSubscriptionPlan = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientSubscriptions, "BrowseStarzSubscriptionPlan", null),
+		MyBagStarzSubscriptionPlan = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientSubscriptions, "MyBagStarzSubscriptionPlan", null)
+	};
+
+	public TransactionApiConfigs TransactionApi => new TransactionApiConfigs
+	{
+		Url = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "TransactionApiUrl", null),
+		Timeout = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "TransactionApiTimeout", 60000),
+		APIKey = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "TransactionApiKey", null)
+	};
+
+	public bool PricingActive => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "PricingActive", defaultValue: true);
+
+	public bool PlanogramSyncEnabled => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "PlanogramSyncEnabled", defaultValue: false);
+
+	public ApplicationConfiguration(IConfigurationService configurationService, IApplicationSettings applicationSettings)
 	{
 		_configurationService = configurationService;
+		_applicationSettings = applicationSettings;
 	}
 
 	private List<T> GetEnumList<T>(string enumListString, List<T> defaultValue = null) where T : struct, Enum

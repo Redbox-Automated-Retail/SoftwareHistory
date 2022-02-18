@@ -17,4 +17,10 @@ public static class APIResponseExtensions
 		baseResponse.ResponseTime = apiResponse.ResponseTime;
 		return apiResponse;
 	}
+
+	public static void CopyTo<T>(this APIResponse<T> apiResponse, ApiBaseResponse baseResponse)
+	{
+		baseResponse.Error = apiResponse.Errors?.ToJson();
+		baseResponse.StatusCode = apiResponse.StatusCode;
+	}
 }

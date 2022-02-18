@@ -23,9 +23,7 @@ public class AnalyticsService : IAnalyticsService
 {
 	private readonly ILogger<AnalyticsService> _logger;
 
-	private readonly IApplicationSettings _applicationSettings;
-
-	private readonly IAdServerClient _adServerClient;
+	private readonly IAdServerAnalyticsClient _adServerClient;
 
 	private readonly IKioskDataServiceClient _kdsClient;
 
@@ -35,22 +33,21 @@ public class AnalyticsService : IAnalyticsService
 
 	private readonly Guid _clientSessionId = Guid.NewGuid();
 
-	public AnalyticsService(IApplicationSettings applicationSettings, ILogger<AnalyticsService> logger, IStoreService store, IAdServerClient adServerClient, IKioskDataServiceClient kdsClient, IAnalyticsQueue queue)
+	public AnalyticsService(ILogger<AnalyticsService> logger, IStoreService store, IAdServerAnalyticsClient adServerClient, IKioskDataServiceClient kdsClient, IAnalyticsQueue queue)
 	{
 		_logger = logger;
-		_applicationSettings = applicationSettings;
 		_adServerClient = adServerClient;
 		_kdsClient = kdsClient;
 		_store = store;
 		_queue = queue;
 	}
 
-	public async Task ServiceEvent(KioskClientEvent eventType)
+	public async Task ServiceEvent(KioskClientEvent eventType, DateTime? eventTime)
 	{
 		_logger.LogInformation($"AnalyticsService.{eventType}");
 		try
 		{
-			KioskClientEventRequest request = new KioskClientEventRequest(_store.KioskId, eventType);
+			KioskClientEventRequest request = new KioskClientEventRequest(_store.KioskId, eventType, eventTime);
 			await _kdsClient.PostKioskClientEvent(request);
 		}
 		catch (Exception arg)
@@ -88,11 +85,11 @@ public class AnalyticsService : IAnalyticsService
 			ProofOfPlayAnalyticsRequest analyticsObject = new ProofOfPlayAnalyticsRequest
 			{
 				KioskId = _store.KioskId,
-				StatusCode = (HttpStatusCode)proofOfPlayResponse.StatusCode,
+				StatusCode = proofOfPlayResponse.StatusCode,
 				ResponseTime = proofOfPlayResponse.ResponseTime,
 				DisplayedMilliseconds = proofOfPlayRequest.DisplayedMilliseconds,
 				DisplayedTime = proofOfPlayRequest.DisplayedTime,
-				Success = proofOfPlayResponse.Success,
+				Success = (proofOfPlayResponse.StatusCode == HttpStatusCode.OK),
 				AdLocation = (ad?.AdLocation ?? AdLocation.Unknown)
 			};
 			await HandleAnalytics(AnalyticsType.VistarProofOfPlay, analyticsObject);
@@ -111,12 +108,12 @@ public class AnalyticsService : IAnalyticsService
 			ExpireAnalyticsRequest analyticsObject = new ExpireAnalyticsRequest
 			{
 				KioskId = _store.KioskId,
-				StatusCode = (HttpStatusCode)expireResponse.StatusCode,
+				StatusCode = expireResponse.StatusCode,
 				ResponseTime = expireResponse.ResponseTime,
 				Requested = ad?.Requested,
 				AdLocation = (ad?.AdLocation ?? AdLocation.Unknown),
 				AdExpirationSource = adExpirationSource,
-				Success = expireResponse.Success
+				Success = (expireResponse.StatusCode == HttpStatusCode.OK)
 			};
 			await HandleAnalytics(AnalyticsType.VistarExpire, analyticsObject);
 		}
@@ -134,10 +131,10 @@ public class AnalyticsService : IAnalyticsService
 			CacheAnalyticsRequest analyticsObject = new CacheAnalyticsRequest
 			{
 				KioskId = _store.KioskId,
-				StatusCode = (HttpStatusCode)cacheResponse.StatusCode,
+				StatusCode = cacheResponse.StatusCode,
 				ResponseTime = cacheResponse.ResponseTime,
 				AssetsCached = cacheResponse.AssetCacheCount,
-				Success = cacheResponse.Success
+				Success = (cacheResponse.StatusCode == HttpStatusCode.OK)
 			};
 			await HandleAnalytics(AnalyticsType.VistarCache, analyticsObject);
 		}
@@ -200,6 +197,63 @@ public class AnalyticsService : IAnalyticsService
 		{
 			_logger.LogError($"AnalyticsService.PurgeOldAnalytics - unhandled exception occurred. {arg}");
 		}
+	}
+
+	public void PurgeServiceEvents()
+	{
+		_logger.LogInfoWithSource("purging saved service events", "PurgeServiceEvents");
+		try
+		{
+			string path = Path.Combine(_store.DataPath, "Analytics", AnalyticsType.ServiceEvent.ToString());
+			if (Directory.Exists(path))
+			{
+				Directory.Delete(path, recursive: true);
+			}
+		}
+		catch (Exception arg)
+		{
+			_logger.LogErrorWithSource($"unhandled exception occurred. {arg}", "PurgeServiceEvents");
+		}
+	}
+
+	public void SaveServiceEvent(ServiceEvent serviceEvent)
+	{
+		try
+		{
+			string text = serviceEvent.ToJson();
+			_logger.LogInfoWithSource("saving event " + text, "SaveServiceEvent");
+			string text2 = Path.Combine(_store.DataPath, "Analytics", AnalyticsType.ServiceEvent.ToString());
+			Directory.CreateDirectory(text2);
+			string path = Path.Combine(text2, serviceEvent.EventType.ToString() + ".json");
+			File.WriteAllText(path, text);
+		}
+		catch (Exception arg)
+		{
+			_logger.LogErrorWithSource($"unhandled exception occurred. {arg}", "SaveServiceEvent");
+		}
+	}
+
+	public ServiceEvent LoadServiceEvent(KioskClientEvent eventType)
+	{
+		try
+		{
+			_logger.LogInfoWithSource($"loading {eventType} event", "LoadServiceEvent");
+			string path = Path.Combine(_store.DataPath, "Analytics", AnalyticsType.ServiceEvent.ToString(), eventType.ToString() + ".json");
+			string value = null;
+			if (File.Exists(path))
+			{
+				value = File.ReadAllText(path);
+			}
+			if (!string.IsNullOrWhiteSpace(value))
+			{
+				return JsonConvert.DeserializeObject<ServiceEvent>(value);
+			}
+		}
+		catch (Exception arg)
+		{
+			_logger.LogErrorWithSource($"error while loading {eventType} event. {arg}", "LoadServiceEvent");
+		}
+		return null;
 	}
 
 	private async Task HandleAnalytics(AnalyticsType type, object analyticsObject)

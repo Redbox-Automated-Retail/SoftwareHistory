@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using KioskClientService.API.App;
-using KioskClientService.API.Models;
 using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.Configuration;
@@ -23,25 +22,12 @@ public class ConfigurationService : IConfigurationService
 	{
 		try
 		{
-			ConfigurationClient.Instance.Initialize(_logger, _applicationSettings.UpdateManagerAddress, _applicationSettings.UpdateManagerPort);
+			ConfigurationClient.Instance.Initialize(_logger, _applicationSettings.AppSettings.UpdateManagerAddress, _applicationSettings.AppSettings.UpdateManagerPort);
 			return new ServiceResult(success: true);
 		}
 		catch (Exception exception)
 		{
 			return new ServiceResult(exception, "ConfigurationService.Initialize");
-		}
-	}
-
-	public ServiceResult Add(string key, string filepath, string defaultCategory, TimeSpan? checkTime, Func<bool> canActivate, Action activateAction)
-	{
-		try
-		{
-			ConfigurationClient.Instance.Add(key, filepath, defaultCategory, checkTime, canActivate, activateAction);
-			return new ServiceResult(success: true);
-		}
-		catch (Exception exception)
-		{
-			return new ServiceResult(exception, "ConfigurationService.Add");
 		}
 	}
 
@@ -111,7 +97,6 @@ public class ConfigurationService : IConfigurationService
 	{
 		try
 		{
-			ConfigurationClient.Instance.Start();
 			return new ServiceResult(success: true);
 		}
 		catch (Exception exception)
@@ -124,12 +109,25 @@ public class ConfigurationService : IConfigurationService
 	{
 		try
 		{
-			ConfigurationClient.Instance.Stop();
 			return new ServiceResult(success: true);
 		}
 		catch (Exception exception)
 		{
 			return new ServiceResult(exception, "ConfigurationService.Stop");
+		}
+	}
+
+	public ServiceResult CheckForUpdates(out Dictionary<string, string> dict)
+	{
+		dict = null;
+		try
+		{
+			dict = ConfigurationClient.Instance.CheckAllForUpdates();
+			return new ServiceResult(success: true);
+		}
+		catch (Exception exception)
+		{
+			return new ServiceResult(exception, "ConfigurationService.CheckForUpdates");
 		}
 	}
 

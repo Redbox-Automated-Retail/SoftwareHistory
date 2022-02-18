@@ -21,4 +21,19 @@ public static class StringExtensions
 		}
 		return "null";
 	}
+
+	public static string EncryptToBase64(this string source)
+	{
+		return Encoding.UTF8.GetBytes(source).Encrypt().ToBase64();
+	}
+
+	public static string DecryptFromBase64(this string source)
+	{
+		return Encoding.UTF8.GetString(source.Base64ToBytes().Decrypt());
+	}
+
+	public static byte[] Base64ToBytes(this string source)
+	{
+		return Convert.FromBase64String(source);
+	}
 }

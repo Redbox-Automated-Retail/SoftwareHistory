@@ -14,7 +14,7 @@ public class GetMoreLikeThisResponse : BaseResponse, IMessageScrub
 		base.Success = true;
 	}
 
-	public object Scrub()
+	public override object Scrub()
 	{
 		return JsonConvert.SerializeObject(this);
 	}

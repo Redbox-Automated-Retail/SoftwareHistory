@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace KioskClientService.API.App;
 
-public static class Jsonextensions
+public static class JsonExtensions
 {
 	public static string ToJsonIndented(this object obj)
 	{
