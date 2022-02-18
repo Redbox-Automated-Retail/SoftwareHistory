@@ -18,4 +18,9 @@ public static class StringExtensions
 		}
 		return new string('X', source.Length - visibleChars) + source.Substring(source.Length - visibleChars);
 	}
+
+	public static string EscapeNewLines(this string source)
+	{
+		return source.Replace("\r", "\\r").Replace("\n", "\\n");
+	}
 }

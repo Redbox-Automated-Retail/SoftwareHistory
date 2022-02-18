@@ -4,7 +4,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Redbox.NetCore.Logging.Abstractions;
 
-public interface ITestableLogger<T>
+public interface ITestableLogger<T> : ILogger<T>, ILogger, ITestableLogger
+{
+}
+public interface ITestableLogger : ILogger
 {
 	void LogCritical(string message, params object[] args);
 
