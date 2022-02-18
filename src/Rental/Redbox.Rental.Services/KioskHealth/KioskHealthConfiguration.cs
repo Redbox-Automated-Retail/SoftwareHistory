@@ -78,6 +78,12 @@ public class KioskHealthConfiguration : IKioskHealthConfiguration
 
 	public int EMVReaderDisconnectSampleSizeHours => GetInt("kioskhealth", "KioskHealth", "EMVReaderDisconnectSampleSizeHours", 48);
 
+	public int PingInterval => GetInt("kioskhealth", "KioskHealth", "PingInterval", 900000);
+
+	public bool PingServiceEnabled => GetBoolean("kioskhealth", "KioskHealth", "PingServiceEnabled");
+
+	public bool KioskServicesPingEnabled => GetBoolean("kioskhealth", "KioskHealth", "KioskServicesPingEnabled", defaultValue: false);
+
 	public KioskHealthConfiguration(IConfigurationService configService)
 	{
 		_configService = configService;

@@ -6,6 +6,8 @@ public interface IStoredPromoCode
 {
 	string PromoCode { get; set; }
 
+	int CampaignId { get; set; }
+
 	string CampaignName { get; set; }
 
 	string UsageDescription { get; set; }

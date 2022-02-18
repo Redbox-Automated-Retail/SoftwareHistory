@@ -43,46 +43,6 @@ public class KioskPricingService : IKioskPricingService
 		}
 	}
 
-	public IPricingSet CurrentPriceSet
-	{
-		get
-		{
-			if (!IsPricingEngineDataAvailable)
-			{
-				return null;
-			}
-			IPricingSet pricingSet = new PricingSet();
-			pricingSet.Name = "kiosk pricing";
-			pricingSet.ProgramName = "kiosk pricing";
-			pricingSet.PriceSetId = null;
-			IPricingRecord productTypePricingRecord = GetProductTypePricingRecord(TitleFamily.Movies, TitleType.DVD, useAdjustedPrices: false);
-			if (productTypePricingRecord == null)
-			{
-				return null;
-			}
-			pricingSet.PriceRecords.Add(productTypePricingRecord);
-			IPricingRecord productTypePricingRecord2 = GetProductTypePricingRecord(TitleFamily.Movies, TitleType.Bluray, useAdjustedPrices: false);
-			if (productTypePricingRecord2 == null)
-			{
-				return null;
-			}
-			pricingSet.PriceRecords.Add(productTypePricingRecord2);
-			IPricingRecord productTypePricingRecord3 = GetProductTypePricingRecord(TitleFamily.Games, TitleType.All, useAdjustedPrices: false);
-			if (productTypePricingRecord3 == null)
-			{
-				return null;
-			}
-			pricingSet.PriceRecords.Add(productTypePricingRecord3);
-			IPricingRecord productTypePricingRecord4 = GetProductTypePricingRecord(TitleFamily.Movies, TitleType._4KUHD, useAdjustedPrices: false);
-			if (productTypePricingRecord4 == null)
-			{
-				return null;
-			}
-			pricingSet.PriceRecords.Add(productTypePricingRecord4);
-			return pricingSet;
-		}
-	}
-
 	private Store Store
 	{
 		get
@@ -124,7 +84,7 @@ public class KioskPricingService : IKioskPricingService
 		}
 	}
 
-	public IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType, bool useAdjustedPrices)
+	public IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType)
 	{
 		IPricingRecord result = null;
 		if (!IsPricingEngineDataAvailable)
@@ -227,7 +187,7 @@ public class KioskPricingService : IKioskPricingService
 			return null;
 		}
 		List<IPricingRecord> productPricingRecordsByProductId = GetProductPricingRecordsByProductId(productId, titleProduct.TitleFamily, titleProduct.TitleType);
-		IPricingRecord productTypePricingRecord = GetProductTypePricingRecord(titleProduct.TitleFamily, titleProduct.TitleType, useAdjustedPrices: false);
+		IPricingRecord productTypePricingRecord = GetProductTypePricingRecord(titleProduct.TitleFamily, titleProduct.TitleType);
 		List<IPricingRecord> initial = new List<IPricingRecord>();
 		List<IPricingRecord> mnp = new List<IPricingRecord>();
 		if (productPricingRecordsByProductId != null)

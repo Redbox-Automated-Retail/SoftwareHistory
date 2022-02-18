@@ -1,15 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel.Loyalty;
 using Redbox.KioskServices.Proxy.Request;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.ShoppingCart;
 
@@ -299,70 +303,116 @@ public class CustomerOfferProxy : ICustomerOfferService
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				if (!StoreServicesProxy.Instance.IsStandAlone)
+				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 				{
-					LogHelper.Instance.Log("Live call to remote ICustomerOfferProxy, URL: {0}", KioskServicesProxy.Instance.Url);
 					IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().GetRentalShoppingCart(new Guid(sessionId));
 					IPromotion promo = rentalShoppingCart?.Promotion;
 					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-					IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(new
+					Dictionary<string, object> creditCardData = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true);
+					ShoppingCart shoppingCart = ProxyMessageHelper.CreateShoppingCart(rentalShoppingCart, promo);
+					string utcOffset = ProxyMessageHelper.CalcUtcOffset(DateTime.Now);
+					if (ServiceLocator.Instance.GetService<IConfiguration>().SendCustomerOffersToKioskClientService)
 					{
-						KioskId = kioskId,
-						MessageId = Guid.NewGuid(),
-						MessageType = "GetCustomerOffers",
-						EngineVersion = service["EngineVersion"],
-						BundleVersion = service["ProductVersion"],
-						Lang = languageCode,
-						StorefrontEventType = storefrontEventType,
-						UtcOffset = ProxyMessageHelper.CalcUtcOffset(DateTime.Now),
-						CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
-						ShoppingCart = ProxyMessageHelper.CreateShoppingCart(rentalShoppingCart, promo)
-					});
-					HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
-					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-					remoteServiceResult.Properties["CustomerProfileNumber"] = GetResponseValue(dictionary, "CustomerProfileNumber", null)?.ToString();
-					remoteServiceResult.Properties["AccountNumber"] = GetResponseValue(dictionary, "AccountNumber", null)?.ToString();
-					remoteServiceResult.Properties["EmailAddress"] = GetResponseValue(dictionary, "EmailAddress", null)?.ToString();
-					if (dictionary.ContainsKey("StoredOffers") && dictionary["StoredOffers"] != null)
-					{
-						ArrayList obj = (ArrayList)dictionary["StoredOffers"];
-						remoteServiceResult.Properties["StoredOffers"] = new List<CustomerOffer>();
-						List<CustomerOffer> list = new List<CustomerOffer>();
-						foreach (IDictionary<string, object> item in obj)
+						LogHelper.Instance.Log("Live call to remote KioskClientService");
+						IGetCustomerOffersResult result = ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.GetCustomerOffersAsync(kioskId, creditCardData, shoppingCart.ToJson().ToObject<Dictionary<string, object>>(), utcOffset, languageCode, storefrontEventType).Result;
+						remoteServiceResult.Properties["CustomerProfileNumber"] = result.CustomerProfileNumber;
+						remoteServiceResult.Properties["AccountNumber"] = result.AccountNumber;
+						remoteServiceResult.Properties["EmailAddress"] = result.EmailAddress;
+						if (result.StoredOffers != null && result.StoredOffers.Count > 0)
 						{
-							CustomerOffer customerOffer = new CustomerOffer();
-							ParseOffer(item, customerOffer);
-							list.Add(customerOffer);
-						}
-						remoteServiceResult.Properties["StoredOffers"] = list;
-					}
-					if (dictionary.ContainsKey("NewOffers") && dictionary["NewOffers"] != null)
-					{
-						ArrayList obj2 = (ArrayList)dictionary["NewOffers"];
-						remoteServiceResult.Properties["NewOffers"] = new List<CustomerOffer>();
-						List<CustomerOffer> list2 = new List<CustomerOffer>();
-						foreach (IDictionary<string, object> item2 in obj2)
-						{
-							CustomerOffer customerOffer2 = new CustomerOffer();
-							ParseOffer(item2, customerOffer2);
-							list2.Add(customerOffer2);
-						}
-						remoteServiceResult.Properties["NewOffers"] = list2;
-					}
-					if (!remoteServiceResult.Success)
-					{
-						ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
-						if (arrayList != null && arrayList.Count > 0)
-						{
-							if (arrayList[0] is Dictionary<string, object> dictionary2)
+							List<CustomerOffer> list = new List<CustomerOffer>();
+							foreach (CustomerOfferResult storedOffer in result.StoredOffers)
 							{
-								object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), (string)dictionary2["Code"]);
+								list.Add(CustomerOfferFromCustomerOfferResult(storedOffer));
+							}
+							remoteServiceResult.Properties["StoredOffers"] = list;
+						}
+						if (result.NewOffers != null && result.NewOffers.Count > 0)
+						{
+							List<CustomerOffer> list2 = new List<CustomerOffer>();
+							foreach (CustomerOfferResult newOffer in result.NewOffers)
+							{
+								list2.Add(CustomerOfferFromCustomerOfferResult(newOffer));
+							}
+							remoteServiceResult.Properties["NewOffers"] = list2;
+						}
+						remoteServiceResult.Success = result.Success;
+						if (!remoteServiceResult.Success)
+						{
+							Redbox.KioskEngine.ComponentModel.Error error = result.Errors.FirstOrDefault();
+							if (error != null)
+							{
+								object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), error.Code);
 								remoteServiceResult.Properties["response"] = fieldsForResponseCode ?? ((object)KioskLoginResponseErrors.Error);
 							}
+							else
+							{
+								remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+							}
 						}
-						else
+					}
+					else
+					{
+						LogHelper.Instance.Log($"Live call to remote ICustomerOfferProxy, URL: {KioskServicesProxy.Instance.Url}");
+						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(new
 						{
-							remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+							KioskId = kioskId,
+							MessageId = Guid.NewGuid(),
+							MessageType = "GetCustomerOffers",
+							EngineVersion = service["EngineVersion"],
+							BundleVersion = service["ProductVersion"],
+							Lang = languageCode,
+							StorefrontEventType = storefrontEventType,
+							UtcOffset = utcOffset,
+							CreditCard = creditCardData,
+							ShoppingCart = shoppingCart
+						});
+						ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(dictionary);
+						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+						remoteServiceResult.Properties["CustomerProfileNumber"] = GetResponseValue(dictionary, "CustomerProfileNumber", null)?.ToString();
+						remoteServiceResult.Properties["AccountNumber"] = GetResponseValue(dictionary, "AccountNumber", null)?.ToString();
+						remoteServiceResult.Properties["EmailAddress"] = GetResponseValue(dictionary, "EmailAddress", null)?.ToString();
+						if (dictionary.ContainsKey("StoredOffers") && dictionary["StoredOffers"] != null)
+						{
+							ArrayList obj = (ArrayList)dictionary["StoredOffers"];
+							remoteServiceResult.Properties["StoredOffers"] = new List<CustomerOffer>();
+							List<CustomerOffer> list3 = new List<CustomerOffer>();
+							foreach (IDictionary<string, object> item in obj)
+							{
+								CustomerOffer customerOffer = new CustomerOffer();
+								ParseOffer(item, customerOffer);
+								list3.Add(customerOffer);
+							}
+							remoteServiceResult.Properties["StoredOffers"] = list3;
+						}
+						if (dictionary.ContainsKey("NewOffers") && dictionary["NewOffers"] != null)
+						{
+							ArrayList obj2 = (ArrayList)dictionary["NewOffers"];
+							remoteServiceResult.Properties["NewOffers"] = new List<CustomerOffer>();
+							List<CustomerOffer> list4 = new List<CustomerOffer>();
+							foreach (IDictionary<string, object> item2 in obj2)
+							{
+								CustomerOffer customerOffer2 = new CustomerOffer();
+								ParseOffer(item2, customerOffer2);
+								list4.Add(customerOffer2);
+							}
+							remoteServiceResult.Properties["NewOffers"] = list4;
+						}
+						if (!remoteServiceResult.Success)
+						{
+							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList != null && arrayList.Count > 0)
+							{
+								if (arrayList[0] is Dictionary<string, object> dictionary2)
+								{
+									object fieldsForResponseCode2 = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), (string)dictionary2["Code"]);
+									remoteServiceResult.Properties["response"] = fieldsForResponseCode2 ?? ((object)KioskLoginResponseErrors.Error);
+								}
+							}
+							else
+							{
+								remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+							}
 						}
 					}
 				}
@@ -383,7 +433,7 @@ public class CustomerOfferProxy : ICustomerOfferService
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+					remoteServiceResult.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
 					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
@@ -398,6 +448,47 @@ public class CustomerOfferProxy : ICustomerOfferService
 				}
 			}
 		});
+	}
+
+	private CustomerOffer CustomerOfferFromCustomerOfferResult(CustomerOfferResult offer)
+	{
+		bool flag = offer.IncludeFormatIds != null && offer.IncludeFormatIds.Count > 0;
+		bool flag2 = offer.IncludeTitleIds != null && offer.IncludeTitleIds.Count > 0;
+		CustomerOffer customerOffer = new CustomerOffer
+		{
+			OfferId = offer.OfferId,
+			StoredOfferId = offer.StoredOfferId,
+			OfferDiscountCode = offer.OfferDiscountCode,
+			PromotionCode = offer.PromotionCode,
+			DiscountType = (OfferDiscountType)Enum.Parse(typeof(OfferDiscountType), offer.DiscountType),
+			CampaignId = offer.CampaignId,
+			TitleFamily = ParseTitleFamily(offer.ProductType),
+			ExpirationDate = offer.ExpirationDate,
+			IncludeOlderThan = offer.ExcludeIfWithinRedboxReleaseDate,
+			Amount = offer.DiscountAmount,
+			ActionCode = ParseActionCode(offer.ActionCode),
+			IncludeFormats = flag,
+			FormatIds = (flag ? offer.IncludeFormatIds.ToList() : offer.ExcludeFormatIds.ToList()),
+			IncludeTitles = flag2,
+			TitleIds = (flag2 ? offer.IncludeTitleIds.ToList() : offer.ExcludeTitleIds.ToList()),
+			RedeemedDateTime = offer.RedeemedDateTime
+		};
+		if (!string.IsNullOrEmpty(offer.OfferScopeType))
+		{
+			customerOffer.OfferScopeType = (OfferScopeType)Enum.Parse(typeof(OfferScopeType), offer.OfferScopeType);
+		}
+		if (!string.IsNullOrEmpty(offer.CustomerSegmentType))
+		{
+			customerOffer.CustomerSegmentType = (CustomerSegmentType)Enum.Parse(typeof(CustomerSegmentType), offer.CustomerSegmentType);
+		}
+		customerOffer.OfferProducts = offer.OfferProducts?.Select((OfferProductResult op) => new OfferProduct
+		{
+			ProductId = op.ProductId,
+			NumberOfNights = op.NumberOfNights,
+			DiscountedPrice = op.DiscountedPrice,
+			TotalDiscountAmount = op.TotalDiscountAmount
+		}).ToList();
+		return customerOffer;
 	}
 
 	private void ParseOffer(IDictionary<string, object> promo, CustomerOffer resultOffer)
@@ -428,7 +519,7 @@ public class CustomerOfferProxy : ICustomerOfferService
 		{
 			resultOffer.CampaignId = long.Parse(text3.ToString());
 		}
-		resultOffer.TitleFamily = ParseTitileFamily(GetResponseValue(promo, "ProductType", null)?.ToString());
+		resultOffer.TitleFamily = ParseTitleFamily(GetResponseValue(promo, "ProductType", null)?.ToString());
 		resultOffer.ExpirationDate = (DateTime)GetResponseValue(promo, "ExpirationDate", DateTime.Today);
 		resultOffer.IncludeOlderThan = GetResponseTimeSpan(promo, "ExcludeIfWithinRedboxReleaseDate", null);
 		resultOffer.Amount = GetResponseDecimal(promo, "DiscountAmount", 0m);
@@ -499,7 +590,7 @@ public class CustomerOfferProxy : ICustomerOfferService
 		return result;
 	}
 
-	private TitleFamily? ParseTitileFamily(string productTypeString)
+	private TitleFamily? ParseTitleFamily(string productTypeString)
 	{
 		if (string.IsNullOrEmpty(productTypeString) || productTypeString.ToUpper() == "ANY")
 		{
@@ -748,7 +839,7 @@ public class CustomerOfferProxy : ICustomerOfferService
 			finally
 			{
 				remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-				remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+				remoteServiceResult.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
 				LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 				ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 				{

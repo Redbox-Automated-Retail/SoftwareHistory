@@ -47,4 +47,8 @@ public interface IAuthorizeResult
 	int GiftCardMaxDiscs { get; set; }
 
 	int GiftCardMaxGames { get; set; }
+
+	bool KioskTransactionSuccess { get; set; }
+
+	bool SubscriptionTransactionSuccess { get; set; }
 }

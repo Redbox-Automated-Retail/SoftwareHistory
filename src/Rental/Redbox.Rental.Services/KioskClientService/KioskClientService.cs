@@ -2,47 +2,102 @@ using Redbox.Core;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.Ads;
 using Redbox.Rental.Model.KioskClientService.Application;
+using Redbox.Rental.Model.KioskClientService.Authentication;
+using Redbox.Rental.Model.KioskClientService.CustomerProfile;
+using Redbox.Rental.Model.KioskClientService.Data;
+using Redbox.Rental.Model.KioskClientService.Installer;
 using Redbox.Rental.Model.KioskClientService.Inventory;
+using Redbox.Rental.Model.KioskClientService.Loyalty;
+using Redbox.Rental.Model.KioskClientService.Marketing;
+using Redbox.Rental.Model.KioskClientService.Personalization;
+using Redbox.Rental.Model.KioskClientService.Planogram;
 using Redbox.Rental.Model.KioskClientService.Products;
+using Redbox.Rental.Model.KioskClientService.Promotion;
 using Redbox.Rental.Model.KioskClientService.Session;
+using Redbox.Rental.Model.KioskClientService.Subscriptions;
+using Redbox.Rental.Model.KioskClientService.TestData;
+using Redbox.Rental.Model.KioskClientService.Transactions;
+using Redbox.Rental.Model.KioskClientService.Utilities;
 using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.KioskClientService.Application;
+using Redbox.Rental.Services.KioskClientService.Authentication;
+using Redbox.Rental.Services.KioskClientService.CustomerProfile;
+using Redbox.Rental.Services.KioskClientService.Data;
+using Redbox.Rental.Services.KioskClientService.Installer;
 using Redbox.Rental.Services.KioskClientService.Inventory;
+using Redbox.Rental.Services.KioskClientService.Loyalty;
+using Redbox.Rental.Services.KioskClientService.Marketing;
+using Redbox.Rental.Services.KioskClientService.Personalization;
+using Redbox.Rental.Services.KioskClientService.Planogram;
 using Redbox.Rental.Services.KioskClientService.Products;
+using Redbox.Rental.Services.KioskClientService.Promotion;
 using Redbox.Rental.Services.KioskClientService.Session;
+using Redbox.Rental.Services.KioskClientService.Subscriptions;
+using Redbox.Rental.Services.KioskClientService.TestData;
+using Redbox.Rental.Services.KioskClientService.Transactions;
+using Redbox.Rental.Services.KioskClientService.Utilities;
 
 namespace Redbox.Rental.Services.KioskClientService;
 
 public class KioskClientService : IKioskClientService
 {
-	private IKioskClientServiceAds _ads;
-
-	private IKioskClientServiceApplication _application;
-
-	private IKioskClientServiceSession _session;
-
-	private IKioskClientServiceProductGroups _productGroups;
-
-	private IKioskClientServiceInventory _inventory;
-
 	public static KioskClientService Instance => Singleton<KioskClientService>.Instance;
 
-	public IKioskClientServiceAds Ads => _ads;
+	public IKioskClientServiceAds Ads { get; private set; }
 
-	public IKioskClientServiceApplication Application => _application;
+	public IKioskClientServiceApplication Application { get; private set; }
 
-	public IKioskClientServiceSession Session => _session;
+	public IKioskClientServiceAuthentication Authentication { get; private set; }
 
-	public IKioskClientServiceProductGroups ProductGroups => _productGroups;
+	public IKioskClientServiceCustomerProfile CustomerProfile { get; private set; }
 
-	public IKioskClientServiceInventory Inventory => _inventory;
+	public IKioskClientServiceData Data { get; private set; }
+
+	public IKioskClientServiceInstaller Installer { get; private set; }
+
+	public IKioskClientServiceInventory Inventory { get; private set; }
+
+	public IKioskClientServiceLoyalty Loyalty { get; private set; }
+
+	public IKioskClientServiceMarketing Marketing { get; private set; }
+
+	public IKioskClientServicePersonalization Personalization { get; private set; }
+
+	public IKioskClientServiceProductGroups ProductGroups { get; private set; }
+
+	public IKioskClientServicePromotion Promotion { get; private set; }
+
+	public IKioskClientServiceQRCodeUtilities QRCodeUtilities { get; private set; }
+
+	public IKioskClientServiceSession Session { get; private set; }
+
+	public IKioskClientServiceSubscriptions Subscriptions { get; private set; }
+
+	public IKioskClientServiceTestData TestData { get; private set; }
+
+	public IKioskClientServiceTransaction Transaction { get; private set; }
+
+	public IKioskClientServicePlanogram Planogram { get; private set; }
 
 	private KioskClientService()
 	{
-		_ads = new KioskClientServiceAds();
-		_application = new KioskClientServiceApplication();
-		_session = new KioskClientServiceSession();
-		_productGroups = new KioskClientServiceProductGroups();
-		_inventory = new KioskClientServiceInventory();
+		Ads = new KioskClientServiceAds();
+		Application = new KioskClientServiceApplication();
+		Authentication = new KioskClientServicesAuthentication();
+		CustomerProfile = new KioskClientServiceCustomerProfile();
+		Data = new KioskClientServiceData();
+		Installer = new KioskClientServiceInstaller();
+		Inventory = new KioskClientServiceInventory();
+		Loyalty = new KioskClientServiceLoyalty();
+		Marketing = new KioskClientServiceMarketing();
+		Personalization = new KioskClientServicePersonalization();
+		ProductGroups = new KioskClientServiceProductGroups();
+		Promotion = new KioskClientServicePromotion();
+		QRCodeUtilities = new KioskClientServiceQRCodeUtilities();
+		Session = new KioskClientServiceSession();
+		Subscriptions = new KioskClientServiceSubscriptions();
+		TestData = new KioskClientServiceTestData();
+		Transaction = new KioskClientServiceTransaction();
+		Planogram = new KioskClientServicePlanogram();
 	}
 }

@@ -15,7 +15,11 @@ public interface IRentalShoppingCart
 
 	bool IsFull { get; }
 
-	IList<IRentalShoppingCartItem> Items { get; }
+	IList<IBaseRentalShoppingCartItem> Items { get; }
+
+	IList<IRentalShoppingCartTitleItem> TitleItems { get; }
+
+	IList<IRentalShoppingCartSubscriptionItem> SubscriptionItems { get; }
 
 	int MaximumCapacity { get; }
 
@@ -41,9 +45,17 @@ public interface IRentalShoppingCart
 
 	OptInConfirmationStatus MarketingOptInConfirmationStatus { get; set; }
 
-	bool NeedLookupOfLoyaltyPointsToBeEarned { get; }
+	IList<IRentalShoppingCartTitleItem> RedeemableItems { get; }
+
+	IList<IRentalShoppingCartTitleItem> ToBeRedeemedItems { get; }
+
+	int TotalPointsToBeEarned { get; }
 
 	bool HasItemsToBeRedeemed { get; }
+
+	bool HasRedboxPlusFreeOneNightRentalSelected { get; }
+
+	bool HasDiscountRestriction { get; }
 
 	IServiceFee ServiceFee { get; set; }
 
@@ -53,25 +65,33 @@ public interface IRentalShoppingCart
 
 	event RentalShoppingCartChanged OnChange;
 
-	int GetCount(long productId);
-
 	void Abandon(string reason);
 
-	void AddItem(IRentalShoppingCartItem rentalShoppingCartItem);
+	bool AddItem(IBaseRentalShoppingCartItem rentalShoppingCartItem);
 
-	void AddItem(IRentalShoppingCartItem rentalShoppingCartItem, IPricingRecord pricingRecord);
+	bool AddTitleItem(IRentalShoppingCartTitleItem rentalShoppingCartItem, IPricingRecord pricingRecord);
 
-	void RemoveItem(IRentalShoppingCartItem rentalShoppingCartItem, bool userRemoved);
+	bool AddSubscriptionItem(IRentalShoppingCartSubscriptionItem rentalShoppingCartItem);
+
+	void RemoveItem(IBaseRentalShoppingCartItem rentalShoppingCartItem, bool userRemoved);
 
 	void Clear();
 
-	IRentalShoppingCartItem GetItem(int index);
+	IBaseRentalShoppingCartItem GetItem(int index);
 
-	bool HasItem(long productId);
+	bool HasTitleItem(long productId);
+
+	bool HasAnyTitleRollupTitle(ITitleRollupProduct titleRollupProduct);
+
+	bool HasSubscriptionItem(ISubscriptionProduct subscriptionProduct);
+
+	bool HasSubscriptionItem(SubscriptionType subscriptionType);
 
 	bool HasItemWithAction(long productId, RentalShoppingCartItemAction action);
 
 	bool HasMultiDiscItem();
+
+	void TriggerChangeNotification();
 
 	void ClearPromoCode();
 
@@ -83,9 +103,9 @@ public interface IRentalShoppingCart
 
 	void ClearAllLoyaltyPointsRecords();
 
-	List<IRentalShoppingCartItem> GetItemsByCriteria(IRentalShoppingCartFilterCriteria filterCriteria);
+	List<IRentalShoppingCartTitleItem> GetTitleItemsByCriteria(IRentalShoppingCartFilterCriteria filterCriteria);
 
-	List<IRentalShoppingCartItem> GetItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, int? productTypeId, List<int> formatIds, bool includeMultiNightPricedItems, bool includeFlashDeals, bool includeLoyaltyRedeemedItems);
+	List<IRentalShoppingCartTitleItem> GetTitleItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, int? productTypeId, List<int> formatIds, bool includeMultiNightPricedItems, bool includeFlashDeals, bool includeLoyaltyRedeemedItems, bool? includeRedboxPlusFreeOneNightRentalItems, bool includeDiscountRestrictionItems);
 
 	void UpdateServiceFee();
 

@@ -236,7 +236,7 @@ public class MerchantServicesProxy : IMerchantServices
 	{
 		get
 		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "ConfirmationStatus", ConfirmationStatus.DoNotShow);
+			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Merchant Services", "ConfirmationStatus", ConfirmationStatus.DontShow);
 		}
 		set
 		{
@@ -502,7 +502,7 @@ public class MerchantServicesProxy : IMerchantServices
 				{
 					if (LiveCall)
 					{
-						if (!StoreServicesProxy.Instance.IsStandAlone)
+						if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 						{
 							LogHelper.Instance.Log("Live call to remote IMerchantServices.PreAuth, URL: {0}", KioskServicesProxy.Instance.Url);
 							IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
@@ -615,7 +615,7 @@ public class MerchantServicesProxy : IMerchantServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					preauthorizeResult.StandAlone = StoreServicesProxy.Instance.IsStandAlone;
+					preauthorizeResult.StandAlone = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
 					completeCallback(remoteServiceResult);
 				}
 				finally
@@ -655,7 +655,7 @@ public class MerchantServicesProxy : IMerchantServices
 				}
 				else if ((flag && LiveCall) || (flag2 && GCLiveCall))
 				{
-					if (!StoreServicesProxy.Instance.IsStandAlone)
+					if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 					{
 						LogHelper.Instance.Log($"Live call to remote IMerchantServices.{text}, URL: {KioskServicesProxy.Instance.Url}");
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
@@ -698,7 +698,7 @@ public class MerchantServicesProxy : IMerchantServices
 							};
 						}
 						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
-						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
+						ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 						if (dictionary.ContainsKey("server_name"))
 						{
@@ -720,7 +720,7 @@ public class MerchantServicesProxy : IMerchantServices
 							authorizeResult.FirstName = dictionary2["FirstName"]?.ToString();
 							authorizeResult.IsRBI = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
-						authorizeResult.ConfirmationStatus = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
+						authorizeResult.ConfirmationStatus = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DontShow.ToString());
 						if (flag2)
 						{
 							Dictionary<string, object> dictionary3 = (dictionary.ContainsKey("GiftCardSummary") ? (dictionary["GiftCardSummary"] as Dictionary<string, object>) : null);
@@ -774,7 +774,7 @@ public class MerchantServicesProxy : IMerchantServices
 						authorizeResult.Response = response;
 						authorizeResult.IsOnline = false;
 						PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
-						authorizeResult.ConfirmationStatus = ConfirmationStatus.DoNotShow.ToString();
+						authorizeResult.ConfirmationStatus = ConfirmationStatus.DontShow.ToString();
 						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
 				}
@@ -848,8 +848,10 @@ public class MerchantServicesProxy : IMerchantServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					authorizeResult.StandAlone = StoreServicesProxy.Instance.IsStandAlone;
+					authorizeResult.StandAlone = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
 					authorizeResult.Success = remoteServiceResult.Success;
+					authorizeResult.KioskTransactionSuccess = remoteServiceResult.Success;
+					authorizeResult.SubscriptionTransactionSuccess = false;
 					completeCallback(remoteServiceResult);
 				}
 				finally
@@ -878,7 +880,7 @@ public class MerchantServicesProxy : IMerchantServices
 				}
 				else if (ResvAuthLiveCall)
 				{
-					if (!StoreServicesProxy.Instance.IsStandAlone)
+					if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.ReservationAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
@@ -897,7 +899,7 @@ public class MerchantServicesProxy : IMerchantServices
 							CustomerProfileNumber = customerProfileNumber
 						};
 						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
-						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
+						ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 						if (dictionary.ContainsKey("server_name"))
 						{
@@ -918,7 +920,7 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["has_profile"] = (bool)dictionary2["Valid"];
 							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
 						}
-						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
+						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DontShow.ToString());
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
@@ -945,7 +947,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = false;
 						PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
-						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DontShow.ToString();
 						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
 				}
@@ -991,7 +993,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["reference_number"] = TransactionId;
 						remoteServiceResult.Properties["account_number"] = AccountNumber;
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
-						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DontShow.ToString();
 					}
 				}
 			}
@@ -1008,7 +1010,7 @@ public class MerchantServicesProxy : IMerchantServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone || !LiveCall;
+					remoteServiceResult.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone || !LiveCall;
 					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -1033,7 +1035,6 @@ public class MerchantServicesProxy : IMerchantServices
 			remoteServiceResult.Properties["is_online"] = true;
 			ITrackData trackData = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession()?.TrackData;
 			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
-			_ = ServiceLocator.Instance.GetService<IPersonalizationServices>()?.CustomerProfileNumber;
 			try
 			{
 				Interlocked.Increment(ref m_working);
@@ -1043,7 +1044,7 @@ public class MerchantServicesProxy : IMerchantServices
 				}
 				else if (LiveCall)
 				{
-					if (!StoreServicesProxy.Instance.IsStandAlone)
+					if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.PickupAuthorize, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
@@ -1068,7 +1069,7 @@ public class MerchantServicesProxy : IMerchantServices
 							CustomerProfileNumber = customerProfileNumber
 						};
 						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
-						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
+						ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 						if (dictionary.ContainsKey("server_name"))
 						{
@@ -1090,7 +1091,7 @@ public class MerchantServicesProxy : IMerchantServices
 							remoteServiceResult.Properties["first_name"] = dictionary2["FirstName"];
 							remoteServiceResult.Properties["is_rbi"] = dictionary2.ContainsKey("IsRBI") && (bool)dictionary2["IsRBI"];
 						}
-						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DoNotShow.ToString());
+						remoteServiceResult.Properties["confirmation_status"] = (dictionary.ContainsKey("ConfirmationStatus") ? ((ConfirmationStatus)dictionary["ConfirmationStatus"]/*cast due to constrained. prefix*/).ToString() : ConfirmationStatus.DontShow.ToString());
 						remoteServiceResult.Properties["account_number"] = (dictionary.ContainsKey("AccountNumber") ? dictionary["AccountNumber"] : string.Empty);
 						remoteServiceResult.Properties["customer_profile_number"] = (dictionary.ContainsKey("CustomerProfileNumber") ? dictionary["CustomerProfileNumber"] : string.Empty);
 						if (!remoteServiceResult.Success && !dictionary.ContainsKey("ExceptionRaised"))
@@ -1117,7 +1118,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["response"] = AuthorizeResponse.Approved.ToString();
 						remoteServiceResult.Properties["is_online"] = false;
 						PopulateFirstNameAndLastNameFromTrackData(remoteServiceResult, trackData);
-						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DontShow.ToString();
 						new AutoResetEvent(initialState: false).WaitOne(1000);
 					}
 				}
@@ -1164,7 +1165,7 @@ public class MerchantServicesProxy : IMerchantServices
 						remoteServiceResult.Properties["reference_number"] = TransactionId;
 						remoteServiceResult.Properties["account_number"] = AccountNumber;
 						remoteServiceResult.Properties["customer_profile_number"] = CPAccountNumber;
-						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DoNotShow.ToString();
+						remoteServiceResult.Properties["confirmation_status"] = ConfirmationStatus.DontShow.ToString();
 					}
 				}
 			}
@@ -1181,7 +1182,7 @@ public class MerchantServicesProxy : IMerchantServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+					remoteServiceResult.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
 					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -1214,7 +1215,7 @@ public class MerchantServicesProxy : IMerchantServices
 				}
 				else if (LiveCall)
 				{
-					if (!StoreServicesProxy.Instance.IsStandAlone)
+					if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 					{
 						LogHelper.Instance.Log("Live call to remote IMerchantServices.ValidatePickup, URL: {0}", KioskServicesProxy.Instance.Url);
 						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
@@ -1224,13 +1225,13 @@ public class MerchantServicesProxy : IMerchantServices
 							MessageId = Guid.NewGuid(),
 							EngineVersion = service["EngineVersion"],
 							BundleVersion = service["ProductVersion"],
-							KioskId = int.Parse(StoreServicesProxy.Instance.StoreNumber),
+							KioskId = ServiceLocator.Instance.GetService<IStoreServices>().StoreNumberInteger,
 							CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true),
 							TransactionDate = DateTime.Now,
 							ReferenceNumbers = referenceNumbers
 						};
 						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
-						HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
+						ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(dictionary);
 						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 						if (dictionary.ContainsKey("server_name"))
 						{
@@ -1384,7 +1385,7 @@ public class MerchantServicesProxy : IMerchantServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+					remoteServiceResult.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
 					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
@@ -1406,17 +1407,23 @@ public class MerchantServicesProxy : IMerchantServices
 		{
 			transactionEntitiesInJsonFormat = false;
 			ISession session = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
-			foreach (TransactionEntity item2 in transactionEntitiesInJsonFormat ? JsonConvert.DeserializeObject<List<TransactionEntity>>(transactionEntities.ToString()) : JsonConvert.DeserializeObject<List<TransactionEntity>>(JsonConvert.SerializeObject(transactionEntities)))
+			List<TransactionEntity> list = (transactionEntitiesInJsonFormat ? JsonConvert.DeserializeObject<List<TransactionEntity>>(transactionEntities.ToString()) : JsonConvert.DeserializeObject<List<TransactionEntity>>(JsonConvert.SerializeObject(transactionEntities)));
+			if (list != null)
 			{
-				TransactionEntity item = new TransactionEntity
+				foreach (TransactionEntity item2 in list)
 				{
-					DiscId = item2.DiscId,
-					Name = item2.Name,
-					Value = item2.Value,
-					TitleId = item2.TitleId
-				};
-				session.TransactionData.TransactionEntities.Add(item);
+					TransactionEntity item = new TransactionEntity
+					{
+						DiscId = item2.DiscId,
+						Name = item2.Name,
+						Value = item2.Value,
+						TitleId = item2.TitleId
+					};
+					session.TransactionData.TransactionEntities.Add(item);
+				}
+				return;
 			}
+			LogHelper.Instance.Log("No transaction entities found to add to the transaction data session");
 		}
 		catch (Exception e)
 		{
@@ -1507,10 +1514,10 @@ public class MerchantServicesProxy : IMerchantServices
 		{
 			foreach (IProductItem result in pickupResults[key])
 			{
-				IRentalShoppingCartItem rentalShoppingCartItem = rentalShoppingCart.Items.SingleOrDefault((IRentalShoppingCartItem i) => i.Barcode == result.Barcode);
-				if (rentalShoppingCartItem != null)
+				IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = rentalShoppingCart.TitleItems.SingleOrDefault((IRentalShoppingCartTitleItem i) => i.Barcode == result.Barcode);
+				if (rentalShoppingCartTitleItem != null)
 				{
-					rentalShoppingCartItem.Status = result.Status;
+					rentalShoppingCartTitleItem.Status = result.Status;
 				}
 				else
 				{

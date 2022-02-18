@@ -10,15 +10,9 @@ namespace Redbox.KioskServices.KernelExtension;
 
 public class KioskServicesHost : IKernelExtensionHost, IDisposable
 {
-	private IQueueMessageProcessorService _queueMessageProcessorService;
+	private IQueueMessageProcessorService _defaultMessageProcessorService;
 
-	private IQueueMessageProcessorService _kioskAlertMessageProcessorService;
-
-	private IQueueMessageProcessorService _auditEventMessageProcessorService;
-
-	private IQueueMessageProcessorService _kioskFunctionCheckMessageProcessorService;
-
-	private IQueueMessageProcessorService _kioskEventsMessageProcessorService;
+	private IQueueMessageProcessorService _softSyncMessageProcessorService;
 
 	public IKernelExtension Extension { get; set; }
 
@@ -29,11 +23,18 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 	public bool CanSwitch(out ErrorList errors)
 	{
 		errors = new ErrorList();
-		bool flag = InventoryServicesProxy.Instance.CanSwitch();
+		bool flag = ServiceLocator.Instance.GetService<IMarketingServices>().CanSwitch();
+		LogHelper.Instance.Log("KioskService -> MarketingService CanSwitch: {0}", flag);
+		if (!flag)
+		{
+			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH669", "Bundle Switch Error", "Can not switch while marketing service is performing work."));
+			return false;
+		}
+		flag = ServiceLocator.Instance.GetService<IInventoryServices>().CanSwitch();
 		LogHelper.Instance.Log("KioskService -> InventoryService CanSwitch: {0}", flag);
 		if (!flag)
 		{
-			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH666", "Bundle Switch Error", "Can not switch while inventory service is performing work."));
+			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH668", "Bundle Switch Error", "Can not switch while inventory service is performing work."));
 			return false;
 		}
 		flag = MerchantServicesProxy.Instance.CanSwitch();
@@ -43,28 +44,28 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH667", "Bundle Switch Error", "Can not switch while merchant service is performing work."));
 			return false;
 		}
-		flag = StoreServicesProxy.Instance.CanSwitch();
+		flag = ServiceLocator.Instance.GetService<IStoreServices>().CanSwitch();
 		LogHelper.Instance.Log("KioskService -> StoreService CanSwitch: {0}", flag);
 		if (!flag)
 		{
 			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH666", "Bundle Switch Error", "Can not switch while store service is performing work."));
 			return false;
 		}
-		flag = PromotionServicesProxy.Instance.CanSwitch();
+		flag = ServiceLocator.Instance.GetService<IPromotionServices>().CanSwitch();
 		LogHelper.Instance.Log("KioskService -> PromotionService CanSwitch: {0}", flag);
 		if (!flag)
 		{
 			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH665", "Bundle Switch Error", "Can not switch while promotion service is performing work."));
 			return false;
 		}
-		flag = HealthServicesProxy.Instance.CanSwitch();
+		flag = ServiceLocator.Instance.GetService<IHealthServices>().CanSwitch();
 		LogHelper.Instance.Log("KioskService -> HealthService CanSwitch: {0}", flag);
 		if (!flag)
 		{
 			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH664", "Bundle Switch Error", "Can not switch while health service is performing work."));
 			return false;
 		}
-		flag = AuthenticationServicesProxy.Instance.CanSwitch();
+		flag = ServiceLocator.Instance.GetService<IAuthenticationServices>().CanSwitch();
 		LogHelper.Instance.Log("KioskService -> AuthenticationService CanSwitch: {0}", flag);
 		if (!flag)
 		{
@@ -85,13 +86,13 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		ErrorList result = new ErrorList();
 		LogHelper.Instance.Log("Kiosk Services Kernel Extension Load.");
 		ServiceLocator.Instance.GetService<IObjectCacheService>()?.SetObject("Kiosk Services Proxy", new ServiceProxy());
-		ServiceLocator.Instance.AddService(typeof(IStoreServices), StoreServicesProxy.Instance);
+		ServiceLocator.Instance.AddStoreServices();
 		ServiceLocator.Instance.AddService(typeof(IHealthServices), HealthServicesProxy.Instance);
 		ServiceLocator.Instance.AddService(typeof(IMerchantServices), MerchantServicesProxy.Instance);
-		ServiceLocator.Instance.AddService(typeof(IInventoryServices), InventoryServicesProxy.Instance);
-		ServiceLocator.Instance.AddService(typeof(IPromotionServices), PromotionServicesProxy.Instance);
-		ServiceLocator.Instance.AddService(typeof(IAuthenticationServices), AuthenticationServicesProxy.Instance);
-		ServiceLocator.Instance.AddService(typeof(IMarketingOptinServices), MarketingOptinServicesProxy.Instance);
+		ServiceLocator.Instance.AddInventoryServices();
+		ServiceLocator.Instance.AddService(typeof(IPromotionServices), PromotionServices.Instance);
+		ServiceLocator.Instance.AddAuthenticationServices();
+		ServiceLocator.Instance.AddMarketingServices();
 		if (GetPzSLiveCall())
 		{
 			ServiceLocator.Instance.AddService(typeof(IPersonalizationServices), PersonalizationServicesProxy.Instance);
@@ -116,7 +117,6 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			service.AddPreferencePage("KioskServices_GiftCardAuth", "Remote Services\\Merchant Services", "Kiosk Services/Gift Card Auth", PreferencePageTarget.LocalSystem, new GiftCardAuthPreferencePage());
 			service.AddPreferencePage("KioskServices_LoyaltyServices", "Remote Services\\Loyalty Services", "Kiosk Services/Loyalty Services", PreferencePageTarget.LocalSystem, new LoyaltyServicesPreferencePage());
 			service.AddPreferencePage("KioskServices_PersonalizationGeneral", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/General", PreferencePageTarget.LocalSystem, new PersonalizationGeneralPreferencePage());
-			service.AddPreferencePage("KioskServices_PersonalizationLogin", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/Login", PreferencePageTarget.LocalSystem, new PersonalizationPreferencePage());
 			service.AddPreferencePage("KioskServices_PersonalizationUpdateAccount", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/Update Account", PreferencePageTarget.LocalSystem, new PersonalizationUpdateAccountPreferencePage());
 			service.AddPreferencePage("FraudService", "Local Services\\Fraud Services", "Kiosk Services/Fraud Services", PreferencePageTarget.LocalSystem, new FraudServicePreferencePage());
 			service.AddPreferencePage("CustomerOffers", "Local Services\\Customer Offers", "Kiosk Services/Customer Offers", PreferencePageTarget.LocalSystem, new CustomerOffersPreferencePage());
@@ -135,9 +135,10 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			service.RegisterKernelFunctions(typeof(IRemoteServiceResultExtensions).Assembly, "Kiosk Services");
 		}
 		LogHelper.Instance.Log("...Reset Kiosk Services Proxy.");
-		AuthenticationServicesProxy.Instance.Reset();
-		PromotionServicesProxy.Instance.Reset();
-		InventoryServicesProxy.Instance.Reset();
+		ServiceLocator.Instance.GetService<IAuthenticationServices>().Reset();
+		ServiceLocator.Instance.GetService<IPromotionServices>().Reset();
+		ServiceLocator.Instance.GetService<IMarketingServices>().Reset();
+		ServiceLocator.Instance.GetService<IInventoryServices>().Reset();
 		return result;
 	}
 
@@ -148,18 +149,12 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 		if (service != null)
 		{
-			_queueMessageProcessorService = new DefaultMessageProcessorService();
-			service.RegisterMessageProcessorService(_queueMessageProcessorService);
-			_kioskAlertMessageProcessorService = new KSKioskAlertMessageProcessorService();
-			service.RegisterMessageProcessorService(_kioskAlertMessageProcessorService);
-			_auditEventMessageProcessorService = new KSAuditEventMessageProcessorService();
-			service.RegisterMessageProcessorService(_auditEventMessageProcessorService);
-			_kioskFunctionCheckMessageProcessorService = new KSKioskFunctionCheckMessageProcessorService();
-			service.RegisterMessageProcessorService(_kioskFunctionCheckMessageProcessorService);
-			_kioskEventsMessageProcessorService = new KSKioskEventsMessageProcessorService();
-			service.RegisterMessageProcessorService(_kioskEventsMessageProcessorService);
+			_defaultMessageProcessorService = new DefaultMessageProcessorService();
+			service.RegisterMessageProcessorService(_defaultMessageProcessorService);
+			_softSyncMessageProcessorService = new SoftSyncMessageProcessorService();
+			service.RegisterMessageProcessorService(_softSyncMessageProcessorService);
 		}
-		HealthServicesProxy.Instance.StartPingTimer();
+		ServiceLocator.Instance.GetService<IHealthServices>().StartPingTimer();
 		return result;
 	}
 
@@ -168,28 +163,28 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		LogHelper.Instance.Log("Kiosk Services Kernel Extension Deactivate:");
 		ErrorList result = new ErrorList();
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		if (service != null && _queueMessageProcessorService != null)
+		if (service != null && _defaultMessageProcessorService != null)
 		{
-			service.UnRegisterMessageProcessorService(_queueMessageProcessorService);
-			_queueMessageProcessorService = null;
-			service.UnRegisterMessageProcessorService(_kioskAlertMessageProcessorService);
-			_kioskAlertMessageProcessorService = null;
-			service.UnRegisterMessageProcessorService(_auditEventMessageProcessorService);
-			_auditEventMessageProcessorService = null;
-			service.UnRegisterMessageProcessorService(_kioskFunctionCheckMessageProcessorService);
-			_kioskFunctionCheckMessageProcessorService = null;
-			service.UnRegisterMessageProcessorService(_kioskEventsMessageProcessorService);
-			_kioskEventsMessageProcessorService = null;
+			if (_defaultMessageProcessorService != null)
+			{
+				service.UnRegisterMessageProcessorService(_softSyncMessageProcessorService);
+				_softSyncMessageProcessorService = null;
+			}
+			if (_softSyncMessageProcessorService != null)
+			{
+				service.UnRegisterMessageProcessorService(_defaultMessageProcessorService);
+				_defaultMessageProcessorService = null;
+			}
 		}
-		InventoryServicesProxy.Instance.Deactivate();
-		HealthServicesProxy.Instance.StopPingTimer();
+		ServiceLocator.Instance.GetService<IInventoryServices>().Deactivate();
+		ServiceLocator.Instance.GetService<IHealthServices>().StopPingTimer();
 		return result;
 	}
 
 	public void HandleHostCrash(Exception e)
 	{
 		LogHelper.Instance.Log("Kiosk Services Kernel Extension Host Crash:", e);
-		HealthServicesProxy.Instance.SendAlert(StoreServicesProxy.Instance.StoreNumber, "ApplicationCrash", null, e.ToString(), DateTime.Now, null);
+		ServiceLocator.Instance.GetService<IHealthServices>().SendAlert(ServiceLocator.Instance.GetService<IStoreServices>().StoreNumberString, "ApplicationCrash", null, e.ToString(), DateTime.Now, null);
 	}
 
 	public void RegisterCommunicationActivity(Action<object, EventArgs> action)

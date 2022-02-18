@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Services;
@@ -39,51 +41,30 @@ public class CheckoutFunctions
 		});
 	}
 
-	private static bool GetBooleanValue(LuaTable luaTable, string propertyName, out bool value)
+	[KernelFunction(Name = "kernel.regular_checkout_preposition_vend_complete")]
+	internal static void RegularCheckoutPrepositionVendComplete(LuaTable vendResults)
 	{
-		bool result = false;
-		value = false;
-		if (luaTable != null)
+		if (vendResults != null)
 		{
-			object obj = luaTable[propertyName];
-			if (obj != null && bool.TryParse(obj.ToString(), out var result2))
+			List<VendResult> list = new List<VendResult>();
+			foreach (object value in vendResults.Values)
 			{
-				value = result2;
-				result = true;
+				if (value is LuaTable)
+				{
+					LuaTable luaTable = value as LuaTable;
+					VendResult item = new VendResult
+					{
+						barcode = luaTable["barcode"]?.ToString(),
+						status = luaTable["status"]?.ToString()
+					};
+					list.Add(item);
+				}
 			}
+			Redbox.Rental.Services.Controllers.CheckoutFunctions.RegularCheckoutPrepositionVendComplete(list);
 		}
-		return result;
-	}
-
-	private static bool GetStringValue(LuaTable luaTable, string propertyName, out string value)
-	{
-		bool result = false;
-		value = null;
-		if (luaTable != null)
+		else
 		{
-			object obj = luaTable[propertyName];
-			if (obj != null)
-			{
-				value = obj.ToString();
-				result = true;
-			}
+			LogHelper.Instance.Log("RegularCheckoutPrepositionVendComplete: Vend result must not be null.");
 		}
-		return result;
-	}
-
-	private static bool GetIntegerValue(LuaTable luaTable, string propertyName, out int value)
-	{
-		bool result = false;
-		value = 0;
-		if (luaTable != null)
-		{
-			object obj = luaTable[propertyName];
-			if (obj != null && int.TryParse(obj.ToString(), out var result2))
-			{
-				value = result2;
-				result = true;
-			}
-		}
-		return result;
 	}
 }

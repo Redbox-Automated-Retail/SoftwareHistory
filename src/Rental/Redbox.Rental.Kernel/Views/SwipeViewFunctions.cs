@@ -9,6 +9,6 @@ public class SwipeViewFunctions
 	[KernelFunction(Name = "kernel.set_swipe_view_parameters")]
 	public static void SetSwipeViewParameters(Action cancelAction, Action continueAction, string swipeViewType)
 	{
-		SwipeViewController.SetSwipeViewParameters(cancelAction, continueAction, swipeViewType);
+		SwipeViewController.SetSwipeViewParameters(cancelAction, continueAction, swipeViewType, null);
 	}
 }

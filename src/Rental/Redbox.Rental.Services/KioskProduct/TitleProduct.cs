@@ -109,77 +109,11 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return false;
 			}
-			if (PricingService.IsPricingEngineEnabled)
+			if (PriceEngineIsSellable)
 			{
-				if (PriceEngineIsSellable)
-				{
-					return PurchasePrice > 0m;
-				}
-				return false;
+				return PurchasePrice > 0m;
 			}
-			return NoPriceEngineIsSellable;
-		}
-	}
-
-	private bool NoPriceEngineIsSellable
-	{
-		get
-		{
-			if (DoNotRent || !IsValidProduct || !SellThru || !IsAvailable)
-			{
-				return false;
-			}
-			if (IsGame)
-			{
-				if (!_storeManager.CanSellUsedGames)
-				{
-					return false;
-				}
-				if (PurchasePrice <= 0m)
-				{
-					return false;
-				}
-				if (!SellThruDate.HasValue)
-				{
-					return false;
-				}
-				if (SellThruDate > DateTime.Now)
-				{
-					return false;
-				}
-			}
-			if (IsMovie)
-			{
-				if (!_storeManager.CanSellUsedMovies)
-				{
-					return false;
-				}
-				if (PurchasePrice <= 0m)
-				{
-					return false;
-				}
-				if (!SellThruDate.HasValue)
-				{
-					if (TitleType == TitleType.DigitalCode)
-					{
-						return true;
-					}
-					IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
-					if (service == null)
-					{
-						return false;
-					}
-					if ((DateTime.Now - MerchandiseDate).TotalDays < (double)service.GetSellThruDays())
-					{
-						return false;
-					}
-				}
-				if (SellThruDate.HasValue && SellThruDate > DateTime.Now)
-				{
-					return false;
-				}
-			}
-			return true;
+			return false;
 		}
 	}
 
@@ -263,47 +197,11 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return PricingService.GetEmptyCasePrice();
 			}
-			if (PricingService.IsPricingEngineEnabled)
+			if (PriceEngineIsSellable)
 			{
-				if (PriceEngineIsSellable)
-				{
-					return PurchasePriceRecord?.Purchase ?? 0m;
-				}
-				return 0m;
+				return PurchasePriceRecord?.Purchase ?? 0m;
 			}
-			return NoPricingEnginePurchasePrice;
-		}
-	}
-
-	private decimal NoPricingEnginePurchasePrice
-	{
-		get
-		{
-			if (IsEmptyCase)
-			{
-				return PricingService.GetEmptyCasePrice();
-			}
-			if (IsGame)
-			{
-				if (!IsGame)
-				{
-					return 0m;
-				}
-				return GetAdjustedPurchasePrice(SellThruPrice ?? 0m);
-			}
-			if (!IsMovie)
-			{
-				return 0m;
-			}
-			if (TitleType == TitleType.DigitalCode)
-			{
-				if (!SellThruPrice.HasValue)
-				{
-					return 0m;
-				}
-				return GetAdjustedPurchasePrice(SellThruPrice.Value);
-			}
-			return GetAdjustedPurchasePrice(SellThruPrice ?? _store.PurchasePrice);
+			return 0m;
 		}
 	}
 
@@ -318,28 +216,14 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 					Purchase = PricingService.GetEmptyCasePrice()
 				};
 			}
-			if (PricingService.IsPricingEngineEnabled)
+			return PricingService.GetPurchasePricing(this) ?? new PricingRecord
 			{
-				return PricingService.GetPurchasePricing(this);
-			}
-			return new PricingRecord
-			{
-				Purchase = NoPricingEnginePurchasePrice
+				Purchase = 0m
 			};
 		}
 	}
 
-	public IList<IPricingRecord> RentalPriceRecords
-	{
-		get
-		{
-			if (PricingService.IsPricingEngineEnabled)
-			{
-				return PricingService.GetProductPricingRecords(this);
-			}
-			return new List<IPricingRecord> { PricingService.GetOneDayProductPricingRecord(this) };
-		}
-	}
+	public IList<IPricingRecord> RentalPriceRecords => PricingService.GetProductPricingRecords(ProductId);
 
 	private IConfiguration Config => Redbox.Rental.Services.Configuration.Configuration.Instance;
 
@@ -523,6 +407,22 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	public int SortOrderPosition { get; set; }
 
 	public string Studio => _title.Studio;
+
+	public DateTime? RedboxPlusEligibleDate => _title.RedboxPlusEligibleDate;
+
+	public bool IsRedboxPlusEligible
+	{
+		get
+		{
+			if (!RedboxPlusEligibleDate.HasValue)
+			{
+				return false;
+			}
+			return RedboxPlusEligibleDate <= DateTime.Now;
+		}
+	}
+
+	public DiscountRestriction DiscountRestriction => _title.DiscountRestriction;
 
 	public TitleProduct(Title title, TitleCache titleCache, TitleType titleType, IProfileDataInstance profile, Store store, IStoreManager storeManager)
 		: base(store)

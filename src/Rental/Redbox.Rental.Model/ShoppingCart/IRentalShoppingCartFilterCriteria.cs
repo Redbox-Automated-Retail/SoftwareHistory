@@ -28,4 +28,8 @@ public interface IRentalShoppingCartFilterCriteria
 	bool IncludeFlashDeals { get; set; }
 
 	bool IncludeLoyaltyRedeemedItems { get; set; }
+
+	bool? IncludeRedboxPlusFreeOneNightRentalItems { get; set; }
+
+	bool IncludeDiscountRestrictionItems { get; set; }
 }

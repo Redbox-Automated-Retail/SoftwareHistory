@@ -1,5 +1,4 @@
 using System;
-using DeviceService.ComponentModel;
 using DeviceService.ComponentModel.Commands;
 
 namespace Redbox.KioskEngine.ComponentModel.TrackData;
@@ -10,15 +9,9 @@ public interface ITrackDataService
 
 	bool IsNewReader { get; }
 
-	event CardReadCompleteHandler OnCardReadComplete;
-
-	event CardReadStartedEventHandler OnCardReadStarted;
-
-	void StartCardRead(int timeout, bool isZeroTouchRead, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction, Guid sessionId);
+	void StartCardRead(CardReadRequestInfo request, Action<IReadCardJob> OnReadJobStart, Action<Guid> OnCardProcessing, Action<CardReadRequestInfo, CardReadCompleteDetails> onComplete);
 
 	void StopCardRead(CancelReason cancelReason);
 
 	void StopAllSessionCardReads(Guid sessionId, CancelReason cancelReason);
-
-	void ClearCardReadHandlers();
 }

@@ -2,10 +2,11 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using Redbox.Core;
 using Redbox.FraudServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskServices.Proxy;
+using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.KernelExtension;
 
@@ -115,12 +116,13 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 
 	public void LoadValues(IPreferencePage preferencePage)
 	{
+		IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
 		m_isLoaded = false;
-		m_liveCallCheckBox.Checked = InventoryServicesProxy.Instance.LiveCall;
-		m_enableSellThruOfNewProduct.Checked = InventoryServicesProxy.Instance.EnableSellThryOfNew;
-		m_simulateServerBusyCheckBox.Checked = InventoryServicesProxy.Instance.SimulateServerBusyError;
-		m_enableOutOfStockDisplayCheckBox.Checked = InventoryServicesProxy.Instance.EnableOutOfStockDisplay;
-		m_simulateCommunicationsFailureCheckBox.Checked = InventoryServicesProxy.Instance.SimulateCommunicationsFailure;
+		m_liveCallCheckBox.Checked = service.LiveCall;
+		m_enableSellThruOfNewProduct.Checked = service.EnableSellThryOfNew;
+		m_simulateServerBusyCheckBox.Checked = service.SimulateServerBusyError;
+		m_enableOutOfStockDisplayCheckBox.Checked = service.EnableOutOfStockDisplay;
+		m_simulateCommunicationsFailureCheckBox.Checked = service.SimulateCommunicationsFailure;
 		m_isLoaded = true;
 		pnlFraudStatusTest.Visible = false;
 	}
@@ -129,7 +131,7 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			InventoryServicesProxy.Instance.LiveCall = m_liveCallCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IInventoryServices>().LiveCall = m_liveCallCheckBox.Checked;
 		}
 	}
 
@@ -137,7 +139,7 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			InventoryServicesProxy.Instance.EnableOutOfStockDisplay = m_enableOutOfStockDisplayCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IInventoryServices>().EnableOutOfStockDisplay = m_enableOutOfStockDisplayCheckBox.Checked;
 		}
 	}
 
@@ -145,7 +147,7 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			InventoryServicesProxy.Instance.SimulateServerBusyError = m_simulateServerBusyCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IInventoryServices>().SimulateServerBusyError = m_simulateServerBusyCheckBox.Checked;
 		}
 	}
 
@@ -153,7 +155,7 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			InventoryServicesProxy.Instance.EnableSellThryOfNew = m_enableSellThruOfNewProduct.Checked;
+			ServiceLocator.Instance.GetService<IInventoryServices>().EnableSellThryOfNew = m_enableSellThruOfNewProduct.Checked;
 		}
 	}
 
@@ -161,7 +163,7 @@ public class InventoryServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			InventoryServicesProxy.Instance.SimulateCommunicationsFailure = m_simulateCommunicationsFailureCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IInventoryServices>().SimulateCommunicationsFailure = m_simulateCommunicationsFailureCheckBox.Checked;
 		}
 	}
 

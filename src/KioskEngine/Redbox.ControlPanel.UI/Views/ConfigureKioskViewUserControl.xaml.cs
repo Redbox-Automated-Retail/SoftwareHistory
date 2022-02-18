@@ -359,7 +359,7 @@ public partial class ConfigureKioskViewUserControl : UserControl, IComponentConn
 			{
 				eventType = "configure_kiosk";
 			}
-			string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser ?? "N/A";
+			string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser.CheckNotAvailable();
 			ProcessFunctions.SendAuditEvent(_selectedStoreId.ToString(), eventType, userName, "CP Bundle", "Activate Control Panel function.");
 			ProcessFunctions.RenameComputer("redbox-" + _selectedStoreId);
 			ProcessFunctions.SetMachineSettingValue("Store", "Banner", _selectedBannerName);

@@ -41,11 +41,11 @@ public partial class EMVInsertAndTapRegularCheckoutUserControl : UserControl, IS
 
 	public void BeginAnimation()
 	{
-		Hand.IsAnimated = true;
+		CardAndPhone.IsAnimated = true;
 	}
 
 	public void StopAnimation()
 	{
-		Hand.RenderTransform = null;
+		CardAndPhone.RenderTransform = null;
 	}
 }

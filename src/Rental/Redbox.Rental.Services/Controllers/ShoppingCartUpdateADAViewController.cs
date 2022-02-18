@@ -79,15 +79,15 @@ public class ShoppingCartUpdateADAViewController : BaseViewController
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		if (rentalShoppingCart != null && service != null)
 		{
-			foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
+			foreach (IRentalShoppingCartTitleItem titleItem in rentalShoppingCart.TitleItems)
 			{
-				service.GetProduct(item.ProductId, excludeTitleRollup: true, out var kioskProduct);
+				service.GetProduct(titleItem.ProductId, excludeTitleRollup: true, out var kioskProduct);
 				if (kioskProduct != null)
 				{
 					DisplayProductModel displayProductModel = new DisplayProductModel
 					{
 						Name = kioskProduct.ProductName,
-						Data = item,
+						Data = titleItem,
 						Image = OrchestrationService.GetProductBitmapImage(kioskProduct)
 					};
 					displayProductModel.ConfigureForUpdateADACart();
@@ -141,7 +141,7 @@ public class ShoppingCartUpdateADAViewController : BaseViewController
 	private static void RemoveItemFromShoppingCart(DisplayProductModel displayProductModel, object parameter)
 	{
 		BaseViewController.ProcessWPFHit();
-		if (displayProductModel?.Data is IRentalShoppingCartItem rentalShoppingCartItem)
+		if (displayProductModel?.Data is IRentalShoppingCartTitleItem rentalShoppingCartItem)
 		{
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("ShoppingCartUpdateADADelete").AddData(ProductData.ToProductData(rentalShoppingCartItem));
 			ShoppingCartViewFunctions.RemoveItemFromShoppingCart(displayProductModel, parameter);

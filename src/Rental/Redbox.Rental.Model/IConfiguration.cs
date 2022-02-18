@@ -20,6 +20,8 @@ public interface IConfiguration
 
 	bool LoyaltyEnabled { get; }
 
+	bool PerksPassEnabled { get; }
+
 	int SignInTimeout { get; }
 
 	int SignInADATimeout { get; }
@@ -31,6 +33,8 @@ public interface IConfiguration
 	bool ComingSoonOptInEnabled { get; }
 
 	bool MarketingOptInEnabled { get; }
+
+	bool RecommendationOnPickup { get; }
 
 	bool ServiceFeeEnabled { get; }
 
@@ -46,6 +50,8 @@ public interface IConfiguration
 
 	List<decimal> FlashDealPrices { get; }
 
+	bool ShowBrowse10Titles { get; }
+
 	bool Show99CentsBrowseFilterButton { get; }
 
 	bool ShowExpandedFormatButtons { get; }
@@ -57,6 +63,14 @@ public interface IConfiguration
 	int BrowseMessagePopupDuration { get; }
 
 	bool EnableSonySweepstakes { get; }
+
+	bool EnableRedboxSweepstakes { get; }
+
+	bool EnableAvodLeadGenerationOfferWithoutBoxArt { get; }
+
+	bool EnableAvodLeadGenerationOfferWithBoxArt { get; }
+
+	bool EnableRedboxPlusLeadGenerationOffer { get; }
 
 	int OfflineItemsLimit { get; }
 
@@ -89,6 +103,12 @@ public interface IConfiguration
 	int ScreenSaverTimeout { get; }
 
 	string OutOfStockTitleDetailsABTestVersion { get; }
+
+	bool StartViewDarkModeEnabled { get; }
+
+	string StartViewDarkModeStartTime { get; }
+
+	string StartViewDarkModeEndTime { get; }
 
 	bool MonitorBarcodeTracking { get; }
 
@@ -162,11 +182,21 @@ public interface IConfiguration
 
 	bool ShowAuthChangeMessage { get; }
 
+	int TextToSpeechVolume { get; }
+
 	bool ShowKMTInCartOffers { get; }
 
 	bool ShowAfterSwipePersonalizedOffers { get; }
 
 	bool UseDiscountsForPmnpOffers { get; }
+
+	bool EnableStarzOffer { get; }
+
+	bool EnableRedboxPlusOffer { get; }
+
+	bool EnableRedboxPlusRedemption { get; }
+
+	bool EnableMeijerVSM { get; }
 
 	bool ShowOptinForNormalCheckout { get; }
 
@@ -191,6 +221,10 @@ public interface IConfiguration
 	int VistarGetAdTimeout { get; }
 
 	string KioskClientServiceBaseUrl { get; }
+
+	string UpdateClientServiceBaseUrl { get; }
+
+	string KioskEngineApiServiceBaseUrl { get; }
 
 	bool ForcedAirExchangerConfigured { get; }
 
@@ -218,21 +252,9 @@ public interface IConfiguration
 
 	string DoNotSellDocument { get; }
 
-	bool ShowRedboxCardUpdated { get; }
+	string SubscriptionsDocument { get; }
 
-	bool ShowTermsUpdated { get; }
-
-	bool ShowMobileFaqUpdated { get; }
-
-	bool ShowFAQUpdated { get; }
-
-	bool ShowPrivacyUpdated { get; }
-
-	bool ShowPerksUpdated { get; }
-
-	bool ShowCAPrivacyNoticeUpdated { get; }
-
-	bool ShowDoNotSellUpdated { get; }
+	string RedboxPlusDocument { get; }
 
 	bool ZeroTouchEnabled { get; }
 
@@ -243,6 +265,10 @@ public interface IConfiguration
 	bool ZeroTouchContactlessEnabled { get; }
 
 	int ZeroTouchReadTimeout { get; }
+
+	bool ZeroTouchVasEnabled { get; }
+
+	bool ZeroTouchGoogleTwoTap { get; }
 
 	bool SendAuditEventsToKioskServices { get; }
 
@@ -257,6 +283,72 @@ public interface IConfiguration
 	TimeSpan ThinJobRangeEnd { get; }
 
 	int MerchOrderExpirationDays { get; }
+
+	int AuthorizeTimeout { get; }
+
+	int LoginLockoutMinutes { get; }
+
+	bool SendAuthorizeToKioskClientService { get; }
+
+	bool SendGiftCardAuthorizeToKioskClientService { get; }
+
+	bool SendPickupAuthorizeToKioskClientSerivce { get; }
+
+	bool SendReservationAuthorizeToKioskClientService { get; }
+
+	bool SendReturnToKioskClientService { get; set; }
+
+	bool SendAuthenticationApisToKioskClientService { get; }
+
+	bool SendInstallerApisToKioskClientService { get; }
+
+	bool SendMarketingApisToKioskClientService { get; }
+
+	bool SendExpireAndCancelReservationToKioskClientService { get; }
+
+	bool SendReconcileToKioskClientService { get; }
+
+	bool SendInventorySnapshotToKioskClientService { get; }
+
+	int KioskClientServiceInventorySnapshotTimeout { get; }
+
+	bool SendReservationPickupToKioskClientService { get; }
+
+	bool UseLegacyBrokerService { get; }
+
+	bool UseAWSBrokerService { get; }
+
+	bool SendCustomerOffersToKioskClientService { get; }
+
+	bool SendDiscActionToKioskClientService { get; }
+
+	int KioskClientServiceDiscActionTimeout { get; }
+
+	bool SendPickupValidationToKioskClientService { get; }
+
+	bool SendDiscFraudToKioskClientService { get; }
+
+	int KioskClientServiceDiscFraudTimeout { get; }
+
+	bool SendEstimateAccrualToKioskClientService { get; }
+
+	int KioskClientServiceEstimateAccrualTimeout { get; }
+
+	bool SendEstimateRedemptionToKioskClientService { get; }
+
+	int KioskClientServiceEstimateRedemptionTimeout { get; }
+
+	bool SendPromoCodeValidationToKioskClientService { get; }
+
+	int KioskClientServicePromoCodeValidationTimeout { get; }
+
+	bool SendUpdateAccountToKioskClientService { get; }
+
+	int KioskClientServiceUpdateAccountTimeout { get; }
+
+	bool UseKCSPricing { get; }
+
+	bool ButtonAnimationEnabled { get; }
 
 	void SessionReload();
 

@@ -97,7 +97,7 @@ public class NewCartConfirmViewTextToSpeech
 			foreach (DisplayCheckoutProductModel displayModel in viewModel.DisplayProductModels)
 			{
 				int speechPartIndex = num2;
-				IRentalShoppingCartItem eachCartItem = (IRentalShoppingCartItem)displayModel.Data;
+				IRentalShoppingCartTitleItem eachCartItem = (IRentalShoppingCartTitleItem)displayModel.Data;
 				speechParts.Add(new SpeechPart
 				{
 					Sequence = num++,
@@ -114,16 +114,16 @@ public class NewCartConfirmViewTextToSpeech
 						AddListCartItemsEvents(speechParts[speechPartIndex], viewModel, parameters);
 						decimal num3 = ServiceLocator.Instance.GetService<IPromotionService>().GetPromotion().PromotionItems.FirstOrDefault((IPromotionItem i) => i.RentalShoppingCartItem.ProductId == eachCartItem.ProductId)?.PromotionAmount ?? 0m;
 						string text = null;
-						IRentalShoppingCartItem rentalShoppingCartItem = eachCartItem;
-						if (rentalShoppingCartItem != null && rentalShoppingCartItem.Action == RentalShoppingCartItemAction.purchase)
+						IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = eachCartItem;
+						if (rentalShoppingCartTitleItem != null && rentalShoppingCartTitleItem.Action == RentalShoppingCartItemAction.purchase)
 						{
 							text = $"{eachCartItem.Price:C} {eachCartItem.Action}";
 						}
 						else
 						{
 							string productDescriptionLine2Text = displayModel.ProductDescriptionLine2Text;
-							IRentalShoppingCartItem rentalShoppingCartItem2 = eachCartItem;
-							text = productDescriptionLine2Text.ReplaceFirst("|", $"{((rentalShoppingCartItem2 != null) ? new decimal?(rentalShoppingCartItem2.Price - num3) : ((decimal?)null)):C}. ");
+							IRentalShoppingCartTitleItem rentalShoppingCartTitleItem2 = eachCartItem;
+							text = productDescriptionLine2Text.ReplaceFirst("|", $"{((rentalShoppingCartTitleItem2 != null) ? new decimal?(rentalShoppingCartTitleItem2.Price - num3) : ((decimal?)null)):C}. ");
 						}
 						speechParts[speechPartIndex].Texts.Add(new TextPart
 						{

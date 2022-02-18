@@ -590,7 +590,10 @@ public static class KioskProductExtensions
 			["show_out_of_stock"] = product.ShowOutOfStock,
 			["is_game"] = product.IsGame,
 			["is_movie"] = product.IsMovie,
-			["title_rollup_product_group_id"] = product.TitleRollupProductGroupId
+			["title_rollup_product_group_id"] = product.TitleRollupProductGroupId,
+			["redbox_plus_eligible_date"] = product.RedboxPlusEligibleDate,
+			["is_redbox_plus_eligible"] = product.IsRedboxPlusEligible,
+			["discount_restriction"] = product.DiscountRestriction.ToString()
 		};
 	}
 
@@ -648,7 +651,10 @@ public static class KioskProductExtensions
 			["kiosk_products"] = product.TitleProducts.ToKioskProducts().ToDictionary(),
 			["is_game"] = product.IsGame,
 			["is_movie"] = product.IsMovie,
-			["title_rollup_product_group_id"] = product.TitleRollupProductGroupId
+			["title_rollup_product_group_id"] = product.TitleRollupProductGroupId,
+			["redbox_plus_eligible_date"] = product.RedboxPlusEligibleDate,
+			["is_redbox_plus_eligible"] = product.IsRedboxPlusEligible,
+			["discount_restriction"] = product.DiscountRestriction.ToString()
 		};
 	}
 
@@ -695,7 +701,10 @@ public static class KioskProductExtensions
 			["coming_soon"] = product.ComingSoon,
 			["in_stock"] = product.InStock,
 			["show_out_of_stock"] = product.ShowOutOfStock,
-			["kiosk_products"] = product.KioskProducts.ToDictionary()
+			["kiosk_products"] = product.KioskProducts.ToDictionary(),
+			["redbox_plus_eligible_date"] = product.RedboxPlusEligibleDate,
+			["is_redbox_plus_eligible"] = product.IsRedboxPlusEligible,
+			["discount_restriction"] = product.DiscountRestriction.ToString()
 		};
 	}
 

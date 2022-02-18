@@ -9,5 +9,7 @@ public enum HelpDocuments
 	PlayPass,
 	MobileFaq,
 	CAPrivacyNotice,
-	DoNotSell
+	DoNotSell,
+	Subscriptions,
+	RedboxPlus
 }

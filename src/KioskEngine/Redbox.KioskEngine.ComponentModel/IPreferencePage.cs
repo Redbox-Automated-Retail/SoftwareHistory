@@ -12,6 +12,8 @@ public interface IPreferencePage
 
 	IPreferencePageHost Host { get; }
 
+	Func<IPreferencePageHost> GetPreferencePageHost { get; }
+
 	PreferencePageTarget Target { get; }
 
 	event EventHandler Activate;

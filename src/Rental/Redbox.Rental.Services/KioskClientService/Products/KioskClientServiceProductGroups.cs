@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Redbox.Core;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService.Products;
 
 namespace Redbox.Rental.Services.KioskClientService.Products;
@@ -17,7 +18,7 @@ public class KioskClientServiceProductGroups : BaseKioskClientService, IKioskCli
 		{
 			LogHelper.Instance.Log($"Getting more like this for productGroupId: {productGroupId}");
 			WebResult<GetMoreLikeThisResponse> webResult = ExecuteWebRequest<GetMoreLikeThisResponse>(new Uri(string.Format("{0}/{1}/{2}/morelikethis", base.KioskClientServiceBaseUrl, "api/productgroups", productGroupId)), null, "GET", 500);
-			LogKioskClientServiceResponse("KioskClientServiceProductGroups", webResult);
+			LogResponse("KioskClientServiceProductGroups", webResult);
 			result = webResult?.Response?.MoreLikeThis;
 		}
 		else
@@ -36,7 +37,7 @@ public class KioskClientServiceProductGroups : BaseKioskClientService, IKioskCli
 	{
 		LogHelper.Instance.Log("KCS ProductGroups.GetSortOrder");
 		WebResult<GetSortOrderResponse> webResult = ExecuteWebRequest<GetSortOrderResponse>(new Uri(string.Format("{0}/{1}/sortorder", base.KioskClientServiceBaseUrl, "api/productgroups")), null, "GET", 500);
-		LogKioskClientServiceResponse("KCS ProductGroups.GetSortOrder", webResult);
+		LogResponse("KCS ProductGroups.GetSortOrder", webResult);
 		if (webResult == null || webResult.Response == null)
 		{
 			LogHelper.Instance.Log("KCS.GetSortOrder returned null");

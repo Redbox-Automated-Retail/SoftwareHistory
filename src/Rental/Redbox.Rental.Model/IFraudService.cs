@@ -35,7 +35,7 @@ public interface IFraudService
 
 	void HandleBeforeReturnMessageProcessing(IMessage message, out object clientData);
 
-	void ProcessReturnResponse(IMessage message, IDictionary<string, object> result, object clientData);
+	void ProcessReturnResponse(IDictionary<string, object> result, object clientData);
 
 	bool ScheduleFraudSync(DateTime startTime, string userName);
 

@@ -399,15 +399,7 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 		{
 			OnBeforePageNumberChange(CurrentPage);
 		}
-		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
-		if (obj != null && obj.IsAnimated)
-		{
-			AnimateScroll(direction);
-		}
-		else
-		{
-			ScrollProducts(direction);
-		}
+		ScrollProducts(direction);
 	}
 
 	private void ScrollProducts(PageDirection direction)

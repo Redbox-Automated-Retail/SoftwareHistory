@@ -11,5 +11,6 @@ public partial class OfferInfoUserControl : UserControl, IComponentConnector
 	public OfferInfoUserControl()
 	{
 		InitializeComponent();
+		TransparentContinueButton.IsAnimated = false;
 	}
 }

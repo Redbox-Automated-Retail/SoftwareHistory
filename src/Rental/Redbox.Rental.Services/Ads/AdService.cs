@@ -52,10 +52,6 @@ public class AdService : IAdService
 		{
 			result = _vistarAdService.RecordAdImpression(adImpression);
 		}
-		else if (adImpression?.Ad is MarketingAd && _marketingAdService != null)
-		{
-			result = _marketingAdService.RecordAdImpression(adImpression);
-		}
 		else
 		{
 			LogHelper.Instance.Log($"Error in AdService.CreateImpression.  Invalid adImpression type: {adImpression?.Ad?.GetType()}");
@@ -69,10 +65,6 @@ public class AdService : IAdService
 		if (adImpression?.Ad is IVistarAd)
 		{
 			result = await (_vistarAdService?.RecordAdImpressionAsync(adImpression)).ConfigureAwait(continueOnCapturedContext: false);
-		}
-		else if (adImpression?.Ad is MarketingAd)
-		{
-			result = await (_marketingAdService?.RecordAdImpressionAsync(adImpression)).ConfigureAwait(continueOnCapturedContext: false);
 		}
 		else
 		{

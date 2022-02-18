@@ -41,11 +41,11 @@ public partial class EncryptedSwipeRegularCheckoutUserControl : UserControl, ISw
 
 	public void BeginAnimation()
 	{
-		Hand.IsAnimated = true;
+		Card.IsAnimated = true;
 	}
 
 	public void StopAnimation()
 	{
-		Hand.RenderTransform = null;
+		Card.RenderTransform = null;
 	}
 }

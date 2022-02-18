@@ -820,7 +820,9 @@ public class InventoryData : IInventoryData
 					{
 						continue;
 					}
-					foreach (Redbox.KioskEngine.ComponentModel.Inventory eachInventoryEntry in GetInventoriesInternal(titleProduct.BarCodeProducts.Values.Select((BarcodeProduct b) => b.Barcode).ToList()).Values)
+					foreach (Redbox.KioskEngine.ComponentModel.Inventory eachInventoryEntry in GetInventoriesInternal((from b in titleProduct.BarCodeProducts.Values
+						where b.Status != "Reserved"
+						select b.Barcode).ToList()).Values)
 					{
 						if (!list.Any((BarcodeForProductResult x) => x.Barcode == eachInventoryEntry.Barcode) && (excludeBarcodesList == null || !excludeBarcodesList.Contains(eachInventoryEntry.Barcode)))
 						{

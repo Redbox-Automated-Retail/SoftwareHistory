@@ -19,7 +19,9 @@ public class LoyaltySession : ILoyaltySession
 
 	public string PostalCode { get; set; }
 
-	public DateTime? BirthDate { get; set; }
+	public int? BirthDayOfMonth { get; set; }
+
+	public int? BirthMonth { get; set; }
 
 	public string LoyaltyTierName { get; set; }
 

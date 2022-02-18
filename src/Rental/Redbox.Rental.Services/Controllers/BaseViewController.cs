@@ -1,10 +1,8 @@
 using System;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Redbox.Core;
@@ -50,18 +48,21 @@ public class BaseViewController
 
 	protected static T GetViewModel<T>() where T : class
 	{
-		Control control = GetViewUserControl() as Control;
-		T dataContext = null;
-		control?.Dispatcher.Invoke(delegate
-		{
-			dataContext = control?.DataContext as T;
-		});
-		return dataContext;
+		return GetViewModel<T>(GetViewUserControl());
 	}
 
 	protected static T GetViewModel<T>(Guid userControlId) where T : class
 	{
-		return GetViewUserControl(userControlId)?.DataContext as T;
+		return GetViewModel<T>(GetViewUserControl(userControlId));
+	}
+
+	private static T GetViewModel<T>(FrameworkElement userControl) where T : class
+	{
+		if (userControl != null)
+		{
+			return userControl.Dispatcher.Invoke(() => userControl?.DataContext as T);
+		}
+		return null;
 	}
 
 	protected static void ProcessWPFHit()
@@ -129,7 +130,7 @@ public class BaseViewController
 	{
 		IBitmapCacheService service = ServiceLocator.Instance.GetService<IBitmapCacheService>();
 		BitmapImage result = null;
-		System.Drawing.Image image = null;
+		Image image = null;
 		image = ((!resourceName.StartsWith("cache:")) ? ServiceLocator.Instance.GetService<IResourceBundleService>().GetBitmap(resourceName) : service?.GetImage(resourceName.Substring(6)));
 		if (image != null)
 		{
@@ -166,24 +167,6 @@ public class BaseViewController
 		}
 		secureString.MakeReadOnly();
 		return secureString;
-	}
-
-	protected static string SecureStringToString(SecureString source)
-	{
-		if (source == null)
-		{
-			return null;
-		}
-		IntPtr intPtr = IntPtr.Zero;
-		try
-		{
-			intPtr = Marshal.SecureStringToGlobalAllocUnicode(source);
-			return Marshal.PtrToStringUni(intPtr);
-		}
-		finally
-		{
-			Marshal.ZeroFreeGlobalAllocUnicode(intPtr);
-		}
 	}
 
 	protected static void RecordAdImpression(IAdImpression adImpression)

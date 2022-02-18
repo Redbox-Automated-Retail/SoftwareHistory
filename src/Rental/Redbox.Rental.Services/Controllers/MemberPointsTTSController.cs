@@ -100,7 +100,7 @@ public class MemberPointsTTSController : BaseTTSController<MemberPointsTTSContro
 
 	private static TitleType GetTitleType(DisplayProductModel displayModel)
 	{
-		return (displayModel.Data as IRentalShoppingCartItem).TitleType;
+		return (displayModel.Data as IRentalShoppingCartTitleItem).TitleType;
 	}
 
 	private static bool IsCartItem4K(DisplayProductModel displayModel)

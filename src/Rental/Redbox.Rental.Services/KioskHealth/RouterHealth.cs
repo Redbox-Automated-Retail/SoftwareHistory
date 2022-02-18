@@ -161,7 +161,7 @@ public class RouterHealth : IRouterHealth, IKioskHealthItem
 			{
 				if (_routerReporting)
 				{
-					_kioskEvents.AddEvent(KioskEvent.NewEvent(KioskEventType.KioskHealthRouter, 302, success: true, relatedId: _relatedId, elapsed: (int)(DateTime.Now - _firstNoActivity.Value).TotalMilliseconds, data: new
+					_kioskEvents.AddEvent(KioskEvent.NewEvent(3, 302, success: true, relatedId: _relatedId, elapsed: (int)(DateTime.Now - _firstNoActivity.Value).TotalMilliseconds, data: new
 					{
 						NoActivityCount = _noActivityCount
 					}.ToJson()));
@@ -207,7 +207,7 @@ public class RouterHealth : IRouterHealth, IKioskHealthItem
 			LogHelper.Instance.Log("RouterHealth.NoActivity - Resetting - OfflineFor: {0} minutes, NoActivitycount: {1}, ResetAttempts {2}", (DateTime.Now - _firstNoActivity.Value).TotalMinutes, _noActivityCount, _resetAttempts);
 			if (_routerReporting)
 			{
-				KioskEvent kioskEvent = KioskEvent.NewEvent(KioskEventType.KioskHealthRouter, 300, success: true, (int)(DateTime.Now - _firstNoActivity.Value).TotalMilliseconds, null, new
+				KioskEvent kioskEvent = KioskEvent.NewEvent(3, 300, success: true, (int)(DateTime.Now - _firstNoActivity.Value).TotalMilliseconds, null, new
 				{
 					NoActivityCount = _noActivityCount
 				}.ToJson());
@@ -277,7 +277,7 @@ public class RouterHealth : IRouterHealth, IKioskHealthItem
 		}
 		if (_routerReporting)
 		{
-			_kioskEvents.AddEvent(KioskEvent.NewEvent(KioskEventType.KioskHealthRouter, 301, flag, elapsed, _relatedId, flag ? new
+			_kioskEvents.AddEvent(KioskEvent.NewEvent(3, 301, flag, elapsed, _relatedId, flag ? new
 			{
 				SupportsRouterReset = flag2
 			}.ToJson() : new

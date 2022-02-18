@@ -23,6 +23,11 @@ public class ProductData : AnalyticsData
 	[JsonConverter(typeof(StringEnumConverter))]
 	public TitleType? TitleType { get; set; }
 
+	public string SubscriptionId { get; set; }
+
+	[JsonConverter(typeof(StringEnumConverter))]
+	public SubscriptionType? SubscriptionType { get; set; }
+
 	public ProductData()
 	{
 		base.DataType = "Product";
@@ -45,17 +50,41 @@ public class ProductData : AnalyticsData
 		};
 	}
 
-	public static ProductData ToProductData(IRentalShoppingCartItem rentalShoppingCartItem)
+	public static ProductData ToProductData(ISubscriptionProduct subscriptionProduct)
 	{
-		if (rentalShoppingCartItem == null)
+		ProductData result = null;
+		if (subscriptionProduct != null)
 		{
-			return null;
+			result = new ProductData
+			{
+				SubscriptionId = subscriptionProduct.SubscriptionId,
+				SubscriptionType = subscriptionProduct.SubscriptionType
+			};
 		}
-		return new ProductData
+		return result;
+	}
+
+	public static ProductData ToProductData(IBaseRentalShoppingCartItem rentalShoppingCartItem)
+	{
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = rentalShoppingCartItem as IRentalShoppingCartTitleItem;
+		IRentalShoppingCartSubscriptionItem rentalShoppingCartSubscriptionItem = rentalShoppingCartItem as IRentalShoppingCartSubscriptionItem;
+		if (rentalShoppingCartTitleItem != null)
 		{
-			ProductId = rentalShoppingCartItem.ProductId,
-			TitleFamily = rentalShoppingCartItem.TitleFamily,
-			TitleType = rentalShoppingCartItem.TitleType
-		};
+			return new ProductData
+			{
+				ProductId = rentalShoppingCartTitleItem.ProductId,
+				TitleFamily = rentalShoppingCartTitleItem.TitleFamily,
+				TitleType = rentalShoppingCartTitleItem.TitleType
+			};
+		}
+		if (rentalShoppingCartSubscriptionItem != null)
+		{
+			return new ProductData
+			{
+				SubscriptionId = rentalShoppingCartSubscriptionItem.SubscriptionProduct.SubscriptionId,
+				SubscriptionType = rentalShoppingCartSubscriptionItem.SubscriptionProduct.SubscriptionType
+			};
+		}
+		return null;
 	}
 }

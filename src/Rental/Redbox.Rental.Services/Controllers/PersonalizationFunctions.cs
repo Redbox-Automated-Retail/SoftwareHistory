@@ -2,21 +2,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
+using DeviceService.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Loyalty;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Model.Transaction;
+using Redbox.Rental.Services.RedboxPlus;
 using Redbox.Rental.Services.Session;
+using Redbox.Rental.Services.Starz;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
 
@@ -24,7 +28,17 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class PersonalizationFunctions
 {
+	private static IRedboxPlusSubscriptionProduct _redboxPlusSubscriptionProduct;
+
+	private static IStarzSubscriptionProduct _starzSubscriptionProduct;
+
 	private static DateTime _loginStartTime;
+
+	public const string EARLY_ID_INDICATOR = "EarlyIdIndicator";
+
+	public const string EARLY_ID_APPLE = "EarlyIdApple";
+
+	public const string EARLY_ID_GOOGLE = "EarlyIdGoogle";
 
 	public static bool IsSignedIn => Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false;
 
@@ -81,7 +95,226 @@ public class PersonalizationFunctions
 
 	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
 
-	public static void ShowEmailLogin(SignInCancelButtonTypes signInCancelButtonType)
+	public static bool CanAddStarzSubscription(IStarzSubscriptionProduct starzSubscriptionProduct)
+	{
+		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
+		if (personalizationSession?.SubscriptionData != null && !personalizationSession.SubscriptionData.SubscriptionServiceIsDown && !personalizationSession.SubscriptionData.HasActiveStarzSubscription)
+		{
+			return personalizationSession.SubscriptionData.IsEligibleForSubscription(starzSubscriptionProduct?.SubscriptionId);
+		}
+		return false;
+	}
+
+	public static bool CanAddRedboxPlusSubscription()
+	{
+		bool flag = false;
+		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
+		List<ISubscriptionProduct> subscriptionProducts = null;
+		ServiceLocator.Instance.GetService<IDataService>()?.GetSubscriptionProducts(out subscriptionProducts);
+		if (personalizationSession?.SubscriptionData?.EligibleSubscriptionPlanIds != null && subscriptionProducts != null)
+		{
+			foreach (string eachEligibleSubscriptionPlanId in personalizationSession.SubscriptionData.EligibleSubscriptionPlanIds)
+			{
+				if (subscriptionProducts.Any((ISubscriptionProduct x) => x.SubscriptionType == SubscriptionType.RedboxPlus && x.SubscriptionId == eachEligibleSubscriptionPlanId))
+				{
+					flag = true;
+					break;
+				}
+			}
+		}
+		return !(personalizationSession?.RedboxPlusSession?.HasActiveSubscription ?? false) & flag;
+	}
+
+	public static void ShowRedboxPlusSignInSignUpDialog(IRedboxPlusSubscriptionProduct redboxPlusSubscriptionProduct)
+	{
+		_redboxPlusSubscriptionProduct = redboxPlusSubscriptionProduct;
+		SignInViewParameters parameter = new SignInViewParameters
+		{
+			AfterSignInAction = delegate(LoginType loginType, ILoginResult loginResult)
+			{
+				AfterEmailOrPhoneAndPinSignInAction(loginType, loginResult, AfterRedboxPlusSignInAction);
+			},
+			SignUpAction = RedboxPlusSignUpAction,
+			SignUpType = SignUpType.RedboxPlus
+		};
+		OrchestrationService.ViewShow("sign_in_view", parameter);
+	}
+
+	public static void ShowRegularSignInSignUpDialog()
+	{
+		SignInViewParameters parameter = new SignInViewParameters
+		{
+			AfterSignInAction = delegate(LoginType loginType, ILoginResult loginResult)
+			{
+				AfterEmailOrPhoneAndPinSignInAction(loginType, loginResult, AfterRegularSignInAction);
+			},
+			SignUpAction = RegularSignUpAction,
+			SignUpType = SignUpType.Perks
+		};
+		OrchestrationService.ViewShow("sign_in_view", parameter);
+	}
+
+	private static void RegularSignUpAction()
+	{
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		string parentView = service.Peek(1);
+		ServiceLocator.Instance.GetService<IPerksSignupService>()?.StartSignupFlow(delegate
+		{
+			OrchestrationService.UnwindToSafe(parentView, discard: true, "SignInViewController sign up");
+		}, SignUpFlowContext.SignUp, delegate
+		{
+			OrchestrationService.InvokeIdleTimerExpireSessionCallback();
+		});
+	}
+
+	private static void AfterEmailOrPhoneAndPinSignInAction(LoginType loginType, ILoginResult loginResult, Action<LoginType, ILoginResult> afterLoginAction)
+	{
+		if (loginResult != null && (loginResult.Success || loginResult.KioskLoginResponseError == KioskLoginResponseErrors.LoyaltyAccountNotFound))
+		{
+			OrchestrationService.ViewGoBackSafe("Login process finished - pop keyboard / phone view", popOnly: false);
+			OrchestrationService.StopIdleTimer("idle_timer");
+			if (IsSignedIn)
+			{
+				OrchestrationService.ViewShow("sign_in_thanks_view", new SignInThanksViewParameters
+				{
+					DelaySeconds = 3,
+					EmailAddress = loginResult.PersonalizationSession.LoginEmailAddress,
+					ContinueAction = delegate
+					{
+						afterLoginAction?.Invoke(loginType, loginResult);
+					}
+				});
+			}
+			else
+			{
+				afterLoginAction?.Invoke(loginType, loginResult);
+			}
+			return;
+		}
+		if (loginResult.KioskLoginResponseError == KioskLoginResponseErrors.LoyaltyIsDown)
+		{
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession = loginResult.PersonalizationSession;
+			}
+			OrchestrationService.ViewGoBackSafe("Login process finished - pop Keyboard view / phone and pin view", popOnly: true);
+			ShowLoyaltyIsDownOnLoginDialog(delegate
+			{
+				afterLoginAction?.Invoke(loginType, loginResult);
+			});
+			return;
+		}
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		IViewFrameInstance viewFrameInstance = service?.PeekViewFrame();
+		if (service == null || viewFrameInstance == null)
+		{
+			return;
+		}
+		if (viewFrameInstance?.ViewFrame.ViewName == "phone_and_pin_view")
+		{
+			LogHelper.Instance.Log("returning to phone and pin view to display error");
+			PhoneAndPinInfo phoneAndPinInfo = viewFrameInstance.Parameter as PhoneAndPinInfo;
+			if (phoneAndPinInfo?.PhoneAndPinViewModel != null)
+			{
+				phoneAndPinInfo.PhoneAndPinViewModel.ErrorMessageText = loginResult.ErrorMessage;
+				phoneAndPinInfo.PhoneAndPinViewModel.SetDefaultDisplays();
+			}
+		}
+		else
+		{
+			LogHelper.Instance.Log("returning to keyboard view to display error");
+			if (viewFrameInstance.Parameter is KeyboardInfo keyboardInfo)
+			{
+				keyboardInfo.ErrorMessage = loginResult.ErrorMessage;
+				keyboardInfo.KeyboardText = string.Empty;
+				keyboardInfo.KeyboardCode = string.Empty;
+			}
+		}
+		service.Show();
+	}
+
+	public static void AfterRegularSignInAction(LoginType loginType, ILoginResult loginResult)
+	{
+		ILoginResult loginResult2 = loginResult;
+		if ((loginResult2 == null || !loginResult2.Success) && loginResult.KioskLoginResponseError != KioskLoginResponseErrors.LoyaltyAccountNotFound)
+		{
+			return;
+		}
+		if (IsSignedIn && loginType == LoginType.Email)
+		{
+			OrchestrationService.StopIdleTimer("idle_timer");
+			Action<ISignupFlowResult> action = delegate
+			{
+				IViewFrameInstance afterSignInUnwindToView2 = GetAfterSignInUnwindToView();
+				if (afterSignInUnwindToView2 != null)
+				{
+					OrchestrationService.UnwindToSafe(afterSignInUnwindToView2?.ViewFrame?.ViewName, discard: true, "sign_up_flow_return");
+				}
+				ShowRecommendedTitlesIfNeeded(loginResult);
+			};
+			ServiceLocator.Instance.GetService<IPerksSignupService>()?.StartSignupFlow(action, SignUpFlowContext.AfterSignIn, action);
+		}
+		else if (IsSignedIn && loginType == LoginType.Mobile)
+		{
+			IViewFrameInstance afterSignInUnwindToView = GetAfterSignInUnwindToView();
+			if (afterSignInUnwindToView != null)
+			{
+				OrchestrationService.UnwindToSafe(afterSignInUnwindToView?.ViewFrame?.ViewName, discard: true, "sign_up_flow_return");
+				ShowRecommendedTitlesIfNeeded(loginResult);
+			}
+		}
+		else if (IsSignedIn)
+		{
+			ShowRecommendedTitlesIfNeeded(loginResult);
+		}
+	}
+
+	private static IViewFrameInstance GetAfterSignInUnwindToView()
+	{
+		IViewFrameInstance viewFrameInstance = OrchestrationService.PeekViewFrameByName("shopping_cart_view", out var index);
+		if (viewFrameInstance == null)
+		{
+			viewFrameInstance = OrchestrationService.PeekViewFrameByName("browse_view", out index);
+		}
+		return viewFrameInstance;
+	}
+
+	public static void ShowStarzSignInSignUpDialog(IStarzSubscriptionProduct starzSubscriptionProduct)
+	{
+		_starzSubscriptionProduct = starzSubscriptionProduct;
+		SignInViewParameters parameter = new SignInViewParameters
+		{
+			AfterSignInAction = delegate(LoginType loginType, ILoginResult loginResult)
+			{
+				AfterEmailOrPhoneAndPinSignInAction(loginType, loginResult, AfterStarzSignInAction);
+			},
+			SignUpAction = StarzSignUpAction,
+			SignUpType = SignUpType.Starz
+		};
+		OrchestrationService.ViewShow("sign_in_view", parameter);
+	}
+
+	public static void AfterStarzSignInAction(LoginType loginType, ILoginResult loginResult)
+	{
+		StarzSignupService.StartStarzSignup(_starzSubscriptionProduct);
+	}
+
+	private static void StarzSignUpAction()
+	{
+		StarzSignupService.StartStarzSignup(_starzSubscriptionProduct);
+	}
+
+	public static void AfterRedboxPlusSignInAction(LoginType loginType, ILoginResult loginResult)
+	{
+		RedboxPlusSignupService.StartRedboxPlusSignup(_redboxPlusSubscriptionProduct);
+	}
+
+	private static void RedboxPlusSignUpAction()
+	{
+		RedboxPlusSignupService.StartRedboxPlusSignup(_redboxPlusSubscriptionProduct);
+	}
+
+	public static void ShowEmailLogin(SignInCancelButtonTypes signInCancelButtonType, Action<LoginType, ILoginResult> afterLoginAction)
 	{
 		LogHelper.Instance.Log("Starting login with email.");
 		OrchestrationService.ViewShow("keyboard_sign_in_view", new KeyboardInfo
@@ -96,12 +329,12 @@ public class PersonalizationFunctions
 			SignInCancelButtonType = signInCancelButtonType,
 			ContinueCodeAction = delegate(string emailAddress, SecureString password)
 			{
-				StartLoginProcess(emailAddress, password, null, null);
+				StartLoginProcess(emailAddress, password, null, null, null, WalletType.None, afterLoginAction);
 			}
 		});
 	}
 
-	public static void ShowPhoneNumberLogin(SignInCancelButtonTypes signInCancelButtonType)
+	public static void ShowPhoneNumberLogin(SignInCancelButtonTypes signInCancelButtonType, Action<LoginType, ILoginResult> afterLoginAction)
 	{
 		LogHelper.Instance.Log("Starting login with phone number.");
 		OrchestrationService.ViewShow("phone_and_pin_view", new PhoneAndPinInfo
@@ -109,7 +342,7 @@ public class PersonalizationFunctions
 			SignInCancelButtonType = signInCancelButtonType,
 			SignInAction = delegate(string phone, SecureString pin, bool textClub)
 			{
-				StartLoginProcess(null, null, phone, pin);
+				StartLoginProcess(null, null, phone, pin, null, WalletType.None, afterLoginAction);
 			},
 			IsSignUp = false
 		});
@@ -149,35 +382,51 @@ public class PersonalizationFunctions
 		});
 	}
 
-	public static void ShowLoyaltyIsDownOnLoginDialog()
+	public static void ShowLoyaltyIsDownOnLoginDialog(Action continueAction)
 	{
 		MessagePopupViewController.ShowLoyaltyIsDownOnLoginMessage(delegate
 		{
 			OrchestrationService.ViewGoBackSafe("Loyalty is down on login message popup timeout", popOnly: false);
+			continueAction?.Invoke();
 		}, delegate
 		{
 			OrchestrationService.ViewGoBackSafe("Loyalty is down on login message popup continue", popOnly: false);
+			continueAction?.Invoke();
 		});
 	}
 
-	private static void StartLoginProcess(string emailAddress, SecureString password, string phoneNumber, SecureString pin)
+	public static void StartLoginProcess(string emailAddress, SecureString password, string phoneNumber, SecureString pin, string customerProfileNumber, WalletType walletType, Action<LoginType, ILoginResult> afterLoginAction)
 	{
-		OrchestrationService.ViewShow("please_wait_view", null);
-		IPersonalizationService service = ServiceLocator.Instance.GetService<IPersonalizationService>();
-		_loginStartTime = DateTime.Now;
-		if (!string.IsNullOrEmpty(emailAddress))
+		LoginType loginType = ((!string.IsNullOrEmpty(customerProfileNumber)) ? LoginType.Mobile : (string.IsNullOrEmpty(emailAddress) ? LoginType.Phone : LoginType.Email));
+		PleaseWaitParameters parameter = ((loginType == LoginType.Mobile) ? new PleaseWaitParameters
 		{
-			service.LoginWithEmail(emailAddress, password, ProcessLoginResult);
+			MessageText = Resources.please_wait_processing_perks_pass
+		} : null);
+		OrchestrationService.ViewShow("please_wait_view", parameter);
+		ServiceLocator.Instance.GetService<IPersonalizationService>();
+		IKioskClientService service = ServiceLocator.Instance.GetService<IKioskClientService>();
+		_loginStartTime = DateTime.Now;
+		Action<ILoginResult> loginResultCallback = delegate(ILoginResult loginResult)
+		{
+			ProcessLoginResult(loginResult, loginType, walletType, afterLoginAction);
+		};
+		if (loginType == LoginType.Mobile)
+		{
+			service?.CustomerProfile?.LoginWithCustomerProfileNumber(customerProfileNumber, loginResultCallback);
+		}
+		else if (loginType == LoginType.Email)
+		{
+			service?.CustomerProfile?.LoginWithEmail(emailAddress, password, loginResultCallback);
 		}
 		else
 		{
-			service.LoginWithPhoneNumber(phoneNumber, pin, ProcessLoginResult);
+			service?.CustomerProfile?.LoginWithPhoneNumber(phoneNumber, pin, loginResultCallback);
 		}
 	}
 
-	private static void ProcessLoginResult(ILoginResult loginResult)
+	private static void ProcessLoginResult(ILoginResult loginResult, LoginType loginType, WalletType walletType, Action<LoginType, ILoginResult> afterLoginAction)
 	{
-		TimeSpan timeRemaining = _loginStartTime.AddSeconds(1.0).Subtract(DateTime.Now);
+		TimeSpan timeRemaining = _loginStartTime.AddMilliseconds(4500.0).Subtract(DateTime.Now);
 		Task.Run(async delegate
 		{
 			if (timeRemaining > new TimeSpan(0L))
@@ -187,83 +436,56 @@ public class PersonalizationFunctions
 		}).ContinueWith(delegate
 		{
 			LogHelper.Instance.Log("Processing login result: success={0} responseError={1}", loginResult?.Success, loginResult?.KioskLoginResponseError);
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+			LoginEvent evt = new LoginEvent
+			{
+				Success = (loginResult?.Success ?? false),
+				LoginType = loginType.ToString(),
+				WalletType = walletType.ToString(),
+				Error = (loginResult?.KioskLoginResponseError.ToString() ?? KioskLoginResponseErrors.None.ToString())
+			};
+			ServiceLocator.Instance?.GetService<IAnalyticsService>()?.AddViewEvent(evt);
+			ServiceLocator.Instance.GetService<IViewService>();
 			OrchestrationService.ViewGoBackSafe("Login process finished - pop PleaseWaitView", popOnly: true);
-			ILoginResult loginResult2 = loginResult;
-			if ((loginResult2 != null && loginResult2.Success) || loginResult.KioskLoginResponseError == KioskLoginResponseErrors.LoyaltyAccountNotFound)
+			if (loginResult != null && (loginResult.Success || loginResult.KioskLoginResponseError == KioskLoginResponseErrors.LoyaltyAccountNotFound))
 			{
 				if (Redbox.Rental.Services.Session.Session.Instance != null)
 				{
+					loginResult.Success = true;
 					Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession = loginResult.PersonalizationSession;
+					Redbox.Rental.Services.Session.Session.Instance.BrowseState.ShowRedboxPlusTooltip = RedboxPlusFunctions.IsFreeOneNightRentalAvailable;
 					Redbox.Rental.Services.Session.Session.Instance.UserInfo = new UserInfo
 					{
 						Email = loginResult.PersonalizationSession.LoginEmailAddress
 					};
+					if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.RedboxPlusSession?.HasActiveSubscription ?? false)
+					{
+						Redbox.Rental.Services.Session.Session.Instance.RentalReturnTime = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession.RedboxPlusSession.RentalReturnTime;
+					}
 					CheckCartForOfferCodes();
 					CheckCartForTivoQueryId();
 					CheckCartForPersonalizationTitleTags();
 					OrchestrationService.AnalyticsAddLoggedInCustomerProfileNumber(loginResult.PersonalizationSession?.CustomerProfileNumber);
 				}
+				IShoppingSession obj = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetCurrentSession();
+				string key = "EarlyIdIndicator";
+				if (walletType == WalletType.Apple)
+				{
+					key = "EarlyIdApple";
+				}
+				else if (walletType == WalletType.Google)
+				{
+					key = "EarlyIdGoogle";
+				}
+				obj?.ShoppingCart?.SetPropertyBagEntry(key, "true");
 				OrchestrationService.ResetApplicationIdleTimerTimeout();
-				bool flag = "keyboard_sign_in_view".Equals(service?.PeekViewFrame()?.ViewFrame?.ViewName);
-				OrchestrationService.ViewGoBackSafe("Login process finished - pop keyboard / phone view", popOnly: false);
-				if (IsSignedIn & flag)
-				{
-					OrchestrationService.StopIdleTimer("idle_timer");
-					Action<ISignupFlowResult> action = delegate
-					{
-						OrchestrationService.UnwindToSafe("browse_view", discard: true, "sign_up_flow_return");
-						ShowRecommendedTitlesIfNeeded(loginResult);
-					};
-					ServiceLocator.Instance.GetService<IPerksSignupService>()?.StartSignupFlow(action, SignUpFlowContext.AfterSignIn, action);
-				}
-				else if (IsSignedIn)
-				{
-					ShowRecommendedTitlesIfNeeded(loginResult);
-				}
 			}
-			else if (loginResult.KioskLoginResponseError == KioskLoginResponseErrors.LoyaltyIsDown)
-			{
-				if (Redbox.Rental.Services.Session.Session.Instance != null)
-				{
-					Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession = loginResult.PersonalizationSession;
-				}
-				OrchestrationService.ViewGoBackSafe("Login process finished - pop Keyboard view", popOnly: true);
-				ShowLoyaltyIsDownOnLoginDialog();
-			}
-			else
-			{
-				IViewFrameInstance viewFrameInstance = service?.PeekViewFrame();
-				if (service != null && viewFrameInstance != null)
-				{
-					if (viewFrameInstance?.ViewFrame.ViewName == "phone_and_pin_view")
-					{
-						LogHelper.Instance.Log("returning to phone and pin view to display error");
-						PhoneAndPinInfo phoneAndPinInfo = viewFrameInstance.Parameter as PhoneAndPinInfo;
-						if (phoneAndPinInfo?.PhoneAndPinViewModel != null)
-						{
-							phoneAndPinInfo.PhoneAndPinViewModel.ErrorMessageText = loginResult.ErrorMessage;
-							phoneAndPinInfo.PhoneAndPinViewModel.SetDefaultDisplays();
-						}
-					}
-					else
-					{
-						LogHelper.Instance.Log("returning to keyboard view to display error");
-						if (viewFrameInstance.Parameter is KeyboardInfo keyboardInfo)
-						{
-							keyboardInfo.ErrorMessage = loginResult.ErrorMessage;
-							keyboardInfo.KeyboardText = string.Empty;
-							keyboardInfo.KeyboardCode = string.Empty;
-						}
-					}
-					service.Show();
-				}
-			}
-		}, TaskScheduler.FromCurrentSynchronizationContext());
+			afterLoginAction?.Invoke(loginType, loginResult);
+		}, ServiceLocator.Instance.GetService<IViewService>()?.UITaskScheduler);
 	}
 
-	private static void ShowRecommendedTitlesIfNeeded(ILoginResult loginResult)
+	public static void ShowRecommendedTitlesIfNeeded(ILoginResult loginResult)
 	{
+		bool flag = false;
 		if (loginResult.PersonalizationSession.RecommendedTitles != null && loginResult.PersonalizationSession.RecommendedTitles.Count > 0 && loginResult.PersonalizationSession.RecommendedTitles[0] != null && loginResult.PersonalizationSession.RecommendedTitles[0].Count > 0)
 		{
 			IRecommendedTitles recommendedTitles = (ApplicationState.Instance.IsADAAccessible ? RecommendedTitlesPopupViewController.UnrollRecommendedTitles(loginResult.PersonalizationSession.RecommendedTitles[0]) : loginResult.PersonalizationSession.RecommendedTitles[0]);
@@ -274,49 +496,53 @@ public class PersonalizationFunctions
 				RecommendedTitlesPopupInfo recommendedTitlesPopupInfo = new RecommendedTitlesPopupInfo();
 				recommendedTitlesPopupInfo.RecommendedTitles = recommendedTitles;
 				recommendedTitlesPopupInfo.NumberOfTitlesToShow = numberOfTitlesToShow;
-				recommendedTitlesPopupInfo.ShowOfferText = recommendedTitles.OfferCode == "RC";
 				recommendedTitlesPopupInfo.ShownFromView = "perks_confirm_view";
+				flag = true;
 				OrchestrationService.ViewShow("recommended_titles_popup_view", recommendedTitlesPopupInfo);
 			}
+		}
+		if (!flag && OrchestrationService.PeekView() == "browse_view")
+		{
+			OrchestrationService.StartIdleTimer("idle_timer");
 		}
 	}
 
 	private static void CheckCartForOfferCodes()
 	{
 		IRentalShoppingCart currentRentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart;
-		if (currentRentalShoppingCart == null || currentRentalShoppingCart.Items.Count <= 0)
+		if (currentRentalShoppingCart == null || currentRentalShoppingCart.TitleItems.Count <= 0)
 		{
 			return;
 		}
-		foreach (IRentalShoppingCartItem item in currentRentalShoppingCart.Items)
+		foreach (IRentalShoppingCartTitleItem titleItem in currentRentalShoppingCart.TitleItems)
 		{
-			item.OfferCode = GetLoyaltyOfferCode(item.TitleProduct);
+			titleItem.OfferCode = GetLoyaltyOfferCode(titleItem.TitleProduct);
 		}
 	}
 
 	private static void CheckCartForTivoQueryId()
 	{
 		IRentalShoppingCart currentRentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart;
-		if (currentRentalShoppingCart == null || currentRentalShoppingCart.Items.Count <= 0)
+		if (currentRentalShoppingCart == null || currentRentalShoppingCart.TitleItems.Count <= 0)
 		{
 			return;
 		}
-		foreach (IRentalShoppingCartItem item in currentRentalShoppingCart.Items)
+		foreach (IRentalShoppingCartTitleItem titleItem in currentRentalShoppingCart.TitleItems)
 		{
-			item.TivoQueryId = GetTivoQueryId(item.TitleProduct);
+			titleItem.TivoQueryId = GetTivoQueryId(titleItem.TitleProduct);
 		}
 	}
 
 	private static void CheckCartForPersonalizationTitleTags()
 	{
 		IRentalShoppingCart currentRentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart;
-		if (currentRentalShoppingCart == null || currentRentalShoppingCart.Items.Count <= 0)
+		if (currentRentalShoppingCart == null || currentRentalShoppingCart.TitleItems.Count <= 0)
 		{
 			return;
 		}
-		foreach (IRentalShoppingCartItem item in currentRentalShoppingCart.Items)
+		foreach (IRentalShoppingCartTitleItem titleItem in currentRentalShoppingCart.TitleItems)
 		{
-			item.PersonalizationTitleTags = GetPersonalizationTitleTags(item.TitleProduct);
+			titleItem.PersonalizationTitleTags = GetPersonalizationTitleTags(titleItem.TitleProduct);
 		}
 	}
 
@@ -343,16 +569,85 @@ public class PersonalizationFunctions
 		});
 	}
 
+	public static void ShowPerksPassLoginError(ILoginResult loginResult, Action continueAction = null, bool popOnlyOnViewGoback = false)
+	{
+		OrchestrationService.SetCurrentUICulture();
+		string header = Resources.perks_pass_login_generic_error_header;
+		string message = Resources.perks_pass_login_generic_error_message;
+		if (loginResult != null)
+		{
+			switch (loginResult.KioskLoginResponseError)
+			{
+			case KioskLoginResponseErrors.AccountLocked:
+			case KioskLoginResponseErrors.AccountNotFound:
+				header = Resources.perks_pass_login_data_mismatch_header;
+				message = Resources.perks_pass_login_data_mismatch_message;
+				break;
+			case KioskLoginResponseErrors.CommunicationError:
+			case KioskLoginResponseErrors.LoyaltyIsDown:
+				header = Resources.perks_pass_login_server_failure_header;
+				message = Resources.perks_pass_login_server_failure_message;
+				break;
+			case KioskLoginResponseErrors.MobilePassReadError:
+				header = Resources.perks_pass_login_read_error_header;
+				message = Resources.perks_pass_login_read_error_message;
+				break;
+			case KioskLoginResponseErrors.MobilePassGoogleNoPassFoundError:
+				header = Resources.mobile_pass_login_google_no_pass_found_error_header;
+				message = Resources.mobile_pass_login_google_no_pass_found_error_message;
+				break;
+			default:
+				header = Resources.perks_pass_login_generic_error_header;
+				message = Resources.perks_pass_login_generic_error_message;
+				break;
+			}
+		}
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		if (service?.UITaskScheduler == null)
+		{
+			return;
+		}
+		Task.Factory.StartNew(delegate
+		{
+			if (loginResult != null && loginResult.KioskLoginResponseError == KioskLoginResponseErrors.MobilePassGoogleNoPassFoundError)
+			{
+				MessagePopupViewController.ShowMessagePopupViewGoogleNoPassFoundError(delegate
+				{
+					OrchestrationService.ViewGoBackSafe("Message view Timed out.", popOnlyOnViewGoback);
+					continueAction?.Invoke();
+				}, delegate
+				{
+					AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsPerksPassErrorGotIt");
+					OrchestrationService.ViewGoBackSafe("Message button GotIt pressed", popOnlyOnViewGoback);
+					continueAction?.Invoke();
+				});
+			}
+			else
+			{
+				MessagePopupViewController.ShowPerksPassLoginErrorMessage(header, message, delegate
+				{
+					AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsPerksPassErrorGotIt");
+					OrchestrationService.ViewGoBackSafe("Message button GotIt pressed", popOnlyOnViewGoback);
+					continueAction?.Invoke();
+				}, delegate
+				{
+					OrchestrationService.ViewGoBackSafe("Message view Timed out.", popOnlyOnViewGoback);
+					continueAction?.Invoke();
+				});
+			}
+		}, CancellationToken.None, TaskCreationOptions.None, service?.UITaskScheduler);
+	}
+
 	public static string GetTivoQueryIdFromTransactionEntities(ITitleProduct titleProduct)
 	{
 		ITransactionData obj = Redbox.Rental.Services.Session.Session.Instance?.TransactionData;
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		long productGroupId = service.GetProductGroupId(titleProduct);
 		string result = null;
-		List<ITransactionEntity> list = obj?.TransactionEntities.Where((ITransactionEntity x) => x.Name == "TivoQueryId").ToList();
+		List<Redbox.Rental.Model.Transaction.ITransactionEntity> list = obj?.TransactionEntities.Where((Redbox.Rental.Model.Transaction.ITransactionEntity x) => x.Name == "TivoQueryId").ToList();
 		if (list != null)
 		{
-			foreach (ITransactionEntity item in list)
+			foreach (Redbox.Rental.Model.Transaction.ITransactionEntity item in list)
 			{
 				service.GetProduct(item.TitleId, excludeTitleRollup: false, out var kioskProduct);
 				long productGroupId2 = service.GetProductGroupId(kioskProduct);
@@ -449,7 +744,7 @@ public class PersonalizationFunctions
 		});
 	}
 
-	public static void ShowSonySweepstakesConfirmationView(IAuthorizeResult authorizeResult, string emailAddress)
+	public static void ShowSonySweepstakesConfirmationView(IAuthorizeResult authorizeResult, string emailAddress, bool showRedboxSweepstakes)
 	{
 		int num = 10000;
 		ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
@@ -490,7 +785,8 @@ public class PersonalizationFunctions
 		OrchestrationService.ViewShow("sony_sweepstakes_confirmation_view", new SonySweepstakesConfirmationViewInfo
 		{
 			ContinueAction = continueAction,
-			EmailAddress = emailAddress
+			EmailAddress = emailAddress,
+			ShowRedboxSweepstakes = showRedboxSweepstakes
 		});
 	}
 
@@ -521,7 +817,8 @@ public class PersonalizationFunctions
 
 	public static void ShowUseMemberPoints()
 	{
-		if (!IsLoyaltySignedIn)
+		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+		if (!IsLoyaltySignedIn || !(service?.CurrentRentalShoppingCart?.TitleItems?.Any() ?? false))
 		{
 			return;
 		}

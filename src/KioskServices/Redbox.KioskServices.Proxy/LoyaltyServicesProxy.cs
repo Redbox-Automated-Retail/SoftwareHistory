@@ -9,8 +9,10 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel.Loyalty;
 using Redbox.KioskServices.Proxy.Request;
-using Redbox.KioskServices.Proxy.Requests;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskServices.Proxy;
@@ -118,15 +120,15 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				_items = new BindingList<ItemAccrualRedemptions>();
 			}
 			IRentalShoppingCartService session = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-			if (session?.CurrentRentalShoppingCart?.Items != null && session.CurrentRentalShoppingCart.Items.Any())
+			if (session?.CurrentRentalShoppingCart?.TitleItems != null && session.CurrentRentalShoppingCart.TitleItems.Any())
 			{
-				_items.ToList().RemoveAll((ItemAccrualRedemptions x) => !session.CurrentRentalShoppingCart.Items.Any((IRentalShoppingCartItem y) => x.ProductId == y.ProductId));
+				_items.ToList().RemoveAll((ItemAccrualRedemptions x) => !session.CurrentRentalShoppingCart.TitleItems.Any((IRentalShoppingCartTitleItem y) => x.ProductId == y.ProductId));
 			}
 			else
 			{
 				_items.Clear();
 			}
-			session?.CurrentRentalShoppingCart?.Items?.Where((IRentalShoppingCartItem x) => !_items.Any((ItemAccrualRedemptions y) => y.ProductId == x.ProductId)).ForEach(delegate(IRentalShoppingCartItem x)
+			session?.CurrentRentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => !_items.Any((ItemAccrualRedemptions y) => y.ProductId == x.ProductId)).ForEach(delegate(IRentalShoppingCartTitleItem x)
 			{
 				_items.Add(new ItemAccrualRedemptions
 				{
@@ -158,30 +160,40 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 
 	private void PerformLiveEstimatePointsAccrued(string customerProfileNumber, RemoteServiceCallback completeCallback)
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		ThreadPool.QueueUserWorkItem(async delegate
 		{
-			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-			remoteServiceResult.Properties["is_online"] = true;
+			RemoteServiceResult result = new RemoteServiceResult();
+			result.Properties["is_online"] = true;
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				if (!StoreServicesProxy.Instance.IsStandAlone)
+				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 				{
-					LogHelper.Instance.Log("Live call to remote ILoyaltyServices.EstimatePointsAccrued, URL: {0}", KioskServicesProxy.Instance.Url);
-					CartMessage message = ProxyMessageHelper.CreateCartMessage(customerProfileNumber, "EstimateAccrual");
-					IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
-					HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
-					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+					IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+					string arg = (service.SendEstimateAccrualToKioskClientService ? service.KioskClientServiceBaseUrl : KioskServicesProxy.Instance.Url);
+					LogHelper.Instance.Log($"Live call to remote ILoyaltyServices.EstimatePointsAccrued, URL: {arg}");
+					CartMessage request = ProxyMessageHelper.CreateCartMessage(customerProfileNumber, "EstimateAccrual");
+					IDictionary<string, object> dictionary;
+					if (service.SendEstimateAccrualToKioskClientService)
+					{
+						dictionary = await ServiceLocator.Instance.GetService<IKioskClientService>().Loyalty.EstimateAccrual(request);
+					}
+					else
+					{
+						dictionary = KioskServicesProxy.Instance.ExecuteMessage(request);
+						ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(dictionary);
+					}
+					result.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 					if (dictionary.ContainsKey("Items"))
 					{
-						remoteServiceResult.Properties["Items"] = dictionary["Items"] as ArrayList;
+						result.Properties["Items"] = dictionary["Items"] as ArrayList;
 					}
 					if (dictionary.ContainsKey("ServerName"))
 					{
-						remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+						result.Properties["server_name"] = dictionary["ServerName"];
 					}
-					if (!remoteServiceResult.Success)
+					if (!result.Success)
 					{
 						ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
 						if (arrayList != null && arrayList.Count > 0)
@@ -189,38 +201,38 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 							if (arrayList[0] is Dictionary<string, object> dictionary2)
 							{
 								object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(EstimateAccrualErrors?), (string)dictionary2["Code"]);
-								remoteServiceResult.Properties["response"] = fieldsForResponseCode ?? ((object)EstimateAccrualErrors.Error);
+								result.Properties["response"] = fieldsForResponseCode ?? ((object)EstimateAccrualErrors.Error);
 							}
 						}
 						else
 						{
-							remoteServiceResult.Properties["response"] = EstimateAccrualErrors.Error;
+							result.Properties["response"] = EstimateAccrualErrors.Error;
 						}
 					}
 				}
 				else
 				{
 					LogHelper.Instance.Log("In stand alone mode, skipping call to login user.", LogEntryType.Info);
-					remoteServiceResult.Properties["response"] = EstimateAccrualErrors.LoyaltyError;
-					remoteServiceResult.Properties["is_online"] = false;
+					result.Properties["response"] = EstimateAccrualErrors.LoyaltyError;
+					result.Properties["is_online"] = false;
 				}
 			}
 			catch (Exception e)
 			{
 				LogHelper.Instance.Log("An unhandled exception was raised in LoyaltyServicesProxy.PerformLiveEstimatePointsAccrued.", e);
-				remoteServiceResult.Properties["response"] = EstimateAccrualErrors.Error;
+				result.Properties["response"] = EstimateAccrualErrors.Error;
 			}
 			finally
 			{
 				try
 				{
-					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult.ToObfuscatedString());
+					result.ExecutionTime = executionTimer.Elapsed;
+					result.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", result.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
-						Result = remoteServiceResult,
+						Result = result,
 						Message = "Invoking completeCallback from LoyaltyServicesProxy.PerformLiveEstimatePointsAccrued."
 					});
 				}
@@ -248,13 +260,19 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				LogHelper.Instance.Log(instance.ToJson(), LogEntryType.Info);
 				if (SimulateAccrualSuccess)
 				{
+					IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 					ArrayList list = new ArrayList();
 					Items.ForEach(delegate(ItemAccrualRedemptions x)
 					{
+						bool flag = rentalShoppingCart?.Promotion?.PromotionItems?.FirstOrDefault((IPromotionItem y) => y.RentalShoppingCartItem.ProductId == x.ProductId) != null;
+						bool flag2 = rentalShoppingCart?.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem y) => y.ProductId == x.ProductId && (y?.IsRedboxPlusFreeOneNightRental ?? false)) != null;
 						Dictionary<string, object> value = new Dictionary<string, object>
 						{
 							{ "ProductId", x.ProductId },
-							{ "Points", x.AccrualPoints }
+							{
+								"Points",
+								(!(flag | flag2)) ? x.AccrualPoints : 0
+							}
 						};
 						list.Add(value);
 					});
@@ -275,7 +293,7 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+					remoteServiceResult.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
 					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
@@ -306,30 +324,40 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 
 	private void PerformLiveEstimateRedemptionPoints(string customerProfileNumber, RemoteServiceCallback completeCallback)
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		ThreadPool.QueueUserWorkItem(async delegate
 		{
-			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-			remoteServiceResult.Properties["is_online"] = true;
+			RemoteServiceResult result = new RemoteServiceResult();
+			result.Properties["is_online"] = true;
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				if (!StoreServicesProxy.Instance.IsStandAlone)
+				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 				{
-					LogHelper.Instance.Log("Live call to remote ILoyaltyServices.EstimateRedemptionPoints, URL: {0}", KioskServicesProxy.Instance.Url);
-					CartMessage message = ProxyMessageHelper.CreateCartMessage(customerProfileNumber, "EstimateRedemption");
-					IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
-					HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
-					remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+					IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+					string arg = (service.SendEstimateRedemptionToKioskClientService ? service.KioskClientServiceBaseUrl : KioskServicesProxy.Instance.Url);
+					LogHelper.Instance.Log($"Live call to remote ILoyaltyServices.EstimateRedemptionPoints, URL: {arg}");
+					CartMessage request = ProxyMessageHelper.CreateCartMessage(customerProfileNumber, "EstimateRedemption");
+					IDictionary<string, object> dictionary;
+					if (service.SendEstimateRedemptionToKioskClientService)
+					{
+						dictionary = await ServiceLocator.Instance.GetService<IKioskClientService>().Loyalty.EstimateRedemption(request);
+					}
+					else
+					{
+						dictionary = KioskServicesProxy.Instance.ExecuteMessage(request);
+						ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(dictionary);
+					}
+					result.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 					if (dictionary.ContainsKey("Items"))
 					{
-						remoteServiceResult.Properties["Items"] = dictionary["Items"] as ArrayList;
+						result.Properties["Items"] = dictionary["Items"] as ArrayList;
 					}
 					if (dictionary.ContainsKey("ServerName"))
 					{
-						remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
+						result.Properties["server_name"] = dictionary["ServerName"];
 					}
-					if (!remoteServiceResult.Success)
+					if (!result.Success)
 					{
 						ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
 						if (arrayList != null && arrayList.Count > 0)
@@ -337,38 +365,38 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 							if (arrayList[0] is Dictionary<string, object> dictionary2)
 							{
 								object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(EstimateRedemptionErrors?), (string)dictionary2["Code"]);
-								remoteServiceResult.Properties["response"] = fieldsForResponseCode ?? ((object)EstimateRedemptionErrors.Error);
+								result.Properties["response"] = fieldsForResponseCode ?? ((object)EstimateRedemptionErrors.Error);
 							}
 						}
 						else
 						{
-							remoteServiceResult.Properties["response"] = EstimateRedemptionErrors.Error;
+							result.Properties["response"] = EstimateRedemptionErrors.Error;
 						}
 					}
 				}
 				else
 				{
 					LogHelper.Instance.Log("In stand alone mode, skipping call to login user.", LogEntryType.Info);
-					remoteServiceResult.Properties["response"] = EstimateRedemptionErrors.LoyaltyError;
-					remoteServiceResult.Properties["is_online"] = false;
+					result.Properties["response"] = EstimateRedemptionErrors.LoyaltyError;
+					result.Properties["is_online"] = false;
 				}
 			}
 			catch (Exception e)
 			{
 				LogHelper.Instance.Log("An unhandled exception was raised in LoyaltyServicesProxy.PerformLiveEstimateRedemptionPoints.", e);
-				remoteServiceResult.Properties["response"] = EstimateRedemptionErrors.Error;
+				result.Properties["response"] = EstimateRedemptionErrors.Error;
 			}
 			finally
 			{
 				try
 				{
-					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
+					result.ExecutionTime = executionTimer.Elapsed;
+					result.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", result?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{
 						Callback = completeCallback,
-						Result = remoteServiceResult,
+						Result = result,
 						Message = "Invoking completeCallback from LoyaltyServicesProxy.PerformLiveEstimateRedemptionPoints."
 					});
 				}
@@ -396,13 +424,19 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				LogHelper.Instance.Log(instance.ToJson(), LogEntryType.Info);
 				if (SimulateRedemptionSuccess)
 				{
+					IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 					ArrayList list = new ArrayList();
 					Items.ForEach(delegate(ItemAccrualRedemptions x)
 					{
+						bool flag = rentalShoppingCart?.Promotion?.PromotionItems?.FirstOrDefault((IPromotionItem y) => y.RentalShoppingCartItem.ProductId == x.ProductId) != null;
+						bool flag2 = rentalShoppingCart?.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem y) => y.ProductId == x.ProductId && (y?.IsRedboxPlusFreeOneNightRental ?? false)) != null;
 						Dictionary<string, object> value = new Dictionary<string, object>
 						{
 							{ "ProductId", x.ProductId },
-							{ "Points", x.RedemptionPoints }
+							{
+								"Points",
+								(!(flag | flag2)) ? x.RedemptionPoints : 0
+							}
 						};
 						list.Add(value);
 					});
@@ -423,7 +457,7 @@ public class LoyaltyServicesProxy : ILoyaltyServices
 				try
 				{
 					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
+					remoteServiceResult.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
 					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
 					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 					{

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Xps.Packaging;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
@@ -60,9 +59,7 @@ public class HelpViewModel : BaseModel<HelpViewModel>
 
 	private HelpDocuments m_currentHelpDocument;
 
-	public ObservableCollection<HelpButtonData> TopRowButtonList { get; set; }
-
-	public ObservableCollection<HelpButtonData> BottomRowButtonList { get; set; }
+	public ObservableCollection<HelpButtonData> ButtonList { get; set; }
 
 	public string BackButtonText
 	{
@@ -253,9 +250,9 @@ public class HelpViewModel : BaseModel<HelpViewModel>
 		set
 		{
 			m_currentHelpDocument = value;
-			foreach (HelpButtonData item in TopRowButtonList.Union(BottomRowButtonList))
+			foreach (HelpButtonData button in ButtonList)
 			{
-				item.IsEnabled = item.DocumentToShow != m_currentHelpDocument;
+				button.IsEnabled = button.DocumentToShow != m_currentHelpDocument;
 			}
 		}
 	}
@@ -276,8 +273,7 @@ public class HelpViewModel : BaseModel<HelpViewModel>
 
 	public HelpViewModel()
 	{
-		TopRowButtonList = new ObservableCollection<HelpButtonData>();
-		BottomRowButtonList = new ObservableCollection<HelpButtonData>();
+		ButtonList = new ObservableCollection<HelpButtonData>();
 	}
 
 	private static void CurrentHelpDocPageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

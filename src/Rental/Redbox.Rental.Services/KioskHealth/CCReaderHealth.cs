@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskEvents;
@@ -159,7 +160,7 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 				{
 					_readErrorCount++;
 					_inactivityOccurred = true;
-					KioskEvent kioskEvent = KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, 601, success: false, null, null, new
+					KioskEvent kioskEvent = KioskEvent.NewEvent(6, 601, success: false, null, null, new
 					{
 						ReadErrors = _readErrorCount
 					}.ToJson());
@@ -179,7 +180,7 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 				{
 					if (_inactivityOccurred && _CCReaderSendNoDataEvents)
 					{
-						_kioskEvents.AddEvent(KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, 602, success: true, null, _relatedId));
+						_kioskEvents.AddEvent(KioskEvent.NewEvent(6, 602, success: true, null, _relatedId));
 					}
 					Reset();
 				}
@@ -189,7 +190,7 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 			_inactivityOccurred = true;
 			if (_CCReaderSendNoDataEvents)
 			{
-				KioskEvent kioskEvent2 = KioskEvent.NewEvent(KioskEventType.KioskHealthCCReader, 600, success: true, null, null, new
+				KioskEvent kioskEvent2 = KioskEvent.NewEvent(6, 600, success: true, null, null, new
 				{
 					FailedReadAttempts = _failedAttemptCount
 				}.ToJson());

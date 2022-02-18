@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Redbox.Core;
@@ -33,6 +31,8 @@ public class AnalyticsService : IAnalyticsService
 	private readonly string _analyticsSessionsPath = "AnalyticsSessions";
 
 	private readonly IDictionary<string, IAnalyticsSession> _analyticsSessions = new Dictionary<string, IAnalyticsSession>();
+
+	private List<IAnalyticsEvent> _queuedAnalyticsEvents = new List<IAnalyticsEvent>();
 
 	public IStoreManager StoreManager
 	{
@@ -71,6 +71,8 @@ public class AnalyticsService : IAnalyticsService
 	}
 
 	public IAnalyticsSession CurrentSession { get; set; }
+
+	public List<IAnalyticsEvent> QueuedAnalyticsEvents => _queuedAnalyticsEvents;
 
 	public AnalyticsService(LogHelper logger, IConfigurationService configuration, IEngineApplication engine)
 	{
@@ -185,6 +187,19 @@ public class AnalyticsService : IAnalyticsService
 		return CurrentSession?.AddView(name);
 	}
 
+	public void AddQueuedViewEvents()
+	{
+		if (_queuedAnalyticsEvents == null)
+		{
+			return;
+		}
+		foreach (IAnalyticsEvent queuedAnalyticsEvent in _queuedAnalyticsEvents)
+		{
+			AddViewEvent(queuedAnalyticsEvent);
+		}
+		_queuedAnalyticsEvents.Clear();
+	}
+
 	public IAnalyticsEvent AddViewEvent(string action, string name)
 	{
 		return CurrentSession?.AddViewEvent(action, name);
@@ -273,6 +288,16 @@ public class AnalyticsService : IAnalyticsService
 		}
 	}
 
+	public IAnalyticsEvent AddOrQueueViewEvent(IAnalyticsEvent evt)
+	{
+		if (CurrentSession != null)
+		{
+			return AddViewEvent(evt);
+		}
+		_queuedAnalyticsEvents.Add(evt);
+		return evt;
+	}
+
 	public IAnalyticsEvent AddButtonPressEvent(string name, string eventSubType = null)
 	{
 		try
@@ -301,9 +326,14 @@ public class AnalyticsService : IAnalyticsService
 
 	public IAnalyticsEvent AddTimeoutEvent(int timeOut)
 	{
+		return AddTimeoutEvent(ServiceLocator.Instance.GetService<IViewService>()?.GetCurrentViewAnalyticsName(), timeOut);
+	}
+
+	public IAnalyticsEvent AddTimeoutEvent(string viewName, int timeOut)
+	{
 		try
 		{
-			return AddViewEvent(new TimeoutEvent(ServiceLocator.Instance.GetService<IViewService>()?.GetCurrentViewAnalyticsName(), timeOut, ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false));
+			return AddViewEvent(new TimeoutEvent(viewName, timeOut, ServiceLocator.Instance.GetService<ITextToSpeechService>()?.TTSEnabled ?? false));
 		}
 		catch (Exception e)
 		{
@@ -355,7 +385,7 @@ public class AnalyticsService : IAnalyticsService
 				StartTime = analyticsSession.StartTime.ToString("yyyy/MM/dd HH:mm:ss"),
 				EndTime = analyticsSession.EndTime.ToString("yyyy/MM/dd HH:mm:ss"),
 				IsUnCompressed = false,
-				SessionData = CompressString(ToJson(sessionId, Formatting.None))
+				SessionData = ToJson(sessionId, Formatting.None).CompressString()
 			});
 			_logger.Log("AnalyticsService.SendToKioskDataService({0}) completed", sessionId);
 		}
@@ -394,31 +424,6 @@ public class AnalyticsService : IAnalyticsService
 			_logger.Log("An unhandled exception was raised in AnalyticsService.ToJson.", e);
 		}
 		return string.Empty;
-	}
-
-	private string CompressString(string text)
-	{
-		try
-		{
-			byte[] bytes = Encoding.UTF8.GetBytes(text);
-			MemoryStream memoryStream = new MemoryStream();
-			using (GZipStream gZipStream = new GZipStream(memoryStream, CompressionMode.Compress, leaveOpen: true))
-			{
-				gZipStream.Write(bytes, 0, bytes.Length);
-			}
-			memoryStream.Position = 0L;
-			byte[] array = new byte[memoryStream.Length];
-			memoryStream.Read(array, 0, array.Length);
-			byte[] array2 = new byte[array.Length + 4];
-			Buffer.BlockCopy(array, 0, array2, 4, array.Length);
-			Buffer.BlockCopy(BitConverter.GetBytes(bytes.Length), 0, array2, 0, 4);
-			return Convert.ToBase64String(array2);
-		}
-		catch (Exception e)
-		{
-			_logger.Log("An unhandled exception was raised in AnalyticsService.CompressString.", e);
-			return text;
-		}
 	}
 
 	private void CleanupAnalyticsFiles()

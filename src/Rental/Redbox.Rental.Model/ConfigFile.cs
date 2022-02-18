@@ -7,4 +7,6 @@ public static class ConfigFile
 	public const string Marketing = "marketing";
 
 	public const string KioskHealth = "kioskhealth";
+
+	public const string KioskEngine = "kioskengine";
 }

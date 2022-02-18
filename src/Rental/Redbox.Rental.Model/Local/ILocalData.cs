@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Redbox.Rental.Model.Local;
 
 public interface ILocalData
@@ -7,4 +9,10 @@ public interface ILocalData
 	void UpdateBadCard(IBadCard badCard);
 
 	void RemoveBadCard(IBadCard badCard);
+
+	void AddRemovedQueueItem(RemovedQueueItem item);
+
+	List<RemovedQueueItem> GetRemovedQueueItems();
+
+	void DeleteRemovedQueueItem(RemovedQueueItem item);
 }

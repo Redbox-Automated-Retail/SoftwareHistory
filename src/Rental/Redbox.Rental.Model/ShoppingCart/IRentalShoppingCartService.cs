@@ -19,10 +19,6 @@ public interface IRentalShoppingCartService
 
 	bool RemoveRentalShoppingCart(Guid id);
 
-	void AddItemToRentalShoppingCart(Guid shoppingCartSessionId, IRentalShoppingCartItem rentalShoppingCartItem);
-
-	void RemoveItemFromRentalShoppingCart(Guid id, int index, bool userRemoved);
-
 	void RemoveItemFromRentalShoppingCartByProductId(Guid shoppingCartSessionId, long productId, bool userRemoved);
 
 	void AddMultiDiscDiscsToRentalShoppingCart(Guid shoppingCartSessionId);
@@ -31,9 +27,11 @@ public interface IRentalShoppingCartService
 
 	void RemoveNonReservedProductsFromRentalShoppingCart(Guid shoppingCartSessionId);
 
-	IRentalShoppingCartItem CreateRentalShoppingCartItemFromTitleProduct(ITitleProduct titleProduct);
+	IRentalShoppingCartTitleItem CreateRentalShoppingCartItemFromTitleProduct(ITitleProduct titleProduct);
 
-	IRentalShoppingCartItem CreateRentalShoppingCartItemFromProductId(long productId);
+	IRentalShoppingCartTitleItem CreateRentalShoppingCartItemFromProductId(long productId);
+
+	IRentalShoppingCartSubscriptionItem CreateRentalShoppingCartItemFromSubscriptionProduct(ISubscriptionProduct subscriptionProduct);
 
 	void SendRentalShoppingCartToAnalytics(IRentalShoppingCart rentalShoppingCart);
 
@@ -41,9 +39,9 @@ public interface IRentalShoppingCartService
 
 	void RemovePromoOfferFromCart(Guid shoppingSessionId, bool force = false);
 
-	void AddMultiNightOfferToItem(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer);
+	void AddMultiNightOfferToItem(IRentalShoppingCartTitleItem rentalShoppingCartItem, CustomerOffer selectedOffer);
 
-	void RemoveMultiNightOfferFromItem(IRentalShoppingCartItem rentalShoppingCartItem);
+	void RemoveMultiNightOfferFromItem(IRentalShoppingCartTitleItem rentalShoppingCartItem);
 
-	void SetPurchasePriceForSelectedItem(CustomerOffer selectedOffer, IRentalShoppingCartItem newLineItem, IPromotionService promotionService);
+	void SetPurchasePriceForSelectedItem(CustomerOffer selectedOffer, IRentalShoppingCartTitleItem newLineItem, IPromotionService promotionService);
 }

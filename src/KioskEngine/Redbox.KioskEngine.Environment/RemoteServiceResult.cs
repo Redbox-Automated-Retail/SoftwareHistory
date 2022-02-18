@@ -5,6 +5,7 @@ using System.Text;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -43,11 +44,16 @@ public class RemoteServiceResult : IRemoteServiceResult
 		stringBuilder.Append($"\"Errors\":{Errors?.ToJson()},");
 		stringBuilder.Append($"\"ExecutionTime\":{ExecutionTime.ToJson()},");
 		Dictionary<string, object> dictionary = new Dictionary<string, object>(Properties);
-		ObfuscationHelper.ObfuscateDictionary(dictionary);
+		ServiceLocator.Instance.GetService<IObfuscationService>()?.ObfuscateDictionary(dictionary);
 		stringBuilder.Append($"\"Properties\":{dictionary.ToJson()},");
 		stringBuilder.Append($"\"Instructions\":{Instructions?.ToJson()}");
 		stringBuilder.Append("}");
 		return stringBuilder.ToString();
+	}
+
+	public void AddError(string code, string message, string details)
+	{
+		m_errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError(code, message, details));
 	}
 
 	public T GetProperty<T>(string keyName)
@@ -61,7 +67,11 @@ public class RemoteServiceResult : IRemoteServiceResult
 		{
 			obj = GetInt(obj);
 		}
-		return (T)obj;
+		if (obj != null)
+		{
+			return (T)obj;
+		}
+		return default(T);
 	}
 
 	private static int GetInt(object obj)

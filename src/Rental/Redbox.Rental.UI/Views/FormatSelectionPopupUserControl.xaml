@@ -25,10 +25,10 @@
   </UIElement.CommandBindings>
   <Grid>
     <Grid Name="BackgroundGrid" Background="#FF000000" Opacity="0.6" />
-    <Border Background="#FFFFFFFF" CornerRadius="28" Height="{Binding Path=DialogHeight, FallbackValue=443}" Width="{Binding Path=DialogWidth, FallbackValue=750}">
+    <Border VerticalAlignment="Center" Background="#FFFFFFFF" CornerRadius="28" Width="{Binding Path=DialogWidth, FallbackValue=750}">
       <StackPanel Margin="0,55,0,0">
         <TextBlock Name="HeaderText" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="47,0,0,0" Foreground="#782D8D" Style="{StaticResource font_montserrat_bold_24}" Text="{Binding Path=HeaderText, FallbackValue=John Wick}" />
-        <TextBlock Name="DescriptionText" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="47,10,0,0" Foreground="#782D8D" Style="{StaticResource DescriptionTextStyle}" Text="{Binding Path=DescriptionText, FallbackValue=Pick your format}" />
+        <TextBlock Name="DescriptionText" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="47,10,47,0" TextWrapping="Wrap" Foreground="#782D8D" Style="{StaticResource DescriptionTextStyle}" Text="{Binding Path=DescriptionText, FallbackValue=Pick your format}" />
         <ItemsControl Name="FormatButtonsItemsControl" Margin="0,0,0,50" ItemsSource="{Binding ButtonData}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
@@ -46,10 +46,10 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <Redbox:RoundedButton Name="CancelButton" Width="250" Height="59" VerticalAlignment="Top" Margin="0,35,0,0" CornerRadius="28" Style="{StaticResource thin_border_button_style}" Command="{x:Static views:FormatSelectionPopupViewUserControlCommands.CancelCommand}">
+        <Redbox:RoundedButton Name="CancelButton" Width="250" Height="59" VerticalAlignment="Top" Margin="0,35,0,25" CornerRadius="28" Style="{StaticResource thin_border_button_style}" Command="{x:Static views:FormatSelectionPopupViewUserControlCommands.CancelCommand}">
           <TextBlock Name="CancelButtonText" Foreground="#E42045" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=CancelButtonText, FallbackValue=Cancel}" />
         </Redbox:RoundedButton>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,20,0,12" Visibility="{Binding Path=DigitalCodeInfoVisibility, FallbackValue=Visible}">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,12" Visibility="{Binding Path=DigitalCodeInfoVisibility, FallbackValue=Visible}">
           <TextBlock Style="{StaticResource font_montserrat_regular_16}" Foreground="#782D8D" VerticalAlignment="Center" Text="{Binding Path=DigitalCodeInfoText, FallbackValue=*What is a Digital Code?}" />
           <Redbox:RoundedButton Name="DigitalCodeInfoButton" Width="40" Height="40" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" Command="{x:Static views:FormatSelectionPopupViewUserControlCommands.DigitalCodeInfoCommand}" CornerRadius="21" Margin="10,0,5,0" IsEnabled="True">
             <TextBlock Style="{StaticResource font_montserrat_bold_24}">i</TextBlock>

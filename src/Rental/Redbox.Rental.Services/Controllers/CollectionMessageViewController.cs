@@ -11,6 +11,7 @@ using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
 
 namespace Redbox.Rental.Services.Controllers;
@@ -53,8 +54,8 @@ public class CollectionMessageViewController : BaseViewController
 		}
 		CollectionMessageModel collectionMessageModel = new CollectionMessageModel
 		{
-			Title = BundleFunctions.GetDictionaryStringValue("strings", "collections_popup_text"),
-			SeeAllCollectionsButtonText = BundleFunctions.GetDictionaryStringValue("strings", "collections_popup_see_all_collections"),
+			Title = Resources.collections_popup_text,
+			SeeAllCollectionsButtonText = Resources.collections_popup_see_all_collections,
 			TimeOut = 15000,
 			DisplayCollectionModel1 = displayCollectionModels[0],
 			DisplayCollectionModel2 = displayCollectionModels[1]

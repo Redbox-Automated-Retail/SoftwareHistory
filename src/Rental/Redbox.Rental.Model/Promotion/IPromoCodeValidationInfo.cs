@@ -11,6 +11,8 @@ public interface IPromoCodeValidationInfo
 
 	bool IsCartInvalidBecauseOfFlashDeal { get; set; }
 
+	bool IsCartInvalidBecauseOfDiscountRestriction { get; set; }
+
 	decimal Price { get; set; }
 
 	decimal Percent { get; set; }
@@ -21,5 +23,5 @@ public interface IPromoCodeValidationInfo
 
 	IList<IPromotionItem> PromotionItems { get; set; }
 
-	IList<IRentalShoppingCartItem> QualifyingItems { get; set; }
+	IList<IRentalShoppingCartTitleItem> QualifyingItems { get; set; }
 }

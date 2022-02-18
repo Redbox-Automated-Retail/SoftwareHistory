@@ -35,11 +35,25 @@ public class DisplayCheckoutProductModel : DisplayProductModel
 		AffectsRender = true
 	});
 
+	public static readonly DependencyProperty DetailsButtonVisibilityProperty = DependencyProperty.Register("DetailsButtonVisibility", typeof(Visibility), typeof(DisplayCheckoutProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty RedboxPlusMovieInfoVisibilityProperty = DependencyProperty.Register("RedboxPlusMovieInfoVisibility", typeof(Visibility), typeof(DisplayCheckoutProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
 	public string ProductTypeText { get; set; }
 
 	public string ProductTitleText { get; set; }
 
 	public string ProductCartPriceText { get; set; }
+
+	public string RedboxPlusMovieInfoButtonText { get; set; }
+
+	public DynamicRoutedCommand RedboxPlusInfoCommand { get; set; }
 
 	public DisplayProductCheckoutSpecialOfferActionModel OfferActionModel { get; set; }
 
@@ -133,6 +147,36 @@ public class DisplayCheckoutProductModel : DisplayProductModel
 		}
 	}
 
+	public Visibility DetailsButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DetailsButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DetailsButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RedboxPlusMovieInfoVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusMovieInfoVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusMovieInfoVisibilityProperty, value);
+			});
+		}
+	}
+
 	public void ConfigureForCheckout()
 	{
 		base.FlagVisibility = Visibility.Collapsed;
@@ -147,6 +191,7 @@ public class DisplayCheckoutProductModel : DisplayProductModel
 		base.AddButtonVisibility = Visibility.Collapsed;
 		base.ADAMiniCartAddButtonVisibility = Visibility.Collapsed;
 		OfferActionVisibility = Visibility.Collapsed;
+		RedboxPlusMovieInfoVisibility = Visibility.Collapsed;
 		OfferActionModel = new DisplayProductCheckoutSpecialOfferActionModel();
 	}
 }

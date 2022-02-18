@@ -7,15 +7,25 @@ namespace Redbox.KioskServices.Proxy.ComponentModel;
 
 public interface IInventoryServices
 {
-	void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, string fileName, RemoteServiceCallback callback);
+	bool EnableOutOfStockDisplay { get; set; }
 
-	void BackwardsDiscReturn(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, RemoteServiceCallback callback);
+	bool EnableSellThryOfNew { get; set; }
+
+	bool LiveCall { get; set; }
+
+	bool SimulateCommunicationsFailure { get; set; }
+
+	bool SimulateServerBusyError { get; set; }
+
+	void Deactivate();
+
+	void Reset();
+
+	void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, string fileName, RemoteServiceCallback callback);
 
 	void Snapshot(string storeNumber, ReadOnlyCollection<IInventoryItem> items, RemoteServiceCallback callback);
 
 	void SnapshotImmediate(string storeNumber, ReadOnlyCollection<IInventoryItem> items, RemoteServiceCallback callback);
-
-	void GetRentalCount(string storeNumber, RemoteServiceCallback completeCallback);
 
 	bool CanSwitch();
 

@@ -10,7 +10,7 @@ public interface ITitleRollupFormatButtonTextValues
 
 	string OutOfStockText { get; }
 
-	string Add { get; }
+	string Rent { get; }
 
 	string CurrencySymbol { get; }
 

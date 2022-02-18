@@ -161,24 +161,35 @@ public partial class MessagePopupViewUserControl : TextToSpeechUserControl, ICom
 
 	private void TextToSpeechUserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
 	{
-		if (Model != null)
+		if (Model == null)
 		{
-			Timeout = Model.TimeOut;
-			if (Model.ContentUserControl != null)
+			return;
+		}
+		Timeout = Model.TimeOut;
+		if (Model.ContentUserControl != null)
+		{
+			if (Model.AutoSizedGridVisibility == Visibility.Visible)
+			{
+				AutoSizeGrid_UserControlContainer.Children.Clear();
+				AutoSizeGrid_UserControlContainer.Children.Add(Model.ContentUserControl);
+			}
+			else
 			{
 				UserControlContainer.Children.Clear();
 				UserControlContainer.Children.Add(Model.ContentUserControl);
 			}
-			if (string.IsNullOrEmpty(Model.Button1Text))
-			{
-				ButtonGrid.ColumnDefinitions[0].Width = new GridLength(0.0);
-				FloatingButtonGrid.ColumnDefinitions[0].Width = new GridLength(0.0);
-			}
-			if (string.IsNullOrEmpty(Model.Button2Text))
-			{
-				ButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
-				FloatingButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
-			}
+		}
+		if (string.IsNullOrEmpty(Model.Button1Text))
+		{
+			ButtonGrid.ColumnDefinitions[0].Width = new GridLength(0.0);
+			FloatingButtonGrid.ColumnDefinitions[0].Width = new GridLength(0.0);
+			AutoSizeGrid_ButtonGrid.ColumnDefinitions[0].Width = new GridLength(0.0);
+		}
+		if (string.IsNullOrEmpty(Model.Button2Text))
+		{
+			ButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
+			FloatingButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
+			AutoSizeGrid_ButtonGrid.ColumnDefinitions[1].Width = new GridLength(0.0);
 		}
 	}
 

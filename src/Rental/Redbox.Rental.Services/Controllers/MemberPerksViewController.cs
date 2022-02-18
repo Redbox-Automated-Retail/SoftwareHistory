@@ -1,8 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.KioskClientService.Subscriptions;
+using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
+using Redbox.Rental.Model.Session;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI;
 using Redbox.Rental.UI.ControllersLogic;
@@ -14,6 +19,10 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class MemberPerksViewController : BaseViewController
 {
+	private static bool EnableRedboxPlusRedemption => Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption;
+
+	private static IRedboxPlusSession RedboxPlusSession => (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession)?.RedboxPlusSession ?? null;
+
 	private static MemberPerksLogic GetPerksLogic()
 	{
 		return BaseViewController.GetViewModel<MemberPerksModel>()?.Logic;
@@ -38,14 +47,15 @@ public class MemberPerksViewController : BaseViewController
 		{
 			Model = new MemberPerksModel
 			{
+				HeaderText = Resources.perks_header_text,
 				PerksButtonText = Resources.perks_perks_btn_text,
 				PromosButtonText = Resources.perks_promos_btn_text,
-				CancelButtonText = Resources.perks_cancel_btn_text,
+				CancelButtonText = Resources.perks_cancel_btn_text.ToUpper(),
 				EmptyPromoListMessage = Resources.perks_promo_empty_list_text,
 				PromosPerPage = 6,
 				IsAdaMode = BaseViewController.ApplicationState.IsADAAccessible
 			};
-			switch (perksInfo.TierName.ToLower())
+			switch (perksInfo.TierName?.ToLower())
 			{
 			default:
 				Model.MemberTier = TierType.Member;
@@ -67,6 +77,11 @@ public class MemberPerksViewController : BaseViewController
 				MoreInfoPopupCommand_Execute(info, perksInfo);
 			});
 			Model.InfoButtonText = Resources.perks_info_button_text;
+			Model.HowPointsWorkButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), delegate(PerksPopupInfo info)
+			{
+				HowPointsWorkPopupCommand_Execute(info, perksInfo);
+			});
+			Model.HowPointsWorkButtonText = Resources.perks_how_points_work_button_text;
 			Model.AddOrRemovePromoCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), delegate(StoredPromoCodeModel obj)
 			{
 				AddOrRemovePromoCommand_Execute(obj, Model);
@@ -76,6 +91,7 @@ public class MemberPerksViewController : BaseViewController
 				DetailsCommand_Execute(obj, Model);
 			});
 			UpdateStoredPromos(Model);
+			SetRedboxPlusInfo(Model);
 			perksInfo.PerksModel = Model;
 			perksInfo.PerksLogic = perksLogic;
 		}
@@ -94,6 +110,11 @@ public class MemberPerksViewController : BaseViewController
 		});
 	}
 
+	private static void HowPointsWorkPopupCommand_Execute(PerksPopupInfo info, PerksMemberInfo perksInfo)
+	{
+		OrchestrationService.ViewShow("perks_signup_info_popup_view");
+	}
+
 	private static void UpdateStoredPromos(MemberPerksModel model)
 	{
 		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
@@ -102,7 +123,7 @@ public class MemberPerksViewController : BaseViewController
 		{
 			activePromoCode = BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.Promotion?.Name;
 		}
-		List<IPerksOfferListItem> list = PromoListLogic.CreateOfferListItemModels(model, personalizationSession, activePromoCode, '*', includeOffers: true);
+		List<IPerksOfferListItem> list = PromoListLogic.CreateOfferListItemModels(model, personalizationSession, activePromoCode, '*', includeOffers: true, includeRedboxPlus: false);
 		model.IsPromoCodeListVisible = list.Count > 0;
 		model.IsEmptyPromoListMessageVisible = list.Count == 0;
 		model.PromosPerPage = 6;
@@ -116,26 +137,7 @@ public class MemberPerksViewController : BaseViewController
 		model.ShowPromoListMessage = false;
 		if (!promoCodeModel.IsAdded)
 		{
-			PromoConfirmationInfo promoConfirmationInfo = new PromoConfirmationInfo();
-			promoConfirmationInfo.promoCodeModel = promoCodeModel;
-			promoConfirmationInfo.ApplyPromoCodeAction = delegate
-			{
-				if (((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart)?.Items?.Count ?? 0) > 0)
-				{
-					ValidatePromoCode(promoCodeModel, model);
-				}
-				else
-				{
-					BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.ClearPromoCode();
-					SetSelectedPromo(promoCodeModel, model);
-				}
-			};
-			promoConfirmationInfo.CancelAction = delegate
-			{
-			};
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			service?.Push("promo_confirmation_view", promoConfirmationInfo);
-			service?.Show();
+			ValidateStoredPromoWillNotConflictWithRedboxPlusBenefit(promoCodeModel, model);
 		}
 		else if (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart != null)
 		{
@@ -145,6 +147,43 @@ public class MemberPerksViewController : BaseViewController
 			model.ShowPromoListMessage = true;
 			model.PromoListMessage = string.Format(Resources.perks_promo_remove_message, promoCodeModel.MaskedPromoCode);
 		}
+	}
+
+	private static void ValidateStoredPromoWillNotConflictWithRedboxPlusBenefit(StoredPromoCodeModel promoCodeModel, MemberPerksModel model)
+	{
+		RedboxPlusFunctions.ValidatePromoWillNotConflictWithRedboxPlusBenefit(delegate
+		{
+			OrchestrationService.ViewGoBackSafe("MemberPerksView DeclinedStoredPromo because of Redbox+ conflict.", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.ViewGoBackSafe("MemberPerksView StoredPromoSelected", popOnly: false);
+			ConfirmPromo(promoCodeModel, model);
+		}, delegate
+		{
+			ConfirmPromo(promoCodeModel, model);
+		});
+	}
+
+	private static void ConfirmPromo(StoredPromoCodeModel promoCodeModel, MemberPerksModel model)
+	{
+		PromoConfirmationInfo promoConfirmationInfo = new PromoConfirmationInfo();
+		promoConfirmationInfo.promoCodeModel = promoCodeModel;
+		promoConfirmationInfo.ApplyPromoCodeAction = delegate
+		{
+			if (((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart)?.Items?.Count ?? 0) > 0)
+			{
+				ValidatePromoCode(promoCodeModel, model);
+			}
+			else
+			{
+				BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.ClearPromoCode();
+				SetSelectedPromo(promoCodeModel, model);
+			}
+		};
+		promoConfirmationInfo.CancelAction = delegate
+		{
+		};
+		OrchestrationService.ViewShow("promo_confirmation_view", promoConfirmationInfo);
 	}
 
 	private static void DetailsCommand_Execute(PerksOfferListItemModel perksOfferModel, MemberPerksModel model)
@@ -206,5 +245,73 @@ public class MemberPerksViewController : BaseViewController
 		{
 			PerksModel.ProcessGetSpeechControl = () => BaseTTSController<MemberPerksTTSController, MemberPerksLogic>.GetSpeechControl(GetPerksLogic);
 		}
+	}
+
+	private static void SeeRedboxPlusMoviesButtonCommand_Execute()
+	{
+		BaseViewController.ProcessWPFHit();
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("MemberPerksViewSeeRedboxPlusMovies");
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.RedboxPlus;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.PageNumber = 1;
+		OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
+		BrowseFunctions.ShowRedboxPlusBrowseWarnings();
+	}
+
+	private static void TermsButtonCommand_Execute()
+	{
+		BaseViewController.ProcessWPFHit();
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("MemberPerksViewTerms");
+		HelpViewController.ShowRedboxPlus();
+	}
+
+	private static void SetRedboxPlusInfo(MemberPerksModel model)
+	{
+		bool flag = EnableRedboxPlusRedemption && (RedboxPlusSession?.HasActiveSubscription ?? false);
+		RedboxPlusSubscriptionTier redboxPlusSubscriptionTier = RedboxPlusSession?.RedboxPlusPlanInfo?.SubscriptionTier ?? RedboxPlusSubscriptionTier.Tier1;
+		bool flag2 = RedboxPlusSession?.RedboxPlusPlanInfo?.IsEarnPointsFor1ExtraNightAvailable ?? false;
+		IRedboxPlusSession redboxPlusSession = RedboxPlusSession;
+		string text = ((redboxPlusSession != null && (redboxPlusSession.RedboxPlusPlanInfo?.SubscriptionEndDate).HasValue) ? RedboxPlusSession.RedboxPlusPlanInfo.SubscriptionEndDate.Value.ToShortDateString() : null);
+		if (flag)
+		{
+			model.PerksSelected = false;
+			model.RedboxPlusSelected = true;
+			model.PromosSelected = false;
+		}
+		model.TabButtonsColumns = (flag ? 3 : 2);
+		model.RedboxPlusButtonVisibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
+		model.RedboxPlusButtonText = Resources.perks_redbox_plus_btn_text;
+		model.RedboxPlusPlanId1Visibility = ((redboxPlusSubscriptionTier != RedboxPlusSubscriptionTier.Tier1) ? Visibility.Collapsed : Visibility.Visible);
+		model.RedboxPlusPlanId2Visibility = ((redboxPlusSubscriptionTier != RedboxPlusSubscriptionTier.Tier2) ? Visibility.Collapsed : Visibility.Visible);
+		model.RedboxPlusFreeMonthlyText = ((redboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier2) ? Resources.redbox_plus_free_1night_text : Resources.redbox_plus_free_monthly_text);
+		model.RedboxPlusFreeThisMonthText = ((redboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier2) ? string.Format(Resources.redbox_plus_this_year_text, 24 - RedboxPlusFunctions.NumberOfFreeOneNightRentalsAvailable) : string.Format(Resources.redbox_plus_this_month_text, RedboxPlusFunctions.IsFreeOneNightRentalAvailable ? Resources.redbox_plus_ready_to_use_text : Resources.redbox_plus_used_text));
+		model.RedboxPlusSeeMoviesText = Resources.redbox_plus_see_movies_text;
+		model.RedboxPlusChooseText = Resources.redbox_plus_choose_text;
+		model.RedboxPlusExtendedText = Resources.redbox_plus_extended_text;
+		model.RedboxPlusKeepText = Resources.redbox_plus_keep_text;
+		model.RedboxPlusExtraNightText = Resources.redbox_plus_extra_night_text;
+		model.RedboxPlusExtraThisMonthText = string.Format(Resources.redbox_plus_this_month_text, flag2 ? Resources.redbox_plus_ready_to_use_text : Resources.redbox_plus_used_text);
+		model.RedboxPlusNeedAnotherText = Resources.redbox_plus_need_another_text;
+		model.RedboxPlusAwardedText = Resources.redbox_plus_awarded_text;
+		SubscriptionPlanStatus? subscriptionPlanStatus = RedboxPlusSession?.RedboxPlusPlanInfo?.SubscriptionStatus;
+		if (!subscriptionPlanStatus.HasValue || subscriptionPlanStatus.GetValueOrDefault() == SubscriptionPlanStatus.Active)
+		{
+			model.RedboxPlusPlanRenewsText = ((text != null) ? string.Format((redboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier2) ? Resources.redbox_plus_tier2_plan_renews_text : Resources.redbox_plus_tier1_plan_renews_text, text) : string.Empty);
+		}
+		else
+		{
+			model.RedboxPlusPlanRenewsText = ((text != null) ? string.Format((redboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier2) ? Resources.redbox_plus_tier2_plan_ends_text : Resources.redbox_plus_tier1_plan_ends_text, text) : string.Empty);
+		}
+		model.RedboxPlusLegalText = ((redboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier2) ? Resources.redbox_plus_legal_text : string.Empty);
+		model.RedboxPlusTermsText = Resources.redbox_plus_terms_text;
+		model.SeeRedboxPlusMoviesButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+		{
+			SeeRedboxPlusMoviesButtonCommand_Execute();
+		}, (Func<bool>)null);
+		model.TermsButtonCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+		{
+			TermsButtonCommand_Execute();
+		}, (Func<bool>)null);
 	}
 }

@@ -1,13 +1,7 @@
-using System;
 using System.Collections.Generic;
-using Redbox.Core;
-using Redbox.Lua;
-using Redbox.Rental.Model;
 using Redbox.Rental.Model.Browse;
-using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Session;
-using Redbox.Rental.Services.KioskProduct;
 
 namespace Redbox.Rental.Services.Session;
 
@@ -16,8 +10,6 @@ public class BrowseState : IBrowseState
 	private Stack<IBrowseStateSet> _browseStateSetStack = new Stack<IBrowseStateSet>();
 
 	private IKioskProduct _browseSelectionSelectedProduct;
-
-	private LuaTable _browseSelectionSelectedProductLuaTable;
 
 	public string ItemAddedFromView { get; set; }
 
@@ -32,25 +24,10 @@ public class BrowseState : IBrowseState
 		set
 		{
 			_browseSelectionSelectedProduct = value;
-			_browseSelectionSelectedProductLuaTable = value?.ToDictionary()?.ToLuaTable();
-		}
-	}
-
-	public LuaTable BrowseSelectionSelectedProductLuaTable
-	{
-		get
-		{
-			return _browseSelectionSelectedProductLuaTable;
-		}
-		set
-		{
-			SetBrowseSelectionSelectedProductLuaTable(value);
 		}
 	}
 
 	public IKioskProduct CenterCarouselProduct { get; set; }
-
-	public LuaTable CenterCarouselProductLuaTable => CenterCarouselProduct?.ToDictionary()?.ToLuaTable();
 
 	public List<IKioskProduct> BrowseProductsShown
 	{
@@ -76,8 +53,6 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public LuaTable BrowseProductsShownLuaTable => BrowseProductsShown?.ToDictionary()?.ToLuaTable();
-
 	public bool CollectionsPopupShown { get; set; }
 
 	public bool CarouselCollectionsSelected { get; set; }
@@ -89,6 +64,8 @@ public class BrowseState : IBrowseState
 	public bool MovieMatureWarningShown { get; set; }
 
 	public bool _4kWarningShown { get; set; }
+
+	public bool SubscriptionRemoved { get; set; }
 
 	public bool MatureGameWarningShown { get; set; }
 
@@ -102,18 +79,6 @@ public class BrowseState : IBrowseState
 
 	public BrowsePriceRangeParameter BrowsePriceRangeFilter { get; set; }
 
-	public string BrowseFilterMode
-	{
-		get
-		{
-			return BrowseMode.ToString();
-		}
-		set
-		{
-			BrowseMode = (BrowseViewFilter)Enum.Parse(typeof(BrowseViewFilter), value);
-		}
-	}
-
 	public BrowseViewFilter BrowseMode
 	{
 		get
@@ -126,18 +91,6 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public string BrowseTitleFamily
-	{
-		get
-		{
-			return TitleFamily.ToString();
-		}
-		set
-		{
-			TitleFamily = value.ConvertToTitleFamily();
-		}
-	}
-
 	public TitleFamily TitleFamily
 	{
 		get
@@ -147,18 +100,6 @@ public class BrowseState : IBrowseState
 		set
 		{
 			_browseStateSetStack.Peek().TitleFamily = value;
-		}
-	}
-
-	public int? BrowseGenre
-	{
-		get
-		{
-			return (int?)Genre;
-		}
-		set
-		{
-			Genre = (Genres?)value;
 		}
 	}
 
@@ -185,18 +126,6 @@ public class BrowseState : IBrowseState
 		set
 		{
 			_browseStateSetStack.Peek().PageNumber = value;
-		}
-	}
-
-	public string BrowseTitleType
-	{
-		get
-		{
-			return TitleType.ToString();
-		}
-		set
-		{
-			TitleType = value.ConvertToTitleType();
 		}
 	}
 
@@ -292,34 +221,24 @@ public class BrowseState : IBrowseState
 
 	public bool EnableBrowseMessagePopup { get; set; }
 
+	public bool EnableStarzOffer { get; set; }
+
 	public int BrowseMessagePopupDuration { get; set; }
 
 	public bool ShowBrowseMessagePopup { get; set; }
 
 	public bool ShowingBrowseMessagePopup { get; set; }
 
+	public bool IsStarzTermsAcceptanceCheckMarkChecked { get; set; }
+
+	public bool ShowRedboxPlusTooltip { get; set; }
+
+	public bool IsRedboxPlusTermsAcceptanceCheckMarkChecked { get; set; }
+
 	public BrowseState()
 	{
 		PushBrowseStateSet();
 		SignupFlowState = new SignupFlowState();
-	}
-
-	private void SetBrowseSelectionSelectedProductLuaTable(LuaTable value)
-	{
-		_browseSelectionSelectedProductLuaTable = value;
-		IKioskProduct kioskProduct = null;
-		IDataService dataService = ServiceLocator.Instance.GetService(typeof(IDataService)) as IDataService;
-		long result = 0L;
-		if (_browseSelectionSelectedProductLuaTable != null && long.TryParse(_browseSelectionSelectedProductLuaTable["product_id"].ToString(), out result))
-		{
-			int result2 = 0;
-			if (int.TryParse(_browseSelectionSelectedProductLuaTable["kiosk_product_type"].ToString(), out result2) && Enum.TryParse<KioskProductType>(result2.ToString(), out var result3))
-			{
-				bool excludeTitleRollup = result3 != KioskProductType.TitleRollup;
-				dataService.GetProduct(result, excludeTitleRollup, out kioskProduct);
-			}
-		}
-		_browseSelectionSelectedProduct = kioskProduct;
 	}
 
 	public void PushBrowseStateSet()

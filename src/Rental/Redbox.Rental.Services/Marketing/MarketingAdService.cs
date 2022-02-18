@@ -16,8 +16,6 @@ public class MarketingAdService : IMarketingAdService, IAdService
 
 	private IStoreManager _storeManager;
 
-	private IMarketingAdImpressionService _marketingAdImpressionService;
-
 	private IResourceBundleService _resourceBundleService;
 
 	private MarketingAdCampaignGroup _marketingAdCampaignGroup = new MarketingAdCampaignGroup();
@@ -28,11 +26,10 @@ public class MarketingAdService : IMarketingAdService, IAdService
 
 	private List<MarketingAdCampaign> _activeCampaigns = new List<MarketingAdCampaign>();
 
-	public MarketingAdService(IMarketingConfigurationManager marketingConfigurationManager, IStoreManager storeManager, IMarketingAdImpressionService marketingAdImpressionService, IResourceBundleService resourceBundleService)
+	public MarketingAdService(IMarketingConfigurationManager marketingConfigurationManager, IStoreManager storeManager, IResourceBundleService resourceBundleService)
 	{
 		_marketingConfigurationManager = marketingConfigurationManager;
 		_storeManager = storeManager;
-		_marketingAdImpressionService = marketingAdImpressionService;
 		_resourceBundleService = resourceBundleService;
 	}
 
@@ -54,16 +51,16 @@ public class MarketingAdService : IMarketingAdService, IAdService
 
 	public void ActivateCampaigns()
 	{
-		_enableMarketingAds = _marketingConfigurationManager.EnableMarketingAds;
+		_enableMarketingAds = _marketingConfigurationManager?.EnableMarketingAds ?? false;
 		_activeCampaigns = GetActiveCampaigns();
-		if (_activeCampaigns.Count == 0)
+		if (_activeCampaigns == null || _activeCampaigns.Count == 0)
 		{
 			LogHelper.Instance.Log("MarketingAdService.StartSession - no active campaign");
 			return;
 		}
 		_activeCampaigns.ForEach(delegate(MarketingAdCampaign c)
 		{
-			LogHelper.Instance.Log("MarketingAdService.StartSession - Active Campaign Id: {0} Name: {1}", c.Id, c.Name);
+			LogHelper.Instance.Log("MarketingAdService.StartSession - Active Campaign Id: {0} Name: {1}", c?.Id, c?.Name);
 		});
 	}
 
@@ -84,37 +81,17 @@ public class MarketingAdService : IMarketingAdService, IAdService
 	public List<MarketingAdCampaign> GetActiveCampaigns()
 	{
 		DateTime dt = DateTime.Now;
-		return (from camp in _marketingAdCampaigns
-			where camp.IsActive(dt)
-			orderby camp.StartDate descending
-			select camp).ToList();
+		return _marketingAdCampaigns?.Where((MarketingAdCampaign camp) => camp?.IsActive(dt) ?? false).OrderByDescending((MarketingAdCampaign camp) => camp.StartDate).ToList();
 	}
 
 	public bool RecordAdImpression(IAdImpression adImpression)
 	{
-		if (adImpression.Ad is MarketingAd marketingAd)
-		{
-			IMarketingAdImpressionService marketingAdImpressionService = _marketingAdImpressionService;
-			if (marketingAdImpressionService == null)
-			{
-				return false;
-			}
-			marketingAdImpressionService.AddImpression(marketingAd.Campaign, adImpression.AdLocation);
-		}
 		return false;
 	}
 
 	public async Task<bool> RecordAdImpressionAsync(IAdImpression adImpression)
 	{
-		bool result = false;
-		await Task.Run(delegate
-		{
-			if (adImpression.Ad is MarketingAd marketingAd)
-			{
-				_marketingAdImpressionService?.AddImpression(marketingAd.Campaign, adImpression.AdLocation);
-			}
-		}).ConfigureAwait(continueOnCapturedContext: false);
-		return result;
+		return await Task.Run(() => false);
 	}
 
 	public async Task<IAd> GetScreenAdAsync(AdLocation marketingAdLocation)

@@ -683,8 +683,8 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 	private void InitializeCarouselImageSizes()
 	{
 		_isStartViewAdABTest = (base.DataContext as CarouselTestModel)?.IsStartViewAdABTest ?? false;
-		_carouselImageSmallSize = (_isStartViewAdABTest ? new Point(232.0, 322.0) : new Point(303.0, 420.0));
-		_carouselImageLargeSize = (_isStartViewAdABTest ? new Point(262.0, 358.0) : new Point(334.0, 456.0));
+		_carouselImageSmallSize = (_isStartViewAdABTest ? new Point(232.0, 348.0) : new Point(303.0, 454.0));
+		_carouselImageLargeSize = (_isStartViewAdABTest ? new Point(262.0, 393.0) : new Point(334.0, 501.0));
 		_carouselPositionCount = (_isStartViewAdABTest ? 9 : 7);
 		_carouselImagePadding = (_isStartViewAdABTest ? (-77) : (-100));
 		_verticalCenterOfCenterImage = (_isStartViewAdABTest ? 161 : 210);

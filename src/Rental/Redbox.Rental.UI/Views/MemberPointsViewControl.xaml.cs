@@ -73,9 +73,9 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 		if (displayProductUserControl?.DataContext is DisplayProductModel)
 		{
 			DisplayProductModel displayProductModel = displayProductUserControl.DataContext as DisplayProductModel;
-			if (displayProductModel?.Data is IRentalShoppingCartItem && displayProductModel.Data is IRentalShoppingCartItem rentalShoppingCartItem)
+			if (displayProductModel?.Data is IRentalShoppingCartTitleItem && displayProductModel.Data is IRentalShoppingCartTitleItem rentalShoppingCartTitleItem)
 			{
-				return rentalShoppingCartItem.ProductId;
+				return rentalShoppingCartTitleItem.ProductId;
 			}
 		}
 		return -1L;
@@ -141,7 +141,7 @@ public partial class MemberPointsViewControl : ViewUserControl, IComponentConnec
 	{
 		if (displayModel != null && displayModel != null)
 		{
-			ViewUserControl.InvokeRoutedCommand(routeCommand, displayModel.Data as IRentalShoppingCartItem);
+			ViewUserControl.InvokeRoutedCommand(routeCommand, displayModel.Data as IRentalShoppingCartTitleItem);
 		}
 	}
 

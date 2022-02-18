@@ -6,6 +6,7 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
+using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
@@ -99,6 +100,10 @@ public class MultiNightPricingPopupViewController : BaseViewController
 		int timeOut = OrchestrationService.TTSGetTimeout("medium", 15000);
 		(service?.CreateTimer("MultiNightPricingPopupViewTimer", timeOut, timeOut, delegate
 		{
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+			}
 			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.ViewGoBackSafe("MultiNightPricingPopupViewController time out", popOnly: false);
 		}))?.Start();
@@ -190,6 +195,10 @@ public class MultiNightPricingPopupViewController : BaseViewController
 
 	private static void MultiNightPricingPopupViewModel_OnCancelButtonClicked()
 	{
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+		}
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("MultiNightPopupCancel");
 		OrchestrationService.ViewGoBackSafe("MultiNightPricingPopupViewController cancel", popOnly: false);
 	}

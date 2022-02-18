@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService.Inventory;
 
 namespace Redbox.Rental.Services.KioskClientService.Inventory;

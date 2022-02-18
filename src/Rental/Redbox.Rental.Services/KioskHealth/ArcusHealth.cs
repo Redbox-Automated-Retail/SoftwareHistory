@@ -16,8 +16,6 @@ public class ArcusHealth : IArcusHealth, IKioskHealthItem
 
 	private const string HardwareCorrectionSuccess = "HardwareCorrectionSuccess";
 
-	private const string HardwareCorrectionFailure = "HardwareCorrectionFailure";
-
 	private const string HardwareCorrectionVendSuccess = "HardwareCorrectionVendSuccess";
 
 	private const string HardwareCorrectionVendFailure = "HardwareCorrectionVendFailure";
@@ -91,7 +89,7 @@ public class ArcusHealth : IArcusHealth, IKioskHealthItem
 			}
 			bool success = eventType == "HardwareCorrectionVendSuccess" || eventType == "HardwareCorrectionSuccess";
 			elapsed = (int)(DateTime.Now - _lastReportedStartTime.Value).TotalMilliseconds;
-			_kioskEvents.AddEvent(KioskEvent.NewEvent(KioskEventType.KioskHealthArcus, kioskEventSubType, success, elapsed, _relatedId, new
+			_kioskEvents.AddEvent(KioskEvent.NewEvent(2, kioskEventSubType, success, elapsed, _relatedId, new
 			{
 				Job = "Vend"
 			}.ToJson()));

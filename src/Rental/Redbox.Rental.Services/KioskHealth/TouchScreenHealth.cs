@@ -197,7 +197,7 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 			{
 				if (_touchScreenReporting)
 				{
-					_kioskEvents.AddEvent(KioskEvent.NewEvent(KioskEventType.KioskHealthTouchScreen, 102, success: true, null, _relatedId));
+					_kioskEvents.AddEvent(KioskEvent.NewEvent(1, 102, success: true, null, _relatedId));
 				}
 				Reset();
 			}
@@ -232,7 +232,7 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 				LogHelper.Instance.Log("TouchScreenHealth.NoActivity - Kiosk touch screen has been inactive for {0} minutes between {1} and {2}. There are {3} resets without activity.", _touchScreenInActivity, _touchScreenStartCheck, _touchScreenEndCheck, _contiguousResetCount);
 				if (_touchScreenReporting)
 				{
-					KioskEvent kioskEvent = KioskEvent.NewEvent(KioskEventType.KioskHealthTouchScreen, 100, success: true, null, null, new
+					KioskEvent kioskEvent = KioskEvent.NewEvent(1, 100, success: true, null, null, new
 					{
 						Inactivity = _touchScreenInActivity
 					}.ToJson());
@@ -314,7 +314,7 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 			}
 			if (_touchScreenReporting)
 			{
-				KioskEvent kioskEvent = KioskEvent.NewEvent(KioskEventType.KioskHealthTouchScreen, 101, flag, elapsed, _relatedId, flag ? null : new
+				KioskEvent kioskEvent = KioskEvent.NewEvent(1, 101, flag, elapsed, _relatedId, flag ? null : new
 				{
 					Error = error
 				}.ToJson());

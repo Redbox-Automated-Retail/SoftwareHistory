@@ -1,3 +1,4 @@
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService.Products;
 
 namespace Redbox.Rental.Services.KioskClientService.Products;

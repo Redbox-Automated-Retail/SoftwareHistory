@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using Newtonsoft.Json;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 
 namespace Redbox.Rental.Services.App;
 
@@ -65,13 +66,10 @@ public class APIResponse<T>
 		ResponseLength = content?.Length ?? 0;
 		try
 		{
-			if (!string.IsNullOrWhiteSpace(content))
+			if (!string.IsNullOrWhiteSpace(content) && IsSuccessStatusCode)
 			{
 				Response = JsonConvert.DeserializeObject<T>(content);
-				ResponseContent = JsonConvert.SerializeObject(Response, Formatting.None, new JsonSerializerSettings
-				{
-					NullValueHandling = NullValueHandling.Ignore
-				});
+				ResponseContent = ((!(Response is IMessageScrub)) ? Response.ToJson() : (Response as IMessageScrub)?.Scrub()?.ToString());
 			}
 		}
 		catch (Exception exception)
@@ -93,10 +91,7 @@ public class APIResponse<T>
 			if (ResponseLength != 0)
 			{
 				Response = content;
-				ResponseContent = JsonConvert.SerializeObject(Response, Formatting.Indented, new JsonSerializerSettings
-				{
-					NullValueHandling = NullValueHandling.Ignore
-				});
+				ResponseContent = Response.ToJson();
 			}
 		}
 		catch (Exception exception)
@@ -110,29 +105,25 @@ public class APIResponse<T>
 		ResponseTime = requestTime;
 		StatusCode = HttpStatusCode.InternalServerError;
 		Exception = exception;
-		string text = $"StatusCode: {HttpStatusCode.InternalServerError}, Message: {exception.Message}";
-		if (exception.InnerException != null)
-		{
-			text = $"{text}, Inner: {exception.InnerException.Message}";
-		}
+		string message = $"StatusCode: {HttpStatusCode.InternalServerError}, Message: {exception.GetFullMessage()}";
 		Errors.Add(new Error
 		{
 			Code = StatusCode.ToString(),
-			Message = text
+			Message = message
 		});
-		_logger?.LogException(text, exception);
+		_logger?.LogException(message, exception);
 	}
 
-	public void Log(bool responseContentLoggingEnabled = true)
+	public void Log(bool logRequest, bool logResponse)
 	{
 		if (HttpRequest != null)
 		{
 			_logger?.LogInformation($"Request: {HttpRequest.Method},Uri: {HttpRequest.RequestUri}, Status: {StatusCode}({(int)StatusCode}), Time:{ResponseTime}, Length:{ResponseLength}");
-			if (RequestContent != null)
+			if (logRequest && RequestContent != null)
 			{
 				_logger?.LogInformation($"Request Content: {RequestContent}");
 			}
-			if (responseContentLoggingEnabled && ResponseContent != null)
+			if (logResponse && ResponseContent != null)
 			{
 				_logger?.LogInformation($"Response Content: {ResponseContent}");
 			}

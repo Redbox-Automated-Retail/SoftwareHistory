@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.Rental.Model;
@@ -109,15 +110,27 @@ public class StartViewModel : DependencyObject
 
 	public static readonly DependencyProperty RentAndBuyMoviesGamesTextVisibilityProperty = DependencyProperty.Register("RentAndBuyMoviesGamesTextVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
-	public static readonly DependencyProperty ZeroTouchLine1TextProperty = DependencyProperty.Register("ZeroTouchLine1Text", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty SignInButtonTooltipVisibilityProperty = DependencyProperty.Register("SignInButtonTooltipVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
-	public static readonly DependencyProperty ZeroTouchLine2TextProperty = DependencyProperty.Register("ZeroTouchLine2Text", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty NonBurnInBackgroundBrushProperty = DependencyProperty.Register("NonBurnInBackgroundBrush", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(Brushes.White));
 
-	public static readonly DependencyProperty ZeroTouchNewTextProperty = DependencyProperty.Register("ZeroTouchNewText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty AdaTurnedOnLabelBackgroundBrushProperty = DependencyProperty.Register("AdaTurnedOnLabelBackgroundBrush", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(Brushes.White));
 
-	public static readonly DependencyProperty ZeroTouchActionToBeginTextProperty = DependencyProperty.Register("ZeroTouchActionToBeginText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty AdaTurnedOnLabelForegroundBrushProperty = DependencyProperty.Register("AdaTurnedOnLabelForegroundBrush", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromRgb(72, 27, 84))));
 
-	public static readonly DependencyProperty ZeroTouchSpoilerVisibilityProperty = DependencyProperty.Register("ZeroTouchSpoilerVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+	public static readonly DependencyProperty HandicapButtonStyleProperty = DependencyProperty.Register("HandicapButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty HandicapButtonIconOffForegroundBrushProperty = DependencyProperty.Register("HandicapButtonIconOffForegroundBrush", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromRgb(121, 45, 141))));
+
+	public static readonly DependencyProperty HandicapButtonIconOnForegroundBrushProperty = DependencyProperty.Register("HandicapButtonIconOnForegroundBrush", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromRgb(121, 45, 141))));
+
+	public static readonly DependencyProperty EllipseFillBrushProperty = DependencyProperty.Register("EllipseFillBrush", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromRgb(121, 45, 141))));
+
+	public static readonly DependencyProperty TextBlockForegroundBrushProperty = DependencyProperty.Register("TextBlockForegroundBrush", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(Brushes.White));
+
+	public static readonly DependencyProperty EspanolButtonStyleProperty = DependencyProperty.Register("EspanolButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty HelpButtonStyleProperty = DependencyProperty.Register("HelpButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public bool BurnInModeEnabled { get; set; }
 
@@ -856,77 +869,167 @@ public class StartViewModel : DependencyObject
 		}
 	}
 
-	public string ZeroTouchLine1Text
+	public Visibility SignInButtonTooltipVisibility
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(ZeroTouchLine1TextProperty));
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(SignInButtonTooltipVisibilityProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(ZeroTouchLine1TextProperty, value);
+				SetValue(SignInButtonTooltipVisibilityProperty, value);
 			});
 		}
 	}
 
-	public string ZeroTouchLine2Text
+	public Brush NonBurnInBackgroundBrush
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(ZeroTouchLine2TextProperty));
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(NonBurnInBackgroundBrushProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(ZeroTouchLine2TextProperty, value);
+				SetValue(NonBurnInBackgroundBrushProperty, value);
 			});
 		}
 	}
 
-	public string ZeroTouchActionToBeginText
+	public Brush AdaTurnedOnLabelBackgroundBrush
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(ZeroTouchActionToBeginTextProperty));
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(AdaTurnedOnLabelBackgroundBrushProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(ZeroTouchActionToBeginTextProperty, value);
+				SetValue(AdaTurnedOnLabelBackgroundBrushProperty, value);
 			});
 		}
 	}
 
-	public string ZeroTouchNewText
+	public Brush AdaTurnedOnLabelForegroundBrush
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(ZeroTouchNewTextProperty));
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(AdaTurnedOnLabelForegroundBrushProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(ZeroTouchNewTextProperty, value);
+				SetValue(AdaTurnedOnLabelForegroundBrushProperty, value);
 			});
 		}
 	}
 
-	public Visibility ZeroTouchSpoilerVisibility
+	public Style HandicapButtonStyle
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ZeroTouchSpoilerVisibilityProperty));
+			return base.Dispatcher.Invoke(() => (Style)GetValue(HandicapButtonStyleProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(ZeroTouchSpoilerVisibilityProperty, value);
+				SetValue(HandicapButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public Brush HandicapButtonIconOffForegroundBrush
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(HandicapButtonIconOffForegroundBrushProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HandicapButtonIconOffForegroundBrushProperty, value);
+			});
+		}
+	}
+
+	public Brush HandicapButtonIconOnForegroundBrush
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(HandicapButtonIconOnForegroundBrushProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HandicapButtonIconOnForegroundBrushProperty, value);
+			});
+		}
+	}
+
+	public Brush EllipseFillBrush
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(EllipseFillBrushProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(EllipseFillBrushProperty, value);
+			});
+		}
+	}
+
+	public Brush TextBlockForegroundBrush
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(TextBlockForegroundBrushProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(TextBlockForegroundBrushProperty, value);
+			});
+		}
+	}
+
+	public Style EspanolButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(EspanolButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(EspanolButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public Style HelpButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(HelpButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HelpButtonStyleProperty, value);
 			});
 		}
 	}
@@ -937,15 +1040,11 @@ public class StartViewModel : DependencyObject
 
 	public MarketingScreenSaverModel ScreenSaverModel { get; set; }
 
-	public Visibility PerksPointsVisibility { get; set; }
-
-	public string MyPerksText { get; set; }
-
-	public string PerksPointsText { get; set; }
-
 	public string SignUpButtonText { get; set; }
 
 	public string SignInUpButtonSeparator { get; set; }
+
+	public string SignInButtonTooltipText { get; set; }
 
 	public IAdImpression AdImpression { get; set; }
 
@@ -966,6 +1065,8 @@ public class StartViewModel : DependencyObject
 	public event Action OnReturnButtonClicked;
 
 	public event Action OnSignInButtonClicked;
+
+	public event Action OnSignInButtonTooltipClicked;
 
 	public event Action OnHelpButtonClicked;
 
@@ -1045,6 +1146,11 @@ public class StartViewModel : DependencyObject
 	public void ProcessSignInButtonClicked()
 	{
 		OnSignInButtonClicked?.Invoke();
+	}
+
+	public void ProcessSignInButtonTooltipClicked()
+	{
+		OnSignInButtonTooltipClicked?.Invoke();
 	}
 
 	public ISpeechControl ProcessGetSpeechControl()

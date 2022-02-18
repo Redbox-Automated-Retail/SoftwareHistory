@@ -119,23 +119,23 @@ public class UpsellInfo : IUpsellInfo
 		if (offerResponse == UpsellItemOfferResponse.accepted)
 		{
 			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-			IRentalShoppingCartItem rentalShoppingCartItem = _rentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem x) => x.ProductId == upsellItem.OriginalProductId);
-			if (rentalShoppingCartItem != null)
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = _rentalShoppingCart.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.ProductId == upsellItem.OriginalProductId);
+			if (rentalShoppingCartTitleItem != null)
 			{
-				_rentalShoppingCart.RemoveItem(rentalShoppingCartItem, userRemoved: false);
+				_rentalShoppingCart.RemoveItem(rentalShoppingCartTitleItem, userRemoved: false);
 			}
-			IRentalShoppingCartItem rentalShoppingCartItem2 = service.CreateRentalShoppingCartItemFromProductId(upsellItem.UpsellProductId);
-			rentalShoppingCartItem2.Quantity = 1m;
-			rentalShoppingCartItem2.Action = RentalShoppingCartItemAction.rental;
-			rentalShoppingCartItem2.SourceType = GetUpsellItemSourceType(rentalShoppingCartItem2.TitleType);
-			rentalShoppingCartItem2.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(rentalShoppingCartItem2.TitleProduct);
-			rentalShoppingCartItem2.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(rentalShoppingCartItem2.TitleProduct);
-			rentalShoppingCartItem2.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(rentalShoppingCartItem2.TitleProduct);
-			_rentalShoppingCart.AddItem(rentalShoppingCartItem2);
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem2 = service.CreateRentalShoppingCartItemFromProductId(upsellItem.UpsellProductId);
+			rentalShoppingCartTitleItem2.Quantity = 1m;
+			rentalShoppingCartTitleItem2.Action = RentalShoppingCartItemAction.rental;
+			rentalShoppingCartTitleItem2.SourceType = GetUpsellItemSourceType(rentalShoppingCartTitleItem2.TitleType);
+			rentalShoppingCartTitleItem2.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(rentalShoppingCartTitleItem2.TitleProduct);
+			rentalShoppingCartTitleItem2.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(rentalShoppingCartTitleItem2.TitleProduct);
+			rentalShoppingCartTitleItem2.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(rentalShoppingCartTitleItem2.TitleProduct);
+			_rentalShoppingCart.AddItem(rentalShoppingCartTitleItem2);
 		}
 	}
 
-	public IUpsellItem GetUpsellItemByRentalShoppingCartItem(IRentalShoppingCartItem rentalShoppingCartItem)
+	public IUpsellItem GetUpsellItemByRentalShoppingCartItem(IRentalShoppingCartTitleItem rentalShoppingCartItem)
 	{
 		IUpsellItem result = null;
 		if (rentalShoppingCartItem != null)
@@ -167,14 +167,18 @@ public class UpsellInfo : IUpsellInfo
 		if (_rentalShoppingCart != null)
 		{
 			IDataService dataService = ServiceLocator.Instance.GetService(typeof(IDataService)) as IDataService;
-			foreach (IRentalShoppingCartItem item in _rentalShoppingCart.Items.Where(delegate(IRentalShoppingCartItem x)
+			foreach (IRentalShoppingCartTitleItem item in _rentalShoppingCart.TitleItems.Where(delegate(IRentalShoppingCartTitleItem x)
 			{
-				if (x.Action == RentalShoppingCartItemAction.rental && x.TitleType == originalTitleType)
+				if (x.Action == RentalShoppingCartItemAction.rental)
 				{
-					IPricingRecord pricingRecord = x.PricingRecord;
-					if (pricingRecord == null || !pricingRecord.IsMultiNightPrice)
+					IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = x;
+					if ((rentalShoppingCartTitleItem == null || !rentalShoppingCartTitleItem.IsRedboxPlusFreeOneNightRental) && x.TitleType == originalTitleType)
 					{
-						return !_items.Any((IUpsellItem y) => y.MatchesOrginalOrUpsellProductId(x.ProductId));
+						IPricingRecord pricingRecord = x.PricingRecord;
+						if (pricingRecord == null || !pricingRecord.IsMultiNightPrice)
+						{
+							return !_items.Any((IUpsellItem y) => y.MatchesOrginalOrUpsellProductId(x.ProductId));
+						}
 					}
 				}
 				return false;
@@ -190,7 +194,7 @@ public class UpsellInfo : IUpsellInfo
 				if (kioskProduct2 is TitleRollupProduct titleRollupProduct)
 				{
 					ITitleProduct titleProduct2 = titleRollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == upsellTitleType1);
-					if (titleProduct2 != null && titleProduct2.IsAvailable && titleProduct2.InStock && !_rentalShoppingCart.HasItem(titleProduct2.ProductId))
+					if (titleProduct2 != null && titleProduct2.IsAvailable && titleProduct2.InStock && !_rentalShoppingCart.HasTitleItem(titleProduct2.ProductId))
 					{
 						list.Add(new UpsellItem
 						{

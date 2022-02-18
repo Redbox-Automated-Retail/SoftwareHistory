@@ -62,6 +62,8 @@ public class TitleProductDetailDevModel : BaseModel<TitleDetailDevModel>
 
 	public static readonly DependencyProperty TitleRollupProductGroupIdProperty = BaseModel<TitleDetailDevModel>.CreateDependencyProperty("TitleRollupProductGroupIdProperty", typeof(long), 0L);
 
+	public static readonly DependencyProperty DiscountRestrictionProperty = BaseModel<TitleDetailDevModel>.CreateDependencyProperty("DiscountRestrictionProperty", TYPES.STRING);
+
 	public static readonly DependencyProperty BarCodesProperty = DependencyProperty.Register("BarCodes", typeof(ObservableCollection<BarcodeProduct>), typeof(TitleProductDetailDevModel), new FrameworkPropertyMetadata(new ObservableCollection<BarcodeProduct>())
 	{
 		AffectsArrange = true
@@ -640,6 +642,21 @@ public class TitleProductDetailDevModel : BaseModel<TitleDetailDevModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(DisplayAddProductWithCustomPriceButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string DiscountRestriction
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DiscountRestrictionProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DiscountRestrictionProperty, value);
 			});
 		}
 	}

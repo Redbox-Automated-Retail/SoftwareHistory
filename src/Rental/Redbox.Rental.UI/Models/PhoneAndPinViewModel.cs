@@ -24,8 +24,6 @@ public class PhoneAndPinViewModel : DependencyObject
 
 	public Action OnTermsButtonClicked;
 
-	public Action OnTextClubClicked;
-
 	public Func<ISpeechControl> OnGetSpeechControl;
 
 	private string _pinDisplayText;
@@ -52,6 +50,11 @@ public class PhoneAndPinViewModel : DependencyObject
 		AffectsRender = true
 	});
 
+	public static readonly DependencyProperty CheckMarkVisibilityProperty = DependencyProperty.Register("CheckMarkVisibility", typeof(Visibility), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
 	public static readonly DependencyProperty IsSignInButtonEnabledProperty = DependencyProperty.Register("IsSignInButtonEnabled", typeof(bool), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(false)
 	{
 		AffectsRender = true
@@ -71,8 +74,6 @@ public class PhoneAndPinViewModel : DependencyObject
 	{
 		AffectsRender = true
 	});
-
-	public static readonly DependencyProperty SignUpForTextClubProperty = DependencyProperty.Register("SignUpForTextClub", typeof(bool), typeof(PhoneAndPinViewModel), new FrameworkPropertyMetadata(true, SignUpforTextClubChanged));
 
 	public PhoneAndPinInfo PhoneAndPinInfo { get; set; }
 
@@ -114,9 +115,9 @@ public class PhoneAndPinViewModel : DependencyObject
 
 	public string TermsButtonText { get; set; }
 
-	public Visibility BottomButtonBarVisibility { get; set; }
+	public DynamicRoutedCommand CheckMarkCommand { get; set; }
 
-	public Visibility RightSideButtonBarVisibility { get; set; }
+	public bool SignUpForTextClub => CheckMarkVisibility == Visibility.Visible;
 
 	public KeypadModel KeypadModel
 	{
@@ -351,17 +352,17 @@ public class PhoneAndPinViewModel : DependencyObject
 		}
 	}
 
-	public bool SignUpForTextClub
+	public Visibility CheckMarkVisibility
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (bool)GetValue(SignUpForTextClubProperty));
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CheckMarkVisibilityProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(SignUpForTextClubProperty, value);
+				SetValue(CheckMarkVisibilityProperty, value);
 			});
 		}
 	}
@@ -402,14 +403,6 @@ public class PhoneAndPinViewModel : DependencyObject
 		}
 	}
 
-	public void ProcessOnTextClubClicked()
-	{
-		if (OnTextClubClicked != null)
-		{
-			OnTextClubClicked();
-		}
-	}
-
 	public ISpeechControl ProcessGetSpeechControl()
 	{
 		ISpeechControl result = null;
@@ -429,8 +422,6 @@ public class PhoneAndPinViewModel : DependencyObject
 		PinConfirmVisibility = Visibility.Collapsed;
 		TextClubOptionVisibility = Visibility.Collapsed;
 		TermsBarVisibility = Visibility.Collapsed;
-		BottomButtonBarVisibility = Visibility.Visible;
-		RightSideButtonBarVisibility = Visibility.Collapsed;
 		IsSignInButtonEnabled = false;
 		IsStartButtonEnabled = true;
 	}
@@ -446,14 +437,6 @@ public class PhoneAndPinViewModel : DependencyObject
 		if (d is PhoneAndPinViewModel phoneAndPinViewModel)
 		{
 			phoneAndPinViewModel.MobilePhoneErrorVisibility = (string.IsNullOrEmpty(phoneAndPinViewModel.MobilePhoneErrorMessageText) ? Visibility.Collapsed : Visibility.Visible);
-		}
-	}
-
-	private static void SignUpforTextClubChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-	{
-		if (d is PhoneAndPinViewModel phoneAndPinViewModel)
-		{
-			phoneAndPinViewModel.OnTextClubClicked?.Invoke();
 		}
 	}
 

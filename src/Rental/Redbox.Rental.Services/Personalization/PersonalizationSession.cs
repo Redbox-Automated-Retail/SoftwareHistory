@@ -21,24 +21,36 @@ public class PersonalizationSession : IPersonalizationSession, ILoginEmailProvid
 
 	public string MobilePhoneNumber { get; set; }
 
+	public bool IsCPNewInThisSession { get; set; }
+
 	public ILoyaltySession LoyaltySession { get; set; }
 
 	public IList<IRecommendedTitles> RecommendedTitles { get; set; }
 
-	public IList<IStoredPromoCode> StoredPromoCodes { get; set; }
+	public StoredPromoCodeCollection StoredPromoCodes { get; set; }
 
 	public IList<IAcceptedOffer> AcceptedOffers { get; set; }
 
 	public string SelectedPromo { get; set; }
 
+	public IRedboxPlusSession RedboxPlusSession { get; set; }
+
+	public ISubscriptionData SubscriptionData { get; set; }
+
 	public void LogOut()
 	{
 		IsLoggedIn = false;
 		LogOutLoyaltySession();
+		LogOutRedboxPlusSession();
 	}
 
 	public void LogOutLoyaltySession()
 	{
 		LoyaltySession = null;
+	}
+
+	public void LogOutRedboxPlusSession()
+	{
+		RedboxPlusSession = null;
 	}
 }

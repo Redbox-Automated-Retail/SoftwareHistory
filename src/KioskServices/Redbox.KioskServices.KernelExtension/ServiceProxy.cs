@@ -1,5 +1,7 @@
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy;
+using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.KernelExtension;
 
@@ -9,8 +11,8 @@ public class ServiceProxy : IServiceProxy
 	{
 		return name switch
 		{
-			"IsOnline" => (T)(object)HealthServicesProxy.Instance.IsOnline, 
-			"IsStandAlone" => (T)(object)StoreServicesProxy.Instance.IsStandAlone, 
+			"IsOnline" => (T)(object)ServiceLocator.Instance.GetService<IHealthServices>().IsOnline, 
+			"IsStandAlone" => (T)(object)ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone, 
 			"Url" => (T)(object)KioskServicesProxy.Instance.Url, 
 			_ => default(T), 
 		};

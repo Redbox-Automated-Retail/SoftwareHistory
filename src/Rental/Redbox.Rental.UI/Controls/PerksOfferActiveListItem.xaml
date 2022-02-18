@@ -2,9 +2,9 @@
 <local:BaseUserControl x:Class="Redbox.Rental.UI.Controls.PerksOfferActiveListItem" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls" xmlns:controls="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:localViews="clr-namespace:Redbox.Rental.UI.Views">
   <FrameworkElement.Resources>
     <ResourceDictionary>
-      <localViews:BoolToVisibilityConverter x:Key="BoolToVisibility" />
-      <localViews:IfElseConverter x:Key="IfElseConverter" />
-      <localViews:NullToVisibilityConverter x:Key="TextToVisibility" />
+      <controls:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+      <controls:IfElseConverter x:Key="IfElseConverter" />
+      <controls:NullToVisibilityConverter x:Key="TextToVisibility" />
     </ResourceDictionary>
   </FrameworkElement.Resources>
   <Grid>

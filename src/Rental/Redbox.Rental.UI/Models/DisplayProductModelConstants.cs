@@ -71,4 +71,6 @@ public class DisplayProductModelConstants
 	public string OutOfStockTitleDetailsABTestVersion { get; set; }
 
 	public List<decimal> FlashDealPrices { get; set; }
+
+	public bool EnableRedboxPlus { get; set; }
 }

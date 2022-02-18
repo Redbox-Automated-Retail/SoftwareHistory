@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using DeviceService.Client;
@@ -10,6 +9,7 @@ using DeviceService.ComponentModel.Requests;
 using DeviceService.ComponentModel.Responses;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.ShoppingCart;
 
@@ -23,17 +23,15 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 
 	private readonly object _pollingLock = new object();
 
-	private System.Timers.Timer _pollingTimer;
+	private Timer _pollingTimer;
 
 	private IReadCardJob _readCardJob;
 
 	private IDeviceServiceClient _deviceServiceClient;
 
-	private Version _deviceServiceVersion;
+	private CardReaderState _cardReaderState;
 
 	private bool _statusChecked;
-
-	private bool? _supportsEMV;
 
 	public static DeviceServiceClientHelper Instance => Singleton<DeviceServiceClientHelper>.Instance;
 
@@ -63,9 +61,11 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 
 	public bool IsCardReaderTampered { get; set; }
 
-	public bool SupportsEMV => _supportsEMV ?? false;
+	public bool SupportsEMV => _cardReaderState?.SupportsEMV ?? false;
 
-	public Version DeviceServiceVersion => _deviceServiceVersion;
+	public bool SupportsVas => _cardReaderState?.SupportsVas ?? false;
+
+	public Version DeviceServiceVersion => _cardReaderState?.Version;
 
 	public Version DeviceServiceClientVersion => _deviceServiceClient?.AssemblyVersion;
 
@@ -108,7 +108,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 		{
 			if (_pollingTimer == null)
 			{
-				_pollingTimer = new System.Timers.Timer
+				_pollingTimer = new Timer
 				{
 					AutoReset = false
 				};
@@ -181,7 +181,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 		_pollingInterval = 0;
 	}
 
-	public IReadCardJob StartCardRead(DeviceInputType deviceInputType, Action<BaseResponseEvent> readCardResponseHandler, Action<BaseResponseEvent> readCardEventHandler, int commandTimeout)
+	public IReadCardJob StartCardRead(DeviceInputType deviceInputType, Action<BaseResponseEvent> readCardResponseHandler, Action<BaseResponseEvent> readCardEventHandler, int commandTimeout, VasMode vasMode)
 	{
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		IShoppingSession currentSession = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetCurrentSession();
@@ -191,10 +191,13 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 		CardReadRequest request = new CardReadRequest
 		{
 			InputType = deviceInputType,
+			VasMode = vasMode,
 			Amount = d,
 			Timeout = commandTimeout + 5000,
 			ExcludeCardBrandBySource = deactivatedCardBrandSources,
-			SessionId = currentSession.Id
+			SessionId = currentSession.Id,
+			AppleVasUrl = null,
+			GoogleVasUrl = null
 		};
 		_readCardJob = _deviceServiceClient.CreateReadCardJob(request, readCardResponseHandler, readCardEventHandler, commandTimeout);
 		LogHelper.Instance.Log($"Starting DeviceServiceClient.ReadCard with id {_readCardJob?.RequestId}");
@@ -244,10 +247,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 
 	private void DeviceServiceClient_OnCardReaderStateHandler(CardReaderState cardReaderState)
 	{
-		if (cardReaderState != null)
-		{
-			_supportsEMV = cardReaderState.SupportsEMV;
-		}
+		_cardReaderState = cardReaderState;
 	}
 
 	private void DeviceServiceClient_OnDeviceServiceShutDownInfoChangeHandler(IDeviceServiceShutDownInfo deviceServiceShutDownInfo)
@@ -258,8 +258,11 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 	private void DeviceServiceClient_OnDeviceTamperedEventHandler()
 	{
 		LogHelper.Instance.Log("DeviceService Tampered Event received; put Kiosk into Maintenance Mode...");
-		IsCardReaderTampered = true;
-		SendTamperedCardReaderKioskAlertMessage();
+		if (!IsCardReaderTampered)
+		{
+			IsCardReaderTampered = true;
+			SendTamperedCardReaderKioskAlertMessage();
+		}
 		ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RaiseTamperedCardReader();
 	}
 
@@ -275,7 +278,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 
 	private void DeviceServiceClient_OnCardReaderDisconnectedHandler(Exception exception)
 	{
-		_supportsEMV = null;
+		_cardReaderState = null;
 		ResetPollingInterval();
 		RaiseInvalidDeviceServiceCardReader();
 	}
@@ -338,8 +341,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 
 	private void DeviceServiceClient_OnDisconnectedHandler(Exception exception)
 	{
-		_deviceServiceVersion = null;
-		_supportsEMV = null;
+		_cardReaderState = null;
 		ResetPollingInterval();
 		RaiseInvalidDeviceServiceCardReader();
 	}
@@ -438,38 +440,24 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 
 	public ValidateVersionModel ValidateVersion()
 	{
-		ValidateVersionModel validateVersionModel = ((!IsConnectedToDeviceService) ? null : _deviceServiceClient?.ValidateVersion());
-		_deviceServiceVersion = validateVersionModel?.DeviceServiceVersion;
-		return validateVersionModel;
+		if (!IsConnectedToDeviceService)
+		{
+			return null;
+		}
+		return _deviceServiceClient?.ValidateVersion();
 	}
 
 	public void SendTamperedCardReaderKioskAlertMessage()
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		try
 		{
-			try
-			{
-				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
-				var anon = new
-				{
-					MessageType = "KioskAlert",
-					MessageId = Guid.NewGuid(),
-					KioskId = num,
-					EngineVersion = service["EngineVersion"],
-					BundleVersion = service["ProductVersion"],
-					SubType = string.Format("mm:TamperedCardReaderError, {0}", "0099CDRR"),
-					Detail = string.Format("<h2>Kiosk Engine Card Reader Tampered Error</h2><p>Card Reader Tampering detected on Kiosk: {0}!<br><br>Placing Kiosk into Maintenance Mode.<br>{1}</p>", num, "0099CDRR"),
-					Type = "ApplicationCrash",
-					Time = DateTime.Now
-				};
-				ServiceLocator.Instance.GetService<IQueueService>()?.Enqueue(byte.MaxValue, anon.MessageType, anon);
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in HealthServicesProxy.SendKioskEvents.", e);
-			}
-		});
+			long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
+			ServiceLocator.Instance.GetService<IHealthServices>().SendAlert(num.ToString(), "ApplicationCrash", string.Format("mm:TamperedCardReaderError, {0}", "0099CDRR"), string.Format("<h2>Kiosk Engine Card Reader Tampered Error</h2><p>Card Reader Tampering detected on Kiosk: {0}!<br><br>Placing Kiosk into Maintenance Mode.<br>{1}</p>", num, "0099CDRR"), DateTime.Now, null, null, skipQueue: true);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in DeviceServiceClientHelper.SendTamperdCardReaderKioskAlertMessage!", e);
+		}
 	}
 
 	public void GetCardInsertedStatus(Action<GetCardInsertedStatusResponseEvent> completeCallback)

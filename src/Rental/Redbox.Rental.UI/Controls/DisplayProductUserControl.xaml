@@ -6,18 +6,18 @@
     </ResourceDictionary>
   </FrameworkElement.Resources>
   <Grid Name="MainGrid" Background="{Binding Path=BackgroundBrush, FallbackValue=Transparent}">
-    <local:AspectRatioLayoutDecorator x:Name="MainAspectRatioLayoutDecorator" AspectRatio="0.7219512195121951" LockAspectRatio="{Binding Path=LockAspectRatio}">
+    <local:AspectRatioLayoutDecorator x:Name="MainAspectRatioLayoutDecorator" AspectRatio="0.6666666666666667" LockAspectRatio="{Binding Path=LockAspectRatio}">
       <Border Name="ImageBorder" BorderBrush="{StaticResource ImageBorderSolidColorBrush}" CornerRadius="{Binding Path=ImageBorderCornerRadius}" BorderThickness="{Binding Path=ImageBorderThickness}">
         <Grid>
           <Redbox:Flag Name="Flag" Width="200" Height="60" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-30,-30,0,0" Visibility="{Binding Path=DisplayFlagVisibility}" Style="{Binding Path=FlagStyle, FallbackValue={StaticResource red_flag_style}}">
             <Viewbox Visibility="{Binding Path=DisplayFlagVisibility}">
-              <TextBlock Name="FlagText" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_bold_13}" Margin="0,2,0,2" Text="{Binding Path=FlagText}" />
+              <TextBlock Name="FlagText" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_bold_13}" Margin="9,3,9,3" Text="{Binding Path=FlagText}" />
             </Viewbox>
           </Redbox:Flag>
-          <local:AspectRatioLayoutDecorator AspectRatio="0.7219512195121951" LockAspectRatio="{Binding Path=LockAspectRatio}" Visibility="{Binding Path=ImageBackgroundVisibility, FallbackValue=Collapsed}">
+          <local:AspectRatioLayoutDecorator AspectRatio="0.6666666666666667" LockAspectRatio="{Binding Path=LockAspectRatio}" Visibility="{Binding Path=ImageBackgroundVisibility, FallbackValue=Collapsed}">
             <Grid Name="ImageBackground" Background="#1E1E1E" />
           </local:AspectRatioLayoutDecorator>
-          <local:AspectRatioLayoutDecorator AspectRatio="0.7219512195121951" LockAspectRatio="{Binding Path=LockAspectRatio}">
+          <local:AspectRatioLayoutDecorator AspectRatio="0.6666666666666667" LockAspectRatio="{Binding Path=LockAspectRatio}">
             <Image Name="DisplayProductImage" Stretch="Fill" Source="{Binding Path=Image}" Opacity="{Binding Path=DisplayImageOpacity}">
               <UIElement.InputBindings>
                 <MouseBinding Gesture="LeftClick" Command="{x:Static localbase:Commands.BrowseItemSelectedCommand}" />
@@ -49,12 +49,12 @@
               </Redbox:RoundedButton>
             </Redbox:GridExt>
           </Redbox:GridExt>
-          <Redbox:RoundedButton Name="AddButton" Style="{StaticResource rubine_white_border_button_style}" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" HorizontalAlignment="Right" VerticalAlignment="Bottom" MinWidth="153" Height="56" CornerRadius="28" Margin="0,0,-10,-25" Focusable="False" IsEnabled="True" Opacity="{Binding Path=AddButtonOpacity}" Visibility="{Binding Path=AddButtonVisibility, FallbackValue=Visible}">
-            <Redbox:GridExt RowHeights="25*,50*,25*" Margin="15,0">
+          <Redbox:RoundedButton Name="AddButton" Style="{StaticResource warm_purple_no_border_button_style}" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" HorizontalAlignment="Right" VerticalAlignment="Bottom" MinWidth="160" Height="48" CornerRadius="24" Margin="0,0,55,-25" Focusable="False" IsEnabled="True" Opacity="{Binding Path=AddButtonOpacity}" Visibility="{Binding Path=AddButtonVisibility, FallbackValue=Visible}">
+            <Redbox:GridExt RowHeights="20*,60*,20*" Margin="12,0">
               <Viewbox Grid.Row="1">
                 <StackPanel Orientation="Horizontal">
                   <UserControl Style="{StaticResource plus_sign_style}" />
-                  <TextBlock Name="AddButtonText" VerticalAlignment="Center" Margin="5" Style="{StaticResource font_montserrat_regular_18}" Text="{Binding Path=AddButtonLabelText, FallbackValue=RENT IT NOW!}" />
+                  <TextBlock Name="AddButtonText" VerticalAlignment="Center" Margin="5" Style="{StaticResource font_montserrat_extrabold_18}" Text="{Binding Path=AddButtonLabelText, FallbackValue=GET IT NOW!}" />
                 </StackPanel>
               </Viewbox>
             </Redbox:GridExt>

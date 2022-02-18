@@ -71,4 +71,10 @@ public static class KioskHealthSettings
 	public const string EMVReaderDisconnectAlertVelocity = "EMVReaderDisconnectAlertVelocity";
 
 	public const string EMVReaderDisconnectSampleSizeHours = "EMVReaderDisconnectSampleSizeHours";
+
+	public const string PingInterval = "PingInterval";
+
+	public const string PingServiceEnabled = "PingServiceEnabled";
+
+	public const string KioskServicesPingEnabled = "KioskServicesPingEnabled";
 }

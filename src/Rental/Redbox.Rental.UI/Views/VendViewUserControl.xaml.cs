@@ -29,18 +29,7 @@ public partial class VendViewUserControl : TextToSpeechUserControl, IComponentCo
 		{
 			VendDiscControl.VendType = value;
 			VendDiscControl.IsPickupDisc = IsPickup;
-			switch (value)
-			{
-			case VendViewType.RentalsOnTheirWay:
-				VendDiscControl.IsAnimated = true;
-				break;
-			case VendViewType.RecomendationOnPickupVend:
-				VendDiscControl.IsAnimated = true;
-				break;
-			case VendViewType.None:
-			case VendViewType.PleaseWait:
-				break;
-			}
+			VendDiscControl.IsAnimated = true;
 		}
 	}
 
@@ -115,8 +104,10 @@ public partial class VendViewUserControl : TextToSpeechUserControl, IComponentCo
 		{
 			IsPickup = Model.IsPickup;
 			VendDiscControl.IsSignedIn = Model.IsSignedIn;
-			VendDiscControl.IsLoyaltySignedIn = Model.IsLoyaltySignedIn;
-			VendDiscControl.VendDiscMessages = Model.TextMessages;
+			VendDiscControl.TitleText1 = Model.TitleText1;
+			VendDiscControl.MessageText1 = Model.MessageText1;
+			VendDiscControl.MessageText2 = Model.MessageText2;
+			VendDiscControl.MessageText3 = Model.MessageText3;
 			VendType = Model.VendType;
 			BannerImage = Model.BannerImage;
 		}

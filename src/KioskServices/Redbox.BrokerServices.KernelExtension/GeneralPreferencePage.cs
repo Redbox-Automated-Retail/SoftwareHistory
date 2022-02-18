@@ -3,8 +3,11 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Redbox.BrokerServices.Proxy;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy;
+using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskClientService;
 
 namespace Redbox.BrokerServices.KernelExtension;
 
@@ -94,12 +97,19 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 
 	private void btnCancel_Click(object sender, EventArgs e)
 	{
-		ReservationServicesProxy.Instance.CancelReservation(long.Parse(txtRefNumber.Text));
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendExpireAndCancelReservationToKioskClientService)
+		{
+			ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.CancelReservation(ServiceLocator.Instance.GetService<IStoreServices>().StoreNumberString, long.Parse(txtRefNumber.Text), "CancelTest", null);
+		}
+		else
+		{
+			ReservationServicesProxy.Instance.CancelReservation(long.Parse(txtRefNumber.Text));
+		}
 	}
 
 	private void btnValidate_Click(object sender, EventArgs e)
 	{
-		ReservationServicesProxy.Instance.ValidateReservation(StoreServicesProxy.Instance.StoreNumber, long.Parse(txtRefNumber.Text), null);
+		ReservationServicesProxy.Instance.ValidateReservation(ServiceLocator.Instance.GetService<IStoreServices>().StoreNumberString, long.Parse(txtRefNumber.Text), null);
 	}
 
 	protected override void Dispose(bool disposing)

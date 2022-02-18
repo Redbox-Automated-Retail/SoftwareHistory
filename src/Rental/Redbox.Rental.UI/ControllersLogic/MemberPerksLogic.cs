@@ -31,6 +31,8 @@ public class MemberPerksLogic : BaseLogic
 
 	protected static IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 
+	public bool IsRedboxPlus => Model.RedboxPlusButtonVisibility == Visibility.Visible;
+
 	public bool IsPerks => Model.PerksButtonVisibility == Visibility.Visible;
 
 	public bool IsPromo => Model.PromoButtonVisibility == Visibility.Visible;
@@ -52,7 +54,7 @@ public class MemberPerksLogic : BaseLogic
 		int perksTierIndex = GetPerksTierIndex(rentals);
 		perksTierIndex = ((perksTierIndex < memberTier) ? memberTier : perksTierIndex);
 		SetSimpleNextLevel(perksTierIndex, rentals);
-		string text = obj[perksTierIndex];
+		string perksLevel = obj[perksTierIndex];
 		bool flag = false;
 		switch (perksTierIndex)
 		{
@@ -74,7 +76,7 @@ public class MemberPerksLogic : BaseLogic
 			Model.PerksLevelMessage = Resources.perks_level3_message;
 			break;
 		}
-		Model.PerksLevel = (flag ? text : text.ToUpper());
+		Model.PerksLevel = perksLevel;
 		Model.PerksImagePath = (flag ? null : ("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/" + ImageNames[perksTierIndex]));
 		Model.EarnedRewardsMessage = GetEarnedRewardsMessage(memberInfo.Points);
 		Model.PerksMarketing = Resources.perks_marketing;
@@ -145,8 +147,18 @@ public class MemberPerksLogic : BaseLogic
 		return 3;
 	}
 
+	public void RedboxPlusButtonCommand_Execute()
+	{
+		Model.RedboxPlusSelected = true;
+		Model.PerksSelected = false;
+		Model.PromosSelected = false;
+		BaseLogic.HandleWPFHit();
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPerksLogicRedboxPlus");
+	}
+
 	public void PerksButtonCommand_Execute()
 	{
+		Model.RedboxPlusSelected = false;
 		Model.PerksSelected = true;
 		Model.PromosSelected = false;
 		BaseLogic.HandleWPFHit();
@@ -155,8 +167,9 @@ public class MemberPerksLogic : BaseLogic
 
 	public void PromoButtonCommand_Execute()
 	{
-		Model.PromosSelected = true;
+		Model.RedboxPlusSelected = false;
 		Model.PerksSelected = false;
+		Model.PromosSelected = true;
 		BaseLogic.HandleWPFHit();
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("MemberPerksLogicPromo");
 	}

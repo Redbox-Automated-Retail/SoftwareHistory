@@ -4,6 +4,7 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
@@ -30,19 +31,24 @@ public class RentalShoppingCart : IRentalShoppingCart
 
 		public bool IncludeFlashDeals { get; set; }
 
+		public bool IncludeDiscountRestrictionItems { get; set; }
+
 		public RentalShoppingCartItemAction Action { get; set; }
 
 		public PromotionFunctionFilters(IPromotion promotion)
 		{
+			int action;
 			if (promotion != null)
 			{
 				_ = promotion.ActionCode;
-				Action = promotion.CartItemAction;
+				action = (int)promotion.CartItemAction;
 			}
 			else
 			{
-				Action = RentalShoppingCartItemAction.rental;
+				action = 0;
 			}
+			Action = (RentalShoppingCartItemAction)action;
+			IncludeDiscountRestrictionItems = promotion?.AllowFullDiscount ?? true;
 		}
 	}
 
@@ -56,7 +62,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 
 	private readonly object _syncObject = new object();
 
-	private IList<IRentalShoppingCartItem> _items = new List<IRentalShoppingCartItem>();
+	private IList<IBaseRentalShoppingCartItem> _items = new List<IBaseRentalShoppingCartItem>();
 
 	private ITotals _totals;
 
@@ -72,14 +78,44 @@ public class RentalShoppingCart : IRentalShoppingCart
 
 	public Guid ShoppingSessionId { get; private set; }
 
-	public IList<IRentalShoppingCartItem> Items
+	public IList<IBaseRentalShoppingCartItem> Items
 	{
 		get
 		{
 			lock (_syncObject)
 			{
-				List<IRentalShoppingCartItem> list = new List<IRentalShoppingCartItem>();
+				List<IBaseRentalShoppingCartItem> list = new List<IBaseRentalShoppingCartItem>();
 				list.AddRange(_items);
+				return list;
+			}
+		}
+	}
+
+	public IList<IRentalShoppingCartTitleItem> TitleItems
+	{
+		get
+		{
+			lock (_syncObject)
+			{
+				List<IRentalShoppingCartTitleItem> list = new List<IRentalShoppingCartTitleItem>();
+				list.AddRange(from x in _items
+					where x is IRentalShoppingCartTitleItem
+					select x as IRentalShoppingCartTitleItem);
+				return list;
+			}
+		}
+	}
+
+	public IList<IRentalShoppingCartSubscriptionItem> SubscriptionItems
+	{
+		get
+		{
+			lock (_syncObject)
+			{
+				List<IRentalShoppingCartSubscriptionItem> list = new List<IRentalShoppingCartSubscriptionItem>();
+				list.AddRange(from x in _items
+					where x is IRentalShoppingCartSubscriptionItem
+					select x as IRentalShoppingCartSubscriptionItem);
 				return list;
 			}
 		}
@@ -149,13 +185,29 @@ public class RentalShoppingCart : IRentalShoppingCart
 
 	public OptInConfirmationStatus MarketingOptInConfirmationStatus { get; set; }
 
-	public bool NeedLookupOfLoyaltyPointsToBeEarned => Items.Count(delegate(IRentalShoppingCartItem x)
+	public IList<IRentalShoppingCartTitleItem> RedeemableItems => TitleItems.Where(delegate(IRentalShoppingCartTitleItem x)
 	{
 		ILoyaltyPointsRecord loyaltyPointsRecord = x.LoyaltyPointsRecord;
-		return loyaltyPointsRecord == null || !loyaltyPointsRecord.PointsToBeEarned.HasValue;
-	}) > 0;
+		return loyaltyPointsRecord != null && loyaltyPointsRecord.CanRedeem && !x.LoyaltyPointsRecord.ToBeRedeemed;
+	}).ToList();
 
-	public bool HasItemsToBeRedeemed => Items.Any((IRentalShoppingCartItem x) => x.LoyaltyPointsRecord?.ToBeRedeemed ?? false);
+	public IList<IRentalShoppingCartTitleItem> ToBeRedeemedItems => TitleItems.Where(delegate(IRentalShoppingCartTitleItem x)
+	{
+		ILoyaltyPointsRecord loyaltyPointsRecord = x.LoyaltyPointsRecord;
+		return loyaltyPointsRecord != null && loyaltyPointsRecord.CanRedeem && x.LoyaltyPointsRecord.ToBeRedeemed;
+	}).ToList();
+
+	public int TotalPointsToBeEarned => TitleItems.Where(delegate(IRentalShoppingCartTitleItem x)
+	{
+		ILoyaltyPointsRecord loyaltyPointsRecord = x.LoyaltyPointsRecord;
+		return loyaltyPointsRecord != null && loyaltyPointsRecord.PointsToBeEarned.HasValue && !x.LoyaltyPointsRecord.ToBeRedeemed;
+	}).Sum((IRentalShoppingCartTitleItem x) => x.LoyaltyPointsRecord.PointsToBeEarned.Value);
+
+	public bool HasItemsToBeRedeemed => TitleItems.Any((IRentalShoppingCartTitleItem x) => x.LoyaltyPointsRecord?.ToBeRedeemed ?? false);
+
+	public bool HasRedboxPlusFreeOneNightRentalSelected => TitleItems.Any((IRentalShoppingCartTitleItem x) => x?.IsRedboxPlusFreeOneNightRental ?? false);
+
+	public bool HasDiscountRestriction => TitleItems.Any((IRentalShoppingCartTitleItem x) => (x.TitleProduct?.DiscountRestriction ?? DiscountRestriction.None) != DiscountRestriction.None);
 
 	public IServiceFee ServiceFee
 	{
@@ -226,7 +278,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 		{
 			if (PickupRecommendationsShown)
 			{
-				return Items.Any((IRentalShoppingCartItem i) => i.SourceType == ItemSourceType.Recommendation);
+				return TitleItems.Any((IRentalShoppingCartTitleItem i) => i.SourceType == ItemSourceType.Recommendation);
 			}
 			return false;
 		}
@@ -247,40 +299,97 @@ public class RentalShoppingCart : IRentalShoppingCart
 		UpdateServiceFee();
 	}
 
-	public void AddItem(IRentalShoppingCartItem rentalShoppingCartItem)
+	public void TriggerChangeNotification()
 	{
-		AddItem(rentalShoppingCartItem, null);
+		OnChange?.Invoke(this);
 	}
 
-	public void AddItem(IRentalShoppingCartItem rentalShoppingCartItem, IPricingRecord pricingRecord)
+	public bool AddItem(IBaseRentalShoppingCartItem rentalShoppingCartItem)
 	{
+		bool result = false;
+		if (rentalShoppingCartItem is IRentalShoppingCartTitleItem)
+		{
+			result = AddTitleItem(rentalShoppingCartItem as IRentalShoppingCartTitleItem, null);
+		}
+		else if (rentalShoppingCartItem is IRentalShoppingCartSubscriptionItem)
+		{
+			result = AddSubscriptionItem(rentalShoppingCartItem as IRentalShoppingCartSubscriptionItem);
+		}
+		else
+		{
+			LogHelper.Instance.Log($"Unable to add item of type {rentalShoppingCartItem?.GetType()} to shopping cart");
+		}
+		return result;
+	}
+
+	public bool AddTitleItem(IRentalShoppingCartTitleItem rentalShoppingCartTitleItem, IPricingRecord pricingRecord)
+	{
+		bool result = false;
 		lock (_syncObject)
 		{
-			if (rentalShoppingCartItem != null)
+			if (rentalShoppingCartTitleItem != null)
 			{
-				if (!HasItem(rentalShoppingCartItem.ProductId))
+				if (!HasTitleItem(rentalShoppingCartTitleItem.ProductId))
 				{
-					SetRentalShoppingCartItemPricing(rentalShoppingCartItem, pricingRecord);
-					rentalShoppingCartItem.Sequence = (InCartPromoOfferMade ? RentalShoppingCartItemSequence.post_offer : RentalShoppingCartItemSequence.pre_offer);
-					_items.Add(rentalShoppingCartItem);
-					LogHelper.Instance.Log("Adding to Rental Shopping Cart: {0} Item: {1}", ShoppingSessionId, rentalShoppingCartItem);
+					SetRentalShoppingCartItemPricing(rentalShoppingCartTitleItem, pricingRecord);
+					result = BaseAddItem(rentalShoppingCartTitleItem);
+					LogHelper.Instance.Log("Adding to Rental Shopping Cart: {0} Item: {1}", ShoppingSessionId, rentalShoppingCartTitleItem);
 					Totals.UpdateSubTotalGroups();
 					ValidateAndUpdatePromoCode();
 					UpdateServiceFee();
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Unable to add item with product id {rentalShoppingCartItem.ProductId}.  Product id is already in the shopping cart.");
+					LogHelper.Instance.Log($"Unable to add item with product title id {rentalShoppingCartTitleItem.ProductId}.  Product title id is already in the shopping cart.");
 				}
+			}
+		}
+		return result;
+	}
+
+	public bool AddSubscriptionItem(IRentalShoppingCartSubscriptionItem rentalShoppingCartSubscriptionItem)
+	{
+		bool result = false;
+		lock (_syncObject)
+		{
+			if (rentalShoppingCartSubscriptionItem?.SubscriptionProduct != null)
+			{
+				if (!SubscriptionItems.Any((IRentalShoppingCartSubscriptionItem x) => x.SubscriptionProduct.SubscriptionType == rentalShoppingCartSubscriptionItem.SubscriptionProduct.SubscriptionType))
+				{
+					result = BaseAddItem(rentalShoppingCartSubscriptionItem);
+				}
+				else
+				{
+					LogHelper.Instance.Log($"Unable to add item with subscription type {rentalShoppingCartSubscriptionItem?.SubscriptionProduct?.SubscriptionType}.  Subscription type is already in the shopping cart.");
+				}
+			}
+		}
+		return result;
+	}
+
+	private bool BaseAddItem(IBaseRentalShoppingCartItem baseRentalShoppingCartItem)
+	{
+		bool result = false;
+		lock (_syncObject)
+		{
+			if (baseRentalShoppingCartItem != null)
+			{
+				baseRentalShoppingCartItem.Sequence = (InCartPromoOfferMade ? RentalShoppingCartItemSequence.post_offer : RentalShoppingCartItemSequence.pre_offer);
+				_items.Add(baseRentalShoppingCartItem);
+				Totals.UpdateSubTotalGroups();
+				ValidateAndUpdatePromoCode();
+				UpdateServiceFee();
+				result = true;
 			}
 		}
 		if (OnChange != null)
 		{
 			OnChange(this);
 		}
+		return result;
 	}
 
-	public void RemoveItem(IRentalShoppingCartItem rentalShoppingCartItem, bool userRemoved)
+	public void RemoveItem(IBaseRentalShoppingCartItem rentalShoppingCartItem, bool userRemoved)
 	{
 		bool flag = false;
 		lock (_syncObject)
@@ -290,7 +399,20 @@ public class RentalShoppingCart : IRentalShoppingCart
 				_items.Remove(rentalShoppingCartItem);
 				flag = true;
 				Totals.UpdateSubTotalGroups();
-				LogHelper.Instance.Log("User removed item {0} {1}", rentalShoppingCartItem.SortName, rentalShoppingCartItem.ProductId);
+				if (rentalShoppingCartItem is IRentalShoppingCartTitleItem)
+				{
+					IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = rentalShoppingCartItem as IRentalShoppingCartTitleItem;
+					LogHelper.Instance.Log("User removed shopping cart title item {0} {1}", rentalShoppingCartTitleItem?.SortName, rentalShoppingCartTitleItem?.ProductId);
+				}
+				else if (rentalShoppingCartItem is IRentalShoppingCartSubscriptionItem)
+				{
+					IRentalShoppingCartSubscriptionItem rentalShoppingCartSubscriptionItem = rentalShoppingCartItem as IRentalShoppingCartSubscriptionItem;
+					LogHelper.Instance.Log("User removed shopping cart subscription item. Type= {0} {1}", rentalShoppingCartSubscriptionItem?.SubscriptionProduct?.SubscriptionType, rentalShoppingCartSubscriptionItem?.SubscriptionProduct?.SubscriptionId);
+				}
+				else
+				{
+					LogHelper.Instance.Log($"Removed shopping cart item of unknown type. {rentalShoppingCartItem}");
+				}
 				Redbox.Rental.Services.Session.Session.Instance.BrowseState.ShoppingCartFullMessagesShown = false;
 				ValidateAndUpdatePromoCode();
 				UpdateServiceFee();
@@ -321,9 +443,9 @@ public class RentalShoppingCart : IRentalShoppingCart
 		}
 	}
 
-	public IRentalShoppingCartItem GetItem(int index)
+	public IBaseRentalShoppingCartItem GetItem(int index)
 	{
-		IRentalShoppingCartItem result = null;
+		IBaseRentalShoppingCartItem result = null;
 		lock (_syncObject)
 		{
 			if (index < _items.Count)
@@ -334,11 +456,46 @@ public class RentalShoppingCart : IRentalShoppingCart
 		return result;
 	}
 
-	public bool HasItem(long productId)
+	public bool HasTitleItem(long productId)
 	{
 		lock (_syncObject)
 		{
-			return _items.Any((IRentalShoppingCartItem x) => x.ProductId == productId);
+			return TitleItems.Any((IRentalShoppingCartTitleItem x) => x.ProductId == productId);
+		}
+	}
+
+	public bool HasAnyTitleRollupTitle(ITitleRollupProduct titleRollupProduct)
+	{
+		lock (_syncObject)
+		{
+			bool result = false;
+			if (titleRollupProduct?.KioskProducts != null)
+			{
+				foreach (ITitleProduct kioskProduct in titleRollupProduct.KioskProducts)
+				{
+					if (HasTitleItem(kioskProduct.ProductId))
+					{
+						result = true;
+					}
+				}
+			}
+			return result;
+		}
+	}
+
+	public bool HasSubscriptionItem(ISubscriptionProduct subscriptionProduct)
+	{
+		lock (_syncObject)
+		{
+			return subscriptionProduct != null && SubscriptionItems.Any((IRentalShoppingCartSubscriptionItem x) => x.SubscriptionProduct.SubscriptionType == subscriptionProduct.SubscriptionType && x.SubscriptionProduct.SubscriptionId == subscriptionProduct.SubscriptionId);
+		}
+	}
+
+	public bool HasSubscriptionItem(SubscriptionType subscriptionType)
+	{
+		lock (_syncObject)
+		{
+			return SubscriptionItems.Any((IRentalShoppingCartSubscriptionItem x) => x?.SubscriptionProduct != null && x.SubscriptionProduct.SubscriptionType == subscriptionType);
 		}
 	}
 
@@ -346,7 +503,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 	{
 		lock (_syncObject)
 		{
-			return _items.Any((IRentalShoppingCartItem x) => x.ProductId == productId && x.Action == action);
+			return TitleItems.Any((IRentalShoppingCartTitleItem x) => x.ProductId == productId && x.Action == action);
 		}
 	}
 
@@ -354,15 +511,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 	{
 		lock (_syncObject)
 		{
-			return _items.Any((IRentalShoppingCartItem x) => x.MultiDisc);
-		}
-	}
-
-	public int GetCount(long productId)
-	{
-		lock (_syncObject)
-		{
-			return _items.Count((IRentalShoppingCartItem x) => x.ProductId == productId);
+			return TitleItems.Any((IRentalShoppingCartTitleItem x) => x.MultiDisc);
 		}
 	}
 
@@ -375,8 +524,8 @@ public class RentalShoppingCart : IRentalShoppingCart
 	public void UpdateServiceFee()
 	{
 		decimal obj = ServiceFee?.ActualAmount ?? 0m;
-		decimal num = Items.Where((IRentalShoppingCartItem x) => x?.TitleProduct?.IsEmptyCase ?? false).Sum((IRentalShoppingCartItem x) => x.PurchasePrice);
-		Items.Count(delegate(IRentalShoppingCartItem x)
+		decimal num = TitleItems.Where((IRentalShoppingCartTitleItem x) => x?.TitleProduct?.IsEmptyCase ?? false).Sum((IRentalShoppingCartTitleItem x) => x.PurchasePrice);
+		TitleItems.Count(delegate(IRentalShoppingCartTitleItem x)
 		{
 			bool? obj2;
 			if (x == null)
@@ -409,123 +558,139 @@ public class RentalShoppingCart : IRentalShoppingCart
 	public IPromoCodeValidationInfo ValidateAndUpdatePromoCode()
 	{
 		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
-		if (PromotionService.Instance.IsFreeInCartOfferRunning)
+		try
 		{
-			promoCodeValidationInfo = PromotionService.Instance.ValidateFreeInCartOffer();
-			if (!promoCodeValidationInfo.IsCartValid && InCartPromoOfferMade)
+			if (PromotionService.Instance.IsFreeInCartOfferRunning)
+			{
+				promoCodeValidationInfo = PromotionService.Instance.ValidateFreeInCartOffer();
+				if (!promoCodeValidationInfo.IsCartValid && InCartPromoOfferMade)
+				{
+					ClearPromoCode();
+					InCartPromoOfferMade = false;
+				}
+			}
+			else if (PromotionService.Instance.IsRentTwoInCartOfferRunning)
+			{
+				if ((PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) < 2 && InCartPromoOfferMade)
+				{
+					ClearPromoCode();
+					InCartPromoOfferMade = false;
+					InCartPromoOfferCancel = false;
+				}
+			}
+			else if (InCartPromoOfferAccepted)
+			{
+				promoCodeValidationInfo = PromotionService.Instance.ValidateRegularInCartPromo(this);
+				if (promoCodeValidationInfo.IsCartValid && Promotion == null)
+				{
+					PromotionService.Instance.SetPromoToFixedPriceInCart(this, promoCodeValidationInfo.Price);
+				}
+			}
+			IPromotion promotion = Promotion;
+			if (promotion != null && promotion.Intent == PromotionIntentCode.FirstNightGameGameRequired && !PromotionService.Instance.IsFreeInCartOfferRunning)
+			{
+				promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightGame, Promotion);
+				if (!promoCodeValidationInfo.IsCartValid)
+				{
+					ClearPromoCode();
+				}
+			}
+			IPromotion promotion2 = Promotion;
+			if (promotion2 != null && promotion2.IsRedboxPlusFreeOneNightRental && !HasRedboxPlusFreeOneNightRentalSelected)
 			{
 				ClearPromoCode();
-				InCartPromoOfferMade = false;
 			}
-		}
-		else if (PromotionService.Instance.IsRentTwoInCartOfferRunning)
-		{
-			if ((PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) < 2 && InCartPromoOfferMade)
+			if (Promotion != null)
 			{
-				ClearPromoCode();
-				InCartPromoOfferMade = false;
-				InCartPromoOfferCancel = false;
-			}
-		}
-		else if (InCartPromoOfferAccepted)
-		{
-			promoCodeValidationInfo = PromotionService.Instance.ValidateRegularInCartPromo(this);
-			if (promoCodeValidationInfo.IsCartValid && Promotion == null)
-			{
-				PromotionService.Instance.SetPromoToFixedPriceInCart(this, promoCodeValidationInfo.Price);
-			}
-		}
-		IPromotion promotion = Promotion;
-		if (promotion != null && promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightGameGameRequired && !PromotionService.Instance.IsFreeInCartOfferRunning)
-		{
-			promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightGame, Promotion);
-			if (!promoCodeValidationInfo.IsCartValid)
-			{
-				ClearPromoCode();
-			}
-		}
-		if (Promotion != null)
-		{
-			if (!InCartPromoOfferAccepted)
-			{
-				if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.RxGx)
+				if (!InCartPromoOfferAccepted)
 				{
-					promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateRxGxPromo, Promotion);
-				}
-				else if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.PercentOffCartTotal)
-				{
-					promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidatePercentOffPromo, Promotion);
-				}
-				else if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightDVD)
-				{
-					promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightDvd, Promotion);
-				}
-				else if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightBluray)
-				{
-					promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightBluRay, Promotion);
-				}
-				else if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightGame || Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightGameGameRequired)
-				{
-					promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightGame, Promotion);
-				}
-				else if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightFreeItem)
-				{
-					promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightFree, Promotion);
-				}
-				else
-				{
-					if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FixedValue)
+					if (Promotion.IsRedboxPlusFreeOneNightRental)
 					{
-						ICampaignTitles campaignTitles = Promotion.CampaignTitles;
-						if (campaignTitles != null && campaignTitles.Titles?.Count > 0)
+						promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateRedboxPlusFreeOneNightRental, Promotion);
+					}
+					else if (Promotion.Intent == PromotionIntentCode.RxGx)
+					{
+						promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateRxGxPromo, Promotion);
+					}
+					else if (Promotion.Intent == PromotionIntentCode.PercentOffCartTotal)
+					{
+						promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidatePercentOffPromo, Promotion);
+					}
+					else if (Promotion.Intent == PromotionIntentCode.FirstNightDVD)
+					{
+						promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightDvd, Promotion);
+					}
+					else if (Promotion.Intent == PromotionIntentCode.FirstNightBluray)
+					{
+						promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightBluRay, Promotion);
+					}
+					else if (Promotion.Intent == PromotionIntentCode.FirstNightGame || Promotion.Intent == PromotionIntentCode.FirstNightGameGameRequired)
+					{
+						promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightGame, Promotion);
+					}
+					else if (Promotion.Intent == PromotionIntentCode.FirstNightFreeItem)
+					{
+						promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFirstNightFree, Promotion);
+					}
+					else
+					{
+						if (Promotion.Intent == PromotionIntentCode.FixedValue)
 						{
-							promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateTitleSpecificPromo, Promotion);
-							goto IL_0338;
+							ICampaignTitles campaignTitles = Promotion.CampaignTitles;
+							if (campaignTitles != null && campaignTitles.Titles?.Count > 0)
+							{
+								promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateTitleSpecificPromo, Promotion);
+								goto IL_0385;
+							}
+						}
+						if (Promotion.Intent == PromotionIntentCode.FixedValue)
+						{
+							promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFixedValuePromo, Promotion);
+						}
+						else if (Promotion.IsExternallyValidated)
+						{
+							promoCodeValidationInfo = ValidatePromoConsideringConditions(SetResultForExternallyValidatedPromo, Promotion);
 						}
 					}
-					if (Promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FixedValue)
+				}
+				goto IL_0385;
+			}
+			goto end_IL_0006;
+			IL_0385:
+			if (!Promotion.IsExternallyValidated)
+			{
+				Promotion.QualifyingItems.Clear();
+				Promotion.PromotionItems.Clear();
+				Promotion.Price = promoCodeValidationInfo.Price;
+				Promotion.Percent = promoCodeValidationInfo.Percent;
+				if (promoCodeValidationInfo.IsCartValid)
+				{
+					promoCodeValidationInfo.QualifyingItems.ForEach(delegate(IRentalShoppingCartTitleItem x)
 					{
-						promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateFixedValuePromo, Promotion);
-					}
-					else if (Promotion.IsExternallyValidated)
+						Promotion.QualifyingItems.Add(x);
+					});
+					promoCodeValidationInfo.PromotionItems.ForEach(delegate(IPromotionItem x)
 					{
-						promoCodeValidationInfo = ValidatePromoConsideringConditions(SetResultForExternallyValidatedPromo, Promotion);
-					}
+						Promotion.PromotionItems.Add(x);
+					});
 				}
 			}
-			goto IL_0338;
+			LogHelper.Instance.Log(string.Format("Validate Promo {0}.  IsValid:{1}{2}{3}{4}  Total Promo discounts: {5}", Promotion?.Intent, promoCodeValidationInfo.IsCartValid, promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing ? " InvalidBecauseOfMultiNightPricing" : null, promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal ? " InvalidBecauseOfFlashDeal" : null, promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction ? " InvalidBecauseOfDiscountRestriction" : null, promoCodeValidationInfo.Price));
+			LogHelper.Instance.Log("Promo Qualifying items: {0}", promoCodeValidationInfo.QualifyingItems.Select((IRentalShoppingCartTitleItem x) => x.ProductId).ToList().Join(", "));
+			LogHelper.Instance.Log("Promo Redemption items: {0}", promoCodeValidationInfo.PromotionItems.Select((IPromotionItem x) => $"{x.RentalShoppingCartItem?.ProductId} {x.PromotionAmount:C2}").ToList().Join(", "));
+			LogHelper.Instance.Log("Loyalty Redemption items: {0}", (from x in TitleItems
+				where x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false
+				select $"{x.ProductId} {x?.PricingRecord?.InitialNight ?? 0m:C2}").ToList().Join(", "));
+			LogHelper.Instance.Log("Total Loyalty discounts {0}", TitleItems.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false).Sum((IRentalShoppingCartTitleItem x) => x?.PricingRecord?.InitialNight ?? 0m));
+			LogHelper.Instance.Log("Total discounts {0}", Totals.DiscountAmountUsed);
+			end_IL_0006:;
 		}
-		goto IL_05f0;
-		IL_05f0:
-		return promoCodeValidationInfo;
-		IL_0338:
-		if (!Promotion.IsExternallyValidated)
+		catch (Exception e)
 		{
-			Promotion.QualifyingItems.Clear();
-			Promotion.PromotionItems.Clear();
-			Promotion.Price = promoCodeValidationInfo.Price;
-			Promotion.Percent = promoCodeValidationInfo.Percent;
-			if (promoCodeValidationInfo.IsCartValid)
-			{
-				promoCodeValidationInfo.QualifyingItems.ForEach(delegate(IRentalShoppingCartItem x)
-				{
-					Promotion.QualifyingItems.Add(x);
-				});
-				promoCodeValidationInfo.PromotionItems.ForEach(delegate(IPromotionItem x)
-				{
-					Promotion.PromotionItems.Add(x);
-				});
-			}
+			LogHelper.Instance.LogException($"Exception validating {Promotion?.Intent} promo", e);
+			promoCodeValidationInfo.IsCartValid = false;
 		}
-		LogHelper.Instance.Log(string.Format("Validate Promo {0}.  IsValid:{1}{2}{3}  Total Promo discounts: {4}", Promotion?.Intent, promoCodeValidationInfo.IsCartValid, promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing ? " InvalidBecauseOfMultiNightPricing" : null, promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal ? " InvalidBecauseOfFlashDeal" : null, promoCodeValidationInfo.Price));
-		LogHelper.Instance.Log("Promo Qualifying items: {0}", promoCodeValidationInfo.QualifyingItems.Select((IRentalShoppingCartItem x) => x.ProductId).ToList().Join(", "));
-		LogHelper.Instance.Log("Promo Redemption items: {0}", promoCodeValidationInfo.PromotionItems.Select((IPromotionItem x) => $"{x.RentalShoppingCartItem?.ProductId} {x.PromotionAmount:C2}").ToList().Join(", "));
-		LogHelper.Instance.Log("Loyalty Redemption items: {0}", (from x in Items
-			where x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false
-			select $"{x.ProductId} {x?.PricingRecord?.InitialNight ?? 0m:C2}").ToList().Join(", "));
-		LogHelper.Instance.Log("Total Loyalty discounts {0}", Items.Where((IRentalShoppingCartItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false).Sum((IRentalShoppingCartItem x) => x?.PricingRecord?.InitialNight ?? 0m));
-		LogHelper.Instance.Log("Total discounts {0}", Totals.DiscountAmountUsed);
-		goto IL_05f0;
+		return promoCodeValidationInfo;
 	}
 
 	public void ReValidatePromoCodeAfterVend()
@@ -551,7 +716,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 						Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.WasOfferAccepted = false;
 					}
 				}
-				else if (Items.All((IRentalShoppingCartItem i) => i.Status != LineItemStatus.Fullfilled) && customerOffer.DiscountType != OfferDiscountType.Loyalty)
+				else if (TitleItems.All((IRentalShoppingCartTitleItem i) => i.Status != LineItemStatus.Fullfilled) && customerOffer.DiscountType != OfferDiscountType.Loyalty)
 				{
 					Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.SelectedOffer = null;
 					customerOffer = null;
@@ -584,7 +749,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 		}
 		else
 		{
-			foreach (IRentalShoppingCartItem item in Items)
+			foreach (IRentalShoppingCartTitleItem item in TitleItems)
 			{
 				if (item.Status != LineItemStatus.Fullfilled)
 				{
@@ -620,8 +785,8 @@ public class RentalShoppingCart : IRentalShoppingCart
 		List<IPromotionItem> list = new List<IPromotionItem>();
 		foreach (IPromotionItem promoItem in Promotion.PromotionItems)
 		{
-			IRentalShoppingCartItem rentalShoppingCartItem = Items.FirstOrDefault((IRentalShoppingCartItem i) => i.ProductId == promoItem.RentalShoppingCartItem.ProductId);
-			if (rentalShoppingCartItem == null || rentalShoppingCartItem.Status != LineItemStatus.Fullfilled)
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem i) => i.ProductId == promoItem.RentalShoppingCartItem.ProductId);
+			if (rentalShoppingCartTitleItem == null || rentalShoppingCartTitleItem.Status != LineItemStatus.Fullfilled)
 			{
 				list.Add(promoItem);
 			}
@@ -635,7 +800,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 
 	public void ClearLoyaltyPointsToBeEarned()
 	{
-		Items.ForEach(delegate(IRentalShoppingCartItem x)
+		TitleItems.ForEach(delegate(IRentalShoppingCartTitleItem x)
 		{
 			if (x.LoyaltyPointsRecord != null)
 			{
@@ -646,7 +811,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 
 	public void ClearAllLoyaltyPointsRecords()
 	{
-		Items.ForEach(delegate(IRentalShoppingCartItem x)
+		TitleItems.ForEach(delegate(IRentalShoppingCartTitleItem x)
 		{
 			x.LoyaltyPointsRecord = null;
 		});
@@ -659,69 +824,69 @@ public class RentalShoppingCart : IRentalShoppingCart
 			List<IOptInItem> optInItems = ComingSoonOptInInfo.OptInItems;
 			if (optInItems != null && optInItems.Count > 0)
 			{
-				string storeNumber = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue<string>("Store", "ID");
-				ServiceLocator.Instance.GetService<IPromotionServices>()?.KioskOptIn(storeNumber, optInItems, null);
+				string s = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue<string>("Store", "ID");
+				ServiceLocator.Instance.GetService<IMarketingServices>()?.KioskOptIn(long.Parse(s), optInItems, null);
 			}
 		}
 		ShoppingSession?.Abandon(reason);
 		ShoppingSession?.End();
 	}
 
-	private void SetRentalShoppingCartItemPricing(IRentalShoppingCartItem rentalShoppingCartItem, IPricingRecord pricingRecord)
+	private void SetRentalShoppingCartItemPricing(IRentalShoppingCartTitleItem rentalShoppingCartTitleItem, IPricingRecord pricingRecord)
 	{
 		IPricingService service = ServiceLocator.Instance.GetService<IPricingService>();
 		if (service == null)
 		{
 			LogHelper.Instance.Log("RentalShoppingCart.SetRentalShoppingCartItemPricing - pricing service cannot be null", LogEntryType.Error);
 		}
-		else if (rentalShoppingCartItem.Action == RentalShoppingCartItemAction.purchase)
+		else if (rentalShoppingCartTitleItem.Action == RentalShoppingCartItemAction.purchase)
 		{
 			if (pricingRecord == null)
 			{
-				pricingRecord = rentalShoppingCartItem.TitleProduct.PurchasePriceRecord;
+				pricingRecord = rentalShoppingCartTitleItem.TitleProduct.PurchasePriceRecord;
 			}
-			rentalShoppingCartItem.PricingRecord = pricingRecord.Clone();
-			rentalShoppingCartItem.Price = rentalShoppingCartItem.PricingRecord.Purchase;
-			if (rentalShoppingCartItem.TitleType == TitleType.DigitalCode)
+			rentalShoppingCartTitleItem.PricingRecord = pricingRecord.Clone();
+			rentalShoppingCartTitleItem.Price = rentalShoppingCartTitleItem.PricingRecord.Purchase;
+			if (rentalShoppingCartTitleItem.TitleType == TitleType.DigitalCode)
 			{
-				rentalShoppingCartItem.TaxRate = service.GetDigitalPurchaseTaxRate() / 100m;
+				rentalShoppingCartTitleItem.TaxRate = service.GetDigitalPurchaseTaxRate() / 100m;
 			}
 			else
 			{
-				rentalShoppingCartItem.TaxRate = service.GetPurchaseTaxRate() / 100m;
+				rentalShoppingCartTitleItem.TaxRate = service.GetPurchaseTaxRate() / 100m;
 			}
 		}
 		else
 		{
-			if (rentalShoppingCartItem.Action != RentalShoppingCartItemAction.rental)
+			if (rentalShoppingCartTitleItem.Action != RentalShoppingCartItemAction.rental)
 			{
 				return;
 			}
 			if (pricingRecord == null)
 			{
-				pricingRecord = service.GetOneDayProductPricingRecord(rentalShoppingCartItem.TitleProduct);
+				pricingRecord = service.GetOneDayProductPricingRecord(rentalShoppingCartTitleItem.TitleProduct.ProductId);
 			}
 			if (pricingRecord == null)
 			{
-				LogHelper.Instance.Log($"RentalShoppingCart.SetRentalShoppingCartItemPricing - pricing record was not found for product ID {rentalShoppingCartItem.TitleProduct.ProductId}", LogEntryType.Error);
+				LogHelper.Instance.Log($"RentalShoppingCart.SetRentalShoppingCartItemPricing - pricing record was not found for product ID {rentalShoppingCartTitleItem.TitleProduct.ProductId}", LogEntryType.Error);
 				return;
 			}
-			rentalShoppingCartItem.PricingRecord = pricingRecord.Clone();
-			rentalShoppingCartItem.TaxRate = service.GetRentalTaxRate() / 100m;
-			if (rentalShoppingCartItem.MultiDisc && rentalShoppingCartItem.DiscNumber > 1)
+			rentalShoppingCartTitleItem.PricingRecord = pricingRecord.Clone();
+			rentalShoppingCartTitleItem.TaxRate = service.GetRentalTaxRate() / 100m;
+			if (rentalShoppingCartTitleItem.MultiDisc && rentalShoppingCartTitleItem.DiscNumber > 1)
 			{
-				rentalShoppingCartItem.PricingRecord.InitialNight = 0m;
-				rentalShoppingCartItem.PricingRecord.ExtraNight = 0m;
-				rentalShoppingCartItem.PricingRecord.NonReturn = 0m;
-				rentalShoppingCartItem.PricingRecord.ExpirationPrice = 0m;
-				rentalShoppingCartItem.PricingRecord.DefaultInitialNightPrice = 0m;
-				rentalShoppingCartItem.PricingRecord.DefaultExtraNightPrice = 0m;
-				rentalShoppingCartItem.PricingRecord.PromoValue = 0m;
-				rentalShoppingCartItem.Price = 0m;
+				rentalShoppingCartTitleItem.PricingRecord.InitialNight = 0m;
+				rentalShoppingCartTitleItem.PricingRecord.ExtraNight = 0m;
+				rentalShoppingCartTitleItem.PricingRecord.NonReturn = 0m;
+				rentalShoppingCartTitleItem.PricingRecord.ExpirationPrice = 0m;
+				rentalShoppingCartTitleItem.PricingRecord.DefaultInitialNightPrice = 0m;
+				rentalShoppingCartTitleItem.PricingRecord.DefaultExtraNightPrice = 0m;
+				rentalShoppingCartTitleItem.PricingRecord.PromoValue = 0m;
+				rentalShoppingCartTitleItem.Price = 0m;
 			}
 			else
 			{
-				rentalShoppingCartItem.Price = rentalShoppingCartItem.PricingRecord.InitialNight;
+				rentalShoppingCartTitleItem.Price = rentalShoppingCartTitleItem.PricingRecord.InitialNight;
 			}
 		}
 	}
@@ -744,17 +909,18 @@ public class RentalShoppingCart : IRentalShoppingCart
 		obj.IncludeLoyaltyRedeemedItems = false;
 		obj.IncludeMultiNightPricedItems = promotionFunctionFilters?.IncludeMultiNightPricingItems ?? false;
 		obj.IncludeFlashDeals = promotionFunctionFilters?.IncludeFlashDeals ?? false;
+		obj.IncludeDiscountRestrictionItems = promotionFunctionFilters?.IncludeDiscountRestrictionItems ?? false;
 		return obj;
 	}
 
 	private IPromoCodeValidationInfo ValidateTitleSpecificPromo(IPromotion promotion, PromotionFunctionFilters promotionFunctionFilters)
 	{
 		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
-		List<IRentalShoppingCartItem> list = (from x in GetItemsByCriteria(GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters))
+		List<IRentalShoppingCartTitleItem> list = (from x in GetTitleItemsByCriteria(GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters))
 			orderby (promotion.ActionCode != PromotionActionCode.Rental) ? x.PricingRecord.Purchase : x.PricingRecord.InitialNight descending, x.ProductId
 			select x).ToList();
 		promoCodeValidationInfo.IsCartValid = list.Any();
-		foreach (IRentalShoppingCartItem item in list)
+		foreach (IRentalShoppingCartTitleItem item in list)
 		{
 			decimal promotionAmount = Math.Min(promotion.OriginalPrice, ((promotion.ActionCode == PromotionActionCode.Rental) ? item?.PricingRecord?.InitialNight : item?.PricingRecord?.Purchase) ?? 0m);
 			promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
@@ -781,12 +947,12 @@ public class RentalShoppingCart : IRentalShoppingCart
 	private IPromoCodeValidationInfo ValidateFixedValuePromo(IPromotion promotion, PromotionFunctionFilters promotionFunctionFilters)
 	{
 		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
-		List<IRentalShoppingCartItem> list = (from x in GetItemsByCriteria(GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters))
+		List<IRentalShoppingCartTitleItem> list = (from x in GetTitleItemsByCriteria(GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters))
 			orderby (promotion.ActionCode != PromotionActionCode.Rental) ? x.PricingRecord.Purchase : x.PricingRecord.InitialNight descending, x.ProductId
 			select x).ToList();
 		promoCodeValidationInfo.IsCartValid = list.Any();
 		decimal originalPrice = promotion.OriginalPrice;
-		foreach (IRentalShoppingCartItem item in list)
+		foreach (IRentalShoppingCartTitleItem item in list)
 		{
 			if (originalPrice > 0m)
 			{
@@ -819,24 +985,24 @@ public class RentalShoppingCart : IRentalShoppingCart
 		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
 		IRentalShoppingCartFilterCriteria promoEligibleItemsFilterCriteria = GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters);
 		promoEligibleItemsFilterCriteria.TitleType = titleType;
-		IRentalShoppingCartItem rentalShoppingCartItem = (from x in GetItemsByCriteria(promoEligibleItemsFilterCriteria)
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = (from x in GetTitleItemsByCriteria(promoEligibleItemsFilterCriteria)
 			orderby x.PricingRecord.InitialNight descending, x.ProductId
 			select x).FirstOrDefault();
-		promoCodeValidationInfo.IsCartValid = rentalShoppingCartItem != null;
-		promoCodeValidationInfo.Price = rentalShoppingCartItem?.PricingRecord?.InitialNight ?? 0m;
-		if (rentalShoppingCartItem != null)
+		promoCodeValidationInfo.IsCartValid = rentalShoppingCartTitleItem != null;
+		promoCodeValidationInfo.Price = rentalShoppingCartTitleItem?.PricingRecord?.InitialNight ?? 0m;
+		if (rentalShoppingCartTitleItem != null)
 		{
 			promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
 			{
-				RentalShoppingCartItem = rentalShoppingCartItem,
+				RentalShoppingCartItem = rentalShoppingCartTitleItem,
 				PromotionAmount = promoCodeValidationInfo.Price
 			});
-			promoCodeValidationInfo.QualifyingItems.Add(rentalShoppingCartItem);
+			promoCodeValidationInfo.QualifyingItems.Add(rentalShoppingCartTitleItem);
 		}
-		if ((promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightDVD || promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightBluray) && rentalShoppingCartItem == null)
+		if ((promotion.Intent == PromotionIntentCode.FirstNightDVD || promotion.Intent == PromotionIntentCode.FirstNightBluray) && rentalShoppingCartTitleItem == null)
 		{
 			promoEligibleItemsFilterCriteria.TitleType = TitleType.All;
-			List<IRentalShoppingCartItem> list = (from x in GetItemsByCriteria(promoEligibleItemsFilterCriteria)
+			List<IRentalShoppingCartTitleItem> list = (from x in GetTitleItemsByCriteria(promoEligibleItemsFilterCriteria)
 				orderby x.PricingRecord.InitialNight descending, x.ProductId
 				select x).ToList();
 			IPricingService service = ServiceLocator.Instance.GetService<IPricingService>();
@@ -847,7 +1013,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 			}
 			promoCodeValidationInfo.IsCartValid = list.Any();
 			decimal num = pricingRecord?.PromoValue ?? 0m;
-			foreach (IRentalShoppingCartItem item in list)
+			foreach (IRentalShoppingCartTitleItem item in list)
 			{
 				if (num > 0m)
 				{
@@ -871,24 +1037,24 @@ public class RentalShoppingCart : IRentalShoppingCart
 		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
 		IRentalShoppingCartFilterCriteria promoEligibleItemsFilterCriteria = GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters);
 		promoEligibleItemsFilterCriteria.TitleFamily = TitleFamily.Games;
-		IRentalShoppingCartItem rentalShoppingCartItem = (from x in GetItemsByCriteria(promoEligibleItemsFilterCriteria)
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = (from x in GetTitleItemsByCriteria(promoEligibleItemsFilterCriteria)
 			orderby x.PricingRecord.InitialNight descending, x.ProductId
 			select x).FirstOrDefault();
-		promoCodeValidationInfo.IsCartValid = rentalShoppingCartItem != null;
-		promoCodeValidationInfo.Price = rentalShoppingCartItem?.PricingRecord?.InitialNight ?? 0m;
-		if (rentalShoppingCartItem != null)
+		promoCodeValidationInfo.IsCartValid = rentalShoppingCartTitleItem != null;
+		promoCodeValidationInfo.Price = rentalShoppingCartTitleItem?.PricingRecord?.InitialNight ?? 0m;
+		if (rentalShoppingCartTitleItem != null)
 		{
 			promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
 			{
-				RentalShoppingCartItem = rentalShoppingCartItem,
+				RentalShoppingCartItem = rentalShoppingCartTitleItem,
 				PromotionAmount = promoCodeValidationInfo.Price
 			});
-			promoCodeValidationInfo.QualifyingItems.Add(rentalShoppingCartItem);
+			promoCodeValidationInfo.QualifyingItems.Add(rentalShoppingCartTitleItem);
 		}
-		if (promotion.Intent == Redbox.Rental.Model.PromotionIntentCode.FirstNightGame && rentalShoppingCartItem == null)
+		if (promotion.Intent == PromotionIntentCode.FirstNightGame && rentalShoppingCartTitleItem == null)
 		{
 			promoEligibleItemsFilterCriteria.TitleFamily = TitleFamily.All;
-			List<IRentalShoppingCartItem> list = (from x in GetItemsByCriteria(promoEligibleItemsFilterCriteria)
+			List<IRentalShoppingCartTitleItem> list = (from x in GetTitleItemsByCriteria(promoEligibleItemsFilterCriteria)
 				orderby x.PricingRecord.InitialNight descending, x.ProductId
 				select x).ToList();
 			IPricingService service = ServiceLocator.Instance.GetService<IPricingService>();
@@ -899,7 +1065,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 			}
 			promoCodeValidationInfo.IsCartValid = list.Any();
 			decimal num = pricingRecord?.PromoValue ?? 0m;
-			foreach (IRentalShoppingCartItem item in list)
+			foreach (IRentalShoppingCartTitleItem item in list)
 			{
 				if (num > 0m)
 				{
@@ -921,19 +1087,42 @@ public class RentalShoppingCart : IRentalShoppingCart
 	private IPromoCodeValidationInfo ValidateFirstNightFree(IPromotion promotion, PromotionFunctionFilters promotionFunctionFilters)
 	{
 		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
-		IRentalShoppingCartItem rentalShoppingCartItem = (from x in GetItemsByCriteria(GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters))
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = (from x in GetTitleItemsByCriteria(GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters))
 			orderby x.PricingRecord.InitialNight descending, x.ProductId
 			select x).FirstOrDefault();
-		promoCodeValidationInfo.IsCartValid = rentalShoppingCartItem != null;
-		promoCodeValidationInfo.Price = rentalShoppingCartItem?.PricingRecord?.InitialNight ?? 0m;
-		if (rentalShoppingCartItem != null)
+		promoCodeValidationInfo.IsCartValid = rentalShoppingCartTitleItem != null;
+		promoCodeValidationInfo.Price = rentalShoppingCartTitleItem?.PricingRecord?.InitialNight ?? 0m;
+		if (rentalShoppingCartTitleItem != null)
 		{
 			promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
 			{
-				RentalShoppingCartItem = rentalShoppingCartItem,
+				RentalShoppingCartItem = rentalShoppingCartTitleItem,
 				PromotionAmount = promoCodeValidationInfo.Price
 			});
-			promoCodeValidationInfo.QualifyingItems.Add(rentalShoppingCartItem);
+			promoCodeValidationInfo.QualifyingItems.Add(rentalShoppingCartTitleItem);
+		}
+		return promoCodeValidationInfo;
+	}
+
+	private IPromoCodeValidationInfo ValidateRedboxPlusFreeOneNightRental(IPromotion promotion, PromotionFunctionFilters promotionFunctionFilters)
+	{
+		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
+		IRentalShoppingCartFilterCriteria promoEligibleItemsFilterCriteria = GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters);
+		promoEligibleItemsFilterCriteria.IncludeRedboxPlusFreeOneNightRentalItems = true;
+		promoEligibleItemsFilterCriteria.IncludeFlashDeals = true;
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = (from x in GetTitleItemsByCriteria(promoEligibleItemsFilterCriteria)
+			orderby x.PricingRecord.InitialNight descending, x.ProductId
+			select x).FirstOrDefault();
+		promoCodeValidationInfo.IsCartValid = rentalShoppingCartTitleItem != null;
+		promoCodeValidationInfo.Price = rentalShoppingCartTitleItem?.PricingRecord?.InitialNight ?? 0m;
+		if (rentalShoppingCartTitleItem != null)
+		{
+			promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
+			{
+				RentalShoppingCartItem = rentalShoppingCartTitleItem,
+				PromotionAmount = promoCodeValidationInfo.Price
+			});
+			promoCodeValidationInfo.QualifyingItems.Add(rentalShoppingCartTitleItem);
 		}
 		return promoCodeValidationInfo;
 	}
@@ -943,10 +1132,22 @@ public class RentalShoppingCart : IRentalShoppingCart
 		IPromoCodeValidationInfo promoCodeValidationInfo = validationFunction(promotion, new PromotionFunctionFilters(promotion));
 		if (!promoCodeValidationInfo.IsCartValid)
 		{
-			if (validationFunction(promotion, new PromotionFunctionFilters(promotion)
+			IPromoCodeValidationInfo promoCodeValidationInfo2 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
+			{
+				IncludeDiscountRestrictionItems = true
+			});
+			IPromoCodeValidationInfo promoCodeValidationInfo3 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
 			{
 				IncludeMultiNightPricingItems = true
-			}).IsCartValid)
+			});
+			if (promoCodeValidationInfo2.IsCartValid)
+			{
+				OrchestrationService.SetCurrentUICulture();
+				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items;
+				promoCodeValidationInfo.Message = null;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction = true;
+			}
+			else if (promoCodeValidationInfo3.IsCartValid)
 			{
 				OrchestrationService.SetCurrentUICulture();
 				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items;
@@ -970,21 +1171,29 @@ public class RentalShoppingCart : IRentalShoppingCart
 	private IPromoCodeValidationInfo ValidatePercentOffPromo(IPromotion promotion, PromotionFunctionFilters promotionFunctionFilters)
 	{
 		IPromoCodeValidationInfo promoCodeValidationInfo = new PromoCodeValidationInfo();
-		List<IRentalShoppingCartItem> list = GetItemsByCriteria(GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters)).ToList();
-		decimal arg = list.Sum((IRentalShoppingCartItem x) => ((promotion.ActionCode != PromotionActionCode.Rental) ? x.PricingRecord?.Purchase : x.PricingRecord?.InitialNight) ?? 0m);
+		List<IRentalShoppingCartTitleItem> list = GetTitleItemsByCriteria(GetPromoEligibleItemsFilterCriteria(promotionFunctionFilters)).ToList();
+		decimal arg = list.Sum((IRentalShoppingCartTitleItem x) => ((promotion.ActionCode != PromotionActionCode.Rental) ? x.PricingRecord?.Purchase : x.PricingRecord?.InitialNight) ?? 0m);
 		Func<decimal, decimal> func = (decimal originalValue) => decimal.Round(originalValue * (promotion?.Percent ?? 0m), 2, MidpointRounding.AwayFromZero);
-		decimal price = func(arg);
+		decimal num = func(arg);
+		decimal num2 = 0m;
 		promoCodeValidationInfo.IsCartValid = list.Any();
-		promoCodeValidationInfo.Price = price;
-		promoCodeValidationInfo.Percent = Promotion.Percent;
-		foreach (IRentalShoppingCartItem item in list)
+		if (promoCodeValidationInfo.IsCartValid)
 		{
-			promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
+			promoCodeValidationInfo.Price = num;
+			promoCodeValidationInfo.Percent = Promotion.Percent;
+			foreach (IRentalShoppingCartTitleItem item in list)
 			{
-				RentalShoppingCartItem = item,
-				PromotionAmount = func(((promotion.ActionCode == PromotionActionCode.Rental) ? item?.PricingRecord?.InitialNight : item?.PricingRecord?.Purchase) ?? 0m)
-			});
-			promoCodeValidationInfo.QualifyingItems.Add(item);
+				PromotionItem promotionItem = new PromotionItem
+				{
+					RentalShoppingCartItem = item,
+					PromotionAmount = func(((promotion.ActionCode == PromotionActionCode.Rental) ? item?.PricingRecord?.InitialNight : item?.PricingRecord?.Purchase) ?? 0m)
+				};
+				promoCodeValidationInfo.PromotionItems.Add(promotionItem);
+				promoCodeValidationInfo.QualifyingItems.Add(item);
+				num2 += promotionItem.PromotionAmount;
+			}
+			decimal num3 = num - num2;
+			promoCodeValidationInfo.PromotionItems[0].PromotionAmount += num3;
 		}
 		return promoCodeValidationInfo;
 	}
@@ -994,40 +1203,40 @@ public class RentalShoppingCart : IRentalShoppingCart
 		IPromoCodeValidationInfo result = new PromoCodeValidationInfo();
 		if (promotion.RentQuantity != 0 && promotion.RentFormat.HasValue && promotion.GetQuantity != 0 && promotion.GetFormat.HasValue)
 		{
-			List<IRentalShoppingCartItem> rentItems = GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, GetTitleTypeFromPromotionFormat(promotion.RentFormat.Value), GetTitleFamilyFromPromotionFormat(promotion.RentFormat.Value), null, null, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false).OrderBy(delegate(IRentalShoppingCartItem x)
+			List<IRentalShoppingCartTitleItem> rentItems = GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, GetTitleTypeFromPromotionFormat(promotion.RentFormat.Value), GetTitleFamilyFromPromotionFormat(promotion.RentFormat.Value), null, null, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false).OrderBy(delegate(IRentalShoppingCartTitleItem x)
 			{
-				Redbox.Rental.Model.PromotionRentFormat? rentFormat = promotion.RentFormat;
-				Redbox.Rental.Model.PromotionRentFormat promotionRentFormat = Redbox.Rental.Model.PromotionRentFormat.Any;
-				return rentFormat.GetValueOrDefault() == promotionRentFormat && rentFormat.HasValue && promotion.GetFormat != Redbox.Rental.Model.PromotionGetFormat.Any && GetTitleTypeFromPromotionFormat(promotion.GetFormat.Value) == x.TitleType;
-			}).ThenByDescending((IRentalShoppingCartItem x) => x.PricingRecord.InitialNight).ThenByDescending((IRentalShoppingCartItem x) => x.ProductId)
+				PromotionRentFormat? rentFormat = promotion.RentFormat;
+				PromotionRentFormat promotionRentFormat = PromotionRentFormat.Any;
+				return rentFormat.GetValueOrDefault() == promotionRentFormat && rentFormat.HasValue && promotion.GetFormat != PromotionGetFormat.Any && GetTitleTypeFromPromotionFormat(promotion.GetFormat.Value) == x.TitleType;
+			}).ThenByDescending((IRentalShoppingCartTitleItem x) => x.PricingRecord.InitialNight).ThenByDescending((IRentalShoppingCartTitleItem x) => x.ProductId)
 				.Take(promotion.RentQuantity)
 				.ToList();
-			List<IRentalShoppingCartItem> list = (from x in GetItemsByCriteria(RentalShoppingCartItemAction.rental, null, GetTitleTypeFromPromotionFormat(promotion.GetFormat.Value), GetTitleFamilyFromPromotionFormat(promotion.GetFormat.Value), null, null, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false)
+			List<IRentalShoppingCartTitleItem> list = (from x in GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, GetTitleTypeFromPromotionFormat(promotion.GetFormat.Value), GetTitleFamilyFromPromotionFormat(promotion.GetFormat.Value), null, null, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
 				where !rentItems.Contains(x)
 				orderby x.PricingRecord.InitialNight descending, x.ProductId
 				select x).Take(promotion.GetQuantity).ToList();
-			List<IRentalShoppingCartItem> list2 = new List<IRentalShoppingCartItem>();
+			List<IRentalShoppingCartTitleItem> list2 = new List<IRentalShoppingCartTitleItem>();
 			list2.AddRange(list);
 			list2.AddRange(rentItems);
 			int num = RxGxGetRequiredCount("Dvd", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value);
-			int num2 = Math.Max(num - list2.Count((IRentalShoppingCartItem x) => x.TitleType == TitleType.DVD), 0);
+			int num2 = Math.Max(num - list2.Count((IRentalShoppingCartTitleItem x) => x.TitleType == TitleType.DVD), 0);
 			int num3 = RxGxGetRequiredCount("BluRay", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value);
-			int num4 = Math.Max(num3 - list2.Count((IRentalShoppingCartItem x) => x.TitleType == TitleType.Bluray), 0);
+			int num4 = Math.Max(num3 - list2.Count((IRentalShoppingCartTitleItem x) => x.TitleType == TitleType.Bluray), 0);
 			int num5 = RxGxGetRequiredCount("FourKUhd", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value);
-			int num6 = Math.Max(num5 - list2.Count((IRentalShoppingCartItem x) => x.TitleType == TitleType._4KUHD), 0);
+			int num6 = Math.Max(num5 - list2.Count((IRentalShoppingCartTitleItem x) => x.TitleType == TitleType._4KUHD), 0);
 			int num7 = RxGxGetRequiredCount("Game", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value);
-			int num8 = Math.Max(num7 - list2.Count((IRentalShoppingCartItem x) => x.TitleFamily == TitleFamily.Games), 0);
+			int num8 = Math.Max(num7 - list2.Count((IRentalShoppingCartTitleItem x) => x.TitleFamily == TitleFamily.Games), 0);
 			int num9 = Math.Max(RxGxGetRequiredCount("Any", promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value) + num + num3 + num5 + num7 - num2 - num4 - num6 - num8 - list2.Count(), 0);
 			bool flag = num2 == 0 && num4 == 0 && num6 == 0 && num8 == 0 && num9 == 0;
 			result.IsCartValid = flag;
-			result.Price = (flag ? list.Sum((IRentalShoppingCartItem x) => x.PricingRecord.InitialNight) : 0m);
+			result.Price = (flag ? list.Sum((IRentalShoppingCartTitleItem x) => x.PricingRecord.InitialNight) : 0m);
 			result.Title = RxGxGetTitle(promotion.RentQuantity, promotion.RentFormat.Value, promotion.GetQuantity, promotion.GetFormat.Value);
 			result.Message = RxGxGetMessage(num2, num4, num6, num8, num9);
-			rentItems.ForEach(delegate(IRentalShoppingCartItem x)
+			rentItems.ForEach(delegate(IRentalShoppingCartTitleItem x)
 			{
 				result.QualifyingItems.Add(x);
 			});
-			list.ForEach(delegate(IRentalShoppingCartItem x)
+			list.ForEach(delegate(IRentalShoppingCartTitleItem x)
 			{
 				result.PromotionItems.Add(new PromotionItem
 				{
@@ -1039,42 +1248,42 @@ public class RentalShoppingCart : IRentalShoppingCart
 		return result;
 	}
 
-	private TitleFamily GetTitleFamilyFromPromotionFormat(Redbox.Rental.Model.PromotionRentFormat rentFormat)
+	private TitleFamily GetTitleFamilyFromPromotionFormat(PromotionRentFormat rentFormat)
 	{
-		if (rentFormat == Redbox.Rental.Model.PromotionRentFormat.Game)
+		if (rentFormat == PromotionRentFormat.Game)
 		{
 			return TitleFamily.Games;
 		}
 		return TitleFamily.All;
 	}
 
-	private TitleFamily GetTitleFamilyFromPromotionFormat(Redbox.Rental.Model.PromotionGetFormat getFormat)
+	private TitleFamily GetTitleFamilyFromPromotionFormat(PromotionGetFormat getFormat)
 	{
-		if (getFormat == Redbox.Rental.Model.PromotionGetFormat.Game)
+		if (getFormat == PromotionGetFormat.Game)
 		{
 			return TitleFamily.Games;
 		}
 		return TitleFamily.All;
 	}
 
-	private TitleType GetTitleTypeFromPromotionFormat(Redbox.Rental.Model.PromotionRentFormat rentFormat)
+	private TitleType GetTitleTypeFromPromotionFormat(PromotionRentFormat rentFormat)
 	{
 		return rentFormat switch
 		{
-			Redbox.Rental.Model.PromotionRentFormat.Dvd => TitleType.DVD, 
-			Redbox.Rental.Model.PromotionRentFormat.BluRay => TitleType.Bluray, 
-			Redbox.Rental.Model.PromotionRentFormat.FourKUhd => TitleType._4KUHD, 
+			PromotionRentFormat.Dvd => TitleType.DVD, 
+			PromotionRentFormat.BluRay => TitleType.Bluray, 
+			PromotionRentFormat.FourKUhd => TitleType._4KUHD, 
 			_ => TitleType.All, 
 		};
 	}
 
-	private TitleType GetTitleTypeFromPromotionFormat(Redbox.Rental.Model.PromotionGetFormat getFormat)
+	private TitleType GetTitleTypeFromPromotionFormat(PromotionGetFormat getFormat)
 	{
 		return getFormat switch
 		{
-			Redbox.Rental.Model.PromotionGetFormat.Dvd => TitleType.DVD, 
-			Redbox.Rental.Model.PromotionGetFormat.BluRay => TitleType.Bluray, 
-			Redbox.Rental.Model.PromotionGetFormat.FourKUhd => TitleType._4KUHD, 
+			PromotionGetFormat.Dvd => TitleType.DVD, 
+			PromotionGetFormat.BluRay => TitleType.Bluray, 
+			PromotionGetFormat.FourKUhd => TitleType._4KUHD, 
 			_ => TitleType.All, 
 		};
 	}
@@ -1105,41 +1314,41 @@ public class RentalShoppingCart : IRentalShoppingCart
 		return result;
 	}
 
-	private string RxGxGetTitle(int rentQuantity, Redbox.Rental.Model.PromotionRentFormat rentFormat, int getQuantity, Redbox.Rental.Model.PromotionGetFormat getFormat)
+	private string RxGxGetTitle(int rentQuantity, PromotionRentFormat rentFormat, int getQuantity, PromotionGetFormat getFormat)
 	{
 		string promo_code_rxgx_title = Resources.promo_code_rxgx_title;
 		string empty = string.Empty;
 		empty = rentFormat switch
 		{
-			Redbox.Rental.Model.PromotionRentFormat.Dvd => Resources.dvd, 
-			Redbox.Rental.Model.PromotionRentFormat.BluRay => Resources.blu_ray, 
-			Redbox.Rental.Model.PromotionRentFormat.FourKUhd => Resources._4k_uhd, 
-			Redbox.Rental.Model.PromotionRentFormat.Game => Resources.game, 
-			Redbox.Rental.Model.PromotionRentFormat.Any => Resources.any, 
+			PromotionRentFormat.Dvd => Resources.dvd, 
+			PromotionRentFormat.BluRay => Resources.blu_ray, 
+			PromotionRentFormat.FourKUhd => Resources._4k_uhd, 
+			PromotionRentFormat.Game => Resources.game, 
+			PromotionRentFormat.Any => Resources.any, 
 			_ => string.Empty, 
 		};
-		if (rentQuantity > 1 && rentFormat != Redbox.Rental.Model.PromotionRentFormat.Any)
+		if (rentQuantity > 1 && rentFormat != PromotionRentFormat.Any)
 		{
 			empty = $"{empty}s";
 		}
 		string empty2 = string.Empty;
 		empty2 = getFormat switch
 		{
-			Redbox.Rental.Model.PromotionGetFormat.Dvd => Resources.dvd, 
-			Redbox.Rental.Model.PromotionGetFormat.BluRay => Resources.blu_ray, 
-			Redbox.Rental.Model.PromotionGetFormat.FourKUhd => Resources._4k_uhd, 
-			Redbox.Rental.Model.PromotionGetFormat.Game => Resources.game, 
-			Redbox.Rental.Model.PromotionGetFormat.Any => Resources.any, 
+			PromotionGetFormat.Dvd => Resources.dvd, 
+			PromotionGetFormat.BluRay => Resources.blu_ray, 
+			PromotionGetFormat.FourKUhd => Resources._4k_uhd, 
+			PromotionGetFormat.Game => Resources.game, 
+			PromotionGetFormat.Any => Resources.any, 
 			_ => string.Empty, 
 		};
-		if (getQuantity > 1 && getFormat != Redbox.Rental.Model.PromotionGetFormat.Any)
+		if (getQuantity > 1 && getFormat != PromotionGetFormat.Any)
 		{
 			empty2 = $"{empty2}s";
 		}
 		return string.Format(promo_code_rxgx_title, rentQuantity, empty, getQuantity, empty2);
 	}
 
-	private int RxGxGetRequiredCount(string format, byte rentQuantity, Redbox.Rental.Model.PromotionRentFormat rentFormat, byte getQuantity, Redbox.Rental.Model.PromotionGetFormat getFormat)
+	private int RxGxGetRequiredCount(string format, byte rentQuantity, PromotionRentFormat rentFormat, byte getQuantity, PromotionGetFormat getFormat)
 	{
 		int num = 0;
 		if (format == rentFormat.ToString())
@@ -1153,19 +1362,37 @@ public class RentalShoppingCart : IRentalShoppingCart
 		return num;
 	}
 
-	public List<IRentalShoppingCartItem> GetItemsByCriteria(IRentalShoppingCartFilterCriteria filterCriteria)
+	public List<IRentalShoppingCartTitleItem> GetTitleItemsByCriteria(IRentalShoppingCartFilterCriteria filterCriteria)
 	{
-		return GetItemsByCriteria(filterCriteria.Action, filterCriteria.Sequence, filterCriteria.TitleType, filterCriteria.TitleFamily, filterCriteria.IncludeProducts, filterCriteria.ExcludeProducts, filterCriteria.ProductTypes, filterCriteria.ProductTypeId, filterCriteria.FormatIds, filterCriteria.IncludeMultiNightPricedItems, filterCriteria.IncludeFlashDeals, filterCriteria.IncludeLoyaltyRedeemedItems);
+		return GetTitleItemsByCriteria(filterCriteria.Action, filterCriteria.Sequence, filterCriteria.TitleType, filterCriteria.TitleFamily, filterCriteria.IncludeProducts, filterCriteria.ExcludeProducts, filterCriteria.ProductTypes, filterCriteria.ProductTypeId, filterCriteria.FormatIds, filterCriteria.IncludeMultiNightPricedItems, filterCriteria.IncludeFlashDeals, filterCriteria.IncludeLoyaltyRedeemedItems, filterCriteria.IncludeRedboxPlusFreeOneNightRentalItems, filterCriteria.IncludeDiscountRestrictionItems);
 	}
 
-	public List<IRentalShoppingCartItem> GetItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, int? productTypeId, List<int> formatIds, bool includeMultiNightPricedItems, bool includeFlashDeals, bool includeLoyaltyRedeemedItems)
+	public List<IRentalShoppingCartTitleItem> GetTitleItemsByCriteria(RentalShoppingCartItemAction? action, RentalShoppingCartItemSequence? sequence, TitleType titleType, TitleFamily titleFamily, List<long> includeProducts, List<long> excludeProducts, List<TitleType> productTypes, int? productTypeId, List<int> formatIds, bool includeMultiNightPricedItems, bool includeFlashDeals, bool includeLoyaltyRedeemedItems, bool? includeRedboxPlusFreeOnNightRentalItems, bool includeDiscountRestrictionItems)
 	{
-		List<IRentalShoppingCartItem> list = new List<IRentalShoppingCartItem>();
-		foreach (IRentalShoppingCartItem item in Items)
+		List<IRentalShoppingCartTitleItem> list = new List<IRentalShoppingCartTitleItem>();
+		foreach (IRentalShoppingCartTitleItem titleItem in TitleItems)
 		{
-			if ((!action.HasValue || item.Action == action) && (!sequence.HasValue || item.Sequence == sequence) && (titleType == TitleType.All || item.TitleType == titleType) && (titleFamily == TitleFamily.All || item.TitleFamily == titleFamily) && (includeProducts == null || includeProducts.Count == 0 || includeProducts.Contains(item.ProductId)) && (excludeProducts == null || excludeProducts.Count == 0 || !excludeProducts.Contains(item.ProductId)) && (productTypes == null || productTypes.Count == 0 || productTypes.Contains(item.TitleType)) && (!productTypeId.HasValue || productTypeId == 0 || (TitleFamily?)item.TitleFamily == (TitleFamily?)productTypeId) && (formatIds == null || formatIds.Count == 0 || formatIds.Contains((int)item.TitleType)) && (!item.DiscNumber.HasValue || item.DiscNumber == 1) && (action == RentalShoppingCartItemAction.purchase || ((includeMultiNightPricedItems || !(item?.PricingRecord?.IsMultiNightPrice ?? false)) && (includeFlashDeals || !item.HasDeal))) && (includeLoyaltyRedeemedItems || !(item?.LoyaltyPointsRecord?.ToBeRedeemed ?? false)) && (!_isAfterVend || item.Status == LineItemStatus.Fullfilled))
+			if ((action.HasValue && titleItem.Action != action) || (sequence.HasValue && titleItem.Sequence != sequence) || (titleType != TitleType.All && titleItem.TitleType != titleType) || (titleFamily != TitleFamily.All && titleItem.TitleFamily != titleFamily) || (includeProducts != null && includeProducts.Count != 0 && !includeProducts.Contains(titleItem.ProductId)) || (excludeProducts != null && excludeProducts.Count != 0 && excludeProducts.Contains(titleItem.ProductId)) || (productTypes != null && productTypes.Count != 0 && !productTypes.Contains(titleItem.TitleType)) || (productTypeId.HasValue && productTypeId != 0 && (TitleFamily?)titleItem.TitleFamily != (TitleFamily?)productTypeId) || (formatIds != null && formatIds.Count != 0 && !formatIds.Contains((int)titleItem.TitleType)) || (titleItem.DiscNumber.HasValue && titleItem.DiscNumber != 1) || (action != RentalShoppingCartItemAction.purchase && ((!includeMultiNightPricedItems && (titleItem?.PricingRecord?.IsMultiNightPrice ?? false)) || (!includeFlashDeals && titleItem.HasDeal))) || (!includeLoyaltyRedeemedItems && (titleItem?.LoyaltyPointsRecord?.ToBeRedeemed ?? false)))
 			{
-				list.Add(item);
+				continue;
+			}
+			if (includeRedboxPlusFreeOnNightRentalItems.HasValue)
+			{
+				bool? flag = includeRedboxPlusFreeOnNightRentalItems;
+				bool flag2 = true;
+				if (flag == true != flag2 || !flag.HasValue || titleItem == null || !titleItem.IsRedboxPlusFreeOneNightRental)
+				{
+					flag = includeRedboxPlusFreeOnNightRentalItems;
+					flag2 = false;
+					if (flag == true != flag2 || !flag.HasValue || (titleItem != null && titleItem.IsRedboxPlusFreeOneNightRental))
+					{
+						continue;
+					}
+				}
+			}
+			if ((includeDiscountRestrictionItems || (titleItem?.TitleProduct?.DiscountRestriction ?? DiscountRestriction.None) == DiscountRestriction.None) && (!_isAfterVend || titleItem.Status == LineItemStatus.Fullfilled))
+			{
+				list.Add(titleItem);
 			}
 		}
 		return list;
@@ -1174,9 +1401,9 @@ public class RentalShoppingCart : IRentalShoppingCart
 	public IRentalShoppingCart ShallowClone()
 	{
 		RentalShoppingCart rentalShoppingCart = new RentalShoppingCart(ShoppingSessionId, _defaultServiceFee, _defaultServiceFeeTaxRate);
-		foreach (IRentalShoppingCartItem item in Items)
+		foreach (IRentalShoppingCartTitleItem titleItem in TitleItems)
 		{
-			rentalShoppingCart.AddItem(item, item.PricingRecord);
+			rentalShoppingCart.AddTitleItem(titleItem, titleItem.PricingRecord);
 		}
 		return rentalShoppingCart;
 	}

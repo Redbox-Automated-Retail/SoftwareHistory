@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using Redbox.Core;
@@ -8,6 +9,7 @@ using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
+using Redbox.Rental.Services.ShoppingCart;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
 
@@ -67,7 +69,7 @@ public class TitleRollupUtilities
 			}
 		}
 
-		public string Add
+		public string Rent
 		{
 			get
 			{
@@ -85,7 +87,7 @@ public class TitleRollupUtilities
 			{
 				if (_currencySymbol == null)
 				{
-					_currencySymbol = BundleFunctions.GetDictionaryStringValue("strings", "currency_symbol");
+					_currencySymbol = Resources.currency_symbol;
 				}
 				return _currencySymbol;
 			}
@@ -180,7 +182,7 @@ public class TitleRollupUtilities
 		return titleRollupOverlayButtonProperties;
 	}
 
-	public static TitleRollupFormatButtonProperties GetRollupFormatButtonProperties(ITitleProduct titleProduct, bool isPurchase, ITitleRollupFormatButtonTextValues buttonTextValues, bool showOutOfStock = true, Func<decimal, decimal> discountedPriceCalc = null)
+	public static TitleRollupFormatButtonProperties GetRollupFormatButtonProperties(ITitleProduct titleProduct, bool isPurchase, ITitleRollupFormatButtonTextValues buttonTextValues, bool showOutOfStock = true, Func<decimal, decimal> discountedPriceCalc = null, bool showPricing = true, int? redboxPlusBenefitId = null)
 	{
 		TitleRollupFormatButtonProperties titleRollupFormatButtonProperties = new TitleRollupFormatButtonProperties();
 		titleRollupFormatButtonProperties.IsEnabled = false;
@@ -189,23 +191,26 @@ public class TitleRollupUtilities
 		string titleTypeText = GetTitleTypeText(titleProduct.TitleType);
 		decimal purchasePrice = titleProduct.PurchasePrice;
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = service?.CurrentRentalShoppingCart?.GetTitleItemsByCriteria(new RentalShoppingCartFilterCriteria
+		{
+			IncludeProducts = new List<long> { titleProduct.ProductId }
+		}).FirstOrDefault();
 		if (isPurchase && (purchasePrice <= 0m || !titleProduct.IsSellable))
 		{
-			titleRollupFormatButtonProperties.Visibility = Visibility.Collapsed;
-			titleRollupFormatButtonProperties.IsEnabled = false;
+			titleRollupFormatButtonProperties.HideAndDisableButton();
 		}
-		else if (service?.CurrentRentalShoppingCart?.HasItem(titleProduct.ProductId) ?? false)
+		else if (service?.CurrentRentalShoppingCart?.HasTitleItem(titleProduct.ProductId) ?? false)
 		{
 			titleRollupFormatButtonProperties.ButtonText = titleTypeText;
 			titleRollupFormatButtonProperties.ButtonTextLine2 = (string.IsNullOrEmpty(buttonTextValues.InCartText) ? buttonTextValues.InCartFormat : buttonTextValues.InCartText);
 			titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
+			titleRollupFormatButtonProperties.IsEnabled = redboxPlusBenefitId == 2 && !(rentalShoppingCartTitleItem?.IsRedboxPlusFreeOneNightRental ?? false);
 		}
 		else if (!titleProduct.InStock & showOutOfStock)
 		{
 			if (titleProduct.TitleType == TitleType._4KUHD && !titleProduct.HasBeenInStock)
 			{
-				titleRollupFormatButtonProperties.Visibility = Visibility.Collapsed;
-				titleRollupFormatButtonProperties.IsEnabled = false;
+				titleRollupFormatButtonProperties.HideAndDisableButton();
 			}
 			else
 			{
@@ -217,20 +222,23 @@ public class TitleRollupUtilities
 		else if (isPurchase)
 		{
 			titleRollupFormatButtonProperties.ButtonText = titleTypeText;
-			if (discountedPriceCalc == null)
+			if (showPricing)
 			{
-				titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{purchasePrice:N2}"}";
-			}
-			else
-			{
-				decimal num = discountedPriceCalc(purchasePrice);
-				if (num > 0m)
+				if (discountedPriceCalc == null)
 				{
-					titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{num:N2}"}";
+					titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{purchasePrice:N2}"}";
 				}
 				else
 				{
-					titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{Resources.offer_info_free:N2}"}";
+					decimal num = discountedPriceCalc(purchasePrice);
+					if (num > 0m)
+					{
+						titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{num:N2}"}";
+					}
+					else
+					{
+						titleRollupFormatButtonProperties.ButtonTextLine2 = $"{buttonTextValues.CurrencySymbol}{$"{Resources.offer_info_free:N2}"}";
+					}
 				}
 			}
 			titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
@@ -238,19 +246,22 @@ public class TitleRollupUtilities
 		}
 		else if (titleProduct.IsAvailable && (titleProduct.InStock || !showOutOfStock))
 		{
-			titleRollupFormatButtonProperties.ButtonText = string.Format(buttonTextValues.Add, titleTypeText);
-			IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(titleProduct.ProductId);
-			if (pricingRecord != null)
+			titleRollupFormatButtonProperties.ButtonText = ((redboxPlusBenefitId == 2) ? titleTypeText : string.Format(buttonTextValues.Rent, titleTypeText));
+			if (showPricing)
 			{
-				decimal initialNight = pricingRecord.InitialNight;
-				if (discountedPriceCalc == null)
+				IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(titleProduct.ProductId);
+				if (pricingRecord != null)
 				{
-					titleRollupFormatButtonProperties.ButtonTextLine2 = $"{initialNight:C}";
-				}
-				else
-				{
-					decimal num2 = discountedPriceCalc(initialNight);
-					titleRollupFormatButtonProperties.ButtonTextLine2 = ((num2 > 0m) ? $"{num2:C}" : Resources.offer_info_free);
+					decimal initialNight = pricingRecord.InitialNight;
+					if (discountedPriceCalc == null)
+					{
+						titleRollupFormatButtonProperties.ButtonTextLine2 = $"{initialNight:C}";
+					}
+					else
+					{
+						decimal num2 = discountedPriceCalc(initialNight);
+						titleRollupFormatButtonProperties.ButtonTextLine2 = ((num2 > 0m) ? $"{num2:C}" : Resources.offer_info_free);
+					}
 				}
 			}
 			titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
@@ -258,13 +269,11 @@ public class TitleRollupUtilities
 		}
 		if (titleProduct.TitleType == TitleType.DigitalCode && !isPurchase)
 		{
-			titleRollupFormatButtonProperties.Visibility = Visibility.Hidden;
-			titleRollupFormatButtonProperties.IsEnabled = false;
+			titleRollupFormatButtonProperties.HideAndDisableButton();
 		}
 		if (titleProduct.TitleFamily == TitleFamily.Games && (Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames))
 		{
-			titleRollupFormatButtonProperties.Visibility = Visibility.Hidden;
-			titleRollupFormatButtonProperties.IsEnabled = false;
+			titleRollupFormatButtonProperties.HideAndDisableButton();
 		}
 		return titleRollupFormatButtonProperties;
 	}

@@ -18,5 +18,6 @@
     <localControls:BrowseTopMenuUserControl VerticalAlignment="Top" DataContext="{Binding Path=BrowseTopMenuModel}" />
     <localControls:BrowseGroupSelectionUserControl Height="37" VerticalAlignment="Top" DataContext="{Binding Path=BrowseGroupSelection}" Margin="{Binding Path=BrowseGroupSelectionMargin, FallbackValue={StaticResource DefaultBrowseGroupSelectionMargin}}" Visibility="{Binding Path=BrowseGroupSelectionVisibility}" />
     <localControls:BrowseMessagePopupUserControl VerticalAlignment="Bottom" Margin="0,0,0,-14" DataContext="{Binding Path=BrowseMessagePopupModel}" Visibility="{Binding Path=BrowseMessagePopupUserControlVisibility, FallbackValue=Collapsed}" />
+    <localControls:BrowseRedboxPlusTooltipUserControl DataContext="{Binding Path=BrowseRedboxPlusTooltipModel}" Visibility="{Binding Path=BrowseRedboxPlusTooltipUserControlVisibility, FallbackValue=Collapsed}" />
   </Grid>
 </localControls:TextToSpeechUserControl>

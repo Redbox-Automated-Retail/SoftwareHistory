@@ -573,6 +573,32 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
+	public DateTime? RedboxPlusEligibleDate => _primaryTitle?.RedboxPlusEligibleDate;
+
+	public bool IsRedboxPlusEligible
+	{
+		get
+		{
+			if (!RedboxPlusEligibleDate.HasValue)
+			{
+				return false;
+			}
+			return RedboxPlusEligibleDate <= DateTime.Now;
+		}
+	}
+
+	public DiscountRestriction DiscountRestriction
+	{
+		get
+		{
+			if (_primaryTitle != null)
+			{
+				return _primaryTitle.DiscountRestriction;
+			}
+			return DiscountRestriction.None;
+		}
+	}
+
 	public MDVProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, IProfileDataInstance profile, Store store)
 		: base(store)
 	{

@@ -173,7 +173,7 @@ public class AnalyticsSession : IAnalyticsSession
 		try
 		{
 			AnalyticsShoppingCart analyticsShoppingCart = AnalyticsShoppingCart.ToShoppingCart(sc);
-			if (analyticsShoppingCart.Items.Count > 0)
+			if (analyticsShoppingCart.Items.Count > 0 || analyticsShoppingCart.SubscriptionItems.Count > 0)
 			{
 				ShoppingCart = analyticsShoppingCart;
 			}

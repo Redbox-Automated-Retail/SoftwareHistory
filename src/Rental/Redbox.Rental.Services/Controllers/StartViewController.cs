@@ -7,9 +7,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DeviceService.ComponentModel;
 using DeviceService.ComponentModel.Commands;
+using DeviceService.ComponentModel.Requests;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TrackData;
@@ -43,47 +45,6 @@ public class StartViewController : BaseViewController
 {
 	public class Constants
 	{
-		public class SessionStartTriggerActions
-		{
-			public static string BluRayBannerClicked = "BluRayBannerClicked";
-
-			public static string GamesBannerClicked = "GamesBannerClicked";
-
-			public static string CollectionsBannerClicked = "CollectionsBannerClicked";
-
-			public static string TurnOffBurnInViewButtonClicked = "TurnOffBurnInViewButtonClicked";
-
-			public static string ADAModeButtonClicked = "ADAModeButtonClicked";
-
-			public static string LanguageButtonClicked = "LanguageButtonClicked";
-
-			public static string TitleRollupOverlayCancelClicked = "TitleRollupOverlayCancelClicked";
-
-			public static string CollectionsCarouselClicked = "CollectionsCarouselClicked";
-
-			public static string ProductCarouselClicked = "ProductCarouselClicked";
-
-			public static string AddProduct = "AddProduct";
-
-			public static string ShowStartViewFromScreenSaver = "ShowStartViewFromScreenSaver";
-
-			public static string ShowBrowseView = "ShowBrowseView";
-
-			public static string ShowReturnView = "ShowReturnView";
-
-			public static string ShowHelpView = "ShowHelpView";
-
-			public static string ShowReserveOnlinePopupView = "ShowReserveOnlinePopupView";
-
-			public static string ShowPerksInfoPopupView = "ShowPerksInfoPopupView";
-
-			public static string SignOut = "SignOut";
-
-			public static string PickupReservation = "PickupReservation";
-
-			public static string ZeroTouch = "ZeroTouch";
-		}
-
 		public static string BurnInIdleTimerName = "burn-in-timer";
 
 		public static string BurnInViewDurationTimerName = "burn-in-view-duration-timer";
@@ -114,6 +75,54 @@ public class StartViewController : BaseViewController
 	private static object _lockObject = new object();
 
 	private const decimal _rentalPrice = 0.99m;
+
+	private static readonly ManualResetEvent _cardReadComplete = new ManualResetEvent(initialState: true);
+
+	private static bool VasEnabled
+	{
+		get
+		{
+			IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.ContactlessEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.PerksPassEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.ZeroTouchVasEnabled)
+			{
+				return service?.SupportsVas ?? false;
+			}
+			return false;
+		}
+	}
+
+	private static bool IsDarkMode
+	{
+		get
+		{
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewDarkModeEnabled)
+			{
+				if (!TimeSpan.TryParse(Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewDarkModeStartTime, out var result))
+				{
+					result = new TimeSpan(19, 0, 0);
+				}
+				if (!TimeSpan.TryParse(Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewDarkModeEndTime, out var result2))
+				{
+					result2 = new TimeSpan(7, 0, 0);
+				}
+				TimeSpan timeOfDay = DateTime.Now.TimeOfDay;
+				if (!(result < result2))
+				{
+					if (!(timeOfDay >= result))
+					{
+						return timeOfDay <= result2;
+					}
+					return true;
+				}
+				if (timeOfDay >= result)
+				{
+					return timeOfDay <= result2;
+				}
+				return false;
+			}
+			return false;
+		}
+	}
 
 	private static IIdleTimerService IdleTimerService => ServiceLocator.Instance.GetService<IIdleTimerService>();
 
@@ -197,6 +206,7 @@ public class StartViewController : BaseViewController
 			startViewModel.OnBuyMoviesButtonClicked += GoToForSaleMovieBrowseView;
 			startViewModel.OnBuyGamesButtonClicked += GoToForSaleGamesBrowseView;
 			startViewModel.OnSignInButtonClicked += ProcessSignInSignOutCommand;
+			startViewModel.OnSignInButtonTooltipClicked += SignInButtonTooltipClicked;
 			ConfigureBurnInTimers(startViewModel);
 			ConfigureStartViewIdleTimer();
 			ConfigureAdaIdleTimer();
@@ -273,6 +283,18 @@ public class StartViewController : BaseViewController
 			BaseViewController.Log($"ZeroTouch Skipped - Current View is Not Start View: {text}");
 			return;
 		}
+		ISession instance = Redbox.Rental.Services.Session.Session.Instance;
+		if (instance != null && instance.HasReceivedUserInteractionThatStartsTimedSession)
+		{
+			BaseViewController.Log($"ZeroTouch Skipped - Current session already has user interaction {Redbox.Rental.Services.Session.Session.Instance?.SessionStartTriggerAction}");
+			return;
+		}
+		ISession instance2 = Redbox.Rental.Services.Session.Session.Instance;
+		if (instance2 != null && instance2.IsInAddProductFlow)
+		{
+			BaseViewController.Log("ZeroTouch Skipped - User is in add product flow");
+			return;
+		}
 		ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
 		if (service != null)
 		{
@@ -287,9 +309,7 @@ public class StartViewController : BaseViewController
 				{
 					_cardReadUserInteractionStarted = false;
 					service.StopCardRead(CancelReason.RestartingCardRead);
-					service.ClearCardReadHandlers();
-					service.OnCardReadComplete += OnCardReadComplete;
-					service.OnCardReadStarted += OnCardReadUserInteractionStarted;
+					IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
 					DeviceInputType deviceInputType = (UseContactless ? DeviceInputType.CS : DeviceInputType.S);
 					if (service is ClassicTrackDataService)
 					{
@@ -301,11 +321,39 @@ public class StartViewController : BaseViewController
 						StartDateTime = DateTime.Now
 					};
 					Redbox.Rental.Services.Session.Session.Instance.CardReadAttemptCollection.Add(cardReadAttempt);
-					service.StartCardRead(ServiceLocator.Instance.GetService<IConfiguration>()?.ZeroTouchReadTimeout ?? 600000, isZeroTouchRead: true, deviceInputType, delegate(IReadCardJob readCardJob)
+					VasMode vasMode = VasMode.PayOnly;
+					if (VasEnabled && deviceInputType.HasFlag(DeviceInputType.C))
+					{
+						ISession instance3 = Redbox.Rental.Services.Session.Session.Instance;
+						bool? obj;
+						if (instance3 == null)
+						{
+							obj = null;
+						}
+						else
+						{
+							IPersonalizationSession personalizationSession = instance3.PersonalizationSession;
+							obj = ((personalizationSession != null) ? new bool?(!personalizationSession.IsLoggedIn) : ((bool?)null));
+						}
+						if (obj ?? true)
+						{
+							vasMode = VasMode.VasAndPay;
+						}
+					}
+					CardReadRequestInfo request = new CardReadRequestInfo
+					{
+						Timeout = (service2?.ZeroTouchReadTimeout ?? 600000),
+						IsZeroTouchRead = true,
+						InputType = deviceInputType,
+						VasMode = vasMode,
+						SessionId = (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ShoppingSessionId ?? default(Guid))
+					};
+					service.StartCardRead(request, delegate(IReadCardJob readCardJob)
 					{
 						LogHelper.Instance.Log($"Card read Starting - RequestId: {readCardJob.RequestId}");
 						cardReadAttempt.CardReadJobCommandRequestId = readCardJob.RequestId;
-					}, BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.ShoppingSessionId ?? default(Guid));
+					}, OnCardReadUserInteractionStarted, OnCardReadComplete);
+					_cardReadComplete.Reset();
 				}
 				return;
 			}
@@ -350,9 +398,11 @@ public class StartViewController : BaseViewController
 		OrchestrationService.StopTimer(Constants.ZeroTouchDisconnectedCardReaderTimerName);
 	}
 
-	private static void OnCardReadComplete(ITrackData trackData, bool chipCardRemovedFromReader, Guid? requestId)
+	private static void OnCardReadComplete(CardReadRequestInfo request, CardReadCompleteDetails readDetails)
 	{
-		BaseViewController.Log($"StartViewController.OnCardReadComplete - RequestId {requestId}");
+		BaseViewController.Log($"StartViewController.OnCardReadComplete - RequestId {readDetails?.RequestId}");
+		_cardReadComplete.Set();
+		ITrackData trackData = readDetails?.TrackData;
 		if (trackData != null && trackData.ReadStatus != ResponseStatus.Timeout)
 		{
 			ResponseStatus? readStatus = trackData.ReadStatus;
@@ -366,15 +416,16 @@ public class StartViewController : BaseViewController
 				}
 				Redbox.Rental.Services.Session.Session.Instance.TrackData = trackData;
 				Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = true;
-				CardFunctions.CardReadComplete(SwipeViewType.ZeroTouchReservationPickup, trackData, chipCardRemovedFromReader, requestId, delegate
+				OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ZeroTouch));
+				BaseViewController.AnalyticsService?.AddSessionProperty("IsZeroTouch", Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode);
+				CardFunctions.CardReadComplete(SwipeViewType.ZeroTouchReservationPickup, trackData, readDetails?.CardRemoved ?? false, readDetails?.RequestId, delegate
 				{
 					LogHelper.Instance.Log("CONTINUE");
-					OnContinueCardReadComplete();
+					OnContinueCardReadComplete(trackData);
 				}, delegate
 				{
-					LogHelper.Instance.Log("TIMEOUT");
-					OrchestrationService.UnwindToSafe("start_view", discard: false, "zerotouch error timeout");
-					OnContinueCardReadComplete();
+					LogHelper.Instance.Log("ERROR");
+					OnErrorCardReadComplete(trackData);
 				});
 				return;
 			}
@@ -383,7 +434,13 @@ public class StartViewController : BaseViewController
 		ZeroTouchCardRead();
 	}
 
-	private static void OnContinueCardReadComplete()
+	private static void ContinueAfterLogin()
+	{
+		BaseViewController.Log("After Login Continue");
+		ServiceLocator.Instance.GetService<IViewService>().Show();
+	}
+
+	private static void OnContinueCardReadComplete(ITrackData trackData)
 	{
 		LogHelper.Instance.Log("StartViewController.OnContinueCardReadComplete BEGIN");
 		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
@@ -392,18 +449,70 @@ public class StartViewController : BaseViewController
 		{
 			list = ReservationFunctions.GetAccountReservations();
 		}
-		ServiceLocator.Instance.GetService<IEngineApplication>();
-		if (list != null && list.Any())
+		if (service.ZeroTouchGoogleTwoTap && trackData.WalletTypeIsGoogleAndHasPayAndHasVas())
 		{
-			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ZeroTouch, AnalyticsSessionType.OnlinePickup);
+			Task.Factory.StartNew(delegate
+			{
+				MessagePopupViewController.ShowMessagePopupViewGoogleWorkaroundError(delegate
+				{
+					OrchestrationService.ViewGoBackSafe("ShowMessagePopupViewGoogleWorkaroundError time out action", popOnly: false);
+					Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = false;
+					PrepareToLeaveStartView();
+					ServiceLocator.Instance.GetService<IViewService>()?.Push("browse_view", BrowseFunctions.GetBrowseViewparameters());
+					SignInViewController.MobileSignInZeroTouchSwipeAction();
+				}, delegate
+				{
+					OrchestrationService.ViewGoBackSafe("ShowMessagePopupViewGoogleWorkaroundError continue action", popOnly: false);
+					Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = false;
+					PrepareToLeaveStartView();
+					ServiceLocator.Instance.GetService<IViewService>()?.Push("browse_view", BrowseFunctions.GetBrowseViewparameters());
+					SignInViewController.MobileSignInZeroTouchSwipeAction();
+				});
+			}, CancellationToken.None, TaskCreationOptions.None, BaseViewController.GetViewService()?.UITaskScheduler);
+			ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>()?.ReportAuthorizeResult(authorizeSuccessful: true);
+		}
+		else if (trackData.HasVas && !string.IsNullOrEmpty(trackData.VasIdentifier))
+		{
+			Task.Factory.StartNew(delegate
+			{
+				Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = false;
+				PrepareToLeaveStartView();
+				ServiceLocator.Instance.GetService<IViewService>()?.Push("browse_view", BrowseFunctions.GetBrowseViewparameters());
+				PersonalizationFunctions.StartLoginProcess(null, null, null, null, trackData.VasIdentifier, trackData.WalletType, delegate(LoginType loginType, ILoginResult loginResult)
+				{
+					AfterLoginAction(loginResult, ContinueAfterLogin);
+				});
+			}, CancellationToken.None, TaskCreationOptions.None, BaseViewController.GetViewService()?.UITaskScheduler);
+			ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>()?.ReportAuthorizeResult(authorizeSuccessful: true);
+		}
+		else if (trackData.CardSourceTypeIsMobileAndHasPayAndNotVas())
+		{
+			Task.Factory.StartNew(delegate
+			{
+				MessagePopupViewController.ShowMessagePopupViewMobilePaymentCardNoPassFoundError(delegate
+				{
+					OrchestrationService.ViewGoBackSafe("ShowMessagePopupViewMobilePaymentCardNoPassFoundError time out action", popOnly: false);
+					OnErrorCardReadComplete(trackData);
+				}, delegate
+				{
+					OrchestrationService.ViewGoBackSafe("ShowMessagePopupViewMobilePaymentCardNoPassFoundError continue action", popOnly: false);
+					OnErrorCardReadComplete(trackData);
+				});
+			}, CancellationToken.None, TaskCreationOptions.None, BaseViewController.GetViewService()?.UITaskScheduler);
+		}
+		else if (list != null && list.Any())
+		{
+			BaseViewController.AnalyticsService?.AddSessionProperty("SessionType", AnalyticsConstants.SessionType.Pickup.ToString());
 			Task.Factory.StartNew(delegate
 			{
 				PrepareToLeaveStartView();
+				Redbox.Rental.Services.Session.Session.Instance.IsInReservationFlow = true;
 				ReservationFunctions.InvokeZeroTouchContinueReservation();
 			}, CancellationToken.None, TaskCreationOptions.None, BaseViewController.GetViewService()?.UITaskScheduler);
 		}
 		else if (service != null && service.ZeroTouchReturnEnabled)
 		{
+			BaseViewController.AnalyticsService?.AddSessionProperty("SessionType", AnalyticsConstants.SessionType.Return.ToString());
 			Task.Factory.StartNew(delegate
 			{
 				GoToReturnProductView(isZeroTouch: true);
@@ -417,6 +526,39 @@ public class StartViewController : BaseViewController
 		}
 	}
 
+	private static void OnErrorCardReadComplete(ITrackData trackData)
+	{
+		LogHelper.Instance.Log("StartViewController.OnErrorCardReadComplete BEGIN");
+		ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession("ZeroTouchCardReadError");
+	}
+
+	private static void AfterLoginAction(ILoginResult loginResult, Action continueAction)
+	{
+		if (loginResult != null && loginResult.Success)
+		{
+			OrchestrationService.ViewShow("sign_in_thanks_view", new SignInThanksViewParameters
+			{
+				DelaySeconds = 3,
+				EmailAddress = loginResult.PersonalizationSession.LoginEmailAddress,
+				PopOnlyOnViewGoBack = true,
+				ContinueAction = delegate
+				{
+					continueAction?.Invoke();
+					OrchestrationService.UnwindToSafe("browse_view", discard: false, "Login process finished - pop signin view");
+					if (PersonalizationFunctions.IsSignedIn)
+					{
+						OrchestrationService.StopIdleTimer("idle_timer");
+						PersonalizationFunctions.ShowRecommendedTitlesIfNeeded(loginResult);
+					}
+				}
+			});
+		}
+		else
+		{
+			PersonalizationFunctions.ShowPerksPassLoginError(loginResult);
+		}
+	}
+
 	private static void OnCardReadUserInteractionStarted(Guid cardReadJobCommandRequestId)
 	{
 		LogHelper.Instance.Log("Zero touch card read started.");
@@ -424,7 +566,6 @@ public class StartViewController : BaseViewController
 		if (cardReadAttempt != null && !cardReadAttempt.AttemptedCancel)
 		{
 			_cardReadUserInteractionStarted = true;
-			Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = true;
 		}
 	}
 
@@ -491,6 +632,14 @@ public class StartViewController : BaseViewController
 			startViewModel.BuyMoviesEnabled = buyMoviesEnabled;
 			ServiceLocator.Instance.GetService<IMacroService>()["Start:BuyMoviesOrGames"] = "Movies" + (service2.CanSellUsedGames ? " and Games" : string.Empty);
 			SetSignInButtonVisibility(startViewModel);
+			if (IsDarkMode)
+			{
+				SetDarkMode(startViewModel, startViewUserControl);
+			}
+			else
+			{
+				SetLightMode(startViewModel, startViewUserControl);
+			}
 		}
 	}
 
@@ -499,9 +648,39 @@ public class StartViewController : BaseViewController
 		IPersonalizationService service = ServiceLocator.Instance.GetService<IPersonalizationService>();
 		bool flag = !startViewModel.IsReturnOnlyMode && (service?.IsEarlyIdEnabled ?? false);
 		bool flag2 = IsTestCarouselSelected && !(StartViewRentAndBuyABTestVersion == "D") && !(StartViewRentAndBuyABTestVersion == "E");
-		startViewModel.SignInVisibility = ((!flag || (BaseViewController.ApplicationState.IsADAAccessible && flag2)) ? Visibility.Collapsed : Visibility.Visible);
+		bool flag3 = flag && (!BaseViewController.ApplicationState.IsADAAccessible || !flag2);
+		startViewModel.SignInVisibility = ((!flag3) ? Visibility.Collapsed : Visibility.Visible);
+		startViewModel.SignInButtonTooltipVisibility = ((!flag3 || PersonalizationFunctions.IsSignedIn) ? Visibility.Collapsed : Visibility.Visible);
 		startViewModel.AdaSignInVisibility = ((!flag || !(BaseViewController.ApplicationState.IsADAAccessible & flag2)) ? Visibility.Collapsed : Visibility.Visible);
 		startViewModel.SignInButtonEnabled = flag;
+	}
+
+	private static void SetLightMode(StartViewModel startViewModel, FrameworkElement startViewUserControl)
+	{
+		startViewModel.NonBurnInBackgroundBrush = System.Windows.Media.Brushes.White;
+		startViewModel.AdaTurnedOnLabelBackgroundBrush = System.Windows.Media.Brushes.White;
+		startViewModel.AdaTurnedOnLabelForegroundBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(72, 27, 84));
+		startViewModel.HandicapButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "white_warmpurple_border_button_style");
+		startViewModel.HandicapButtonIconOffForegroundBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(121, 45, 141));
+		startViewModel.HandicapButtonIconOnForegroundBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(121, 45, 141));
+		startViewModel.EllipseFillBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(121, 45, 141));
+		startViewModel.TextBlockForegroundBrush = System.Windows.Media.Brushes.White;
+		startViewModel.EspanolButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "white_warmpurple_border_button_style");
+		startViewModel.HelpButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "white_warmpurple_border_button_style");
+	}
+
+	private static void SetDarkMode(StartViewModel startViewModel, FrameworkElement startViewUserControl)
+	{
+		startViewModel.NonBurnInBackgroundBrush = System.Windows.Media.Brushes.Black;
+		startViewModel.AdaTurnedOnLabelBackgroundBrush = System.Windows.Media.Brushes.Black;
+		startViewModel.AdaTurnedOnLabelForegroundBrush = System.Windows.Media.Brushes.White;
+		startViewModel.HandicapButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "black_with_white_border_button_style");
+		startViewModel.HandicapButtonIconOffForegroundBrush = System.Windows.Media.Brushes.White;
+		startViewModel.HandicapButtonIconOnForegroundBrush = System.Windows.Media.Brushes.White;
+		startViewModel.EllipseFillBrush = System.Windows.Media.Brushes.White;
+		startViewModel.TextBlockForegroundBrush = System.Windows.Media.Brushes.Black;
+		startViewModel.EspanolButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "black_with_white_border_button_style");
+		startViewModel.HelpButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "black_with_white_border_button_style");
 	}
 
 	private static void ConfigureScreenSaver(StartViewModel startViewModel)
@@ -620,6 +799,7 @@ public class StartViewController : BaseViewController
 		if (!_cardReadUserInteractionStarted)
 		{
 			service?.StopCardRead(CancelReason.LeavingStartView);
+			_cardReadComplete.WaitOne(3000);
 		}
 		StopZeroTouchDisconnectedCardReaderTimer();
 	}
@@ -677,7 +857,7 @@ public class StartViewController : BaseViewController
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.All;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.Bluray;
 			PrepareToLeaveStartView();
-			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.BluRayBannerClicked);
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.BluRayBannerClicked));
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartBannerBluRays");
 			OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 			break;
@@ -686,7 +866,7 @@ public class StartViewController : BaseViewController
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.Genre = null;
 			PrepareToLeaveStartView();
-			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.GamesBannerClicked);
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.GamesBannerClicked));
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartBannerGames");
 			OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 			break;
@@ -708,7 +888,7 @@ public class StartViewController : BaseViewController
 				}
 			}
 			PrepareToLeaveStartView();
-			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.CollectionsBannerClicked);
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.CollectionsBannerClicked));
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartBannerCollections");
 			ShowCollectionBrowseView(collection);
 			break;
@@ -863,6 +1043,18 @@ public class StartViewController : BaseViewController
 		burnInIdleTimer.Start();
 		Action turnOffBurnInView = delegate
 		{
+			FrameworkElement startViewUserControl = GetStartViewUserControl();
+			if (startViewUserControl != null)
+			{
+				if (IsDarkMode)
+				{
+					SetDarkMode(startViewModel, startViewUserControl);
+				}
+				else
+				{
+					SetLightMode(startViewModel, startViewUserControl);
+				}
+			}
 			startViewModel.BurnInVisibility = Visibility.Visible;
 			startViewModel.UseTestScreenSaver = false;
 			if (IsTestCarouselSelected && !startViewModel.IsReturnOnlyMode)
@@ -892,7 +1084,7 @@ public class StartViewController : BaseViewController
 		};
 		Action value = delegate
 		{
-			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.TurnOffBurnInViewButtonClicked);
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.TurnOffBurnInViewButtonClicked));
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartStartBrowsing");
 			turnOffBurnInView();
 		};
@@ -920,7 +1112,7 @@ public class StartViewController : BaseViewController
 			ConfigureBanner(GetStartViewModelFromView());
 			ConfigureCarousel(GetStartViewModelFromView());
 		}
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ADAModeButtonClicked);
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ADAModeButtonClicked));
 		BaseViewController.AnalyticsService?.AddButtonPressEvent(BaseViewController.ApplicationState.IsABEOn ? "StartADAOn" : "StartADAOff");
 	}
 
@@ -957,7 +1149,7 @@ public class StartViewController : BaseViewController
 	{
 		CloseTitleRollupOverlay();
 		LogHelper.Instance.Log("language_toggle, setting language_switch=true");
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.LanguageButtonClicked);
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.LanguageButtonClicked));
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartLanguageToggle");
 		LogHelper.Instance.Log("Function:switch_language()");
 		ToggleLocalizationCulture();
@@ -990,7 +1182,7 @@ public class StartViewController : BaseViewController
 			displayProductModel.Image = OrchestrationService.GetProductBitmapImage(item);
 			if (item.KioskProductType == KioskProductType.Collection && item is ICollectionProduct)
 			{
-				displayProductModel.AddButtonLabelText = BundleFunctions.GetDictionaryStringValue("strings", "carousel_add_item_to_cart_button_for_collection");
+				displayProductModel.AddButtonLabelText = Resources.carousel_add_item_to_cart_button_for_collection;
 			}
 			list2.Add(displayProductModel);
 		}
@@ -1016,6 +1208,10 @@ public class StartViewController : BaseViewController
 	{
 		if (newVisibility == Visibility.Visible)
 		{
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = true;
+			}
 			IKioskProduct centerCarouselProduct = GetStartViewModelFromView()?.CarouselModel?.TitleRollupOverlayModel?.BrowseItemModel?.Data as IKioskProduct;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.CenterCarouselProduct = centerCarouselProduct;
 		}
@@ -1054,6 +1250,10 @@ public class StartViewController : BaseViewController
 		StartViewModel startViewModelFromView = GetStartViewModelFromView();
 		if (startViewModelFromView != null)
 		{
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+			}
 			startViewModelFromView.CarouselModel.IsAnimationOn = IsClassicCarouselSelected;
 		}
 	}
@@ -1063,7 +1263,11 @@ public class StartViewController : BaseViewController
 		StartViewModel startViewModelFromView = GetStartViewModelFromView();
 		if (startViewModelFromView != null)
 		{
-			OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.TitleRollupOverlayCancelClicked);
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+			}
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.TitleRollupOverlayCancelClicked));
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartCarouselCancelAddItem");
 			startViewModelFromView.CarouselModel.IsAnimationOn = IsClassicCarouselSelected;
 		}
@@ -1094,7 +1298,7 @@ public class StartViewController : BaseViewController
 			case KioskProductType.Collection:
 				startViewModelFromView.CarouselModel.IsAnimationOn = false;
 				startViewModelFromView.CarouselTestModel.IsAnimationOn = false;
-				OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.CollectionsCarouselClicked);
+				OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.CollectionsCarouselClicked));
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("StartAddToCart");
 				PrepareToLeaveStartView();
 				ShowCollectionBrowseView(kioskProduct);
@@ -1107,37 +1311,22 @@ public class StartViewController : BaseViewController
 
 	private static void AddProductToCart(ITitleProduct titleProduct)
 	{
-		if (titleProduct == null)
+		if (titleProduct != null)
 		{
-			return;
-		}
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.AddProduct);
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartAddToCart");
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductAddedFromCarousel = true;
-		SetBrowseFiltersBasedOnSelectedProduct(titleProduct);
-		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
-		if ((titleProduct.HasMultiNightPrice || (titleProduct.IsSellableAndInStock && (titleProduct.IsMovie || titleProduct.IsGame))) && !flag)
-		{
-			string viewAnalyticsName = "multi_night_pricing_popup_view";
-			if (titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.AddProductCarouselButtonClicked));
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartAddToCart");
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductAddedFromCarousel = true;
+			SetBrowseFiltersBasedOnSelectedProduct(titleProduct);
+			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
+			if ((titleProduct.HasMultiNightPrice || (titleProduct.IsSellableAndInStock && (titleProduct.IsMovie || titleProduct.IsGame))) && !flag)
 			{
-				viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
+				BrowseFunctions.AddMultiNightPricedProductToCart(titleProduct, "start_view");
 			}
-			else if (!titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+			else
 			{
-				viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
+				BrowseFunctions.AddProductToCart(titleProduct, isPurchase: false);
 			}
-			OrchestrationService.ViewShow("multi_night_pricing_popup_view", new MultiNightPricingPopupInfo
-			{
-				TitleProduct = titleProduct,
-				ShownFromView = "start_view",
-				ViewAnalyticsName = viewAnalyticsName
-			});
-		}
-		else
-		{
-			BrowseFunctions.AddProductToCart(titleProduct, isPurchase: false);
 		}
 	}
 
@@ -1158,7 +1347,7 @@ public class StartViewController : BaseViewController
 			return;
 		}
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct = kioskProduct;
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ProductCarouselClicked);
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ProductCarouselClicked));
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartCarouselArt");
 		switch (kioskProduct.KioskProductType)
 		{
@@ -1248,36 +1437,29 @@ public class StartViewController : BaseViewController
 		}
 		else
 		{
-			startViewModel.AllMoviesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "movie_button_rent_label");
-			startViewModel.AllMoviesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "Alt_StartView_Movies");
-			startViewModel.PickUpButtonText = BundleFunctions.GetDictionaryStringValue("strings", "pickup");
-			startViewModel.ReturnButtonText = BundleFunctions.GetDictionaryStringValue("strings", "return_button_label");
-			startViewModel.ToggleLanguageButtonText = BundleFunctions.GetDictionaryStringValue("strings", "toggle_language_button_label");
-			startViewModel.BurnInViewLabelText = BundleFunctions.GetDictionaryStringValue("strings", "burn_in_view_label");
+			startViewModel.AllMoviesButtonTextLine1 = Resources.movie_button_rent_label;
+			startViewModel.AllMoviesButtonTextLine2 = Resources.Alt_StartView_Movies;
+			startViewModel.PickUpButtonText = Resources.pickup_uppercase;
+			startViewModel.ReturnButtonText = Resources.return_button_label;
+			startViewModel.ToggleLanguageButtonText = Resources.toggle_language_button_label;
+			startViewModel.BurnInViewLabelText = Resources.burn_in_view_label;
 			startViewModel.BuyMoviesOrGamesButtonTextLine1 = Resources.buy_movies_button_text;
 			startViewModel.BuyGamesButtonTextLine1 = Resources.buy_games_button_text;
 			startViewModel.BuyMoviesOrGamesButtonTextLine1Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_montserrat_extrabold_16") : WPFFunctions.GetStyle(startViewUserControl, "font_montserrat_extrabold_20"));
 			startViewModel.BuyGamesButtonTextLine1Style = (OrchestrationService.IsCultureSpanish() ? WPFFunctions.GetStyle(startViewUserControl, "font_montserrat_extrabold_16") : WPFFunctions.GetStyle(startViewUserControl, "font_montserrat_extrabold_20"));
-			startViewModel.AllMoviesButtonTextLine1Style = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_montserrat_regular_16" : "font_montserrat_regular_20");
+			startViewModel.AllMoviesButtonTextLine1Style = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_montserrat_extrabold_16" : "font_montserrat_extrabold_20");
 			startViewModel.AllMoviesButtonTextLine2Style = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_montserrat_extrabold_20" : "font_montserrat_extrabold_24");
 			startViewModel.GamesButtonTextLine1Style = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_montserrat_regular_16" : "font_montserrat_regular_20");
 			startViewModel.GamesButtonTextLine2Style = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "font_montserrat_extrabold_20" : "font_montserrat_extrabold_24");
-			startViewModel.GamesButtonTextLine1 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_rent_label");
-			startViewModel.GamesButtonTextLine2 = BundleFunctions.GetDictionaryStringValue("strings", "games_button_games_label");
-			startViewModel.AdaTurnedOnLabelText = BundleFunctions.GetDictionaryStringValue("strings", "ada_turned_on_label_text");
+			startViewModel.GamesButtonTextLine1 = Resources.games_button_rent_label;
+			startViewModel.GamesButtonTextLine2 = Resources.games_button_games_label;
+			startViewModel.AdaTurnedOnLabelText = Resources.ada_turned_on_label_text;
 		}
 		startViewModel.ToggleSignInButtonText = (PersonalizationFunctions.IsSignedIn ? Resources.sign_out_button : Resources.button_sign_in);
 		startViewModel.SignUpButtonText = (PersonalizationFunctions.IsSignedIn ? null : Resources.button_sign_up);
 		startViewModel.SignInUpButtonSeparator = (PersonalizationFunctions.IsSignedIn ? null : Resources.button_sign_in_sign_up_separator);
+		startViewModel.SignInButtonTooltipText = Resources.sign_in_button_tooltip_text;
 		startViewModel.AdaTurnedOnLabelVisibility = ((!BaseViewController.ApplicationState.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
-		startViewModel.PerksPointsVisibility = ((!PersonalizationFunctions.IsSignedIn) ? Visibility.Collapsed : Visibility.Visible);
-		startViewModel.MyPerksText = Resources.startup_my_perks;
-		startViewModel.PerksPointsText = string.Format(Resources.startup_perks_points, PersonalizationFunctions.LoyaltyPointsBalance);
-		startViewModel.ZeroTouchActionToBeginText = GetZeroTouchActionText();
-		startViewModel.ZeroTouchLine1Text = Resources.zero_touch_line_1;
-		startViewModel.ZeroTouchLine2Text = Resources.zero_touch_line_2;
-		startViewModel.ZeroTouchNewText = Resources.zero_touch_new;
-		startViewModel.ZeroTouchSpoilerVisibility = ((!ServiceLocator.Instance.GetService<IConfiguration>().ZeroTouchEnabled) ? Visibility.Hidden : Visibility.Visible);
 	}
 
 	private static void PrepareToLeaveStartView()
@@ -1317,7 +1499,7 @@ public class StartViewController : BaseViewController
 	private static void GoToStartViewFromScreenSaver()
 	{
 		BaseViewController.ProcessWPFHit();
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowStartViewFromScreenSaver);
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowStartViewFromScreenSaver));
 		PrepareToLeaveStartView();
 		ResetToStartView("start_browsing_button");
 	}
@@ -1376,7 +1558,7 @@ public class StartViewController : BaseViewController
 
 	private static void GoToBrowseView(string pressedButtonName, TitleFamily titleFamily, string analyticsButtonName)
 	{
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowBrowseView);
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowBrowseView));
 		BaseViewController.AnalyticsService?.AddButtonPressEvent(analyticsButtonName);
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = titleFamily;
@@ -1412,6 +1594,7 @@ public class StartViewController : BaseViewController
 	private static void GoToPickupReservationSwipeView()
 	{
 		PrepareToLeaveStartView();
+		Redbox.Rental.Services.Session.Session.Instance.IsInReservationFlow = true;
 		OrchestrationService.ExecuteScript("pickup_reserved_product");
 	}
 
@@ -1435,13 +1618,9 @@ public class StartViewController : BaseViewController
 						startViewModelFromView.ReturnButtonEnabled = false;
 					}
 					PrepareToLeaveStartView();
-					if (isZeroTouch)
+					if (!isZeroTouch)
 					{
-						OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ZeroTouch, AnalyticsSessionType.Return);
-					}
-					else
-					{
-						OrchestrationService.CreateStartViewAnalytics(Constants.SessionStartTriggerActions.ShowReturnView, "Return");
+						OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowReturnView), AnalyticsSessionType.Return);
 						BaseViewController.AnalyticsService?.AddButtonPressEvent("StartReturn");
 					}
 					OrchestrationService.ExecuteScript("return_product");
@@ -1461,7 +1640,7 @@ public class StartViewController : BaseViewController
 	private static void GoToHelpDocumentView()
 	{
 		PrepareToLeaveStartView();
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowHelpView);
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowHelpView));
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartHelp");
 		HelpViewController.ShowFullHelpView(allowFMA: true, restartTimer: true);
 	}
@@ -1469,7 +1648,7 @@ public class StartViewController : BaseViewController
 	private static void ShowReserveOnlinePopupView()
 	{
 		BaseViewController.ProcessWPFHit();
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowReserveOnlinePopupView);
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowReserveOnlinePopupView));
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverReserveOnlineLearnMore");
 		BulletListPopupParameters parameter = new BulletListPopupParameters
 		{
@@ -1482,7 +1661,7 @@ public class StartViewController : BaseViewController
 	private static void ShowPerksInfoPopupView()
 	{
 		BaseViewController.ProcessWPFHit();
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.ShowPerksInfoPopupView);
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowPerksInfoPopupView));
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverRedboxPerksLearnMore");
 		BulletListPopupParameters parameter = new BulletListPopupParameters
 		{
@@ -1492,40 +1671,45 @@ public class StartViewController : BaseViewController
 		PrepareToLeaveStartView();
 	}
 
-	private static void ProcessSignInSignOutCommand()
+	private static bool IsCurrentViewValid(bool logError = true)
 	{
-		PrepareToLeaveStartView();
-		OrchestrationService.StarteUserInteraction(Constants.SessionStartTriggerActions.SignOut);
-		IAnalyticsService analyticsService = BaseViewController.AnalyticsService;
-		if (analyticsService != null)
-		{
-			IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
-			analyticsService.AddButtonPressEvent((personalizationSession != null && personalizationSession.IsLoggedIn) ? "StartSignOut" : "StartSignIn");
-		}
-		IPersonalizationSession personalizationSession2 = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
-		if (personalizationSession2 != null && personalizationSession2.IsLoggedIn)
-		{
-			PersonalizationFunctions.ShowLogoutDialog();
-			return;
-		}
-		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartSignInHome");
-		service.Push("browse_view", BrowseFunctions.GetBrowseViewparameters());
-		OrchestrationService.ViewShow("sign_in_view");
+		return OrchestrationService.IsCurrentViewValid("start_view");
 	}
 
-	private static string GetZeroTouchActionText()
+	private static void ProcessSignInSignOutCommand()
 	{
-		ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
-		if (service == null || service.IsOlderReader)
+		if (IsCurrentViewValid())
 		{
-			return Resources.zero_touch_action_to_begin_swipe;
+			PrepareToLeaveStartView();
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.SignOut));
+			IAnalyticsService analyticsService = BaseViewController.AnalyticsService;
+			if (analyticsService != null)
+			{
+				IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+				analyticsService.AddButtonPressEvent((personalizationSession != null && personalizationSession.IsLoggedIn) ? "StartSignOut" : "StartSignIn");
+			}
+			IPersonalizationSession personalizationSession2 = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession;
+			if (personalizationSession2 != null && personalizationSession2.IsLoggedIn)
+			{
+				PersonalizationFunctions.ShowLogoutDialog();
+				return;
+			}
+			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartSignInHome");
+			service.Push("browse_view", BrowseFunctions.GetBrowseViewparameters());
+			PersonalizationFunctions.ShowRegularSignInSignUpDialog();
 		}
-		if (!UseContactless)
+	}
+
+	private static void SignInButtonTooltipClicked()
+	{
+		BaseViewController.ProcessWPFHit();
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartSignInTooltip");
+		StartViewModel startViewModelFromView = GetStartViewModelFromView();
+		if (startViewModelFromView != null)
 		{
-			return Resources.zero_touch_action_to_begin_insert;
+			startViewModelFromView.SignInButtonTooltipVisibility = Visibility.Collapsed;
 		}
-		return Resources.zero_touch_action_to_begin_contactless_enabled;
 	}
 }

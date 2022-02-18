@@ -6,6 +6,8 @@ public class StoredPromoCode : IStoredPromoCode
 {
 	public string PromoCode { get; set; }
 
+	public int CampaignId { get; set; }
+
 	public string CampaignName { get; set; }
 
 	public string UsageDescription { get; set; }

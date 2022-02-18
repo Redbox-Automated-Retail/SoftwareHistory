@@ -38,20 +38,12 @@ public partial class HelpViewUserControl : TextToSpeechUserControl, IWPFActor, I
 	{
 		ITheme theme = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		theme?.SetStyle(back_button);
-		for (int i = 0; i < top_row_buttons_items_control.Items.Count; i++)
+		for (int i = 0; i < buttons_items_control.Items.Count; i++)
 		{
-			FrameworkElement frameworkElement = (FrameworkElement)top_row_buttons_items_control.ItemContainerGenerator.ContainerFromIndex(i);
+			FrameworkElement frameworkElement = (FrameworkElement)buttons_items_control.ItemContainerGenerator.ContainerFromIndex(i);
 			if (frameworkElement != null)
 			{
 				theme?.SetStyle(frameworkElement);
-			}
-		}
-		for (int j = 0; j < bottom_row_buttons_items_control.Items.Count; j++)
-		{
-			FrameworkElement frameworkElement2 = (FrameworkElement)bottom_row_buttons_items_control.ItemContainerGenerator.ContainerFromIndex(j);
-			if (frameworkElement2 != null)
-			{
-				theme?.SetStyle(frameworkElement2);
 			}
 		}
 	}

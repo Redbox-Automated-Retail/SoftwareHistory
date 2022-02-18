@@ -22,7 +22,7 @@ public class KioskClientServiceAds : BaseKioskClientService, IKioskClientService
 	{
 		int timeoutSetting = ServiceLocator.Instance.GetService<IConfiguration>()?.VistarGetAdTimeout ?? 500;
 		WebResult<GetAdResponse> webResult = ExecuteWebRequest<GetAdResponse>(new Uri(string.Format("{0}/{1}?location={2}", base.KioskClientServiceBaseUrl, "api/ads", adLocation)), null, "GET", timeoutSetting);
-		LogKioskClientServiceResponse($"KioskClientServiceAds.GetAd for ad location: {adLocation}", webResult);
+		LogResponse($"KioskClientServiceAds.GetAd for ad location: {adLocation}", webResult);
 		if (webResult.ExceptionStatus == WebExceptionStatus.Timeout)
 		{
 			Task.Run(() => PostGetAdTimeoutEvent(adLocation, timeoutSetting));
@@ -33,14 +33,14 @@ public class KioskClientServiceAds : BaseKioskClientService, IKioskClientService
 	public async Task<IGetAdResponse> GetAdAsync(AdLocation adLocation)
 	{
 		WebResult<GetAdResponse> webResult = await ExecuteAsyncWebRequest<GetAdResponse>(new Uri(string.Format("{0}/{1}?location={2}", base.KioskClientServiceBaseUrl, "api/ads", adLocation)), null, "GET", ServiceLocator.Instance.GetService<IConfiguration>()?.VistarGetAdTimeout ?? 500).ConfigureAwait(continueOnCapturedContext: false);
-		LogKioskClientServiceResponse($"KioskClientServiceAds.GetAd for ad locataion: {adLocation}", webResult);
+		LogResponse($"KioskClientServiceAds.GetAd for ad locataion: {adLocation}", webResult);
 		return webResult?.Response;
 	}
 
 	public async Task<bool> ExpireAd(string advertisementId)
 	{
 		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/{2}/expire", base.KioskClientServiceBaseUrl, "api/ads", advertisementId)), null, "POST", 180000).ConfigureAwait(continueOnCapturedContext: false);
-		LogKioskClientServiceResponse($"KioskClientServiceAds.ExpireAd for advertisement id: {advertisementId}", webResult);
+		LogResponse($"KioskClientServiceAds.ExpireAd for advertisement id: {advertisementId}", webResult);
 		return webResult?.Response?.Success ?? false;
 	}
 
@@ -58,7 +58,7 @@ public class KioskClientServiceAds : BaseKioskClientService, IKioskClientService
 				};
 				IVistarAd vistarAd = adImpression?.Ad as IVistarAd;
 				WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/{2}/proofofplay", base.KioskClientServiceBaseUrl, "api/ads", vistarAd?.AdvertisementId)), requestPayload, "POST", 2000);
-				LogKioskClientServiceResponse($"KioskClientServiceAds.ProofOfPlay for advertisement id: {vistarAd?.AdvertisementId}, Display Duration: {adImpression?.DisplayMilliseconds}, ", webResult);
+				LogResponse($"KioskClientServiceAds.ProofOfPlay for advertisement id: {vistarAd?.AdvertisementId}, Display Duration: {adImpression?.DisplayMilliseconds}, ", webResult);
 				result = webResult?.Response?.Success ?? false;
 			}
 			else
@@ -87,7 +87,7 @@ public class KioskClientServiceAds : BaseKioskClientService, IKioskClientService
 				};
 				IVistarAd vistarAd = adImpression?.Ad as IVistarAd;
 				WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/{2}/proofofplay", base.KioskClientServiceBaseUrl, "api/ads", vistarAd?.AdvertisementId)), requestPayload, "POST", 2000).ConfigureAwait(continueOnCapturedContext: false);
-				LogKioskClientServiceResponse($"KioskClientServiceAds.ProofOfPlay for advertisement id: {vistarAd?.AdvertisementId}, Display Duration: {adImpression?.DisplayMilliseconds}, ", webResult);
+				LogResponse($"KioskClientServiceAds.ProofOfPlay for advertisement id: {vistarAd?.AdvertisementId}, Display Duration: {adImpression?.DisplayMilliseconds}, ", webResult);
 				result = webResult?.Response?.Success ?? false;
 			}
 			else

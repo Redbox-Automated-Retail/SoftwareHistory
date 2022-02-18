@@ -101,6 +101,12 @@ public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActo
 		HandleWPFHit();
 	}
 
+	private void RedboxPlusInfo_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		Model.ProcessRedboxPlusInfo();
+		HandleWPFHit();
+	}
+
 	private void StatisticsPopup_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 	}

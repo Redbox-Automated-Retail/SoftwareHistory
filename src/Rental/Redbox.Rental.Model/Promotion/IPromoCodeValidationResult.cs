@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 
 namespace Redbox.Rental.Model.Promotion;
 
@@ -37,4 +38,8 @@ public interface IPromoCodeValidationResult
 	List<int> FormatIds { get; set; }
 
 	PromotionActionCode ActionCode { get; set; }
+
+	bool? AllowFullDiscount { get; set; }
+
+	IDefaultPromo DefaultPromo { get; set; }
 }

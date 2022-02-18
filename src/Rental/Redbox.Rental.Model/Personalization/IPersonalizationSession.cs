@@ -20,17 +20,25 @@ public interface IPersonalizationSession : ILoginEmailProvider
 
 	string MobilePhoneNumber { get; set; }
 
+	bool IsCPNewInThisSession { get; set; }
+
 	ILoyaltySession LoyaltySession { get; set; }
 
 	IList<IRecommendedTitles> RecommendedTitles { get; set; }
 
-	IList<IStoredPromoCode> StoredPromoCodes { get; set; }
+	StoredPromoCodeCollection StoredPromoCodes { get; set; }
 
 	IList<IAcceptedOffer> AcceptedOffers { get; set; }
 
 	string SelectedPromo { get; set; }
 
+	IRedboxPlusSession RedboxPlusSession { get; set; }
+
+	ISubscriptionData SubscriptionData { get; set; }
+
 	void LogOut();
 
 	void LogOutLoyaltySession();
+
+	void LogOutRedboxPlusSession();
 }

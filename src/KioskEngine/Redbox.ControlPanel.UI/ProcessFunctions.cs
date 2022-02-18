@@ -195,7 +195,7 @@ internal static class ProcessFunctions
 			List<int> processes = dictionary.Keys.ToList();
 			if (killHandler != null && killHandler(processes))
 			{
-				string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser ?? "N/A";
+				string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser.CheckNotAvailable();
 				InnerSendAuditEvent(kioskId.ToString(), "CP_Process_Killed", userName, "CP Bundle", KilledProcesses);
 				form.RefreshList();
 			}
@@ -487,7 +487,7 @@ internal static class ProcessFunctions
 
 	internal static void SendAudit(string browseType, string url)
 	{
-		string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser ?? "N/A";
+		string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser.CheckNotAvailable();
 		InnerSendAuditEvent(kioskId.ToString(), browseType, userName, "CP_SecureBrowser", url);
 	}
 
@@ -768,7 +768,7 @@ internal static class ProcessFunctions
 
 	internal static void PerformActivityLogAndSendAuditEvent(string tag)
 	{
-		string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser ?? "N/A";
+		string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser.CheckNotAvailable();
 		LogHelper.Instance.LogTo("ControlPanelActionLog", tag);
 		InnerSendAuditEvent(kioskId.ToString(), tag, userName, "CP Bundle", "Activate Control Panel function.");
 	}

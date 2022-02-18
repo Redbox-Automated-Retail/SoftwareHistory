@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 
 namespace Redbox.Rental.Model.Analytics;
 

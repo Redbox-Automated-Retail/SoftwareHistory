@@ -16,7 +16,11 @@ public class FilterBarModel : DependencyObject
 
 	public static readonly DependencyProperty MoreCollectionsButtonVisibilityProperty = DependencyProperty.Register("MoreCollectionsButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
+	public static readonly DependencyProperty StartOverButtonTextProperty = DependencyProperty.Register("StartOverButtonText", typeof(string), typeof(FilterBarModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty StartOverButtonVisibilityProperty = DependencyProperty.Register("StartOverButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty HomeButtonTextProperty = DependencyProperty.Register("HomeButtonText", typeof(string), typeof(FilterBarModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty HomeButtonVisibilityProperty = DependencyProperty.Register("HomeButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
@@ -37,12 +41,6 @@ public class FilterBarModel : DependencyObject
 	public static readonly DependencyProperty PriceRangeFilterButtonStyleProperty = DependencyProperty.Register("PriceRangeFilterButtonStyle", typeof(Style), typeof(FilterBarModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty SelectedPriceRangeProperty = DependencyProperty.Register("SelectedPriceRange", typeof(BrowsePriceRangeParameter), typeof(FilterBarModel), new FrameworkPropertyMetadata(new BrowsePriceRangeParameter(), SelectedPriceRangeChanged));
-
-	public string StartOverButtonText { get; set; }
-
-	public Style StartOverButtonStyle { get; set; }
-
-	public string HomeButtonText { get; set; }
 
 	public string BackButtonText { get; set; }
 
@@ -88,6 +86,21 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
+	public string StartOverButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(StartOverButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(StartOverButtonTextProperty, value);
+			});
+		}
+	}
+
 	public Visibility StartOverButtonVisibility
 	{
 		get
@@ -99,6 +112,21 @@ public class FilterBarModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(StartOverButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string HomeButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(HomeButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HomeButtonTextProperty, value);
 			});
 		}
 	}

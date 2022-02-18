@@ -51,7 +51,7 @@ public class TitleDevDetailsController : BaseViewController
 	{
 		ServiceLocator.Instance.GetService<IDataService>().GetProduct(productId, excludeTitleRollup: true, out var kioskProduct);
 		ITitleProduct titleProduct = kioskProduct as ITitleProduct;
-		IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>().GetOneDayProductPricingRecord(titleProduct).Clone();
+		IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>().GetOneDayProductPricingRecord(titleProduct.ProductId).Clone();
 		pricingRecord.InitialNight = amount;
 		BrowseFunctions.AddProductToCart(titleProduct, isPurchase: false, pricingRecord);
 	}
@@ -111,6 +111,7 @@ public class TitleDevDetailsController : BaseViewController
 		dateTime = (TitleProductObj.ReleaseDate.HasValue ? TitleProductObj.ReleaseDate.Value : DateTime.MinValue);
 		titleProductDetailDevModel.ReleaseDate = ((dateTime == DateTime.MinValue) ? string.Empty : dateTime.ToShortDateString());
 		titleProductDetailDevModel.SellThru = TitleProductObj.SellThru;
+		titleProductDetailDevModel.DiscountRestriction = TitleProductObj.DiscountRestriction.ToString();
 		if (pricingRecord != null)
 		{
 			titleProductDetailDevModel.PromoValue = pricingRecord.PromoValue;

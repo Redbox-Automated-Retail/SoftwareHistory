@@ -6,5 +6,6 @@ public enum KioskProductType
 	Title,
 	MDV,
 	TitleRollup,
-	Collection
+	Collection,
+	Subscription
 }

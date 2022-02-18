@@ -43,6 +43,21 @@ public class MessagePopupViewModel : BaseModel<MessagePopupViewModel>
 		AffectsRender = true
 	});
 
+	public static readonly DependencyProperty CountdownTimerGridVisibilityProperty = DependencyProperty.Register("CountdownTimerGridVisibility", typeof(Visibility), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty CountdownTimerTextProperty = DependencyProperty.Register("CountdownTimerText", typeof(string), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty ButtonGridSeparatorLineVisibilityProperty = DependencyProperty.Register("ButtonGridSeparatorLineVisibility", typeof(Visibility), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
 	public static readonly DependencyProperty TitleProperty = DependencyProperty.Register("Title", typeof(string), typeof(MessagePopupViewModel), new FrameworkPropertyMetadata(null)
 	{
 		AffectsRender = true
@@ -112,6 +127,10 @@ public class MessagePopupViewModel : BaseModel<MessagePopupViewModel>
 
 	public UserControl ContentUserControl { get; set; }
 
+	public Visibility FixedSizeGridVisibility { get; set; }
+
+	public Visibility AutoSizedGridVisibility { get; set; }
+
 	public string Button1Text
 	{
 		get
@@ -168,6 +187,36 @@ public class MessagePopupViewModel : BaseModel<MessagePopupViewModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(Button2VisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility CountdownTimerGridVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CountdownTimerGridVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CountdownTimerGridVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string CountdownTimerText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(CountdownTimerTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CountdownTimerTextProperty, value);
 			});
 		}
 	}
@@ -363,6 +412,21 @@ public class MessagePopupViewModel : BaseModel<MessagePopupViewModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(MessageDockPanelStyleProperty, value);
+			});
+		}
+	}
+
+	public Visibility ButtonGridSeparatorLineVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ButtonGridSeparatorLineVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ButtonGridSeparatorLineVisibilityProperty, value);
 			});
 		}
 	}

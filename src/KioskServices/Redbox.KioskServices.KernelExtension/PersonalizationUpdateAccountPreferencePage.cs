@@ -69,9 +69,9 @@ public class PersonalizationUpdateAccountPreferencePage : UserControl, IPreferen
 	{
 		IPersonalizationService service = ServiceLocator.Instance.GetService<IPersonalizationService>();
 		Action<IUpdateAccountResult> resultCallback = updateAcountCallback;
-		SecureString pin = CardHelper.CopyToSecure(tb_Pin.Text);
+		SecureString pin = CardHelper.CopyToSecure(tb_Pin.Text.Trim());
 		PersonalizationServicesProxySimulator instance = PersonalizationServicesProxySimulator.Instance;
-		service.UpdateAccount(instance.CustomerProfileNumber, instance.LoginEmail, instance.MobilePhoneNumber, pin, cbPunchCardOptIn.Checked, cbTextClubOptIn.Checked, resultCallback);
+		service.UpdateAccount(instance.CustomerProfileNumber.Trim(), instance.LoginEmail.Trim(), instance.MobilePhoneNumber.Trim(), pin, cbPunchCardOptIn.Checked, cbTextClubOptIn.Checked, resultCallback);
 	}
 
 	private void updateAcountCallback(IUpdateAccountResult result)

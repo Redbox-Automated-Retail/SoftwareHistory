@@ -8,6 +8,7 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Local;
@@ -326,6 +327,94 @@ public class DataService : IDataService
 		}
 		errorList.ToLogHelper();
 		return errorList;
+	}
+
+	public IRedboxPlusPromoCampaign GetRedboxPlusPromoCampaign(int campaignId)
+	{
+		WaitForFirstLoad();
+		IRedboxPlusPromoCampaign redboxPlusPromoCampaign = null;
+		lock (_lock)
+		{
+			return _kioskProductView.GetRedboxPlusPromoCampaign(campaignId);
+		}
+	}
+
+	public ErrorList GetActiveBrowseSubscriptionProduct(out ISubscriptionProduct subscriptionProduct)
+	{
+		WaitForFirstLoad();
+		subscriptionProduct = null;
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				subscriptionProduct = _kioskProductView.GetActiveBrowseSubscriptionProduct();
+			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetActiveBrowseSubscriptionProduct", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
+	public ErrorList GetActiveMyBagSubscriptionProduct(out ISubscriptionProduct subscriptionProduct)
+	{
+		WaitForFirstLoad();
+		subscriptionProduct = null;
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				subscriptionProduct = _kioskProductView.GetActiveMyBagSubscriptionProduct();
+			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetActiveMyBagSubscriptionProduct", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
+	public ErrorList GetSubscriptionProducts(out List<ISubscriptionProduct> subscriptionProducts)
+	{
+		WaitForFirstLoad();
+		subscriptionProducts = new List<ISubscriptionProduct>();
+		ErrorList errorList = new ErrorList();
+		try
+		{
+			lock (_lock)
+			{
+				subscriptionProducts = _kioskProductView.GetSubscriptionProducts();
+			}
+		}
+		catch (Exception e)
+		{
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetSubscriptionProducts", "Unhandled exception occurred", e));
+		}
+		errorList.ToLogHelper();
+		return errorList;
+	}
+
+	public List<IRedboxPlusSubscriptionProduct> GetRedboxPlusSubscriptionProducts()
+	{
+		WaitForFirstLoad();
+		lock (_lock)
+		{
+			List<ISubscriptionProduct> subscriptionProducts = _kioskProductView.GetSubscriptionProducts();
+			List<IRedboxPlusSubscriptionProduct> list = new List<IRedboxPlusSubscriptionProduct>();
+			foreach (ISubscriptionProduct item2 in subscriptionProducts)
+			{
+				if (item2 is IRedboxPlusSubscriptionProduct item)
+				{
+					list.Add(item);
+				}
+			}
+			return list;
+		}
 	}
 
 	public ErrorList GetProduct(long productId, bool excludeTitleRollup, out IKioskProduct kioskProduct)
@@ -744,6 +833,24 @@ public class DataService : IDataService
 			result = titleProduct.TitleRollupProductGroupId;
 		}
 		return result;
+	}
+
+	public void AddRemovedQueueItem(RemovedQueueItem item)
+	{
+		WaitForFirstLoad();
+		_localData.AddRemovedQueueItem(item);
+	}
+
+	public List<RemovedQueueItem> GetRemovedQueueItems()
+	{
+		WaitForFirstLoad();
+		return _localData.GetRemovedQueueItems();
+	}
+
+	public void DeleteRemovedQueueItem(RemovedQueueItem item)
+	{
+		WaitForFirstLoad();
+		_localData.DeleteRemovedQueueItem(item);
 	}
 
 	private ErrorList PerformActionWhileLocked(Action action)

@@ -18,7 +18,7 @@ public class Theme : ITheme
 
 	public bool IsDefault { get; set; }
 
-	public bool IsAnimated { get; set; }
+	public bool IsAnimated { get; set; } = true;
 
 	public FrameworkElement GetNewThemedControlInstance(string controlName)
 	{

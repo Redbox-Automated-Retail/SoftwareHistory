@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Redbox.Lua;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
 
@@ -19,6 +18,8 @@ public interface IBrowseState
 
 	bool _4kWarningShown { get; set; }
 
+	bool SubscriptionRemoved { get; set; }
+
 	bool MatureGameWarningShown { get; set; }
 
 	bool IsShoppingCartFullMessagesOpen { get; set; }
@@ -29,19 +30,13 @@ public interface IBrowseState
 
 	int PaddleClickCount { get; set; }
 
-	string BrowseFilterMode { get; set; }
-
 	BrowseViewFilter BrowseMode { get; set; }
 
 	BrowseSelectedSort BrowseSelectedSort { get; set; }
 
 	string SelectedAlphaGroupName { get; set; }
 
-	string BrowseTitleFamily { get; set; }
-
 	TitleFamily TitleFamily { get; set; }
-
-	string BrowseTitleType { get; set; }
 
 	TitleType TitleType { get; set; }
 
@@ -53,8 +48,6 @@ public interface IBrowseState
 
 	int PageNumber { get; set; }
 
-	int? BrowseGenre { get; set; }
-
 	Genres? Genre { get; set; }
 
 	string BrowseStudio { get; set; }
@@ -63,11 +56,7 @@ public interface IBrowseState
 
 	IKioskProduct CenterCarouselProduct { get; set; }
 
-	LuaTable CenterCarouselProductLuaTable { get; }
-
 	IKioskProduct BrowseSelectionSelectedProduct { get; set; }
-
-	LuaTable BrowseSelectionSelectedProductLuaTable { get; set; }
 
 	string ProductDetailShownFromView { get; set; }
 
@@ -79,8 +68,6 @@ public interface IBrowseState
 
 	List<IBrowseItemModel> TTSBrowseItemModelsShown { get; set; }
 
-	LuaTable BrowseProductsShownLuaTable { get; }
-
 	bool InReturnFlow { get; set; }
 
 	bool NeedMarketingConfirm { get; set; }
@@ -89,11 +76,19 @@ public interface IBrowseState
 
 	bool EnableBrowseMessagePopup { get; set; }
 
+	bool EnableStarzOffer { get; set; }
+
 	int BrowseMessagePopupDuration { get; set; }
 
 	bool ShowBrowseMessagePopup { get; set; }
 
 	bool ShowingBrowseMessagePopup { get; set; }
+
+	bool IsStarzTermsAcceptanceCheckMarkChecked { get; set; }
+
+	bool ShowRedboxPlusTooltip { get; set; }
+
+	bool IsRedboxPlusTermsAcceptanceCheckMarkChecked { get; set; }
 
 	void PushBrowseStateSet();
 

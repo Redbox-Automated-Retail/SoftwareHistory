@@ -44,6 +44,7 @@ public partial class MarketingScreenSaverUserControl : UserControl, IComponentCo
 	public MarketingScreenSaverUserControl()
 	{
 		InitializeComponent();
+		BottomBarHitTarget.IsAnimated = false;
 	}
 
 	private static void IsAnimationOnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

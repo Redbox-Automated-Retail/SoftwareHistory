@@ -827,7 +827,7 @@ public class PhoneAndPinViewTextToSpeech
 						KeyCode = "2",
 						Action = delegate
 						{
-							viewModel.SignUpForTextClub = false;
+							viewModel.CheckMarkVisibility = Visibility.Hidden;
 						},
 						Function = "TTSRepeatSpeechPart",
 						Text = "2"
@@ -844,7 +844,7 @@ public class PhoneAndPinViewTextToSpeech
 						KeyCode = "1",
 						Action = delegate
 						{
-							viewModel.SignUpForTextClub = true;
+							viewModel.CheckMarkVisibility = Visibility.Visible;
 						},
 						Function = "TTSRepeatSpeechPart",
 						Text = "1"

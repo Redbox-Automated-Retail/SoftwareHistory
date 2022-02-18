@@ -45,11 +45,11 @@ public interface IPromotionService
 
 	IPromotionRule GetInCartPromoActionRule();
 
-	void SetPromoFromCustomerOffer(IRentalShoppingCart rentalShoppingCart, CustomerOffer offer, IRentalShoppingCartItem applyToLineItem);
+	void SetPromoFromCustomerOffer(IRentalShoppingCart rentalShoppingCart, CustomerOffer offer, IRentalShoppingCartTitleItem applyToLineItem);
 
 	void ValidatePromoCodeOnServer(string promoCode, Action<IPromoCodeValidationResult> promoCodeValidationResultCallback);
 
 	string GetInCartPromoCode();
 
-	decimal CalcInCartOfferPromoAmount(IRentalShoppingCartItem newLineItem, CustomerOffer offer);
+	decimal CalcInCartOfferPromoAmount(IRentalShoppingCartTitleItem newLineItem, CustomerOffer offer);
 }

@@ -12,9 +12,13 @@ public class SignInViewDefinition : BaseViewDefinition, IViewDefinition
 		base.ViewName = "sign_in_view";
 		base.ActiveFlag = true;
 		base.ControlName = "SignInView";
-		base.OnEnter = delegate
+		base.OnEnter = delegate(IViewFrameInstance viewFrameInstance)
 		{
-			SignInViewController.ConfigureSignInView();
+			SignInViewController.ConfigureSignInView(viewFrameInstance.Parameter as SignInViewParameters);
+		};
+		base.OnLeave = delegate
+		{
+			SignInViewController.LeaveView();
 		};
 	}
 }

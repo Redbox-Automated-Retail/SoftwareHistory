@@ -8,7 +8,5 @@ public class RecommendedTitlesPopupInfo
 
 	public int NumberOfTitlesToShow { get; set; }
 
-	public bool ShowOfferText { get; set; }
-
 	public string ShownFromView { get; set; }
 }

@@ -6,6 +6,7 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
 
 namespace Redbox.Rental.Data;
@@ -191,8 +192,14 @@ public class ProfileData : IProfileData
 				DiscNumber = dictionary.ToInt32("disc_number", null),
 				DigitalHDRentPrice = dictionary.ToDecimal("digital_hd_rent_price", null),
 				DigitalSDRentPrice = dictionary.ToDecimal("digital_sd_rent_price", null),
-				Studio = dictionary.ToString("studio")
+				Studio = dictionary.ToString("studio"),
+				RedboxPlusEligibleDate = dictionary.ToDateTime("redbox_plus_eligible_date", null)
 			};
+			if (!Enum.TryParse<DiscountRestriction>(dictionary.ToString("discount_restriction"), out var result))
+			{
+				result = DiscountRestriction.None;
+			}
+			item.DiscountRestriction = result;
 			item.Genres = new List<long>();
 			dictionary.ToDictionaryObject("genres").ForEach(delegate(object g)
 			{

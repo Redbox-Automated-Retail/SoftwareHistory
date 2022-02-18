@@ -94,21 +94,21 @@ public class NewCartConfirmViewController : BaseViewController
 		List<DisplayCheckoutProductModel> list = new List<DisplayCheckoutProductModel>();
 		IRentalShoppingCart newCart = parameters.NewCart;
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-		if (newCart != null && service != null && newCart.Items.Count > 0)
+		if (newCart != null && service != null && newCart.TitleItems.Count > 0)
 		{
-			foreach (IRentalShoppingCartItem item in newCart.Items)
+			foreach (IRentalShoppingCartTitleItem titleItem in newCart.TitleItems)
 			{
 				IKioskProduct kioskProduct = null;
-				service.GetProduct(item.ProductId, excludeTitleRollup: true, out kioskProduct);
+				service.GetProduct(titleItem.ProductId, excludeTitleRollup: true, out kioskProduct);
 				if (kioskProduct != null)
 				{
 					DisplayCheckoutProductModel displayCheckoutProductModel = new DisplayCheckoutProductModel
 					{
 						Name = kioskProduct.ProductName,
-						Data = item,
+						Data = titleItem,
 						Image = OrchestrationService.GetProductBitmapImage(kioskProduct)
 					};
-					bool flag = item.ProductId == parameters.promoProduct?.ProductId;
+					bool flag = titleItem.ProductId == parameters.promoProduct?.ProductId;
 					PopulateDisplayCheckoutProductModel(displayCheckoutProductModel, flag);
 					if (flag)
 					{
@@ -130,7 +130,7 @@ public class NewCartConfirmViewController : BaseViewController
 
 	private static void PopulateDisplayCheckoutProductModel(DisplayCheckoutProductModel displayCheckoutProductModel, bool isSelectedProduct)
 	{
-		IRentalShoppingCartItem eachRentalShoppingCartItem = displayCheckoutProductModel?.Data as IRentalShoppingCartItem;
+		IRentalShoppingCartTitleItem eachRentalShoppingCartItem = displayCheckoutProductModel?.Data as IRentalShoppingCartTitleItem;
 		if (eachRentalShoppingCartItem == null)
 		{
 			return;
@@ -156,7 +156,7 @@ public class NewCartConfirmViewController : BaseViewController
 		}
 		else
 		{
-			string arg = $"{eachRentalShoppingCartItem?.PricingRecord?.InitialDays ?? 1}-{Resources.night_rental}";
+			string arg = string.Format(Resources.night_rental, eachRentalShoppingCartItem?.PricingRecord?.InitialDays ?? 1);
 			string arg2 = $"{Resources.extra_night} {eachRentalShoppingCartItem?.PricingRecord.ExtraNight:C}";
 			text = $"{arg} | {arg2}";
 		}
@@ -230,7 +230,7 @@ public class NewCartConfirmViewController : BaseViewController
 		}
 	}
 
-	private static void AddMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer)
+	private static void AddMultiNightCommand_Execute(IRentalShoppingCartTitleItem rentalShoppingCartItem, CustomerOffer selectedOffer)
 	{
 		BaseViewController.ProcessWPFHit();
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmAddPMNPOfferToProduct", $"Add offer to {rentalShoppingCartItem?.ProductId}");
@@ -238,7 +238,7 @@ public class NewCartConfirmViewController : BaseViewController
 		UpdateCartDisplay();
 	}
 
-	private static void RemoveMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, long offerId)
+	private static void RemoveMultiNightCommand_Execute(IRentalShoppingCartTitleItem rentalShoppingCartItem, long offerId)
 	{
 		BaseViewController.ProcessWPFHit();
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmRemovePMNPOfferToProduct", $"delete {rentalShoppingCartItem?.ProductId}");
@@ -280,7 +280,7 @@ public class NewCartConfirmViewController : BaseViewController
 	{
 		BaseViewController.ProcessWPFHit();
 		object obj = model?.Data;
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmRemoveProductOffer", $"delete {(obj as IRentalShoppingCartItem)?.ProductId}");
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmRemoveProductOffer", $"delete {(obj as IRentalShoppingCartTitleItem)?.ProductId}");
 		_removeOfferAction();
 		UpdateCartDisplay();
 	}
@@ -342,9 +342,12 @@ public class NewCartConfirmViewController : BaseViewController
 			{
 				viewModel.BackButtonText = Resources.skip_offer_button_text.ToUpper();
 			}
-			viewModel.PassiveSaleNote = Resources.passive_sale_note;
-			viewModel.MDVFootnoteVisibility = ((!newCart.Items.Any((IRentalShoppingCartItem x) => x.MultiDisc)) ? Visibility.Collapsed : Visibility.Visible);
-			viewModel.MDVFootnote = (newCart.Items.Any((IRentalShoppingCartItem x) => x.MultiDisc) ? Resources.multi_disc_vend_footnote : null);
+			TimeSpan value = Redbox.Rental.Services.Session.Session.Instance?.RentalReturnTime ?? TimeSpan.FromHours(21.0);
+			DateTime dateTime = DateTime.Today.Add(value);
+			string arg = ((value.Seconds == 0) ? dateTime.ToString("h:mm tt") : dateTime.ToString("h:mm:ss tt"));
+			viewModel.PassiveSaleNote = string.Format(Resources.passive_sale_note, arg);
+			viewModel.MDVFootnoteVisibility = ((!newCart.TitleItems.Any((IRentalShoppingCartTitleItem x) => x.MultiDisc)) ? Visibility.Collapsed : Visibility.Visible);
+			viewModel.MDVFootnote = (newCart.TitleItems.Any((IRentalShoppingCartTitleItem x) => x.MultiDisc) ? Resources.multi_disc_vend_footnote : null);
 			int num = (int)((newCart?.DefaultServiceFee ?? 0m) * 100m);
 			viewModel.ServiceFeeText = string.Format(Resources.service_fee_text, num);
 			viewModel.ServiceFeeTextVisibility = ((num <= 0) ? Visibility.Collapsed : Visibility.Visible);

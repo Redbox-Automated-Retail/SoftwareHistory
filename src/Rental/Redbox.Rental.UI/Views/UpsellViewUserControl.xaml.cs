@@ -66,8 +66,8 @@ public partial class UpsellViewUserControl : TextToSpeechUserControl, IWPFActor,
 			DisplayProductUpsellUserControl element = new DisplayProductUpsellUserControl
 			{
 				DataContext = displayProductModel,
-				Width = 130.0,
-				Margin = new Thickness(15.5, 0.0, 15.5, 0.0)
+				Width = 167.0,
+				Margin = new Thickness(-3.0, 0.0, -3.0, 0.0)
 			};
 			UpsellStackPanel.Children.Insert(Model.DisplayProductModels.IndexOf(displayProductModel), element);
 		}

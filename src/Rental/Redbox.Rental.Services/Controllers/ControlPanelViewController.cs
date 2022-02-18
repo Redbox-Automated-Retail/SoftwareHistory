@@ -12,6 +12,8 @@ public class ControlPanelViewController : BaseControlPanelController
 {
 	private static readonly string LoginIdleTimerName = "";
 
+	private const int LOCAL_ACCOUNT_EXPIRE = 14;
+
 	public static void ConfigureLoginView(LoginInfo loginInfo)
 	{
 		int timeOutTime = 60000;
@@ -75,6 +77,10 @@ public class ControlPanelViewController : BaseControlPanelController
 		if (!BaseControlPanelController.SecurityUserExists(userData.Id))
 		{
 			BaseControlPanelController.SecurityCreateUser(userData.Id, userData.Password, 14);
+		}
+		else
+		{
+			BaseControlPanelController.SecuritySlideExpirationDate(userData.Id, 14);
 		}
 	}
 

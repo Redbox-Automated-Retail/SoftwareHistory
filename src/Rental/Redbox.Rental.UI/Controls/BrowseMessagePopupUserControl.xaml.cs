@@ -16,11 +16,11 @@ public partial class BrowseMessagePopupUserControl : UserControl, IComponentConn
 
 	private void BrowseMessagePopupInfoCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		BrowseMessagePopupModel?.ProcessOnBrowseMessagePopupInfoClicked(BrowseMessagePopupModel);
+		BrowseMessagePopupModel?.ProcessOnBrowseMessagePopupInfoClicked();
 	}
 
 	private void BrowseMessagePopupCloseCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
-		BrowseMessagePopupModel?.ProcessOnBrowseMessagePopupCloseClicked(BrowseMessagePopupModel);
+		BrowseMessagePopupModel?.ProcessOnBrowseMessagePopupCloseClicked();
 	}
 }

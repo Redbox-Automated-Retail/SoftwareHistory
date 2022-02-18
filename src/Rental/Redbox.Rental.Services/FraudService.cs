@@ -453,13 +453,13 @@ public class FraudService : IFraudService
 		}
 	}
 
-	public void ProcessReturnResponse(IMessage message, IDictionary<string, object> result, object clientData)
+	public void ProcessReturnResponse(IDictionary<string, object> result, object clientData)
 	{
-		if (!(message?.Type == "Return") || !IsFraudImageEnabled)
+		if (!IsFraudImageEnabled)
 		{
 			return;
 		}
-		LogHelper.Instance.Log($"Executing queue service post-message processing for message type {message?.Type}");
+		LogHelper.Instance.Log("Executing queue service post-message processing for return message type");
 		ReturnMessageClientData returnMessageClientData = clientData as ReturnMessageClientData;
 		if (string.IsNullOrEmpty(returnMessageClientData?.Barcode))
 		{

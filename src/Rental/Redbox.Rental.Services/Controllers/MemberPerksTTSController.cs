@@ -81,6 +81,17 @@ public class MemberPerksTTSController : BaseTTSController<MemberPerksTTSControll
 				}
 			});
 		}
+		if (logic.IsPerks)
+		{
+			speechPart.Events.Add(new MapKeyPressToAction
+			{
+				KeyCode = "4",
+				Action = delegate
+				{
+					logic.Model.HowPointsWorkButtonCommand?.Execute(null);
+				}
+			});
+		}
 	}
 
 	private static void AddJumpToCurrentPerksSection(ISpeechControl speechControl, MemberPerksLogic logic)
@@ -144,6 +155,13 @@ public class MemberPerksTTSController : BaseTTSController<MemberPerksTTSControll
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = "To get more information about your perks level, press 3."
+				});
+			}
+			if (logic.IsPerks)
+			{
+				speechPart.Texts.Add(new TextPart
+				{
+					Text = "To get more information about how points work, press 4."
 				});
 			}
 		};

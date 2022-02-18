@@ -32,8 +32,6 @@ public partial class PhoneAndPinViewUserControl : TextToSpeechUserControl, IWPFA
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(StartButton);
 		obj?.SetStyle(SignInButton);
-		obj?.SetStyle(RightSignInButton);
-		obj?.SetStyle(RightStartButton);
 		obj?.SetStyle(TermsButton);
 	}
 

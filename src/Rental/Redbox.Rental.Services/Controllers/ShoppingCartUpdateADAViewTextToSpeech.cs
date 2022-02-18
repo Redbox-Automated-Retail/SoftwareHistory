@@ -192,13 +192,13 @@ public class ShoppingCartUpdateADAViewTextToSpeech
 					Text = string.Format("Your cart has {0} title{1}.", CartCount, (CartCount != 1) ? "s" : null)
 				});
 				int num = 0;
-				foreach (IRentalShoppingCartItem item in RentalShoppingCartService.CurrentRentalShoppingCart.Items)
+				foreach (IRentalShoppingCartTitleItem titleItem in RentalShoppingCartService.CurrentRentalShoppingCart.TitleItems)
 				{
 					DisplayProductModel displayModel = shoppingCartUpdateADAViewModel.DisplayProductModels[num];
 					num++;
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"To remove the {item.Action} title {displayModel.Name} from your cart, press clear and number {num}."
+						Text = $"To remove the {titleItem.Action} title {displayModel.Name} from your cart, press clear and number {num}."
 					});
 					speechPart.Events.Add(new MapKeyPressToAction
 					{

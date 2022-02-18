@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DeviceService.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
@@ -35,9 +36,13 @@ public interface ISession
 
 	int CardReadTechnicalFallbackCount { get; set; }
 
-	bool HasReceivedUserInteraction { get; set; }
+	bool HasReceivedUserInteraction { get; }
+
+	bool HasReceivedUserInteractionThatStartsTimedSession { get; }
 
 	string SessionStartTriggerAction { get; set; }
+
+	ISessionStartTriggerActionList SessionStartTriggerActions { get; }
 
 	bool WaitingForCardReaderConnection { get; set; }
 
@@ -50,6 +55,14 @@ public interface ISession
 	ITransactionData TransactionData { get; set; }
 
 	bool IsInZeroTouchMode { get; set; }
+
+	bool IsInReservationFlow { get; set; }
+
+	bool IsVendProcessStarted { get; set; }
+
+	bool IsInAddProductFlow { get; set; }
+
+	TimeSpan RentalReturnTime { get; set; }
 
 	void ClearTrackData();
 }

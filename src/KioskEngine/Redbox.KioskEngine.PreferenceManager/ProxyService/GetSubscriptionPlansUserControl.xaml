@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.KioskEngine.PreferenceManager.ProxyService.GetSubscriptionPlansUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.KioskEngine.PreferenceManager.ProxyService" xmlns:controls="clr-namespace:Redbox.KioskEngine.PreferenceManager.Controls">
+  <Grid>
+    <StackPanel Orientation="Vertical">
+      <controls:PreferencePageHeaderUserControl x:Name="PreferencePageHeaderUserControl" HeaderBackgroundColor="#008B8B" DockPanel.Dock="Top" RefreshButtonVisibilty="Visible" SaveButtonVisibilty="Visible" />
+      <StackPanel Margin="20,5,0,5">
+        <TextBlock Name="ErrorMessageText" Foreground="#FFFF0000" FontSize="15" Text="{Binding Path=ErrorMessage}" />
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+          </Grid.RowDefinitions>
+          <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Margin="0,3">
+            <CheckBox Name="LiveCallCheckBox" Grid.Row="1" IsChecked="{Binding Path=LiveCall}">
+              <TextBlock Text="Live Call" FontSize="10" Margin="0,1" />
+            </CheckBox>
+          </StackPanel>
+          <TextBlock Text="Browse Starz Subscription Plan" Grid.Row="1" Grid.Column="0" FontSize="10" VerticalAlignment="Center" />
+          <ComboBox Name="BrowseSubscriptionPlanComboBox" Grid.Row="1" Grid.Column="1" MaxDropDownHeight="200" Width="350" HorizontalAlignment="Left" Margin="0,3" SelectedItem="{Binding Path=BrowseStarzSubscriptionPlan}" />
+          <TextBlock Text="My Bag Starz Subscription Plan" Grid.Row="2" Grid.Column="0" FontSize="10" VerticalAlignment="Center" />
+          <ComboBox Name="MyBagSubscriptionPlanComboBox" Grid.Row="2" Grid.Column="1" MaxDropDownHeight="200" Width="350" HorizontalAlignment="Left" Margin="0,3" SelectedItem="{Binding Path=MyBagStarzSubscriptionPlan}" />
+        </Grid>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+</UserControl>

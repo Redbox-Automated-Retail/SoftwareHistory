@@ -73,14 +73,6 @@ public class FormatFilterPopupViewController : BaseViewController
 			{
 				ProcessButtonClick(type, type.GetDisplayName());
 			};
-			if (num < 4)
-			{
-				formatSelectionPopupViewModel.DialogHeight = 350;
-			}
-			else
-			{
-				formatSelectionPopupViewModel.DialogHeight = 443;
-			}
 			if (num == 3)
 			{
 				formatSelectionPopupViewModel.DialogWidth = 900;
@@ -130,7 +122,7 @@ public class FormatFilterPopupViewController : BaseViewController
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("FormatFilterPopupFilter", filterType.ToString());
 		BrowseState.TitleType = filterType;
 		BrowseState.BrowseSelectedSort = TitleTypeToSelectedSort(filterType);
-		BrowseState.BrowseMode = ((filterType == TitleType.DigitalCode) ? BrowseViewFilter.ForSale : BrowseViewFilter.All);
+		BrowseState.BrowseMode = BrowseFunctions.GetBrowseMode(filterType);
 		BrowseState.PageNumber = 1;
 		BrowseState.BrowsePriceRangeFilter = null;
 		BrowseState.BrowseStudio = null;

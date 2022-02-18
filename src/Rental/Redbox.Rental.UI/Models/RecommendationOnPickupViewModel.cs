@@ -46,7 +46,7 @@ public class RecommendationOnPickupViewModel : DependencyObject
 
 	public string PickupButtonText { get; set; }
 
-	public List<IRentalShoppingCartItem> SecondaryMdvDiscs { get; set; }
+	public List<IRentalShoppingCartTitleItem> SecondaryMdvDiscs { get; set; }
 
 	public BrowseControlModel ShoppingCartControlModel
 	{

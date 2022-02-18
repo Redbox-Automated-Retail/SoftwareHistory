@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.Rental.UI.Controls.StarzOfferDetailTwoColumnsUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Controls">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="163" />
+      <RowDefinition />
+    </Grid.RowDefinitions>
+    <TextBlock Name="Title" Grid.ColumnSpan="2" Style="{StaticResource font_montserrat_semibold_16}" Foreground="#FFFFFFFF" Width="344" TextWrapping="Wrap" TextAlignment="Center" Margin="0,48,0,0" HorizontalAlignment="Center">
+      <TextBlock.Inlines>
+        <Run Text="Watch thousands of movies &amp; originals on the STARZ" />
+        <Run Text="®" BaselineAlignment="Superscript" FontSize="10" />
+        <Run Text=" app or starz.com" />
+      </TextBlock.Inlines>
+    </TextBlock>
+    <StackPanel Grid.Column="0" Grid.Row="1">
+      <Image Name="StarzLogo" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/starz-logo.png" Width="160" Height="44" VerticalAlignment="Top" />
+      <TextBlock Name="LeftTitleText" Style="{StaticResource font_montserrat_bold_40}" Foreground="#fdba4d" HorizontalAlignment="Center" Margin="0,16,0,0" Text="{Binding LeftTitleText, FallbackValue=7-Day Free Trial}" />
+      <TextBlock Name="LeftSubtitleText" Style="{StaticResource font_montserrat_semibold_20}" Foreground="#FFFFFFFF" Margin="0,4,20,0" Width="364" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Text="{Binding LeftSubtitleText, FallbackValue=$8.99 per month after trial}" />
+      <TextBlock Name="LeftSubtitle2Text" Style="{StaticResource font_montserrat_medium_14}" Foreground="#FFFFFFFF" Margin="0,16,0,0" Width="364" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Text="{Binding LeftSubtitle2Text, FallbackValue=Cancel anytime}" />
+    </StackPanel>
+    <StackPanel Grid.Column="1" Grid.Row="1">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+        <Image Name="RedboxIcon" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/redbox-icon-with-dot.png" Height="44" />
+        <Image Name="RedboxLogo" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite2.png" Height="31" Margin="10,0,0,0" />
+      </StackPanel>
+      <TextBlock Name="RightTitleText" Grid.Column="1" Grid.Row="1" Style="{StaticResource font_montserrat_bold_40}" Foreground="#fdba4d" HorizontalAlignment="Center" Margin="0,16,0,0" Text="{Binding RightTitleText, FallbackValue=2 Free Rentals/Mo*}" />
+      <TextBlock Name="RightSubtitleText" Style="{StaticResource font_montserrat_semibold_20}" Foreground="#FFFFFFFF" Margin="0,4,20,0" Width="364" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Text="{Binding RightSubtitleText, FallbackValue=For the next 12 months - 24 in total after trial}" />
+      <TextBlock Name="RightSubtitle2Text" Style="{StaticResource font_montserrat_medium_14}" Foreground="#FFFFFFFF" Margin="0,16,0,0" Width="364" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Text="{Binding RightSubtitle2Text, FallbackValue=Valid for 1-night disc rentals only.}" />
+    </StackPanel>
+    <Grid Name="TopSeparatorLine" Row="1" Background="#FFD3D3D3" Width="2" Height="76" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,-1,0" />
+    <Grid Name="BottomSeparatorLine" Row="1" Background="#FFD3D3D3" Width="2" Height="76" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,128,-1,0" />
+    <Grid Name="PlusSign" Row="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,88,-14,0" Width="28" Height="28">
+      <Grid Name="PlusPart1" Row="1" Background="#FFFFFFFF" Width="5" Height="28" HorizontalAlignment="Center" VerticalAlignment="Top" />
+      <Grid Name="PlusPart2" Row="1" Background="#FFFFFFFF" Width="28" Height="5" HorizontalAlignment="Right" VerticalAlignment="Center" />
+    </Grid>
+  </Grid>
+</UserControl>

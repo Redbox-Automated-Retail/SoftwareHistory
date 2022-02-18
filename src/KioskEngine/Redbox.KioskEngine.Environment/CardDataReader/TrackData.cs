@@ -298,6 +298,24 @@ public abstract class TrackData : ITrackData
 		}
 	}
 
+	public string VasIdentifier { get; set; }
+
+	public bool HasVas => !string.IsNullOrEmpty(VasIdentifier);
+
+	public bool HasPay
+	{
+		get
+		{
+			if (!string.IsNullOrEmpty(FirstSix))
+			{
+				return !string.IsNullOrEmpty(LastFour);
+			}
+			return false;
+		}
+	}
+
+	public WalletType WalletType { get; set; }
+
 	public TrackData()
 	{
 		Errors = new ErrorList();
@@ -312,9 +330,13 @@ public abstract class TrackData : ITrackData
 
 	public virtual bool HasValidData()
 	{
-		if ((!ReadStatus.HasValue || ReadStatus == ResponseStatus.Success) && Errors != null && !Errors.ContainsError() && !string.IsNullOrEmpty(FirstSix))
+		if ((!ReadStatus.HasValue || ReadStatus == ResponseStatus.Success) && Errors != null && !Errors.ContainsError())
 		{
-			return !string.IsNullOrEmpty(LastFour);
+			if (!HasPay)
+			{
+				return HasVas;
+			}
+			return true;
 		}
 		return false;
 	}

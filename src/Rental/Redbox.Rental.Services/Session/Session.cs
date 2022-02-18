@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using DeviceService.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
@@ -14,6 +16,8 @@ namespace Redbox.Rental.Services.Session;
 
 public class Session : ISession
 {
+	private bool _isInAddProductFlow;
+
 	public static ISession Instance { get; set; }
 
 	public IBrowseState BrowseState { get; set; }
@@ -79,9 +83,13 @@ public class Session : ISession
 
 	public FallbackType? LastFallbackType { get; set; }
 
-	public bool HasReceivedUserInteraction { get; set; }
+	public bool HasReceivedUserInteraction => SessionStartTriggerActions.Any();
+
+	public bool HasReceivedUserInteractionThatStartsTimedSession => SessionStartTriggerActions.Any((ISessionStartTriggerAction x) => x.StartedTimedSession);
 
 	public string SessionStartTriggerAction { get; set; }
+
+	public ISessionStartTriggerActionList SessionStartTriggerActions { get; private set; }
 
 	public bool WaitingForCardReaderConnection { get; set; }
 
@@ -89,7 +97,29 @@ public class Session : ISession
 
 	public ITransactionData TransactionData { get; set; }
 
+	public TimeSpan RentalReturnTime { get; set; }
+
 	public bool IsInZeroTouchMode { get; set; }
+
+	public bool IsVendProcessStarted { get; set; }
+
+	public bool IsInReservationFlow { get; set; }
+
+	public bool IsInAddProductFlow
+	{
+		get
+		{
+			return _isInAddProductFlow;
+		}
+		set
+		{
+			if (value != IsInAddProductFlow)
+			{
+				_isInAddProductFlow = value;
+				LogHelper.Instance.Log($"IsInAddProductFlow set to {value}");
+			}
+		}
+	}
 
 	public Session()
 	{
@@ -100,6 +130,8 @@ public class Session : ISession
 		ValidatedReservations = null;
 		CardReadAttemptCollection = new CardReadAttemptCollection();
 		TransactionData = new TransactionData();
+		RentalReturnTime = TimeSpan.FromHours(21.0);
+		SessionStartTriggerActions = new SessionStartTriggerActionList();
 	}
 
 	public void ClearTrackData()

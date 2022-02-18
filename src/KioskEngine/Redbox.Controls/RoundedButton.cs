@@ -1,4 +1,7 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,11 +14,15 @@ namespace Redbox.Controls;
 
 public class RoundedButton : Button, IThemedControl
 {
+	private int _executingButtonClick;
+
+	private Storyboard _storyboard;
+
 	public static readonly DependencyProperty StateProperty = DependencyProperty.Register("State", typeof(bool), typeof(RoundedButton), new FrameworkPropertyMetadata(false));
 
 	public static readonly DependencyProperty UsedDefaultCornerRadiusProperty = DependencyProperty.Register("UsedDefaultCornerRadius", typeof(bool), typeof(RoundedButton), new FrameworkPropertyMetadata(false));
 
-	public static readonly DependencyProperty IsClickAnimatedProperty = DependencyProperty.Register("IsClickAnimated", typeof(bool), typeof(RoundedButton), new FrameworkPropertyMetadata(false));
+	public static readonly DependencyProperty IsClickAnimatedProperty = DependencyProperty.Register("IsClickAnimated", typeof(bool), typeof(RoundedButton), new FrameworkPropertyMetadata(true));
 
 	public static readonly DependencyProperty IsClickBeforeAnimationProperty = DependencyProperty.Register("IsClickBeforeAnimation", typeof(bool), typeof(RoundedButton), new FrameworkPropertyMetadata(false));
 
@@ -59,6 +66,10 @@ public class RoundedButton : Button, IThemedControl
 	public static readonly DependencyProperty BackgroundGradientStartPointProperty = DependencyProperty.Register("BackgroundGradientStartPoint", typeof(Point), typeof(RoundedButton), new FrameworkPropertyMetadata(new Point(0.5, 0.0)));
 
 	public static readonly DependencyProperty BackgroundGradientEndPointProperty = DependencyProperty.Register("BackgroundGradientEndPoint", typeof(Point), typeof(RoundedButton), new FrameworkPropertyMetadata(new Point(0.5, 1.0)));
+
+	public static bool DefaultIsAnimated { get; set; }
+
+	public static TaskScheduler UITaskScheduler { get; set; }
 
 	public bool State
 	{
@@ -300,11 +311,56 @@ public class RoundedButton : Button, IThemedControl
 		}
 	}
 
-	public event EventHandler OnAnimationComplete;
-
 	public RoundedButton()
 	{
 		base.Focusable = false;
+		IsAnimated = DefaultIsAnimated;
+		if (IsAnimated)
+		{
+			CreateAnimationStoryboard();
+		}
+	}
+
+	private void CreateAnimationStoryboard()
+	{
+		double num = 0.05;
+		double value = num * 2.0;
+		_storyboard = new Storyboard
+		{
+			Name = "ButtonAnimationStoryboard",
+			Duration = new Duration(TimeSpan.FromSeconds(value))
+		};
+		base.RenderTransformOrigin = new Point(0.5, 0.5);
+		ScaleTransform value2 = new ScaleTransform();
+		TransformGroup transformGroup = new TransformGroup();
+		transformGroup.Children.Add(value2);
+		base.RenderTransform = transformGroup;
+		DoubleAnimation doubleAnimation = new DoubleAnimation
+		{
+			From = 1.0,
+			To = 0.95,
+			Duration = new Duration(TimeSpan.FromSeconds(num)),
+			AutoReverse = true
+		};
+		_storyboard.Children.Add(doubleAnimation);
+		Storyboard.SetTarget(doubleAnimation, this);
+		Storyboard.SetTargetProperty(doubleAnimation, new PropertyPath("(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleX)"));
+		DoubleAnimation doubleAnimation2 = new DoubleAnimation
+		{
+			From = 1.0,
+			To = 0.95,
+			Duration = new Duration(TimeSpan.FromSeconds(num)),
+			AutoReverse = true
+		};
+		_storyboard.Children.Add(doubleAnimation2);
+		Storyboard.SetTarget(doubleAnimation2, this);
+		Storyboard.SetTargetProperty(doubleAnimation2, new PropertyPath("(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleY)"));
+		EventTrigger eventTrigger = new EventTrigger(UIElement.PreviewMouseDownEvent);
+		eventTrigger.Actions.Add(new BeginStoryboard
+		{
+			Storyboard = _storyboard
+		});
+		base.Triggers.Add(eventTrigger);
 	}
 
 	protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
@@ -336,26 +392,45 @@ public class RoundedButton : Button, IThemedControl
 
 	protected override void OnClick()
 	{
-		if (IsAnimated)
-		{
-			_ = base.RenderTransformOrigin;
-			if (base.RenderTransformOrigin.X == 0.0 && base.RenderTransformOrigin.Y == 0.0)
-			{
-				base.RenderTransformOrigin = new Point(0.5, 0.5);
-			}
-			DoubleAnimation doubleAnimation = new DoubleAnimation(0.95, 1.0, new Duration(TimeSpan.FromSeconds(0.2)));
-			DoubleAnimation animation = new DoubleAnimation(0.95, 1.0, new Duration(TimeSpan.FromSeconds(0.2)));
-			ScaleTransform scaleTransform = (ScaleTransform)(base.RenderTransform = new ScaleTransform());
-			doubleAnimation.Completed += Animation_Completed;
-			scaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, doubleAnimation);
-			scaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty, animation);
-		}
 		if (IsClickBeforeAnimation || !IsAnimated)
+		{
+			ButtonClick();
+			return;
+		}
+		if (Interlocked.CompareExchange(ref _executingButtonClick, 1, 0) == 1)
+		{
+			LogHelper.Instance.Log("RoundedButton click is already being executed.  Ignoring this call.");
+			return;
+		}
+		System.Timers.Timer buttonTimer = new System.Timers.Timer
+		{
+			AutoReset = false,
+			Interval = (_storyboard?.Duration.TimeSpan.Milliseconds ?? 0) + 10
+		};
+		buttonTimer.Elapsed += delegate
+		{
+			try
+			{
+				buttonTimer.Stop();
+				buttonTimer.Dispose();
+				ButtonClick();
+			}
+			finally
+			{
+				_executingButtonClick = 0;
+			}
+		};
+		buttonTimer.Start();
+	}
+
+	private void ButtonClick()
+	{
+		Task.Factory.StartNew(delegate
 		{
 			State = !State;
 			LogButtonClick();
 			base.OnClick();
-		}
+		}, CancellationToken.None, TaskCreationOptions.None, (UITaskScheduler != null) ? UITaskScheduler : TaskScheduler.FromCurrentSynchronizationContext());
 	}
 
 	private void LogButtonClick()
@@ -398,18 +473,6 @@ public class RoundedButton : Button, IThemedControl
 			}
 		}
 		LogHelper.Instance.Log($"RoundedButton click: Parent: {text}, {arg}");
-	}
-
-	private void Animation_Completed(object sender, EventArgs e)
-	{
-		if (!IsClickBeforeAnimation)
-		{
-			base.OnClick();
-		}
-		if (OnAnimationComplete != null)
-		{
-			OnAnimationComplete(this, null);
-		}
 	}
 
 	private static void OnCornerRadiusPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

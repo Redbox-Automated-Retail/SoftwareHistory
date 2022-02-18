@@ -1,19 +1,11 @@
 using System;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Lua;
-using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Services;
 
 namespace Redbox.Rental.Kernel;
 
 public static class OrchestrationFunctions
 {
-	[KernelFunction(Name = "kernel.is_card_blocklisted")]
-	internal static bool IsCardBlocklisted()
-	{
-		return OrchestrationService.IsCardBlocklisted();
-	}
-
 	[KernelFunction(Name = "kernel.view_analytics_start")]
 	internal static void ViewAnalyticsStart(string userTriggerAction, string sessionType)
 	{
@@ -92,46 +84,6 @@ public static class OrchestrationFunctions
 		OrchestrationService.ReloadPricingService();
 	}
 
-	private static void AssignPriceValuesFromLuaTable(IPricingRecord pricingRecord, LuaTable luaTable)
-	{
-		if (GetDecimalValue(luaTable, "initial_night", out var value))
-		{
-			pricingRecord.InitialNight = value;
-		}
-		if (GetDecimalValue(luaTable, "extra_night", out value))
-		{
-			pricingRecord.ExtraNight = value;
-		}
-		if (GetDecimalValue(luaTable, "non_return", out value))
-		{
-			pricingRecord.NonReturn = value;
-		}
-		if (GetDecimalValue(luaTable, "non_return_days", out value))
-		{
-			pricingRecord.NonReturnDays = value;
-		}
-		if (GetDecimalValue(luaTable, "expiration_price", out value))
-		{
-			pricingRecord.ExpirationPrice = value;
-		}
-	}
-
-	private static bool GetDecimalValue(LuaTable luaTable, string propertyName, out decimal value)
-	{
-		bool result = false;
-		value = 0m;
-		if (luaTable != null)
-		{
-			object obj = luaTable[propertyName];
-			if (obj != null && decimal.TryParse(obj.ToString(), out var result2))
-			{
-				value = result2;
-				result = true;
-			}
-		}
-		return result;
-	}
-
 	[KernelFunction(Name = "kernel.does_shopping_cart_contain_all_reserved_barcodes")]
 	internal static bool DoesShoppingCartContainAllReservedBarcodes()
 	{
@@ -144,12 +96,6 @@ public static class OrchestrationFunctions
 		bool result = false;
 		bool.TryParse(shouldEndAndSave, out result);
 		OrchestrationService.ShoppingCartCommit(sessionId, reason, result);
-	}
-
-	[KernelFunction(Name = "kernel.shopping_cart_end_session")]
-	internal static void ShoppingCartEndSession(string sessionId)
-	{
-		OrchestrationService.ShoppingCartEndSession(sessionId);
 	}
 
 	[KernelFunction(Name = "kernel.load_email_optin_campaign")]

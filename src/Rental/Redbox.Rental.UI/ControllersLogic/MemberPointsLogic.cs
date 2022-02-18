@@ -59,7 +59,7 @@ public class MemberPointsLogic : BaseLogic
 		_ = Model.SelectedProductIds;
 		foreach (DisplayProductModel item in displayProductModels)
 		{
-			IRentalShoppingCartItem shoppingCartItem = GetShoppingCartItem(item);
+			IRentalShoppingCartTitleItem shoppingCartItem = GetShoppingCartItem(item);
 			if (Model.SelectedProductIds.Contains(shoppingCartItem.ProductId))
 			{
 				list.Add(item);
@@ -75,7 +75,7 @@ public class MemberPointsLogic : BaseLogic
 		_ = Model.SelectedProductIds;
 		foreach (DisplayProductModel item in displayProductModels)
 		{
-			IRentalShoppingCartItem shoppingCartItem = GetShoppingCartItem(item);
+			IRentalShoppingCartTitleItem shoppingCartItem = GetShoppingCartItem(item);
 			if (!Model.SelectedProductIds.Contains(shoppingCartItem.ProductId))
 			{
 				list.Add(item);
@@ -95,11 +95,11 @@ public class MemberPointsLogic : BaseLogic
 		return Info.RemainingPoints - pointsToRedeem < 0;
 	}
 
-	private IRentalShoppingCartItem GetShoppingCartItem(DisplayProductModel displayModel)
+	private IRentalShoppingCartTitleItem GetShoppingCartItem(DisplayProductModel displayModel)
 	{
-		if (displayModel != null && displayModel.Data != null && displayModel.Data is IRentalShoppingCartItem)
+		if (displayModel != null && displayModel.Data != null && displayModel.Data is IRentalShoppingCartTitleItem)
 		{
-			return displayModel.Data as IRentalShoppingCartItem;
+			return displayModel.Data as IRentalShoppingCartTitleItem;
 		}
 		return null;
 	}
@@ -109,7 +109,7 @@ public class MemberPointsLogic : BaseLogic
 		return GetPointsToRedeem(GetShoppingCartItem(displayModel));
 	}
 
-	public int GetPointsToRedeem(IRentalShoppingCartItem shoppingCartItem)
+	public int GetPointsToRedeem(IRentalShoppingCartTitleItem shoppingCartItem)
 	{
 		int result = 0;
 		if (shoppingCartItem?.LoyaltyPointsRecord != null)
@@ -128,7 +128,7 @@ public class MemberPointsLogic : BaseLogic
 		});
 	}
 
-	private static void UpdatePointsInfo(IRentalShoppingCartItem shoppingCartItem, int scalar)
+	private static void UpdatePointsInfo(IRentalShoppingCartTitleItem shoppingCartItem, int scalar)
 	{
 		ILoyaltyPointsRecord loyaltyPointsRecord = shoppingCartItem.LoyaltyPointsRecord;
 		if (loyaltyPointsRecord != null && loyaltyPointsRecord.PointsToRedeem.HasValue)
@@ -138,7 +138,7 @@ public class MemberPointsLogic : BaseLogic
 		}
 	}
 
-	public void PointsIncludeCommand_Execute(IRentalShoppingCartItem shoppingCartItem)
+	public void PointsIncludeCommand_Execute(IRentalShoppingCartTitleItem shoppingCartItem)
 	{
 		if (shoppingCartItem != null)
 		{
@@ -151,7 +151,7 @@ public class MemberPointsLogic : BaseLogic
 		}
 	}
 
-	public void PointsExcludeCommand_Execute(IRentalShoppingCartItem shoppingCartItem)
+	public void PointsExcludeCommand_Execute(IRentalShoppingCartTitleItem shoppingCartItem)
 	{
 		if (shoppingCartItem != null)
 		{
@@ -171,8 +171,8 @@ public class MemberPointsLogic : BaseLogic
 		ContinueAction = memberInfo.ContinueAction;
 		Info = memberInfo;
 		Model = pointsModel;
-		Model.PointsIncludeCommand = DynamicRouting.RegisterRoutedCommand<IRentalShoppingCartItem>(Commands.PointsIncludeCommand, PointsIncludeCommand_Execute);
-		Model.PointsExcludeCommand = DynamicRouting.RegisterRoutedCommand<IRentalShoppingCartItem>(Commands.PointsExcludeCommand, PointsExcludeCommand_Execute);
+		Model.PointsIncludeCommand = DynamicRouting.RegisterRoutedCommand<IRentalShoppingCartTitleItem>(Commands.PointsIncludeCommand, PointsIncludeCommand_Execute);
+		Model.PointsExcludeCommand = DynamicRouting.RegisterRoutedCommand<IRentalShoppingCartTitleItem>(Commands.PointsExcludeCommand, PointsExcludeCommand_Execute);
 		Model.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.CancelButtonCommand, CancelButtonCommand_Execute);
 		Func<bool> canExecute = () => Model.ContinueButtonEnabled;
 		Model.ContinueButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.ContinueButtonCommand, ContinueButtonCommand_Execute, canExecute);

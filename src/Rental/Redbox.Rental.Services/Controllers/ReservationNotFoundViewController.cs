@@ -54,7 +54,7 @@ public class ReservationNotFoundViewController : BaseViewController
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = "This box doesn't have a reservation for you."
+				Text = "This Kiosk doesn't have a reservation for you."
 			});
 			speechPart.Texts.Add(new TextPart
 			{

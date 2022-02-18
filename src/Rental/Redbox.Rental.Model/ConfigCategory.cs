@@ -32,5 +32,13 @@ public static class ConfigCategory
 
 	public const string ZeroTouch = "ZeroTouch";
 
+	public const string KioskEngineApiService = "KioskEngineApiService";
+
+	public const string UpdateClientService = "UpdateClientService";
+
+	public const string FMACP = "FMACP";
+
 	public const string KioskHealth = "KioskHealth";
+
+	public const string Jarvis = "Jarvis";
 }

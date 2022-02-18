@@ -48,4 +48,8 @@ public class AuthorizeResult : IAuthorizeResult
 	public int GiftCardMaxDiscs { get; set; }
 
 	public int GiftCardMaxGames { get; set; }
+
+	public bool KioskTransactionSuccess { get; set; }
+
+	public bool SubscriptionTransactionSuccess { get; set; }
 }

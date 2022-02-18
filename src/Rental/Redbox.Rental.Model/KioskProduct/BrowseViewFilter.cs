@@ -4,5 +4,6 @@ public enum BrowseViewFilter
 {
 	All,
 	ForSale,
-	ComingSoon
+	ComingSoon,
+	RedboxPlus
 }

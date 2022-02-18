@@ -1,3 +1,4 @@
+using System;
 using System.Security;
 using System.Windows;
 using Redbox.Core;
@@ -90,6 +91,15 @@ public class KeyboardViewController : BaseViewController
 		case KeyboardMode.PERKS_SIGN_UP:
 			InitForPerksSignup(keyboardLogic);
 			break;
+		case KeyboardMode.STARZ_SIGN_UP:
+			InitForStarzSignup(keyboardLogic);
+			break;
+		case KeyboardMode.REDBOX_PLUS_SIGN_UP:
+			InitForRedboxPlusSignup(keyboardLogic);
+			break;
+		case KeyboardMode.LEAD_GENERATION_SIGN_UP:
+			InitForLeadGenerationSignup(keyboardLogic);
+			break;
 		}
 		ConfigureTTS(keyboardModel);
 	}
@@ -180,7 +190,7 @@ public class KeyboardViewController : BaseViewController
 		model.CancelButtonText = Resources.keyboard_receipt_cancel_btn;
 		model.ContinueButtonText = Resources.keyboard_receipt_continue_btn;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
-		StartKeyboardIdleTimer();
+		StartKeyboardIdleTimer(TimeOutAction);
 	}
 
 	private static void InitForCommingSoonEmail(KeyboardLogic keyboardLogic)
@@ -213,16 +223,45 @@ public class KeyboardViewController : BaseViewController
 		KeyboardModel model = keyboardLogic.Model;
 		model.TitleText = Resources.perks_sign_up_title;
 		model.MessageText = Resources.email_privacy_message;
-		model.CancelButtonText = Resources.no_thanks_button_text;
-		model.ContinueButtonText = Resources.continue_button_text;
+		model.CancelButtonText = Resources.back_button.ToUpper();
+		model.ContinueButtonText = Resources.go_to_final_step_button;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 	}
 
-	private static void StartKeyboardIdleTimer()
+	private static void InitForStarzSignup(KeyboardLogic keyboardLogic)
+	{
+		KeyboardModel model = keyboardLogic.Model;
+		model.TitleText = Resources.starz_sign_up_title;
+		model.CancelButtonText = Resources.back_button.ToUpper();
+		model.ContinueButtonText = Resources.go_to_final_step_button;
+		model.EmailPromptText = Resources.keyboard_input_email_prompt;
+	}
+
+	private static void InitForRedboxPlusSignup(KeyboardLogic keyboardLogic)
+	{
+		KeyboardModel model = keyboardLogic.Model;
+		model.TitleText = Resources.redbox_plus_sign_up_title;
+		model.MessageText = Resources.email_privacy_message;
+		model.CancelButtonText = Resources.back_button.ToUpper();
+		model.ContinueButtonText = Resources.go_to_final_step_button;
+		model.EmailPromptText = Resources.keyboard_input_email_prompt;
+	}
+
+	private static void InitForLeadGenerationSignup(KeyboardLogic keyboardLogic)
+	{
+		KeyboardModel model = keyboardLogic.Model;
+		model.TitleText = Resources.lead_generation_signup_title_text;
+		model.EmailPromptText = Resources.keyboard_input_email_prompt;
+		model.CancelButtonText = Resources.no_thanks_button.ToUpper();
+		model.ContinueButtonText = Resources.finish_button.ToUpper();
+		StartKeyboardIdleTimer(TimeOutAction2);
+	}
+
+	private static void StartKeyboardIdleTimer(Action timeOutAction)
 	{
 		int num = 15000;
 		num = (OrchestrationService.TTSEnabled ? OrchestrationService.TTSGetTimeout("medium", num) : num);
-		OrchestrationService.StartIdleTimer(num, TimeOutAction, "keyboard_idle_timer");
+		OrchestrationService.StartIdleTimer(num, timeOutAction, "keyboard_idle_timer");
 	}
 
 	private static void TimeOutAction()
@@ -262,6 +301,12 @@ public class KeyboardViewController : BaseViewController
 		{
 			BaseViewController.GetViewService()?.UnwindToSafe(BaseViewController.GetViewService().GetStartOverViewName(), discard: true, "TimeOutAction from idle_timer (KeyboardInfo.CancelAction = null)");
 		}
+	}
+
+	private static void TimeOutAction2()
+	{
+		OrchestrationService.RemoveIdleTimer("keyboard_idle_timer");
+		GetKeyboardLogic()?.CancelAction?.Invoke();
 	}
 
 	private static void ConfigureTTS(KeyboardModel keyboardModel)

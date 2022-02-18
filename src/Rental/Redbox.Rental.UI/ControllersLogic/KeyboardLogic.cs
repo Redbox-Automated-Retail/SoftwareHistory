@@ -72,6 +72,9 @@ public class KeyboardLogic : BaseLogic
 		case KeyboardMode.EMAIL_COMING_SOON:
 		case KeyboardMode.ACCOUNT_SIGN_IN:
 		case KeyboardMode.PERKS_SIGN_UP:
+		case KeyboardMode.STARZ_SIGN_UP:
+		case KeyboardMode.REDBOX_PLUS_SIGN_UP:
+		case KeyboardMode.LEAD_GENERATION_SIGN_UP:
 			return Resources.email_error_message;
 		case KeyboardMode.EMAIL_RECEIPTS_PROMO:
 			return Resources.receipt_email_error;

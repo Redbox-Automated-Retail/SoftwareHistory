@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy;
+using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.KernelExtension;
 
 public class GeneralPreferencePage : UserControl, IPreferencePageHost
 {
+	private readonly IStoreServices m_storeServices;
+
 	private bool m_isLoaded;
 
 	private IContainer components;
@@ -51,6 +55,7 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 	public GeneralPreferencePage()
 	{
 		InitializeComponent();
+		m_storeServices = ServiceLocator.Instance.GetService<IStoreServices>();
 	}
 
 	public bool SaveValues(IPreferencePage preferencePage)
@@ -62,17 +67,17 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 	{
 		m_isLoaded = false;
 		m_kioskServicesUrlTextBox.Text = KioskServicesProxy.Instance.Url;
-		m_storeNumberTextBox.Text = StoreServicesProxy.Instance.StoreNumber;
-		m_standAloneModeCheckBox.Checked = StoreServicesProxy.Instance.IsStandAlone;
+		m_storeNumberTextBox.Text = m_storeServices.StoreNumberString;
+		m_standAloneModeCheckBox.Checked = m_storeServices.IsStandAlone;
 		m_kioskServicesTimeoutTextBox.Text = KioskServicesProxy.Instance.Timeout.ToString();
-		m_runInitialSyncCheckBox.Checked = StoreServicesProxy.Instance.RunInitialSync;
+		m_runInitialSyncCheckBox.Checked = m_storeServices.RunInitialSync;
 		m_restfulCallCheckBox.Checked = KioskServicesProxy.Instance.Protocol == KioskServicesProtocol.REST;
-		m_syncTypeComboBox.SelectedIndex = m_syncTypeComboBox.FindStringExact(StoreServicesProxy.Instance.InitialSyncType);
+		m_syncTypeComboBox.SelectedIndex = m_syncTypeComboBox.FindStringExact(m_storeServices.InitialSyncType);
 		if (m_syncTypeComboBox.SelectedIndex == -1)
 		{
 			m_syncTypeComboBox.SelectedIndex = 0;
 		}
-		m_synchronizeTimeToServerCheckBox.Checked = StoreServicesProxy.Instance.SynchronizeTimeToServer;
+		m_synchronizeTimeToServerCheckBox.Checked = m_storeServices.SynchronizeTimeToServer;
 		m_currentVersionsListView.BeginUpdate();
 		m_currentVersionsListView.Items.Clear();
 		foreach (KeyValuePair<string, string> currentVersion in KioskServicesProxy.Instance.GetCurrentVersions())
@@ -89,7 +94,7 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			StoreServicesProxy.Instance.IsStandAlone = m_standAloneModeCheckBox.Checked;
+			m_storeServices.IsStandAlone = m_standAloneModeCheckBox.Checked;
 		}
 	}
 
@@ -97,7 +102,7 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			StoreServicesProxy.Instance.StoreNumber = m_storeNumberTextBox.Text;
+			m_storeServices.StoreNumberString = m_storeNumberTextBox.Text;
 		}
 	}
 
@@ -126,7 +131,7 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			StoreServicesProxy.Instance.RunInitialSync = m_runInitialSyncCheckBox.Checked;
+			m_storeServices.RunInitialSync = m_runInitialSyncCheckBox.Checked;
 			m_syncTypeComboBox.Enabled = m_runInitialSyncCheckBox.Checked;
 		}
 	}
@@ -135,7 +140,7 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			StoreServicesProxy.Instance.InitialSyncType = m_syncTypeComboBox.SelectedItem.ToString();
+			m_storeServices.InitialSyncType = m_syncTypeComboBox.SelectedItem.ToString();
 		}
 	}
 
@@ -151,7 +156,7 @@ public class GeneralPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			StoreServicesProxy.Instance.SynchronizeTimeToServer = m_synchronizeTimeToServerCheckBox.Checked;
+			m_storeServices.SynchronizeTimeToServer = m_synchronizeTimeToServerCheckBox.Checked;
 		}
 	}
 

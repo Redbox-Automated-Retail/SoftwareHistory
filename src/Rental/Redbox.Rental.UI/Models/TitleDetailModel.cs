@@ -73,6 +73,8 @@ public class TitleDetailModel : DependencyObject
 
 	public event Action<IBrowseItemModel> SeeFullDetails;
 
+	public event Action RedboxPlusInfo;
+
 	public event Action StatisticPopup;
 
 	public event Action<TitleDetailModel> OnTitleDetailModelChanged;
@@ -110,6 +112,11 @@ public class TitleDetailModel : DependencyObject
 	public void ProcessSeeFullDetails(IBrowseItemModel model)
 	{
 		SeeFullDetails?.Invoke(model);
+	}
+
+	public void ProcessRedboxPlusInfo()
+	{
+		RedboxPlusInfo?.Invoke();
 	}
 
 	public void ProcessStatisticPopup()

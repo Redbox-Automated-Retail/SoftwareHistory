@@ -259,15 +259,14 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 							(Transform)value2
 						}
 					};
-					double num = 2.0;
-					Thickness value4 = new Thickness(2.0);
-					Thickness value5 = new Thickness(num);
-					double num2 = value5.Bottom - value4.Bottom;
+					Thickness value4 = new Thickness(3.0);
+					Thickness value5 = new Thickness(3.0);
+					double num = value5.Bottom - value4.Bottom;
 					bool flag = carouselPosition2 == _carouselPositions.CenterCarouselPosition;
 					bool flag2 = carouselPosition == _carouselPositions.CenterCarouselPosition;
-					double num3 = carouselPosition.Width - (flag2 ? num2 : 0.0);
-					double value6 = num3 / carouselPosition.Width;
-					double value7 = (carouselPosition2.Width - (flag ? num2 : 0.0)) / num3;
+					double num2 = carouselPosition.Width - (flag2 ? num : 0.0);
+					double value6 = num2 / carouselPosition.Width;
+					double value7 = (carouselPosition2.Width - (flag ? num : 0.0)) / num2;
 					DoubleAnimationUsingKeyFrames doubleAnimationUsingKeyFrames = new DoubleAnimationUsingKeyFrames
 					{
 						KeyFrames = { (DoubleKeyFrame)new EasingDoubleKeyFrame
@@ -302,9 +301,9 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 					Storyboard.SetTarget(doubleAnimationUsingKeyFrames, displayProductUserControl);
 					Storyboard.SetTargetProperty(doubleAnimationUsingKeyFrames, new PropertyPath("(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleX)"));
 					_carouselRotationStoryboard.Children.Add(doubleAnimationUsingKeyFrames);
-					double num4 = carouselPosition.Height - (flag2 ? num2 : 0.0);
-					double value8 = num4 / carouselPosition.Height;
-					double value9 = (carouselPosition2.Height - (flag ? num2 : 0.0)) / num4;
+					double num3 = carouselPosition.Height - (flag2 ? num : 0.0);
+					double value8 = num3 / carouselPosition.Height;
+					double value9 = (carouselPosition2.Height - (flag ? num : 0.0)) / num3;
 					DoubleAnimationUsingKeyFrames doubleAnimationUsingKeyFrames2 = new DoubleAnimationUsingKeyFrames
 					{
 						KeyFrames = { (DoubleKeyFrame)new EasingDoubleKeyFrame
@@ -415,24 +414,24 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 					colorAnimationUsingKeyFrames.KeyFrames.Add(new EasingColorKeyFrame
 					{
 						KeyTime = KeyTime.FromTimeSpan(TimeSpan.Zero),
-						Value = Color.FromRgb(60, 56, 57)
+						Value = Color.FromRgb(155, 153, 156)
 					});
 					if (flag2)
 					{
 						colorAnimationUsingKeyFrames.KeyFrames.Add(new EasingColorKeyFrame
 						{
 							KeyTime = KeyTime.FromTimeSpan(timeSpan),
-							Value = Color.FromRgb(153, 14, 22)
+							Value = Color.FromRgb(155, 153, 156)
 						});
 						colorAnimationUsingKeyFrames.KeyFrames.Add(new EasingColorKeyFrame
 						{
 							KeyTime = KeyTime.FromTimeSpan(timeSpan3),
-							Value = Color.FromRgb(153, 14, 22)
+							Value = Color.FromRgb(155, 153, 156)
 						});
 						colorAnimationUsingKeyFrames.KeyFrames.Add(new EasingColorKeyFrame
 						{
 							KeyTime = KeyTime.FromTimeSpan(timeSpan5),
-							Value = Color.FromRgb(60, 56, 57)
+							Value = Color.FromRgb(155, 153, 156)
 						});
 					}
 					Storyboard.SetTarget(colorAnimationUsingKeyFrames, value);
@@ -476,12 +475,12 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 						doubleAnimationUsingKeyFrames6.KeyFrames.Add(new EasingDoubleKeyFrame
 						{
 							KeyTime = KeyTime.FromTimeSpan(timeSpan),
-							Value = num
+							Value = 2.0
 						});
 						doubleAnimationUsingKeyFrames6.KeyFrames.Add(new EasingDoubleKeyFrame
 						{
 							KeyTime = KeyTime.FromTimeSpan(timeSpan3),
-							Value = num
+							Value = 2.0
 						});
 						doubleAnimationUsingKeyFrames6.KeyFrames.Add(new EasingDoubleKeyFrame
 						{
@@ -569,8 +568,8 @@ public partial class RedboxClassicProductCarouselUserControl : UserControl, ICom
 
 	private void InitializeCarouselImageSizes()
 	{
-		_carouselImageSmallSize = new Point(216.0, 295.0);
-		_carouselImageLargeSize = new Point(280.0, 391.0);
+		_carouselImageSmallSize = new Point(216.0, 324.0);
+		_carouselImageLargeSize = new Point(280.0, 420.0);
 	}
 
 	private void DisplayProductSelectedCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)

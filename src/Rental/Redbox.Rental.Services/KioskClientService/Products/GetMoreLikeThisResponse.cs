@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Redbox.Rental.Model;
 
 namespace Redbox.Rental.Services.KioskClientService.Products;
 

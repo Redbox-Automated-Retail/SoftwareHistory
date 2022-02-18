@@ -43,61 +43,6 @@ internal class KioskDataServicesProxy
 		return ExecuteMessage("AddKioskSessionJson", "api/KioskData/AddKioskSessionJson", payload);
 	}
 
-	public IDictionary<string, object> KioskAlert(byte[] payload)
-	{
-		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskAlertsToKioskDataService)
-		{
-			return ExecuteMessage("KioskAlert", "api/KioskData/KioskAlert", payload);
-		}
-		LogHelper.Instance.Log("KioskDataServicesProxy.KioskAlert() - bypassing kiosk alert live call to AWS due to configuration flag being off");
-		return new Dictionary<string, object> { { "success", true } };
-	}
-
-	public IDictionary<string, object> AuditEvent(byte[] payload)
-	{
-		if (ServiceLocator.Instance.GetService<IConfiguration>().SendAuditEventsToKioskDataService)
-		{
-			return ExecuteMessage("AuditEvent", "api/KioskData/AuditEvent", payload);
-		}
-		LogHelper.Instance.Log("KioskDataServicesProxy.AuditEvent() - bypassing audit event live call to AWS due to configuration flag being off");
-		return new Dictionary<string, object> { { "success", true } };
-	}
-
-	public IDictionary<string, object> KioskFunctionCheck(byte[] payload)
-	{
-		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskFunctionChecksToKioskDataService)
-		{
-			return ExecuteMessage("KioskFunctionCheck", "api/KioskData/KioskFunctionCheck", payload);
-		}
-		LogHelper.Instance.Log("KioskDataServicesProxy.KioskFunctionCheck() - bypassing live call to AWS due to configuration flag being off");
-		return new Dictionary<string, object> { { "success", true } };
-	}
-
-	public IDictionary<string, object> KioskVersions(byte[] payload)
-	{
-		return ExecuteMessage("KioskVersions", "api/KioskData/KioskVersion", payload);
-	}
-
-	public IDictionary<string, object> KioskStatistics(byte[] payload)
-	{
-		return ExecuteMessage("KioskStatistics", "api/KioskData/KioskStatistics", payload);
-	}
-
-	public IDictionary<string, object> KioskProperties(byte[] payload)
-	{
-		return ExecuteMessage("KioskProperties", "api/KioskData/KioskProperties", payload);
-	}
-
-	public IDictionary<string, object> KioskEvents(byte[] payload)
-	{
-		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskEventsToKioskDataService)
-		{
-			return ExecuteMessage("KioskEvents", "api/KioskData/KioskEvents", payload);
-		}
-		LogHelper.Instance.Log("KioskDataServicesProxy.KioskEvents() - bypassing live call to AWS due to configuration flag being off");
-		return new Dictionary<string, object> { { "success", true } };
-	}
-
 	private IDictionary<string, object> ExecuteMessage(string messageType, string apiUri, byte[] payload)
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
@@ -184,19 +129,15 @@ internal class KioskDataServicesProxy
 		{
 			return;
 		}
-		LogHelper.Instance.Log("KioskDataServicesProxy.LoadUriAndKey() - config valid");
 		Uri uri = null;
 		string kioskDataServicesUrl = service.KioskDataServicesUrl;
 		string kioskDataServicesKey = service.KioskDataServicesKey;
-		LogHelper.Instance.Log($"KioskDataServicesProxy.LoadUriAndKey() - config url: '{kioskDataServicesUrl}'");
 		if (!string.IsNullOrEmpty(kioskDataServicesUrl))
 		{
 			kioskDataServicesUrl = kioskDataServicesUrl.TrimEnd('/') + "/";
-			LogHelper.Instance.Log($"KioskDataServicesProxy.LoadUriAndKey() - config value trimmed: '{kioskDataServicesUrl}'");
 			try
 			{
 				uri = new Uri(kioskDataServicesUrl);
-				LogHelper.Instance.Log($"KioskDataServicesProxy.LoadUriAndKey() - created uri: '{uri}'");
 			}
 			catch (Exception e)
 			{

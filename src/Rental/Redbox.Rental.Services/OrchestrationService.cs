@@ -7,6 +7,7 @@ using System.Threading;
 using System.Windows.Media.Imaging;
 using System.Xml;
 using DeviceService.ComponentModel;
+using Redbox.Controls;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
@@ -185,6 +186,7 @@ public static class OrchestrationService
 	{
 		ServiceLocator.Instance.GetService<IViewService>().ClearCache(clearResourceViewsOnly: false);
 		WPFViewFrame.CacheWPFViewFrames("Redbox.Rental.Services.dll");
+		WPFViewFrame.CacheWPFViewFrames("Redbox.FMA.UI.dll");
 	}
 
 	public static void InvokeIdleTimerExpireSessionCallback()
@@ -274,6 +276,19 @@ public static class OrchestrationService
 		}
 	}
 
+	public static void SetThemeAnimationState()
+	{
+		IThemeService service = ServiceLocator.Instance.GetService<IThemeService>();
+		IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
+		IViewService service3 = ServiceLocator.Instance.GetService<IViewService>();
+		if (service?.CurrentTheme != null && service2 != null)
+		{
+			service.CurrentTheme.IsAnimated = service2.ButtonAnimationEnabled;
+			RoundedButton.DefaultIsAnimated = service2.ButtonAnimationEnabled;
+			RoundedButton.UITaskScheduler = service3?.UITaskScheduler;
+		}
+	}
+
 	public static BitmapImage GetProductBitmapImage(IKioskProduct kioskProduct)
 	{
 		BitmapImage result = null;
@@ -309,6 +324,16 @@ public static class OrchestrationService
 					result = Redbox.Rental.UI.Views.Constants.Images.CollectionsCarousel;
 				}
 				break;
+			case KioskProductType.Subscription:
+				if (kioskProduct is IStarzSubscriptionProduct)
+				{
+					result = Redbox.Rental.UI.Views.Constants.Images.StarzBoxArt;
+				}
+				else if (kioskProduct is IRedboxPlusSubscriptionProduct)
+				{
+					result = Redbox.Rental.UI.Views.Constants.Images.RedboxPlusBoxArt;
+				}
+				break;
 			default:
 				result = Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt;
 				break;
@@ -319,12 +344,12 @@ public static class OrchestrationService
 
 	public static void ComingSoonKioskOptIn()
 	{
-		string storeNumber = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue<string>("Store", "ID");
-		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
+		string s = ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue<string>("Store", "ID");
+		IMarketingServices service = ServiceLocator.Instance.GetService<IMarketingServices>();
 		List<IOptInItem> list = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.ComingSoonOptInInfo.OptInItems;
 		if (list != null && list.Count > 0)
 		{
-			service.KioskOptIn(storeNumber, list, null);
+			service.KioskOptIn(long.Parse(s), list, null);
 		}
 	}
 
@@ -454,9 +479,13 @@ public static class OrchestrationService
 		return service.ShowCollectionsPopUp;
 	}
 
-	public static void CreateStartViewAnalytics(string sessionStartTriggerAction, string sessionType)
+	public static void CreateStartViewAnalytics(string sessionStartTriggerActionName, string sessionType)
 	{
-		StarteUserInteraction(sessionStartTriggerAction, Enum<AnalyticsSessionType>.ParseIgnoringCase(sessionType, AnalyticsSessionType.BrowseVend));
+		ISessionStartTriggerAction sessionStartTriggerAction = SessionStartTriggerActionList.Instance.FindByName(sessionStartTriggerActionName);
+		if (sessionStartTriggerAction != null)
+		{
+			StartUserInteraction(sessionStartTriggerAction, Enum<AnalyticsSessionType>.ParseIgnoringCase(sessionType, AnalyticsSessionType.BrowseVend));
+		}
 	}
 
 	public static string GetCulture()
@@ -536,6 +565,15 @@ public static class OrchestrationService
 		return ServiceLocator.Instance.GetService<IViewService>()?.Peek(index);
 	}
 
+	public static IViewFrameInstance PeekViewFrameByName(string viewName, out int index)
+	{
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		int index2 = -1;
+		IViewFrameInstance result = service?.PeekViewFrameByName(viewName, out index2);
+		index = index2;
+		return result;
+	}
+
 	public static void ViewGoBack(object context, bool popOnly)
 	{
 		ServiceLocator.Instance.GetService<IViewService>()?.GoBack(context, popOnly);
@@ -556,6 +594,17 @@ public static class OrchestrationService
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		service.ClearCache(clearResourceViewsOnly: true);
 		service.Show();
+	}
+
+	public static bool IsCurrentViewValid(string expectedViewName, bool logError = true)
+	{
+		string text = PeekView();
+		bool num = text == expectedViewName;
+		if (!num & logError)
+		{
+			LogHelper.Instance.Log($"Invalid view.  Expected {expectedViewName} but found {text}");
+		}
+		return num;
 	}
 
 	public static bool IsCultureSpanish()
@@ -650,20 +699,23 @@ public static class OrchestrationService
 		return result;
 	}
 
-	public static void StarteUserInteraction(string userTriggerAction, AnalyticsSessionType sessionType = AnalyticsSessionType.BrowseVend)
+	public static void StartUserInteraction(ISessionStartTriggerAction userTriggerAction, AnalyticsSessionType sessionType = AnalyticsSessionType.BrowseVend)
 	{
 		LogHelper.Instance.Log($"OrchestrationService.StartUserInteraction - Session Type: {sessionType},  user trigger action: {userTriggerAction}");
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			ISession instance = Redbox.Rental.Services.Session.Session.Instance;
+			if (instance != null && !instance.HasReceivedUserInteraction)
+			{
+				ServiceLocator.Instance.GetService<IKioskClientService>()?.Session?.Start(AnalyticsSessionTypeToKioskClientServiceSessionType(sessionType));
+			}
+			Redbox.Rental.Services.Session.Session.Instance?.SessionStartTriggerActions?.Add(userTriggerAction);
+		}
 		IShoppingSessionService service = ServiceLocator.Instance.GetService<IShoppingSessionService>();
 		if (!service.StartUserInteraction())
 		{
 			LogHelper.Instance.Log("OrchestrationService.StartUserInteraction - session already started");
 			return;
-		}
-		if (Redbox.Rental.Services.Session.Session.Instance != null)
-		{
-			Redbox.Rental.Services.Session.Session.Instance.HasReceivedUserInteraction = true;
-			Redbox.Rental.Services.Session.Session.Instance.SessionStartTriggerAction = userTriggerAction;
-			ServiceLocator.Instance.GetService<IKioskClientService>()?.Session?.Start(AnalyticsSessionTypeToKioskClientServiceSessionType(sessionType));
 		}
 		IShoppingSession currentSession = service.GetCurrentSession();
 		if (currentSession != null)
@@ -684,15 +736,13 @@ public static class OrchestrationService
 			}
 			IAnalyticsService service2 = ServiceLocator.Instance.GetService<IAnalyticsService>();
 			service2?.Start(currentSession.Id.ToString(), sessionType2);
-			if (Redbox.Rental.Services.Session.Session.Instance != null && Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode)
-			{
-				service2?.AddSessionProperty("IsZeroTouch", Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode);
-			}
 			service2?.AddView(ViewService?.GetCurrentViewAnalyticsName());
+			service2?.AddQueuedViewEvents();
 		}
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.EnableBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableBrowseMessagePopup;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.EnableStarzOffer = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableStarzOffer;
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMessagePopupDuration = Redbox.Rental.Services.Configuration.Configuration.Instance.BrowseMessagePopupDuration;
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ShowBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableBrowseMessagePopup;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ShowBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableBrowseMessagePopup || Redbox.Rental.Services.Configuration.Configuration.Instance.EnableStarzOffer;
 		RentalRefreshIfNeeded();
 	}
 
@@ -858,7 +908,7 @@ public static class OrchestrationService
 		{
 			foreach (string eachBarcode in ReservationFunctions.GetReservedBarcodesToVend())
 			{
-				if (!rentalShoppingCart.Items.Any((IRentalShoppingCartItem x) => x.Barcode == eachBarcode))
+				if (!rentalShoppingCart.TitleItems.Any((IRentalShoppingCartTitleItem x) => x.Barcode == eachBarcode))
 				{
 					result = false;
 					LogHelper.Instance.Log($"Error: reserved barcode {eachBarcode} not found in shopping cart.");

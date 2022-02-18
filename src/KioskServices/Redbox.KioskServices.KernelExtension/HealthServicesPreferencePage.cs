@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy;
 using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.KernelExtension;
@@ -12,6 +11,8 @@ namespace Redbox.KioskServices.KernelExtension;
 public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 {
 	private bool m_isLoaded;
+
+	private readonly IHealthServices _healthServices;
 
 	private IContainer components;
 
@@ -57,6 +58,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 
 	public HealthServicesPreferencePage()
 	{
+		_healthServices = ServiceLocator.Instance.GetService<IHealthServices>();
 		InitializeComponent();
 	}
 
@@ -68,14 +70,14 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 	public void LoadValues(IPreferencePage preferencePage)
 	{
 		m_isLoaded = false;
-		m_liveCallCheckBox.Checked = HealthServicesProxy.Instance.LiveCall;
-		m_pingPeriodTextBox.Text = HealthServicesProxy.Instance.PingPeriod.ToString();
-		m_smtpServerTextBox.Text = HealthServicesProxy.Instance.SmtpServer;
-		m_recipientsTextBox.Text = HealthServicesProxy.Instance.Recipients;
-		m_remoteServerStatusTextBox.Text = HealthServicesProxy.Instance.RemoteServicesStatus;
-		m_simulateServerBusyCheckBox.Checked = HealthServicesProxy.Instance.SimulateServerBusyError;
-		m_communicationsStatusTextBox.Text = (HealthServicesProxy.Instance.IsOnline ? "Online" : "Offline");
-		m_simulateCommunicationsFailureCheckBox.Checked = HealthServicesProxy.Instance.SimulateCommunicationsFailure;
+		m_liveCallCheckBox.Checked = _healthServices.LiveCall;
+		m_pingPeriodTextBox.Text = _healthServices.PingPeriod.ToString();
+		m_smtpServerTextBox.Text = _healthServices.SmtpServer;
+		m_recipientsTextBox.Text = _healthServices.Recipients;
+		m_remoteServerStatusTextBox.Text = _healthServices.RemoteServicesStatus;
+		m_simulateServerBusyCheckBox.Checked = _healthServices.SimulateServerBusyError;
+		m_communicationsStatusTextBox.Text = (_healthServices.IsOnline ? "Online" : "Offline");
+		m_simulateCommunicationsFailureCheckBox.Checked = _healthServices.SimulateCommunicationsFailure;
 		m_isLoaded = true;
 	}
 
@@ -83,7 +85,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			HealthServicesProxy.Instance.Ping(StoreServicesProxy.Instance.StoreNumber);
+			_healthServices.Ping(ServiceLocator.Instance.GetService<IStoreServices>().StoreNumberString);
 		}
 	}
 
@@ -107,7 +109,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 			}
 			else
 			{
-				HealthServicesProxy.Instance.PingPeriod = result;
+				_healthServices.PingPeriod = result;
 			}
 		}
 	}
@@ -116,7 +118,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			HealthServicesProxy.Instance.LiveCall = m_liveCallCheckBox.Checked;
+			_healthServices.LiveCall = m_liveCallCheckBox.Checked;
 		}
 	}
 
@@ -124,7 +126,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			HealthServicesProxy.Instance.SmtpServer = m_smtpServerTextBox.Text;
+			_healthServices.SmtpServer = m_smtpServerTextBox.Text;
 		}
 	}
 
@@ -132,7 +134,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			HealthServicesProxy.Instance.Recipients = m_recipientsTextBox.Text;
+			_healthServices.Recipients = m_recipientsTextBox.Text;
 		}
 	}
 
@@ -140,7 +142,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			HealthServicesProxy.Instance.SimulateServerBusyError = m_simulateServerBusyCheckBox.Checked;
+			_healthServices.SimulateServerBusyError = m_simulateServerBusyCheckBox.Checked;
 		}
 	}
 
@@ -148,7 +150,7 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			HealthServicesProxy.Instance.SimulateCommunicationsFailure = m_simulateCommunicationsFailureCheckBox.Checked;
+			_healthServices.SimulateCommunicationsFailure = m_simulateCommunicationsFailureCheckBox.Checked;
 		}
 	}
 
@@ -156,8 +158,8 @@ public class HealthServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			m_remoteServerStatusTextBox.Text = HealthServicesProxy.Instance.RemoteServicesStatus;
-			m_communicationsStatusTextBox.Text = (HealthServicesProxy.Instance.IsOnline ? "Online" : "Offline");
+			m_remoteServerStatusTextBox.Text = _healthServices.RemoteServicesStatus;
+			m_communicationsStatusTextBox.Text = (_healthServices.IsOnline ? "Online" : "Offline");
 		}
 	}
 

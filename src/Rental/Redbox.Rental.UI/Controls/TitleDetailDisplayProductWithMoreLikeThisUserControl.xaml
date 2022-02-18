@@ -10,7 +10,7 @@
           </DataTrigger>
         </Style.Triggers>
       </Style>
-      <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+      <Redbox:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     </ResourceDictionary>
   </FrameworkElement.Resources>
   <UIElement.InputBindings>
@@ -20,8 +20,8 @@
     <StackPanel>
       <Grid>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="{Binding Path=BoxArtGridWidth, FallbackValue=529}" />
-          <ColumnDefinition Width="{Binding Path=DetailsGridWidth, FallbackValue=495}" />
+          <ColumnDefinition Width="{Binding Path=BoxArtGridWidth, FallbackValue=512}" />
+          <ColumnDefinition Width="{Binding Path=DetailsGridWidth, FallbackValue=512}" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
           <RowDefinition MinHeight="0" MaxHeight="98" Height="{Binding AdHeight}" />
@@ -33,27 +33,46 @@
           <Image Name="AdImage" Height="90" Width="728" Source="{Binding AdImage}" Visibility="{Binding AdImageVisibility, FallbackValue=Collapsed}" />
         </Grid>
         <Grid Column="0" Row="1" Background="#FFFFFFFF">
-          <Grid Margin="101,35,0,0">
+          <Grid Margin="66,35,0,0">
             <Grid Margin="{Binding FlagMargin, FallbackValue=0}">
-              <localControls:DisplayProductUserControl VerticalAlignment="Bottom" HorizontalAlignment="Center" ClipToBounds="False" />
+              <Grid>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="*" />
+                  <RowDefinition Height="{Binding Path=RedboxPlusInfoADAGridHeight, FallbackValue=0}" />
+                </Grid.RowDefinitions>
+                <localControls:DisplayProductUserControl Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center" ClipToBounds="False" />
+                <Redbox:RoundedButton Name="RedboxPlusInfoADAButton" Grid.Row="1" VerticalAlignment="Bottom" HorizontalAlignment="Center" Style="{StaticResource transparent_button_style}" Command="{x:Static localbase:Commands.RedboxPlusInfoCommand}" Visibility="{Binding Path=RedboxPlusInfoADAVisibility, FallbackValue=Collapsed}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Name="RedboxPlusInfoADAText" Style="{StaticResource font_montserrat_bold_18}" Foreground="#481B54" VerticalAlignment="Center" Text="{Binding Path=RedboxPlusInfoText, FallbackValue=This is a Redbox+ movie!}" />
+                    <Image Name="RedboxPlusInfoADAImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/information.png" Width="28" Height="28" Margin="9,0,0,0" />
+                  </StackPanel>
+                </Redbox:RoundedButton>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
         <Grid Column="1" Row="1" Background="#FFFFFFFF">
-          <DockPanel LastChildFill="True" Margin="35,35,66,0">
+          <DockPanel LastChildFill="True" Margin="0,35,101,0">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
-              <Border Padding="0,0,12,0" Margin="0,0,12,0" BorderBrush="#060208" BorderThickness="{Binding RatingBorderThickness, FallbackValue='0,0,1,0'}" Visibility="{Binding RatingVisibility, FallbackValue=Visible}">
+              <Border Height="16" Padding="0,0,12,0" Margin="0,0,12,0" BorderBrush="#060208" BorderThickness="{Binding RatingBorderThickness, FallbackValue='0,0,1,0'}" Visibility="{Binding RatingVisibility, FallbackValue=Visible}">
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#060208" Text="{Binding Rating}" />
               </Border>
-              <Border Padding="0,0,12,0" Margin="0,0,12,0" BorderBrush="#060208" BorderThickness="{Binding RunningTimeBorderThickness, FallbackValue='0,0,1,0'}" Visibility="{Binding RunningTimeVisibility, FallbackValue=Collapsed}">
+              <Border Height="16" Padding="0,0,12,0" Margin="0,0,12,0" BorderBrush="#060208" BorderThickness="{Binding RunningTimeBorderThickness, FallbackValue='0,0,1,0'}" Visibility="{Binding RunningTimeVisibility, FallbackValue=Collapsed}">
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#060208" Text="{Binding RunningTime}" />
               </Border>
-              <Border Padding="0,0,12,0" Margin="0,0,12,0" BorderBrush="#060208" BorderThickness="{Binding ReleaseYearBorderThickness, FallbackValue='0,0,1,0'}" Visibility="{Binding ReleaseYearVisibility, FallbackValue=Collapsed}">
+              <Border Height="16" Padding="0,0,12,0" Margin="0,0,12,0" BorderBrush="#060208" BorderThickness="{Binding ReleaseYearBorderThickness, FallbackValue='0,0,1,0'}" Visibility="{Binding ReleaseYearVisibility, FallbackValue=Collapsed}">
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#060208" Text="{Binding ReleaseYear}" />
               </Border>
-              <Border Visibility="{Binding CCSupported, FallbackValue=Collapsed}">
+              <Border Height="16" Padding="0,0,12,0" Margin="0,0,12,0" Visibility="{Binding CCSupported, FallbackValue=Collapsed}">
                 <TextBlock TextAlignment="Center" Style="{StaticResource font_montserrat_semibold_12}" Foreground="#060208" Text="CC" />
               </Border>
+              <Border Height="16" Padding="0,0,12,0" Margin="-12,0,0,0" BorderThickness="1,0,0,0" BorderBrush="#060208" Visibility="{Binding Path=RedboxPlusInfoVisibility, FallbackValue=Collapsed}" />
+              <Redbox:RoundedButton Name="RedboxPlusInfoButton" Margin="0,0,0,-3" Style="{StaticResource transparent_button_style}" Command="{x:Static localbase:Commands.RedboxPlusInfoCommand}" Visibility="{Binding Path=RedboxPlusInfoVisibility, FallbackValue=Collapsed}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Name="RedboxPlusInfoText" Style="{StaticResource font_montserrat_bold_16}" LineHeight="24" Foreground="#481B54" VerticalAlignment="Center" Text="{Binding Path=RedboxPlusInfoText, FallbackValue=This is a Redbox+ movie!}" />
+                  <Image Name="RedboxPlusInfoImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/information.png" Width="28" Height="28" Margin="9,-3,0,0" />
+                </StackPanel>
+              </Redbox:RoundedButton>
             </StackPanel>
             <TextBlock Style="{StaticResource font_montserrat_semibold_32}" DockPanel.Dock="Top" Margin="0,6,0,6" Foreground="#060208" LineHeight="40" MaxHeight="80" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding Header, FallbackValue=HEADER}" />
             <TextBlock Style="{StaticResource font_montserrat_medium_16}" DockPanel.Dock="Top" Margin="0,0,0,6" Foreground="#060208" LineHeight="24" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="{Binding Path=DescriptionMaxHeight, FallbackValue=144}" Text="{Binding Description, FallbackValue=DESCRIPTION}" />
@@ -98,7 +117,7 @@
             <StackPanel Name="rightButtons" Orientation="Horizontal" DockPanel.Dock="Right" FlowDirection="RightToLeft" Margin="0,0,24,0" Visibility="{Binding AddButtonBarVisibility, FallbackValue=Collapsed}">
               <Redbox:RoundedButton Name="buy_button" Style="{StaticResource rubine_no_border_button_style}" Margin="0,0,16,0" Height="56" Width="180" CornerRadius="28" Command="{x:Static localbase:Commands.BuyCommand}" Focusable="False" Visibility="{Binding ShowBuy, FallbackValue=Visible}">
                 <StackPanel Orientation="Vertical" FlowDirection="LeftToRight" HorizontalAlignment="Center" VerticalAlignment="Center">
-                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonBuyTextStyle, FallbackValue={StaticResource font_montserrat_extrabold_16}}" Text="{Binding BuyText, FallbackValue=OWN IT}" />
+                  <TextBlock TextAlignment="Center" Style="{Binding BuyButtonBuyTextStyle, FallbackValue={StaticResource font_montserrat_extrabold_16}}" Text="{Binding BuyText, FallbackValue=BUY IT}" />
                   <TextBlock TextAlignment="Center" Style="{Binding BuyButtonBuyPriceTextStyle, FallbackValue={StaticResource font_montserrat_medium_20}}" Text="{Binding BuyPriceText, FallbackValue=$$$}" />
                 </StackPanel>
               </Redbox:RoundedButton>
@@ -120,7 +139,7 @@
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
             </StackPanel>
-            <StackPanel Name="comingSoonButtons" Orientation="Vertical" DockPanel.Dock="Right" FlowDirection="RightToLeft" Margin="0,5,0,0" Visibility="{Binding ComingSoonVisibility, FallbackValue=Collapsed}">
+            <StackPanel Name="comingSoonButtons" Orientation="Vertical" DockPanel.Dock="Right" FlowDirection="RightToLeft" Margin="0,5,24,0" Visibility="{Binding ComingSoonVisibility, FallbackValue=Collapsed}">
               <TextBlock Name="comingSoonDateText" Style="{StaticResource font_montserrat_medium_16}" HorizontalAlignment="Center" Foreground="#AC2C32" Text="{Binding ComingSoonLabelText, FallbackValue=Coming}" />
               <Redbox:RoundedButton Name="coming_soon_email_me" Style="{StaticResource classic_rubine_button_style}" Height="56" Width="180" CornerRadius="28" Command="{x:Static localbase:Commands.MoreInfoCommand}" Focusable="False">
                 <TextBlock Style="{StaticResource font_montserrat_medium_20}" TextAlignment="Center" Text="{Binding ComingSoonButtonText, FallbackValue=Email me}" />

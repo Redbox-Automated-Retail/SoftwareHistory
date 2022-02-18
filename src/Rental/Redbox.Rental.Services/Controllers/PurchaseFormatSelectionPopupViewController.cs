@@ -50,8 +50,20 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		}
 		TitleRollupProduct rollupProduct = parameter.RollupProduct;
 		bool isPurchase = parameter.IsPurchase;
+		bool flag = parameter.RedboxPlusBenefitId == 2 && (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.HasAnyTitleRollupTitle(parameter.RollupProduct) ?? false);
 		formatSelectionPopupViewModel.HeaderText = rollupProduct.LongName;
-		formatSelectionPopupViewModel.DescriptionText = (isPurchase ? Resources.purchase_format_dialog_description : Resources.rental_format_dialog_description);
+		if (isPurchase)
+		{
+			formatSelectionPopupViewModel.DescriptionText = Resources.purchase_format_dialog_description;
+		}
+		else if (flag)
+		{
+			formatSelectionPopupViewModel.DescriptionText = string.Format(Resources.redbox_plus_already_in_cart_message, parameter?.RollupProduct?.ProductName);
+		}
+		else
+		{
+			formatSelectionPopupViewModel.DescriptionText = Resources.rental_format_dialog_description;
+		}
 		if (parameter.DiscountedPriceCalc != null)
 		{
 			FormatSelectionPopupViewModel formatSelectionPopupViewModel2 = formatSelectionPopupViewModel;
@@ -60,7 +72,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		formatSelectionPopupViewModel.DigitalCodeInfoText = Resources.title_rollup_format_digital_code_info;
 		formatSelectionPopupViewModel.OnFormatButtonClicked = delegate(TitleType type)
 		{
-			ProcessButtonClick(rollupProduct, type, type.GetDisplayName(), isPurchase, parameter.ShowMnp);
+			ProcessButtonClick(rollupProduct, type, type.GetDisplayName(), isPurchase, parameter.ShowMnp, parameter.RedboxPlusBenefitId);
 		};
 		formatSelectionPopupViewModel.OnDigitalCodeInfoButtonClicked = delegate
 		{
@@ -68,22 +80,9 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		};
 		foreach (ITitleProduct item in rollupProduct.KioskProducts.OrderBy((ITitleProduct p) => (int)((p.TitleType != TitleType.DigitalCode) ? p.TitleType : ((TitleType)999))))
 		{
-			AddFormatButtonData(formatSelectionPopupViewModel, item, service, isPurchase, parameter.DiscountedPriceCalc);
+			AddFormatButtonData(formatSelectionPopupViewModel, item, service, isPurchase, parameter.DiscountedPriceCalc, parameter.RedboxPlusBenefitId);
 		}
-		int count = formatSelectionPopupViewModel.ButtonData.Count;
-		if (count < 4)
-		{
-			formatSelectionPopupViewModel.DialogHeight = 400;
-		}
-		else
-		{
-			formatSelectionPopupViewModel.DialogHeight = 493;
-		}
-		if (formatSelectionPopupViewModel.DigitalCodeInfoVisibility == Visibility.Visible)
-		{
-			formatSelectionPopupViewModel.DialogHeight += 75;
-		}
-		if (count == 3)
+		if (formatSelectionPopupViewModel.ButtonData.Count == 3)
 		{
 			formatSelectionPopupViewModel.DialogWidth = 900;
 		}
@@ -95,10 +94,11 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		viewUserControl.DataContext = formatSelectionPopupViewModel;
 	}
 
-	private static void AddFormatButtonData(FormatSelectionPopupViewModel viewModel, ITitleProduct kioskProduct, IPricingService pricingService, bool isPurchase, Func<decimal, decimal> discountedPriceCalc)
+	private static void AddFormatButtonData(FormatSelectionPopupViewModel viewModel, ITitleProduct kioskProduct, IPricingService pricingService, bool isPurchase, Func<decimal, decimal> discountedPriceCalc, int? redboxPlusBenefitId)
 	{
 		bool showOutOfStock = !(Redbox.Rental.Services.Configuration.Configuration.Instance.OutOfStockTitleDetailsABTestVersion == "B") || kioskProduct.TitleFamily != TitleFamily.Movies || isPurchase;
-		TitleRollupFormatButtonProperties rollupFormatButtonProperties = TitleRollupUtilities.GetRollupFormatButtonProperties(kioskProduct, isPurchase, new TitleRollupOverlayButtonTextValues(), showOutOfStock, discountedPriceCalc);
+		bool showPricing = redboxPlusBenefitId != 2;
+		TitleRollupFormatButtonProperties rollupFormatButtonProperties = TitleRollupUtilities.GetRollupFormatButtonProperties(kioskProduct, isPurchase, new TitleRollupOverlayButtonTextValues(), showOutOfStock, discountedPriceCalc, showPricing, redboxPlusBenefitId);
 		if (rollupFormatButtonProperties.Visibility == Visibility.Visible)
 		{
 			if (kioskProduct.TitleType == TitleType.DigitalCode && rollupFormatButtonProperties.IsEnabled)
@@ -140,7 +140,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		return false;
 	}
 
-	private static void ProcessButtonClick(TitleRollupProduct rollupProduct, TitleType type, string analysisText, bool isPurchase, bool showMnp)
+	private static void ProcessButtonClick(TitleRollupProduct rollupProduct, TitleType type, string analysisText, bool isPurchase, bool showMnp, int? redboxPlusBenefitId)
 	{
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupAnalysisText", analysisText);
 		OrchestrationService.ViewGoBackSafe($"RentalFormatSelectionPopupViewController {analysisText}", popOnly: false);
@@ -149,6 +149,10 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 			return;
 		}
 		ITitleProduct titleProduct = rollupProduct.KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == type);
+		if (titleProduct == null)
+		{
+			return;
+		}
 		titleProduct.TivoQueryId = titleProduct.TivoQueryId ?? rollupProduct.TivoQueryId;
 		if (titleProduct.InStock | isPurchase)
 		{
@@ -156,34 +160,25 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
 			if (showMnp && (titleProduct.HasMultiNightPrice || (titleProduct.IsSellableAndInStock && (titleProduct.IsMovie || titleProduct.IsGame))) && !isPurchase && !flag)
 			{
-				string viewAnalyticsName = "multi_night_pricing_popup_view";
-				if (titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
-				{
-					viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
-				}
-				else if (!titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
-				{
-					viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
-				}
-				OrchestrationService.ViewShow("multi_night_pricing_popup_view", new MultiNightPricingPopupInfo
-				{
-					TitleProduct = titleProduct,
-					ShownFromView = "purchase_popup_view",
-					ViewAnalyticsName = viewAnalyticsName
-				});
+				BrowseFunctions.AddMultiNightPricedProductToCart(titleProduct, "purchase_popup_view");
+				return;
 			}
-			else
+			BrowseFunctions.SetRedboxPlusFreeOneNightRentalOrAddProductToCart(new AddProductToCartParameters
 			{
-				BrowseFunctions.AddProductToCart(titleProduct, isPurchase);
-			}
+				TitleProduct = titleProduct,
+				IsPurchase = isPurchase,
+				PricingRecord = null,
+				ItemSourceType = ItemSourceType.Browse,
+				RedboxPlusBenefitId = redboxPlusBenefitId
+			});
 		}
 		else
 		{
-			ShowOutOfStockOptionsDialog(rollupProduct, type, showMnp);
+			ShowOutOfStockOptionsDialog(rollupProduct, type, showMnp, redboxPlusBenefitId);
 		}
 	}
 
-	private static void ShowOutOfStockOptionsDialog(ITitleProduct kioskProduct, TitleType titleType, bool showMnp)
+	private static void ShowOutOfStockOptionsDialog(ITitleProduct kioskProduct, TitleType titleType, bool showMnp, int? redboxPlusBenefitId)
 	{
 		bool flag = kioskProduct is TitleRollupProduct;
 		ITitleProduct selectedProduct = (flag ? ((TitleRollupProduct)kioskProduct).KioskProducts.FirstOrDefault((ITitleProduct x) => x.TitleType == titleType) : kioskProduct);
@@ -212,7 +207,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 				ButtonData item = new ButtonData((pricingRecord != null) ? string.Format("{0} ${1}", displayDescription, pricingRecord.InitialNight.ToString("0.00")) : displayDescription, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 				{
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOutOfStockAddFormat");
-					ProcessButtonClick((TitleRollupProduct)kioskProduct, inStockFormat.TitleType, inStockFormat.TitleType.GetDisplayName(), isPurchase: false, showMnp);
+					ProcessButtonClick((TitleRollupProduct)kioskProduct, inStockFormat.TitleType, inStockFormat.TitleType.GetDisplayName(), isPurchase: false, showMnp, redboxPlusBenefitId);
 				}, (Func<bool>)null));
 				observableCollection.Add(item);
 			}
@@ -245,6 +240,10 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 
 	private static void ProcessCancelButtonClick(Action cancelAction)
 	{
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+		}
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupCancel");
 		OrchestrationService.ViewGoBackSafe("RentalFormatSelectionPopupViewController cancel", popOnly: false);
 		cancelAction?.Invoke();
@@ -279,6 +278,10 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		int timeOut = OrchestrationService.TTSGetTimeout("medium", 15000);
 		(service?.CreateTimer("RentalFormatSelectionPopupViewTimer", timeOut, timeOut, delegate
 		{
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+			}
 			BaseViewController.AnalyticsService?.AddTimeoutEvent(timeOut);
 			OrchestrationService.ViewGoBackSafe("RentalFormatSelectionViewController time out", popOnly: false);
 		}))?.Start();

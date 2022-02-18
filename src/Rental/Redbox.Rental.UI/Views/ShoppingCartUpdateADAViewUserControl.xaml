@@ -16,7 +16,7 @@
       <Redbox:RoundedButton Name="OkButton" Style="{StaticResource warmpurple_white_border_button_with_dropshadow_style}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,394,0,0" CornerRadius="32" Height="59" Width="163" Command="{x:Static localbase:Commands.GoBackCommand}">
         <TextBlock Name="OkButtonText" Style="{StaticResource font_museo_slab_900_20}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Path=OkButtonText, FallbackValue=Okay}" />
       </Redbox:RoundedButton>
-      <StackPanel Name="ShoppingCartStackPanel" Margin="10,180,10,156" Orientation="Horizontal" HorizontalAlignment="Center">
+      <StackPanel Name="ShoppingCartStackPanel" Margin="10,175,10,151" Orientation="Horizontal" HorizontalAlignment="Center">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
           <Grid Name="AddMovieAddGameGrid">
             <Grid.RowDefinitions>

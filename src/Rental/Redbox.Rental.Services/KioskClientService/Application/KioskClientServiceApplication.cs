@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService.Application;
 
 namespace Redbox.Rental.Services.KioskClientService.Application;
@@ -28,14 +29,14 @@ public class KioskClientServiceApplication : BaseKioskClientService, IKioskClien
 	public async Task<bool> Start()
 	{
 		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/start", base.KioskClientServiceBaseUrl, "api/application")), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
-		LogKioskClientServiceResponse("KioskClientServiceApplication.Start", webResult);
+		LogResponse("KioskClientServiceApplication.Start", webResult);
 		return webResult?.Response?.Success ?? false;
 	}
 
 	public async Task<bool> End()
 	{
 		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/end", base.KioskClientServiceBaseUrl, "api/application")), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
-		LogKioskClientServiceResponse("KioskClientServiceApplication.End", webResult);
+		LogResponse("KioskClientServiceApplication.End", webResult);
 		return webResult?.Response?.Success ?? false;
 	}
 
@@ -44,7 +45,7 @@ public class KioskClientServiceApplication : BaseKioskClientService, IKioskClien
 		if (e.ToView != null && (e.Type == ViewStateChangedType.Pop || e.Type == ViewStateChangedType.Push))
 		{
 			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/viewchangedevent", base.KioskClientServiceBaseUrl, "api/application")), e, "POST").ConfigureAwait(continueOnCapturedContext: false);
-			LogKioskClientServiceResponse("KioskClientServiceApplication.PostViewChangedEventAsync", webResult);
+			LogResponse("KioskClientServiceApplication.PostViewChangedEventAsync", webResult);
 			return webResult?.Response?.Success ?? false;
 		}
 		return false;
@@ -55,7 +56,7 @@ public class KioskClientServiceApplication : BaseKioskClientService, IKioskClien
 		if (e.ToView != null && (e.Type == ViewStateChangedType.Pop || e.Type == ViewStateChangedType.Push))
 		{
 			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/viewchangedevent", base.KioskClientServiceBaseUrl, "api/application")), e, "POST");
-			LogKioskClientServiceResponse("KioskClientServiceApplication.PostViewChangedEvent", webResult);
+			LogResponse("KioskClientServiceApplication.PostViewChangedEvent", webResult);
 			return webResult?.Response?.Success ?? false;
 		}
 		return false;

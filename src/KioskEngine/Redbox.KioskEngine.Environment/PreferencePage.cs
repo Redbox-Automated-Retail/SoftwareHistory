@@ -5,13 +5,31 @@ namespace Redbox.KioskEngine.Environment;
 
 internal class PreferencePage : IPreferencePage
 {
+	private IPreferencePageHost _preferencePageHost;
+
 	public string Name { get; internal set; }
 
 	public string SettingPath { get; internal set; }
 
 	public string DisplayPath { get; internal set; }
 
-	public IPreferencePageHost Host { get; internal set; }
+	public IPreferencePageHost Host
+	{
+		get
+		{
+			if (_preferencePageHost == null)
+			{
+				_preferencePageHost = GetPreferencePageHost?.Invoke();
+			}
+			return _preferencePageHost;
+		}
+		internal set
+		{
+			_preferencePageHost = value;
+		}
+	}
+
+	public Func<IPreferencePageHost> GetPreferencePageHost { get; set; }
 
 	public PreferencePageTarget Target { get; internal set; }
 

@@ -29,7 +29,8 @@ public static class RatingsProperties
 						{
 							Name = "G",
 							Code = "G",
-							Description = "General Audiences. All Ages Admitted."
+							Description = "General Audiences. All Ages Admitted.",
+							IsMPAARating = true
 						}
 					},
 					{
@@ -38,7 +39,8 @@ public static class RatingsProperties
 						{
 							Name = "PG",
 							Code = "PG",
-							Description = "Parental Guidance Suggested. Some Material May Not Be Suitable For Children."
+							Description = "Parental Guidance Suggested. Some Material May Not Be Suitable For Children.",
+							IsMPAARating = true
 						}
 					},
 					{
@@ -47,7 +49,8 @@ public static class RatingsProperties
 						{
 							Name = "PG-13",
 							Code = "PG13",
-							Description = "Parents Strongly Cautioned. Some Material May Be Inappropriate For Children Under 13."
+							Description = "Parents Strongly Cautioned. Some Material May Be Inappropriate For Children Under 13.",
+							IsMPAARating = true
 						}
 					},
 					{
@@ -56,7 +59,8 @@ public static class RatingsProperties
 						{
 							Name = "R",
 							Code = "R",
-							Description = "Restricted. Children Under 17 Require Accompanying Parent or Adult Guardian."
+							Description = "Restricted. Children Under 17 Require Accompanying Parent or Adult Guardian.",
+							IsMPAARating = true
 						}
 					},
 					{
@@ -153,7 +157,8 @@ public static class RatingsProperties
 						{
 							Name = "TVMA",
 							Code = "TVMA",
-							Description = "Mature Audience Only"
+							Description = "Mature Audience Only",
+							MPAARatingEquivalent = Ratings.R
 						}
 					},
 					{
@@ -162,7 +167,8 @@ public static class RatingsProperties
 						{
 							Name = "TVPG",
 							Code = "TVPG",
-							Description = "Parental Guidance Suggested"
+							Description = "Parental Guidance Suggested",
+							MPAARatingEquivalent = Ratings.PG
 						}
 					},
 					{
@@ -171,7 +177,8 @@ public static class RatingsProperties
 						{
 							Name = "TV14",
 							Code = "TV14",
-							Description = "Parents Strongly Cautioned"
+							Description = "Parents Strongly Cautioned",
+							MPAARatingEquivalent = Ratings.PG13
 						}
 					},
 					{
@@ -180,7 +187,8 @@ public static class RatingsProperties
 						{
 							Name = "TVG",
 							Code = "TVG",
-							Description = "General Audience"
+							Description = "General Audience",
+							MPAARatingEquivalent = Ratings.G
 						}
 					},
 					{
@@ -189,7 +197,8 @@ public static class RatingsProperties
 						{
 							Name = "TVY",
 							Code = "TVY",
-							Description = "All Children"
+							Description = "All Children",
+							MPAARatingEquivalent = Ratings.G
 						}
 					},
 					{
@@ -198,12 +207,30 @@ public static class RatingsProperties
 						{
 							Name = "TVY7",
 							Code = "TVY7",
-							Description = "Directed to Older Children"
+							Description = "Directed to Older Children",
+							MPAARatingEquivalent = Ratings.G
 						}
 					}
 				};
 			}
 			return _ratingsProperties;
 		}
+	}
+
+	public static Ratings GetMPAARatingEquivalent(Ratings rating)
+	{
+		Ratings result = Ratings.None;
+		if (Properties.TryGetValue(rating, out var value))
+		{
+			if (value.IsMPAARating)
+			{
+				result = rating;
+			}
+			else if (value.MPAARatingEquivalent != Ratings.None)
+			{
+				result = value.MPAARatingEquivalent;
+			}
+		}
+		return result;
 	}
 }

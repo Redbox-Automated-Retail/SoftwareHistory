@@ -44,7 +44,7 @@ public class ZipCodeViewController : BaseViewController
 			note2LabelText = string.Format(Resources.zip_code_auth_text, ConvertAuthorizeDays(Redbox.Rental.Services.Session.Session.Instance.PreauthorizeResult.AuthDays));
 		}
 		zipCodeViewModel.Note2LabelText = note2LabelText;
-		zipCodeViewModel.NextButtonText = Resources.zip_code_next_button_text;
+		zipCodeViewModel.NextButtonText = Resources.zip_code_next_button_text.ToUpper();
 		zipCodeViewModel.IsNextButtonEnabled = false;
 		zipCodeViewModel.OnNextButtonClicked = delegate(string s)
 		{

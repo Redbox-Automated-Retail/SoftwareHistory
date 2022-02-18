@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
+using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.UI.Models;
 
@@ -18,6 +19,8 @@ public class BrowseViewModel : DependencyObject
 	public Action OnMyPerksButtonClicked;
 
 	public Func<ISpeechControl> OnGetSpeechControl;
+
+	public IStarzSubscriptionProduct StarzSubscriptionProduct;
 
 	public static readonly DependencyProperty BrowseGroupSelectionProperty = DependencyProperty.Register("BrowseGroupSelection", typeof(DisplayGroupSelectionModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
 
@@ -55,11 +58,37 @@ public class BrowseViewModel : DependencyObject
 
 	public static readonly DependencyProperty MyPerksButtonVisibilityProperty = DependencyProperty.Register("MyPerksButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty MyPerksRedboxPlusButtonVisibilityProperty = DependencyProperty.Register("MyPerksRedboxPlusButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty ViewRedboxPlusMoviesButtonVisibilityProperty = DependencyProperty.Register("ViewRedboxPlusMoviesButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty RedboxPlusMiniCartVisiblityProperty = DependencyProperty.Register("RedboxPlusMiniCartVisiblity", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty ADARedboxPlusSignOutGridVisibilityProperty = DependencyProperty.Register("ADARedboxPlusSignOutGridVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty RedboxPlusEmptyCartSpaceVisiblityProperty = DependencyProperty.Register("RedboxPlusEmptyCartSpaceVisiblity", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty RedboxPlusMiniCartMessageTextProperty = DependencyProperty.Register("RedboxPlusMiniCartMessageText", typeof(string), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty BackToAllMoviesButtonVisibilityProperty = DependencyProperty.Register("BackToAllMoviesButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
 	public static readonly DependencyProperty EmptyCartSpacesVisibilityProperty = DependencyProperty.Register("EmptyCartSpacesVisibilityVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public static readonly DependencyProperty EmptyCartAddItemMessageVisibilityProperty = DependencyProperty.Register("EmptyCartAddItemMessageVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty ContinueButtonVisibilityProperty = DependencyProperty.Register("ContinueButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty CheckOutButtonVisibilityProperty = DependencyProperty.Register("CheckOutButtonVisibility", typeof(Visibility), typeof(BrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty BrowseRedboxPlusTooltipModelProperty = DependencyProperty.Register("BrowseRedboxPlusTooltipModel", typeof(BrowseRedboxPlusTooltipModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty BrowseMessagePopupModelProperty = DependencyProperty.Register("BrowseMessagePopupModel", typeof(BrowseMessagePopupModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
+
+	public DynamicRoutedCommand BackToAllMoviesCommand { get; set; }
+
+	public DynamicRoutedCommand ContinueCommand { get; set; }
+
+	public DynamicRoutedCommand ViewRedboxPlusMoviesCommand { get; set; }
 
 	public string SignInButtonText { get; set; }
 
@@ -70,6 +99,12 @@ public class BrowseViewModel : DependencyObject
 	public string SignOutButtonText { get; set; }
 
 	public string MyPerksButtonText { get; set; }
+
+	public string ViewRedboxPlusMoviesButtonText { get; set; }
+
+	public string BackToAllMoviesButtonText { get; set; }
+
+	public string ContinueButtonText { get; set; }
 
 	public string DontMissYourPerksText { get; set; }
 
@@ -330,6 +365,111 @@ public class BrowseViewModel : DependencyObject
 		}
 	}
 
+	public Visibility MyPerksRedboxPlusButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MyPerksRedboxPlusButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MyPerksRedboxPlusButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility ViewRedboxPlusMoviesButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ViewRedboxPlusMoviesButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ViewRedboxPlusMoviesButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RedboxPlusMiniCartVisiblity
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusMiniCartVisiblityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusMiniCartVisiblityProperty, value);
+			});
+		}
+	}
+
+	public Visibility ADARedboxPlusSignOutGridVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ADARedboxPlusSignOutGridVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ADARedboxPlusSignOutGridVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RedboxPlusEmptyCartSpaceVisiblity
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusEmptyCartSpaceVisiblityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusEmptyCartSpaceVisiblityProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusMiniCartMessageText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusMiniCartMessageTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusMiniCartMessageTextProperty, value);
+			});
+		}
+	}
+
+	public Visibility BackToAllMoviesButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BackToAllMoviesButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BackToAllMoviesButtonVisibilityProperty, value);
+			});
+		}
+	}
+
 	public Visibility EmptyCartSpacesVisibility
 	{
 		get
@@ -360,6 +500,36 @@ public class BrowseViewModel : DependencyObject
 		}
 	}
 
+	public Visibility ContinueButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ContinueButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ContinueButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility CheckOutButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CheckOutButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CheckOutButtonVisibilityProperty, value);
+			});
+		}
+	}
+
 	public BrowseMessagePopupModel BrowseMessagePopupModel
 	{
 		get
@@ -371,6 +541,21 @@ public class BrowseViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(BrowseMessagePopupModelProperty, value);
+			});
+		}
+	}
+
+	public BrowseRedboxPlusTooltipModel BrowseRedboxPlusTooltipModel
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (BrowseRedboxPlusTooltipModel)GetValue(BrowseRedboxPlusTooltipModelProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BrowseRedboxPlusTooltipModelProperty, value);
 			});
 		}
 	}

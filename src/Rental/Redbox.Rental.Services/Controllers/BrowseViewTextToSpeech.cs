@@ -218,10 +218,11 @@ public class BrowseViewTextToSpeech
 					Value = "MainMenu"
 				});
 				AddCheckOutEvent(speechPart, browseViewModel);
+				string arg = (BrowseFunctions.IsRedboxPlusBrowseMode ? "Redbox plus movies" : null);
 				List<ITextPart> texts = speechPart.Texts;
 				TextPart textPart = new TextPart();
 				IBrowseState browseState = BrowseState;
-				textPart.Text = $"You are now browsing by {((browseState != null) ? browseState.BrowseSelectedSort.GetDisplayName() : null)} ";
+				textPart.Text = $"You are now browsing {arg} by {((browseState != null) ? browseState.BrowseSelectedSort.GetDisplayName() : null)} ";
 				texts.Add(textPart);
 				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.ForSale && BrowseState.BrowsePriceRangeFilter != null)
 				{
@@ -310,9 +311,10 @@ public class BrowseViewTextToSpeech
 					}
 				});
 				int num = BrowseState?.TTSBrowseItemModelsShown?.Count((IBrowseItemModel x) => x is DisplayProductModel) ?? 0;
+				string text = (BrowseFunctions.IsRedboxPlusBrowseMode ? "Redbox plus" : null);
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"You are currently browsing on page {browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0} of {browseViewModel?.BrowseProductControlModel?.TotalPages ?? 0} pages and there are {num} titles on this screen."
+					Text = $"You are currently browsing on page {browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0} of {browseViewModel?.BrowseProductControlModel?.TotalPages ?? 0} pages and there are {num} {text} titles on this screen."
 				});
 				if ((browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0) > 1)
 				{
@@ -327,24 +329,27 @@ public class BrowseViewTextToSpeech
 					{
 						if (eachTTSBrowseItemModel?.Data is ITitleProduct titleProduct)
 						{
-							string text = (BrowseState.TTSBrowseItemModelsShown.IndexOf(eachTTSBrowseItemModel) + 1).ToString();
-							speechPart.Events.Add(new MapKeyPressToAction
+							string text2 = (BrowseState.TTSBrowseItemModelsShown.IndexOf(eachTTSBrowseItemModel) + 1).ToString();
+							if (!BrowseFunctions.IsRedboxPlusBrowseMode)
 							{
-								KeyCode = text,
-								Action = delegate
+								speechPart.Events.Add(new MapKeyPressToAction
 								{
-									browseViewModel.BrowseProductControlModel.ProcessBrowseItemModelSelected(eachTTSBrowseItemModel, null);
-								}
-							});
-							speechPart.Texts.Add(new TextPart
-							{
-								Text = $"For {titleProduct.ProductName}, Press {text} for more information."
-							});
+									KeyCode = text2,
+									Action = delegate
+									{
+										browseViewModel.BrowseProductControlModel.ProcessBrowseItemModelSelected(eachTTSBrowseItemModel, null);
+									}
+								});
+								speechPart.Texts.Add(new TextPart
+								{
+									Text = $"For {titleProduct.ProductName}, Press {text2} for more information."
+								});
+							}
 							if (eachTTSBrowseItemModel.CanAdd)
 							{
 								speechPart.Events.Add(new MapKeyPressToAction
 								{
-									KeyCode = $"PLUS{text}",
+									KeyCode = $"PLUS{text2}",
 									Text = $"you added {titleProduct.ProductName} to your cart.",
 									Action = delegate
 									{
@@ -352,9 +357,10 @@ public class BrowseViewTextToSpeech
 										CommandManager.InvalidateRequerySuggested();
 									}
 								});
+								string arg = (BrowseFunctions.IsRedboxPlusBrowseMode ? $"For {titleProduct.ProductName}, " : null);
 								speechPart.Texts.Add(new TextPart
 								{
-									Text = $" Press PLUS and {text} to add to cart."
+									Text = $"{arg} Press PLUS and {text2} to add to cart."
 								});
 							}
 						}
@@ -434,7 +440,7 @@ public class BrowseViewTextToSpeech
 				AddCheckOutEvent(speechPart, browseViewModel);
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"To browse all {BrowsingFamily}, press 1."
+					Text = $"To browse all {(BrowseFunctions.IsRedboxPlusBrowseMode ? $"Redbox plus {BrowsingFamily}" : BrowsingFamily)}, press 1."
 				});
 				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 				{
@@ -469,7 +475,7 @@ public class BrowseViewTextToSpeech
 						}
 					});
 				}
-				if (browseViewModel.SignOutButtonVisibility == Visibility.Visible)
+				if (browseViewModel.SignOutButtonVisibility == Visibility.Visible || browseViewModel.ADARedboxPlusSignOutGridVisibility == Visibility.Visible)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
@@ -484,11 +490,11 @@ public class BrowseViewTextToSpeech
 						}
 					});
 				}
-				if (browseViewModel.MyPerksButtonVisibility == Visibility.Visible)
+				if (browseViewModel.MyPerksButtonVisibility == Visibility.Visible || browseViewModel.MyPerksRedboxPlusButtonVisibility == Visibility.Visible)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "To access my Redbox press 6."
+						Text = "To access my Perks press 6."
 					});
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
@@ -496,6 +502,36 @@ public class BrowseViewTextToSpeech
 						Action = delegate
 						{
 							browseViewModel?.ProcessOnMyPerksButtonClicked();
+						}
+					});
+				}
+				if (browseViewModel.ViewRedboxPlusMoviesButtonVisibility == Visibility.Visible)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "To browse Redbox plus movies press 7."
+					});
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "7",
+						Action = delegate
+						{
+							browseViewModel?.ViewRedboxPlusMoviesCommand?.Execute(null);
+						}
+					});
+				}
+				if (browseViewModel.BackToAllMoviesButtonVisibility == Visibility.Visible)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = "To go back to all movies press 8."
+					});
+					speechPart.Events.Add(new MapKeyPressToAction
+					{
+						KeyCode = "8",
+						Action = delegate
+						{
+							browseViewModel?.BackToAllMoviesCommand?.Execute(null);
 						}
 					});
 				}
@@ -800,7 +836,7 @@ public class BrowseViewTextToSpeech
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = "Press 0 to go home."
+				Text = "Press 0 to quit."
 			});
 		}
 		if (browseViewModel.BrowseFilterBarModel.StartOverButtonVisibility == Visibility.Visible)
@@ -815,7 +851,7 @@ public class BrowseViewTextToSpeech
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = "Press 0 to start over."
+				Text = "Press 0 to quit."
 			});
 		}
 	}

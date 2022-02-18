@@ -1,5 +1,8 @@
 using System.Globalization;
+using System.IO;
 using System.Security;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -25,6 +28,14 @@ public class BaseLogic : DynamicRouting
 			secureString.AppendChar(c);
 		}
 		return secureString;
+	}
+
+	protected static byte[] CreateHashString(string s)
+	{
+		byte[] array = null;
+		using SHA256 sHA = SHA256.Create();
+		using MemoryStream inputStream = new MemoryStream(Encoding.UTF8.GetBytes(s));
+		return sHA.ComputeHash(inputStream);
 	}
 
 	public static void HandleWPFHit()

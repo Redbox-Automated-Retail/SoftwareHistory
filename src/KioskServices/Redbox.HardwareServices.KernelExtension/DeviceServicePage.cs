@@ -57,6 +57,8 @@ public class DeviceServicePage : UserControl, IPreferencePageHost
 
 	private CheckBox checkBoxSupportsEMV;
 
+	private Button buttonDeviceServiceSendTamperedAlert;
+
 	public DeviceServicePage()
 	{
 		InitializeComponent();
@@ -114,6 +116,11 @@ public class DeviceServicePage : UserControl, IPreferencePageHost
 		}, service.UITaskScheduler);
 	}
 
+	private void buttonDeviceServiceSendTamperedAlert_Click(object sender, EventArgs e)
+	{
+		ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>().SendTamperedCardReaderKioskAlertMessage();
+	}
+
 	private void buttonRefresh_Click(object sender, EventArgs e)
 	{
 		LoadValues(null);
@@ -151,6 +158,7 @@ public class DeviceServicePage : UserControl, IPreferencePageHost
 		this.panelLoading = new System.Windows.Forms.Panel();
 		this.labelLoading = new System.Windows.Forms.Label();
 		this.checkBoxSupportsEMV = new System.Windows.Forms.CheckBox();
+		this.buttonDeviceServiceSendTamperedAlert = new System.Windows.Forms.Button();
 		this.panelTopHeader.SuspendLayout();
 		this.groupBoxShutDown.SuspendLayout();
 		this.panelBottom.SuspendLayout();
@@ -295,8 +303,17 @@ public class DeviceServicePage : UserControl, IPreferencePageHost
 		this.checkBoxSupportsEMV.Text = "Device Service Supports EMV";
 		this.checkBoxSupportsEMV.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
 		this.checkBoxSupportsEMV.UseVisualStyleBackColor = true;
+		this.buttonDeviceServiceSendTamperedAlert.Location = new System.Drawing.Point(11, 365);
+		this.buttonDeviceServiceSendTamperedAlert.Name = "buttonDeviceServiceSendTamperedAlert";
+		this.buttonDeviceServiceSendTamperedAlert.Size = new System.Drawing.Size(189, 23);
+		this.buttonDeviceServiceSendTamperedAlert.TabIndex = 17;
+		this.buttonDeviceServiceSendTamperedAlert.TabStop = false;
+		this.buttonDeviceServiceSendTamperedAlert.Text = "Send Device Tampered Alert";
+		this.buttonDeviceServiceSendTamperedAlert.UseVisualStyleBackColor = true;
+		this.buttonDeviceServiceSendTamperedAlert.Click += new System.EventHandler(buttonDeviceServiceSendTamperedAlert_Click);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.buttonDeviceServiceSendTamperedAlert);
 		base.Controls.Add(this.panelLoading);
 		base.Controls.Add(this.checkBoxSupportsEMV);
 		base.Controls.Add(this.panelBottom);

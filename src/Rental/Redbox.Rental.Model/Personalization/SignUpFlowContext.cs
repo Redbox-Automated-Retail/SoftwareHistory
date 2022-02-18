@@ -6,5 +6,6 @@ public enum SignUpFlowContext
 	AfterSwipe,
 	AfterSignIn,
 	AfterPerksEquivalentOffer,
-	SignUp
+	SignUp,
+	AfterSwipeAndRedboxPlusSignup
 }

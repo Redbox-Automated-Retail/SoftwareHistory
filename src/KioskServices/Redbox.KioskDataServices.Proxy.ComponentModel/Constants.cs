@@ -14,20 +14,6 @@ public class Constants
 		public const string AddKioskSession = "api/KioskData/AddKioskSession";
 
 		public const string AddKioskSessionJson = "api/KioskData/AddKioskSessionJson";
-
-		public const string KioskAlert = "api/KioskData/KioskAlert";
-
-		public const string AuditEvent = "api/KioskData/AuditEvent";
-
-		public const string KioskEvents = "api/KioskData/KioskEvents";
-
-		public const string KioskFunctionCheck = "api/KioskData/KioskFunctionCheck";
-
-		public const string KioskProperties = "api/KioskData/KioskProperties";
-
-		public const string KioskStatistics = "api/KioskData/KioskStatistics";
-
-		public const string KioskVersion = "api/KioskData/KioskVersion";
 	}
 
 	public class RequestHeaderKeys

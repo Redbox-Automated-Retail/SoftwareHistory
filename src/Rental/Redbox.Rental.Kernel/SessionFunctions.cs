@@ -17,7 +17,15 @@ public static class SessionFunctions
 	[KernelFunction(Name = "kernel.close_open_session_and_start_new_rental_session")]
 	public static void CloseOpenSessionAndStartNewRentalSession(string newSessionContext)
 	{
-		ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession(newSessionContext);
+		try
+		{
+			ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession(newSessionContext);
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.LogEntireException("An unhandled exception was raised in SessionFunctions.CloseOpenSessionAndStartNewRentalSession", ex, "CloseOpenSessionAndStartNewRentalSession");
+			throw ex;
+		}
 	}
 
 	[KernelFunction(Name = "kernel.is_personalization_session_signed_in")]

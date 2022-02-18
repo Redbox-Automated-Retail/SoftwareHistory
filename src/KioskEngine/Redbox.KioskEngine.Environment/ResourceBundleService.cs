@@ -16,6 +16,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.IDE;
 using Redbox.REDS.Framework;
+using Redbox.Rental.Model.Reservation;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -242,6 +243,7 @@ public class ResourceBundleService : IResourceBundleService
 				service3["ProductName"] = manifestInfo.ProductName;
 				service3["ProductVersion"] = manifestInfo.ProductVersion;
 				errorList.AddRange(service.ResetAllExtensions());
+				ServiceLocator.Instance.GetService<IReservationService>().UnRegisterFromAWSBrokerService(UnRegisterFromBrokerServiceReason.BundleSwitch);
 				IKernelService service4 = ServiceLocator.Instance.GetService<IKernelService>();
 				foreach (string item3 in list3)
 				{

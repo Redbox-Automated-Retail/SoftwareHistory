@@ -4,7 +4,7 @@ namespace Redbox.Rental.Model;
 
 public interface IPromotionItem
 {
-	IRentalShoppingCartItem RentalShoppingCartItem { get; set; }
+	IRentalShoppingCartTitleItem RentalShoppingCartItem { get; set; }
 
 	decimal PromotionAmount { get; set; }
 }

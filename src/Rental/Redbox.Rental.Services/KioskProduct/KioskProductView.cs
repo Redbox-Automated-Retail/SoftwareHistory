@@ -7,6 +7,7 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
@@ -79,6 +80,14 @@ public class KioskProductView
 
 	private List<ITitleProduct> _movieProducts = new List<ITitleProduct>();
 
+	private List<ISubscriptionProduct> _subscriptionProducts = new List<ISubscriptionProduct>();
+
+	private List<IRedboxPlusPromoCampaign> _redboxPlusPromoCampaigns = new List<IRedboxPlusPromoCampaign>();
+
+	private ISubscriptionProduct _activeBrowseSubscriptionProduct;
+
+	private ISubscriptionProduct _activeMyBagSubscriptionProduct;
+
 	public IProfileDataInstance ProfileDataInstance { get; set; }
 
 	public ICacheDataInstance CacheDataInstance { get; set; }
@@ -136,6 +145,35 @@ public class KioskProductView
 			LoadMovies();
 			LoadGames();
 		}
+	}
+
+	public ISubscriptionProduct GetActiveBrowseSubscriptionProduct()
+	{
+		LoadSubscriptionProducts();
+		return _activeBrowseSubscriptionProduct;
+	}
+
+	public IRedboxPlusPromoCampaign GetRedboxPlusPromoCampaign(int promoCampaignId)
+	{
+		if (_redboxPlusPromoCampaigns == null || _redboxPlusPromoCampaigns.Count == 0)
+		{
+			LoadSubscriptionProducts();
+		}
+		return _redboxPlusPromoCampaigns?.FirstOrDefault((IRedboxPlusPromoCampaign x) => x.PromoCampaignId == promoCampaignId);
+	}
+
+	public ISubscriptionProduct GetActiveMyBagSubscriptionProduct()
+	{
+		LoadSubscriptionProducts();
+		return _activeMyBagSubscriptionProduct;
+	}
+
+	public List<ISubscriptionProduct> GetSubscriptionProducts()
+	{
+		LoadSubscriptionProducts();
+		List<ISubscriptionProduct> list = new List<ISubscriptionProduct>();
+		list.AddRange(_subscriptionProducts);
+		return list;
 	}
 
 	public IKioskProduct GetProduct(long productId, bool excludeTitleRollup)
@@ -698,11 +736,19 @@ public class KioskProductView
 	{
 		if ((browseFilter != BrowseViewFilter.All || (!IsRentable(titleProduct) && !titleProduct.ShowOutOfStock)) && (browseFilter != BrowseViewFilter.ComingSoon || !titleProduct.ComingSoon))
 		{
-			if (browseFilter == BrowseViewFilter.ForSale)
+			if (browseFilter != BrowseViewFilter.ForSale || !IsSellable(titleProduct))
 			{
-				return IsSellable(titleProduct);
+				if (browseFilter == BrowseViewFilter.RedboxPlus && titleProduct.IsRedboxPlusEligible)
+				{
+					if (!IsRentable(titleProduct))
+					{
+						return titleProduct.ShowOutOfStock;
+					}
+					return true;
+				}
+				return false;
 			}
-			return false;
+			return true;
 		}
 		return true;
 	}
@@ -1094,5 +1140,15 @@ public class KioskProductView
 		{
 			LogHelper.Instance.LogException("KioskProductView.LoadMoreLikeThis - an unhandled exception occurred", e);
 		}
+	}
+
+	private void LoadSubscriptionProducts()
+	{
+		LogHelper.Instance.Log("Loading subscription products.");
+		ISubscriptionPlans subscriptionPlans = ServiceLocator.Instance.GetService<IKioskClientService>()?.Subscriptions?.GetSubscriptionPlans();
+		_subscriptionProducts = subscriptionPlans?.SubscriptionProducts;
+		_redboxPlusPromoCampaigns = subscriptionPlans?.RedboxPlusPromoCampaigns;
+		_activeBrowseSubscriptionProduct = subscriptionPlans?.GetBrowseSubscriptionProduct();
+		_activeMyBagSubscriptionProduct = subscriptionPlans?.GetMyBagSubscriptionProduct();
 	}
 }

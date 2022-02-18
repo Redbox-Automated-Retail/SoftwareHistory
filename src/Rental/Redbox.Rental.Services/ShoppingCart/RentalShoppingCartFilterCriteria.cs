@@ -29,4 +29,8 @@ public class RentalShoppingCartFilterCriteria : IRentalShoppingCartFilterCriteri
 	public bool IncludeFlashDeals { get; set; }
 
 	public bool IncludeLoyaltyRedeemedItems { get; set; }
+
+	public bool? IncludeRedboxPlusFreeOneNightRentalItems { get; set; }
+
+	public bool IncludeDiscountRestrictionItems { get; set; }
 }

@@ -5,6 +5,18 @@ namespace Redbox.KioskServices.Proxy.ComponentModel;
 
 public interface IStoreServices
 {
+	int StoreNumberInteger { get; }
+
+	string StoreNumberString { get; set; }
+
+	bool IsStandAlone { get; set; }
+
+	bool SynchronizeTimeToServer { get; set; }
+
+	bool RunInitialSync { get; set; }
+
+	string InitialSyncType { get; set; }
+
 	string GetEnvironment();
 
 	string GetApplication();

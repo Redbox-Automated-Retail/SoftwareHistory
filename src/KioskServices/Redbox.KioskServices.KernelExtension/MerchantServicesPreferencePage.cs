@@ -195,7 +195,7 @@ public class MerchantServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			MerchantServicesProxy.Instance.ConfirmationStatus = Enum<ConfirmationStatus>.ParseIgnoringCase(m_confirmationStatusComboBox.SelectedItem.ToString(), ConfirmationStatus.DoNotShow);
+			MerchantServicesProxy.Instance.ConfirmationStatus = Enum<ConfirmationStatus>.ParseIgnoringCase(m_confirmationStatusComboBox.SelectedItem.ToString(), ConfirmationStatus.DontShow);
 		}
 	}
 

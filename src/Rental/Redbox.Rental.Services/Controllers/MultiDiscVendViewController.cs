@@ -88,7 +88,7 @@ public class MultiDiscVendViewController : BaseViewController
 		int num2 = 0;
 		if (rentalShoppingCart != null)
 		{
-			foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items.Where((IRentalShoppingCartItem x) => x.MultiDisc && x.DiscNumber == 1))
+			foreach (IRentalShoppingCartTitleItem item in rentalShoppingCart.TitleItems.Where((IRentalShoppingCartTitleItem x) => x.MultiDisc && x.DiscNumber == 1))
 			{
 				if (item?.TitleProduct != null)
 				{

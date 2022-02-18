@@ -167,7 +167,6 @@ public partial class HelpDocViewUserControl : BaseUserControl, IComponentConnect
 	private void PageLeftCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		ChangePage(-1);
-		AnimatePaddleClick(e.OriginalSource);
 		HandleWPFHit();
 		RaiseOnHelpPaddleButtonPressed("Left");
 	}
@@ -175,7 +174,6 @@ public partial class HelpDocViewUserControl : BaseUserControl, IComponentConnect
 	private void PageRightCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		ChangePage(1);
-		AnimatePaddleClick(e.OriginalSource);
 		HandleWPFHit();
 		RaiseOnHelpPaddleButtonPressed("Right");
 	}
@@ -183,10 +181,6 @@ public partial class HelpDocViewUserControl : BaseUserControl, IComponentConnect
 	private void RaiseOnHelpPaddleButtonPressed(string source)
 	{
 		OnHelpPaddleButtonPressed?.Invoke(source);
-	}
-
-	private void AnimatePaddleClick(object paddle)
-	{
 	}
 
 	public string GetCurrentPageText()

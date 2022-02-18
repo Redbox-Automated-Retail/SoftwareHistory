@@ -184,6 +184,9 @@ public partial class KeyboardUserControl : BaseUserControl, IValueConverter, ICo
 		case KeyboardMode.EMAIL_RECEIPTS_PROMO:
 		case KeyboardMode.ACCOUNT_EMAIL_CHANGED:
 		case KeyboardMode.PERKS_SIGN_UP:
+		case KeyboardMode.STARZ_SIGN_UP:
+		case KeyboardMode.REDBOX_PLUS_SIGN_UP:
+		case KeyboardMode.LEAD_GENERATION_SIGN_UP:
 			SymbolKeysElem.Visibility = Visibility.Collapsed;
 			CodeKeysElem.Visibility = Visibility.Collapsed;
 			EmailKeysElem.Visibility = Visibility.Visible;

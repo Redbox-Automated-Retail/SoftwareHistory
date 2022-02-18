@@ -2,6 +2,8 @@ using System;
 using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.Personalization;
+using Redbox.Rental.UI;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
@@ -51,25 +53,27 @@ public class PhoneAndPinViewController : BaseViewController
 		{
 			phoneAndPinViewModel.PhoneDisplayText = phoneAndPinInfo.MobilePhoneNumber;
 		}
-		phoneAndPinViewModel.RightSideButtonBarVisibility = ((!Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
-		phoneAndPinViewModel.BottomButtonBarVisibility = (Redbox.Rental.Services.ApplicationState.Instance.IsADAAccessible ? Visibility.Collapsed : Visibility.Visible);
 		if (phoneAndPinInfo.IsSignUp)
 		{
 			phoneAndPinViewModel.HeaderLabelText = Resources.phone_and_pin_sign_up_header_text;
-			phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sign_up_sub_header_text;
-			phoneAndPinViewModel.StartButtonText = ((phoneAndPinInfo.SignInCancelButtonType == SignInCancelButtonTypes.Back) ? Resources.cancel_button : Resources.phone_and_pin_sign_up_back_button_text);
-			phoneAndPinViewModel.SignInButtonText = Resources.phone_and_pin_sign_up_button_text;
-			phoneAndPinViewModel.TermsTitleText = (phoneAndPinInfo.ShowTextClubOption ? Resources.phone_and_pin_terms_title_text : null);
+			phoneAndPinViewModel.SubHeadLabelText = ((phoneAndPinInfo.SignUpFlowContext == SignUpFlowContext.AfterSwipeAndRedboxPlusSignup) ? Resources.phone_and_pin_sign_up_redbox_plus_sub_header_text : Resources.phone_and_pin_sign_up_sub_header_text);
+			phoneAndPinViewModel.StartButtonText = ((phoneAndPinInfo.SignInCancelButtonType == SignInCancelButtonTypes.Back) ? Resources.cancel_button.ToUpper() : Resources.phone_and_pin_sign_up_back_button_text.ToUpper());
+			phoneAndPinViewModel.SignInButtonText = Resources.phone_and_pin_sign_up_button_text.ToUpper();
 			phoneAndPinViewModel.TermsText = (phoneAndPinInfo.ShowTextClubOption ? Resources.phone_and_pin_terms_text : null);
 			phoneAndPinViewModel.TermsButtonText = Resources.terms_link_text;
 			phoneAndPinViewModel.TermsBarVisibility = Visibility.Visible;
 			phoneAndPinViewModel.PinConfirmVisibility = Visibility.Visible;
 			phoneAndPinViewModel.TextClubOptionVisibility = ((!phoneAndPinInfo.ShowTextClubOption) ? Visibility.Collapsed : Visibility.Visible);
 			phoneAndPinViewModel.TextClubText = Resources.text_club_option_text;
-			phoneAndPinViewModel.SignUpForTextClub = phoneAndPinInfo.ShowTextClubOption;
-			phoneAndPinViewModel.OnStartButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnStartButtonClicked, new Action(OnMaybeLaterButtonClicked));
-			phoneAndPinViewModel.OnSignInButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnSignInButtonClicked, new Action(OnSignUpButtonClicked));
-			phoneAndPinViewModel.OnTextClubClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnTextClubClicked, new Action(OnTextClubCheckboxCliked));
+			phoneAndPinViewModel.CheckMarkVisibility = ((!phoneAndPinInfo.ShowTextClubOption) ? Visibility.Hidden : Visibility.Visible);
+			PhoneAndPinViewModel phoneAndPinViewModel2 = phoneAndPinViewModel;
+			phoneAndPinViewModel2.OnStartButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel2.OnStartButtonClicked, new Action(OnMaybeLaterButtonClicked));
+			PhoneAndPinViewModel phoneAndPinViewModel3 = phoneAndPinViewModel;
+			phoneAndPinViewModel3.OnSignInButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel3.OnSignInButtonClicked, new Action(OnSignUpButtonClicked));
+			phoneAndPinViewModel.CheckMarkCommand = DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+			{
+				CheckMarkCommand_Execute(phoneAndPinViewModel);
+			}, (Func<bool>)null);
 			phoneAndPinViewModel.MobilePhoneErrorMessageText = string.Empty;
 		}
 		else
@@ -78,17 +82,31 @@ public class PhoneAndPinViewController : BaseViewController
 			phoneAndPinViewModel.SubHeadLabelText = Resources.phone_and_pin_sub_header_text;
 			phoneAndPinViewModel.StartButtonText = ((phoneAndPinInfo.SignInCancelButtonType == SignInCancelButtonTypes.Back) ? Resources.cancel_button : Resources.phone_and_pin_start_button_text);
 			phoneAndPinViewModel.SignInButtonText = Resources.phone_and_pin_sign_in_button_text;
-			phoneAndPinViewModel.OnStartButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnStartButtonClicked, new Action(PhoneAndPinViewModel_OnStartButtonClicked));
-			phoneAndPinViewModel.OnSignInButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnSignInButtonClicked, new Action(PhoneAndPinViewModel_OnSignInButtonClicked));
+			PhoneAndPinViewModel phoneAndPinViewModel4 = phoneAndPinViewModel;
+			phoneAndPinViewModel4.OnStartButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel4.OnStartButtonClicked, new Action(PhoneAndPinViewModel_OnStartButtonClicked));
+			PhoneAndPinViewModel phoneAndPinViewModel5 = phoneAndPinViewModel;
+			phoneAndPinViewModel5.OnSignInButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel5.OnSignInButtonClicked, new Action(PhoneAndPinViewModel_OnSignInButtonClicked));
 		}
-		phoneAndPinViewModel.OnDisplayClicked = (Action<PhoneAndPinViewModel.DisplayType>)Delegate.Combine(phoneAndPinViewModel.OnDisplayClicked, new Action<PhoneAndPinViewModel.DisplayType>(PhoneAndPinViewModel_OnDisplayClicked));
-		phoneAndPinViewModel.OnTermsButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel.OnTermsButtonClicked, (Action)delegate
+		PhoneAndPinViewModel phoneAndPinViewModel6 = phoneAndPinViewModel;
+		phoneAndPinViewModel6.OnDisplayClicked = (Action<PhoneAndPinViewModel.DisplayType>)Delegate.Combine(phoneAndPinViewModel6.OnDisplayClicked, new Action<PhoneAndPinViewModel.DisplayType>(PhoneAndPinViewModel_OnDisplayClicked));
+		PhoneAndPinViewModel phoneAndPinViewModel7 = phoneAndPinViewModel;
+		phoneAndPinViewModel7.OnTermsButtonClicked = (Action)Delegate.Combine(phoneAndPinViewModel7.OnTermsButtonClicked, (Action)delegate
 		{
 			PhoneAndPinViewModel_OnTermsButtonClicked(phoneAndPinInfo.IdleTimerName);
 		});
 		ConfigureTTS(phoneAndPinViewModel);
 		phoneAndPinInfo.PhoneAndPinViewModel = phoneAndPinViewModel;
 		viewUserControl.DataContext = phoneAndPinViewModel;
+	}
+
+	private static void CheckMarkCommand_Execute(PhoneAndPinViewModel phoneAndPinViewModel)
+	{
+		BaseViewController.ProcessWPFHit();
+		if (phoneAndPinViewModel != null)
+		{
+			phoneAndPinViewModel.CheckMarkVisibility = ((phoneAndPinViewModel.CheckMarkVisibility == Visibility.Visible) ? Visibility.Hidden : Visibility.Visible);
+			BaseViewController.AnalyticsService?.AddCheckBoxEvent("PhoneAndPinTextClubOptin", phoneAndPinViewModel.SignUpForTextClub);
+		}
 	}
 
 	public static void LeavePhoneAndPinView(PhoneAndPinInfo phoneAndPinInfo)
@@ -345,15 +363,6 @@ public class PhoneAndPinViewController : BaseViewController
 		if (phoneAndPinViewModel != null && phoneAndPinViewModel.PhoneAndPinInfo != null && phoneAndPinViewModel.PhoneAndPinInfo.SignInAction != null)
 		{
 			phoneAndPinViewModel.PhoneAndPinInfo.SignInAction(phoneAndPinViewModel.PhoneDisplayText, BaseViewController.StringToSecureString(phoneAndPinViewModel.PinDisplayText), phoneAndPinViewModel.SignUpForTextClub);
-		}
-	}
-
-	private static void OnTextClubCheckboxCliked()
-	{
-		PhoneAndPinViewModel phoneAndPinViewModel = GetPhoneAndPinViewModel();
-		if (phoneAndPinViewModel != null)
-		{
-			BaseViewController.AnalyticsService?.AddCheckBoxEvent("PhoneAndPinTextClubOptin", phoneAndPinViewModel.SignUpForTextClub);
 		}
 	}
 }

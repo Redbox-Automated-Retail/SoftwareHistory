@@ -55,34 +55,29 @@ public class VendViewController : BaseViewController
 				VendViewModel vendViewModel2 = new VendViewModel();
 				OrchestrationService.SetCurrentUICulture();
 				IAd ad = ((!BaseViewController.ApplicationState.IsADAAccessible) ? BaseViewController.GetAd(AdLocation.Vending) : null);
-				string text = string.Empty;
-				string text2 = string.Empty;
+				string titleText = string.Empty;
+				string messageText = string.Empty;
 				vendViewModel2.IsPickup = BaseViewController.GetPickupStatus();
 				switch (result)
 				{
 				case VendViewType.PleaseWait:
-					text = Resources.vending_disc_please_wait_title;
-					text2 = Resources.vending_disc_please_wait_message;
+					titleText = Resources.vending_disc_please_wait_title;
+					messageText = Resources.vending_disc_please_wait_message;
 					break;
 				case VendViewType.RentalsOnTheirWay:
-					text = Resources.vending_disc_rentals_on_their_way_title;
-					text2 = "";
+					titleText = Resources.vending_disc_rentals_on_their_way_title;
+					messageText = "";
 					break;
 				case VendViewType.RecomendationOnPickupVend:
-					text = Resources.vending_disc_rentals_on_their_way_charged_once_title;
-					text2 = Resources.vending_disc_rentals_on_their_way_charged_once_message;
+					titleText = Resources.vending_disc_rentals_on_their_way_charged_once_title;
+					messageText = Resources.vending_disc_rentals_on_their_way_charged_once_message;
 					break;
 				}
 				vendViewModel2.IsSignedIn = PersonalizationFunctions.IsSignedIn;
-				vendViewModel2.IsLoyaltySignedIn = PersonalizationFunctions.IsLoyaltySignedIn;
-				vendViewModel2.TextMessages = new string[5]
-				{
-					text,
-					text2,
-					Resources.vending_racking_points,
-					Resources.vending_signing_out,
-					Resources.vending_serving_discs
-				};
+				vendViewModel2.TitleText1 = titleText;
+				vendViewModel2.MessageText1 = messageText;
+				vendViewModel2.MessageText2 = Resources.vending_serving_discs;
+				vendViewModel2.MessageText3 = Resources.vending_signing_out;
 				vendViewModel2.VendType = result;
 				vendViewModel2.BannerImage = ad?.Image;
 				vendViewModel2.AdImpression = ((ad != null) ? new AdImpression

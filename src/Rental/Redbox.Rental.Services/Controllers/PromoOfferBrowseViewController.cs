@@ -104,7 +104,7 @@ public class PromoOfferBrowseViewController : BaseViewController
 
 	private static void CurrentRentalShoppingCart_OnChange(IRentalShoppingCart rentalShoppingCart)
 	{
-		ITitleProduct titleProduct = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart.Items.Where((IRentalShoppingCartItem i) => !_originalCartItems.Items.Any((IRentalShoppingCartItem o) => o.ProductId == i.ProductId)).FirstOrDefault()?.TitleProduct;
+		ITitleProduct titleProduct = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().CurrentRentalShoppingCart.TitleItems.Where((IRentalShoppingCartTitleItem i) => !_originalCartItems.TitleItems.Any((IRentalShoppingCartTitleItem o) => o.ProductId == i.ProductId)).FirstOrDefault()?.TitleProduct;
 		if (titleProduct != null)
 		{
 			_selectedTitle = titleProduct;
@@ -137,8 +137,8 @@ public class PromoOfferBrowseViewController : BaseViewController
 	{
 		BrowseControlModel browseControlModel = new BrowseControlModel();
 		browseControlModel.RowCount = 2;
-		browseControlModel.ColumnCount = 5;
-		browseControlModel.BrowseItemMargin = new Thickness(0.0, 32.0, 0.0, 10.0);
+		browseControlModel.ColumnCount = (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? 5 : 6);
+		browseControlModel.BrowseItemMargin = (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? new Thickness(0.0, 32.0, 0.0, 10.0) : new Thickness(0.0, 48.0, 0.0, 15.0));
 		browseControlModel.ShowBorderItems = true;
 		browseControlModel.BorderShadowVisibility = Visibility.Collapsed;
 		browseControlModel.PageNumberVisibility = Visibility.Collapsed;
@@ -222,10 +222,10 @@ public class PromoOfferBrowseViewController : BaseViewController
 				AddProductCheckMnpView(titleProduct);
 				break;
 			}
-			OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, _isPurchase, delegate
+			BrowseFunctions.ShowRentalPopupView(titleRollupProduct, _isPurchase, delegate
 			{
 				CancelBrowseSelection();
-			}, _allowMnp, _promoPriceCalc));
+			}, _allowMnp, _promoPriceCalc);
 			break;
 		}
 		case KioskProductType.None:
@@ -237,21 +237,7 @@ public class PromoOfferBrowseViewController : BaseViewController
 	{
 		if (_allowMnp && titleProduct.HasMultiNightPrice && !BrowseFunctions.IsPurchase)
 		{
-			string viewAnalyticsName = "multi_night_pricing_popup_view";
-			if (titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
-			{
-				viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
-			}
-			else if (!titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
-			{
-				viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
-			}
-			OrchestrationService.ViewShow("multi_night_pricing_popup_view", new MultiNightPricingPopupInfo
-			{
-				TitleProduct = titleProduct,
-				ShownFromView = "promo_offer_browse_view",
-				ViewAnalyticsName = viewAnalyticsName
-			});
+			BrowseFunctions.AddMultiNightPricedProductToCart(titleProduct, "promo_offer_browse_view");
 		}
 		else
 		{
@@ -265,17 +251,17 @@ public class PromoOfferBrowseViewController : BaseViewController
 		{
 			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 			IRentalShoppingCart currentRentalShoppingCart = service.CurrentRentalShoppingCart;
-			if (!currentRentalShoppingCart.HasItem(_selectedTitle.ProductId))
+			if (!currentRentalShoppingCart.HasTitleItem(_selectedTitle.ProductId))
 			{
-				IRentalShoppingCartItem rentalShoppingCartItem = service.CreateRentalShoppingCartItemFromTitleProduct(_selectedTitle);
-				rentalShoppingCartItem.SourceType = ItemSourceType.Browse;
-				rentalShoppingCartItem.Action = RentalShoppingCartItemAction.rental;
-				rentalShoppingCartItem.Quantity = 1m;
-				rentalShoppingCartItem.Status = LineItemStatus.Pending;
-				rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(_selectedTitle);
-				rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(_selectedTitle);
-				rentalShoppingCartItem.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(_selectedTitle);
-				currentRentalShoppingCart.AddItem(rentalShoppingCartItem);
+				IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = service.CreateRentalShoppingCartItemFromTitleProduct(_selectedTitle);
+				rentalShoppingCartTitleItem.SourceType = ItemSourceType.Browse;
+				rentalShoppingCartTitleItem.Action = RentalShoppingCartItemAction.rental;
+				rentalShoppingCartTitleItem.Quantity = 1m;
+				rentalShoppingCartTitleItem.Status = LineItemStatus.Pending;
+				rentalShoppingCartTitleItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(_selectedTitle);
+				rentalShoppingCartTitleItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(_selectedTitle);
+				rentalShoppingCartTitleItem.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(_selectedTitle);
+				currentRentalShoppingCart.AddItem(rentalShoppingCartTitleItem);
 				UpdateBrowseDisplay();
 			}
 		}
@@ -436,7 +422,8 @@ public class PromoOfferBrowseViewController : BaseViewController
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
 			IsInCartBrowse = false,
-			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices
+			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices,
+			EnableRedboxPlus = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption
 		};
 	}
 
@@ -464,8 +451,8 @@ public class PromoOfferBrowseViewController : BaseViewController
 			browseControlModel.Margin = (BaseViewController.IsADAMode ? new Thickness(0.0, 0.0, 0.0, 20.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 			browseControlModel.BrowseItemMargin = new Thickness(10.0, 10.0, 10.0, 10.0);
 			browseControlModel.RowCount = ((!BaseViewController.IsADAMode) ? 1 : 2);
-			browseControlModel.ColumnCount = ((!BaseViewController.IsADAMode) ? 1 : 5);
-			int num = ((!BaseViewController.IsADAMode) ? 1 : 10);
+			browseControlModel.ColumnCount = ((!BaseViewController.IsADAMode) ? 1 : (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? 5 : 6));
+			int num = ((!BaseViewController.IsADAMode) ? 1 : (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? 10 : 12));
 			for (int i = 0; i < num; i++)
 			{
 				browseControlModel.BrowseControls.Add(new DisplayProductWithCommandsUserControl
@@ -595,13 +582,13 @@ public class PromoOfferBrowseViewController : BaseViewController
 					if (kioskProduct.IsRentable)
 					{
 						bool flag2 = (!(displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B") || kioskProduct.TitleFamily != TitleFamily.Movies) && !kioskProduct.InStock;
-						flag = flag && (flag2 || (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.HasItem(kioskProduct.ProductId) ?? true));
+						flag = flag && (flag2 || (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.HasTitleItem(kioskProduct.ProductId) ?? true));
 					}
 				}
 			}
 			else
 			{
-				flag = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.HasItem(titleProduct.ProductId) ?? true;
+				flag = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.HasTitleItem(titleProduct.ProductId) ?? true;
 			}
 		}
 		return flag;

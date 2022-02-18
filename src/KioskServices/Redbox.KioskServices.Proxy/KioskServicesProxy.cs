@@ -11,9 +11,9 @@ using System.Text;
 using System.Web;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.ComponentModel;
 using Redbox.REDS.Framework;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskServices.Proxy;
 
@@ -92,8 +92,9 @@ public class KioskServicesProxy
 		}
 		try
 		{
+			IObfuscationService service = ServiceLocator.Instance.GetService<IObfuscationService>();
 			Dictionary<string, object> dictionary = jsonRequest.ToObject<Dictionary<string, object>>();
-			ObfuscationHelper.ObfuscateDictionary(dictionary);
+			service?.ObfuscateDictionary(dictionary);
 			if (dictionary.ContainsKey("OptInItems") && dictionary["OptInItems"] != null)
 			{
 				foreach (object item in dictionary["OptInItems"] as ArrayList)
@@ -101,14 +102,14 @@ public class KioskServicesProxy
 					Dictionary<string, object> dictionary2 = item as Dictionary<string, object>;
 					if (dictionary2.ContainsKey("OptInMethodData") && dictionary2["OptInMethodData"] != null)
 					{
-						dictionary2["OptInMethodData"] = ObfuscationHelper.ObfuscateMessageData(dictionary2["OptInMethodData"].ToString(), 'x', 1, 0);
+						dictionary2["OptInMethodData"] = service?.ObfuscateMessageData(dictionary2["OptInMethodData"].ToString(), 'x', 1, 0);
 					}
 				}
 			}
 			if (dictionary.ContainsKey("CreditCard"))
 			{
 				Dictionary<string, object> dictionary3 = (Dictionary<string, object>)dictionary["CreditCard"];
-				ObfuscationHelper.ObfuscateDictionary(dictionary3);
+				service?.ObfuscateDictionary(dictionary3);
 				if (dictionary3.ContainsKey("EmvTags") && dictionary3["EmvTags"] != null)
 				{
 					IDictionary<string, object> obj = (IDictionary<string, object>)dictionary3["EmvTags"];
@@ -132,10 +133,11 @@ public class KioskServicesProxy
 			LogHelper.Instance.Log("KioskServicesProxy JSON request: {0}", (text2.Length <= 10000) ? text2 : text);
 			string text3 = PerformRemoteMessage(jsonRequest);
 			dictionary = text3.ToObject<Dictionary<string, object>>() ?? new Dictionary<string, object>();
-			ObfuscationHelper.ObfuscateDictionary(dictionary);
+			service?.ObfuscateDictionary(dictionary);
 			if (dictionary.ContainsKey("CustomerProfile"))
 			{
-				ObfuscationHelper.ObfuscateDictionary((Dictionary<string, object>)dictionary["CustomerProfile"]);
+				Dictionary<string, object> workDictionary = (Dictionary<string, object>)dictionary["CustomerProfile"];
+				service?.ObfuscateDictionary(workDictionary);
 			}
 			string source = dictionary.ToJson();
 			LogHelper.Instance.Log($"KioskServicesProxy JSON response: {source.ToPrettyJson()}");

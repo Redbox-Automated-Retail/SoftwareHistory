@@ -83,13 +83,13 @@ public class UpsellViewController : BaseLoyaltyController
 			{
 				continue;
 			}
-			IRentalShoppingCartItem rentalShoppingCartItem = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem x) => x.ProductId == eachUpsellItem.OriginalProductId);
-			if (rentalShoppingCartItem == null)
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.ProductId == eachUpsellItem.OriginalProductId);
+			if (rentalShoppingCartTitleItem == null)
 			{
 				continue;
 			}
 			IKioskProduct kioskProduct = null;
-			service2.GetProduct(rentalShoppingCartItem.ProductId, excludeTitleRollup: true, out kioskProduct);
+			service2.GetProduct(rentalShoppingCartTitleItem.ProductId, excludeTitleRollup: true, out kioskProduct);
 			if (kioskProduct != null)
 			{
 				DisplayUpsellProductModel displayUpsellProductModel = new DisplayUpsellProductModel
@@ -106,7 +106,7 @@ public class UpsellViewController : BaseLoyaltyController
 					list.Add(kioskProduct2);
 				}
 				ITitleProduct titleProduct = kioskProduct2 as ITitleProduct;
-				IList<IPricingRecord> list4 = service?.GetProductPricingRecords(titleProduct);
+				IList<IPricingRecord> list4 = service?.GetProductPricingRecords(titleProduct?.ProductId ?? 0);
 				IPricingRecord pricingRecord = (((list4?.Count ?? 0) > 0) ? list4[0] : null);
 				displayUpsellProductModel.PriceText = ((pricingRecord != null) ? $"{pricingRecord.InitialNight:c2}" : null);
 				BannerType bannerType = BannerType.None;

@@ -1,6 +1,9 @@
 using System.Collections.Generic;
+using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
+using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Services.Promotion;
@@ -8,6 +11,8 @@ namespace Redbox.Rental.Services.Promotion;
 public class Promotion : IPromotion
 {
 	public string Name { get; set; }
+
+	public int CampaignId { get; set; }
 
 	public decimal OriginalPrice { get; set; }
 
@@ -35,7 +40,7 @@ public class Promotion : IPromotion
 
 	public List<int> FormatIds { get; set; }
 
-	public IList<IRentalShoppingCartItem> QualifyingItems { get; set; }
+	public IList<IRentalShoppingCartTitleItem> QualifyingItems { get; set; }
 
 	public IList<IPromotionItem> PromotionItems { get; set; }
 
@@ -43,20 +48,20 @@ public class Promotion : IPromotion
 	{
 		get
 		{
-			if (Intent != PromotionIntentCode.FirstNightFreeItem)
+			if (Intent != PromotionIntentCode.FirstNightFreeItem && Intent != PromotionIntentCode.PercentOffCartTotal)
 			{
 				if (Intent == PromotionIntentCode.FixedValue)
 				{
 					ICampaignTitles campaignTitles = CampaignTitles;
 					if (campaignTitles != null && campaignTitles.Titles?.Count > 0)
 					{
-						goto IL_0061;
+						goto IL_006a;
 					}
 				}
 				return Intent == PromotionIntentCode.MultiNightItem;
 			}
-			goto IL_0061;
-			IL_0061:
+			goto IL_006a;
+			IL_006a:
 			return true;
 		}
 	}
@@ -81,9 +86,15 @@ public class Promotion : IPromotion
 		}
 	}
 
+	public bool IsRedboxPlusFreeOneNightRental => ServiceLocator.Instance.GetService<IDataService>().GetRedboxPlusPromoCampaign(CampaignId) != null;
+
+	public bool AllowFullDiscount { get; set; } = true;
+
+	public IDefaultPromo DefaultPromo { get; set; }
+
 	public Promotion()
 	{
-		QualifyingItems = new List<IRentalShoppingCartItem>();
+		QualifyingItems = new List<IRentalShoppingCartTitleItem>();
 		PromotionItems = new List<IPromotionItem>();
 		IsValidatedPostVend = false;
 		DiscountType = DiscountType.PromotionCode;

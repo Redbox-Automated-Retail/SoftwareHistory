@@ -87,9 +87,9 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty ReleaseYearBorderThicknessProperty = DependencyProperty.Register("ReleaseYearBorderThickness", typeof(Thickness), typeof(DisplayProductModel), new FrameworkPropertyMetadata(new Thickness(0.0, 0.0, 1.0, 0.0)));
 
-	public static readonly DependencyProperty BoxArtGridWidthProperty = DependencyProperty.Register("BoxArtGridWidth", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(529));
+	public static readonly DependencyProperty BoxArtGridWidthProperty = DependencyProperty.Register("BoxArtGridWidth", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(512));
 
-	public static readonly DependencyProperty DetailsGridWidthProperty = DependencyProperty.Register("DetailsGridWidth", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(495));
+	public static readonly DependencyProperty DetailsGridWidthProperty = DependencyProperty.Register("DetailsGridWidth", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(512));
 
 	public static readonly DependencyProperty AdImageProperty = DependencyProperty.Register("AdImage", typeof(BitmapImage), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -338,6 +338,14 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty RemoveButtonTextProperty = DependencyProperty.Register("RemoveButtonText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty RedboxPlusInfoTextProperty = DependencyProperty.Register("RedboxPlusInfoText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RedboxPlusInfoVisibilityProperty = DependencyProperty.Register("RedboxPlusInfoVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty RedboxPlusInfoADAGridHeightProperty = DependencyProperty.Register("RedboxPlusInfoADAGridHeight", typeof(int), typeof(DisplayProductModel), new FrameworkPropertyMetadata(0));
+
+	public static readonly DependencyProperty RedboxPlusInfoADAVisibilityProperty = DependencyProperty.Register("RedboxPlusInfoADAVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
 	public static readonly DependencyProperty MoreLikeThisVisibilityProperty = DependencyProperty.Register("MoreLikeThisVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty DisplayProductMoreLikeThis1Property = DependencyProperty.Register("DisplayProductMoreLikeThis1", typeof(DisplayProductMoreLikeThisModel), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
@@ -347,6 +355,8 @@ public class DisplayProductModel : BrowseItemModel
 	public static readonly DependencyProperty DisplayProductMoreLikeThis3Property = DependencyProperty.Register("DisplayProductMoreLikeThis3", typeof(DisplayProductMoreLikeThisModel), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty DisplayProductMoreLikeThis4Property = DependencyProperty.Register("DisplayProductMoreLikeThis4", typeof(DisplayProductMoreLikeThisModel), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty DetailsButtonTextProperty = DependencyProperty.Register("DetailsButtonText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public bool TitleDetailPropertiesInitialized;
 
@@ -368,6 +378,8 @@ public class DisplayProductModel : BrowseItemModel
 	}
 
 	public bool LockAspectRatio { get; set; }
+
+	public bool IsTitleDetailsFlag { get; set; }
 
 	public BitmapImage Image
 	{
@@ -1908,6 +1920,36 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
+	public string RemoveButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RemoveButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RemoveButtonTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusInfoText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusInfoTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusInfoTextProperty, value);
+			});
+		}
+	}
+
 	public string SeeFullDetailsText
 	{
 		get
@@ -1938,17 +1980,47 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public string RemoveButtonText
+	public Visibility RedboxPlusInfoVisibility
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(RemoveButtonTextProperty));
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusInfoVisibilityProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(RemoveButtonTextProperty, value);
+				SetValue(RedboxPlusInfoVisibilityProperty, value);
+			});
+		}
+	}
+
+	public int RedboxPlusInfoADAGridHeight
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(RedboxPlusInfoADAGridHeightProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusInfoADAGridHeightProperty, value);
+			});
+		}
+	}
+
+	public Visibility RedboxPlusInfoADAVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusInfoADAVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusInfoADAVisibilityProperty, value);
 			});
 		}
 	}
@@ -2024,6 +2096,21 @@ public class DisplayProductModel : BrowseItemModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(DisplayProductMoreLikeThis4Property, value);
+			});
+		}
+	}
+
+	public string DetailsButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DetailsButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DetailsButtonTextProperty, value);
 			});
 		}
 	}
@@ -2231,5 +2318,6 @@ public class DisplayProductModel : BrowseItemModel
 		ComingSoonButtonVisibility = Visibility.Collapsed;
 		BannerVisibility = Visibility.Collapsed;
 		AddButtonTextVisibility = Visibility.Collapsed;
+		IsTitleDetailsFlag = true;
 	}
 }

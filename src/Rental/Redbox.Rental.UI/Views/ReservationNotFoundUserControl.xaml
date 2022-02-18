@@ -7,7 +7,7 @@
     <DockPanel>
       <Grid DockPanel.Dock="Top" Background="{StaticResource RubineRedBrush}" Height="626" VerticalAlignment="Top">
         <TextBlock Name="TitleText" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_regular_60}" TextWrapping="Wrap" Margin="60,49,0,0" Width="904" Text="{Binding Path=TitleText, FallbackValue=Your reservation is waiting.  Let us find it for you!}" />
-        <TextBlock Name="MessageText" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_regular_24}" TextWrapping="Wrap" Margin="60,246,0,0" Width="904" Text="{Binding Path=MessageText, FallbackValue=This box doesnt have a reservation for you. That might be because:}" />
+        <TextBlock Name="MessageText" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_regular_24}" TextWrapping="Wrap" Margin="60,246,0,0" Width="904" Text="{Binding Path=MessageText, FallbackValue=This Kiosk doesnt have a reservation for you. That might be because:}" />
         <Image Name="PhoneImage" Width="279" Height="304" Margin="670,298,0,0" Source="{Binding Path=ImageName, FallbackValue='pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/phone_graphic.png'}" />
       </Grid>
       <Grid Background="{StaticResource EggplantBrush}">

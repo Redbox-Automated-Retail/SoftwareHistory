@@ -9,4 +9,6 @@ public class SignupFlowState : ISignupFlowState
 	public bool EmailOptInCampaignShown { get; set; }
 
 	public bool WasPerksSignupOfferPresented { get; set; }
+
+	public bool WasEarlyIdSignupPresented { get; set; }
 }

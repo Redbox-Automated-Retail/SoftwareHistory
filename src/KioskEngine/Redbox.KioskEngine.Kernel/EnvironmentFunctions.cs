@@ -24,13 +24,14 @@ public static class EnvironmentFunctions
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		IManifestInfo manifestInfo = null;
 		service?.GetManifest(out manifestInfo);
+		string message = "Kiosk Engine is checking if it can shut-down";
 		if (manifestInfo?.ProductName == "Field Maintenance Application" || manifestInfo?.ProductName == "Control Panel Application")
 		{
 			LogHelper.Instance.Log(manifestInfo?.ProductName);
-			LogHelper.Instance.Log("Kiosk Engine is requesting a shut-down");
+			LogHelper.Instance.Log(message);
 			return false;
 		}
-		LogHelper.Instance.Log("Kiosk Engine is requesting a shut-down");
+		LogHelper.Instance.Log(message);
 		IApplicationState service2 = ServiceLocator.Instance.GetService<IApplicationState>();
 		IRedboxRental service3 = ServiceLocator.Instance.GetService<IRedboxRental>();
 		if (service3 == null || service3.IsRentalSessionActive())

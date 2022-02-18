@@ -33,6 +33,8 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 
 	public static readonly DependencyProperty PromoTitleProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PromoTitle", TYPES.STRING);
 
+	public static readonly DependencyProperty HeaderTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("HeaderText", TYPES.STRING);
+
 	public static readonly DependencyProperty PerksButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PerksButtonText", TYPES.STRING);
 
 	public static readonly DependencyProperty PromosButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PromosButtonText", TYPES.STRING);
@@ -49,6 +51,8 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 
 	public static readonly DependencyProperty InfoButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("InfoButtonText", TYPES.STRING);
 
+	public static readonly DependencyProperty HowPointsWorkButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("HowPointsWorkButtonText", TYPES.STRING);
+
 	public static readonly DependencyProperty PromoListMessageProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("PromoListMessage", TYPES.STRING);
 
 	public static readonly DependencyProperty ShowPromoListMessageProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("ShowPromoListMessage", TYPES.BOOL, false);
@@ -58,6 +62,44 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 	public static readonly DependencyProperty CurrentPageNumberProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("CurrentPageNumber", TYPES.INT, 1);
 
 	public static readonly DependencyProperty IsAdaModeProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("IsAdaMode", TYPES.BOOL, false);
+
+	public static readonly DependencyProperty TabButtonsColumnsProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("TabButtonsColumns", TYPES.INT, 2);
+
+	public static readonly DependencyProperty RedboxPlusButtonVisibilityProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusButtonVisibility", TYPES.VISIBILITY, Visibility.Collapsed);
+
+	public static readonly DependencyProperty RedboxPlusButtonTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusButtonText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusSelectedProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusSelected", TYPES.BOOL, false);
+
+	public static readonly DependencyProperty RedboxPlusPlanId1VisibilityProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusPlanId1Visibility", TYPES.VISIBILITY, Visibility.Visible);
+
+	public static readonly DependencyProperty RedboxPlusPlanId2VisibilityProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusPlanId2Visibility", TYPES.VISIBILITY, Visibility.Collapsed);
+
+	public static readonly DependencyProperty RedboxPlusFreeMonthlyTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusFreeMonthlyText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusFreeThisMonthTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusFreeThisMonthText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusSeeMoviesTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusSeeMoviesText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusChooseTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusChooseText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusExtendedTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusExtendedText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusKeepTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusKeepText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusExtraNightTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusExtraNightText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusExtraThisMonthTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusExtraThisMonthText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusNeedAnotherTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusNeedAnotherText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusAwardedTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusAwardedText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusPlanRenewsTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusPlanRenewsText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusLegalTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusLegalText", TYPES.STRING);
+
+	public static readonly DependencyProperty RedboxPlusTermsTextProperty = BaseModel<MemberPerksModel>.CreateDependencyProperty("RedboxPlusTermsText", TYPES.STRING);
 
 	public MemberPerksLogic Logic { get; set; }
 
@@ -73,6 +115,8 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 
 	public DynamicRoutedCommand InfoButtonCommand { get; set; }
 
+	public DynamicRoutedCommand HowPointsWorkButtonCommand { get; set; }
+
 	public DynamicRoutedCommand NextPagePressedCommand { get; set; }
 
 	public DynamicRoutedCommand PreviousPagePressedCommand { get; set; }
@@ -82,6 +126,10 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 	public DynamicRoutedCommand AddOrRemovePromoCommand { get; set; }
 
 	public DynamicRoutedCommand DetailsCommand { get; set; }
+
+	public DynamicRoutedCommand SeeRedboxPlusMoviesButtonCommand { get; set; }
+
+	public DynamicRoutedCommand TermsButtonCommand { get; set; }
 
 	public bool IsAdaMode
 	{
@@ -293,6 +341,21 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 		}
 	}
 
+	public string HeaderText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(HeaderTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HeaderTextProperty, value);
+			});
+		}
+	}
+
 	public string PerksButtonText
 	{
 		get
@@ -413,6 +476,21 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 		}
 	}
 
+	public string HowPointsWorkButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(HowPointsWorkButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(HowPointsWorkButtonTextProperty, value);
+			});
+		}
+	}
+
 	public string PromoListMessage
 	{
 		get
@@ -469,6 +547,291 @@ public class MemberPerksModel : BaseModel<MemberPerksModel>, IPromoListModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(CurrentPageNumberProperty, value);
+			});
+		}
+	}
+
+	public int TabButtonsColumns
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (int)GetValue(TabButtonsColumnsProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(TabButtonsColumnsProperty, value);
+			});
+		}
+	}
+
+	public Visibility RedboxPlusButtonVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusButtonVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusButtonVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusButtonTextProperty, value);
+			});
+		}
+	}
+
+	public bool RedboxPlusSelected
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(RedboxPlusSelectedProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusSelectedProperty, value);
+			});
+		}
+	}
+
+	public Visibility RedboxPlusPlanId1Visibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusPlanId1VisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusPlanId1VisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility RedboxPlusPlanId2Visibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusPlanId2VisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusPlanId2VisibilityProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusFreeMonthlyText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusFreeMonthlyTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusFreeMonthlyTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusFreeThisMonthText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusFreeThisMonthTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusFreeThisMonthTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusSeeMoviesText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusSeeMoviesTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusSeeMoviesTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusChooseText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusChooseTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusChooseTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusExtendedText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusExtendedTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusExtendedTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusKeepText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusKeepTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusKeepTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusExtraNightText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusExtraNightTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusExtraNightTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusExtraThisMonthText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusExtraThisMonthTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusExtraThisMonthTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusNeedAnotherText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusNeedAnotherTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusNeedAnotherTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusAwardedText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusAwardedTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusAwardedTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusPlanRenewsText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusPlanRenewsTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusPlanRenewsTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusLegalText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusLegalTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusLegalTextProperty, value);
+			});
+		}
+	}
+
+	public string RedboxPlusTermsText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(RedboxPlusTermsTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusTermsTextProperty, value);
 			});
 		}
 	}

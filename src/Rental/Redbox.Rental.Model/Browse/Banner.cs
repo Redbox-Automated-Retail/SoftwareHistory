@@ -11,6 +11,10 @@ public class Banner
 		public const string MultipleDisc = "banner_multiple_disc_background";
 
 		public const string Format = "banner_format_background";
+
+		public const string Subscription = "banner_subscription_background";
+
+		public const string Plan = "banner_plan_background";
 	}
 
 	public class TextKeyConstants
@@ -28,6 +32,10 @@ public class Banner
 		public const string _4k_uhd = "_4k_uhd";
 
 		public const string MultipleDiscs = "disc_vend";
+
+		public const string Subscription = "mini_cart_subscription_text";
+
+		public const string Plan = "mini_cart_plan_text";
 	}
 
 	public BannerType BannerType { get; set; }

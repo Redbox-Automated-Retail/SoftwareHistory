@@ -5,13 +5,11 @@ namespace Redbox.Rental.Model.Pricing;
 
 public interface IKioskPricingService
 {
-	IPricingSet CurrentPriceSet { get; }
-
 	bool IsPricingEngineDataAvailable { get; }
 
 	void UpdatePricingInstance(bool force = false);
 
-	IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType, bool useAdjustedPrices);
+	IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType);
 
 	IPricingRecord GetActiveProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType);
 

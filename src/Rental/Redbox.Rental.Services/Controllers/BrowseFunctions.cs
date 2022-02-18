@@ -9,6 +9,7 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
@@ -18,6 +19,7 @@ using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
+using Redbox.Rental.Services.ShoppingCart;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
@@ -62,27 +64,98 @@ public class BrowseFunctions
 
 	private static IBrowseState BrowseState => Redbox.Rental.Services.Session.Session.Instance.BrowseState;
 
+	public static bool IsRedboxPlusBrowseMode
+	{
+		get
+		{
+			IBrowseState browseState = BrowseState;
+			if (browseState == null)
+			{
+				return false;
+			}
+			return browseState.BrowseMode == BrowseViewFilter.RedboxPlus;
+		}
+	}
+
+	public static bool IsShoppingCartFull => RentalShoppingCartService?.CurrentRentalShoppingCart?.IsFull ?? false;
+
+	public static bool CanAddProductToCart
+	{
+		get
+		{
+			if (!IsRedboxPlusBrowseMode)
+			{
+				return !IsShoppingCartFull;
+			}
+			return RedboxPlusFunctions.CanAddRedboxPlusFreeOneNightRental;
+		}
+	}
+
+	public static void SetRedboxPlusFreeOneNightRentalOrAddProductToCart(AddProductToCartParameters addProductToCartParameters)
+	{
+		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
+		if (rentalShoppingCart == null || addProductToCartParameters?.TitleProduct == null)
+		{
+			return;
+		}
+		int? redboxPlusBenefitId = addProductToCartParameters.RedboxPlusBenefitId;
+		int num = 2;
+		if (redboxPlusBenefitId.GetValueOrDefault() == num && redboxPlusBenefitId.HasValue && rentalShoppingCart != null && rentalShoppingCart.HasTitleItem(addProductToCartParameters.TitleProduct.ProductId))
+		{
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = rentalShoppingCart?.GetTitleItemsByCriteria(new RentalShoppingCartFilterCriteria
+			{
+				IncludeProducts = new List<long> { addProductToCartParameters.TitleProduct.ProductId },
+				IncludeFlashDeals = true,
+				IncludeLoyaltyRedeemedItems = true,
+				IncludeMultiNightPricedItems = true,
+				IncludeDiscountRestrictionItems = true
+			})?.FirstOrDefault();
+			if (rentalShoppingCartTitleItem != null)
+			{
+				RedboxPlusFunctions.ValidateAndSetFreeOneNightRental(rentalShoppingCartTitleItem, showConfirmationMessage: false, "browse_view");
+			}
+		}
+		else
+		{
+			AddProductToCart(addProductToCartParameters);
+		}
+	}
+
 	public static void AddProductToCart(ITitleProduct titleProduct, bool isPurchase)
 	{
-		AddProductToCart(titleProduct, isPurchase, null, ItemSourceType.Browse);
+		AddProductToCart(new AddProductToCartParameters
+		{
+			TitleProduct = titleProduct,
+			IsPurchase = isPurchase,
+			PricingRecord = null,
+			ItemSourceType = ItemSourceType.Browse,
+			RedboxPlusBenefitId = null
+		});
 	}
 
 	public static void AddProductToCart(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord)
 	{
-		AddProductToCart(titleProduct, isPurchase, pricingRecord, ItemSourceType.Browse);
+		AddProductToCart(new AddProductToCartParameters
+		{
+			TitleProduct = titleProduct,
+			IsPurchase = isPurchase,
+			PricingRecord = pricingRecord,
+			ItemSourceType = ItemSourceType.Browse,
+			RedboxPlusBenefitId = null
+		});
 	}
 
-	public static void AddProductToCart(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	public static void AddProductToCart(AddProductToCartParameters addProductToCartParameters)
 	{
-		if (titleProduct != null)
+		if (addProductToCartParameters?.TitleProduct != null)
 		{
-			if (isPurchase)
+			if (addProductToCartParameters.IsPurchase)
 			{
-				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsBuy")?.AddData(ProductData.ToProductData(titleProduct));
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsBuy")?.AddData(ProductData.ToProductData(addProductToCartParameters.TitleProduct));
 			}
 			else
 			{
-				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsShoppingCartAddItem")?.AddData(ProductData.ToProductData(titleProduct));
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsShoppingCartAddItem")?.AddData(ProductData.ToProductData(addProductToCartParameters.TitleProduct));
 			}
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.ItemAddedFromView = service?.Peek();
@@ -91,7 +164,11 @@ public class BrowseFunctions
 			_digitalCodeWarningShown = false;
 			_subPlatformWarningShown = false;
 			_multiDiscWarningShown = false;
-			AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = true;
+			}
+			AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 		}
 	}
 
@@ -112,6 +189,19 @@ public class BrowseFunctions
 			service.Push("idle_timeout_message_view");
 			service.Show();
 		}, continueAction);
+	}
+
+	public static void ShowBrowseViewRedboxPlus(string contextMessage)
+	{
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.RedboxPlus;
+		if (ServiceLocator.Instance.GetService<IViewService>()?.PeekViewFrameByName("browse_view", out var _) != null)
+		{
+			OrchestrationService.UnwindToSafe("browse_view", discard: true, contextMessage);
+		}
+		else
+		{
+			OrchestrationService.ViewShow("browse_view");
+		}
 	}
 
 	public static DisplayCollectionModel CreateDisplayCollectionModelFromCollectionProduct(CollectionProduct collectionProduct)
@@ -166,11 +256,11 @@ public class BrowseFunctions
 			}
 			else
 			{
-				displayProductModel.FlagText = BundleFunctions.GetDictionaryStringValue("strings", productFlag?.TextKeyName);
+				displayProductModel.FlagText = ((!string.IsNullOrEmpty(productFlag?.TextKeyName)) ? Resources.ResourceManager.GetString(productFlag?.TextKeyName) : null);
 			}
 			if (displayProductModel.FlagVisibility == Visibility.Visible)
 			{
-				displayProductModel.FlagMargin = new Thickness(0.0, 45.0, 0.0, 0.0);
+				displayProductModel.FlagMargin = new Thickness(0.0, 31.0, 0.0, 0.0);
 			}
 		}
 	}
@@ -318,50 +408,87 @@ public class BrowseFunctions
 		displayProductModel.BannerBackgroundBrush = WPFFunctions.GetBrush(frameworkElementToGetStyleFrom, banner.BannerStyleName);
 	}
 
-	private static void AddProductToCartIfUserApprovesWarnings(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	private static void AddProductToCartIfUserApprovesWarnings(AddProductToCartParameters addProductToCartParameters)
 	{
-		if (CheckForADAPurchaseWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForMatureRatingWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckFor4kWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForSubPlatformWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForPurchaseWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForDigitalCodeWarning(titleProduct, isPurchase, pricingRecord, itemSourceType) && CheckForAdditionalDiscWarning(titleProduct, isPurchase, pricingRecord, itemSourceType))
+		if (addProductToCartParameters == null)
 		{
-			IRentalShoppingCartItem rentalShoppingCartItem = RentalShoppingCartService?.CreateRentalShoppingCartItemFromTitleProduct(titleProduct);
-			if (rentalShoppingCartItem != null)
+			return;
+		}
+		LogHelper.Instance.Log($"Starting AddProductToCartIfUserApprovesWarnings for product id {addProductToCartParameters?.TitleProduct?.ProductId}, purchase: {addProductToCartParameters?.IsPurchase}");
+		if (!CheckForADAPurchaseWarning(addProductToCartParameters) || !CheckForMatureRatingWarning(addProductToCartParameters) || !CheckFor4kWarning(addProductToCartParameters) || !CheckForSubPlatformWarning(addProductToCartParameters) || !CheckForPurchaseWarning(addProductToCartParameters) || !CheckForDigitalCodeWarning(addProductToCartParameters) || !CheckForAdditionalDiscWarning(addProductToCartParameters))
+		{
+			return;
+		}
+		if (addProductToCartParameters.IsRedboxPlusFreeOneNightRental)
+		{
+			RemoveExistingRedboxPlusFreeOneNightRentalItem();
+		}
+		ISession instance = Redbox.Rental.Services.Session.Session.Instance;
+		if (instance == null || !instance.HasReceivedUserInteractionThatStartsTimedSession)
+		{
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.AddProductToCart));
+		}
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = RentalShoppingCartService?.CreateRentalShoppingCartItemFromTitleProduct(addProductToCartParameters.TitleProduct);
+		if (rentalShoppingCartTitleItem != null)
+		{
+			rentalShoppingCartTitleItem.SourceType = addProductToCartParameters.ItemSourceType;
+			rentalShoppingCartTitleItem.Action = (addProductToCartParameters.IsPurchase ? RentalShoppingCartItemAction.purchase : RentalShoppingCartItemAction.rental);
+			rentalShoppingCartTitleItem.Quantity = 1m;
+			rentalShoppingCartTitleItem.Status = LineItemStatus.Pending;
+			rentalShoppingCartTitleItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(addProductToCartParameters.TitleProduct);
+			rentalShoppingCartTitleItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(addProductToCartParameters.TitleProduct);
+			rentalShoppingCartTitleItem.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(addProductToCartParameters.TitleProduct);
+			if (addProductToCartParameters.IsRedboxPlusFreeOneNightRental && RedboxPlusFunctions.IsFreeOneNightRentalAvailable)
 			{
-				rentalShoppingCartItem.SourceType = itemSourceType;
-				rentalShoppingCartItem.Action = (isPurchase ? RentalShoppingCartItemAction.purchase : RentalShoppingCartItemAction.rental);
-				rentalShoppingCartItem.Quantity = 1m;
-				rentalShoppingCartItem.Status = LineItemStatus.Pending;
-				rentalShoppingCartItem.OfferCode = PersonalizationFunctions.GetLoyaltyOfferCode(titleProduct);
-				rentalShoppingCartItem.TivoQueryId = PersonalizationFunctions.GetTivoQueryId(titleProduct);
-				rentalShoppingCartItem.PersonalizationTitleTags = PersonalizationFunctions.GetPersonalizationTitleTags(titleProduct);
-				RentalShoppingCartService?.CurrentRentalShoppingCart?.AddItem(rentalShoppingCartItem, pricingRecord);
+				RedboxPlusFunctions.ValidateAndSetFreeOneNightRental(rentalShoppingCartTitleItem, showConfirmationMessage: false, null);
 			}
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			IBrowseState browseState = BrowseState;
-			if (browseState != null && browseState.ProductAddedFromCarousel)
+			RentalShoppingCartService?.CurrentRentalShoppingCart?.AddTitleItem(rentalShoppingCartTitleItem, addProductToCartParameters.PricingRecord);
+			if (Redbox.Rental.Services.Session.Session.Instance != null)
 			{
-				OrchestrationService.ViewShow("browse_view", GetBrowseViewparameters());
-				BrowseState.ProductAddedFromCarousel = false;
+				Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
 			}
-			bool flag = service?.Stack.Any((IViewFrameInstance vf) => vf.ViewFrame?.ViewName == "recommended_titles_popup_view") ?? false;
-			if (BrowseState?.ItemAddedFromView == "recommended_titles_popup_view" || ((BrowseState?.ItemAddedFromView == "product_detail_view") & flag))
+		}
+		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+		IBrowseState browseState = BrowseState;
+		if (browseState != null && browseState.ProductAddedFromCarousel)
+		{
+			OrchestrationService.ViewShow("browse_view", GetBrowseViewparameters());
+			BrowseState.ProductAddedFromCarousel = false;
+		}
+		bool flag = service?.Stack.Any((IViewFrameInstance vf) => vf.ViewFrame?.ViewName == "recommended_titles_popup_view") ?? false;
+		if (BrowseState?.ItemAddedFromView == "recommended_titles_popup_view" || ((BrowseState?.ItemAddedFromView == "product_detail_view") & flag))
+		{
+			service?.UnwindToSafe("browse_view", discard: true, "recommended_titles_popup_view");
+		}
+		else if (BrowseState?.ItemAddedFromView == "product_detail_view")
+		{
+			service?.GoBack("Item Added", popOnly: false);
+		}
+		if (BrowseState?.ItemAddedFromView == "multi_night_pricing_popup_view")
+		{
+			service?.UnwindToSafe("browse_view", discard: true, "multi_night_pricing_popup_view");
+		}
+		if (BrowseState?.ItemAddedFromView == "option_selection_dialog_view")
+		{
+			service?.UnwindToSafe("browse_view", discard: true, "option_selection_dialog_view");
+		}
+		IRentalShoppingCartService rentalShoppingCartService = RentalShoppingCartService;
+		if (rentalShoppingCartService != null && rentalShoppingCartService.CurrentRentalShoppingCartIsFull)
+		{
+			ShowCartFullMessage();
+		}
+	}
+
+	private static void RemoveExistingRedboxPlusFreeOneNightRentalItem()
+	{
+		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
+		if (rentalShoppingCart != null)
+		{
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = rentalShoppingCart.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem x) => x?.IsRedboxPlusFreeOneNightRental ?? false);
+			if (rentalShoppingCartTitleItem != null)
 			{
-				service?.UnwindToSafe("browse_view", discard: true, "recommended_titles_popup_view");
-			}
-			else if (BrowseState?.ItemAddedFromView == "product_detail_view")
-			{
-				service?.GoBack("Item Added", popOnly: false);
-			}
-			if (BrowseState?.ItemAddedFromView == "multi_night_pricing_popup_view")
-			{
-				service?.UnwindToSafe("browse_view", discard: true, "multi_night_pricing_popup_view");
-			}
-			if (BrowseState?.ItemAddedFromView == "option_selection_dialog_view")
-			{
-				service?.UnwindToSafe("browse_view", discard: true, "option_selection_dialog_view");
-			}
-			IRentalShoppingCartService rentalShoppingCartService = RentalShoppingCartService;
-			if (rentalShoppingCartService != null && rentalShoppingCartService.CurrentRentalShoppingCartIsFull)
-			{
-				ShowCartFullMessage();
+				LogHelper.Instance.Log($"Removing existing Redbox+ free one night rental item product id: {rentalShoppingCartTitleItem.ProductId}");
+				rentalShoppingCart.RemoveItem(rentalShoppingCartTitleItem, userRemoved: true);
 			}
 		}
 	}
@@ -394,7 +521,6 @@ public class BrowseFunctions
 				RecommendedTitlesPopupInfo recommendedTitlesPopupInfo = new RecommendedTitlesPopupInfo();
 				recommendedTitlesPopupInfo.RecommendedTitles = recommendedTitles;
 				recommendedTitlesPopupInfo.NumberOfTitlesToShow = numberOfTitlesToShow;
-				recommendedTitlesPopupInfo.ShowOfferText = true;
 				recommendedTitlesPopupInfo.ShownFromView = "option_selection_dialog_view";
 				OrchestrationService.ViewShow("recommended_titles_popup_view", recommendedTitlesPopupInfo);
 			}
@@ -410,14 +536,14 @@ public class BrowseFunctions
 		}
 	}
 
-	private static bool CheckForAdditionalDiscWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	private static bool CheckForAdditionalDiscWarning(AddProductToCartParameters addProductToCartParameters)
 	{
 		bool flag = true;
-		if (!_multiDiscWarningShown && !isPurchase && (titleProduct.RequiredAdditionalTitles?.Count ?? 0) > 0)
+		if (!_multiDiscWarningShown && !addProductToCartParameters.IsPurchase && (addProductToCartParameters.TitleProduct.RequiredAdditionalTitles?.Count ?? 0) > 0)
 		{
-			foreach (long requiredAdditionalTitle in titleProduct.RequiredAdditionalTitles)
+			foreach (long requiredAdditionalTitle in addProductToCartParameters.TitleProduct.RequiredAdditionalTitles)
 			{
-				if (!RentalShoppingCartService.CurrentRentalShoppingCart.HasItem(requiredAdditionalTitle))
+				if (!RentalShoppingCartService.CurrentRentalShoppingCart.HasTitleItem(requiredAdditionalTitle))
 				{
 					flag = false;
 					break;
@@ -425,14 +551,14 @@ public class BrowseFunctions
 			}
 			if (!flag)
 			{
-				string title = string.Format(Resources.multi_disc_warning_title, titleProduct.RequiredAdditionalTitles.Count + 1);
+				string title = string.Format(Resources.multi_disc_warning_title, addProductToCartParameters.TitleProduct.RequiredAdditionalTitles.Count + 1);
 				string empty = string.Empty;
 				string multi_disc_warning_button_text = Resources.multi_disc_warning_button_text;
 				IPricingService service = ServiceLocator.Instance.GetService<IPricingService>();
 				IDataService service2 = ServiceLocator.Instance.GetService<IDataService>();
-				IPricingRecord oneDayProductPricingRecord = service.GetOneDayProductPricingRecord(titleProduct.ProductId);
+				IPricingRecord oneDayProductPricingRecord = service.GetOneDayProductPricingRecord(addProductToCartParameters.TitleProduct.ProductId);
 				decimal initialNight = oneDayProductPricingRecord.InitialNight;
-				foreach (long requiredAdditionalTitle2 in titleProduct.RequiredAdditionalTitles)
+				foreach (long requiredAdditionalTitle2 in addProductToCartParameters.TitleProduct.RequiredAdditionalTitles)
 				{
 					oneDayProductPricingRecord = service.GetOneDayProductPricingRecord(requiredAdditionalTitle2);
 					if (oneDayProductPricingRecord != null)
@@ -441,13 +567,13 @@ public class BrowseFunctions
 					}
 				}
 				IKioskProduct kioskProduct = null;
-				if (titleProduct.RequiredAdditionalTitles.Count > 1)
+				if (addProductToCartParameters.TitleProduct.RequiredAdditionalTitles.Count > 1)
 				{
 					string text = "";
-					for (int i = 0; i < titleProduct.RequiredAdditionalTitles.Count - 1; i++)
+					for (int i = 0; i < addProductToCartParameters.TitleProduct.RequiredAdditionalTitles.Count - 1; i++)
 					{
 						kioskProduct = null;
-						service2.GetProduct(titleProduct.RequiredAdditionalTitles[i], excludeTitleRollup: true, out kioskProduct);
+						service2.GetProduct(addProductToCartParameters.TitleProduct.RequiredAdditionalTitles[i], excludeTitleRollup: true, out kioskProduct);
 						if (kioskProduct != null)
 						{
 							if (i > 0)
@@ -458,49 +584,53 @@ public class BrowseFunctions
 						}
 					}
 					kioskProduct = null;
-					service2.GetProduct(titleProduct.RequiredAdditionalTitles[titleProduct.RequiredAdditionalTitles.Count - 1], excludeTitleRollup: true, out kioskProduct);
+					service2.GetProduct(addProductToCartParameters.TitleProduct.RequiredAdditionalTitles[addProductToCartParameters.TitleProduct.RequiredAdditionalTitles.Count - 1], excludeTitleRollup: true, out kioskProduct);
 					string arg = kioskProduct?.ProductName;
 					empty = string.Format(Resources.multi_disc_warning_multiple_disc_message, text, arg, initialNight.ToString("0.00"));
 				}
 				else
 				{
 					kioskProduct = null;
-					service2.GetProduct(titleProduct.RequiredAdditionalTitles[titleProduct.RequiredAdditionalTitles.Count - 1], excludeTitleRollup: true, out kioskProduct);
+					service2.GetProduct(addProductToCartParameters.TitleProduct.RequiredAdditionalTitles[addProductToCartParameters.TitleProduct.RequiredAdditionalTitles.Count - 1], excludeTitleRollup: true, out kioskProduct);
 					string arg2 = kioskProduct?.ProductName;
 					empty = string.Format(Resources.multi_disc_warning_2_disc_message, arg2, initialNight.ToString("0.00"));
 				}
 				_multiDiscWarningShown = true;
 				MessagePopupViewController.ShowMultiDiscAlert(title, empty, multi_disc_warning_button_text, delegate
 				{
+					if (Redbox.Rental.Services.Session.Session.Instance != null)
+					{
+						Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+					}
 					ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
 				}, delegate
 				{
 					BrowseState._4kWarningShown = true;
 					AnalyticsService?.AddButtonPressEvent("BrowseFunctionsOkay");
 					ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("multi_disc_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
-					AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+					AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 				}, "MultiDiscWarningDialog");
 			}
 		}
 		return flag;
 	}
 
-	private static bool CheckForADAPurchaseWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	private static bool CheckForADAPurchaseWarning(AddProductToCartParameters addProductToCartParameters)
 	{
 		bool result = true;
-		if ((ApplicationState.Instance.IsADAAccessible && !_adaPurchaseWarningShown) & isPurchase)
+		if (ApplicationState.Instance.IsADAAccessible && !_adaPurchaseWarningShown && addProductToCartParameters.IsPurchase)
 		{
 			result = false;
 			TitleTypeProperty value = null;
-			TitleTypeProperties.Properties.TryGetValue(titleProduct.TitleType, out value);
-			string arg = string.Format("{0} {1}", value?.GetName(Resources.ResourceManager), (titleProduct.TitleFamily == TitleFamily.Games) ? BundleFunctions.GetDictionaryStringValue("strings", "game") : null).Trim();
-			string arg2 = $"{titleProduct.PurchasePrice:n2}";
-			string value2 = string.Format(BundleFunctions.GetDictionaryStringValue("strings", "ada_purchase_price_message"), arg, BundleFunctions.GetDictionaryStringValue("strings", "currency_symbol"), arg2);
-			string dictionaryStringValue = BundleFunctions.GetDictionaryStringValue("strings", "abe_purchase_price_message");
+			TitleTypeProperties.Properties.TryGetValue(addProductToCartParameters.TitleProduct.TitleType, out value);
+			string arg = $"{value?.GetName(Resources.ResourceManager)} {((addProductToCartParameters.TitleProduct.TitleFamily == TitleFamily.Games) ? Resources.game : null)}".Trim();
+			string arg2 = $"{addProductToCartParameters.TitleProduct.PurchasePrice:n2}";
+			string value2 = string.Format(Resources.ada_purchase_price_message, arg, Resources.currency_symbol, arg2);
+			string abe_purchase_price_message = Resources.abe_purchase_price_message;
 			string value3 = null;
-			if (!string.IsNullOrEmpty(dictionaryStringValue))
+			if (!string.IsNullOrEmpty(abe_purchase_price_message))
 			{
-				value3 = (ApplicationState.Instance.IsABEOn ? string.Format(dictionaryStringValue, arg, BundleFunctions.GetDictionaryStringValue("strings", "currency_symbol"), arg2) : null);
+				value3 = (ApplicationState.Instance.IsABEOn ? string.Format(abe_purchase_price_message, arg, Resources.currency_symbol, arg2) : null);
 			}
 			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 			if (service != null)
@@ -510,24 +640,32 @@ public class BrowseFunctions
 			}
 			MessagePopupViewController.ShowADAPurchaseWarning(delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
 			}, delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("ada_purchase_message_view:hide()", popOnly: false);
 			}, delegate
 			{
 				_adaPurchaseWarningShown = true;
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("ada_purchase_message_view:continue", popOnly: false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+				AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 			});
 		}
 		return result;
 	}
 
-	private static bool CheckFor4kWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	private static bool CheckFor4kWarning(AddProductToCartParameters addProductToCartParameters)
 	{
 		bool result = true;
-		if (titleProduct.TitleType == TitleType._4KUHD && !BrowseState._4kWarningShown)
+		if (addProductToCartParameters.TitleProduct.TitleType == TitleType._4KUHD && !BrowseState._4kWarningShown)
 		{
 			result = false;
 			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
@@ -538,9 +676,17 @@ public class BrowseFunctions
 			}
 			MessagePopupViewController.Show4KAlert(delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
 			}, delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsCancel");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:hide()", popOnly: false);
 			}, delegate
@@ -548,29 +694,29 @@ public class BrowseFunctions
 				BrowseState._4kWarningShown = true;
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsGotit");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+				AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 			}, "4KDialog");
 		}
 		return result;
 	}
 
-	private static bool CheckForSubPlatformWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	private static bool CheckForSubPlatformWarning(AddProductToCartParameters addProductToCartParameters)
 	{
 		bool result = true;
 		if (!_subPlatformWarningShown)
 		{
-			ITitleProduct titleProduct2 = titleProduct;
-			if (titleProduct2 != null && titleProduct2.SubPlatformId.HasValue)
+			ITitleProduct titleProduct = addProductToCartParameters.TitleProduct;
+			if (titleProduct != null && titleProduct.SubPlatformId.HasValue)
 			{
-				ITitleProduct titleProduct3 = titleProduct;
-				if (titleProduct3 != null)
+				ITitleProduct titleProduct2 = addProductToCartParameters.TitleProduct;
+				if (titleProduct2 != null)
 				{
-					_ = titleProduct3.ProductTypeId;
+					_ = titleProduct2.ProductTypeId;
 					if (true)
 					{
 						IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-						SubPlatform subPlatform = service?.GetSubPlatforms()?.FirstOrDefault((SubPlatform x) => x.SubPlatformId == titleProduct.SubPlatformId);
-						ProductType productType = service?.GetProductTypes()?.FirstOrDefault((ProductType x) => x.ProductTypeId == titleProduct.ProductTypeId);
+						SubPlatform subPlatform = service?.GetSubPlatforms()?.FirstOrDefault((SubPlatform x) => x.SubPlatformId == addProductToCartParameters.TitleProduct.SubPlatformId);
+						ProductType productType = service?.GetProductTypes()?.FirstOrDefault((ProductType x) => x.ProductTypeId == addProductToCartParameters.TitleProduct.ProductTypeId);
 						if (subPlatform != null)
 						{
 							if (productType != null)
@@ -579,35 +725,43 @@ public class BrowseFunctions
 									.Replace("PS4 ", string.Empty)
 									.Replace("Move", "Playstation Move")
 									.Replace("Eye Camera", "Playstation Eye Camera");
-								string arg2 = string.Format("\n{0}{1} {2}", arg, BundleFunctions.GetDictionaryStringValue("strings", "subplatform_for"), productType?.ProductTypeName);
+								string arg2 = $"\n{arg}{Resources.subplatform_for} {productType?.ProductTypeName}";
 								result = false;
 								IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
 								if (service2 != null)
 								{
-									service2["Subplatform:Header"] = BundleFunctions.GetDictionaryStringValue("strings", "subplatform_warning_title");
-									service2["Subplatform:Message"] = string.Format(BundleFunctions.GetDictionaryStringValue("strings", "subplatform_warning"), arg2);
+									service2["Subplatform:Header"] = Resources.subplatform_warning_title;
+									service2["Subplatform:Message"] = string.Format(Resources.subplatform_warning, arg2);
 								}
 								MessagePopupViewController.ShowSubPlatformWarning(delegate
 								{
+									if (Redbox.Rental.Services.Session.Session.Instance != null)
+									{
+										Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+									}
 									ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
 								}, delegate
 								{
+									if (Redbox.Rental.Services.Session.Session.Instance != null)
+									{
+										Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+									}
 									ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("subplatform_message_view:hide()", popOnly: false);
 								}, delegate
 								{
 									_subPlatformWarningShown = true;
 									ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("subplatform_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
-									AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+									AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 								});
 							}
 							else
 							{
-								LogHelper.Instance.Log("Error: Unable to find product type with id {0}", titleProduct.ProductTypeId);
+								LogHelper.Instance.Log("Error: Unable to find product type with id {0}", addProductToCartParameters.TitleProduct.ProductTypeId);
 							}
 						}
 						else
 						{
-							LogHelper.Instance.Log("Error: Unable to find subPlatorm with id {0}", titleProduct.SubPlatformId);
+							LogHelper.Instance.Log("Error: Unable to find subPlatorm with id {0}", addProductToCartParameters.TitleProduct.SubPlatformId);
 						}
 					}
 				}
@@ -616,42 +770,54 @@ public class BrowseFunctions
 		return result;
 	}
 
-	private static bool CheckForPurchaseWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	private static bool CheckForPurchaseWarning(AddProductToCartParameters addProductToCartParameters)
 	{
 		bool result = true;
-		if ((!_purchaseWarningShown & isPurchase) && titleProduct.ProductId != 1139 && titleProduct.ProductTypeId != 17)
+		if (!_purchaseWarningShown && addProductToCartParameters.IsPurchase && addProductToCartParameters.TitleProduct.ProductId != 1139 && addProductToCartParameters.TitleProduct.ProductTypeId != 17)
 		{
 			result = false;
 			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 			if (service != null)
 			{
-				service["PurchaseWarning:Header"] = BundleFunctions.GetDictionaryStringValue("strings", "products_used");
-				service["PurchaseWarning:Message"] = BundleFunctions.GetDictionaryStringValue("strings", "purchase_warning");
+				service["PurchaseWarning:Header"] = Resources.products_used;
+				service["PurchaseWarning:Message"] = Resources.purchase_warning;
 			}
 			MessagePopupViewController.ShowPurchaseWarning(delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
 			}, delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("purchase_message_view:hide()", popOnly: false);
 			}, delegate
 			{
 				_purchaseWarningShown = true;
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("purchase_message_view:continue", popOnly: false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+				AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 			});
 		}
 		return result;
 	}
 
-	private static bool CheckForDigitalCodeWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	private static bool CheckForDigitalCodeWarning(AddProductToCartParameters addProductToCartParameters)
 	{
 		bool result = true;
-		if (!_digitalCodeWarningShown && titleProduct.ProductTypeId == 17)
+		if (!_digitalCodeWarningShown && addProductToCartParameters.TitleProduct.ProductTypeId == 17)
 		{
 			result = false;
 			MessagePopupViewController.ShowDigitalCodeAlert(delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsCancelDigitalCodeIncart");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert back button", popOnly: false);
 			}, delegate
@@ -659,68 +825,98 @@ public class BrowseFunctions
 				_digitalCodeWarningShown = true;
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsOkDigitalCodeIncart");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert ok button", popOnly: false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+				AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 			}, delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Digital Code alert time out", popOnly: false);
 			});
 		}
 		return result;
 	}
 
-	private static bool CheckForMatureRatingWarning(ITitleProduct titleProduct, bool isPurchase, IPricingRecord pricingRecord, ItemSourceType itemSourceType)
+	private static bool CheckForMatureRatingWarning(AddProductToCartParameters addProductToCartParameters)
 	{
 		bool result = true;
-		if (titleProduct != null && (titleProduct.RatingId == 8 || titleProduct.RatingId == 18 || titleProduct.RatingId == 20 || titleProduct.RatingId == 21) && ((!BrowseState.MovieMatureWarningShown && titleProduct.TitleFamily == TitleFamily.Movies) || (!BrowseState.MatureGameWarningShown && titleProduct.TitleFamily == TitleFamily.Games)))
+		if (addProductToCartParameters.TitleProduct != null && (addProductToCartParameters.TitleProduct.RatingId == 8 || addProductToCartParameters.TitleProduct.RatingId == 18 || addProductToCartParameters.TitleProduct.RatingId == 20 || addProductToCartParameters.TitleProduct.RatingId == 21) && ((!BrowseState.MovieMatureWarningShown && addProductToCartParameters.TitleProduct.TitleFamily == TitleFamily.Movies) || (!BrowseState.MatureGameWarningShown && addProductToCartParameters.TitleProduct.TitleFamily == TitleFamily.Games)))
 		{
 			result = false;
 			List<string> list = new List<string>();
-			list.Add(titleProduct.TitleFamily.ToString());
+			list.Add(addProductToCartParameters.TitleProduct.TitleFamily.ToString());
 			list.Add("matureWarning");
 			Ratings result2 = Ratings.None;
-			Enum.TryParse<Ratings>(titleProduct?.RatingId?.ToString() ?? string.Empty, out result2);
+			Enum.TryParse<Ratings>(addProductToCartParameters.TitleProduct?.RatingId?.ToString() ?? string.Empty, out result2);
 			RatingsProperty ratingsProperty = ((result2 != Ratings.None) ? RatingsProperties.Properties[result2] : null);
 			IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 			if (service != null)
 			{
-				if (titleProduct.TitleFamily == TitleFamily.Movies)
+				if (addProductToCartParameters.TitleProduct.TitleFamily == TitleFamily.Movies)
 				{
-					string dictionaryStringValue = BundleFunctions.GetDictionaryStringValue("strings", "mature_movie_warning");
-					dictionaryStringValue = string.Format(dictionaryStringValue, ratingsProperty?.Name);
-					service["MatureWarning:Header"] = string.Format(BundleFunctions.GetDictionaryStringValue("strings", "esrb_mature_name"), ratingsProperty?.Name);
-					service["MatureWarning:Message"] = dictionaryStringValue;
-					service["MatureWarning:TTSMessage"] = dictionaryStringValue.Replace("OK", "Enter");
+					string mature_movie_warning = Resources.mature_movie_warning;
+					mature_movie_warning = string.Format(mature_movie_warning, ratingsProperty?.Name);
+					service["MatureWarning:Header"] = string.Format(Resources.esrb_mature_name, ratingsProperty?.Name);
+					service["MatureWarning:Message"] = mature_movie_warning;
+					service["MatureWarning:TTSMessage"] = mature_movie_warning.Replace("OK", "Enter");
 				}
-				else if (titleProduct.TitleFamily == TitleFamily.Games)
+				else if (addProductToCartParameters.TitleProduct.TitleFamily == TitleFamily.Games)
 				{
-					string dictionaryStringValue2 = BundleFunctions.GetDictionaryStringValue("strings", "mature_game_warning");
-					dictionaryStringValue2 = string.Format(dictionaryStringValue2, ratingsProperty?.Name).Replace("M", BundleFunctions.GetDictionaryStringValue("strings", "esrb_mature"));
-					service["MatureWarning:Header"] = string.Format(BundleFunctions.GetDictionaryStringValue("strings", "esrb_mature_game_name"), ratingsProperty?.Code);
-					service["MatureWarning:Message"] = dictionaryStringValue2;
-					service["MatureWarning:TTSMessage"] = dictionaryStringValue2.Replace("OK", "Enter");
+					string mature_game_warning = Resources.mature_game_warning;
+					mature_game_warning = string.Format(mature_game_warning, ratingsProperty?.Name).Replace("M", Resources.esrb_mature);
+					service["MatureWarning:Header"] = string.Format(Resources.esrb_mature_game_name, ratingsProperty?.Code);
+					service["MatureWarning:Message"] = mature_game_warning;
+					service["MatureWarning:TTSMessage"] = mature_game_warning.Replace("OK", "Enter");
 				}
 			}
 			MessagePopupViewController.ShowMatureWarning(delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("Message view Timed out.", popOnly: false);
 			}, delegate
 			{
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
+				{
+					Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = false;
+				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("rrated_message_view:hide()", popOnly: false);
 			}, delegate
 			{
-				if (titleProduct.TitleFamily == TitleFamily.Movies)
+				if (addProductToCartParameters.TitleProduct.TitleFamily == TitleFamily.Movies)
 				{
 					BrowseState.MovieMatureWarningShown = true;
 				}
-				else if (titleProduct.TitleFamily == TitleFamily.Games)
+				else if (addProductToCartParameters.TitleProduct.TitleFamily == TitleFamily.Games)
 				{
 					BrowseState.MatureGameWarningShown = true;
 				}
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("rrated_message_view:continue", popOnly: false);
-				AddProductToCartIfUserApprovesWarnings(titleProduct, isPurchase, pricingRecord, itemSourceType);
+				AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 			}, list);
 		}
 		return result;
+	}
+
+	public static BrowseViewFilter GetBrowseMode()
+	{
+		return GetBrowseMode(BrowseState.TitleType);
+	}
+
+	public static BrowseViewFilter GetBrowseMode(TitleType titleType)
+	{
+		if (!IsRedboxPlusBrowseMode)
+		{
+			if (titleType != TitleType.DigitalCode)
+			{
+				return BrowseViewFilter.All;
+			}
+			return BrowseViewFilter.ForSale;
+		}
+		return BrowseViewFilter.RedboxPlus;
 	}
 
 	public static string GetPurchasePriceText(ITitleProduct titleProduct, Func<decimal, decimal> discountedPriceCalc = null)
@@ -742,5 +938,122 @@ public class BrowseFunctions
 			return Resources.offer_info_free;
 		}
 		return string.Format("${0:F2}{1}", price, flag ? "" : "+");
+	}
+
+	public static void PromptToRemoveItem(IBaseRentalShoppingCartItem deleteRentalShoppingCartItem, bool userRemoved)
+	{
+		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService.CurrentRentalShoppingCart;
+		if (rentalShoppingCart == null)
+		{
+			return;
+		}
+		if (deleteRentalShoppingCartItem is IRentalShoppingCartSubscriptionItem)
+		{
+			MessagePopupViewController.ShowRemoveSubscriptionWarning(delegate
+			{
+				OrchestrationService.ViewGoBackSafe("Message view Timed out.", popOnly: false);
+			}, delegate
+			{
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsCancel");
+				OrchestrationService.ViewGoBackSafe("RemoveSubscriptionFromCart", popOnly: false);
+			}, delegate
+			{
+				BrowseState.SubscriptionRemoved = true;
+				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsRemove");
+				RemoveItemFromCart();
+				OrchestrationService.ViewGoBackSafe("RemoveSubscriptionFromCart", popOnly: false);
+			});
+		}
+		else
+		{
+			RemoveItemFromCart();
+		}
+		void RemoveItemFromCart()
+		{
+			rentalShoppingCart.RemoveItem(deleteRentalShoppingCartItem, userRemoved);
+		}
+	}
+
+	public static void AddMultiNightPricedProductToCart(ITitleProduct titleProduct, string shownFromView)
+	{
+		string viewAnalyticsName = "multi_night_pricing_popup_view";
+		if (titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+		{
+			viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
+		}
+		else if (!titleProduct.HasMultiNightPrice && titleProduct.IsSellableAndInStock)
+		{
+			viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
+		}
+		AddMultiNightPricedProductToCart(titleProduct, shownFromView, viewAnalyticsName);
+	}
+
+	public static void AddMultiNightPricedProductToCart(ITitleProduct titleProduct, string shownFromView, string viewAnalyticsName)
+	{
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = true;
+		}
+		OrchestrationService.ViewShow("multi_night_pricing_popup_view", new MultiNightPricingPopupInfo
+		{
+			TitleProduct = titleProduct,
+			ShownFromView = shownFromView,
+			ViewAnalyticsName = viewAnalyticsName
+		});
+	}
+
+	public static void ShowRentalPopupView(TitleRollupProduct titleRollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null)
+	{
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = true;
+		}
+		OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase, cancelAction, showMnp, discountedPriceCalc, IsRedboxPlusBrowseMode ? new int?(2) : ((int?)null)));
+	}
+
+	public static void ShowPurchasePopupView(TitleRollupProduct titleRollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null)
+	{
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = true;
+		}
+		OrchestrationService.ViewShow("purchase_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase, cancelAction, showMnp, discountedPriceCalc));
+	}
+
+	public static void ShowRedboxPlusBrowseWarnings()
+	{
+		ShowRedboxPlusCartFullMessageIfNeeded();
+		ShowRedboxPlusFreeOneNightRentalAlreadyUsedMessageIfNeeded();
+	}
+
+	private static void ShowRedboxPlusCartFullMessageIfNeeded()
+	{
+		if (IsRedboxPlusBrowseMode && RedboxPlusFunctions.IsFreeOneNightRentalAvailable && !CanAddProductToCart)
+		{
+			Action action = delegate
+			{
+				OrchestrationService.ViewGoBackSafe("RedboxPlusCartFullMessage", popOnly: false);
+			};
+			MessagePopupViewController.ShowRedboxPlusCartFullMessage(action, action);
+		}
+	}
+
+	private static void ShowRedboxPlusFreeOneNightRentalAlreadyUsedMessageIfNeeded()
+	{
+		if (IsRedboxPlusBrowseMode && !RedboxPlusFunctions.IsFreeOneNightRentalAvailable)
+		{
+			Action action = delegate
+			{
+				OrchestrationService.ViewGoBackSafe("RedboxPlusFreeOneNightRentalAlreadyUsedMessage", popOnly: false);
+			};
+			if (RedboxPlusFunctions.RedboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier1)
+			{
+				MessagePopupViewController.ShowRedboxPlusFreeOneNightRentalAlreadyUsedTier1Message(action, action);
+			}
+			else
+			{
+				MessagePopupViewController.ShowRedboxPlusFreeOneNightRentalAlreadyUsedTier2Message(action, action);
+			}
+		}
 	}
 }

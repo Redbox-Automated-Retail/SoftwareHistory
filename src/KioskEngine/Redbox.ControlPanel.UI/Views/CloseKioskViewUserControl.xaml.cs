@@ -184,7 +184,7 @@ public partial class CloseKioskViewUserControl : UserControl, IComponentConnecto
 			header_textbox.Text = "Inventory Removed";
 			message_text.Visibility = Visibility.Visible;
 			message_text.Text = "Inventory successfully marked as removed for this kiosk.\n\n" + ProcessFunctions.kioskItemsCount + " Inventory Record(s) Updated.\n\nYou may continue the process of closing the kiosk.";
-			string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser ?? "N/A";
+			string userName = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser.CheckNotAvailable();
 			ProcessFunctions.InnerSendAuditEvent(ProcessFunctions.kioskId.ToString(), "CP_CloseKiosk", userName, "CP Bundle", "Marked " + ProcessFunctions.kioskItemsCount + " barcode(s) as removed.");
 			button_yes.Click -= YesButtonClickHandle2;
 			button_yes.Click += YesButtonClickHandle3;

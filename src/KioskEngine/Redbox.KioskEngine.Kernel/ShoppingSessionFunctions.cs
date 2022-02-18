@@ -55,18 +55,6 @@ internal static class ShoppingSessionFunctions
 		return result;
 	}
 
-	[KernelFunction(Name = "kernel.is_session_committed")]
-	internal static bool IsSessionCommitted(string sessionId)
-	{
-		bool result = false;
-		IShoppingSession shoppingSession = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId);
-		if (shoppingSession != null)
-		{
-			result = shoppingSession.Status == ShoppingSessionStatus.Committed;
-		}
-		return result;
-	}
-
 	[KernelFunction(Name = "kernel.sessionaddevent2")]
 	internal static void AddNewEvent(string sessionId, string type, string description)
 	{

@@ -71,7 +71,7 @@ public class NewCartConfirmADAActionUpdateViewController : BaseViewController
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		if (rentalShoppingCart != null && service != null)
 		{
-			foreach (IRentalShoppingCartItem eachRentalShoppingCartItem in rentalShoppingCart.Items)
+			foreach (IRentalShoppingCartTitleItem eachRentalShoppingCartItem in rentalShoppingCart.TitleItems)
 			{
 				IKioskProduct kioskProduct = null;
 				service.GetProduct(eachRentalShoppingCartItem.ProductId, excludeTitleRollup: true, out kioskProduct);
@@ -156,7 +156,7 @@ public class NewCartConfirmADAActionUpdateViewController : BaseViewController
 		OrchestrationService.RemoveIdleTimer("shopping_cart_update_ada_idle_timer");
 	}
 
-	private static void AddMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, CustomerOffer selectedOffer)
+	private static void AddMultiNightCommand_Execute(IRentalShoppingCartTitleItem rentalShoppingCartItem, CustomerOffer selectedOffer)
 	{
 		BaseViewController.ProcessWPFHit();
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmADAAddProductOffer", $"Add offer To {rentalShoppingCartItem?.ProductId}");
@@ -170,7 +170,7 @@ public class NewCartConfirmADAActionUpdateViewController : BaseViewController
 		ConfigureShoppingCartDisplay(_viewModel);
 	}
 
-	private static void RemoveMultiNightCommand_Execute(IRentalShoppingCartItem rentalShoppingCartItem, long offerId)
+	private static void RemoveMultiNightCommand_Execute(IRentalShoppingCartTitleItem rentalShoppingCartItem, long offerId)
 	{
 		BaseViewController.ProcessWPFHit();
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("NewCartConfirmADARemoveProductOffer", $"delete {rentalShoppingCartItem?.ProductId}");

@@ -1,69 +1,37 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+using System.Collections.ObjectModel;
 using System.Net.Mail;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Redbox.Core;
-using Redbox.KioskDataServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.REDS.Framework;
-using Redbox.Rental.Model;
 
 namespace Redbox.KioskServices.Proxy;
 
 public class HealthServicesProxy : IHealthServices
 {
-	internal sealed class Statistic
-	{
-		public string Name { get; set; }
+	private const int DefaultPingPeriod = 300000;
 
-		public string Value { get; set; }
-	}
+	private const string DefaultSmtpServer = "corpsmtp01.rb.local";
 
-	[StructLayout(LayoutKind.Sequential, Pack = 1, Size = 16)]
-	private struct SYSTEMTIME
-	{
-		public ushort Year;
+	private const string DefaultRecipients = "";
 
-		public ushort Month;
-
-		public ushort DayOfWeek;
-
-		public ushort Day;
-
-		public ushort Hour;
-
-		public ushort Minute;
-
-		public ushort Second;
-
-		public ushort Milliseconds;
-	}
-
-	internal const int DefaultPingPeriod = 300000;
-
-	internal const string DefaultSmtpServer = "corpsmtp01.rb.local";
-
-	internal const string DefaultRecipients = "";
+	private bool m_wasFirstPingSent;
 
 	private Timer m_pingTimer;
 
 	private readonly object m_syncLock = new object();
 
-	private readonly Queue<Statistic> m_statisticsQueue = new Queue<Statistic>();
+	private readonly Dictionary<string, string> m_statistics = new Dictionary<string, string>();
 
-	private readonly Queue<KeyValuePair<string, string>> m_propertiesQueue = new Queue<KeyValuePair<string, string>>();
+	private readonly Dictionary<string, string> m_properties = new Dictionary<string, string>();
 
-	private int m_working;
+	private readonly Collection<IHealthServicesBroadcast> m_listeners;
 
-	private bool m_wasFirstPingSent;
-
-	public static HealthServicesProxy Instance => Singleton<HealthServicesProxy>.Instance;
+	public static IHealthServices Instance => Singleton<HealthServicesProxy>.Instance;
 
 	public bool LiveCall
 	{
@@ -102,6 +70,8 @@ public class HealthServicesProxy : IHealthServices
 			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "IsOnline", value);
 		}
 	}
+
+	public bool IsNotOnline => !IsOnline;
 
 	public bool IsServerBusy
 	{
@@ -177,318 +147,74 @@ public class HealthServicesProxy : IHealthServices
 
 	public bool CanSwitch()
 	{
-		return m_working == 0;
+		bool result = true;
+		m_listeners.ForEach(delegate(IHealthServicesBroadcast l)
+		{
+			result &= l.CanSwitch();
+		});
+		if (result)
+		{
+			ResetMinutesInMaintenanceMode();
+		}
+		return result;
 	}
 
 	public void Ping(string storeNumber)
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		Guid messageId = Guid.NewGuid();
+		int kioskId = VerifyStoreNumber(storeNumber);
+		Dictionary<string, string> versions = CollectVersions();
+		Dictionary<string, string> statistics;
+		Dictionary<string, string> properties;
+		lock (m_syncLock)
 		{
-			try
-			{
-				if (!string.IsNullOrEmpty(storeNumber) && string.Compare(storeNumber, "unconfigured", ignoreCase: true) == 0)
-				{
-					IObjectCacheService service = ServiceLocator.Instance.GetService<IObjectCacheService>();
-					if (service != null)
-					{
-						storeNumber = service.GetObject<string>("NullKioskId") ?? "1";
-					}
-				}
-				if (LiveCall)
-				{
-					LogHelper.Instance.Log("Live call to remote IHealthServices.Ping, URL: {0}", KioskServicesProxy.Instance.Url);
-					int store = int.Parse(storeNumber);
-					Dictionary<string, string> versions = CollectVersions();
-					IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
-					var anon = new
-					{
-						MessageType = "KioskPing",
-						MessageId = Guid.NewGuid(),
-						KioskId = int.Parse(storeNumber),
-						EngineVersion = service2["EngineVersion"],
-						BundleVersion = service2["ProductVersion"],
-						Versions = versions,
-						Statistics = new Dictionary<string, string>(),
-						Properties = new Dictionary<string, string>()
-					};
-					lock (m_syncLock)
-					{
-						while (m_statisticsQueue.Count > 0)
-						{
-							Statistic statistic = m_statisticsQueue.Dequeue();
-							anon.Statistics[statistic.Name] = statistic.Value;
-						}
-						while (m_propertiesQueue.Count > 0)
-						{
-							KeyValuePair<string, string> keyValuePair = m_propertiesQueue.Dequeue();
-							anon.Properties[keyValuePair.Key] = keyValuePair.Value;
-						}
-					}
-					IDictionary<string, object> response = KioskServicesProxy.Instance.ExecuteMessage(anon);
-					UpdateFirstPingSent(response);
-					UpdateOnlineStatus(response);
-					if (StoreServicesProxy.Instance.SynchronizeTimeToServer)
-					{
-						IEngineApplication service3 = ServiceLocator.Instance.GetService<IEngineApplication>();
-						if (service3 != null && service3.CanShutDown())
-						{
-							SynchronizeToServerTime(response);
-						}
-					}
-					SendKioskVersionsToKioskDataService(store, versions);
-					SendKioskStatisticsToKioskDataService(store, anon.Statistics);
-					SendKioskPropertiesToKioskDataService(store, anon.Properties);
-				}
-				else
-				{
-					LogHelper.Instance.Log("Simulating call to IHealthServices.Ping", LogEntryType.Info);
-				}
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in HealthServicesProxy.Ping.", e);
-				IsOnline = false;
-			}
+			statistics = m_statistics.ShallowCopy();
+			m_statistics.Clear();
+			properties = m_properties.ShallowCopy();
+			m_properties.Clear();
+		}
+		m_listeners.ForEach(delegate(IHealthServicesBroadcast l)
+		{
+			l.Ping(messageId, kioskId, versions, statistics, properties);
 		});
 	}
 
 	public void SendAlert(string storeNumber, string alertType, string subType, string message, DateTime dateTime, RemoteServiceCallback callback, Action action = null, bool skipQueue = false)
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		Guid messageId = Guid.NewGuid();
+		int kioskId = VerifyStoreNumber(storeNumber);
+		m_listeners.ForEach(delegate(IHealthServicesBroadcast l)
 		{
-			Redbox.KioskEngine.ComponentModel.ErrorList errorList = null;
-			try
-			{
-				Interlocked.Increment(ref m_working);
-				if (LiveCall)
-				{
-					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendAlert, URL: {0}", KioskServicesProxy.Instance.Url);
-					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-					IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
-					if (skipQueue)
-					{
-						KioskServicesProxy.Instance.ExecuteMessage(new
-						{
-							MessageType = "KioskAlert",
-							MessageId = Guid.NewGuid(),
-							KioskId = int.Parse(storeNumber),
-							EngineVersion = service["EngineVersion"],
-							BundleVersion = service["ProductVersion"],
-							SubType = subType,
-							Detail = message,
-							Type = alertType,
-							Time = dateTime
-						});
-					}
-					else
-					{
-						errorList = service2.Enqueue(byte.MaxValue, "KioskAlert", new
-						{
-							MessageType = "KioskAlert",
-							MessageId = Guid.NewGuid(),
-							KioskId = int.Parse(storeNumber),
-							EngineVersion = service["EngineVersion"],
-							BundleVersion = service["ProductVersion"],
-							SubType = subType,
-							Detail = message,
-							Type = alertType,
-							Time = dateTime
-						});
-					}
-				}
-				else
-				{
-					LogHelper.Instance.Log("Simulating enqueue to IHealthServices.SendAlert", LogEntryType.Info);
-					if (Recipients != null && Recipients != string.Empty)
-					{
-						MailMessage message2 = new MailMessage("deddie@redbox.com", Recipients, $"Test Alert: {alertType}, Kiosk ID: {storeNumber}, Date Time: {dateTime}", message);
-						new SmtpClient(SmtpServer).Send(message2);
-					}
-					else
-					{
-						LogHelper.Instance.Log("> recipient list for simulated SendAlert was empty, email was not sent.", LogEntryType.Info);
-					}
-				}
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in HealthServicesProxy.SendAlert.", e);
-			}
-			finally
-			{
-				try
-				{
-					LogHelper.Instance.Log("Invoking action from HealthServicesProxy.SendAlert");
-					action?.Invoke();
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
-					{
-						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
-						{
-							Success = true
-						};
-						if (errorList != null)
-						{
-							remoteServiceResult.Errors.AddRange(errorList);
-							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
-						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
-						{
-							Callback = callback,
-							Result = remoteServiceResult,
-							Message = "Invoking callback from HealthServicesProxy.SendAlert."
-						});
-					}
-				}
-				finally
-				{
-					Interlocked.Decrement(ref m_working);
-				}
-			}
+			l.SendAlert(messageId, kioskId, alertType, subType, message, dateTime, callback, action, skipQueue);
 		});
 	}
 
 	public void SendAuditEvent(string storeNumber, string eventType, DateTime logDate, string userName, string message, string source, RemoteServiceCallback callback)
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		Guid messageId = Guid.NewGuid();
+		int kioskId = VerifyStoreNumber(storeNumber);
+		m_listeners.ForEach(delegate(IHealthServicesBroadcast l)
 		{
-			Redbox.KioskEngine.ComponentModel.ErrorList errorList = null;
-			try
-			{
-				Interlocked.Increment(ref m_working);
-				if (LiveCall)
-				{
-					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendAuditEvent endpoints");
-					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(254, "AuditEvent", new
-					{
-						MessageType = "AuditEvent",
-						MessageId = Guid.NewGuid(),
-						KioskId = int.Parse(storeNumber),
-						EngineVersion = service["EngineVersion"],
-						BundleVersion = service["ProductVersion"],
-						EventType = eventType,
-						LogDate = logDate,
-						UserName = (string.IsNullOrEmpty(userName) ? "N/A" : userName),
-						Message = message,
-						Source = source
-					});
-				}
-				else
-				{
-					LogHelper.Instance.Log("Simulating enqueue to IHealthServices.SendAuditEvent", LogEntryType.Info);
-					MailMessage message2 = new MailMessage("deddie@redbox.com", Recipients, $"Test Audit Event: {eventType}, Kiosk ID: {storeNumber}, Date Time: {logDate}, User Name: {userName}, Source: {source}", message);
-					new SmtpClient(SmtpServer).Send(message2);
-				}
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in HealthServicesProxy.SendAuditEvent.", e);
-			}
-			finally
-			{
-				try
-				{
-					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service2 != null)
-					{
-						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
-						{
-							Success = true
-						};
-						if (errorList != null)
-						{
-							remoteServiceResult.Errors.AddRange(errorList);
-							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
-						}
-						service2.EnqueueCallback(new RemoteServiceCallbackEntry
-						{
-							Callback = callback,
-							Result = remoteServiceResult,
-							Message = "Invoking callback from HealthServicesProxy.SendAlert."
-						});
-					}
-				}
-				finally
-				{
-					Interlocked.Decrement(ref m_working);
-				}
-			}
+			l.SendAuditEvent(messageId, kioskId, eventType, logDate, userName, message, source, callback);
 		});
 	}
 
 	public void SendKioskFunctionCheck(string storeNumber, string userName, DateTime reportTime, string verticalSlot, string initTest, string vendDoor, string trackTest, string snapDecode, string touchScreenDriver, string cameraDriver, RemoteServiceCallback callback, Action dotNetCallBack)
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		Guid messageId = Guid.NewGuid();
+		int kioskId = VerifyStoreNumber(storeNumber);
+		m_listeners.ForEach(delegate(IHealthServicesBroadcast l)
 		{
-			Redbox.KioskEngine.ComponentModel.ErrorList errorList = null;
-			try
-			{
-				Interlocked.Increment(ref m_working);
-				if (LiveCall)
-				{
-					LogHelper.Instance.Log("Enqueue call to remote IHealthServices.SendKioskFunctionCheck endpoints");
-					IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-					KioskFunctionCheckPayload message = new KioskFunctionCheckPayload
-					{
-						MessageId = Guid.NewGuid(),
-						KioskId = int.Parse(storeNumber),
-						EngineVersion = service["EngineVersion"],
-						BundleVersion = service["ProductVersion"],
-						ReportTime = reportTime,
-						UserName = (string.IsNullOrEmpty(userName) ? "N/A" : userName),
-						VerticalSlot = verticalSlot,
-						InitTest = initTest,
-						VendDoor = vendDoor,
-						TrackTest = trackTest,
-						SnapDecode = snapDecode,
-						TouchScreenDriver = touchScreenDriver,
-						CameraDriver = cameraDriver
-					};
-					errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(254, "KioskFunctionCheck", message);
-				}
-				else
-				{
-					LogHelper.Instance.Log("Simulating enqueue to IHealthServices.SendKioskFunctionCheck.", LogEntryType.Info);
-				}
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in HealthServicesProxy.SendKioskFunctionCheck.", e);
-			}
-			finally
-			{
-				try
-				{
-					ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service2 != null)
-					{
-						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
-						{
-							Success = true
-						};
-						if (errorList != null)
-						{
-							remoteServiceResult.Errors.AddRange(errorList);
-							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
-						}
-						service2.EnqueueCallback(new RemoteServiceCallbackEntry
-						{
-							Callback = callback,
-							Result = remoteServiceResult,
-							Message = "Invoking callback from HealthServicesProxy.SendKioskFunctionCheck."
-						});
-					}
-					else
-					{
-						dotNetCallBack?.Invoke();
-					}
-				}
-				finally
-				{
-					Interlocked.Decrement(ref m_working);
-				}
-			}
+			l.SendKioskFunctionCheck(messageId, kioskId, userName, reportTime, verticalSlot, initTest, vendDoor, trackTest, snapDecode, touchScreenDriver, cameraDriver, callback, dotNetCallBack);
+		});
+	}
+
+	public void SendKioskEvents(long kioskId, List<KioskEvent> events)
+	{
+		Guid messageId = Guid.NewGuid();
+		m_listeners.ForEach(delegate(IHealthServicesBroadcast l)
+		{
+			l.SendKioskEvents(messageId, kioskId, DateTime.Now, events);
 		});
 	}
 
@@ -532,11 +258,14 @@ public class HealthServicesProxy : IHealthServices
 	{
 		lock (m_syncLock)
 		{
-			m_statisticsQueue.Enqueue(new Statistic
+			if (m_statistics.ContainsKey(name))
 			{
-				Name = name,
-				Value = value
-			});
+				m_statistics[name] = value;
+			}
+			else
+			{
+				m_statistics.Add(name, value);
+			}
 		}
 	}
 
@@ -544,7 +273,20 @@ public class HealthServicesProxy : IHealthServices
 	{
 		lock (m_syncLock)
 		{
-			m_propertiesQueue.Enqueue(new KeyValuePair<string, string>(name, value));
+			m_properties.Add(name, value);
+		}
+	}
+
+	public void SendEmail(string subject, string message)
+	{
+		if (!string.IsNullOrEmpty(Recipients))
+		{
+			MailMessage message2 = new MailMessage("deddie@redbox.com", Recipients, subject, message);
+			new SmtpClient(SmtpServer).Send(message2);
+		}
+		else
+		{
+			LogHelper.Instance.Log("> recipient list for simulated SendAlert was empty, email was not sent.", LogEntryType.Info);
 		}
 	}
 
@@ -556,49 +298,33 @@ public class HealthServicesProxy : IHealthServices
 		RemoteServicesStatus = (flag ? "Busy" : "Normal");
 	}
 
-	[DllImport("kernel32.dll", SetLastError = true)]
-	private static extern bool SetLocalTime(ref SYSTEMTIME lpSystemTime);
+	public void UpdateOnlineStatus(bool isServerBusy, bool isOnline)
+	{
+		IsServerBusy = IsServerBusy;
+		IsOnline = isOnline;
+		RemoteServicesStatus = (isServerBusy ? "Busy" : "Normal");
+	}
+
+	internal void UpdateFirstPingSent()
+	{
+		m_wasFirstPingSent = true;
+	}
 
 	private HealthServicesProxy()
 	{
+		m_listeners = new Collection<IHealthServicesBroadcast>
+		{
+			new KioskServicesHealthListener(this),
+			new KioskClientServiceHealthListener(this)
+		};
 	}
 
-	private static void SynchronizeToServerTime(IDictionary<string, object> response)
+	public void ResetMinutesInMaintenanceMode()
 	{
-		if (!response.ContainsKey("ServerTime"))
+		string lastShownView = ServiceLocator.Instance.GetService<IViewService>().GetLastShownView();
+		if (!string.IsNullOrEmpty(lastShownView) && lastShownView.Equals("maintenance_view"))
 		{
-			return;
-		}
-		DateTime value = response["ServerTime"].ToJson().ToObject<DateTime>();
-		value = DateTime.SpecifyKind(value, DateTimeKind.Utc);
-		if (!(Math.Abs((DateTime.UtcNow - value).TotalMinutes) <= 1.0))
-		{
-			DateTime dateTime = value.ToLocalTime();
-			LogHelper.Instance.Log("...There's more than a one minute variance between the server and client, setting local time to match server: {0}", dateTime);
-			SYSTEMTIME lpSystemTime = new SYSTEMTIME
-			{
-				Hour = (ushort)dateTime.Hour,
-				Minute = (ushort)dateTime.Minute,
-				Second = (ushort)dateTime.Second,
-				Milliseconds = (ushort)dateTime.Millisecond,
-				Month = (ushort)dateTime.Month,
-				Day = (ushort)dateTime.Day,
-				Year = (ushort)dateTime.Year,
-				DayOfWeek = (ushort)dateTime.DayOfWeek
-			};
-			if (!SetLocalTime(ref lpSystemTime))
-			{
-				Win32Exception e = new Win32Exception();
-				LogHelper.Instance.Log("Unable to set the local time.", e);
-			}
-		}
-	}
-
-	private void UpdateFirstPingSent(IDictionary<string, object> response)
-	{
-		if (!m_wasFirstPingSent)
-		{
-			m_wasFirstPingSent = response.ContainsKey("Success") && (bool)response["Success"];
+			EnqueueStatistic("MinutesInMaintenance", "0");
 		}
 	}
 
@@ -622,75 +348,16 @@ public class HealthServicesProxy : IHealthServices
 		return dictionary;
 	}
 
-	private void SendKioskPropertiesToKioskDataService(int store, IDictionary<string, string> properties)
+	private int VerifyStoreNumber(string number)
 	{
-		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskPropertiesToKioskDataService)
+		if (!string.IsNullOrEmpty(number) && string.Compare(number, "unconfigured", ignoreCase: true) == 0)
 		{
-			if (properties.Any())
+			IObjectCacheService service = ServiceLocator.Instance.GetService<IObjectCacheService>();
+			if (service != null)
 			{
-				ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "KioskProperties", new AWSKioskPropertiesPayload
-				{
-					KioskId = store,
-					CreatedOn = DateTime.UtcNow,
-					Properties = properties
-				});
-			}
-			else
-			{
-				LogHelper.Instance.Log("HealthServicesProxy.SendKioskPropertiesToKioskDataService() - bypassing live call due to no properties information to send up");
+				number = service.GetObject<string>("NullKioskId") ?? "1";
 			}
 		}
-		else
-		{
-			LogHelper.Instance.Log("HealthServicesProxy.SendKioskPropertiesToKioskDataService() - bypassing live call due to configuration flag being off");
-		}
-	}
-
-	private void SendKioskStatisticsToKioskDataService(int store, IDictionary<string, string> statistics)
-	{
-		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskStatisticsToKioskDataService)
-		{
-			if (statistics.Any())
-			{
-				ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "KioskStatistics", new AWSKioskStatisticsPayload
-				{
-					KioskId = store,
-					CreatedOn = DateTime.UtcNow,
-					Statistics = statistics
-				});
-			}
-			else
-			{
-				LogHelper.Instance.Log("HealthServicesProxy.SendKioskStatisticsToKioskDataService() - bypassing live call due to no statistics information to send up");
-			}
-		}
-		else
-		{
-			LogHelper.Instance.Log("HealthServicesProxy.SendKioskStatisticsToKioskDataService() - bypassing live call due to configuration flag being off");
-		}
-	}
-
-	private void SendKioskVersionsToKioskDataService(int store, IDictionary<string, string> versions)
-	{
-		if (ServiceLocator.Instance.GetService<IConfiguration>().SendKioskVersionsToKioskDataService)
-		{
-			if (versions.Any())
-			{
-				ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "KioskVersions", new AWSKioskVersionsPayload
-				{
-					KioskId = store,
-					CreatedOn = DateTime.Now,
-					Versions = versions
-				});
-			}
-			else
-			{
-				LogHelper.Instance.Log("HealthServicesProxy.SendKioskVersionsToKioskDataService() - bypassing live call due to no version information to send up");
-			}
-		}
-		else
-		{
-			LogHelper.Instance.Log("HealthServicesProxy.SendKioskVersionsToKioskDataService() - bypassing live call due to configuration flag being off");
-		}
+		return int.Parse(number);
 	}
 }

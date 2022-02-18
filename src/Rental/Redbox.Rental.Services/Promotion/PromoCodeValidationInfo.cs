@@ -13,6 +13,8 @@ public class PromoCodeValidationInfo : IPromoCodeValidationInfo
 
 	public bool IsCartInvalidBecauseOfFlashDeal { get; set; }
 
+	public bool IsCartInvalidBecauseOfDiscountRestriction { get; set; }
+
 	public decimal Price { get; set; }
 
 	public decimal Percent { get; set; }
@@ -23,11 +25,11 @@ public class PromoCodeValidationInfo : IPromoCodeValidationInfo
 
 	public IList<IPromotionItem> PromotionItems { get; set; }
 
-	public IList<IRentalShoppingCartItem> QualifyingItems { get; set; }
+	public IList<IRentalShoppingCartTitleItem> QualifyingItems { get; set; }
 
 	public PromoCodeValidationInfo()
 	{
 		PromotionItems = new List<IPromotionItem>();
-		QualifyingItems = new List<IRentalShoppingCartItem>();
+		QualifyingItems = new List<IRentalShoppingCartTitleItem>();
 	}
 }

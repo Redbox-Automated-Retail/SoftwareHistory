@@ -3,36 +3,23 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model;
+using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.Local;
 
 namespace Redbox.KioskServices.Proxy;
 
-public class InventoryServicesProxy : IInventoryServices
+internal class InventoryServicesProxy : IInventoryServices
 {
-	private class SnapshotRequest
-	{
-		public string MessageType { get; set; }
-
-		public string MessageId { get; set; }
-
-		public int KioskId { get; set; }
-
-		public string EngineVersion { get; set; }
-
-		public string BundleVersion { get; set; }
-
-		public List<InventoryItem> Discs { get; set; }
-	}
-
 	private int m_working;
-
-	public static InventoryServicesProxy Instance => Singleton<InventoryServicesProxy>.Instance;
 
 	public bool LiveCall
 	{
@@ -109,6 +96,69 @@ public class InventoryServicesProxy : IInventoryServices
 
 	public void Return(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, string fileName, RemoteServiceCallback callback)
 	{
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendReturnToKioskClientService)
+		{
+			KioskClientServiceReturn(storeNumber, returnType, barcode, deck, slot, returnTime, failedSecurityRead, fileName, callback);
+		}
+		else
+		{
+			KioskServicesReturn(storeNumber, returnType, barcode, deck, slot, returnTime, failedSecurityRead, fileName, callback);
+		}
+	}
+
+	private async void KioskClientServiceReturn(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, string fileName, RemoteServiceCallback callback)
+	{
+		ErrorList errors = null;
+		try
+		{
+			Interlocked.Increment(ref m_working);
+			IReturnResult returnResult = await ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.ReturnAsync(storeNumber, returnType, barcode, returnTime, deck, slot, failedSecurityRead, fileName);
+			if (returnResult == null || !returnResult.Success)
+			{
+				errors = new ErrorList { Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "Non 200 level result returned from the ReturnAsync call..", "") };
+			}
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in InventoryServicesProxy.KioskClientServiceReturn.", ex);
+			errors = new ErrorList { Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", ex.Message, ex) };
+		}
+		finally
+		{
+			try
+			{
+				if (callback != null)
+				{
+					ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
+					if (service != null)
+					{
+						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+						{
+							Success = true
+						};
+						if (errors != null)
+						{
+							remoteServiceResult.Errors.AddRange(errors);
+							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+						}
+						service.EnqueueCallback(new RemoteServiceCallbackEntry
+						{
+							Callback = callback,
+							Result = remoteServiceResult,
+							Message = "Invoking callback from InventoryServicesProxy.Return."
+						});
+					}
+				}
+			}
+			finally
+			{
+				Interlocked.Decrement(ref m_working);
+			}
+		}
+	}
+
+	private void KioskServicesReturn(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, bool failedSecurityRead, string fileName, RemoteServiceCallback callback)
+	{
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
 		string bundleVersion = service["ProductVersion"];
 		string engineVersion = service["EngineVersion"];
@@ -153,7 +203,7 @@ public class InventoryServicesProxy : IInventoryServices
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("An unhandled exception was raised in InventoryServicesProxy.Return.", e);
+				LogHelper.Instance.Log("An unhandled exception was raised in InventoryServicesProxy.KioskServicesReturn.", e);
 			}
 			finally
 			{
@@ -187,33 +237,60 @@ public class InventoryServicesProxy : IInventoryServices
 		});
 	}
 
-	public void BackwardsDiscReturn(string storeNumber, ReturnType returnType, string barcode, int deck, int slot, string returnTime, RemoteServiceCallback callback)
+	public void Snapshot(string storeNumber, ReadOnlyCollection<IInventoryItem> items, RemoteServiceCallback callback)
+	{
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendInventorySnapshotToKioskClientService)
+		{
+			KioskClientServiceSnapshot(storeNumber, items, callback);
+		}
+		else
+		{
+			KioskServicesSnapshot(storeNumber, items, callback);
+		}
+	}
+
+	private void KioskServicesSnapshot(string storeNumber, ReadOnlyCollection<IInventoryItem> items, RemoteServiceCallback callback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			ErrorList errorList = null;
+			Guid messageId = Guid.NewGuid();
+			int newMessageId = 0;
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.BackwardsDiscReturn, URL: {0}", KioskServicesProxy.Instance.Url);
-				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Return", new
+				LogHelper.Instance.Log("InventoryServicesProxy.KioskServicesSnapshot - Enqueue soft sync call to kiosk services, URL: {0}", KioskServicesProxy.Instance.Url);
+				List<RemovedQueueItem> removedQueueItems = ServiceLocator.Instance.GetService<IDataService>().GetRemovedQueueItems();
+				if (removedQueueItems.Any())
 				{
-					MessageType = "Return",
-					MessageId = Guid.NewGuid(),
+					LogHelper.Instance.Log(string.Format("InventoryServicesProxy.KioskServicesSnapshot - appending the following removed barcodes: {0}", string.Join(",", removedQueueItems.Select((RemovedQueueItem ri) => ri.Barcode))));
+				}
+				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+				List<IInventoryItem> list = new List<IInventoryItem>(items);
+				list.AddRange(removedQueueItems.ToInventoryItems());
+				var message = new
+				{
+					MessageType = "SoftSync",
+					MessageId = messageId,
 					KioskId = int.Parse(storeNumber),
 					EngineVersion = service["EngineVersion"],
 					BundleVersion = service["ProductVersion"],
-					ReturnDate = DateTime.Parse(returnTime),
-					ReturnType = returnType,
-					Barcode = barcode,
-					Deck = deck,
-					Slot = slot
-				});
+					Discs = list,
+					RemovedQueueItems = removedQueueItems
+				};
+				errorList = ServiceLocator.Instance.GetService<IQueueService>().EnqueueOnlyOne(200, "SoftSync", message, out newMessageId);
+				if (errorList.Count > 0)
+				{
+					LogHelper.Instance.Log($"InventoryServicesProxy.KioskServicesSnapshot - KS call to snapshot failed!  Errors returned: {errorList.ToJson()}");
+				}
+				else
+				{
+					LogHelper.Instance.Log("InventoryServicesProxy.KioskServicesSnapshot - KS snapshot call successful");
+				}
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("An unhandled exception was raised in InventoryServicesProxy.BackwardsDiscReturn.", e);
+				LogHelper.Instance.Log("InventoryServicesProxy.KioskServicesSnapshot - An unhandled exception was raised!", e);
 			}
 			finally
 			{
@@ -235,7 +312,7 @@ public class InventoryServicesProxy : IInventoryServices
 						{
 							Callback = callback,
 							Result = remoteServiceResult,
-							Message = "Invoking callback from InventoryServicesProxy.BackwardsDiscReturn."
+							Message = "Invoking callback from InventoryServicesProxy.KioskServicesSnapshot."
 						});
 					}
 				}
@@ -247,80 +324,104 @@ public class InventoryServicesProxy : IInventoryServices
 		});
 	}
 
-	public void Snapshot(string storeNumber, ReadOnlyCollection<IInventoryItem> items, RemoteServiceCallback callback)
+	private async void KioskClientServiceSnapshot(string storeNumber, ReadOnlyCollection<IInventoryItem> items, RemoteServiceCallback callback)
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		ErrorList errors = null;
+		try
 		{
-			ErrorList errorList = null;
-			Guid messageId = Guid.NewGuid();
-			int newMessageId = 0;
+			Interlocked.Increment(ref m_working);
+			LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceSnapshot - Enqueue soft sync call to kiosk client service, URL: {0}", ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl);
+			List<RemovedQueueItem> removedItems = ServiceLocator.Instance.GetService<IDataService>().GetRemovedQueueItems();
+			LogHelper.Instance.Log(string.Format("InventoryServicesProxy.KioskClientServiceSnapshot - appending the following removed barcodes: {0}", string.Join(",", removedItems.Select((RemovedQueueItem ri) => ri.Barcode))));
+			List<IInventoryItem> list = new List<IInventoryItem>(items);
+			list.AddRange(removedItems.ToInventoryItems());
+			IKioskClientServiceResult kioskClientServiceResult = await ServiceLocator.Instance.GetService<IKioskClientService>().Inventory.SnapshotAsync(storeNumber, list);
+			if (kioskClientServiceResult == null || !kioskClientServiceResult.Success)
+			{
+				LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceSnapshot - KCS call to snapshot failed!");
+				if (kioskClientServiceResult.Error != null)
+				{
+					LogHelper.Instance.Log($"InventoryServicesProxy.KioskClientServiceSnapshot - error returned: {kioskClientServiceResult.Error.Code}, {kioskClientServiceResult.Error.Description}");
+				}
+				return;
+			}
+			LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceSnapshot - KCS snapshot call successful");
+			if (removedItems.Any())
+			{
+				List<Task> processingTasks = new List<Task>();
+				removedItems.ForEach(delegate(RemovedQueueItem i)
+				{
+					processingTasks.Add(Delete(i));
+				});
+				await Task.WhenAll(processingTasks);
+			}
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceSnapshot - An unhandled exception was raised!", ex);
+			errors = new ErrorList { Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", ex.Message, ex) };
+		}
+		finally
+		{
 			try
 			{
-				Interlocked.Increment(ref m_working);
-				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.SoftSync, URL: {0}", KioskServicesProxy.Instance.Url);
-				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				IQueueService service2 = ServiceLocator.Instance.GetService<IQueueService>();
-				List<IMessage> oldData = new List<IMessage>();
-				service2.ForEach(delegate(IMessage x)
+				ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
+				if (callback != null && service != null)
 				{
-					oldData.Add(x);
-				}, "SoftSync");
-				List<IInventoryItem> list = new List<IInventoryItem>(items);
-				if (oldData.Any())
-				{
-					IEnumerable<InventoryItem> collection = Encoding.ASCII.GetString(oldData.SelectMany((IMessage x) => x.Data).ToArray()).ToObject<SnapshotRequest>().Discs.Where((InventoryItem x) => x.Status == InventoryItemStatus.Removed);
-					list.AddRange(collection);
+					RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+					{
+						Success = true
+					};
+					if (errors != null)
+					{
+						remoteServiceResult.Errors.AddRange(errors);
+						remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+					}
+					service.EnqueueCallback(new RemoteServiceCallbackEntry
+					{
+						Callback = callback,
+						Result = remoteServiceResult,
+						Message = "Invoking callback from InventoryServicesProxy.KioskClientServiceSnapshot."
+					});
 				}
-				var message = new
-				{
-					MessageType = "SoftSync",
-					MessageId = messageId,
-					KioskId = int.Parse(storeNumber),
-					EngineVersion = service["EngineVersion"],
-					BundleVersion = service["ProductVersion"],
-					Discs = list
-				};
-				errorList = service2.EnqueueOnlyOne(200, "SoftSync", message, out newMessageId);
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in InventoryServicesProxy.SoftSync.", e);
 			}
 			finally
 			{
+				Interlocked.Decrement(ref m_working);
+			}
+		}
+		static async Task Delete(RemovedQueueItem item)
+		{
+			await Task.Run(delegate
+			{
+				LogHelper.Instance.Log($"SoftSyncMessageProcessorService.Delete - deleting removedqueue record for barcode: {item.Barcode} with hash: {item.HashId}");
 				try
 				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
-					{
-						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
-						{
-							Success = true
-						};
-						if (errorList != null)
-						{
-							remoteServiceResult.Errors.AddRange(errorList);
-							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
-							remoteServiceResult.Properties["softsync_queue_id"] = newMessageId.ToString();
-							remoteServiceResult.Properties["message_guid"] = messageId.ToString();
-						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
-						{
-							Callback = callback,
-							Result = remoteServiceResult,
-							Message = "Invoking callback from InventoryServicesProxy.Snapshot."
-						});
-					}
+					ServiceLocator.Instance.GetService<IDataService>().DeleteRemovedQueueItem(item);
 				}
-				finally
+				catch (Exception e)
 				{
-					Interlocked.Decrement(ref m_working);
+					LogHelper.Instance.Log($"SoftSyncMessageProcessorService.Delete - exception trying to delete removedqueue record for barcode: {item.Barcode}!", e);
+					string storeNumber2 = (ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0).ToString();
+					ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(storeNumber2, "TitleEmpty", "RemovedQueueDeleteFail", $"Unable to delete RemovedQueue record for hash: {item.HashId}, barcode: {item.Barcode}", DateTime.Now, null);
 				}
-			}
-		});
+			});
+		}
 	}
 
 	public void SnapshotImmediate(string storeNumber, ReadOnlyCollection<IInventoryItem> items, RemoteServiceCallback callback)
+	{
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendInventorySnapshotToKioskClientService)
+		{
+			KioskClientServiceSnapshot(storeNumber, items, callback);
+		}
+		else
+		{
+			KioskServicesSnapshotImmediate(storeNumber, items, callback);
+		}
+	}
+
+	private void KioskServicesSnapshotImmediate(string storeNumber, ReadOnlyCollection<IInventoryItem> items, RemoteServiceCallback callback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -342,7 +443,7 @@ public class InventoryServicesProxy : IInventoryServices
 					Discs = new List<IInventoryItem>(items)
 				};
 				IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(message);
-				HealthServicesProxy.Instance.UpdateOnlineStatus(dictionary);
+				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(dictionary);
 				remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
 			}
 			catch (Exception e)
@@ -373,78 +474,6 @@ public class InventoryServicesProxy : IInventoryServices
 		});
 	}
 
-	public void GetRentalCount(string storeNumber, RemoteServiceCallback completeCallback)
-	{
-		ThreadPool.QueueUserWorkItem(delegate
-		{
-			using ExecutionTimer executionTimer = new ExecutionTimer();
-			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-			remoteServiceResult.Properties["is_online"] = true;
-			remoteServiceResult.Properties["rental_count"] = 0;
-			try
-			{
-				Interlocked.Increment(ref m_working);
-				if (LiveCall)
-				{
-					if (HealthServicesProxy.Instance.IsOnline && !HealthServicesProxy.Instance.IsServerBusy && !StoreServicesProxy.Instance.IsStandAlone)
-					{
-						LogHelper.Instance.Log("Live call to remote IInventoryServices.GetRentalCount, URL: {0}", KioskServicesProxy.Instance.Url);
-						IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-						IDictionary<string, object> dictionary = KioskServicesProxy.Instance.ExecuteMessage(new
-						{
-							MessageType = "RentalCount",
-							MessageId = Guid.NewGuid(),
-							KioskId = int.Parse(storeNumber),
-							EngineVersion = service["EngineVersion"],
-							BundleVersion = service["ProductVersion"]
-						});
-						remoteServiceResult.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
-						if (dictionary.ContainsKey("ServerName"))
-						{
-							remoteServiceResult.Properties["server_name"] = dictionary["ServerName"];
-						}
-						if (dictionary.ContainsKey("Count"))
-						{
-							remoteServiceResult.Properties["rental_count"] = (int)dictionary["Count"];
-						}
-					}
-					else
-					{
-						LogHelper.Instance.Log("IsOnline is false or stand alone, not issuing realtime call to IInventoryServices.GetRentalCount.", LogEntryType.Info);
-						remoteServiceResult.Properties["is_online"] = false;
-					}
-				}
-				else
-				{
-					LogHelper.Instance.Log("Simulating call to IInventoryServices.GetRentalCount", LogEntryType.Info);
-					remoteServiceResult.Success = true;
-				}
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in InventoryServicesProxy.GetRentalCount.", e);
-			}
-			finally
-			{
-				try
-				{
-					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-					remoteServiceResult.Properties["stand_alone"] = StoreServicesProxy.Instance.IsStandAlone;
-					ServiceLocator.Instance.GetService<ICallbackService>().EnqueueCallback(new RemoteServiceCallbackEntry
-					{
-						Callback = completeCallback,
-						Result = remoteServiceResult,
-						Message = "Invoking completeCallback from InventoryServicesProxy.GetRentalCount."
-					});
-				}
-				finally
-				{
-					Interlocked.Decrement(ref m_working);
-				}
-			}
-		});
-	}
-
 	public IInventoryItem CreateInventoryItem(string barcode, int? deck, int? slot, InventoryItemStatus status)
 	{
 		return new InventoryItem
@@ -456,22 +485,32 @@ public class InventoryServicesProxy : IInventoryServices
 		};
 	}
 
-	public void UpdateFraudStatus(string storeNumber, string barcode, string isFraud, string readTime, RemoteServiceCallback completeCallback, long? transactionId = null, long? discId = null, DateTime? returnDate = null)
+	public async void UpdateFraudStatus(string storeNumber, string barcode, string isFraud, string readTime, RemoteServiceCallback completeCallback, long? transactionId = null, long? discId = null, DateTime? returnDate = null)
 	{
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("FraudType", "Paper");
+		Dictionary<string, string> properties = new Dictionary<string, string> { { "FraudType", "Paper" } };
 		if (discId.HasValue)
 		{
-			dictionary.Add("DiscId", discId.Value.ToString());
+			properties.Add("DiscId", discId.Value.ToString());
 		}
 		if (returnDate.HasValue)
 		{
-			dictionary.Add("ReturnDate", returnDate.Value.ToString("o"));
+			properties.Add("ReturnDate", returnDate.Value.ToString("o"));
 		}
-		UpdateFraudStatusInternal(storeNumber, barcode, isFraud, readTime, completeCallback, transactionId, dictionary);
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendDiscFraudToKioskClientService)
+		{
+			if (!DateTime.TryParseExact(readTime, "yyyyMMddHHmmss", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out var result))
+			{
+				result = DateTime.Now;
+			}
+			await KioskClientServiceUpdateFraudStatus(storeNumber, barcode, result, completeCallback, properties);
+		}
+		else
+		{
+			KioskServicesUpdateFraudStatus(storeNumber, barcode, isFraud, readTime, completeCallback, transactionId, properties);
+		}
 	}
 
-	public void UpdateFraudStatusInternal(string storeNumber, string barcode, string isFraud, string readTime, RemoteServiceCallback completeCallback, long? transactionId = null, Dictionary<string, string> properties = null)
+	private void KioskServicesUpdateFraudStatus(string storeNumber, string barcode, string isFraud, string readTime, RemoteServiceCallback completeCallback, long? transactionId = null, Dictionary<string, string> properties = null)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -480,7 +519,7 @@ public class InventoryServicesProxy : IInventoryServices
 			try
 			{
 				Interlocked.Increment(ref m_working);
-				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.UpdateFraudStatus");
+				LogHelper.Instance.Log("Enqueuing DiscFraud api call to KioskServices");
 				if (!DateTime.TryParseExact(readTime, "yyyyMMddHHmmss", null, DateTimeStyles.None, out var result))
 				{
 					result = DateTime.Now;
@@ -531,7 +570,76 @@ public class InventoryServicesProxy : IInventoryServices
 		});
 	}
 
+	private async Task KioskClientServiceUpdateFraudStatus(string storeNumber, string barcode, DateTime readDate, RemoteServiceCallback callback, Dictionary<string, string> properties = null)
+	{
+		ErrorList errors = null;
+		try
+		{
+			Interlocked.Increment(ref m_working);
+			LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceDiscFraudStatus - Enqueue call to kiosk client service, URL: {0}", ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl);
+			IKioskClientServiceResult kioskClientServiceResult = await ServiceLocator.Instance.GetService<IKioskClientService>().Inventory.DiscFraudAsync(storeNumber, barcode, readDate, properties);
+			if (kioskClientServiceResult == null || !kioskClientServiceResult.Success)
+			{
+				LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceDiscFraudStatus - KCS call to disc action failed!");
+				if (kioskClientServiceResult.Error != null)
+				{
+					LogHelper.Instance.Log($"InventoryServicesProxy.KioskClientServiceDiscFraudStatus - error returned: {kioskClientServiceResult.Error.Code}, {kioskClientServiceResult.Error.Description}");
+				}
+			}
+			else
+			{
+				LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceDiscFraudStatus - KCS disc action call successful");
+			}
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceDiscFraudService - An unhandled exception was raised!", ex);
+			errors = new ErrorList { Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", ex.Message, ex) };
+		}
+		finally
+		{
+			try
+			{
+				ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
+				if (callback != null && service != null)
+				{
+					RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+					{
+						Success = true
+					};
+					if (errors != null)
+					{
+						remoteServiceResult.Errors.AddRange(errors);
+						remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+					}
+					service.EnqueueCallback(new RemoteServiceCallbackEntry
+					{
+						Callback = callback,
+						Result = remoteServiceResult,
+						Message = "Invoking callback from InventoryServicesProxy.KioskClientServiceDiscFraudService."
+					});
+				}
+			}
+			finally
+			{
+				Interlocked.Decrement(ref m_working);
+			}
+		}
+	}
+
 	public void FmaDiscAction(string storeNumber, string username, string jobName, string jobTimeStamp, List<Dictionary<string, string>> actionList, RemoteServiceCallback completeCallback)
+	{
+		if (ServiceLocator.Instance.GetService<IConfiguration>().SendDiscActionToKioskClientService)
+		{
+			KioskClientServiceDiscAction(storeNumber, username, jobName, jobTimeStamp, actionList, completeCallback);
+		}
+		else
+		{
+			KioskServicesDiscAction(storeNumber, username, jobName, jobTimeStamp, actionList, completeCallback);
+		}
+	}
+
+	private void KioskServicesDiscAction(string storeNumber, string username, string jobName, string jobTimeStamp, List<Dictionary<string, string>> actionList, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -540,17 +648,11 @@ public class InventoryServicesProxy : IInventoryServices
 			{
 				Interlocked.Increment(ref m_working);
 				LogHelper.Instance.Log("Enqueue call to remote IInventoryServices.FmaDiscAction, URL: {0}", KioskServicesProxy.Instance.Url);
-				string text = jobTimeStamp.Substring(0, 4) + "-" + jobTimeStamp.Substring(4, 2) + "-" + jobTimeStamp.Substring(6, 2);
-				text = text + " " + jobTimeStamp.Substring(8, 2) + ":" + jobTimeStamp.Substring(10, 2) + ":00";
-				DateTime result = default(DateTime);
-				if (!DateTime.TryParse(text, null, DateTimeStyles.AssumeLocal, out result))
-				{
-					result = DateTime.Now;
-				}
-				string value = $"{result:yyyy-MM-ddTHH:mm:ss}";
+				DateTime dateTime = UnLUATimmestamp(jobTimeStamp);
+				string value = $"{dateTime:yyyy-MM-ddTHH:mm:ss}";
 				Dictionary<string, object> actionDate = new Dictionary<string, object>
 				{
-					{ "theDate", result.Ticks },
+					{ "theDate", dateTime.Ticks },
 					{ "dateTimeKind", "Local" },
 					{ "dateString", value }
 				};
@@ -572,7 +674,7 @@ public class InventoryServicesProxy : IInventoryServices
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.Log("An unhandled exception was raised in InventoryServicesProxy.UpdateFraudStatus.", e);
+				LogHelper.Instance.Log("An unhandled exception was raised in InventoryServicesProxy.KioskServicesDiscAction.", e);
 			}
 			finally
 			{
@@ -582,7 +684,7 @@ public class InventoryServicesProxy : IInventoryServices
 					{
 						Callback = completeCallback,
 						Result = remoteServiceResult,
-						Message = "Invoking completeCallback from InventoryServicesProxy.UpdateFraudStatus."
+						Message = "Invoking completeCallback from InventoryServicesProxy.KioskServicesDiscAction."
 					});
 				}
 				finally
@@ -593,7 +695,76 @@ public class InventoryServicesProxy : IInventoryServices
 		});
 	}
 
-	private InventoryServicesProxy()
+	private async void KioskClientServiceDiscAction(string storeNumber, string username, string jobName, string jobTimeStamp, List<Dictionary<string, string>> actionList, RemoteServiceCallback callback)
+	{
+		ErrorList errors = null;
+		try
+		{
+			Interlocked.Increment(ref m_working);
+			LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceDiscAction - Enqueue call to kiosk client service, URL: {0}", ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl);
+			DateTime jobTimestamp = UnLUATimmestamp(jobTimeStamp);
+			IKioskClientServiceResult kioskClientServiceResult = await ServiceLocator.Instance.GetService<IKioskClientService>().Inventory.DiscActionAsync(storeNumber, username, jobName, jobTimestamp, actionList);
+			if (kioskClientServiceResult == null || !kioskClientServiceResult.Success)
+			{
+				LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceDiscAction - KCS call to disc action failed!");
+				if (kioskClientServiceResult.Error != null)
+				{
+					LogHelper.Instance.Log($"InventoryServicesProxy.KioskClientServiceDiscAction - error returned: {kioskClientServiceResult.Error.Code}, {kioskClientServiceResult.Error.Description}");
+				}
+			}
+			else
+			{
+				LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceDiscAction - KCS disc action call successful");
+			}
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log("InventoryServicesProxy.KioskClientServiceDiscAction - An unhandled exception was raised!", ex);
+			errors = new ErrorList { Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", ex.Message, ex) };
+		}
+		finally
+		{
+			try
+			{
+				ICallbackService service = ServiceLocator.Instance.GetService<ICallbackService>();
+				if (callback != null && service != null)
+				{
+					RemoteServiceResult remoteServiceResult = new RemoteServiceResult
+					{
+						Success = true
+					};
+					if (errors != null)
+					{
+						remoteServiceResult.Errors.AddRange(errors);
+						remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
+					}
+					service.EnqueueCallback(new RemoteServiceCallbackEntry
+					{
+						Callback = callback,
+						Result = remoteServiceResult,
+						Message = "Invoking callback from InventoryServicesProxy.KioskClientServiceDiscAction."
+					});
+				}
+			}
+			finally
+			{
+				Interlocked.Decrement(ref m_working);
+			}
+		}
+	}
+
+	private DateTime UnLUATimmestamp(string source)
+	{
+		string text = source.Substring(0, 4) + "-" + source.Substring(4, 2) + "-" + source.Substring(6, 2);
+		text = text + " " + source.Substring(8, 2) + ":" + source.Substring(10, 2) + ":00";
+		if (DateTime.TryParse(text, null, DateTimeStyles.AssumeLocal, out var result))
+		{
+			return result;
+		}
+		return DateTime.Now;
+	}
+
+	internal InventoryServicesProxy()
 	{
 	}
 }

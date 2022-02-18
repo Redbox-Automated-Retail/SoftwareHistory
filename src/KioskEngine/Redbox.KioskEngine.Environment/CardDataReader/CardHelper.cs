@@ -198,7 +198,7 @@ public static class CardHelper
 
 	public static void CheckForTrackDataErrors(ITrackData trackData)
 	{
-		if (trackData == null)
+		if (trackData == null || !trackData.HasPay)
 		{
 			return;
 		}

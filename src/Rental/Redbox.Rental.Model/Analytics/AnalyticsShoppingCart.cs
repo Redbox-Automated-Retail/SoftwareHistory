@@ -18,6 +18,8 @@ public class AnalyticsShoppingCart
 
 	public List<AnalyticsShoppingCartItem> Items { get; } = new List<AnalyticsShoppingCartItem>();
 
+	public List<AnalyticsShoppingCartSubscriptionItem> SubscriptionItems { get; } = new List<AnalyticsShoppingCartSubscriptionItem>();
+
 	public List<AnalyticsDiscount> Discounts { get; } = new List<AnalyticsDiscount>();
 
 	public static AnalyticsShoppingCart ToShoppingCart(IRentalShoppingCart sc)
@@ -28,7 +30,7 @@ public class AnalyticsShoppingCart
 			TaxAmount = ((sc.Totals == null) ? 0m : sc.Totals.TaxAmount),
 			GrandTotal = ((sc.Totals == null) ? 0m : sc.Totals.GrandTotal)
 		};
-		(sc?.Items?.Where((IRentalShoppingCartItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.ToList().ForEach(delegate(IRentalShoppingCartItem x)
+		(sc?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.ToList().ForEach(delegate(IRentalShoppingCartTitleItem x)
 		{
 			cart.Discounts.Add(new AnalyticsDiscount
 			{
@@ -63,7 +65,7 @@ public class AnalyticsShoppingCart
 				List<ITitleRollupProduct> rollupOnly = (from x in movieBrowseProducts
 					where x is ITitleRollupProduct
 					select x as ITitleRollupProduct).ToList();
-				sc.Items.ToList().ForEach(delegate(IRentalShoppingCartItem item)
+				sc.TitleItems.ToList().ForEach(delegate(IRentalShoppingCartTitleItem item)
 				{
 					ITitleRollupProduct titleRollupProduct = rollupOnly.Where((ITitleRollupProduct tr) => tr.KioskProducts.Contains(item.TitleProduct)).FirstOrDefault();
 					if (titleRollupProduct != null)
@@ -86,9 +88,13 @@ public class AnalyticsShoppingCart
 		{
 			LogHelper.Instance.LogException("AnalyticsShoppingCart.ToShoppingCart - unhandled exception occurred", e);
 		}
-		sc.Items.ToList().ForEach(delegate(IRentalShoppingCartItem item)
+		sc.TitleItems.ToList().ForEach(delegate(IRentalShoppingCartTitleItem item)
 		{
 			cart.Items.Add(AnalyticsShoppingCartItem.ToShoppingCartItem(item));
+		});
+		sc.SubscriptionItems.ToList().ForEach(delegate(IRentalShoppingCartSubscriptionItem subscriptionItem)
+		{
+			cart.SubscriptionItems.Add(AnalyticsShoppingCartSubscriptionItem.ToAnalyticsShoppingCartSubscriptionItem(subscriptionItem));
 		});
 		return cart;
 	}

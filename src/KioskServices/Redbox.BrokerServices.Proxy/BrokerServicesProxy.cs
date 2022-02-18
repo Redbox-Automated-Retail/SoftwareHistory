@@ -8,6 +8,7 @@ using Belikov.GenuineChannels.GenuineTcp;
 using Belikov.GenuineChannels.TransportContext;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Services.KioskBrokerServices.KioskShared.DomainObjects;
 using Redbox.Services.KioskBrokerServices.KioskShared.ServiceInterfaces;
 
@@ -98,10 +99,16 @@ public class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 
 	public bool Register(int kioskId, string versionPricingDictionary)
 	{
-		m_kioskId = kioskId;
-		m_versionPricingDictionary = versionPricingDictionary;
-		m_allowReconnect = true;
-		return ConnectToBroker();
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		if (service != null && service.UseLegacyBrokerService)
+		{
+			m_kioskId = kioskId;
+			m_versionPricingDictionary = versionPricingDictionary;
+			m_allowReconnect = true;
+			return ConnectToBroker();
+		}
+		LogHelper.Instance.Log(string.Format("BrokerServiceProxy.Register aborted.  Config setting {0} not enabled.", "UseLegacyBrokerService"));
+		return false;
 	}
 
 	public ReservationResult Reserve(ReservationCart cart)

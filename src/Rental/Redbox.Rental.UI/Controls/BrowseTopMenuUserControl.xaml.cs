@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Markup;
+using System.Windows.Media;
 using Redbox.Controls;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -100,6 +101,21 @@ public partial class BrowseTopMenuUserControl : RentalUserControl, IWPFActor, IC
 				stackPanel.Children.Add(element);
 				stackPanel.Children.Add(element2);
 			}
+			Border border = null;
+			SignOutMenuButton signOutMenuButton = menuButton as SignOutMenuButton;
+			if (signOutMenuButton != null)
+			{
+				border = new Border
+				{
+					Background = new SolidColorBrush(Colors.White),
+					CornerRadius = new CornerRadius(16.0)
+				};
+				textBlock.Margin = new Thickness(10.0, 10.0, 10.0, 10.0);
+				border.Child = textBlock;
+				SolidColorBrush solidColorBrush = new SolidColorBrush();
+				solidColorBrush.Color = (Color)FindResource("RubineRed");
+				roundedButton.Foreground = solidColorBrush;
+			}
 			if (menuButton.FixedPosition)
 			{
 				roundedButton.VerticalAlignment = VerticalAlignment.Top;
@@ -107,7 +123,7 @@ public partial class BrowseTopMenuUserControl : RentalUserControl, IWPFActor, IC
 				roundedButton.Width = menuButton.Width;
 				roundedButton.Margin = new Thickness(menuButton.X, menuButton.Y, 0.0, 0.0);
 			}
-			roundedButton.Content = ((stackPanel != null) ? ((object)stackPanel) : ((object)textBlock));
+			roundedButton.Content = ((stackPanel != null) ? stackPanel : ((signOutMenuButton != null) ? ((object)border) : ((object)textBlock)));
 			if (menuButton.FixedPosition)
 			{
 				FixedButtonContainer.Children.Add(roundedButton);

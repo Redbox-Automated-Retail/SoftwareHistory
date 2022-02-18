@@ -15,7 +15,6 @@ public class ReservationDataInstance : IReservationDataInstance
 	{
 		public static IReservation ConvertToReservation(ReservationDataFile_V002 reservationDataFile)
 		{
-			//IL_025d: Unknown result type (might be due to invalid IL or missing references)
 			IReservation reservation = null;
 			if (reservationDataFile != null)
 			{
@@ -106,7 +105,6 @@ public class ReservationDataInstance : IReservationDataInstance
 
 		public static IReservationDataFile ConvertToReservationDataFile(IReservation reservation)
 		{
-			//IL_025d: Unknown result type (might be due to invalid IL or missing references)
 			ReservationDataFile_V002 reservationDataFile_V = null;
 			if (reservation != null)
 			{

@@ -1,5 +1,6 @@
 using System;
 using System.Security;
+using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.Rental.Model.Personalization;
 
@@ -9,11 +10,7 @@ public interface IPersonalizationService
 
 	bool IsLoyaltyEnabled { get; }
 
-	void LoginWithEmail(string emailAddress, SecureString password, Action<ILoginResult> loginResultCallback);
-
-	void LoginWithPhoneNumber(string phoneNumber, SecureString pin, Action<ILoginResult> loginResultCallback);
-
-	void UpdateAccount(string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, Action<IUpdateAccountResult> resultCallback, bool queued = false);
+	void UpdateAccount(string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, Action<IUpdateAccountResult> resultCallback, bool queued = false, AccountSourceType source = AccountSourceType.General);
 
 	void SetSelectedPromo(string promoCode);
 

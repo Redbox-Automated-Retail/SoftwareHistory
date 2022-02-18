@@ -12,6 +12,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskEngine.Environment;
 
@@ -50,7 +51,7 @@ public class TextToSpeechService : ITextToSpeechService
 
 	private int m_speechRate;
 
-	private int m_speechVolume = 80;
+	private int m_speechVolume;
 
 	private object m_speechSynthesizerLock = new object();
 
@@ -99,6 +100,23 @@ public class TextToSpeechService : ITextToSpeechService
 
 	public bool TTSEnabled => AudioDeviceConnected;
 
+	public int GetTextToSpeechVolume
+	{
+		get
+		{
+			int num = ServiceLocator.Instance.GetService<IConfiguration>()?.TextToSpeechVolume ?? 100;
+			if (num < 0)
+			{
+				num = 0;
+			}
+			if (num > 100)
+			{
+				num = 100;
+			}
+			return num;
+		}
+	}
+
 	public event AudioDeviceConnectionChanged OnAudioDeviceConnectionChanged;
 
 	public void ClearOnAudioDeviceConnectionChanged()
@@ -118,7 +136,7 @@ public class TextToSpeechService : ITextToSpeechService
 		SilenceTTS();
 		m_keyHandlers.Clear();
 		m_speechRate = 0;
-		m_speechVolume = 80;
+		m_speechVolume = GetTextToSpeechVolume;
 	}
 
 	public int GetTimeout(string timeoutType, int defaultTimeout)
@@ -207,6 +225,7 @@ public class TextToSpeechService : ITextToSpeechService
 	private TextToSpeechService()
 	{
 		LogHelper.Instance.Log("TTS((> Service Initialized.");
+		m_speechVolume = GetTextToSpeechVolume;
 		m_textReplacement.Add("blu-ray", "blue ray");
 		m_textReplacement.Add("sec", "second");
 		m_textReplacement.Add("pg", "p g");

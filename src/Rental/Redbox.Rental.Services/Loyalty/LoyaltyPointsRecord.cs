@@ -5,7 +5,7 @@ namespace Redbox.Rental.Services.Loyalty;
 
 public class LoyaltyPointsRecord : ILoyaltyPointsRecord
 {
-	private IRentalShoppingCartItem _rentalShoppingCartItem;
+	private IRentalShoppingCartTitleItem _rentalShoppingCartItem;
 
 	public int? PointsToBeEarned { get; set; }
 
@@ -28,7 +28,7 @@ public class LoyaltyPointsRecord : ILoyaltyPointsRecord
 		}
 	}
 
-	public LoyaltyPointsRecord(IRentalShoppingCartItem rentalShoppingCartItem)
+	public LoyaltyPointsRecord(IRentalShoppingCartTitleItem rentalShoppingCartItem)
 	{
 		_rentalShoppingCartItem = rentalShoppingCartItem;
 	}

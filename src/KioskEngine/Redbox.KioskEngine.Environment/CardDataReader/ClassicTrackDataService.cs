@@ -11,6 +11,10 @@ namespace Redbox.KioskEngine.Environment.CardDataReader;
 
 public class ClassicTrackDataService : IClassicTrackDataService, ITrackDataService
 {
+	private Action<CardReadRequestInfo, CardReadCompleteDetails> _onCardReadComplete;
+
+	private CardReadRequestInfo _cardReadRequest;
+
 	private const char TrackEnd = '?';
 
 	private const char TrackStart = '%';
@@ -29,23 +33,15 @@ public class ClassicTrackDataService : IClassicTrackDataService, ITrackDataServi
 
 	private SecureString _trackDataBuffer { get; set; }
 
-	public event CardReadCompleteHandler OnCardReadComplete;
-
-	public event CardReadStartedEventHandler OnCardReadStarted;
-
 	private void ClearData()
 	{
 		_trackDataBuffer?.Clear();
 	}
 
-	public void ClearCardReadHandlers()
+	public void StartCardRead(CardReadRequestInfo request, Action<IReadCardJob> cardReadStartedAction, Action<Guid> onCardProcessing, Action<CardReadRequestInfo, CardReadCompleteDetails> onCardReadComplete)
 	{
-		OnCardReadComplete = null;
-		OnCardReadStarted = null;
-	}
-
-	public void StartCardRead(int timeout, bool isZeroTouchRead, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction, Guid sessionId)
-	{
+		_cardReadRequest = request;
+		_onCardReadComplete = onCardReadComplete;
 		LogHelper.Instance.Log("ClassicTrackDataService start card read");
 		_allowTrackDataParsing = true;
 		ClearData();
@@ -104,10 +100,12 @@ public class ClassicTrackDataService : IClassicTrackDataService, ITrackDataServi
 						unencryptedTrackData.EncryptedTrack2 = service.GetEncryptedTrack2(unencryptedTrackData);
 					}
 					unencryptedTrackData?.LockData();
-					if (OnCardReadComplete != null)
+					_onCardReadComplete?.Invoke(_cardReadRequest, new CardReadCompleteDetails
 					{
-						OnCardReadComplete(unencryptedTrackData, chipCardRemovedFromReader: true, null);
-					}
+						TrackData = unencryptedTrackData,
+						CardRemoved = true,
+						Success = (unencryptedTrackData?.HasValidData() ?? false)
+					});
 					_trackDataBuffer.Clear();
 				}
 				result = true;

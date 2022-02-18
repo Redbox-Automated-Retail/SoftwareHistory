@@ -85,6 +85,50 @@ public class HelpViewController : BaseViewController
 		ShowHelpDocument(analysisContext, HelpDocuments.Terms, idleTimerName);
 	}
 
+	public static void ShowSubscriptions(string analysisContext = null)
+	{
+		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
+		{
+			AnalysisContext = analysisContext
+		};
+		helpViewControllerParameters.GoBackAction = delegate
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("HelpBack");
+			OrchestrationService.ResetApplicationIdleTimerTimeout();
+			OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
+		};
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.Subscriptions;
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = 1;
+		}
+		OrchestrationService.ResetApplicationIdleTimerTimeout();
+		OrchestrationService.StartIdleTimer("idle_timer");
+		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
+	}
+
+	public static void ShowRedboxPlus(string analysisContext = null)
+	{
+		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
+		{
+			AnalysisContext = analysisContext
+		};
+		helpViewControllerParameters.GoBackAction = delegate
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("HelpBack");
+			OrchestrationService.ResetApplicationIdleTimerTimeout();
+			OrchestrationService.ViewGoBackSafe("go_back", popOnly: false);
+		};
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocument = HelpDocuments.RedboxPlus;
+			Redbox.Rental.Services.Session.Session.Instance.HelpState.CurrentHelpDocumentPage = 1;
+		}
+		OrchestrationService.ResetApplicationIdleTimerTimeout();
+		OrchestrationService.StartIdleTimer("idle_timer");
+		OrchestrationService.ViewShow("help_document_view", helpViewControllerParameters);
+	}
+
 	private static void ShowHelpDocument(string analysisContext, HelpDocuments helpDocuments, string idleTimerName = "idle_timer")
 	{
 		HelpViewControllerParameters helpViewControllerParameters = new HelpViewControllerParameters
@@ -223,7 +267,7 @@ public class HelpViewController : BaseViewController
 		{
 			viewModel.StoreNumberText = service["StoreNumber"];
 		}
-		viewModel.BackButtonText = Resources.back_button;
+		viewModel.BackButtonText = Resources.back_button.ToUpper();
 		viewModel.ContactText = Resources.contact_redbox_label;
 		viewModel.PageCounterText = Resources.help_page_counter;
 		viewModel.StoreNumberLabel = Resources.kiosk_id_label;
@@ -243,84 +287,82 @@ public class HelpViewController : BaseViewController
 
 	private static void BuildHelpDocButtons(HelpViewControllerParameters parameters, HelpViewModel viewModel, HelpDocuments currentHelpDoc)
 	{
-		viewModel.TopRowButtonList = new ObservableCollection<HelpButtonData>();
-		viewModel.BottomRowButtonList = new ObservableCollection<HelpButtonData>();
-		viewModel.TopRowButtonList.Add(new HelpButtonData
+		viewModel.ButtonList = new ObservableCollection<HelpButtonData>();
+		viewModel.ButtonList.Add(new HelpButtonData
+		{
+			ButtonText = Resources.play_pass_button,
+			DocumentToShow = HelpDocuments.PlayPass,
+			IsEnabled = (currentHelpDoc != HelpDocuments.PlayPass)
+		});
+		viewModel.ButtonList.Add(new HelpButtonData
 		{
 			ButtonText = Resources.faq_button,
-			UpdatedText = Resources.help_updated_button,
-			ShowUpdatedFlag = Redbox.Rental.Services.Configuration.Configuration.Instance.ShowFAQUpdated,
 			DocumentToShow = HelpDocuments.Faq,
 			IsEnabled = (currentHelpDoc != HelpDocuments.Faq)
 		});
 		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		if (service.GetResource(Redbox.Rental.Services.Configuration.Configuration.Instance.MobileFaqDocument) != null)
 		{
-			viewModel.TopRowButtonList.Add(new HelpButtonData
+			viewModel.ButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.mobile_faq_button,
-				UpdatedText = Resources.help_updated_button,
-				ShowUpdatedFlag = Redbox.Rental.Services.Configuration.Configuration.Instance.ShowMobileFaqUpdated,
 				DocumentToShow = HelpDocuments.MobileFaq,
 				IsEnabled = (currentHelpDoc != HelpDocuments.MobileFaq)
 			});
 		}
-		viewModel.TopRowButtonList.Add(new HelpButtonData
+		viewModel.ButtonList.Add(new HelpButtonData
 		{
 			ButtonText = Resources.transaction_terms_button,
-			UpdatedText = Resources.help_updated_button,
-			ShowUpdatedFlag = Redbox.Rental.Services.Configuration.Configuration.Instance.ShowTermsUpdated,
 			DocumentToShow = HelpDocuments.Terms,
 			IsEnabled = (currentHelpDoc != HelpDocuments.Terms)
 		});
 		if (Redbox.Rental.Services.Configuration.Configuration.Instance.GiftCardsEnabled)
 		{
-			viewModel.TopRowButtonList.Add(new HelpButtonData
+			viewModel.ButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.terms_redbox_card_button,
-				UpdatedText = Resources.help_updated_button,
-				ShowUpdatedFlag = Redbox.Rental.Services.Configuration.Configuration.Instance.ShowRedboxCardUpdated,
 				DocumentToShow = HelpDocuments.TermsReboxCard,
 				IsEnabled = (currentHelpDoc != HelpDocuments.TermsReboxCard)
 			});
 		}
-		if (service.GetResource(Redbox.Rental.Services.Configuration.Configuration.Instance.PerksDocument) != null)
+		if (service.GetResource(Redbox.Rental.Services.Configuration.Configuration.Instance.SubscriptionsDocument) != null)
 		{
-			viewModel.BottomRowButtonList.Add(new HelpButtonData
+			viewModel.ButtonList.Add(new HelpButtonData
 			{
-				ButtonText = Resources.play_pass_button,
-				UpdatedText = Resources.help_updated_button,
-				ShowUpdatedFlag = Redbox.Rental.Services.Configuration.Configuration.Instance.ShowPerksUpdated,
-				DocumentToShow = HelpDocuments.PlayPass,
-				IsEnabled = (currentHelpDoc != HelpDocuments.PlayPass)
+				ButtonText = Resources.subscriptions_button,
+				DocumentToShow = HelpDocuments.Subscriptions,
+				IsEnabled = (currentHelpDoc != HelpDocuments.Subscriptions)
 			});
 		}
-		viewModel.BottomRowButtonList.Add(new HelpButtonData
+		if (service.GetResource(Redbox.Rental.Services.Configuration.Configuration.Instance.RedboxPlusDocument) != null)
+		{
+			viewModel.ButtonList.Add(new HelpButtonData
+			{
+				ButtonText = Resources.redbox_plus_button,
+				DocumentToShow = HelpDocuments.RedboxPlus,
+				IsEnabled = (currentHelpDoc != HelpDocuments.RedboxPlus)
+			});
+		}
+		viewModel.ButtonList.Add(new HelpButtonData
 		{
 			ButtonText = Resources.privacy_button,
-			UpdatedText = Resources.help_updated_button,
-			ShowUpdatedFlag = Redbox.Rental.Services.Configuration.Configuration.Instance.ShowPrivacyUpdated,
 			DocumentToShow = HelpDocuments.Privacy,
 			IsEnabled = (currentHelpDoc != HelpDocuments.Privacy)
 		});
 		if (service.GetResource(Redbox.Rental.Services.Configuration.Configuration.Instance.CAPrivacyNoticeDocument) != null)
 		{
-			viewModel.BottomRowButtonList.Add(new HelpButtonData
+			viewModel.ButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.ca_privacy_notice_button,
-				UpdatedText = Resources.help_updated_button,
-				ShowUpdatedFlag = Redbox.Rental.Services.Configuration.Configuration.Instance.ShowCAPrivacyNoticeUpdated,
 				DocumentToShow = HelpDocuments.CAPrivacyNotice,
 				IsEnabled = (currentHelpDoc != HelpDocuments.CAPrivacyNotice)
 			});
 		}
 		if (service.GetResource(Redbox.Rental.Services.Configuration.Configuration.Instance.DoNotSellDocument) != null)
 		{
-			viewModel.BottomRowButtonList.Add(new HelpButtonData
+			viewModel.ButtonList.Add(new HelpButtonData
 			{
 				ButtonText = Resources.do_not_sell_button,
-				UpdatedText = Resources.help_updated_button,
-				ShowUpdatedFlag = Redbox.Rental.Services.Configuration.Configuration.Instance.ShowDoNotSellUpdated,
 				DocumentToShow = HelpDocuments.DoNotSell,
 				IsEnabled = (currentHelpDoc != HelpDocuments.DoNotSell)
 			});
@@ -329,15 +371,26 @@ public class HelpViewController : BaseViewController
 
 	private static void BuildHelpDocInfoList(bool giftCardEnabled, HelpViewModel viewModel)
 	{
+		string perksDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.PerksDocument;
 		string fAQDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.FAQDocument;
+		string mobileFaqDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.MobileFaqDocument;
 		string termsDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.TermsDocument;
 		string redboxCardDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.RedboxCardDocument;
+		string subscriptionsDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.SubscriptionsDocument;
+		string redboxPlusDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.RedboxPlusDocument;
 		string privacyDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.PrivacyDocument;
-		string perksDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.PerksDocument;
-		string mobileFaqDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.MobileFaqDocument;
 		string cAPrivacyNoticeDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.CAPrivacyNoticeDocument;
 		string doNotSellDocument = Redbox.Rental.Services.Configuration.Configuration.Instance.DoNotSellDocument;
 		viewModel.HelpDocumentInfoList = new Dictionary<HelpDocuments, HelpViewModel.HelpDocumentInfo>();
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.PlayPass, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = perksDocument,
+			DefaultDocumentName = "document-perks",
+			Title = Resources.play_pass_title,
+			Visible = true,
+			AnalyticsButtonName = "show_play_pass",
+			AbeTitle = Resources.play_pass_title_abe
+		});
 		viewModel.HelpDocumentInfoList.Add(HelpDocuments.Faq, new HelpViewModel.HelpDocumentInfo
 		{
 			DocumentName = fAQDocument,
@@ -346,6 +399,15 @@ public class HelpViewController : BaseViewController
 			Visible = true,
 			AnalyticsButtonName = "show_faq",
 			AbeTitle = Resources.faq_title_abe
+		});
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.MobileFaq, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = mobileFaqDocument,
+			DefaultDocumentName = "document-mobile-faqs",
+			Title = Resources.mobile_faq_title,
+			Visible = true,
+			AnalyticsButtonName = "show_mobile_faq",
+			AbeTitle = Resources.mobile_faq_title_abe
 		});
 		viewModel.HelpDocumentInfoList.Add(HelpDocuments.Terms, new HelpViewModel.HelpDocumentInfo
 		{
@@ -365,6 +427,24 @@ public class HelpViewController : BaseViewController
 			AnalyticsButtonName = "show_terms_redbox_card",
 			AbeTitle = Resources.redbox_card_terms_title_abe
 		});
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.Subscriptions, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = subscriptionsDocument,
+			DefaultDocumentName = "document-subscriptions",
+			Title = Resources.subscriptions_title,
+			Visible = true,
+			AnalyticsButtonName = "show_subscriptions",
+			AbeTitle = Resources.subscriptions_title_abe
+		});
+		viewModel.HelpDocumentInfoList.Add(HelpDocuments.RedboxPlus, new HelpViewModel.HelpDocumentInfo
+		{
+			DocumentName = redboxPlusDocument,
+			DefaultDocumentName = "document-redbox-plus",
+			Title = Resources.redbox_plus_title,
+			Visible = true,
+			AnalyticsButtonName = "show_redbox_plus",
+			AbeTitle = Resources.redbox_plus_title_abe
+		});
 		viewModel.HelpDocumentInfoList.Add(HelpDocuments.Privacy, new HelpViewModel.HelpDocumentInfo
 		{
 			DocumentName = privacyDocument,
@@ -373,24 +453,6 @@ public class HelpViewController : BaseViewController
 			Visible = true,
 			AnalyticsButtonName = "show_privacy",
 			AbeTitle = Resources.privacy_policy_title_abe
-		});
-		viewModel.HelpDocumentInfoList.Add(HelpDocuments.PlayPass, new HelpViewModel.HelpDocumentInfo
-		{
-			DocumentName = perksDocument,
-			DefaultDocumentName = "document-perks",
-			Title = Resources.play_pass_title,
-			Visible = true,
-			AnalyticsButtonName = "show_play_pass",
-			AbeTitle = Resources.play_pass_title_abe
-		});
-		viewModel.HelpDocumentInfoList.Add(HelpDocuments.MobileFaq, new HelpViewModel.HelpDocumentInfo
-		{
-			DocumentName = mobileFaqDocument,
-			DefaultDocumentName = "document-mobile-faqs",
-			Title = Resources.mobile_faq_title,
-			Visible = true,
-			AnalyticsButtonName = "show_mobile_faq",
-			AbeTitle = Resources.mobile_faq_title_abe
 		});
 		viewModel.HelpDocumentInfoList.Add(HelpDocuments.CAPrivacyNotice, new HelpViewModel.HelpDocumentInfo
 		{

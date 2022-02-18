@@ -32,6 +32,10 @@ public interface IViewService
 
 	string Peek(int index);
 
+	IViewFrameInstance PeekViewFrame(int index);
+
+	IViewFrameInstance PeekViewFrameByName(string viewName, out int index);
+
 	void ClearCache(bool clearResourceViewsOnly);
 
 	string PopDiscard();

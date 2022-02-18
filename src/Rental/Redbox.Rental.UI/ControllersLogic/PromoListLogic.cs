@@ -4,6 +4,7 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
+using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -48,61 +49,102 @@ public class PromoListLogic : BaseLogic
 		BaseLogic.AnalyticsService?.AddButtonPressEvent(name).AddData(new NameValueData("PromoCode", promoCodeModel.PromoCode));
 	}
 
-	public static List<IPerksOfferListItem> CreateOfferListItemModels(IPromoListModel model, IPersonalizationSession personalizationSession, string activePromoCode, char maskCharacter, bool includeOffers)
+	public static List<IPerksOfferListItem> CreateOfferListItemModels(IPromoListModel model, IPersonalizationSession personalizationSession, string activePromoCode, char maskCharacter, bool includeOffers, bool includeRedboxPlus)
 	{
 		List<IPerksOfferListItem> list = new List<IPerksOfferListItem>();
 		if (personalizationSession != null && (personalizationSession.StoredPromoCodes != null || personalizationSession.AcceptedOffers != null))
 		{
-			if (personalizationSession.StoredPromoCodes != null)
-			{
-				foreach (IStoredPromoCode storedPromoCode in personalizationSession.StoredPromoCodes)
-				{
-					string promoCodeExpirationText = DetermineExpirationText(storedPromoCode);
-					list.Add(new StoredPromoCodeModel
-					{
-						PromoCode = storedPromoCode.PromoCode,
-						PromoCodeDescription = storedPromoCode.CampaignName,
-						PromoCodeExpirationText = promoCodeExpirationText,
-						ExpirationDate = storedPromoCode.ExpirationDate,
-						MaskCharacter = maskCharacter,
-						IsAdded = (storedPromoCode.PromoCode == (activePromoCode ?? personalizationSession.SelectedPromo)),
-						AddRemoveButtonCommand = model.AddOrRemovePromoCommand,
-						AddedToBagText = Resources.promo_added_to_bag,
-						Logic = model.PromoLogic,
-						IsAdaMode = ApplicationState.IsADAAccessible
-					});
-				}
-			}
-			if (includeOffers && (personalizationSession.AcceptedOffers?.Count ?? 0) > 0)
-			{
-				int num = 0;
-				foreach (IAcceptedOffer acceptedOffer in personalizationSession.AcceptedOffers)
-				{
-					PerksOfferListItemModel item = CreatePersOfferListItemModelFromAcceptedOffer(model, acceptedOffer);
-					if (list.Count >= num)
-					{
-						list.Insert(num, item);
-					}
-					else
-					{
-						list.Add(item);
-					}
-					if (num == 0)
-					{
-						num = 3;
-						continue;
-					}
-					num++;
-					if (num <= 4)
-					{
-						continue;
-					}
-					break;
-				}
-			}
+			AddStoredPromos(model, personalizationSession, activePromoCode, maskCharacter, list, includeRedboxPlus);
+			AddCustomerOffers(model, personalizationSession, includeOffers, list);
 		}
 		model.StoredPromoCodes = list;
 		return list;
+	}
+
+	private static void AddCustomerOffers(IPromoListModel model, IPersonalizationSession personalizationSession, bool includeOffers, List<IPerksOfferListItem> promoModels)
+	{
+		if (!includeOffers || (personalizationSession.AcceptedOffers?.Count ?? 0) <= 0)
+		{
+			return;
+		}
+		int num = 0;
+		foreach (IAcceptedOffer acceptedOffer in personalizationSession.AcceptedOffers)
+		{
+			PerksOfferListItemModel item = CreatePersOfferListItemModelFromAcceptedOffer(model, acceptedOffer);
+			if (promoModels.Count >= num)
+			{
+				promoModels.Insert(num, item);
+			}
+			else
+			{
+				promoModels.Add(item);
+			}
+			if (num == 0)
+			{
+				num = 3;
+				continue;
+			}
+			num++;
+			if (num <= 4)
+			{
+				continue;
+			}
+			break;
+		}
+	}
+
+	private static void AddStoredPromos(IPromoListModel model, IPersonalizationSession personalizationSession, string activePromoCode, char maskCharacter, List<IPerksOfferListItem> promoModels, bool includeRedboxPlus)
+	{
+		if (personalizationSession.StoredPromoCodes == null)
+		{
+			return;
+		}
+		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+		bool flag = false;
+		foreach (IStoredPromoCode storedPromoCode in personalizationSession.StoredPromoCodes)
+		{
+			string promoCodeExpirationText = DetermineExpirationText(storedPromoCode);
+			bool flag2 = service?.GetRedboxPlusPromoCampaign(storedPromoCode.CampaignId) != null;
+			if (!flag2 || (includeRedboxPlus && !flag))
+			{
+				StoredPromoCodeModel storedPromoCodeModel = new StoredPromoCodeModel
+				{
+					PromoCode = storedPromoCode.PromoCode,
+					CampaignId = storedPromoCode.CampaignId,
+					PromoCodeDescription = (flag2 ? Resources.redbox_plus_free_1_night_rental : storedPromoCode.CampaignName),
+					IsRedboxPlusPromo = flag2,
+					PromoCodeExpirationText = promoCodeExpirationText,
+					ExpirationDate = storedPromoCode.ExpirationDate,
+					MaskCharacter = maskCharacter,
+					IsAdded = (storedPromoCode.PromoCode == (activePromoCode ?? personalizationSession.SelectedPromo)),
+					AddRemoveButtonCommand = model.AddOrRemovePromoCommand,
+					AddedToBagText = Resources.promo_added_to_bag,
+					Logic = model.PromoLogic,
+					IsAdaMode = ApplicationState.IsADAAccessible
+				};
+				if (flag2)
+				{
+					InsertPromoModel(promoModels, 0, storedPromoCodeModel);
+					flag = true;
+				}
+				else
+				{
+					promoModels.Add(storedPromoCodeModel);
+				}
+			}
+		}
+	}
+
+	private static void InsertPromoModel(List<IPerksOfferListItem> promoModels, int insertPos, IPerksOfferListItem promoModelToInsert)
+	{
+		if (promoModels.Count > insertPos)
+		{
+			promoModels.Insert(insertPos, promoModelToInsert);
+		}
+		else
+		{
+			promoModels.Add(promoModelToInsert);
+		}
 	}
 
 	private static PerksOfferListItemModel CreatePersOfferListItemModelFromAcceptedOffer(IPromoListModel promoListModel, IAcceptedOffer offer)

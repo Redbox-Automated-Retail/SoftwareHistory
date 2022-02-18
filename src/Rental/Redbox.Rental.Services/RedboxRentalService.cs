@@ -102,7 +102,12 @@ public class RedboxRentalService : IRedboxRental
 			ServiceLocator.Instance.GetService<IEMVReaderHealth>()?.SessionWasInTechnicalFallback(cardReadAttemptCollection.IsInTrackableTechnicalFallback);
 		}
 		Redbox.Rental.Services.Session.Session.Instance?.ClearTrackData();
-		ServiceLocator.Instance.GetService<ITrackDataService>()?.StopAllSessionCardReads(rentalShoppingCart?.ShoppingSessionId ?? default(Guid), CancelReason.EndingSession);
+		ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
+		service?.StopAllSessionCardReads(rentalShoppingCart?.ShoppingSessionId ?? default(Guid), CancelReason.EndingSession);
+		if (service is IDeviceServiceTrackDataService)
+		{
+			ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>()?.ReportAuthorizeResult(authorizeSuccessful: false);
+		}
 		ServiceLocator.Instance.GetService<IKioskClientService>()?.Session?.End();
 		StartNewRentalSession(newSessionContext);
 	}
@@ -136,6 +141,7 @@ public class RedboxRentalService : IRedboxRental
 			OrchestrationService.StartTimer("reservation-expire-timer");
 			OrchestrationService.StopIdleTimer("idle_timer");
 			Redbox.Rental.Services.Configuration.Configuration.Instance.SessionReload();
+			OrchestrationService.SetThemeAnimationState();
 			Redbox.Rental.Services.Session.Session.Instance = new Redbox.Rental.Services.Session.Session();
 			OrchestrationService.ResetApplicationIdleTimerTimeout();
 			ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
@@ -182,6 +188,7 @@ public class RedboxRentalService : IRedboxRental
 		{
 			service3.RegisterThemedControls("Redbox.Rental.UI.exe");
 			service3.RegisterThemedControls("Redbox.ControlPanel.UI.exe");
+			service3.RegisterThemedControls("Redbox.FMA.UI.dll");
 			ITheme theme = service3.Themes.Find((ITheme x) => x.Name == "Redbox Classic");
 			if (theme != null)
 			{
@@ -360,7 +367,7 @@ public class RedboxRentalService : IRedboxRental
 	public void EnterMaintenanceModeBecauseOfTamperedCardReader()
 	{
 		IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-		if (service != null)
+		if (service != null && !service.IsCardReaderTampered)
 		{
 			service.IsCardReaderTampered = true;
 			service.SendTamperedCardReaderKioskAlertMessage();
@@ -556,18 +563,18 @@ public class RedboxRentalService : IRedboxRental
 		{
 			return;
 		}
-		IList<IRentalShoppingCartItem> list = rentalShoppingCart.Items;
+		IList<IRentalShoppingCartTitleItem> list = rentalShoppingCart.TitleItems;
 		if (list == null)
 		{
-			list = new List<IRentalShoppingCartItem>();
+			list = new List<IRentalShoppingCartTitleItem>();
 		}
 		for (int i = 1; i <= rentalShoppingCart.MaximumCapacity; i++)
 		{
 			string text = null;
-			IRentalShoppingCartItem rentalShoppingCartItem = ((i <= list.Count) ? list[i - 1] : null);
-			if (rentalShoppingCartItem != null)
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = ((i <= list.Count) ? list[i - 1] : null);
+			if (rentalShoppingCartTitleItem != null)
 			{
-				dataService.GetProduct(rentalShoppingCartItem.ProductId, excludeTitleRollup: true, out var kioskProduct);
+				dataService.GetProduct(rentalShoppingCartTitleItem.ProductId, excludeTitleRollup: true, out var kioskProduct);
 				if (kioskProduct != null && kioskProduct is ITitleProduct)
 				{
 					text = ((ITitleProduct)kioskProduct).LongName;
@@ -577,7 +584,7 @@ public class RedboxRentalService : IRedboxRental
 			string macroValue = text;
 			SetAndLogMacroValue(service2, macroName, macroValue);
 			macroName = $"TTS:CartTitle_{i}_Action";
-			macroValue = ((rentalShoppingCartItem != null) ? rentalShoppingCartItem.Action.ToString() : string.Empty);
+			macroValue = ((rentalShoppingCartTitleItem != null) ? rentalShoppingCartTitleItem.Action.ToString() : string.Empty);
 			SetAndLogMacroValue(service2, macroName, macroValue);
 		}
 		service2["TTS:NumberOfTitlesInCart"] = ((list.Count > 0) ? list.Count.ToString() : string.Empty);

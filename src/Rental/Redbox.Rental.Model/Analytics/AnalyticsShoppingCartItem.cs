@@ -62,7 +62,7 @@ public class AnalyticsShoppingCartItem
 
 	public int? RentalPosition { get; set; }
 
-	public static AnalyticsShoppingCartItem ToShoppingCartItem(IRentalShoppingCartItem rentalShoppingCartItem)
+	public static AnalyticsShoppingCartItem ToShoppingCartItem(IRentalShoppingCartTitleItem rentalShoppingCartItem)
 	{
 		AnalyticsShoppingCartItem analyticsShoppingCartItem = new AnalyticsShoppingCartItem
 		{

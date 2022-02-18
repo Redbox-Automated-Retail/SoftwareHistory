@@ -28,7 +28,7 @@ public class HardwareStatusChangeCallback : ICallbackEntry
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log("An unhandled exception was raised in HardwareStatusChangeCallback handler.", e);
+			LogHelper.Instance.LogEntireException($"An unhandled exception was raised in HardwareStatusChangeCallback handler for Job: {JobId}.", e, "Invoke");
 		}
 	}
 }

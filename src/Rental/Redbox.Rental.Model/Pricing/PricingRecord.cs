@@ -180,7 +180,7 @@ public class PricingRecord : IPricingRecord
 
 	public Dictionary<string, object> ToDictionary()
 	{
-		return new Dictionary<string, object>
+		Dictionary<string, object> obj = new Dictionary<string, object>
 		{
 			{
 				"family",
@@ -201,11 +201,10 @@ public class PricingRecord : IPricingRecord
 			{ "product_price_id", ProductPricingId },
 			{ "initial_days", InitialDays },
 			{ "default_initial_night", DefaultInitialNightPrice },
-			{ "default_extra_night", DefaultExtraNightPrice },
-			{
-				"price_set_id",
-				ServiceLocator.Instance.GetService<IPricingService>()?.CurrentPriceSet?.PriceSetId ?? "1"
-			}
+			{ "default_extra_night", DefaultExtraNightPrice }
 		};
+		ServiceLocator.Instance.GetService<IPricingService>();
+		obj.Add("price_set_id", "1");
+		return obj;
 	}
 }

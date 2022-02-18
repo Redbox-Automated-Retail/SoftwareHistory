@@ -242,7 +242,7 @@ public class ViewHealth : IViewHealth, IKioskHealthItem
 			{
 				if (_viewReporting)
 				{
-					_kioskEvents.AddEvent(KioskEvent.NewEvent(KioskEventType.KioskHealthView, 502, success: true, null, _relatedId));
+					_kioskEvents.AddEvent(KioskEvent.NewEvent(5, 502, success: true, null, _relatedId));
 				}
 				Reset();
 			}
@@ -318,7 +318,7 @@ public class ViewHealth : IViewHealth, IKioskHealthItem
 			KioskEvent kioskEvent = null;
 			if (_viewReporting)
 			{
-				kioskEvent = KioskEvent.NewEvent(KioskEventType.KioskHealthView, 500, success: true, null, null, new
+				kioskEvent = KioskEvent.NewEvent(5, 500, success: true, null, null, new
 				{
 					InactivitySeconds = InActivitySeconds,
 					ViewName = _viewName,
@@ -345,7 +345,7 @@ public class ViewHealth : IViewHealth, IKioskHealthItem
 				_ = string.Empty;
 				if (_viewReporting)
 				{
-					KioskEvent kioskEvent2 = KioskEvent.NewEvent(KioskEventType.KioskHealthView, 501, success, null, _relatedId);
+					KioskEvent kioskEvent2 = KioskEvent.NewEvent(5, 501, success, null, _relatedId);
 					_kioskEvents.AddEvent(kioskEvent2);
 				}
 				if (_viewHealingType == 1)

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Local;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Reservation;
 
@@ -82,4 +84,20 @@ public interface IDataService
 	List<string> GetAllUnmatchedMultiDiscBarcodes();
 
 	long GetProductGroupId(IKioskProduct kioskProduct);
+
+	ErrorList GetActiveBrowseSubscriptionProduct(out ISubscriptionProduct subscriptionProduct);
+
+	ErrorList GetActiveMyBagSubscriptionProduct(out ISubscriptionProduct subscriptionProduct);
+
+	IRedboxPlusPromoCampaign GetRedboxPlusPromoCampaign(int campaignId);
+
+	ErrorList GetSubscriptionProducts(out List<ISubscriptionProduct> subscriptionProducts);
+
+	List<IRedboxPlusSubscriptionProduct> GetRedboxPlusSubscriptionProducts();
+
+	void AddRemovedQueueItem(RemovedQueueItem item);
+
+	List<RemovedQueueItem> GetRemovedQueueItems();
+
+	void DeleteRemovedQueueItem(RemovedQueueItem item);
 }

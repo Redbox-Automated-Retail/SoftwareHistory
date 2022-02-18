@@ -13,7 +13,6 @@ using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Controllers;
-using Redbox.Rental.Services.Personalization;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Controls;
 using Redbox.Rental.UI.Properties;
@@ -100,6 +99,21 @@ public class PerksSignupService : IPerksSignupService
 
 	private bool WasPerksSignupOfferPresented => Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.WasPerksSignupOfferPresented ?? false;
 
+	private bool WasEarlyIdSignupPresented
+	{
+		get
+		{
+			return Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.WasEarlyIdSignupPresented ?? false;
+		}
+		set
+		{
+			if (Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState != null)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.SignupFlowState.WasEarlyIdSignupPresented = value;
+			}
+		}
+	}
+
 	private bool UserInvokedSignUp
 	{
 		get
@@ -126,6 +140,7 @@ public class PerksSignupService : IPerksSignupService
 		switch (signUpFlowContext)
 		{
 		case SignUpFlowContext.AfterSignIn:
+		case SignUpFlowContext.AfterSwipeAndRedboxPlusSignup:
 			SignUpFlow_StartSignUpDialogs();
 			return;
 		case SignUpFlowContext.AfterSwipe:
@@ -177,8 +192,20 @@ public class PerksSignupService : IPerksSignupService
 		_accountNumber = string.Empty;
 		OptInConfirmationStatus confirmationStatus = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus ?? OptInConfirmationStatus.DoNotShow;
 		_confirmationStatus = (ConfirmationStatus)confirmationStatus;
-		if (signUpFlowContext == SignUpFlowContext.AfterSignIn)
+		switch (signUpFlowContext)
 		{
+		case SignUpFlowContext.AfterSwipeAndRedboxPlusSignup:
+			if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession != null)
+			{
+				_emailAddress = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession.LoginEmailAddress;
+				_accountNumber = null;
+				_customerProfileNumber = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession.CustomerProfileNumber;
+				_promptForEarlyId = true;
+				_mobilePhoneNumber = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession.MobilePhoneNumber;
+				_textClubEnabled = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession.TextClubEnabled;
+			}
+			break;
+		case SignUpFlowContext.AfterSignIn:
 			if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession != null)
 			{
 				_emailAddress = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession.LoginEmailAddress;
@@ -189,18 +216,21 @@ public class PerksSignupService : IPerksSignupService
 				_mobilePhoneNumber = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession.MobilePhoneNumber;
 				_textClubEnabled = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession.TextClubEnabled;
 			}
-		}
-		else if (Redbox.Rental.Services.Session.Session.Instance.UserInfo != null)
-		{
-			_emailAddress = Redbox.Rental.Services.Session.Session.Instance.UserInfo.Email;
-			_accountNumber = Redbox.Rental.Services.Session.Session.Instance.UserInfo.AccountNumber;
-			_customerProfileNumber = Redbox.Rental.Services.Session.Session.Instance.UserInfo.CustomerProfileNumber;
-		}
-		else
-		{
-			_emailAddress = null;
-			_accountNumber = null;
-			_customerProfileNumber = null;
+			break;
+		default:
+			if (Redbox.Rental.Services.Session.Session.Instance.UserInfo != null)
+			{
+				_emailAddress = Redbox.Rental.Services.Session.Session.Instance.UserInfo.Email;
+				_accountNumber = Redbox.Rental.Services.Session.Session.Instance.UserInfo.AccountNumber;
+				_customerProfileNumber = Redbox.Rental.Services.Session.Session.Instance.UserInfo.CustomerProfileNumber;
+			}
+			else
+			{
+				_emailAddress = null;
+				_accountNumber = null;
+				_customerProfileNumber = null;
+			}
+			break;
 		}
 	}
 
@@ -237,14 +267,14 @@ public class PerksSignupService : IPerksSignupService
 
 	private void ValidateEmail(string email)
 	{
-		IMarketingOptinServices service = ServiceLocator.Instance.GetService<IMarketingOptinServices>();
-		long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
+		IMarketingServices service = ServiceLocator.Instance.GetService<IMarketingServices>();
+		long kioskid = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
 		SendEmailConfirmCallback completeCallback = delegate(IEmailConfirmResult emailConfirmResult)
 		{
 			ProcessConfirmEmailResult(emailConfirmResult);
 		};
 		_emailAddress = email;
-		service.SendEmailConfirm(num.ToString(), email, _accountNumber, completeCallback);
+		service.SendEmailConfirm(kioskid, email, _accountNumber, completeCallback);
 	}
 
 	private void ProcessConfirmEmailResult(IEmailConfirmResult result)
@@ -350,7 +380,7 @@ public class PerksSignupService : IPerksSignupService
 
 	private void SignUpFlow_ShowEarlyIdSignUpIfNeeded()
 	{
-		if (_signupFlowResult.PerksSignupResult == SignupResult.Accepted && _promptForEarlyId)
+		if (!WasEarlyIdSignupPresented && (_signupFlowResult.PerksSignupResult == SignupResult.Accepted || _signUpFlowContext == SignUpFlowContext.AfterSwipeAndRedboxPlusSignup) && _promptForEarlyId)
 		{
 			ShowSignUpForEarlyIdDialog(SignUpFlow_UpdateAccountIfNeeded);
 		}
@@ -374,7 +404,7 @@ public class PerksSignupService : IPerksSignupService
 			{
 				SignUpFlow_HandlelAccountUpdateResult(updateAccountResult, SignUpFlow_ShowEarlyIdVerifyIfNeeded);
 			};
-			CallUpdateAccountImmediate(_mobilePhoneNumber, _pin, _optinForTextClub, callback);
+			SignupFunctions.CallUpdateAccountImmediate(_mobilePhoneNumber, _pin, _emailAddress, _customerProfileNumber, _optinForTextClub, _signupFlowResult.AcceptedPerksSignup, callback);
 		}
 		else
 		{
@@ -388,7 +418,7 @@ public class PerksSignupService : IPerksSignupService
 		{
 			if (_signupFlowResult.AcceptedPerksSignup)
 			{
-				SetNewAccountLoggedInState(updateAccountResult);
+				SignupFunctions.SetNewAccountLoggedInState(updateAccountResult, _emailAddress, _mobilePhoneNumber, _textClubEnabled);
 			}
 			continueAction();
 		}
@@ -457,7 +487,7 @@ public class PerksSignupService : IPerksSignupService
 
 	private void SignUpFlow_ShowAlreadyMemberIfNeeded()
 	{
-		if (UserInvokedSignUp && _confirmationStatus == ConfirmationStatus.SubscribedConfirmed && (!_promptForPerks || !string.IsNullOrEmpty(_customerProfileNumber)))
+		if (UserInvokedSignUp && _signupFlowResult.MarketingEmailSignupResult == SignupResult.NotShown && (!_promptForPerks || !string.IsNullOrEmpty(_customerProfileNumber)))
 		{
 			ShowAlreadyMemberDialog(SignUpFlow_HandleAlreadyPerksMemberResult);
 		}
@@ -506,7 +536,7 @@ public class PerksSignupService : IPerksSignupService
 				_signupFlowResult.PerksSignupResult = SignupResult.Accepted;
 				IdleTimer.Stop();
 				ProcessWPFHit();
-				SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId.Yes);
+				SignupFunctions.SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId.Yes, _confirmationStatus, _emailAddress);
 				continueAction?.Invoke();
 			},
 			CancelAction = delegate
@@ -687,26 +717,6 @@ public class PerksSignupService : IPerksSignupService
 		OrchestrationService.ViewShow("perks_signup_already_member_view", parameter);
 	}
 
-	private void SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId kioskOptInItemId)
-	{
-		if (_confirmationStatus == ConfirmationStatus.NotSubscribedConfirmed || _confirmationStatus == ConfirmationStatus.NotSubscribedNotConfirmed || _confirmationStatus == ConfirmationStatus.NewCustomer)
-		{
-			CheckoutFunctions.SendKioskOptinForMarketingCampaign(KioskOptIntItemType.MarketingSubscribe, kioskOptInItemId, _emailAddress);
-			if (kioskOptInItemId == KioskOptInItemId.Yes)
-			{
-				CheckoutFunctions.SendKioskOptinForMarketingCampaign(KioskOptIntItemType.MarketingConfirm, kioskOptInItemId, _emailAddress);
-			}
-		}
-		else if (_confirmationStatus == ConfirmationStatus.SubscribedNotConfirmed)
-		{
-			CheckoutFunctions.SendKioskOptinForMarketingCampaign(KioskOptIntItemType.MarketingConfirm, kioskOptInItemId, _emailAddress);
-		}
-		if (Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState != null)
-		{
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.SignupFlowState.MarketingOptInShown = true;
-		}
-	}
-
 	private void ShowEmailMarketingOptin(Action continueAction)
 	{
 		PerksSignupAlreadyMemberOptInViewInfo parameter = new PerksSignupAlreadyMemberOptInViewInfo
@@ -718,14 +728,14 @@ public class PerksSignupService : IPerksSignupService
 			{
 				IdleTimer.Stop();
 				_signupFlowResult.MarketingEmailSignupResult = SignupResult.Accepted;
-				SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId.Yes);
+				SignupFunctions.SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId.Yes, _confirmationStatus, _emailAddress);
 				continueAction?.Invoke();
 			},
 			CancelAction = delegate
 			{
 				IdleTimer.Stop();
 				_signupFlowResult.MarketingEmailSignupResult = SignupResult.Declined;
-				SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId.No);
+				SignupFunctions.SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId.No, _confirmationStatus, _emailAddress);
 				continueAction?.Invoke();
 			}
 		};
@@ -733,7 +743,7 @@ public class PerksSignupService : IPerksSignupService
 		{
 			IdleTimer.Stop();
 			_signupFlowResult.MarketingEmailSignupResult = SignupResult.TimedOut;
-			SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId.Timeout);
+			SignupFunctions.SendKioskOptInForMarketingCampaignMessages(KioskOptInItemId.Timeout, _confirmationStatus, _emailAddress);
 			continueAction?.Invoke();
 		};
 		IdleTimer.Start();
@@ -743,6 +753,7 @@ public class PerksSignupService : IPerksSignupService
 	private void ShowSignUpForEarlyIdDialog(Action continueAction)
 	{
 		LogHelper.Instance.Log("Starting login with phone number.");
+		WasEarlyIdSignupPresented = true;
 		PhoneAndPinInfo parameter = new PhoneAndPinInfo
 		{
 			SignInCancelButtonType = SignInCancelButtonTypes.MaybeLater,
@@ -775,50 +786,16 @@ public class PerksSignupService : IPerksSignupService
 			IdleTimer?.Stop();
 			_signupFlowResult.PhoneAndPinSignupResult = SignupResult.TimedOut;
 			_mobilePhoneNumber = null;
-			QueueUpdateAccount(_mobilePhoneNumber, _pin, _optinForTextClub);
 			continueAction?.Invoke();
 		};
 		IdleTimer.Start();
 		OrchestrationService.ViewShow("phone_and_pin_view", parameter);
 	}
 
-	private void CallUpdateAccountImmediate(string phoneNumber, SecureString pin, bool optinForTextClub, Action<IUpdateAccountResult> callback)
-	{
-		IPersonalizationService service = ServiceLocator.Instance.GetService<IPersonalizationService>();
-		LogHelper.Instance.Log("Calling PersonalizationService.UpdateAccount");
-		service.UpdateAccount(_customerProfileNumber, _emailAddress, phoneNumber, pin, _signupFlowResult.AcceptedPerksSignup, optinForTextClub, callback);
-	}
-
 	private void ShowUpdateAccountErrorMessage()
 	{
 		OrchestrationService.SetCurrentUICulture();
 		MessagePopupViewController.ShowSimpleOkMessage(string.Empty, Resources.perks_sign_up_cannot_create_account_message, TimeoutSignupFlow, ExitSignupFlow);
-	}
-
-	private void SetNewAccountLoggedInState(IUpdateAccountResult result)
-	{
-		if (Redbox.Rental.Services.Session.Session.Instance != null)
-		{
-			PersonalizationSession personalizationSession = new PersonalizationSession();
-			personalizationSession.CustomerProfileNumber = result.CustomerProfileNumber;
-			personalizationSession.LoginEmailAddress = _emailAddress;
-			personalizationSession.MobilePhoneNumber = _mobilePhoneNumber;
-			personalizationSession.IsLoggedIn = true;
-			personalizationSession.PromptForPerks = false;
-			personalizationSession.PromptForEarlyId = false;
-			personalizationSession.TextClubEnabled = _textClubEnabled;
-			personalizationSession.LoyaltySession = new LoyaltySession();
-			personalizationSession.LoyaltySession.PointsBalance = 0;
-			LoyaltyTiers loyaltyTier = LoyaltyTiers.PerksMember;
-			personalizationSession.LoyaltySession.LoyaltyTier = loyaltyTier;
-			personalizationSession.LoyaltySession.LoyaltyTierName = loyaltyTier.ToString();
-			Redbox.Rental.Services.Session.Session.Instance.UserInfo = new UserInfo
-			{
-				Email = _emailAddress,
-				CustomerProfileNumber = result.CustomerProfileNumber
-			};
-			Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession = personalizationSession;
-		}
 	}
 
 	private void ShowUpdateAccountErrorOnPhoneAndPinView(IUpdateAccountResult result)

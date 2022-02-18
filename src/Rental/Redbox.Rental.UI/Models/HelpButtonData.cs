@@ -9,11 +9,7 @@ public class HelpButtonData : BaseModel<HelpButtonData>
 
 	public string ButtonText { get; set; }
 
-	public string UpdatedText { get; set; }
-
 	public HelpDocuments DocumentToShow { get; set; }
-
-	public bool ShowUpdatedFlag { get; set; }
 
 	public bool IsEnabled
 	{

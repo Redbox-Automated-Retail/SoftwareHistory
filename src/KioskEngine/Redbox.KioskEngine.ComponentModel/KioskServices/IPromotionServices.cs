@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Redbox.KioskEngine.ComponentModel.KioskServices;
 
 public interface IPromotionServices
@@ -17,12 +15,4 @@ public interface IPromotionServices
 	void ValidatePromotionCode(string storeNumber, string promotionCode, RemoteServiceCallback completeCallback);
 
 	bool CanSwitch();
-
-	void KioskOptIn(string storeNumber, List<IOptInItem> optInItems, RemoteServiceCallback callback);
-
-	IOptInItem NewOptInItem();
-
-	void MarketingAdImpressions(long kioskId, List<MarketingAdImpressionData> impressions);
-
-	void SendKioskEvents(long kioskId, List<KioskEventData> events);
 }

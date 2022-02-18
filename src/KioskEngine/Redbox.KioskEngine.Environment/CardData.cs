@@ -4,7 +4,7 @@ namespace Redbox.KioskEngine.Environment;
 
 internal class CardData
 {
-	public int CardSource { get; set; }
+	public string CardSource { get; set; }
 
 	public int FallbackStatusAction { get; set; }
 

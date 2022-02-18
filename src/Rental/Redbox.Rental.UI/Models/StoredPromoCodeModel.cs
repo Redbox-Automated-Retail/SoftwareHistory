@@ -27,6 +27,10 @@ public class StoredPromoCodeModel : BaseModel<StoredPromoCodeModel>, IPerksOffer
 		}
 	}
 
+	public int CampaignId { get; set; }
+
+	public bool IsRedboxPlusPromo { get; set; }
+
 	public string MaskedPromoCode { get; private set; }
 
 	public string PromoCodeDescription { get; set; }

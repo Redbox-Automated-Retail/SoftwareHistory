@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<localControls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.StarzOfferDetailView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" DataContextChanged="TextToSpeechUserControl_DataContextChanged">
+  <Grid Background="#060208">
+    <StackPanel Orientation="Vertical" Margin="0,0,0,0">
+      <Grid Name="UserControlContainer" Height="439">
+        <localControls:StarzOfferDetailTwoColumnsUserControl />
+      </Grid>
+      <Redbox:RoundedButton Name="AcceptButton" Style="{StaticResource white_button_style}" Width="474" Height="56" UsedDefaultCornerRadius="True" Margin="0,-22,0,0" Command="{Binding AcceptButtonCommand}">
+        <TextBlock Name="AcceptButtonText" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=AcceptButtonText, FallbackValue=START YOUR FREE TRIAL}" />
+      </Redbox:RoundedButton>
+      <TextBlock Name="AcceptButtonLegalText" Style="{StaticResource font_montserrat_medium_12}" Foreground="#FFFFFFFF" HorizontalAlignment="Center" TextAlignment="Center" Width="412" TextWrapping="Wrap" Margin="0,12,0,30" Text="{Binding AcceptButtonLegalText, FallbackValue=Free trial available only to new STARZ app subscribers. A Redbox account is required – youll need to sign in or create one.}" />
+      <TextBlock Name="NotReadyYetText" Style="{StaticResource font_montserrat_medium_16}" Foreground="#FFFFFFFF" HorizontalAlignment="Center" Margin="0,40,0,0" TextAlignment="Center" Text="{Binding NotReadyYetText, FallbackValue=Not ready yet?&#xA;Visit redbox.com/starz or}" />
+      <Grid Height="36" Margin="0,-8,0,0">
+        <Redbox:RoundedButton Name="ScanQRCodeButton" Style="{StaticResource transparent_button_style}" Margin="0,0,4,0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Command="{Binding ScanQRCodeButtonCommand}" Visibility="{Binding ScanQRCodeButtonVisibility, FallbackValue=Visible}">
+          <TextBlock Name="ScanQRCodeButtonText" Style="{StaticResource font_montserrat_extrabold_16}" TextDecorations="Underline" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=ScanQRCodeButtonText, FallbackValue=SCAN QR CODE}" />
+        </Redbox:RoundedButton>
+        <Redbox:RoundedButton Name="TermsButton1" Style="{StaticResource transparent_button_style}" Height="40" Margin="0,0,42,0" Command="{Binding TermsButtonCommand}" Visibility="{Binding TermsButton1Visibility, FallbackValue=Visible}">
+          <TextBlock Name="TermsButtonText" TextAlignment="Center" Style="{StaticResource font_montserrat_bold_14}" TextDecorations="Underline" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=TermsButton1Text, FallbackValue=FAQs and&#xA; Terms &amp; Conditions}" />
+        </Redbox:RoundedButton>
+      </Grid>
+      <Redbox:RoundedButton Name="TermsButton2" Style="{StaticResource transparent_button_style}" Height="40" Margin="0,0,0,0" HorizontalAlignment="Center" Command="{Binding TermsButtonCommand}" Visibility="{Binding TermsButton2Visibility, FallbackValue=Visible}">
+        <TextBlock Name="TermsButton2Text" TextAlignment="Center" Style="{StaticResource font_montserrat_bold_14}" TextDecorations="Underline" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=TermsButton2Text, FallbackValue=FAQs and Terms &amp; Conditions}" />
+      </Redbox:RoundedButton>
+    </StackPanel>
+    <Grid VerticalAlignment="Bottom">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="auto" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Redbox:RoundedButton Name="BackButton" Grid.Column="0" Style="{StaticResource black_with_white_border_button_style}" BorderThickness="2" Height="48" UsedDefaultCornerRadius="True" VerticalAlignment="Center" Margin="32,0,0,0" Command="{Binding BackButtonCommand}" Visibility="{Binding BackButtonVisibility, FallbackValue=Visible}">
+        <TextBlock Name="BackButtonText" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Margin="24,0,24,0" Text="{Binding Path=BackButtonText, FallbackValue=BACK}" />
+      </Redbox:RoundedButton>
+      <TextBlock Name="LegalText" Grid.Column="1" Style="{StaticResource font_montserrat_light_11}" LineHeight="16" HorizontalAlignment="Left" VerticalAlignment="Bottom" Foreground="#FFFFFFFF" Margin="32,0,32,24" TextWrapping="WrapWithOverflow" TextAlignment="Left" Text="{Binding LegalText, FallbackValue='7-day free trial only available to new STARZ App subscribers. STARZ subscription automatically renews thereafter as a monthly recurring paid subscription at the then current price (plus tax, if applicable) unless cancelled prior to expiration of free trial/current billing period. Subscription is non-refundable. 2 Redbox 1-night disc rental codes/month in next 12 months following trial, if you remain a STARZ subscriber through Redbox. Codes are available in your Redbox Account and expire 1 month from issue. 1 code/transaction. Payment card required. Charges apply for addl days. Cant combine w/other offers. Subject to addl terms. Void where prohibited. Starz® and related channels and service marks are the property of Starz Entertainment, LLC.'}" />
+    </Grid>
+  </Grid>
+</localControls:TextToSpeechUserControl>

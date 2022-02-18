@@ -27,6 +27,8 @@ public interface ITrackData
 
 	CardSourceType CardSourceType { get; set; }
 
+	WalletType WalletType { get; set; }
+
 	FallbackStatusAction FallbackStatusAction { get; set; }
 
 	FallbackType? FallbackReason { get; set; }
@@ -46,6 +48,12 @@ public interface ITrackData
 	bool ContactlessEnabledAndSupportsEmv { get; }
 
 	bool EmvEnabled { get; }
+
+	string VasIdentifier { get; set; }
+
+	bool HasVas { get; }
+
+	bool HasPay { get; }
 
 	bool HasValidData();
 

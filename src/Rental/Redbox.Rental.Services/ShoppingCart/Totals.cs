@@ -34,7 +34,7 @@ public class Totals : ITotals
 		{
 			return;
 		}
-		foreach (RentalShoppingCartItemAction eachAction in _rentalShoppingCart.Items.Select((IRentalShoppingCartItem x) => x.Action).Distinct())
+		foreach (RentalShoppingCartItemAction eachAction in _rentalShoppingCart.Items.Select((IBaseRentalShoppingCartItem x) => x.Action).Distinct())
 		{
 			if (!_subTotalGroups.Any((ISubTotalGroup x) => x.Action == eachAction))
 			{
@@ -45,7 +45,7 @@ public class Totals : ITotals
 			}
 		}
 		List<ISubTotalGroup> list = new List<ISubTotalGroup>();
-		foreach (ISubTotalGroup item in _subTotalGroups.Where((ISubTotalGroup x) => !_rentalShoppingCart.Items.Any((IRentalShoppingCartItem y) => y.Action == x.Action)))
+		foreach (ISubTotalGroup item in _subTotalGroups.Where((ISubTotalGroup x) => !_rentalShoppingCart.Items.Any((IBaseRentalShoppingCartItem y) => y.Action == x.Action)))
 		{
 			list.Add(item);
 		}

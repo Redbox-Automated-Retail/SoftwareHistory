@@ -321,26 +321,26 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 
 	private void SetMnpPriceForApplicableItems(CustomerOffer offer, IRentalShoppingCart shoppingCart)
 	{
-		foreach (IRentalShoppingCartItem item in shoppingCart.Items)
+		foreach (IRentalShoppingCartTitleItem titleItem in shoppingCart.TitleItems)
 		{
-			ServiceLocator.Instance.GetService<IRentalShoppingCartService>().AddMultiNightOfferToItem(item, offer);
+			ServiceLocator.Instance.GetService<IRentalShoppingCartService>().AddMultiNightOfferToItem(titleItem, offer);
 		}
 	}
 
 	private void SetPromoForSelectedOffer(ITitleProduct newProduct, IRentalShoppingCartService shoppingCartService, CustomerOffer selectedOffer)
 	{
 		IRentalShoppingCart currentRentalShoppingCart = shoppingCartService.CurrentRentalShoppingCart;
-		IRentalShoppingCartItem rentalShoppingCartItem = currentRentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem i) => i.ProductId == newProduct?.ProductId);
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = currentRentalShoppingCart.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem i) => i.ProductId == newProduct?.ProductId);
 		IPromotionService service = ServiceLocator.Instance.GetService<IPromotionService>();
 		if (selectedOffer.ShouldAdjustPrice(Redbox.Rental.Services.Configuration.Configuration.Instance) && selectedOffer.ActionCode == ActionCode.Purchase)
 		{
 			LogHelper.Instance.Log("AfterSwipeOfferService.SetPromoForSelectedOffer: Adjusting price for PRM offer.");
-			shoppingCartService.SetPurchasePriceForSelectedItem(selectedOffer, rentalShoppingCartItem, service);
+			shoppingCartService.SetPurchasePriceForSelectedItem(selectedOffer, rentalShoppingCartTitleItem, service);
 		}
 		else if (selectedOffer.DiscountType != OfferDiscountType.MultiNightPrice || Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
 		{
 			LogHelper.Instance.Log("AfterSwipeOfferService.SetPromoForSelectedOffer: Creating promo for the offer.");
-			service.SetPromoFromCustomerOffer(currentRentalShoppingCart, selectedOffer, rentalShoppingCartItem);
+			service.SetPromoFromCustomerOffer(currentRentalShoppingCart, selectedOffer, rentalShoppingCartTitleItem);
 		}
 		if (selectedOffer.DiscountType == OfferDiscountType.MultiNightPrice)
 		{

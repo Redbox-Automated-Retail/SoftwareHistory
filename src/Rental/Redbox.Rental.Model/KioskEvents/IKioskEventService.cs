@@ -1,3 +1,5 @@
+using Redbox.KioskEngine.ComponentModel;
+
 namespace Redbox.Rental.Model.KioskEvents;
 
 public interface IKioskEventService

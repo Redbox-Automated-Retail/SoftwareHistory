@@ -10,6 +10,8 @@ public enum BrowseFilterType
 	DigitalCode,
 	Dvd,
 	_4KUHD,
+	RedboxPlus,
+	BackToAll,
 	XboxOne,
 	Xbox360,
 	PS3,

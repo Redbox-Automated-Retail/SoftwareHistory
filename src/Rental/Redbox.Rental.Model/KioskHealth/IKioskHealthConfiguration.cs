@@ -73,4 +73,10 @@ public interface IKioskHealthConfiguration
 	int EMVReaderDisconnectAlertVelocity { get; }
 
 	int EMVReaderDisconnectSampleSizeHours { get; }
+
+	int PingInterval { get; }
+
+	bool PingServiceEnabled { get; }
+
+	bool KioskServicesPingEnabled { get; }
 }

@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using DeviceService.ComponentModel;
 using DeviceService.ComponentModel.Commands;
+using DeviceService.ComponentModel.Requests;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
@@ -17,8 +18,10 @@ using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.Session;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Properties;
@@ -28,11 +31,11 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class SwipeViewController : BaseViewController
 {
-	private delegate void ShowMessage(Action timeout, Action goBack);
-
 	private static Action _cancelAction;
 
 	private static Action _continueAction;
+
+	private static Action<CardReadRequestInfo, CardReadCompleteDetails, Action> _cardReadImmediateAction;
 
 	private static SwipeViewType _swipeViewType;
 
@@ -54,6 +57,8 @@ public class SwipeViewController : BaseViewController
 		SwipeViewType.EMVInsertTapReservationPickup,
 		SwipeViewType.EMVTapReservationPickup
 	};
+
+	private static readonly ManualResetEvent _cardReadComplete = new ManualResetEvent(initialState: true);
 
 	private static bool ChipEnabled
 	{
@@ -85,6 +90,19 @@ public class SwipeViewController : BaseViewController
 		}
 	}
 
+	private static bool PerksPassEnabled
+	{
+		get
+		{
+			IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.ContactlessEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.PerksPassEnabled)
+			{
+				return service?.SupportsEMV ?? false;
+			}
+			return false;
+		}
+	}
+
 	private static string ShoppingCartSessionId
 	{
 		get
@@ -103,22 +121,23 @@ public class SwipeViewController : BaseViewController
 		}
 	}
 
-	public static void SetSwipeViewParameters(Action cancelAction, Action continueAction, string stringSwipeViewType)
+	public static void SetSwipeViewParameters(Action cancelAction, Action continueAction, string stringSwipeViewType, Action<CardReadRequestInfo, CardReadCompleteDetails, Action> cardReadImmediateAction)
 	{
 		SwipeViewType result = SwipeViewType.RegularCheckOut;
 		if (Enum.TryParse<SwipeViewType>(stringSwipeViewType, out result))
 		{
-			SetSwipeViewParameters2(cancelAction, continueAction, result);
+			SetSwipeViewParameters2(cancelAction, continueAction, result, cardReadImmediateAction);
 			return;
 		}
 		throw new ArgumentException("Invalid stringSwipeViewType parameter value: {0}", stringSwipeViewType);
 	}
 
-	public static void SetSwipeViewParameters2(Action cancelAction, Action continueAction, SwipeViewType swipeViewType)
+	public static void SetSwipeViewParameters2(Action cancelAction, Action continueAction, SwipeViewType swipeViewType, Action<CardReadRequestInfo, CardReadCompleteDetails, Action> cardReadImmediateAction)
 	{
 		_cancelAction = cancelAction;
 		_continueAction = continueAction;
 		_swipeViewType = swipeViewType;
+		_cardReadImmediateAction = cardReadImmediateAction;
 	}
 
 	private static void AdjustSwipeViewType()
@@ -245,12 +264,11 @@ public class SwipeViewController : BaseViewController
 		int num = 50000;
 		int timeout = num + 10000;
 		swipeViewUserControl.Timeout = num;
+		DeviceInputType deviceInputType;
+		int num2;
 		if (service2 != null)
 		{
-			service2.ClearCardReadHandlers();
-			service2.OnCardReadComplete += OnCardReadCompleteHandler;
-			service2.OnCardReadStarted += OnCardReadStartedHandler;
-			DeviceInputType deviceInputType = DeviceInputType.M;
+			deviceInputType = DeviceInputType.M;
 			if (service2 is IDeviceServiceTrackDataService)
 			{
 				if (ChipEnabled && ContactlessEnabled && _reservationPickupTypes.Contains(_swipeViewType))
@@ -269,20 +287,58 @@ public class SwipeViewController : BaseViewController
 				{
 					deviceInputType = DeviceInputType.MC;
 				}
+				else if (_swipeViewType == SwipeViewType.EMVTapToLogin)
+				{
+					deviceInputType = DeviceInputType.C;
+				}
 			}
 			swipeViewModel.CardReadAttempt.DeviceInputType = deviceInputType;
 			swipeViewModel.CardReadAttempt.CardReadAttemptStatus = CardReadAttemptStatus.Active;
-			service2.StartCardRead(timeout, isZeroTouchRead: false, deviceInputType, delegate(IReadCardJob cardReadJob)
+			if (PerksPassEnabled)
+			{
+				ISession instance = Redbox.Rental.Services.Session.Session.Instance;
+				if (instance != null && !instance.IsInReservationFlow && (deviceInputType == DeviceInputType.C || deviceInputType == DeviceInputType.MC || deviceInputType == DeviceInputType.MCS))
+				{
+					num2 = 2;
+					goto IL_02e2;
+				}
+			}
+			num2 = 0;
+			goto IL_02e2;
+		}
+		LogHelper.Instance.Log("Error in SwipeViewController.ConfigiureSwipeView. TrackDataService is null.");
+		return;
+		IL_02e2:
+		VasMode vasMode = (VasMode)num2;
+		if (_swipeViewType == SwipeViewType.EMVTapToLogin)
+		{
+			vasMode = VasMode.VasOnly;
+		}
+		CardReadRequestInfo request = new CardReadRequestInfo
+		{
+			Timeout = timeout,
+			IsZeroTouchRead = false,
+			InputType = deviceInputType,
+			VasMode = vasMode,
+			SessionId = (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ShoppingSessionId ?? default(Guid))
+		};
+		if (vasMode != VasMode.VasOnly || !PersonalizationFunctions.IsLoyaltySignedIn)
+		{
+			service2.StartCardRead(request, delegate(IReadCardJob cardReadJob)
 			{
 				if (cardReadJob != null && swipeViewModel?.CardReadAttempt != null)
 				{
 					swipeViewModel.CardReadAttempt.CardReadJobCommandRequestId = cardReadJob.RequestId;
 				}
-			}, BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ShoppingSessionId ?? default(Guid));
+			}, OnCardReadStartedHandler, delegate(CardReadRequestInfo cardReadRequest, CardReadCompleteDetails cardReadCompleteDetails)
+			{
+				OnCardReadCompleteHandler(cardReadRequest, cardReadCompleteDetails);
+			});
+			_cardReadComplete.Reset();
 		}
 		else
 		{
-			LogHelper.Instance.Log("Error in SwipeViewController.ConfigiureSwipeView. TrackDataService is null.");
+			LogHelper.Instance.LogError("InvalidFlowError001", "SwipeViewController.ConfigureSwipeView - We should not get into this flow.");
 		}
 	}
 
@@ -307,7 +363,7 @@ public class SwipeViewController : BaseViewController
 		{
 			return;
 		}
-		swipeViewModel.GridBackground = WPFFunctions.GetBrush(BaseViewController.GetViewUserControl(), (_swipeViewType == SwipeViewType.EMVInsertTapReservationPickup) ? "RubineToDarkPurpleGradientBrush" : "RubineRedBrush");
+		swipeViewModel.GridBackground = WPFFunctions.GetBrush(BaseViewController.GetViewUserControl(), (_swipeViewType == SwipeViewType.EMVInsertTapRegularCheckout || _swipeViewType == SwipeViewType.EncryptedSwipeRegularCheckOut || _swipeViewType == SwipeViewType.EMVInsertTapReservationPickup || _swipeViewType == SwipeViewType.EMVTapToLogin) ? "RubineToDarkPurpleGradientBrush" : "RubineRedBrush");
 		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 		swipeViewModel.ApplePayImageVisibility = ((service != null && service.HideApplePayImage) ? Visibility.Collapsed : Visibility.Visible);
 		swipeViewModel.GooglePayImageVisibility = ((service != null && service.HideGooglePayImage) ? Visibility.Collapsed : Visibility.Visible);
@@ -357,20 +413,7 @@ public class SwipeViewController : BaseViewController
 			break;
 		case SwipeViewType.EncryptedSwipeRegularCheckOut:
 			swipeViewModel.TitleText = Resources.regular_checkout_emv_swipe_title;
-			if (deviceServiceTrackDataService == null || deviceServiceTrackDataService.IsInTechnicalFallback)
-			{
-				if (swipeViewModel.TitleText.Contains("Swipe!"))
-				{
-					swipeViewModel.TitleText = swipeViewModel.TitleText.Replace("Swipe!", "\r\nSwipe!");
-				}
-				swipeViewModel.MessageText = null;
-				swipeViewModel.ImageStackPanelVisibility = Visibility.Collapsed;
-			}
-			else
-			{
-				swipeViewModel.MessageText = Resources.regular_checkout_emv_swipe_message;
-				swipeViewModel.ImageStackPanelVisibility = Visibility.Visible;
-			}
+			swipeViewModel.MessageText = null;
 			break;
 		case SwipeViewType.EMVInsertRegularCheckout:
 			swipeViewModel.TitleText = Resources.regular_checkout_emv_insert_title;
@@ -390,6 +433,27 @@ public class SwipeViewController : BaseViewController
 			swipeViewModel.TitleText = Resources.regular_checkout_emv_tap_title;
 			swipeViewModel.MessageText = null;
 			break;
+		case SwipeViewType.EMVTapToLogin:
+		{
+			swipeViewModel.TitleText = Resources.swipe_view_tap_to_sign_in_title;
+			swipeViewModel.MessageText = Resources.swipe_view_tap_to_sign_in_message;
+			swipeViewModel.MessageButtonText = Resources.swipe_view_tap_to_sign_in_message_button;
+			swipeViewModel.OnMessageButtonClicked = OnGetThePassClicked;
+			swipeViewModel.TimerTitleText = Resources.swipe_view_tap_to_sign_in_timer_title;
+			swipeViewModel.TimerMessageText = Resources.swipe_view_tap_to_sign_in_timer_message;
+			ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
+			(timerService?.CreateTimer("EMVTapPhoneTimerTextTimer", 10000, 10000, delegate
+			{
+				(timerService?.GetTimer("EMVTapPhoneTimerTextTimer"))?.Stop();
+				timerService?.RemoveTimer("EMVTapPhoneTimerTextTimer");
+				if (swipeViewModel != null && OrchestrationService.PeekView() == "swipe_view")
+				{
+					swipeViewModel.TitleTextVisibility = Visibility.Collapsed;
+					swipeViewModel.TimerTextBorderVisibility = Visibility.Visible;
+				}
+			}))?.Start();
+			break;
+		}
 		default:
 			swipeViewModel.TitleText = Resources.regular_checkout_swipe_title;
 			swipeViewModel.MessageText = Resources.regular_checkout_swipe_message;
@@ -485,7 +549,12 @@ public class SwipeViewController : BaseViewController
 
 	public static void LeaveSwipeView(IViewFrameInstance viewFrameInstance)
 	{
-		ServiceLocator.Instance.GetService<ITrackDataService>()?.StopCardRead(CancelReason.LeavingSwipeView);
+		ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
+		if (service != null)
+		{
+			service.StopCardRead(CancelReason.LeavingSwipeView);
+			_cardReadComplete.WaitOne(3000);
+		}
 		ICardReadAttempt currentCardReadAttempt = GetCurrentCardReadAttempt();
 		if (currentCardReadAttempt != null && currentCardReadAttempt.CardReadAttemptStatus == CardReadAttemptStatus.Active)
 		{
@@ -536,7 +605,12 @@ public class SwipeViewController : BaseViewController
 			}
 			if (item?.AuthorizeResult != null)
 			{
-				stringBuilder.Append($" Authorize Result: Success={item?.AuthorizeResult.Success} Response={item?.AuthorizeResult.Response}");
+				string arg = null;
+				if (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.SubscriptionItems != null && BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.SubscriptionItems.Count > 0)
+				{
+					arg = $", SubscriptionTransactionSuccess={item?.AuthorizeResult.SubscriptionTransactionSuccess}";
+				}
+				stringBuilder.Append($" Authorize Result: Success={item?.AuthorizeResult.Success}, Response={item?.AuthorizeResult.Response}{arg}");
 			}
 			LogHelper.Instance.Log(stringBuilder.ToString());
 		}
@@ -571,188 +645,174 @@ public class SwipeViewController : BaseViewController
 		}
 	}
 
-	private static void OnCardReadCompleteHandler(ITrackData trackData, bool chipCardRemovedFromReader, Guid? requestId)
+	private static void OnCardReadCompleteHandler(CardReadRequestInfo request, CardReadCompleteDetails cardReadCompleteDetails)
 	{
 		try
 		{
 			LogHelper.Instance.Log("Starting SwipeViewController.OnCardReadCompleteHandler");
 			StopTimer();
+			_cardReadComplete.Set();
 			ICardReadAttempt currentCardReadAttempt = GetCurrentCardReadAttempt();
-			if (requestId.HasValue)
+			if (!cardReadCompleteDetails.RequestId.HasValue || currentCardReadAttempt?.CardReadJobCommandRequestId == cardReadCompleteDetails.RequestId)
 			{
-				bool num;
-				if (currentCardReadAttempt == null)
+				if (Redbox.Rental.Services.Session.Session.Instance != null)
 				{
-					num = !requestId.HasValue;
+					Redbox.Rental.Services.Session.Session.Instance.TrackData = cardReadCompleteDetails.TrackData;
+				}
+				if (ServiceLocator.Instance.GetService<IViewService>()?.UITaskScheduler != null)
+				{
+					if (_cardReadImmediateAction != null && cardReadCompleteDetails != null)
+					{
+						_cardReadImmediateAction(request, cardReadCompleteDetails, delegate
+						{
+							ContinueWithCardRead(request, cardReadCompleteDetails);
+						});
+					}
+					else
+					{
+						ContinueWithCardRead(request, cardReadCompleteDetails);
+					}
 				}
 				else
 				{
-					Guid cardReadJobCommandRequestId = currentCardReadAttempt.CardReadJobCommandRequestId;
-					Guid? guid = requestId;
-					if (!guid.HasValue)
-					{
-						goto IL_010d;
-					}
-					num = cardReadJobCommandRequestId == guid.GetValueOrDefault();
+					LogHelper.Instance.Log("ViewService UITaskScheduler is null in SwipeViewController.OnCardReadCompleteHandler");
 				}
-				if (!num)
-				{
-					goto IL_010d;
-				}
-			}
-			if (Redbox.Rental.Services.Session.Session.Instance != null)
-			{
-				Redbox.Rental.Services.Session.Session.Instance.TrackData = trackData;
-			}
-			IViewService viewService = ServiceLocator.Instance.GetService<IViewService>();
-			if (viewService?.UITaskScheduler != null)
-			{
-				Task.Factory.StartNew(delegate
-				{
-					LogHelper.Instance.Log("Starting UI update in SwipeViewController.OnCardReadCompleteHandler");
-					try
-					{
-						UpdateCardReadAttemptWithTrackDataResult(trackData);
-						if (viewService?.Peek() == "swipe_view")
-						{
-							OrchestrationService.SetCurrentUICulture();
-							CardReadEvent cardReadEvent = new CardReadEvent
-							{
-								CardReadValid = false,
-								CardSourceType = trackData?.CardSourceType.ToString(),
-								NextCardReadIsInTechnicalFallback = trackData?.NextCardReadIsInTechnicalFallback,
-								IsInTechnicalFallback = trackData?.IsInTechnicalFallback,
-								CardHasChip = trackData?.CardHasChip,
-								FallbackStatusAction = trackData?.FallbackStatusAction.ToString(),
-								HasName = (!string.IsNullOrWhiteSpace(trackData?.FirstName) || !string.IsNullOrWhiteSpace(trackData?.LastName))
-							};
-							if (trackData == null || !trackData.HasValidData())
-							{
-								cardReadEvent.CardReadValid = false;
-								Action action = delegate
-								{
-									MessagePopupViewController.ReenableTimer();
-									viewService.Push("idle_timeout_message_view");
-									viewService.Show();
-								};
-								cardReadEvent.Action = "bad_swipe_action";
-								Action action2 = delegate
-								{
-									GoBackSafe("bad_swipe_action");
-								};
-								ShowMessage showMessage = MessagePopupViewController.ShowMessagePopupViewCardNotRecognized;
-								ITrackData trackData2 = trackData;
-								if (trackData2 != null && trackData2.NextCardReadIsInTechnicalFallback)
-								{
-									cardReadEvent.Action = "technical_fallback";
-									action2 = delegate
-									{
-										GoBackSafe("technical_fallback");
-									};
-									showMessage = MessagePopupViewController.ShowMessagePopupViewCardNotRecognizedTechnicalFallback;
-								}
-								else if (trackData.HasErrors())
-								{
-									if (trackData.HasSwipedCardIsChipEnabledError())
-									{
-										cardReadEvent.Action = "swiped_card_is_chip_enabled";
-										action2 = delegate
-										{
-											GoBackSafe("swiped_card_is_chip_enabled");
-										};
-										showMessage = MessagePopupViewController.ShowMessagePopupViewSwipedCardIsChipEnabled;
-									}
-									else if (_swipeViewType.IsReservation() && trackData.HasReservationMobileDeviceError())
-									{
-										cardReadEvent.Action = "reservation_with_mobile_wallet";
-										action2 = delegate
-										{
-											GoBackSafe("reservation_with_mobile_wallet");
-										};
-										showMessage = MessagePopupViewController.ShowMessagePopupViewReservationMobileWalletError;
-									}
-									else if (trackData.HasTamperedError())
-									{
-										cardReadEvent.Action = "tampered_card_reader";
-										action2 = delegate
-										{
-											GoBackSafe("tampered_card_reader");
-											ServiceLocator.Instance.GetService<IRedboxRental>()?.EnterMaintenanceModeBecauseOfTamperedCardReader();
-										};
-										action = action2;
-										showMessage = ((!_swipeViewType.IsReservation()) ? new ShowMessage(MessagePopupViewController.ShowMessagePopupViewCheckoutCardReaderTampered) : new ShowMessage(MessagePopupViewController.ShowMessagePopupViewReservationCardReaderTampered));
-									}
-									else if (trackData.CardSourceTypeIsEMVContactOrQuickChip())
-									{
-										cardReadEvent.Action = "bad_chip_read_action";
-										action2 = delegate
-										{
-											GoBackSafe("bad_chip_read_action");
-										};
-										showMessage = MessagePopupViewController.ShowMessagePopupViewBadChipReadError;
-									}
-									else if (trackData.CardSourceTypeIsEMVContactlessOrMobileOrMSDContactless())
-									{
-										cardReadEvent.Action = "bad_contactless_read_action";
-										action2 = delegate
-										{
-											GoBackSafe("bad_contactless_read_action");
-										};
-										showMessage = MessagePopupViewController.ShowMessagePopupViewBadContactlessReadError;
-									}
-								}
-								if (action != null && action2 != null && showMessage != null)
-								{
-									showMessage(action, action2);
-									BaseViewController.AnalyticsService?.AddViewEvent(cardReadEvent);
-								}
-								else
-								{
-									LogHelper.Instance.Log("OnCardReadCompleteHandler missing action.");
-								}
-							}
-							else
-							{
-								cardReadEvent.CardReadValid = true;
-								cardReadEvent.Action = "continue";
-								BaseViewController.AnalyticsService?.AddViewEvent(cardReadEvent);
-								if (QuickChipWasUsedAndCardNotRemovedFromReader(trackData, chipCardRemovedFromReader))
-								{
-									OrchestrationService.ViewShow("remove_card_view", new RemoveCardViewParameters
-									{
-										IsQuickChip = true,
-										ContinueAction = PerformContinue
-									});
-								}
-								else
-								{
-									PerformContinue();
-								}
-							}
-						}
-						else
-						{
-							LogHelper.Instance.Log("SwipeViewController.OnCardReadCompleteHandler: current view is not swipe_view.  Card read data will not be processed.");
-						}
-					}
-					catch (Exception e2)
-					{
-						LogHelper.Instance.Log("An unhandled exception was raised in SwipeViewController.OnCardReadCompleteHandler.", e2);
-					}
-				}, CancellationToken.None, TaskCreationOptions.None, viewService?.UITaskScheduler);
 			}
 			else
 			{
-				LogHelper.Instance.Log("ViewService UITaskScheduler is null in SwipeViewController.OnCardReadCompleteHandler");
+				LogHelper.Instance.Log($"ViewService Received a response for request Id {cardReadCompleteDetails.RequestId} which is not the current read attempt.");
 			}
-			return;
-			IL_010d:
-			LogHelper.Instance.Log($"ViewService Received a response for request Id {requestId} which is not the current read attempt.");
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("An unhandled exception was raised in SwipeViewController.OnCardReadCompleteHandler.", e);
 		}
+	}
+
+	private static void ContinueWithCardRead(CardReadRequestInfo request, CardReadCompleteDetails cardReadCompleteDetails)
+	{
+		ITrackData trackData = cardReadCompleteDetails?.TrackData;
+		bool chipCardRemovedFromReader = cardReadCompleteDetails?.CardRemoved ?? false;
+		_ = cardReadCompleteDetails?.RequestId;
+		IViewService viewService = ServiceLocator.Instance.GetService<IViewService>();
+		Task.Factory.StartNew(delegate
+		{
+			LogHelper.Instance.Log("Starting UI update in SwipeViewController.OnCardReadCompleteHandler");
+			try
+			{
+				UpdateCardReadAttemptWithTrackDataResult(trackData);
+				string text = viewService?.Peek();
+				if (text == "swipe_view" || text == "please_wait_view")
+				{
+					OrchestrationService.SetCurrentUICulture();
+					CardReadEvent cardRead = new CardReadEvent(trackData);
+					if (trackData == null || !trackData.HasValidData() || (request.VasMode != VasMode.VasOnly && !trackData.HasPay) || (request.VasMode == VasMode.VasOnly && !trackData.HasVas))
+					{
+						cardRead.CardReadValid = false;
+						if (trackData.ReadStatus == ResponseStatus.Cancelled)
+						{
+							LogHelper.Instance.Log("OnCardReadCompleteHandler card read cancelled.");
+						}
+						else
+						{
+							cardRead.Action = "bad_swipe_action";
+							Action arg = delegate
+							{
+								ErrorMessageAction(cardRead.Action);
+							};
+							Action arg2 = delegate
+							{
+								ErrorMessageAction(cardRead.Action);
+							};
+							Action<Action, Action> action = MessagePopupViewController.ShowMessagePopupViewCardNotRecognized;
+							ITrackData trackData2 = trackData;
+							if (trackData2 != null && trackData2.NextCardReadIsInTechnicalFallback)
+							{
+								cardRead.Action = "technical_fallback";
+								action = MessagePopupViewController.ShowMessagePopupViewCardNotRecognizedTechnicalFallback;
+							}
+							else if (trackData.HasErrors())
+							{
+								if (trackData.HasSwipedCardIsChipEnabledError())
+								{
+									cardRead.Action = "swiped_card_is_chip_enabled";
+									action = MessagePopupViewController.ShowMessagePopupViewSwipedCardIsChipEnabled;
+								}
+								else if (_swipeViewType.IsReservation() && trackData.HasReservationMobileDeviceError())
+								{
+									cardRead.Action = "reservation_with_mobile_wallet";
+									action = MessagePopupViewController.ShowMessagePopupViewReservationMobileWalletError;
+								}
+								else if (trackData.HasTamperedError())
+								{
+									cardRead.Action = "tampered_card_reader";
+									arg = delegate
+									{
+										ErrorMessageAction(cardRead.Action);
+										ServiceLocator.Instance.GetService<IRedboxRental>()?.EnterMaintenanceModeBecauseOfTamperedCardReader();
+									};
+									arg2 = delegate
+									{
+										ErrorMessageAction(cardRead.Action);
+										ServiceLocator.Instance.GetService<IRedboxRental>()?.EnterMaintenanceModeBecauseOfTamperedCardReader();
+									};
+									action = ((!_swipeViewType.IsReservation()) ? new Action<Action, Action>(MessagePopupViewController.ShowMessagePopupViewCheckoutCardReaderTampered) : new Action<Action, Action>(MessagePopupViewController.ShowMessagePopupViewReservationCardReaderTampered));
+								}
+								else if (trackData.CardSourceTypeIsEMVContactOrQuickChip())
+								{
+									cardRead.Action = "bad_chip_read_action";
+									action = MessagePopupViewController.ShowMessagePopupViewBadChipReadError;
+								}
+								else if (trackData.CardSourceTypeIsEMVContactlessOrMobileOrMSDContactless())
+								{
+									cardRead.Action = "bad_contactless_read_action";
+									action = MessagePopupViewController.ShowMessagePopupViewBadContactlessReadError;
+								}
+								else if (trackData.WalletTypeIsGoogleAndNotVas())
+								{
+									cardRead.Action = "google_not_vas_action";
+									action = MessagePopupViewController.ShowMessagePopupViewGoogleNoPassFoundError;
+								}
+							}
+							BaseViewController.AnalyticsService?.AddViewEvent(cardRead);
+							action(arg, arg2);
+						}
+					}
+					else
+					{
+						cardRead.CardReadValid = true;
+						cardRead.Action = "continue";
+						BaseViewController.AnalyticsService?.AddViewEvent(cardRead);
+						if (QuickChipWasUsedAndCardNotRemovedFromReader(trackData, chipCardRemovedFromReader))
+						{
+							OrchestrationService.ViewShow("remove_card_view", new RemoveCardViewParameters
+							{
+								IsQuickChip = true,
+								ContinueAction = PerformContinue
+							});
+						}
+						else
+						{
+							PerformContinue();
+						}
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("SwipeViewController.OnCardReadCompleteHandler: current view is not swipe_view.  Card read data will not be processed.");
+				}
+			}
+			catch (Exception e)
+			{
+				CheckoutFunctions.ReportAuthorizeResultToDeviceService(authorizeSuccessful: false);
+				LogHelper.Instance.Log("An unhandled exception was raised in SwipeViewController.OnCardReadCompleteHandler.", e);
+			}
+		}, CancellationToken.None, TaskCreationOptions.None, viewService?.UITaskScheduler);
+	}
+
+	private static void ErrorMessageAction(string cardReadAction)
+	{
+		GoBackSafe(cardReadAction);
 	}
 
 	private static bool QuickChipWasUsedAndCardNotRemovedFromReader(ITrackData trackData, bool chipCardRemovedFromReader)
@@ -769,29 +829,11 @@ public class SwipeViewController : BaseViewController
 	{
 		if (Redbox.Rental.Services.Session.Session.Instance?.TrackData != null && _continueAction != null)
 		{
-			if (_swipeViewType == SwipeViewType.RegularCheckOut || _swipeViewType == SwipeViewType.EncryptedSwipeRegularCheckOut || _swipeViewType == SwipeViewType.EMVInsertRegularCheckout || _swipeViewType == SwipeViewType.EMVInsertTapRegularCheckout || _swipeViewType == SwipeViewType.EMVInsertTapHideMobileRegularCheckout || _swipeViewType == SwipeViewType.EMVTapRegularCheckout)
-			{
-				ServiceLocator.Instance.GetService<IAfterSwipeOfferService>().StartOfferFlow(delegate(bool c)
-				{
-					ContinueAfterOfferFlow(c);
-				});
-			}
-			else
-			{
-				_continueAction();
-			}
+			_continueAction();
 		}
 		else
 		{
 			GoBackSafe("trackdatanotify");
-		}
-	}
-
-	private static void ContinueAfterOfferFlow(bool performContinue)
-	{
-		if (performContinue)
-		{
-			_continueAction();
 		}
 	}
 
@@ -808,6 +850,19 @@ public class SwipeViewController : BaseViewController
 	private static void GoBackSafe(object content)
 	{
 		ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe(content, popOnly: false);
+	}
+
+	private static void OnGetThePassClicked()
+	{
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("SwipeViewMessageButton");
+		BitmapImage qrCodeImage = ServiceLocator.Instance.GetService<IKioskClientService>()?.QRCodeUtilities?.GetQRCodeImage(Resources.mobile_pass_login_qr_code_url, returnDefaultOnError: true);
+		MessagePopupViewController.ShowPerksPassLoginDialogMessageAndQRCode(Resources.mobile_pass_login_get_pass_header, Resources.mobile_pass_login_get_pass_message, delegate
+		{
+			OrchestrationService.ViewGoBackSafe("SwipeViewMessageButtonContinue", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.ViewGoBackSafe("SwipeViewMessageButtonTimeOut", popOnly: false);
+		}, qrCodeImage);
 	}
 
 	private static void OnBackButtonPressed()
@@ -851,12 +906,15 @@ public class SwipeViewController : BaseViewController
 
 	private static void SwipeTimerTimeout()
 	{
-		BaseViewController.AnalyticsService?.AddViewEvent(new CardReadEvent
+		if (BaseViewController.GetViewService()?.Peek() == "swipe_view")
 		{
-			CardReadValid = false,
-			Action = "timeout"
-		});
-		UpdateCardReadAttempt(CardReadAttemptStatus.TimedOut, null);
-		GoBackSafe("swipe_view:timeout");
+			BaseViewController.AnalyticsService?.AddViewEvent(new CardReadEvent(null)
+			{
+				CardReadValid = false,
+				Action = "timeout"
+			});
+			UpdateCardReadAttempt(CardReadAttemptStatus.TimedOut, null);
+			GoBackSafe("swipe_view:timeout");
+		}
 	}
 }

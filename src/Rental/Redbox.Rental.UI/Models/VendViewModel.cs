@@ -8,13 +8,17 @@ public class VendViewModel : BaseModel<VendViewModel>
 {
 	public VendViewType VendType { get; set; }
 
-	public bool IsLoyaltySignedIn { get; set; }
-
 	public bool IsSignedIn { get; set; }
 
 	public bool IsPickup { get; set; }
 
-	public string[] TextMessages { get; set; }
+	public string TitleText1 { get; set; }
+
+	public string MessageText1 { get; set; }
+
+	public string MessageText2 { get; set; }
+
+	public string MessageText3 { get; set; }
 
 	public BitmapImage BannerImage { get; set; }
 

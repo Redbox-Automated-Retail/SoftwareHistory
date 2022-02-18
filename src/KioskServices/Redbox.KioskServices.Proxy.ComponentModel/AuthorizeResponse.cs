@@ -46,6 +46,30 @@ public enum AuthorizeResponse
 	NewCustomerRentalLimitExceeded,
 	[ResponseCode(Name = "(A029)")]
 	ReservationForOtherCustomer,
+	[ResponseCode(Name = "(A030)")]
+	CheckoutApiError,
+	[ResponseCode(Name = "(A031)")]
+	MissingOrExtraSubscriptionLineItem,
+	[ResponseCode(Name = "(A032)")]
+	CardCPDifferentFromSubCP,
+	[ResponseCode(Name = "(A033)")]
+	SubscriptionNotProcessedDueToAuthFailure,
+	[ResponseCode(Name = "(A034)")]
+	InvalidCheckoutApiResponse,
+	[ResponseCode(Name = "(A100)")]
+	AuthorizeProcessingError,
+	[ResponseCode(Name = "(A101)")]
+	MerchantServiceConnectionError,
+	[ResponseCode(Name = "(A102)")]
+	KioskDatConnectionError,
+	[ResponseCode(Name = "(A203)")]
+	CPServiceConnectionError,
+	[ResponseCode(Name = "(A104)")]
+	PromoServiceConnectionError,
+	[ResponseCode(Name = "(A105)")]
+	CheckoutApiConnectionError,
 	[ResponseCode(Name = "(TBS004)")]
-	BlockedMobileOrEMVContactless
+	BlockedMobileOrEMVContactless,
+	[ResponseCode(Name = "(KCS500)")]
+	CommunicationError
 }

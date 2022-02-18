@@ -37,6 +37,16 @@ public partial class RecommendedTitlesPopupViewUserControl : TextToSpeechUserCon
 		HandleWPFHit();
 	}
 
+	private void HowPointsWorkCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		RecommendedTitlesPopupViewModel?.ProcessOnHowPointsWorkButtonClicked();
+	}
+
+	private void PickupCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		RecommendedTitlesPopupViewModel?.ProcessOnPickupButtonClicked();
+	}
+
 	private void CancelCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		RecommendedTitlesPopupViewModel?.ProcessOnCancelButtonClicked();

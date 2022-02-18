@@ -30,66 +30,8 @@ internal static class InventoryServicesFunctions
 		IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
 		if (service != null)
 		{
-			InnerSnapshot(storeNumber, items, list);
+			InnerSnapshot(items, list);
 			service.Snapshot(storeNumber, list.AsReadOnly(), null);
-		}
-	}
-
-	[KernelFunction(Name = "kernel.invsvcs_snapshotimmediate")]
-	internal static void Snapshot(string storeNumber, LuaTable items, LuaFunction callback)
-	{
-		List<IInventoryItem> list = new List<IInventoryItem>();
-		IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
-		if (service == null)
-		{
-			return;
-		}
-		ICallbackService callbackService = ServiceLocator.Instance.GetService<ICallbackService>();
-		if (callbackService == null)
-		{
-			return;
-		}
-		RemoteServiceCallback callback2 = null;
-		if (callback != null)
-		{
-			callback2 = delegate(IRemoteServiceResult r)
-			{
-				ICallbackService callbackService2 = callbackService;
-				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
-				{
-					Function = callback
-				};
-				object[] parameters = new LuaTable[1] { r.AsTable() };
-				resultCallbackEntry.Parameters = parameters;
-				callbackService2.EnqueueCallback(resultCallbackEntry);
-			};
-		}
-		InnerSnapshot(storeNumber, items, list);
-		service.SnapshotImmediate(storeNumber, list.AsReadOnly(), callback2);
-	}
-
-	[KernelFunction(Name = "kernel.invsvcs_getrentalcount")]
-	internal static void GetRentalCount(string storeNumber, LuaFunction completeCallback)
-	{
-		IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
-		if (service == null)
-		{
-			return;
-		}
-		ICallbackService callbackService = ServiceLocator.Instance.GetService<ICallbackService>();
-		if (callbackService != null)
-		{
-			service.GetRentalCount(storeNumber, delegate(IRemoteServiceResult r)
-			{
-				ICallbackService callbackService2 = callbackService;
-				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
-				{
-					Function = completeCallback
-				};
-				object[] parameters = new LuaTable[1] { r.AsTable() };
-				resultCallbackEntry.Parameters = parameters;
-				callbackService2.EnqueueCallback(resultCallbackEntry);
-			});
 		}
 	}
 
@@ -192,7 +134,7 @@ internal static class InventoryServicesFunctions
 		service.Return(storeNumber, Enum<ReturnType>.ParseIgnoringCase(returnType, ReturnType.KioskReturn), barcode, deck, slot, result.ToString(), failedSecurityRead, fileName, callback2);
 	}
 
-	private static void InnerSnapshot(string storeNumber, LuaTable items, List<IInventoryItem> inventoryItems)
+	private static void InnerSnapshot(LuaTable items, List<IInventoryItem> inventoryItems)
 	{
 		IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
 		if (service == null || items == null)

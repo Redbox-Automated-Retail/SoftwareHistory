@@ -14,8 +14,7 @@
           </Grid>
           <Grid Row="1" Background="#FFFFFFFF">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-              <Image Name="ImageElem1" Source="pack://Application:,,,/Redbox.ControlPanel.UI;component/Assets/Images/redbox-logo1.jpg" VerticalAlignment="Bottom" HorizontalAlignment="Left" Height="140" Margin="0,0,30,0" />
-              <Image Name="ImageElem2" Source="pack://Application:,,,/Redbox.ControlPanel.UI;component/Assets/Images/redbox-logo2.jpg" VerticalAlignment="Center" HorizontalAlignment="Left" Height="100" />
+              <Image Name="ImageElem1" Source="pack://Application:,,,/Redbox.ControlPanel.UI;component/Assets/Images/redbox-logo3.jpg" VerticalAlignment="Center" Height="100" />
             </StackPanel>
           </Grid>
           <Redbox:GridExt Row="2" Background="#CDCDCD" RowHeights="auto,*,*,2*" FocusManager.IsFocusScope="True">

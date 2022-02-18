@@ -22,7 +22,15 @@ public class LocalData : ILocalData
 		public const string LastAttemptFormat = "yyyyMMddHHmm";
 
 		public const string Local = "Local";
+
+		public const string RemovedQueue = "RemovedQueue";
+
+		public const string Barcode = "barcode";
+
+		public const string Status = "status";
 	}
+
+	private object _removedQueueLock = new object();
 
 	public ILocalDataInstance LoadData()
 	{
@@ -54,6 +62,56 @@ public class LocalData : ILocalData
 		if (badCard != null && badCard.HashId != null)
 		{
 			Remove("BadCardList", badCard.HashId);
+		}
+	}
+
+	public void AddRemovedQueueItem(RemovedQueueItem item)
+	{
+		string value = VistaDBStringHelper.ToString(new Dictionary<string, object>
+		{
+			{ "barcode", item.Barcode },
+			{ "status", item.Status }
+		});
+		lock (_removedQueueLock)
+		{
+			Set("RemovedQueue", item.HashId, value);
+		}
+	}
+
+	public List<RemovedQueueItem> GetRemovedQueueItems()
+	{
+		List<RemovedQueueItem> result = new List<RemovedQueueItem>();
+		lock (_removedQueueLock)
+		{
+			GetAll("RemovedQueue").ForEach(delegate(KeyValuePair<string, string> item)
+			{
+				TryCatchData("LocalData.RemovedQueue", item, delegate
+				{
+					RemovedQueueItem removedQueueItem = new RemovedQueueItem
+					{
+						HashId = item.Key
+					};
+					Dictionary<string, object> dictionary = item.Value.ParseLuaValue();
+					if (dictionary.ContainsKey("barcode"))
+					{
+						removedQueueItem.Barcode = dictionary["barcode"]?.ToString();
+					}
+					if (dictionary.ContainsKey("status"))
+					{
+						removedQueueItem.Status = dictionary["status"]?.ToString();
+					}
+					result.Add(removedQueueItem);
+				});
+			});
+		}
+		return result;
+	}
+
+	public void DeleteRemovedQueueItem(RemovedQueueItem item)
+	{
+		lock (_removedQueueLock)
+		{
+			RemoveIfExists("RemovedQueue", item.HashId);
 		}
 	}
 
@@ -153,6 +211,30 @@ public class LocalData : ILocalData
 		try
 		{
 			ServiceLocator.Instance.GetService<IDataStoreService>()?.Remove("Local", tableName, keyName);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log(string.Format("An exception was raised in LocalData.Remove({0},{1},{2}).", "Local", tableName, keyName), e);
+			EnvironmentFunctions.HandleDataStoreErrors("Local");
+		}
+	}
+
+	private void RemoveIfExists(string tableName, string keyName)
+	{
+		try
+		{
+			IDataStoreService service = ServiceLocator.Instance.GetService<IDataStoreService>();
+			if (service != null)
+			{
+				if (service.Get("Local", tableName, keyName) == null)
+				{
+					LogHelper.Instance.Log($"LocalData.RemoveIfExists{tableName} - keyName {keyName} does not exist");
+				}
+				else
+				{
+					service.Remove("Local", tableName, keyName);
+				}
+			}
 		}
 		catch (Exception e)
 		{

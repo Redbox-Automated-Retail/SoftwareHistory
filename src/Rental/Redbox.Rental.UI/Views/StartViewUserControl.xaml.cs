@@ -23,10 +23,15 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		RegisterRoutedCommand("RentOrBuyGamesCommand", Redbox.Rental.UI.Commands.RentOrBuyGamesCommand);
 		RegisterRoutedCommand("BuyMoviesCommand", Redbox.Rental.UI.Commands.BuyMoviesCommand);
 		RegisterRoutedCommand("BuyGamesCommand", Redbox.Rental.UI.Commands.BuyGamesCommand);
-		RegisterRoutedCommand("PickupProductCommand", Redbox.Rental.UI.Commands.PickupProductCommand);
 		RegisterRoutedCommand("ReturnProductCommand", Redbox.Rental.UI.Commands.ReturnProductCommand);
+		RegisterRoutedCommand("PickupProductCommand", Redbox.Rental.UI.Commands.PickupProductCommand);
+		RegisterRoutedCommand("ToggleADAModeCommand", Redbox.Rental.UI.Commands.ToggleADAModeCommand);
+		RegisterRoutedCommand("ToggleLanguageModeCommand", Redbox.Rental.UI.Commands.ToggleLanguageModeCommand);
 		RegisterRoutedCommand("HelpCommand", Redbox.Rental.UI.Commands.HelpCommand);
 		RegisterRoutedCommand("SignInCommand", Redbox.Rental.UI.Commands.SignInCommand);
+		RegisterRoutedCommand("SignInTooltipCommand", Redbox.Rental.UI.Commands.SignInTooltipCommand);
+		RegisterRoutedCommand("ExitBurnInViewCommand", Redbox.Rental.UI.Commands.ExitBurnInViewCommand);
+		RegisterRoutedCommand("BannerClickCommand", Redbox.Rental.UI.Commands.BannerClickCommand);
 		PostHealthActivity();
 	}
 
@@ -37,8 +42,9 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		obj?.SetStyle(games_button);
 		obj?.SetStyle(buy_movies_button);
 		obj?.SetStyle(buy_games_button);
-		obj?.SetStyle(return_button);
 		obj?.SetStyle(online_pickup_button);
+		obj?.SetStyle(return_button);
+		obj?.SetStyle(sign_in_button);
 		obj?.SetStyle(handicap_button);
 		obj?.SetStyle(espanol_button);
 		obj?.SetStyle(help_button);
@@ -212,10 +218,6 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		});
 	}
 
-	private void CommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-	}
-
 	private void BannerClickCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		RunCommandOnce(delegate
@@ -239,6 +241,22 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 			try
 			{
 				StartViewModel?.ProcessSignInButtonClicked();
+				HandleWPFHit();
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
+	}
+
+	private void SignInTooltipCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				StartViewModel?.ProcessSignInButtonTooltipClicked();
 				HandleWPFHit();
 			}
 			finally

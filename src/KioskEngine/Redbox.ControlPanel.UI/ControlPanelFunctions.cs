@@ -37,12 +37,8 @@ public class ControlPanelFunctions
 			IMachineSettingsStore service3 = ServiceLocator.Instance.GetService<IMachineSettingsStore>();
 			if (service2 != null && service3 != null)
 			{
-				userData.StoreNumber = service3.GetValue("Store", "ID", "N/A");
-				RemoteServiceCallback completeCallback = delegate(IRemoteServiceResult result)
-				{
-					userData.AuthenticationResultCallback(result);
-				};
-				service.Authenticate(userData.StoreNumber, userData.Id, userData.Password, useLdapAuthentication: true, completeCallback);
+				userData.StoreNumber = service3.StoreNumberString();
+				service.Authenticate(userData.StoreNumber, userData.Id, userData.Password, useLdapAuthentication: true, remoteServiceCallback);
 				flag = false;
 			}
 		}
@@ -50,6 +46,10 @@ public class ControlPanelFunctions
 		{
 			LogHelper.Instance.LogTo("UserLoginLog", "Control Panel | Login IAuthenticationServices or ICallbackService failed");
 			userData.AuthenticationResultCallback(null);
+		}
+		void remoteServiceCallback(IRemoteServiceResult result)
+		{
+			userData.AuthenticationResultCallback(result);
 		}
 	}
 
@@ -95,18 +95,9 @@ public class ControlPanelFunctions
 		{
 			LoginInfo parameter = new LoginInfo
 			{
-				AuthenticateAction = delegate(UserData userData)
-				{
-					AuthenticateUser(userData);
-				},
-				CancelAction = delegate
-				{
-					ActivateDefaultBundle();
-				},
-				ContinueAction = delegate
-				{
-					DisplayControlPanelView();
-				}
+				AuthenticateAction = AuthenticateUser,
+				CancelAction = ActivateDefaultBundle,
+				ContinueAction = DisplayControlPanelView
 			};
 			OrchestrationService.ViewShow("control_panel_login_view", parameter);
 		}

@@ -4,12 +4,15 @@ using System.Linq;
 using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
+using Redbox.Rental.Model.Session;
+using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
@@ -33,11 +36,41 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 		{
 			_shownFromView = recommendedTitlesPopupInfo.ShownFromView;
 			RecommendedTitlesPopupViewModel recommendedTitlesPopupViewModel = new RecommendedTitlesPopupViewModel();
+			int num = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.PointsBalance ?? 0;
+			ISession instance = Redbox.Rental.Services.Session.Session.Instance;
+			bool flag = instance != null && instance.PersonalizationSession?.StoredPromoCodes?.Count > 0;
+			bool flag2 = (num > 0) | flag;
+			recommendedTitlesPopupViewModel.PerksInfoBorderVisibility = ((!flag2) ? Visibility.Collapsed : Visibility.Visible);
+			recommendedTitlesPopupViewModel.RecommendationsBorderCornerRadius = (flag2 ? new CornerRadius(0.0, 0.0, 16.0, 16.0) : new CornerRadius(16.0, 16.0, 16.0, 16.0));
+			recommendedTitlesPopupViewModel.PerksHeadingText = Resources.recommended_titles_perks_heading_text;
+			recommendedTitlesPopupViewModel.PerksMessageText = string.Format(Resources.recommended_titles_perks_message_text_points_1_to_999_no_promo, num);
+			recommendedTitlesPopupViewModel.HowPointsWorkButtonText = Resources.recommended_titles_how_points_work_button_text;
+			recommendedTitlesPopupViewModel.OnHowPointsWorkButtonClicked = (Action)Delegate.Combine(recommendedTitlesPopupViewModel.OnHowPointsWorkButtonClicked, new Action(RecommendedTitlesPopupViewModel_OnHowPointsWorkButtonClicked));
+			recommendedTitlesPopupViewModel.HowPointsWorkButtonVisibility = Visibility.Visible;
+			if (flag2 && num >= 1000 && num <= 1499 && !flag)
+			{
+				recommendedTitlesPopupViewModel.PerksMessageText = string.Format(Resources.recommended_titles_perks_message_text_points_1000_to_1499_no_promo, 1500 - num);
+			}
+			if (flag2 && num >= 1500 && !flag)
+			{
+				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_1500_no_promo;
+			}
+			if ((flag2 && num < 1500) & flag)
+			{
+				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_0_to_1499_yes_promo;
+				recommendedTitlesPopupViewModel.HowPointsWorkButtonVisibility = Visibility.Collapsed;
+			}
+			if ((flag2 && num >= 1500) & flag)
+			{
+				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_1500_yes_promo;
+			}
 			recommendedTitlesPopupViewModel.HeaderText = ((recommendedTitlesPopupInfo.ShownFromView == "option_selection_dialog_view") ? Resources.related_movies_popup_header : Resources.recommended_titles_popup_header);
-			recommendedTitlesPopupViewModel.OfferText = ((recommendedTitlesPopupInfo.ShownFromView == "option_selection_dialog_view") ? Resources.related_movies_popup_offer : Resources.recommended_titles_popup_offer);
-			recommendedTitlesPopupViewModel.OfferTextVisibility = ((!recommendedTitlesPopupInfo.ShowOfferText) ? Visibility.Hidden : Visibility.Visible);
 			ConfigureRecommendedTitlesBrowse(recommendedTitlesPopupViewModel, recommendedTitlesPopupInfo.RecommendedTitles, recommendedTitlesPopupInfo.NumberOfTitlesToShow);
-			recommendedTitlesPopupViewModel.CancelButtonText = Resources.no_thanks_button;
+			bool flag3 = ServiceLocator.Instance.GetService<IViewService>()?.Stack?.Any((IViewFrameInstance vfi) => vfi?.ViewFrame?.ViewName == "shopping_cart_view") ?? false;
+			recommendedTitlesPopupViewModel.PickupButtonText = Resources.recommended_titles_pickup_button_text;
+			recommendedTitlesPopupViewModel.PickupButtonVisibility = (flag3 ? Visibility.Collapsed : Visibility.Visible);
+			recommendedTitlesPopupViewModel.OnPickupButtonClicked = (Action)Delegate.Combine(recommendedTitlesPopupViewModel.OnPickupButtonClicked, new Action(RecommendedTitlesPopupViewModel_OnPickupButtonClicked));
+			recommendedTitlesPopupViewModel.CancelButtonText = Resources.close_button.ToUpper();
 			recommendedTitlesPopupViewModel.OnCancelButtonClicked = (Action)Delegate.Combine(recommendedTitlesPopupViewModel.OnCancelButtonClicked, new Action(RecommendedTitlesPopupViewModel_OnCancelButtonClicked));
 			ConfigureTTS(recommendedTitlesPopupViewModel);
 			viewUserControl.DataContext = recommendedTitlesPopupViewModel;
@@ -214,7 +247,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 	private static void CreateAndStartTimer()
 	{
 		IIdleTimerService service = ServiceLocator.Instance.GetService<IIdleTimerService>();
-		int timeOut = OrchestrationService.TTSGetTimeout("medium", 15000);
+		int timeOut = OrchestrationService.TTSGetTimeout("long", 40000);
 		IIdleTimer obj = service?.CreateIdleTimer("RecommendedTitlesPopupViewTimer");
 		obj?.Initialize(timeOut, delegate
 		{
@@ -236,7 +269,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 		BrowseControlModel browseControlModel = new BrowseControlModel();
 		browseControlModel.RowCount = 1;
 		browseControlModel.ColumnCount = 4;
-		browseControlModel.BrowseItemMargin = new Thickness(0.0, 32.0, 0.0, 32.0);
+		browseControlModel.BrowseItemMargin = new Thickness(0.0, 0.0, 0.0, 0.0);
 		browseControlModel.ShowBorderItems = true;
 		browseControlModel.BorderShadowVisibility = Visibility.Collapsed;
 		browseControlModel.PageNumberVisibility = Visibility.Collapsed;
@@ -286,7 +319,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 		{
 		case KioskProductType.TitleRollup:
 		{
-			TitleRollupProduct rollupProduct = kioskProduct as TitleRollupProduct;
+			TitleRollupProduct titleRollupProduct = kioskProduct as TitleRollupProduct;
 			if (_shownFromView == "option_selection_dialog_view")
 			{
 				ITitleProduct titleProduct2 = kioskProduct as ITitleProduct;
@@ -296,7 +329,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			{
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedAddItem");
 			}
-			OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(rollupProduct, isPurchase: false));
+			BrowseFunctions.ShowRentalPopupView(titleRollupProduct, isPurchase: false);
 			break;
 		}
 		case KioskProductType.Title:
@@ -312,11 +345,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			}
 			if (titleProduct.HasMultiNightPrice)
 			{
-				OrchestrationService.ViewShow("multi_night_pricing_popup_view", new MultiNightPricingPopupInfo
-				{
-					TitleProduct = titleProduct,
-					ShownFromView = "recommended_titles_popup_view"
-				});
+				BrowseFunctions.AddMultiNightPricedProductToCart(titleProduct, "recommended_titles_popup_view", null);
 			}
 			else
 			{
@@ -325,6 +354,43 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			break;
 		}
 		}
+	}
+
+	private static void RecommendedTitlesPopupViewModel_OnHowPointsWorkButtonClicked()
+	{
+		if (_shownFromView == "option_selection_dialog_view")
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedHowPointsWork");
+		}
+		else
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedHowPointsWork");
+		}
+		OrchestrationService.ViewShow("perks_signup_info_popup_view");
+	}
+
+	private static void RecommendedTitlesPopupViewModel_OnPickupButtonClicked()
+	{
+		if (_shownFromView == "option_selection_dialog_view")
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRelatedPickup");
+		}
+		else
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendedTitlesPopupRecommendedPickup");
+		}
+		Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LogOut();
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.EmailConfirmResult = null;
+		}
+		ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.ClearAllLoyaltyPointsRecords();
+		ServiceLocator.Instance.GetService<IRedboxRental>()?.CloseOpenSessionAndStartNewRentalSession("recommended_titles_popup_view");
+		if (Redbox.Rental.Services.Session.Session.Instance != null)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.IsInReservationFlow = true;
+		}
+		OrchestrationService.ExecuteScript("pickup_reserved_product");
 	}
 
 	private static void RecommendedTitlesPopupViewModel_OnCancelButtonClicked()
@@ -375,7 +441,8 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
 			IsInCartBrowse = false,
-			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices
+			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices,
+			EnableRedboxPlus = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption
 		};
 	}
 

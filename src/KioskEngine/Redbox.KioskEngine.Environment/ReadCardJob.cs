@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using DeviceService.ComponentModel.Commands;
 using DeviceService.ComponentModel.Requests;
 using DeviceService.ComponentModel.Responses;
@@ -35,13 +36,19 @@ internal class ReadCardJob : IReadCardJob
 
 	public bool Cancel(Action<BaseResponseEvent> cancelCompleteCallback)
 	{
-		IsExecuting = false;
-		cancelCompleteCallback(new CancelCommandResponseEvent(null)
+		if (IsExecuting)
 		{
-			RequestId = _requestId,
-			Success = true,
-			EventName = "Cancel"
-		});
+			IsExecuting = false;
+			CancelCommandResponseEvent obj = new CancelCommandResponseEvent(null)
+			{
+				RequestId = _requestId,
+				Success = true,
+				EventName = "Cancel"
+			};
+			Thread.Sleep(1000);
+			ReadCardResponseHandler(obj);
+			cancelCompleteCallback(obj);
+		}
 		return true;
 	}
 

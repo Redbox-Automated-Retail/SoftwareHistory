@@ -51,7 +51,7 @@ public class CardFunctions
 		return result;
 	}
 
-	public static void CardReadComplete(SwipeViewType swipeType, ITrackData trackData, bool chipCardRemovedFromReader, Guid? requestId, Action onContinue = null, Action onTimeout = null)
+	public static void CardReadComplete(SwipeViewType swipeType, ITrackData trackData, bool chipCardRemovedFromReader, Guid? requestId, Action onContinue = null, Action onError = null)
 	{
 		try
 		{
@@ -70,21 +70,21 @@ public class CardFunctions
 					Guid? guid = requestId;
 					if (!guid.HasValue)
 					{
-						goto IL_0137;
+						goto IL_010f;
 					}
 					num = cardReadJobCommandRequestId == guid.GetValueOrDefault();
 				}
 				if (!num)
 				{
-					goto IL_0137;
+					goto IL_010f;
 				}
 			}
 			if (Redbox.Rental.Services.Session.Session.Instance != null)
 			{
 				Redbox.Rental.Services.Session.Session.Instance.TrackData = trackData;
 			}
-			IViewService viewService = ServiceLocator.Instance.GetService<IViewService>();
-			if (viewService?.UITaskScheduler != null)
+			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+			if (service?.UITaskScheduler != null)
 			{
 				Task.Factory.StartNew(delegate
 				{
@@ -95,107 +95,77 @@ public class CardFunctions
 						if (IsCurrentViewTheCardReadView(swipeType, out var cardReadViewName))
 						{
 							OrchestrationService.SetCurrentUICulture();
-							CardReadEvent cardReadEvent = new CardReadEvent
-							{
-								CardReadValid = false,
-								CardSourceType = trackData?.CardSourceType.ToString(),
-								NextCardReadIsInTechnicalFallback = trackData?.NextCardReadIsInTechnicalFallback,
-								IsInTechnicalFallback = trackData?.IsInTechnicalFallback,
-								CardHasChip = trackData?.CardHasChip,
-								FallbackStatusAction = trackData?.FallbackStatusAction.ToString(),
-								HasName = (!string.IsNullOrWhiteSpace(trackData?.FirstName) || !string.IsNullOrWhiteSpace(trackData?.LastName))
-							};
+							CardReadEvent cardRead = new CardReadEvent(trackData);
 							if (trackData == null || !trackData.HasValidData())
 							{
-								cardReadEvent.CardReadValid = false;
-								Action action = delegate
+								cardRead.CardReadValid = false;
+								cardRead.Action = "bad_swipe_action";
+								Action arg = delegate
 								{
-									MessagePopupViewController.ReenableTimer();
-									viewService.Push("idle_timeout_message_view");
-									viewService.Show();
+									ErrorMessageAction(cardReadViewName, cardRead.Action, onError);
 								};
-								Action action2 = ((onTimeout != null) ? onTimeout : action);
-								cardReadEvent.Action = "bad_swipe_action";
-								Action action3 = delegate
+								Action arg2 = delegate
 								{
-									OrchestrationService.UnwindToSafe(cardReadViewName, discard: true, "bad_swipe_action");
+									ErrorMessageAction(cardReadViewName, cardRead.Action, onError);
 								};
-								Action<Action, Action> action4 = MessagePopupViewController.ShowMessagePopupViewCardNotRecognized;
+								Action<Action, Action> action = MessagePopupViewController.ShowMessagePopupViewCardNotRecognized;
 								ITrackData trackData2 = trackData;
 								if (trackData2 != null && trackData2.NextCardReadIsInTechnicalFallback)
 								{
-									cardReadEvent.Action = "technical_fallback";
-									action3 = delegate
-									{
-										OrchestrationService.UnwindToSafe(cardReadViewName, discard: true, "technical_fallback");
-									};
-									action4 = MessagePopupViewController.ShowMessagePopupViewCardNotRecognizedTechnicalFallback;
+									cardRead.Action = "technical_fallback";
+									action = MessagePopupViewController.ShowMessagePopupViewCardNotRecognizedTechnicalFallback;
 								}
 								else if (trackData.HasErrors())
 								{
 									if (trackData.HasSwipedCardIsChipEnabledError())
 									{
-										cardReadEvent.Action = "swiped_card_is_chip_enabled";
-										action3 = delegate
-										{
-											OrchestrationService.UnwindToSafe(cardReadViewName, discard: true, "swiped_card_is_chip_enabled");
-										};
-										action4 = MessagePopupViewController.ShowMessagePopupViewSwipedCardIsChipEnabled;
+										cardRead.Action = "swiped_card_is_chip_enabled";
+										action = MessagePopupViewController.ShowMessagePopupViewSwipedCardIsChipEnabled;
 									}
 									else if (swipeType.IsReservation() && trackData.HasReservationMobileDeviceError())
 									{
-										cardReadEvent.Action = "reservation_with_mobile_wallet";
-										action3 = delegate
-										{
-											OrchestrationService.UnwindToSafe(cardReadViewName, discard: true, "reservation_with_mobile_wallet");
-										};
-										action4 = MessagePopupViewController.ShowMessagePopupViewReservationMobileWalletError;
+										cardRead.Action = "reservation_with_mobile_wallet";
+										action = MessagePopupViewController.ShowMessagePopupViewReservationMobileWalletError;
 									}
 									else if (trackData.HasTamperedError())
 									{
-										cardReadEvent.Action = "tampered_card_reader";
-										action3 = delegate
+										cardRead.Action = "tampered_card_reader";
+										arg = delegate
 										{
-											OrchestrationService.UnwindToSafe(cardReadViewName, discard: true, "tampered_card_reader");
+											ErrorMessageAction(cardReadViewName, cardRead.Action, onError);
 											ServiceLocator.Instance.GetService<IRedboxRental>()?.EnterMaintenanceModeBecauseOfTamperedCardReader();
 										};
-										action = action3;
-										action4 = ((!swipeType.IsReservation()) ? new Action<Action, Action>(MessagePopupViewController.ShowMessagePopupViewCheckoutCardReaderTampered) : new Action<Action, Action>(MessagePopupViewController.ShowMessagePopupViewReservationCardReaderTampered));
+										arg2 = delegate
+										{
+											ErrorMessageAction(cardReadViewName, cardRead.Action, onError);
+											ServiceLocator.Instance.GetService<IRedboxRental>()?.EnterMaintenanceModeBecauseOfTamperedCardReader();
+										};
+										action = ((!swipeType.IsReservation()) ? new Action<Action, Action>(MessagePopupViewController.ShowMessagePopupViewCheckoutCardReaderTampered) : new Action<Action, Action>(MessagePopupViewController.ShowMessagePopupViewReservationCardReaderTampered));
 									}
 									else if (trackData.CardSourceTypeIsEMVContactOrQuickChip())
 									{
-										cardReadEvent.Action = "bad_chip_read_action";
-										action3 = delegate
-										{
-											OrchestrationService.UnwindToSafe(cardReadViewName, discard: true, "bad_chip_read_action");
-										};
-										action4 = MessagePopupViewController.ShowMessagePopupViewBadChipReadError;
+										cardRead.Action = "bad_chip_read_action";
+										action = MessagePopupViewController.ShowMessagePopupViewBadChipReadError;
 									}
 									else if (trackData.CardSourceTypeIsEMVContactlessOrMobileOrMSDContactless())
 									{
-										cardReadEvent.Action = "bad_contactless_read_action";
-										action3 = delegate
-										{
-											OrchestrationService.UnwindToSafe(cardReadViewName, discard: true, "bad_contactless_read_action");
-										};
-										action4 = MessagePopupViewController.ShowMessagePopupViewBadContactlessReadError;
+										cardRead.Action = "bad_contactless_read_action";
+										action = MessagePopupViewController.ShowMessagePopupViewBadContactlessReadError;
+									}
+									else if (trackData.WalletTypeIsGoogleAndNotVas())
+									{
+										cardRead.Action = "google_not_vas_action";
+										action = MessagePopupViewController.ShowMessagePopupViewGoogleNoPassFoundError;
 									}
 								}
-								if (action2 != null && action3 != null && action4 != null)
-								{
-									action4(action2, action3);
-									AnalyticsService?.AddViewEvent(cardReadEvent);
-								}
-								else
-								{
-									LogHelper.Instance.Log("CardFunctions.CardReadComplete missing action.");
-								}
+								AnalyticsService?.AddViewEvent(cardRead);
+								action(arg, arg2);
 							}
 							else
 							{
-								cardReadEvent.CardReadValid = true;
-								cardReadEvent.Action = "continue";
-								AnalyticsService?.AddViewEvent(cardReadEvent);
+								cardRead.CardReadValid = true;
+								cardRead.Action = "continue";
+								AnalyticsService?.AddViewEvent(cardRead);
 								if (QuickChipWasUsedAndCardNotRemovedFromReader(trackData, chipCardRemovedFromReader))
 								{
 									OrchestrationService.ViewShow("remove_card_view", new RemoveCardViewParameters
@@ -219,14 +189,14 @@ public class CardFunctions
 					{
 						LogHelper.Instance.Log("An unhandled exception was raised in CardFunctions.CardReadComplete.", e2);
 					}
-				}, CancellationToken.None, TaskCreationOptions.None, viewService?.UITaskScheduler);
+				}, CancellationToken.None, TaskCreationOptions.None, service?.UITaskScheduler);
 			}
 			else
 			{
 				LogHelper.Instance.Log("ViewService UITaskScheduler is null in CardFunctions.CardReadComplete");
 			}
 			return;
-			IL_0137:
+			IL_010f:
 			LogHelper.Instance.Log($"ViewService Received a response for request Id {requestId} which is not the current read attempt.");
 		}
 		catch (Exception e)
@@ -256,5 +226,11 @@ public class CardFunctions
 			}
 		}
 		return result;
+	}
+
+	private static void ErrorMessageAction(string cardReadViewName, string cardReadAction, Action onError)
+	{
+		OrchestrationService.UnwindToSafe(cardReadViewName, discard: true, cardReadAction);
+		onError?.Invoke();
 	}
 }

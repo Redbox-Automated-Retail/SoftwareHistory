@@ -143,71 +143,80 @@ public class ShoppingCartViewFunctions
 
 	public static void RemoveItemFromShoppingCart(DisplayProductModel displayProductModel, object parameter)
 	{
-		IRentalShoppingCartItem rentalShoppingCartItem = displayProductModel?.Data as IRentalShoppingCartItem;
+		IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = displayProductModel?.Data as IRentalShoppingCartTitleItem;
+		IRentalShoppingCartSubscriptionItem rentalShoppingCartSubscriptionItem = displayProductModel?.Data as IRentalShoppingCartSubscriptionItem;
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
-		if (rentalShoppingCart == null || rentalShoppingCartItem == null)
+		if (rentalShoppingCart != null && rentalShoppingCartTitleItem != null)
 		{
-			return;
-		}
-		IRentalShoppingCartItem deleteRentalShoppingCartItem = rentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem x) => x.ProductId == rentalShoppingCartItem.ProductId);
-		bool flag = true;
-		if (rentalShoppingCart.InCartTitleMarketing)
-		{
-			LogHelper.Instance.Log("Creating temp RentalShoppingCart to retest in cart offer conditions");
-			IRentalShoppingCart rentalShoppingCart2 = CloneRentalShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
-			bool isCartValid = PromotionService.Instance.ValidateRegularInCartPromo(rentalShoppingCart2).IsCartValid;
-			if (rentalShoppingCart2 != null)
+			IRentalShoppingCartTitleItem deleteRentalShoppingCartItem = rentalShoppingCart.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.ProductId == rentalShoppingCartTitleItem.ProductId);
+			bool flag = true;
+			if (rentalShoppingCart.InCartTitleMarketing)
 			{
-				RentalShoppingCartService.RemoveRentalShoppingCart(rentalShoppingCart2.ShoppingSessionId);
+				LogHelper.Instance.Log("Creating temp RentalShoppingCart to retest in cart offer conditions");
+				IRentalShoppingCart rentalShoppingCart2 = CloneRentalShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
+				bool isCartValid = PromotionService.Instance.ValidateRegularInCartPromo(rentalShoppingCart2).IsCartValid;
+				if (rentalShoppingCart2 != null)
+				{
+					RentalShoppingCartService.RemoveRentalShoppingCart(rentalShoppingCart2.ShoppingSessionId);
+				}
+				if (!isCartValid)
+				{
+					flag = false;
+					MessagePopupViewController.ShowInCartCancelWarning(delegate
+					{
+						LogHelper.Instance.Log("Title marketing remove item warning popup timed out");
+						RemoveItemFromShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
+						ClearInCart(rentalShoppingCart);
+						GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning Timed out.");
+					}, delegate
+					{
+						LogHelper.Instance.Log("User cancelled remove item with back");
+						AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartRemoveItemCancel");
+						GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning go back.");
+					}, delegate
+					{
+						LogHelper.Instance.Log("User confirmed remove item warning popup with continue");
+						AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartRemoveItemConfirm");
+						RemoveItemFromShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
+						ClearInCart(rentalShoppingCart);
+						GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning continue.");
+					});
+				}
 			}
-			if (!isCartValid)
+			if (flag && deleteRentalShoppingCartItem != null)
 			{
-				flag = false;
-				MessagePopupViewController.ShowInCartCancelWarning(delegate
-				{
-					LogHelper.Instance.Log("Title marketing remove item warning popup timed out");
-					RemoveItemFromShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
-					ClearInCart(rentalShoppingCart);
-					GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning Timed out.");
-				}, delegate
-				{
-					LogHelper.Instance.Log("User cancelled remove item with back");
-					AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartRemoveItemCancel");
-					GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning go back.");
-				}, delegate
-				{
-					LogHelper.Instance.Log("User confirmed remove item warning popup with continue");
-					AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartRemoveItemConfirm");
-					RemoveItemFromShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
-					ClearInCart(rentalShoppingCart);
-					GetViewService()?.UnwindToSafe("shopping_cart_view", discard: true, "ShowInCartCancelWarning continue.");
-				});
+				RemoveItemFromShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
+				GetViewService()?.Show();
 			}
 		}
-		if (flag && deleteRentalShoppingCartItem != null)
+		else if (rentalShoppingCart != null && rentalShoppingCartSubscriptionItem != null)
 		{
-			RemoveItemFromShoppingCart(rentalShoppingCart, deleteRentalShoppingCartItem);
-			GetViewService()?.Show();
+			IRentalShoppingCartSubscriptionItem rentalShoppingCartSubscriptionItem2 = rentalShoppingCart.SubscriptionItems.FirstOrDefault((IRentalShoppingCartSubscriptionItem x) => x.SubscriptionProduct.CompareTo(rentalShoppingCartSubscriptionItem.SubscriptionProduct) == 0);
+			if (rentalShoppingCartSubscriptionItem2 != null)
+			{
+				RemoveItemFromShoppingCart(rentalShoppingCart, rentalShoppingCartSubscriptionItem2);
+				GetViewService()?.Show();
+			}
 		}
 	}
 
-	private static IRentalShoppingCart CloneRentalShoppingCart(IRentalShoppingCart rentalShoppingCartToClone, IRentalShoppingCartItem excludeRentalShoppingCartItem)
+	private static IRentalShoppingCart CloneRentalShoppingCart(IRentalShoppingCart rentalShoppingCartToClone, IRentalShoppingCartTitleItem excludeRentalShoppingCartItem)
 	{
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService.CreateNew(Guid.NewGuid());
-		foreach (IRentalShoppingCartItem item in rentalShoppingCartToClone.Items.Where((IRentalShoppingCartItem x) => excludeRentalShoppingCartItem == null || x.ProductId != (excludeRentalShoppingCartItem?.ProductId ?? 0)))
+		foreach (IRentalShoppingCartTitleItem item in rentalShoppingCartToClone.TitleItems.Where((IRentalShoppingCartTitleItem x) => excludeRentalShoppingCartItem == null || x.ProductId != (excludeRentalShoppingCartItem?.ProductId ?? 0)))
 		{
-			IRentalShoppingCartItem rentalShoppingCartItem = RentalShoppingCartService.CreateRentalShoppingCartItemFromProductId(item.ProductId);
-			if (rentalShoppingCartItem != null)
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = RentalShoppingCartService.CreateRentalShoppingCartItemFromProductId(item.ProductId);
+			if (rentalShoppingCartTitleItem != null)
 			{
-				rentalShoppingCartItem.SourceType = item.SourceType;
-				rentalShoppingCartItem.Action = item.Action;
-				if (rentalShoppingCartItem.SourceType == ItemSourceType.Reservation)
+				rentalShoppingCartTitleItem.SourceType = item.SourceType;
+				rentalShoppingCartTitleItem.Action = item.Action;
+				if (rentalShoppingCartTitleItem.SourceType == ItemSourceType.Reservation)
 				{
-					rentalShoppingCartItem.Barcode = item.Barcode;
+					rentalShoppingCartTitleItem.Barcode = item.Barcode;
 				}
-				rentalShoppingCartItem.Quantity = 1m;
-				rentalShoppingCartItem.Status = LineItemStatus.Pending;
-				rentalShoppingCart.AddItem(rentalShoppingCartItem);
+				rentalShoppingCartTitleItem.Quantity = 1m;
+				rentalShoppingCartTitleItem.Status = LineItemStatus.Pending;
+				rentalShoppingCart.AddItem(rentalShoppingCartTitleItem);
 			}
 			else
 			{
@@ -225,10 +234,10 @@ public class ShoppingCartViewFunctions
 		rentalShoppingCart.InCartTitleMarketing = false;
 	}
 
-	private static void RemoveItemFromShoppingCart(IRentalShoppingCart rentalShoppingCart, IRentalShoppingCartItem deleteRentalShoppingCartItem)
+	private static void RemoveItemFromShoppingCart(IRentalShoppingCart rentalShoppingCart, IBaseRentalShoppingCartItem deleteRentalShoppingCartItem)
 	{
 		AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsRemoveItem")?.AddData(ProductData.ToProductData(deleteRentalShoppingCartItem));
-		rentalShoppingCart.RemoveItem(deleteRentalShoppingCartItem, userRemoved: true);
+		BrowseFunctions.PromptToRemoveItem(deleteRentalShoppingCartItem, userRemoved: true);
 	}
 
 	private static IViewService GetViewService()

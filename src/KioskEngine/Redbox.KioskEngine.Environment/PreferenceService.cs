@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Redbox.Core;
@@ -60,7 +61,7 @@ public class PreferenceService : IPreferenceService
 		Pages.Clear();
 	}
 
-	public IPreferencePage AddPreferencePage(string pageName, string settingPath, string displayPath, PreferencePageTarget target, IPreferencePageHost host)
+	public IPreferencePage AddPreferencePage(string pageName, string settingPath, string displayPath, PreferencePageTarget target, IPreferencePageHost host, Func<IPreferencePageHost> getPreferencePageHost = null)
 	{
 		IPreferencePage preferencePage = GetPreferencePage(pageName);
 		if (preferencePage != null)
@@ -73,7 +74,8 @@ public class PreferenceService : IPreferenceService
 			Name = pageName,
 			Target = target,
 			DisplayPath = displayPath,
-			SettingPath = settingPath
+			SettingPath = settingPath,
+			GetPreferencePageHost = getPreferencePageHost
 		};
 		Pages[pageName] = preferencePage;
 		return preferencePage;

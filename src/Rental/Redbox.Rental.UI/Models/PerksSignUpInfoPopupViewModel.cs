@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Input;
 
 namespace Redbox.Rental.UI.Models;
@@ -10,7 +11,13 @@ public class PerksSignUpInfoPopupViewModel : BaseModel<PerksSignUpInfoPopupViewM
 
 	public string UseHeading { get; set; }
 
+	public string VisitHeading { get; set; }
+
+	public string BalanceHeading { get; set; }
+
 	public string OKButtonText { get; set; }
+
+	public HorizontalAlignment OKButtonHorizontalAlignment { get; set; }
 
 	public ICommand OKButtonCommand { get; set; }
 
@@ -37,8 +44,4 @@ public class PerksSignUpInfoPopupViewModel : BaseModel<PerksSignUpInfoPopupViewM
 	public string UseOption2Desc { get; set; }
 
 	public string UseOption2Value { get; set; }
-
-	public string UseOption3Desc { get; set; }
-
-	public string UseOption3Value { get; set; }
 }

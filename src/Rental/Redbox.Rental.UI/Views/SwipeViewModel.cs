@@ -10,6 +10,8 @@ namespace Redbox.Rental.UI.Views;
 
 public class SwipeViewModel : DependencyObject
 {
+	public Action OnMessageButtonClicked;
+
 	public Action OnBackButtonClicked;
 
 	public Action OnTimeout;
@@ -24,11 +26,21 @@ public class SwipeViewModel : DependencyObject
 
 	public static readonly DependencyProperty GooglePayImageVisibilityProperty = DependencyProperty.Register("GooglePayImageVisibility", typeof(Visibility), typeof(SwipeViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty TimerTextBorderVisibilityProperty = DependencyProperty.Register("TimerTextBorderVisibility", typeof(Visibility), typeof(SwipeViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty TitleTextVisibilityProperty = DependencyProperty.Register("TitleTextVisibility", typeof(Visibility), typeof(SwipeViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
 	public Brush GridBackground { get; set; }
 
 	public string TitleText { get; set; }
 
 	public string MessageText { get; set; }
+
+	public string MessageButtonText { get; set; }
+
+	public string TimerTitleText { get; set; }
+
+	public string TimerMessageText { get; set; }
 
 	public string BackButtonText { get; set; }
 
@@ -98,6 +110,41 @@ public class SwipeViewModel : DependencyObject
 				SetValue(GooglePayImageVisibilityProperty, value);
 			});
 		}
+	}
+
+	public Visibility TimerTextBorderVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(TimerTextBorderVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(TimerTextBorderVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility TitleTextVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(TitleTextVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(TitleTextVisibilityProperty, value);
+			});
+		}
+	}
+
+	public void ProcessOnMessageButtonClicked()
+	{
+		OnMessageButtonClicked?.Invoke();
 	}
 
 	public void ProcessOnBackButtonClicked()

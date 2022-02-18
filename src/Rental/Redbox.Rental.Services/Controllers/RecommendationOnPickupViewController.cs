@@ -96,7 +96,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 	{
 		if (_reservationValues.AuthorizeAtPickup)
 		{
-			foreach (IRentalShoppingCartItem item in RentalShoppingCart.Items.Where((IRentalShoppingCartItem i) => i.SourceType == ItemSourceType.Recommendation))
+			foreach (IRentalShoppingCartTitleItem item in RentalShoppingCart.TitleItems.Where((IRentalShoppingCartTitleItem i) => i.SourceType == ItemSourceType.Recommendation))
 			{
 				RentalShoppingCart.RemoveItem(item, userRemoved: false);
 			}
@@ -111,13 +111,13 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 	private static void ConfigureRecommendedTitlesBrowse(RecommendationOnPickupViewModel recommendationOnPickupViewModel)
 	{
 		LogHelper.Instance.Log("RecommendationOnPickupController.ConfigureRecommendedTitlesBrowse");
-		bool includeBluray = RentalShoppingCart?.Items.Any((IRentalShoppingCartItem x) => x.SourceType == ItemSourceType.Reservation && x.TitleType == TitleType.Bluray) ?? false;
+		bool includeBluray = RentalShoppingCart?.TitleItems.Any((IRentalShoppingCartTitleItem x) => x.SourceType == ItemSourceType.Reservation && x.TitleType == TitleType.Bluray) ?? false;
 		List<long> excludeProducts = new List<long>();
 		_reservationValues?.HistoryTitleIds.ForEach(delegate(int x)
 		{
 			excludeProducts.Add(x);
 		});
-		excludeProducts.AddRange(RentalShoppingCart?.Items.Where((IRentalShoppingCartItem x) => x.SourceType == ItemSourceType.Reservation).Select((IRentalShoppingCartItem x) => x.ProductId));
+		excludeProducts.AddRange(RentalShoppingCart?.TitleItems.Where((IRentalShoppingCartTitleItem x) => x.SourceType == ItemSourceType.Reservation).Select((IRentalShoppingCartTitleItem x) => x.ProductId));
 		List<IKioskProduct> list = GenerateRecommendations(includeBluray, excludeProducts);
 		if (Redbox.Rental.Services.Session.Session.Instance?.BrowseState != null)
 		{
@@ -231,19 +231,19 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		browseItemModel.ConfigureForBrowse();
 		ITitleProduct titleProduct = eachKioskProduct as ITitleProduct;
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCart;
-		bool flag = (browseItemModel.CanAdd = rentalShoppingCart != null && !rentalShoppingCart.HasItem(titleProduct.ProductId) && !(RentalShoppingCart?.IsFull ?? true));
+		bool flag = (browseItemModel.CanAdd = rentalShoppingCart != null && !rentalShoppingCart.HasTitleItem(titleProduct.ProductId) && !(RentalShoppingCart?.IsFull ?? true));
 		browseItemModel.ImageOpacity = (flag ? 1.0 : 0.4);
 		browseItemModel.CornerAddButtonVisibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.AddButtonStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "classic_rubine_button_style");
 		browseItemModel.FooterTextStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_gray_montserrat_medium_16");
 		IRentalShoppingCart rentalShoppingCart2 = RentalShoppingCart;
-		if (rentalShoppingCart2 != null && rentalShoppingCart2.HasItem(titleProduct.ProductId))
+		if (rentalShoppingCart2 != null && rentalShoppingCart2.HasTitleItem(titleProduct.ProductId))
 		{
 			browseItemModel.FooterText = Resources.in_cart;
 		}
 		else
 		{
-			IPricingRecord pricingRecord = (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(titleProduct))?[0];
+			IPricingRecord pricingRecord = (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(titleProduct?.ProductId ?? 0))?[0];
 			browseItemModel.FooterText = ((pricingRecord != null) ? $"{pricingRecord.InitialNight:c2} / {Resources.night}" : null);
 		}
 		BannerType bannerType = BannerType.None;
@@ -257,7 +257,14 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		BaseViewController.ProcessWPFHit();
 		if (browseItemModel.Data is ITitleProduct titleProduct)
 		{
-			BrowseFunctions.AddProductToCart(titleProduct, isPurchase: false, null, ItemSourceType.Recommendation);
+			BrowseFunctions.AddProductToCart(new AddProductToCartParameters
+			{
+				TitleProduct = titleProduct,
+				IsPurchase = false,
+				PricingRecord = null,
+				ItemSourceType = ItemSourceType.Recommendation,
+				RedboxPlusBenefitId = null
+			});
 		}
 	}
 
@@ -352,11 +359,11 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 					if (_reservationValues.AuthorizeAtPickup)
 					{
 						List<long> list = new List<long>();
-						foreach (IRentalShoppingCartItem item in RentalShoppingCart.Items)
+						foreach (IRentalShoppingCartTitleItem titleItem in RentalShoppingCart.TitleItems)
 						{
-							if (item.SourceType == ItemSourceType.Recommendation)
+							if (titleItem.SourceType == ItemSourceType.Recommendation)
 							{
-								list.Add(item.ProductId);
+								list.Add(titleItem.ProductId);
 							}
 						}
 						ReservationFunctions.InvokeAuthorizeOnPickupCallback(_reservationValues?.ReferenceNumber, cartWasModified: true);
@@ -408,8 +415,8 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 			_reservationValues = new ReservationDetails();
 			LogHelper.Instance.Log("RecommendationOnPickupViewController.PopulateShoppingCartWithReservationItems reservationInfo is null.", LogEntryType.Info);
 		}
-		List<IRentalShoppingCartItem> list = rentalShoppingCart.Items.Where((IRentalShoppingCartItem i) => i.MultiDisc && i.DiscNumber > 1).ToList();
-		foreach (IRentalShoppingCartItem item in list)
+		List<IRentalShoppingCartTitleItem> list = rentalShoppingCart.TitleItems.Where((IRentalShoppingCartTitleItem i) => i.MultiDisc && i.DiscNumber > 1).ToList();
+		foreach (IRentalShoppingCartTitleItem item in list)
 		{
 			rentalShoppingCart.RemoveItem(item, userRemoved: false);
 		}
@@ -427,7 +434,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 				{
 					return;
 				}
-				foreach (IRentalShoppingCartItem secondaryMdvDisc in recommendationOnPickupViewModel.SecondaryMdvDiscs)
+				foreach (IRentalShoppingCartTitleItem secondaryMdvDisc in recommendationOnPickupViewModel.SecondaryMdvDiscs)
 				{
 					rentalShoppingCart.AddItem(secondaryMdvDisc);
 				}
@@ -479,14 +486,14 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		{
 			return;
 		}
-		IRentalShoppingCartItem rentalShoppingCartItem = browseItemModel.Data as IRentalShoppingCartItem;
+		IRentalShoppingCartTitleItem rentalShoppingCartItem = browseItemModel.Data as IRentalShoppingCartTitleItem;
 		if (RentalShoppingCart != null && rentalShoppingCartItem != null)
 		{
-			IRentalShoppingCartItem rentalShoppingCartItem2 = RentalShoppingCart.Items.FirstOrDefault((IRentalShoppingCartItem x) => x.ProductId == rentalShoppingCartItem.ProductId);
-			if (rentalShoppingCartItem2 != null)
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = RentalShoppingCart.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.ProductId == rentalShoppingCartItem.ProductId);
+			if (rentalShoppingCartTitleItem != null)
 			{
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("RecommendationOnPickupShoppingCartRemoveItem");
-				RentalShoppingCart.RemoveItem(rentalShoppingCartItem2, userRemoved: true);
+				RentalShoppingCart.RemoveItem(rentalShoppingCartTitleItem, userRemoved: true);
 			}
 		}
 	}
@@ -498,28 +505,28 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		if (rentalShoppingCart != null && service != null)
 		{
-			foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
+			foreach (IRentalShoppingCartTitleItem titleItem in rentalShoppingCart.TitleItems)
 			{
 				IKioskProduct kioskProduct = null;
-				service.GetProduct(item.ProductId, excludeTitleRollup: true, out kioskProduct);
+				service.GetProduct(titleItem.ProductId, excludeTitleRollup: true, out kioskProduct);
 				if (kioskProduct != null)
 				{
 					DisplayProductWithTextFooterModel displayProductWithTextFooterModel = new DisplayProductWithTextFooterModel
 					{
 						Name = kioskProduct.ProductName,
-						Data = item,
+						Data = titleItem,
 						Image = OrchestrationService.GetProductBitmapImage(kioskProduct)
 					};
 					displayProductWithTextFooterModel.ConfigureForRecommendationOnPickupCart();
-					displayProductWithTextFooterModel.RecommendationOnPickupCartCancelButtonVisibility = ((item.SourceType == ItemSourceType.Reservation) ? Visibility.Collapsed : Visibility.Visible);
+					displayProductWithTextFooterModel.RecommendationOnPickupCartCancelButtonVisibility = ((titleItem.SourceType == ItemSourceType.Reservation) ? Visibility.Collapsed : Visibility.Visible);
 					displayProductWithTextFooterModel.FooterTextStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "font_white_montserrat_medium_16");
-					if (item.SourceType == ItemSourceType.Reservation)
+					if (titleItem.SourceType == ItemSourceType.Reservation)
 					{
 						displayProductWithTextFooterModel.FooterText = Resources.reserved_title;
 					}
 					else
 					{
-						displayProductWithTextFooterModel.FooterText = $"{item.Price:c2} / {Resources.night}";
+						displayProductWithTextFooterModel.FooterText = $"{titleItem.Price:c2} / {Resources.night}";
 					}
 					ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 					BannerType bannerType = BannerType.None;
@@ -530,7 +537,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 				}
 				else
 				{
-					LogHelper.Instance.Log($"RecommendationOnPickupViewController.CreateBrowseItemsFromCartItems productId: {item.ProductId} was not found", LogEntryType.Info);
+					LogHelper.Instance.Log($"RecommendationOnPickupViewController.CreateBrowseItemsFromCartItems productId: {titleItem.ProductId} was not found", LogEntryType.Info);
 				}
 			}
 		}
@@ -552,14 +559,14 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		recommendationOnPickupViewModel.TermsAndPrivacyButtonText = Resources.terms_link_text;
 		recommendationOnPickupViewModel.ChargedOnceText = Resources.charged_once;
 		recommendationOnPickupViewModel.AgreeToTermsText = Resources.by_pressing_pay;
-		int num = RentalShoppingCart?.Items.Count((IRentalShoppingCartItem x) => x.SourceType != ItemSourceType.Reservation) ?? 0;
+		int num = RentalShoppingCart?.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.SourceType != ItemSourceType.Reservation) ?? 0;
 		recommendationOnPickupViewModel.PayButtonText = Resources.pay_button;
 		recommendationOnPickupViewModel.PayButtonVisibility = ((num <= 0) ? Visibility.Collapsed : Visibility.Visible);
 		recommendationOnPickupViewModel.PickupButtonText = Resources.pickup;
 		recommendationOnPickupViewModel.PickupButtonVisibility = ((num != 0) ? Visibility.Collapsed : Visibility.Visible);
-		int num2 = RentalShoppingCart?.Items.Count((IRentalShoppingCartItem x) => x.TitleFamily == TitleFamily.Movies && x.SourceType == ItemSourceType.Reservation) ?? 0;
-		int num3 = RentalShoppingCart?.Items.Count((IRentalShoppingCartItem x) => x.TitleFamily == TitleFamily.Games && x.SourceType == ItemSourceType.Reservation) ?? 0;
-		int num4 = RentalShoppingCart?.Items.Count((IRentalShoppingCartItem x) => x.SourceType == ItemSourceType.Reservation) ?? 0;
+		int num2 = RentalShoppingCart?.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.TitleFamily == TitleFamily.Movies && x.SourceType == ItemSourceType.Reservation) ?? 0;
+		int num3 = RentalShoppingCart?.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.TitleFamily == TitleFamily.Games && x.SourceType == ItemSourceType.Reservation) ?? 0;
+		int num4 = RentalShoppingCart?.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.SourceType == ItemSourceType.Reservation) ?? 0;
 		string format = Resources.pickup_discs;
 		if (num4 == 1)
 		{
@@ -600,9 +607,9 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		}
 		recommendationOnPickupViewModel.PricingModel.DiscountValueText = text2;
 		recommendationOnPickupViewModel.PricingModel.DiscountLineVisibility = ((!((RentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
-		decimal num5 = RentalShoppingCart.Items.Where((IRentalShoppingCartItem x) => x.SourceType == ItemSourceType.Reservation).Sum((IRentalShoppingCartItem x) => x.Price);
+		decimal num5 = RentalShoppingCart.TitleItems.Where((IRentalShoppingCartTitleItem x) => x.SourceType == ItemSourceType.Reservation).Sum((IRentalShoppingCartTitleItem x) => x.Price);
 		recommendationOnPickupViewModel.PricingModel.ReservedDiscsValueText = $"{num5:C}";
-		decimal num6 = RentalShoppingCart.Items.Where((IRentalShoppingCartItem x) => x.SourceType != ItemSourceType.Reservation).Sum((IRentalShoppingCartItem x) => x.Price);
+		decimal num6 = RentalShoppingCart.TitleItems.Where((IRentalShoppingCartTitleItem x) => x.SourceType != ItemSourceType.Reservation).Sum((IRentalShoppingCartTitleItem x) => x.Price);
 		recommendationOnPickupViewModel.PricingModel.AddedDiscsValueText = $"{num6:C}";
 		recommendationOnPickupViewModel.PricingModel.ServiceFeeValueText = $"{RentalShoppingCart?.ServiceFee?.ActualAmount ?? 0m:C}";
 		recommendationOnPickupViewModel.PricingModel.TaxLineVisibility = ((text == "SC" || text == "MD") ? Visibility.Collapsed : Visibility.Visible);

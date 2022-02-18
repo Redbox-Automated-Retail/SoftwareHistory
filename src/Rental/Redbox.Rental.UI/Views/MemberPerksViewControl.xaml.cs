@@ -181,6 +181,15 @@ public partial class MemberPerksViewControl : ViewUserControl, IComponentConnect
 		}
 	}
 
+	private void RedboxPlusButton_Pressed(object sender, RoutedEventArgs e)
+	{
+		HandleWPFHit();
+		if (Model != null)
+		{
+			ViewUserControl.InvokeRoutedCommand(Model.SelectedButtonCommand, "RedboxPlusButton");
+		}
+	}
+
 	private void PerksButton_Pressed(object sender, RoutedEventArgs e)
 	{
 		HandleWPFHit();

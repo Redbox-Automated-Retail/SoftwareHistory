@@ -13,9 +13,9 @@
       <local:DisplayProductUserControl Grid.Row="1" DockPanel.Dock="Left" Margin="0,0,3,0" />
       <Grid DockPanel.Dock="Right" Visibility="{Binding Path=RightAddButtonVisibility}">
         <Grid.RowDefinitions>
-          <RowDefinition Height="2.5*" />
-          <RowDefinition Height="5*" />
-          <RowDefinition Height="2.5*" />
+          <RowDefinition Height="2.3*" />
+          <RowDefinition Height="5.4*" />
+          <RowDefinition Height="2.3*" />
         </Grid.RowDefinitions>
         <Viewbox Grid.Row="1">
           <Redbox:RoundedButton Name="AddButton" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" Width="50" Height="50" CornerRadius="25" DockPanel.Dock="Right" Style="{Binding Path=AddButtonStyle, FallbackValue={StaticResource classic_rubine_button_style}}" Visibility="{Binding Path=RightAddButtonVisibility}">

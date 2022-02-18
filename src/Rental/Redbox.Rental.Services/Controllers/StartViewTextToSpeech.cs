@@ -1,8 +1,6 @@
 using System;
 using System.Windows;
-using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
-using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.UI.Models;
 
@@ -166,17 +164,8 @@ public class StartViewTextToSpeech
 		speechPart.Refresh = delegate
 		{
 			speechPart.Clear();
-			StartViewModel startViewModel = getViewModelFunction();
-			if (startViewModel != null)
+			if (getViewModelFunction() != null)
 			{
-				if (startViewModel.ZeroTouchSpoilerVisibility == Visibility.Visible)
-				{
-					string arg = (ServiceLocator.Instance.GetService<ITrackDataService>().IsOlderReader ? "swipe" : "insert");
-					speechPart.Texts.Add(new TextPart
-					{
-						Text = $"Introducing a new touch-free pickup & return experience in response to coronavirus. To launch a touch-free pickup of an online reservation or to return a disc, {arg} your payment card now in the reader to the right of the screen."
-					});
-				}
 				speechPart.Events.Add(new MapKeyPress
 				{
 					KeyCode = "TAB",

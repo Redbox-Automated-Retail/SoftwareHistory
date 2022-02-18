@@ -126,9 +126,9 @@ public class QueueService : IQueueService, IDisposable
 				result = json.ToObject<T>();
 				return result;
 			}
-			catch (Exception)
+			catch (Exception e)
 			{
-				LogHelper.Instance.Log($"Unable to convert message.data to {typeof(T)}");
+				LogHelper.Instance.Log($"Unable to convert message.data to {typeof(T)}", e);
 			}
 		}
 		return result;
@@ -283,7 +283,7 @@ public class QueueService : IQueueService, IDisposable
 				try
 				{
 					int randomNumber = GetRandomNumber(QueueReadPeriodMin, QueueReadPeriodMax);
-					m_queueTimer.Change(randomNumber, randomNumber);
+					m_queueTimer?.Change(randomNumber, randomNumber);
 				}
 				catch (Exception e)
 				{

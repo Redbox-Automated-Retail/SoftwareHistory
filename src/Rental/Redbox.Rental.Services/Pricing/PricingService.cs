@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using ProductPricing.Model;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
@@ -15,6 +17,8 @@ namespace Redbox.Rental.Services.Pricing;
 
 public class PricingService : IPricingService
 {
+	private IKioskClientServicePricing _kcsPricing;
+
 	private Store _store;
 
 	private IBundleBasedPricingService _bundleBasedPricingService;
@@ -51,22 +55,6 @@ public class PricingService : IPricingService
 		}
 	}
 
-	public IPricingSet CurrentPriceSet
-	{
-		get
-		{
-			if (IsPricingEngineEnabled)
-			{
-				IPricingSet currentPriceSet = _kioskPricingService.CurrentPriceSet;
-				if (currentPriceSet != null)
-				{
-					return currentPriceSet;
-				}
-			}
-			return _bundleBasedPricingService.CurrentPriceSet;
-		}
-	}
-
 	private Store Store
 	{
 		get
@@ -87,6 +75,7 @@ public class PricingService : IPricingService
 		_pricingData = new PricingData(kernelService, storeManager);
 		_kioskPricingService = new KioskPricingService(_pricingData, storeManager.KioskId, Redbox.Rental.Services.Configuration.Configuration.Instance);
 		_configuration = Redbox.Rental.Services.Configuration.Configuration.Instance;
+		_kcsPricing = ServiceLocator.Instance.GetService<IKioskClientServicePricing>();
 		if (_changeTimer == null)
 		{
 			_changeTimer = new Timer(delegate
@@ -129,15 +118,17 @@ public class PricingService : IPricingService
 		if (Interlocked.CompareExchange(ref _inRefresh, 1, 0) == 1)
 		{
 			LogHelper.Instance.Log("PricingService.Refresh - exiting already in OnTimer");
-			return;
 		}
-		try
+		else if (!_kcsPricing.IsKCSPricingEnabled)
 		{
-			_pricingData.LoadStaged();
-		}
-		finally
-		{
-			_inRefresh = 0;
+			try
+			{
+				_pricingData.LoadStaged();
+			}
+			finally
+			{
+				_inRefresh = 0;
+			}
 		}
 	}
 
@@ -168,7 +159,11 @@ public class PricingService : IPricingService
 		LogHelper.Instance.Log("PricingService.UpdatePricingInstance");
 		try
 		{
-			if (_kioskPricingService != null)
+			if (_kcsPricing.IsKCSPricingEnabled)
+			{
+				_kcsPricing.CachePricing();
+			}
+			else if (_kioskPricingService != null)
 			{
 				_kioskPricingService.UpdatePricingInstance();
 			}
@@ -179,24 +174,118 @@ public class PricingService : IPricingService
 		}
 	}
 
+	private ITitleProduct GetTitleProduct(long productId)
+	{
+		if (productId == 0L)
+		{
+			LogHelper.Instance.LogError("PricingService", "GetTitleProduct - productID cannot be zero");
+			return null;
+		}
+		ServiceLocator.Instance.GetService<IDataService>().GetProduct(productId, excludeTitleRollup: true, out var kioskProduct);
+		if (kioskProduct == null)
+		{
+			LogHelper.Instance.LogError("PricingService", $"GetTitleProduct - ProductId: {productId} not found in dataservice.getproduct");
+			return null;
+		}
+		if (!(kioskProduct is ITitleProduct result))
+		{
+			LogHelper.Instance.LogError("PricingService", $"GetTitleProduct - ProductId: {productId} is not a TitleProduct");
+			return null;
+		}
+		return result;
+	}
+
+	private ProductPricing GetKCSPricing(long productId)
+	{
+		if (!_kcsPricing.IsKCSPricingEnabled)
+		{
+			return null;
+		}
+		ITitleProduct titleProduct = GetTitleProduct(productId);
+		if (titleProduct == null)
+		{
+			return null;
+		}
+		return GetKCSPricing(titleProduct);
+	}
+
+	private ProductPricing GetKCSPricing(ITitleProduct titleProduct)
+	{
+		if (titleProduct == null)
+		{
+			LogHelper.Instance.LogError("PricingService", "GetKCSPricing - TitleProduct cannot be null");
+			return null;
+		}
+		if (!_kcsPricing.IsKCSPricingEnabled)
+		{
+			return null;
+		}
+		ProductPricing localProductPricing = _kcsPricing.GetLocalProductPricing(titleProduct.ProductId, titleProduct.TitleType.ToPriceLevelType(), Store.RentalTaxRate, Store.PurchaseTaxRate, Store.State);
+		if (localProductPricing == null || localProductPricing.RentalPriceDefault == null)
+		{
+			LogHelper.Instance.LogError("PricingService", $"GetKCSPricing - TitleProduct.ProductId({titleProduct.ProductId}) pricing not found");
+		}
+		return localProductPricing;
+	}
+
+	private ProductPricing GetKCSDefaultPricing(TitleType titleType)
+	{
+		PriceLevelType priceLevelType = titleType.ToPriceLevelType();
+		if (priceLevelType == PriceLevelType.None)
+		{
+			LogHelper.Instance.LogError("PricingService", "GetKCSDefaultPricing - TitleType is none");
+			return null;
+		}
+		if (!_kcsPricing.IsKCSPricingEnabled)
+		{
+			return null;
+		}
+		ProductPricing localProductDefaultPricing = _kcsPricing.GetLocalProductDefaultPricing(priceLevelType, Store.RentalTaxRate, Store.PurchaseTaxRate, Store.State);
+		if (localProductDefaultPricing == null)
+		{
+			LogHelper.Instance.LogError("PricingService", $"GetKCSDefaultPricing - TitleType({titleType}) pricing not found");
+		}
+		return localProductDefaultPricing;
+	}
+
 	public IPricingRecord GetPurchasePricing(ITitleProduct titleProduct)
 	{
-		if (IsPricingEngineEnabled)
+		if (_kcsPricing.IsKCSPricingEnabled)
+		{
+			ProductPricing kCSPricing = GetKCSPricing(titleProduct);
+			if (kCSPricing != null)
+			{
+				if (kCSPricing.PurchasePrice == null)
+				{
+					return null;
+				}
+				return kCSPricing.PurchasePrice.ToPricingRecord(titleProduct.TitleFamily, titleProduct.TitleType);
+			}
+		}
+		else if (IsPricingEngineEnabled)
 		{
 			return _kioskPricingService.GetPurchasePricing(titleProduct);
 		}
 		return null;
 	}
 
-	public IPricingRecord GetOneDayProductPricingRecord(ITitleProduct titleProduct)
-	{
-		return GetOneDayProductPricingRecord(titleProduct.ProductId);
-	}
-
 	public IPricingRecord GetOneDayProductPricingRecord(long productId)
 	{
 		IPricingRecord pricingRecord = null;
-		if (IsPricingEngineEnabled)
+		if (_kcsPricing.IsKCSPricingEnabled)
+		{
+			ITitleProduct titleProduct = GetTitleProduct(productId);
+			if (titleProduct == null)
+			{
+				return null;
+			}
+			ProductPricing kCSPricing = GetKCSPricing(titleProduct);
+			if (kCSPricing != null && kCSPricing.RentalPrice != null)
+			{
+				return kCSPricing.RentalPrice.ToPricingRecord(titleProduct.TitleFamily, titleProduct.TitleType);
+			}
+		}
+		else if (IsPricingEngineEnabled)
 		{
 			pricingRecord = _kioskPricingService.GetOneDayProductPricingRecord(productId);
 		}
@@ -207,15 +296,31 @@ public class PricingService : IPricingService
 		return pricingRecord;
 	}
 
-	public IList<IPricingRecord> GetProductPricingRecords(ITitleProduct titleProduct)
-	{
-		return GetProductPricingRecords(titleProduct?.ProductId ?? 0);
-	}
-
 	public IList<IPricingRecord> GetProductPricingRecords(long productId)
 	{
 		IList<IPricingRecord> list = null;
-		if (IsPricingEngineEnabled)
+		if (_kcsPricing.IsKCSPricingEnabled)
+		{
+			ITitleProduct titleProduct = GetTitleProduct(productId);
+			if (titleProduct == null)
+			{
+				return null;
+			}
+			ProductPricing kCSPricing = GetKCSPricing(titleProduct);
+			if (kCSPricing != null && kCSPricing.RentalPrice != null)
+			{
+				list = new List<IPricingRecord>();
+				IPricingRecord item = kCSPricing.RentalPrice.ToPricingRecord(titleProduct.TitleFamily, titleProduct.TitleType);
+				list.Add(item);
+				ProductRentalPrice productRentalPrice = kCSPricing.MultiNightRentalPrices.FirstOrDefault();
+				if (productRentalPrice != null)
+				{
+					list.Add(productRentalPrice.ToPricingRecord(titleProduct.TitleFamily, titleProduct.TitleType));
+				}
+				return list;
+			}
+		}
+		else if (IsPricingEngineEnabled)
 		{
 			list = _kioskPricingService.GetProductPricingRecords(productId);
 		}
@@ -230,9 +335,17 @@ public class PricingService : IPricingService
 	public IPricingRecord GetProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType, bool useAdjustedPrices)
 	{
 		IPricingRecord pricingRecord = null;
-		if (IsPricingEngineEnabled)
+		if (_kcsPricing.IsKCSPricingEnabled)
 		{
-			pricingRecord = _kioskPricingService.GetProductTypePricingRecord(titleFamily, titleType, useAdjustedPrices);
+			ProductPricing kCSDefaultPricing = GetKCSDefaultPricing(titleType);
+			if (kCSDefaultPricing != null && kCSDefaultPricing.RentalPriceDefault != null)
+			{
+				return kCSDefaultPricing.RentalPriceDefault.ToPricingRecord(titleFamily, titleType);
+			}
+		}
+		else if (IsPricingEngineEnabled)
+		{
+			pricingRecord = _kioskPricingService.GetProductTypePricingRecord(titleFamily, titleType);
 		}
 		if (pricingRecord == null)
 		{
@@ -243,7 +356,15 @@ public class PricingService : IPricingService
 
 	public IPricingRecord GetActiveProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType)
 	{
-		if (IsPricingEngineEnabled)
+		if (_kcsPricing.IsKCSPricingEnabled)
+		{
+			ProductPricing kCSDefaultPricing = GetKCSDefaultPricing(titleType);
+			if (kCSDefaultPricing != null && kCSDefaultPricing.RentalPriceDefault != null)
+			{
+				return kCSDefaultPricing.RentalPriceDefault.ToPricingRecord(titleFamily, titleType);
+			}
+		}
+		else if (IsPricingEngineEnabled)
 		{
 			return _kioskPricingService.GetActiveProductTypePricingRecord(titleFamily, titleType);
 		}

@@ -1,6 +1,7 @@
 using System;
 using DeviceService.ComponentModel;
 using DeviceService.ComponentModel.Commands;
+using DeviceService.ComponentModel.Requests;
 using DeviceService.ComponentModel.Responses;
 
 namespace Redbox.KioskEngine.ComponentModel;
@@ -21,11 +22,13 @@ public interface IDeviceServiceClientHelper
 
 	bool SupportsEMV { get; }
 
+	bool SupportsVas { get; }
+
 	bool ConnectToDeviceService();
 
 	ValidateVersionModel ValidateVersion();
 
-	IReadCardJob StartCardRead(DeviceInputType deviceInputType, Action<BaseResponseEvent> readCardResponseHandler, Action<BaseResponseEvent> readCardEventHandler, int timeout);
+	IReadCardJob StartCardRead(DeviceInputType deviceInputType, Action<BaseResponseEvent> readCardResponseHandler, Action<BaseResponseEvent> readCardEventHandler, int timeout, VasMode vasMode);
 
 	void CancelCommand(Guid id);
 

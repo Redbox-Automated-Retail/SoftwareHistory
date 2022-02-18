@@ -8,11 +8,6 @@ public class PromoOfferBrowseViewModel : DependencyObject
 {
 	public Func<ISpeechControl> OnGetSpeechControl;
 
-	public static readonly DependencyProperty OfferTextVisibilityProperty = DependencyProperty.Register("OfferTextVisibility", typeof(Visibility), typeof(PromoOfferBrowseViewModel), new FrameworkPropertyMetadata(Visibility.Hidden)
-	{
-		AffectsRender = true
-	});
-
 	public static readonly DependencyProperty BrowseProductControlModelProperty = DependencyProperty.Register("BrowseProductControlModel", typeof(BrowseControlModel), typeof(PromoOfferBrowseViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty MiniCartControlModelProperty = DependencyProperty.Register("MiniCartControlModel", typeof(BrowseControlModel), typeof(PromoOfferBrowseViewModel), new FrameworkPropertyMetadata(null));
@@ -34,8 +29,6 @@ public class PromoOfferBrowseViewModel : DependencyObject
 	public static readonly DependencyProperty EmptyCartSpacesVisibilityProperty = DependencyProperty.Register("EmptyCartSpacesVisibilityVisibility", typeof(Visibility), typeof(PromoOfferBrowseViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public string HeaderText { get; set; }
-
-	public string OfferText { get; set; }
 
 	public string CancelButtonText { get; set; }
 

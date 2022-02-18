@@ -6,8 +6,6 @@ namespace Redbox.Rental.Model.Pricing;
 
 public interface IPricingService
 {
-	IPricingSet CurrentPriceSet { get; }
-
 	bool IsPricingEngineEnabled { get; }
 
 	event PricingSetChange OnPricingSetChange;
@@ -28,11 +26,7 @@ public interface IPricingService
 
 	IPricingRecord GetActiveProductTypePricingRecord(TitleFamily titleFamily, TitleType titleType);
 
-	IPricingRecord GetOneDayProductPricingRecord(ITitleProduct titleProduct);
-
 	IPricingRecord GetOneDayProductPricingRecord(long productId);
-
-	IList<IPricingRecord> GetProductPricingRecords(ITitleProduct titleProduct);
 
 	IList<IPricingRecord> GetProductPricingRecords(long productId);
 

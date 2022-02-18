@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
 
 namespace Redbox.KioskServices.Kernel;
@@ -16,7 +17,7 @@ internal static class PromotionServicesFunctions
 
 	private static void InnerKioskOptIn(string storeNumber, LuaTable optInItems, LuaFunction callback)
 	{
-		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
+		IMarketingServices service = ServiceLocator.Instance.GetService<IMarketingServices>();
 		if (service == null)
 		{
 			return;
@@ -57,7 +58,7 @@ internal static class PromotionServicesFunctions
 				callbackService2.EnqueueCallback(resultCallbackEntry);
 			};
 		}
-		service.KioskOptIn(storeNumber, list, callback2);
+		service.KioskOptIn(long.Parse(storeNumber), list, callback2);
 		optInItems.Dispose();
 	}
 }

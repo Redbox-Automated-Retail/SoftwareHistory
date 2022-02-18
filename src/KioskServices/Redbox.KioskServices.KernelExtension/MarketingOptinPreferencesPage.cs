@@ -1,9 +1,10 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy;
 using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.KernelExtension;
@@ -42,6 +43,20 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 
 	private Label labelEmailVerified;
 
+	private Panel emailConfirmationApiPanel;
+
+	private Button emailConfSend;
+
+	private Label emailConfirmationAccountLabel;
+
+	private TextBox emailConfAccountNumberTextbox;
+
+	private Label emailConfirmationEmailLabel;
+
+	private TextBox emailConfAddressTextbox;
+
+	private Label emailConfirmationPanelLabel;
+
 	public MarketingOptinPreferencesPage()
 	{
 		InitializeComponent();
@@ -49,18 +64,18 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 
 	public bool SaveValues(IPreferencePage preferencePage)
 	{
-		MarketingOptinServicesProxy instance = MarketingOptinServicesProxy.Instance;
-		instance.CustomerProfileNumber = txtCustProfileNum.Text;
-		instance.MobilePhoneNumber = txtMobilePhoneNumber.Text;
-		instance.PromptForEarlyId = cbPromptForEarlyId.Checked;
-		instance.PromptForPerks = cbPromptForPerks.Checked;
-		instance.TextClubEnabled = cbTextClubEnabled.Checked;
+		IMarketingServices service = ServiceLocator.Instance.GetService<IMarketingServices>();
+		service.CustomerProfileNumber = txtCustProfileNum.Text;
+		service.MobilePhoneNumber = txtMobilePhoneNumber.Text;
+		service.PromptForEarlyId = cbPromptForEarlyId.Checked;
+		service.PromptForPerks = cbPromptForPerks.Checked;
+		service.TextClubEnabled = cbTextClubEnabled.Checked;
 		bool? emailVerified = null;
 		if (bool.TryParse(cbEmailVerified?.Text, out var result))
 		{
 			emailVerified = result;
 		}
-		instance.EmailVerified = emailVerified;
+		service.EmailVerified = emailVerified;
 		return true;
 	}
 
@@ -73,16 +88,16 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		{
 			m_confirmationStatusComboBox.Items.Add(item);
 		}
-		MarketingOptinServicesProxy instance = MarketingOptinServicesProxy.Instance;
-		m_confirmationStatusComboBox.SelectedIndex = (int)instance.ConfirmationStatusCode;
-		m_liveCallCheckBox.Checked = instance.LiveCall;
-		m_commFailureCheckBox.Checked = instance.SimulateCommunicationsFailure;
-		txtCustProfileNum.Text = instance.CustomerProfileNumber;
-		txtMobilePhoneNumber.Text = instance.MobilePhoneNumber;
-		cbPromptForEarlyId.Checked = instance.PromptForEarlyId;
-		cbPromptForPerks.Checked = instance.PromptForPerks;
-		cbTextClubEnabled.Checked = instance.TextClubEnabled;
-		cbEmailVerified.Text = ((!instance.EmailVerified.HasValue) ? "null" : instance.EmailVerified.ToString());
+		IMarketingServices service = ServiceLocator.Instance.GetService<IMarketingServices>();
+		m_confirmationStatusComboBox.SelectedIndex = (int)service.ConfirmationStatusCode;
+		m_liveCallCheckBox.Checked = service.LiveCall;
+		m_commFailureCheckBox.Checked = service.SimulateCommunicationsFailure;
+		txtCustProfileNum.Text = service.CustomerProfileNumber;
+		txtMobilePhoneNumber.Text = service.MobilePhoneNumber;
+		cbPromptForEarlyId.Checked = service.PromptForEarlyId;
+		cbPromptForPerks.Checked = service.PromptForPerks;
+		cbTextClubEnabled.Checked = service.TextClubEnabled;
+		cbEmailVerified.Text = ((!service.EmailVerified.HasValue) ? "null" : service.EmailVerified.ToString());
 		UpdateSimulatedOptions();
 		m_isLoaded = true;
 	}
@@ -91,14 +106,14 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			MarketingOptinServicesProxy.Instance.LiveCall = m_liveCallCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IMarketingServices>().LiveCall = m_liveCallCheckBox.Checked;
 			UpdateSimulatedOptions();
 		}
 	}
 
 	private void UpdateSimulatedOptions()
 	{
-		bool liveCall = MarketingOptinServicesProxy.Instance.LiveCall;
+		bool liveCall = ServiceLocator.Instance.GetService<IMarketingServices>().LiveCall;
 		m_confirmationStatusComboBox.Enabled = !liveCall;
 		m_commFailureCheckBox.Enabled = !liveCall;
 		txtCustProfileNum.Enabled = !liveCall;
@@ -113,7 +128,7 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			MarketingOptinServicesProxy.Instance.SimulateCommunicationsFailure = m_commFailureCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IMarketingServices>().SimulateCommunicationsFailure = m_commFailureCheckBox.Checked;
 		}
 	}
 
@@ -121,12 +136,26 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			MarketingOptinServicesProxy.Instance.ConfirmationStatusCode = (ConfirmationStatus)Enum.Parse(typeof(ConfirmationStatus), (string)m_confirmationStatusComboBox.SelectedItem, ignoreCase: true);
+			ServiceLocator.Instance.GetService<IMarketingServices>().ConfirmationStatusCode = (ConfirmationStatus)Enum.Parse(typeof(ConfirmationStatus), (string)m_confirmationStatusComboBox.SelectedItem, ignoreCase: true);
 		}
 	}
 
 	private void MarketingOptinPreferencesPage_Load(object sender, EventArgs e)
 	{
+	}
+
+	private void OnEmailConfirmationSend(object sender, EventArgs e)
+	{
+		emailConfSend.Enabled = false;
+		Task.Run(delegate
+		{
+			ServiceLocator.Instance.GetService<IMarketingServices>().SendEmailConfirm(ServiceLocator.Instance.GetService<IStoreServices>().StoreNumberInteger, emailConfAddressTextbox.Text, emailConfAccountNumberTextbox.Text, callback);
+		});
+		void callback(IEmailConfirmResult emailConfirmResult)
+		{
+			MessageBox.Show(emailConfirmResult.ToJson(), "Result", MessageBoxButtons.OK);
+			emailConfSend.Enabled = true;
+		}
 	}
 
 	protected override void Dispose(bool disposing)
@@ -154,6 +183,14 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		this.cbTextClubEnabled = new System.Windows.Forms.CheckBox();
 		this.cbEmailVerified = new System.Windows.Forms.ComboBox();
 		this.labelEmailVerified = new System.Windows.Forms.Label();
+		this.emailConfirmationApiPanel = new System.Windows.Forms.Panel();
+		this.emailConfirmationPanelLabel = new System.Windows.Forms.Label();
+		this.emailConfAddressTextbox = new System.Windows.Forms.TextBox();
+		this.emailConfirmationEmailLabel = new System.Windows.Forms.Label();
+		this.emailConfirmationAccountLabel = new System.Windows.Forms.Label();
+		this.emailConfAccountNumberTextbox = new System.Windows.Forms.TextBox();
+		this.emailConfSend = new System.Windows.Forms.Button();
+		this.emailConfirmationApiPanel.SuspendLayout();
 		base.SuspendLayout();
 		this.m_confirmationStatusComboBox.FormattingEnabled = true;
 		this.m_confirmationStatusComboBox.Location = new System.Drawing.Point(144, 75);
@@ -237,7 +274,7 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		this.cbEmailVerified.FormattingEnabled = true;
 		this.cbEmailVerified.Items.AddRange(new object[3] { "null", "True", "False" });
 		this.cbEmailVerified.Location = new System.Drawing.Point(144, 154);
-		this.cbEmailVerified.Name = "comboBoxEmailVerified";
+		this.cbEmailVerified.Name = "cbEmailVerified";
 		this.cbEmailVerified.Size = new System.Drawing.Size(262, 21);
 		this.cbEmailVerified.TabIndex = 63;
 		this.labelEmailVerified.AutoSize = true;
@@ -246,8 +283,52 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		this.labelEmailVerified.Size = new System.Drawing.Size(70, 13);
 		this.labelEmailVerified.TabIndex = 64;
 		this.labelEmailVerified.Text = "Email Verified";
+		this.emailConfirmationApiPanel.Controls.Add(this.emailConfSend);
+		this.emailConfirmationApiPanel.Controls.Add(this.emailConfirmationAccountLabel);
+		this.emailConfirmationApiPanel.Controls.Add(this.emailConfAccountNumberTextbox);
+		this.emailConfirmationApiPanel.Controls.Add(this.emailConfirmationEmailLabel);
+		this.emailConfirmationApiPanel.Controls.Add(this.emailConfAddressTextbox);
+		this.emailConfirmationApiPanel.Controls.Add(this.emailConfirmationPanelLabel);
+		this.emailConfirmationApiPanel.Location = new System.Drawing.Point(28, 249);
+		this.emailConfirmationApiPanel.Name = "panel1";
+		this.emailConfirmationApiPanel.Size = new System.Drawing.Size(378, 102);
+		this.emailConfirmationApiPanel.TabIndex = 65;
+		this.emailConfirmationPanelLabel.AutoSize = true;
+		this.emailConfirmationPanelLabel.Location = new System.Drawing.Point(3, 3);
+		this.emailConfirmationPanelLabel.Name = "label3";
+		this.emailConfirmationPanelLabel.Size = new System.Drawing.Size(144, 13);
+		this.emailConfirmationPanelLabel.TabIndex = 0;
+		this.emailConfirmationPanelLabel.Text = "Email Confirmaton API Tester";
+		this.emailConfAddressTextbox.Location = new System.Drawing.Point(99, 19);
+		this.emailConfAddressTextbox.Name = "emailConfAddressTextbox";
+		this.emailConfAddressTextbox.Size = new System.Drawing.Size(156, 20);
+		this.emailConfAddressTextbox.TabIndex = 66;
+		this.emailConfirmationEmailLabel.AutoSize = true;
+		this.emailConfirmationEmailLabel.Location = new System.Drawing.Point(3, 22);
+		this.emailConfirmationEmailLabel.Name = "label4";
+		this.emailConfirmationEmailLabel.Size = new System.Drawing.Size(76, 13);
+		this.emailConfirmationEmailLabel.TabIndex = 67;
+		this.emailConfirmationEmailLabel.Text = "Email Address:";
+		this.emailConfirmationAccountLabel.AutoSize = true;
+		this.emailConfirmationAccountLabel.Location = new System.Drawing.Point(3, 45);
+		this.emailConfirmationAccountLabel.Name = "label5";
+		this.emailConfirmationAccountLabel.Size = new System.Drawing.Size(90, 13);
+		this.emailConfirmationAccountLabel.TabIndex = 69;
+		this.emailConfirmationAccountLabel.Text = "Account Number:";
+		this.emailConfAccountNumberTextbox.Location = new System.Drawing.Point(99, 42);
+		this.emailConfAccountNumberTextbox.Name = "emailConfAccountNumberTextbox";
+		this.emailConfAccountNumberTextbox.Size = new System.Drawing.Size(156, 20);
+		this.emailConfAccountNumberTextbox.TabIndex = 68;
+		this.emailConfSend.Location = new System.Drawing.Point(274, 19);
+		this.emailConfSend.Name = "emailConfSend";
+		this.emailConfSend.Size = new System.Drawing.Size(75, 23);
+		this.emailConfSend.TabIndex = 70;
+		this.emailConfSend.Text = "Send";
+		this.emailConfSend.UseVisualStyleBackColor = true;
+		this.emailConfSend.Click += new System.EventHandler(OnEmailConfirmationSend);
 		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+		base.Controls.Add(this.emailConfirmationApiPanel);
 		base.Controls.Add(this.labelEmailVerified);
 		base.Controls.Add(this.cbEmailVerified);
 		base.Controls.Add(this.cbTextClubEnabled);
@@ -265,6 +346,8 @@ public class MarketingOptinPreferencesPage : UserControl, IPreferencePageHost
 		base.Name = "MarketingOptinPreferencesPage";
 		base.Size = new System.Drawing.Size(519, 382);
 		base.Load += new System.EventHandler(MarketingOptinPreferencesPage_Load);
+		this.emailConfirmationApiPanel.ResumeLayout(false);
+		this.emailConfirmationApiPanel.PerformLayout();
 		base.ResumeLayout(false);
 		base.PerformLayout();
 	}

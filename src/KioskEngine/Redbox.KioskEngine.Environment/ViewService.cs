@@ -239,18 +239,7 @@ public class ViewService : IViewService
 
 	public string Peek(int index)
 	{
-		string result = null;
-		int num = 0;
-		foreach (IViewFrameInstance item in InnerStack)
-		{
-			if (index == num)
-			{
-				result = item?.ViewFrame?.ViewName;
-				break;
-			}
-			num++;
-		}
-		return result;
+		return PeekViewFrame(index)?.ViewFrame?.ViewName;
 	}
 
 	public void ClearCache(bool clearResourceViewsOnly)
@@ -428,6 +417,43 @@ public class ViewService : IViewService
 	public IViewFrameInstance PeekViewFrame()
 	{
 		return InnerStack.Peek();
+	}
+
+	public IViewFrameInstance PeekViewFrame(int index)
+	{
+		IViewFrameInstance result = null;
+		int num = 0;
+		foreach (IViewFrameInstance item in InnerStack)
+		{
+			if (index == num)
+			{
+				result = item;
+				break;
+			}
+			num++;
+		}
+		return result;
+	}
+
+	public IViewFrameInstance PeekViewFrameByName(string viewName, out int index)
+	{
+		index = -1;
+		IViewFrameInstance result = null;
+		int num = 0;
+		if (ViewStackCount > 0)
+		{
+			foreach (IViewFrameInstance item in InnerStack)
+			{
+				if (item?.ViewFrame?.ViewName == viewName)
+				{
+					index = num;
+					result = item;
+					break;
+				}
+				num++;
+			}
+		}
+		return result;
 	}
 
 	public void CacheViewFrame(IBaseViewFrame baseViewFrame)

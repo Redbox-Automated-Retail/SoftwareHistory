@@ -120,4 +120,10 @@ public interface ITitleProduct : IKioskProduct
 	string TivoQueryId { get; set; }
 
 	string Studio { get; }
+
+	DateTime? RedboxPlusEligibleDate { get; }
+
+	bool IsRedboxPlusEligible { get; }
+
+	DiscountRestriction DiscountRestriction { get; }
 }

@@ -14,6 +14,8 @@ public interface IAnalyticsService
 
 	IAnalyticsEvent AddView(string name);
 
+	void AddQueuedViewEvents();
+
 	IAnalyticsEvent AddViewEvent(string action, string name);
 
 	IAnalyticsData AddData(IAnalyticsData analyticsData);
@@ -34,11 +36,15 @@ public interface IAnalyticsService
 
 	IAnalyticsEvent AddViewEvent(IAnalyticsEvent evt);
 
+	IAnalyticsEvent AddOrQueueViewEvent(IAnalyticsEvent evt);
+
 	IAnalyticsEvent AddButtonPressEvent(string name, string eventSubType = null);
 
 	IAnalyticsEvent AddCheckBoxEvent(string name, bool isChecked);
 
 	IAnalyticsEvent AddTimeoutEvent(int timeOut);
+
+	IAnalyticsEvent AddTimeoutEvent(string viewName, int timeOut);
 
 	void WriteToFile(string sessionId, string contents, string extension);
 

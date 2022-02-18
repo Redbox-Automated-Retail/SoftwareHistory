@@ -2,10 +2,11 @@ namespace Redbox.KioskServices.Proxy.ComponentModel;
 
 public enum ConfirmationStatus
 {
-	DoNotShow,
-	SubscribedConfirmed,
-	SubscribedNotConfirmed,
-	NotSubscribedConfirmed,
-	NotSubscribedNotConfirmed,
-	NewCustomer
+	DontShow = 0,
+	DoNotShow = DontShow,
+	SubscribedConfirmed = 1,
+	SubscribedNotConfirmed = 2,
+	NotSubscribedConfirmed = 3,
+	NotSubscribedNotConfirmed = 4,
+	NewCustomer = 5
 }

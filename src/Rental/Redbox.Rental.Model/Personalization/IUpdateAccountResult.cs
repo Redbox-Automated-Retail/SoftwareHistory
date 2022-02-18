@@ -11,6 +11,8 @@ public interface IUpdateAccountResult
 
 	string MobilePhoneNumber { get; set; }
 
+	string TempPassword { get; set; }
+
 	UpdateAccountResponseErrors UpdateAccountResponseError { get; set; }
 
 	string ErrorMessage { get; set; }

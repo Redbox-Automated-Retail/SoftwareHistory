@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
@@ -157,10 +157,10 @@ public class KioskEventService : IKioskEventService
 
 	private void PerformUnload()
 	{
-		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
+		IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
 		if (service == null)
 		{
-			LogHelper.Instance.Log("KioskEventService.PerformUnload - IPromotionServices was not found");
+			LogHelper.Instance.Log("KioskEventService.PerformUnload - IHealthServices was not found");
 			return;
 		}
 		LogHelper.Instance.Log("KioskEventService.PerformUnload - unloading all {0} events to send to kiosk services", _kioskEvents.Count);
@@ -170,10 +170,10 @@ public class KioskEventService : IKioskEventService
 		{
 			try
 			{
-				List<KioskEvent> source = _kioskEvents.Take(count).ToList();
-				_kioskEvents.RemoveRange(0, source.Count());
-				service.SendKioskEvents(_storeManagerService.KioskId, ToKioskEventData(source.ToList()));
-				LogHelper.Instance.Log("KioskEventService.PerformUnload - unloading {0} events", source.Count());
+				List<KioskEvent> list = _kioskEvents.Take(count).ToList();
+				_kioskEvents.RemoveRange(0, list.Count());
+				service.SendKioskEvents(_storeManagerService.KioskId, list);
+				LogHelper.Instance.Log("KioskEventService.PerformUnload - unloading {0} events", list.Count());
 			}
 			catch (Exception e)
 			{
@@ -181,26 +181,6 @@ public class KioskEventService : IKioskEventService
 				_kioskEvents.Clear();
 			}
 		}
-	}
-
-	private List<KioskEventData> ToKioskEventData(List<KioskEvent> events)
-	{
-		List<KioskEventData> data = new List<KioskEventData>();
-		events.ForEach(delegate(KioskEvent e)
-		{
-			data.Add(new KioskEventData
-			{
-				Id = e.Id,
-				KioskEventType = (int)e.KioskEventType,
-				KioskEventSubType = e.KioskEventSubType,
-				EventTime = e.EventTime,
-				Elapsed = e.Elapsed,
-				RelatedId = e.RelatedId,
-				Success = e.Success,
-				Data = e.Data
-			});
-		});
-		return data;
 	}
 
 	private void Save()

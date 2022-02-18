@@ -7,7 +7,5 @@ public interface IPersonalizationServices
 {
 	string CustomerProfileNumber { get; set; }
 
-	void Login(int kioskId, string emailAddress, SecureString password, string phoneNumber, SecureString pin, string languageCode, RemoteServiceCallback completeCallback);
-
-	void UpdateAccount(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback, bool queued = false);
+	void UpdateAccount(int kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, RemoteServiceCallback completeCallback, bool queued = false, AccountSourceType source = AccountSourceType.General);
 }

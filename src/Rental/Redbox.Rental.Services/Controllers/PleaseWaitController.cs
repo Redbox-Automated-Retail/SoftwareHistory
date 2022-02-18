@@ -11,7 +11,7 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class PleaseWaitController : BaseViewController
 {
-	public static void ConfigureView(ActionCallbackInfo callbackInfo)
+	public static void ConfigureView(PleaseWaitParameters parameters)
 	{
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl != null)
@@ -26,7 +26,7 @@ public class PleaseWaitController : BaseViewController
 			PleaseWaitViewModel pleaseWaitViewModel = (PleaseWaitViewModel)(viewUserControl.DataContext = new PleaseWaitViewModel
 			{
 				TitleText = Resources.just_a_sec_label,
-				MessageText = Resources.alot_goingon_label,
+				MessageText = parameters?.MessageText,
 				AdImageSource = ad?.Image,
 				AdImageVisibility = ((ad == null) ? Visibility.Collapsed : Visibility.Visible),
 				AdImpression = ((ad != null) ? new AdImpression
@@ -36,7 +36,7 @@ public class PleaseWaitController : BaseViewController
 				} : null)
 			});
 			pleaseWaitViewModel.AdImpression?.Start();
-			callbackInfo?.CallbackAction?.Invoke(viewUserControl);
+			parameters?.CallbackAction?.Invoke(viewUserControl);
 		}
 	}
 

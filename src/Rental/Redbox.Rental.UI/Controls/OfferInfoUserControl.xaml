@@ -11,7 +11,7 @@
     </Grid.ColumnDefinitions>
     <Grid Row="1" ColumnSpan="2" Background="#FFFFFFFF" />
     <Grid Column="1" RowSpan="2" Background="#FFFFFFFF" />
-    <Redbox:RoundedButton Style="{StaticResource transparent_button_style}" Command="{Binding ContinueButtonCommand}" CommandParameter="{Binding CustomerOffer}">
+    <Redbox:RoundedButton Name="TransparentContinueButton" Style="{StaticResource transparent_button_style}" Command="{Binding ContinueButtonCommand}" CommandParameter="{Binding CustomerOffer}">
       <Grid Height="{Binding ControlHeight, FallbackValue=600}" Width="{Binding ControlWidth, FallbackValue=1024}">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" MinHeight="{Binding TopMargin}" />

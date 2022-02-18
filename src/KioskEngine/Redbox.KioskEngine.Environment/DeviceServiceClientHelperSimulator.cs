@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using DeviceService.ComponentModel;
 using DeviceService.ComponentModel.Commands;
 using DeviceService.ComponentModel.Requests;
@@ -9,6 +8,7 @@ using DeviceService.ComponentModel.Responses;
 using Newtonsoft.Json;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.ShoppingCart;
 
@@ -23,8 +23,6 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 	private Version _deviceServiceVersion;
 
 	private bool _statusChecked;
-
-	private bool? _supportsEMV;
 
 	private string _fileDir;
 
@@ -82,6 +80,8 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 
 	public bool SupportsEMV => true;
 
+	public bool SupportsVas => true;
+
 	public Version DeviceServiceVersion => _deviceServiceVersion;
 
 	public Version DeviceServiceClientVersion => _deviceServiceVersion;
@@ -123,6 +123,7 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 			case CardSourceType.QuickChip:
 			case CardSourceType.EMVContactless:
 			case CardSourceType.Mobile:
+			case CardSourceType.VASOnly:
 				obj = CreateEMVResponse(cardData, cardSourceType);
 				break;
 			default:
@@ -137,7 +138,11 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 	private BaseResponseEvent CreateEMVResponse(CardData cardData, CardSourceType sourceType)
 	{
 		EMVCardReadModel eMVCardReadModel = new EMVCardReadModel();
-		eMVCardReadModel = (EMVCardReadModel)ParseCardData(cardData, sourceType);
+		if (sourceType != CardSourceType.VASOnly)
+		{
+			eMVCardReadModel = (EMVCardReadModel)ParseCardData(cardData, sourceType);
+		}
+		eMVCardReadModel.VasData = cardData.VasData;
 		return new EMVCardReadResponseEvent(null)
 		{
 			Data = eMVCardReadModel,
@@ -169,7 +174,7 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 		};
 	}
 
-	public IReadCardJob StartCardRead(DeviceInputType deviceInputType, Action<BaseResponseEvent> readCardResponseHandler, Action<BaseResponseEvent> readCardEventHandler, int commandTimeout)
+	public IReadCardJob StartCardRead(DeviceInputType deviceInputType, Action<BaseResponseEvent> readCardResponseHandler, Action<BaseResponseEvent> readCardEventHandler, int commandTimeout, VasMode vasMode)
 	{
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		IShoppingSession currentSession = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetCurrentSession();
@@ -179,6 +184,7 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 		CardReadRequest cardReadRequest = new CardReadRequest
 		{
 			InputType = deviceInputType,
+			VasMode = vasMode,
 			Amount = d,
 			Timeout = commandTimeout + 5000,
 			ExcludeCardBrandBySource = deactivatedCardBrandSources,
@@ -285,31 +291,15 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 
 	public void SendTamperedCardReaderKioskAlertMessage()
 	{
-		ThreadPool.QueueUserWorkItem(delegate
+		try
 		{
-			try
-			{
-				IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-				long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
-				var message = new
-				{
-					MessageType = "KioskAlert",
-					MessageId = Guid.NewGuid(),
-					KioskId = num,
-					EngineVersion = service["EngineVersion"],
-					BundleVersion = service["ProductVersion"],
-					SubType = string.Format("mm:TamperedCardReaderError, {0}", "0099CDRR"),
-					Detail = string.Format("<h2>Kiosk Engine Card Reader Tampered Error</h2><p>Card Reader Tampering detected on Kiosk: {0}!<br><br>Placing Kiosk into Maintenance Mode.<br>{1}</p>", num, "0099CDRR"),
-					Type = "ApplicationCrash",
-					Time = DateTime.Now
-				};
-				ServiceLocator.Instance.GetService<IQueueService>()?.EnqueueKioskEvent(message);
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in HealthServicesProxy.SendKioskEvents.", e);
-			}
-		});
+			long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
+			ServiceLocator.Instance.GetService<IHealthServices>().SendAlert((ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0).ToString(), "ApplicationCrash", string.Format("mm:TamperedCardReaderError, {0}", "0099CDRR"), string.Format("<h2>Kiosk Engine Card Reader Tampered Error</h2><p>Card Reader Tampering detected on Kiosk: {0}!<br><br>Placing Kiosk into Maintenance Mode.<br>{1}</p>", num, "0099CDRR"), DateTime.Now, null, null, skipQueue: true);
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.Log("An unhandled exception was raised in DeviceServiceClientHelper.SendTamperdCardReaderKioskAlertMessage!", e);
+		}
 	}
 
 	public void GetCardInsertedStatus(Action<GetCardInsertedStatusResponseEvent> completeCallback)
@@ -343,18 +333,36 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 		}
 	}
 
-	private CardSourceType ParseCardSourceType(int sourceType)
+	private CardSourceType ParseCardSourceType(string sourceType)
 	{
-		return sourceType switch
+		switch (sourceType)
 		{
-			1 => CardSourceType.Swipe, 
-			5 => CardSourceType.EMVContactless, 
-			4 => CardSourceType.MSDContactless, 
-			2 => CardSourceType.EMVContact, 
-			3 => CardSourceType.QuickChip, 
-			6 => CardSourceType.Mobile, 
-			_ => CardSourceType.Unknown, 
-		};
+		case "M":
+		case "1":
+			return CardSourceType.Swipe;
+		case "E":
+		case "5":
+			return CardSourceType.EMVContactless;
+		case "C":
+		case "4":
+			return CardSourceType.MSDContactless;
+		case "S":
+		case "2":
+			return CardSourceType.EMVContact;
+		case "Q":
+		case "3":
+			return CardSourceType.QuickChip;
+		case "m":
+		case "6":
+			return CardSourceType.Mobile;
+		case "c":
+		case "7":
+			return CardSourceType.VASOnly;
+		case "cq":
+			return CardSourceType.VASOnly;
+		default:
+			return CardSourceType.Unknown;
+		}
 	}
 
 	private Base87CardReadModel ParseCardData(CardData cardData, CardSourceType sourceType)

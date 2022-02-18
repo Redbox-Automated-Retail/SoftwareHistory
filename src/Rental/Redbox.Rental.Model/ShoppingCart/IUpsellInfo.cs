@@ -21,5 +21,5 @@ public interface IUpsellInfo
 
 	void SetUpsellOffer(long originalProductId, UpsellItemOfferResponse offerResponse);
 
-	IUpsellItem GetUpsellItemByRentalShoppingCartItem(IRentalShoppingCartItem rentalShoppingCartItem);
+	IUpsellItem GetUpsellItemByRentalShoppingCartItem(IRentalShoppingCartTitleItem rentalShoppingCartItem);
 }

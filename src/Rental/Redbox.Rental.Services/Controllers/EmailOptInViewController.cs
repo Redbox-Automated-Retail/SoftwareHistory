@@ -5,6 +5,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.EmailOptInCampaign;
 using Redbox.Rental.Services.Session;
@@ -87,7 +88,7 @@ public class EmailOptInViewController : BaseViewController
 
 	public static void SendKioskOptinForEmailCampaign()
 	{
-		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
+		IMarketingServices service = ServiceLocator.Instance.GetService<IMarketingServices>();
 		IStoreManager service2 = ServiceLocator.Instance.GetService<IStoreManager>();
 		IOptInItem optInItem = service.NewOptInItem();
 		optInItem.Item_Type = KioskOptIntItemType.Non_Item_Specific;
@@ -96,8 +97,7 @@ public class EmailOptInViewController : BaseViewController
 		optInItem.OptInMethodType = OptInMethodType.EmailAddress;
 		optInItem.TemplateName = Redbox.Rental.Services.ApplicationState.Instance?.EmailOptInCampaign?.TemplateName;
 		optInItem.CampaignName = Redbox.Rental.Services.ApplicationState.Instance?.EmailOptInCampaign?.CampaignId;
-		List<IOptInItem> obj = new List<IOptInItem> { optInItem };
-		service?.KioskOptIn(optInItems: obj, storeNumber: service2?.KioskId.ToString() ?? "Unknown", callback: null);
+		service.KioskOptIn(optInItems: new List<IOptInItem> { optInItem }, kioskId: service2.KioskId, callback: null);
 	}
 
 	private static void ConfigureTextAndVisibility(EmailOptInViewModel emailOptInViewModel)
@@ -106,7 +106,6 @@ public class EmailOptInViewController : BaseViewController
 		emailOptInViewModel.YesButtonText = Resources.yes_button;
 		emailOptInViewModel.NoThanksButtonText = Resources.no_thanks_button;
 		emailOptInViewModel.MessageText = Resources.email_optin_offer_message;
-		ServiceLocator.Instance.GetService<IBitmapCacheService>();
 		IEmailOptInCampaign emailOptInCampaign = Redbox.Rental.Services.ApplicationState.Instance?.EmailOptInCampaign;
 		if (emailOptInCampaign != null && emailOptInCampaign.ImageName != null)
 		{

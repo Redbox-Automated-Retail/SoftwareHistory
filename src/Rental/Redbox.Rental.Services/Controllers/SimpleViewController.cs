@@ -72,7 +72,7 @@ public class SimpleViewController : BaseViewController
 		{
 			info.Model = new SimpleModel
 			{
-				ContinueButtonText = Resources.joined_texing_btn_text,
+				ContinueButtonText = Resources.joined_texing_btn_text?.ToUpper(),
 				MessageText = Resources.joined_texing_message,
 				TitleText = Resources.joined_texing_title
 			};
@@ -88,7 +88,7 @@ public class SimpleViewController : BaseViewController
 			IAd ad = ((!BaseViewController.ApplicationState.IsADAAccessible) ? BaseViewController.GetAd(AdLocation.EmailNotification) : null);
 			info.Model = new SimpleModel
 			{
-				ContinueButtonText = Resources.continue_button_mixed_case,
+				ContinueButtonText = Resources.continue_button_mixed_case.ToUpper(),
 				CommentText = Resources.email_receipt_comment,
 				TitleText = Resources.email_receipt_title,
 				MessageText = info.EmailAddress,
@@ -115,13 +115,26 @@ public class SimpleViewController : BaseViewController
 		BaseViewController.SetCurrentUICulture();
 		if (info.Model == null)
 		{
-			info.Model = new SimpleModel
+			if (info.ShowRedboxSweepstakes)
 			{
-				TitleText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? Resources.sony_sweepstakes_confirmation_email_title_text : Resources.sony_sweepstakes_confirmation_title_text),
-				MessageText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? string.Empty : Resources.sony_sweepstakes_confirmation_message_text),
-				ContinueButtonText = Resources.got_it_button.ToUpper(),
-				CommentText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? Resources.sony_sweepstakes_confirmation_email_comment_text : Resources.sony_sweepstakes_confirmation_comment_text)
-			};
+				info.Model = new SimpleModel
+				{
+					TitleText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? Resources.redbox_sweepstakes_confirmation_email_title_text : Resources.redbox_sweepstakes_confirmation_title_text),
+					MessageText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? string.Empty : Resources.sony_sweepstakes_confirmation_message_text),
+					ContinueButtonText = Resources.got_it_button.ToUpper(),
+					CommentText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? Resources.redbox_sweepstakes_confirmation_email_comment_text : Resources.redbox_sweepstakes_confirmation_comment_text)
+				};
+			}
+			else
+			{
+				info.Model = new SimpleModel
+				{
+					TitleText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? Resources.sony_sweepstakes_confirmation_email_title_text : Resources.sony_sweepstakes_confirmation_title_text),
+					MessageText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? string.Empty : Resources.sony_sweepstakes_confirmation_message_text),
+					ContinueButtonText = Resources.got_it_button.ToUpper(),
+					CommentText = ((!string.IsNullOrEmpty(info.EmailAddress)) ? Resources.sony_sweepstakes_confirmation_email_comment_text : Resources.sony_sweepstakes_confirmation_comment_text)
+				};
+			}
 		}
 		ConfigureView(info, info.UseIdleTimer.HasValue && info.UseIdleTimer.Value);
 	}

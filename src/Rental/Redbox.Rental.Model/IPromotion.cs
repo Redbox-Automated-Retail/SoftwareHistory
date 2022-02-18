@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.ShoppingCart;
 
@@ -9,6 +10,8 @@ public interface IPromotion
 	DiscountType DiscountType { get; set; }
 
 	string Name { get; set; }
+
+	int CampaignId { get; set; }
 
 	decimal OriginalPrice { get; set; }
 
@@ -36,7 +39,7 @@ public interface IPromotion
 
 	List<int> FormatIds { get; set; }
 
-	IList<IRentalShoppingCartItem> QualifyingItems { get; set; }
+	IList<IRentalShoppingCartTitleItem> QualifyingItems { get; set; }
 
 	IList<IPromotionItem> PromotionItems { get; set; }
 
@@ -49,4 +52,10 @@ public interface IPromotion
 	PromotionActionCode ActionCode { get; set; }
 
 	RentalShoppingCartItemAction CartItemAction { get; }
+
+	bool IsRedboxPlusFreeOneNightRental { get; }
+
+	bool AllowFullDiscount { get; set; }
+
+	IDefaultPromo DefaultPromo { get; set; }
 }

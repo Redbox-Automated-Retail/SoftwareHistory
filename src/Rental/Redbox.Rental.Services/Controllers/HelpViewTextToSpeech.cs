@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.UI.Models;
@@ -133,7 +132,7 @@ public class HelpViewTextToSpeech
 			Value = tabKeySpeechPart
 		});
 		int num = 1;
-		foreach (HelpButtonData button in viewModel.TopRowButtonList.Union(viewModel.BottomRowButtonList))
+		foreach (HelpButtonData button in viewModel.ButtonList)
 		{
 			if (button.DocumentToShow != viewModel.CurrentHelpDocument)
 			{

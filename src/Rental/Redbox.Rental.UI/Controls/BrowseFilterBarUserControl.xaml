@@ -11,14 +11,14 @@
   </UIElement.CommandBindings>
   <Grid Background="#FFFFFF" Height="59">
     <DockPanel LastChildFill="True" Margin="59,0,0,0">
-      <Redbox:RoundedButton Name="startover_button" Command="{x:Static localbase:Commands.StartOverCommand}" HorizontalAlignment="Left" Margin="8,0" Focusable="False" Style="{Binding Path=StartOverButtonStyle, FallbackValue={StaticResource english_start_over_button_style}}" Visibility="{Binding Path=StartOverButtonVisibility, FallbackValue=Visible}">
+      <Redbox:RoundedButton Name="startover_button" Style="{StaticResource thin_border_button_style}" Height="32" Width="119" Command="{x:Static localbase:Commands.StartOverCommand}" HorizontalAlignment="Left" Margin="8,0" Focusable="False" Visibility="{Binding Path=StartOverButtonVisibility, FallbackValue=Visible}">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-          <TextBlock Style="{StaticResource font_montserrat_extrabold_14}" VerticalAlignment="Center" TextWrapping="NoWrap" TextAlignment="Center" Text="{Binding Path=StartOverButtonText, FallbackValue=Start Over}" />
+          <TextBlock Style="{StaticResource font_montserrat_extrabold_14}" VerticalAlignment="Center" TextWrapping="NoWrap" TextAlignment="Center" Text="{Binding Path=StartOverButtonText, FallbackValue=QUIT}" />
         </StackPanel>
       </Redbox:RoundedButton>
       <Redbox:RoundedButton Name="home_button" Style="{StaticResource thin_border_button_style}" Height="32" Width="119" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.HomeCommand}" HorizontalAlignment="Left" Margin="8,0" Focusable="False" Visibility="{Binding Path=HomeButtonVisibility, FallbackValue=Visible}">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-          <TextBlock Style="{StaticResource font_montserrat_extrabold_14}" VerticalAlignment="Center" TextWrapping="Wrap" Width="85" TextAlignment="Center" Text="{Binding Path=HomeButtonText, FallbackValue=Home}" />
+          <TextBlock Style="{StaticResource font_montserrat_extrabold_14}" VerticalAlignment="Center" TextWrapping="Wrap" Width="85" TextAlignment="Center" Text="{Binding Path=HomeButtonText, FallbackValue=QUIT}" />
         </StackPanel>
       </Redbox:RoundedButton>
       <Redbox:RoundedButton Name="BackButton" Style="{StaticResource thin_border_button_style}" Height="32" Command="{x:Static localbase:Commands.GoBackCommand}" HorizontalAlignment="Left" Margin="8,0" Visibility="{Binding Path=BackButtonVisibility, FallbackValue=Collapsed}">

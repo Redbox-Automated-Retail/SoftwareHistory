@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskServices.Proxy;
 
 namespace Redbox.KioskServices.KernelExtension;
 
@@ -82,14 +82,15 @@ public class PromotionServicesPreferencePage : UserControl, IPreferencePageHost
 		{
 			m_promoIntentComboBox.Items.Add(item2);
 		}
+		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
 		m_responseTypeComboBox.SelectedIndex = 0;
 		m_promoIntentComboBox.SelectedIndex = 0;
-		m_liveCallCheckBox.Checked = PromotionServicesProxy.Instance.LiveCall;
-		m_simulateServerBusyCheckBox.Checked = PromotionServicesProxy.Instance.SimulateServerBusyError;
-		m_simulateCommunicationsFailureCheckBox.Checked = PromotionServicesProxy.Instance.SimulateCommunicationsFailure;
+		m_liveCallCheckBox.Checked = service.LiveCall;
+		m_simulateServerBusyCheckBox.Checked = service.SimulateServerBusyError;
+		m_simulateCommunicationsFailureCheckBox.Checked = service.SimulateCommunicationsFailure;
 		m_promoCodeListView.BeginUpdate();
 		m_promoCodeListView.Items.Clear();
-		names = PromotionServicesProxy.Instance.PromoCodes;
+		names = service.PromoCodes;
 		for (int i = 0; i < names.Length; i++)
 		{
 			string[] array = names[i].Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
@@ -153,7 +154,7 @@ public class PromotionServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			PromotionServicesProxy.Instance.LiveCall = m_liveCallCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IPromotionServices>().LiveCall = m_liveCallCheckBox.Checked;
 		}
 	}
 
@@ -161,7 +162,7 @@ public class PromotionServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			PromotionServicesProxy.Instance.SimulateServerBusyError = m_simulateServerBusyCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IPromotionServices>().SimulateServerBusyError = m_simulateServerBusyCheckBox.Checked;
 		}
 	}
 
@@ -169,7 +170,7 @@ public class PromotionServicesPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			PromotionServicesProxy.Instance.SimulateCommunicationsFailure = m_simulateCommunicationsFailureCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IPromotionServices>().SimulateCommunicationsFailure = m_simulateCommunicationsFailureCheckBox.Checked;
 		}
 	}
 
@@ -180,7 +181,7 @@ public class PromotionServicesPreferencePage : UserControl, IPreferencePageHost
 		{
 			list.Add($"{item.SubItems[0].Text}|{item.SubItems[1].Text}|{item.SubItems[2].Text}|{item.SubItems[3].Text}");
 		}
-		PromotionServicesProxy.Instance.PromoCodes = list.ToArray();
+		ServiceLocator.Instance.GetService<IPromotionServices>().PromoCodes = list.ToArray();
 	}
 
 	protected override void Dispose(bool disposing)

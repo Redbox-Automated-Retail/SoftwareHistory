@@ -28,6 +28,8 @@ public static class ConfigSetting
 
 	public const string MarketingOptInEnabled = "MarketingOptInEnabled";
 
+	public const string RecommendationOnPickup = "RecommendationOnPickup";
+
 	public const string ShowOptinForNormalCheckout = "ShowOptinForNormalCheckout";
 
 	public const string ServiceFeeEnabled = "ServiceFeeEnabled";
@@ -94,13 +96,25 @@ public static class ConfigSetting
 
 	public const string SendAuditEventsToKioskDataService = "SendAuditEventsToKioskDataService";
 
-	public const string SendKioskFunctionChecksToKioskServices = "SendKioskAlertsToKioskServices";
+	public const string SendKioskFunctionChecksToKioskServices = "SendKioskFunctionChecksToKioskServices";
 
-	public const string SendKioskFunctionChecksToKioskDataService = "SendKioskAlertsToKioskDataService";
+	public const string SendKioskFunctionChecksToKioskDataService = "SendKioskFunctionChecksToKioskDataService";
 
 	public const string SendKioskEventsToKioskServices = "SendKioskEventsToKioskServices";
 
 	public const string SendKioskEventsToKioskDataService = "SendKioskEventsToKioskDataService";
+
+	public const string TextToSpeechVolume = "TextToSpeechVolume";
+
+	public const string StartViewDarkModeEnabled = "StartViewDarkModeEnabled";
+
+	public const string StartViewDarkModeStartTime = "StartViewDarkModeStartTime";
+
+	public const string StartViewDarkModeEndTime = "StartViewDarkModeEndTime";
+
+	public const string ButtonAnimationEnabled = "ButtonAnimationEnabled";
+
+	public const string LoginLockoutMinutes = "LoginLockoutMinutes";
 
 	public const string GameEnableXbox360 = "GameEnableXbox360";
 
@@ -148,6 +162,8 @@ public static class ConfigSetting
 
 	public const string FlashDealPrices = "FlashDealPrices";
 
+	public const string ShowBrowse10Titles = "ShowBrowse10Titles";
+
 	public const string Show99CentsBrowseFilterButton = "Show99CentsBrowseFilterButton";
 
 	public const string ShowExpandedFormatButtons = "ShowExpandedFormatButtons";
@@ -160,21 +176,21 @@ public static class ConfigSetting
 
 	public const string EnableSonySweepstakes = "EnableSonySweepstakes";
 
-	public const string ShowFAQUpdated = "ShowFAQUpdated";
+	public const string EnableRedboxSweepstakes = "EnableRedboxSweepstakes";
 
-	public const string ShowTermsUpdated = "ShowTermsUpdated";
+	public const string EnableAvodLeadGenerationOfferWithoutBoxArt = "EnableAvodLeadGenerationOfferWithoutBoxArt";
 
-	public const string ShowRedboxCardUpdated = "ShowRedboxCardUpdated";
+	public const string EnableAvodLeadGenerationOfferWithBoxArt = "EnableAvodLeadGenerationOfferWithBoxArt";
 
-	public const string ShowPrivacyUpdated = "ShowPrivacyUpdated";
+	public const string EnableRedboxPlusLeadGenerationOffer = "EnableRedboxPlusLeadGenerationOffer";
 
-	public const string ShowPerksUpdated = "ShowPerksUpdated";
+	public const string EnableStarzOffer = "EnableStarzOffer";
 
-	public const string ShowMobileFaqUpdated = "ShowMobileFAQUpdated";
+	public const string EnableRedboxPlusOffer = "EnableRedboxPlusOffer";
 
-	public const string ShowCAPrivacyNoticeUpdated = "ShowCAPrivacyNoticeUpdated";
+	public const string EnableRedboxPlusRedemption = "EnableRedboxPlusRedemption";
 
-	public const string ShowDoNotSellUpdated = "ShowDoNotSellUpdated";
+	public const string EnableMeijerVSM = "EnableMeijerVSM";
 
 	public const string FAQDocument = "FAQDocument";
 
@@ -191,6 +207,10 @@ public static class ConfigSetting
 	public const string CAPrivacyNoticeDocument = "CAPrivacyNoticeDocument";
 
 	public const string DoNotSellDocument = "DoNotSellDocument";
+
+	public const string SubscriptionsDocument = "SubscriptionsDocument";
+
+	public const string RedboxPlusDocument = "RedboxPlusDocument";
 
 	public const string ABTestOffValue = "OFF";
 
@@ -262,6 +282,8 @@ public static class ConfigSetting
 
 	public const string LoyaltySignUpAfterSwipeStartEndTime = "SignUpAfterSwipeStartEndTime";
 
+	public const string PerksPassEnabled = "PerksPassEnabled";
+
 	public const string DeviceServiceClientUrl = "DeviceServiceClientUrl";
 
 	public const string ChipEnabled = "ChipEnabled";
@@ -296,6 +318,10 @@ public static class ConfigSetting
 
 	public const string HideGooglePayImage = "HideGooglePayImage";
 
+	public const string GoogleUrl = "GoogleUrl";
+
+	public const string AppleUrl = "AppleUrl";
+
 	public const string BluefinAutoActivate = "BluefinAutoActivate";
 
 	public const string BluefinServiceUrl = "BluefinServiceUrl";
@@ -305,6 +331,8 @@ public static class ConfigSetting
 	public const string BluefinServiceTimeout = "BluefinServiceTimeout";
 
 	public const string KioskClientServiceBaseUrl = "KioskClientServiceBaseUrl";
+
+	public const string UpdateClientServiceBaseUrl = "UpdateClientServiceBaseUrl";
 
 	public const string UseMerchOrdersForThinning = "UseMerchOrdersForThinning";
 
@@ -323,4 +351,70 @@ public static class ConfigSetting
 	public const string ZeroTouchContactlessEnabled = "ZeroTouchContactlessEnabled";
 
 	public const string ZeroTouchReadTimeout = "ZeroTouchReadTimeout";
+
+	public const string ZeroTouchVasEnabled = "ZeroTouchVasEnabled";
+
+	public const string ZeroTouchGoogleTwoTap = "ZeroTouchGoogleTwoTap";
+
+	public const string AuthorizeTimeout = "AuthorizeTimeout";
+
+	public const string SendAuthorizeToKioskClientService = "SendAuthorizeToKioskClientService";
+
+	public const string SendReturnToKioskClientService = "SendReturnToKioskClientService";
+
+	public const string SendGiftCardAuthorizeToKioskClientService = "SendGiftCardAuthorizeToKioskClientService";
+
+	public const string SendPickupAuthorizeToKioskClientService = "SendPickupAuthorizeToKioskClientService";
+
+	public const string SendReservationAuthorizeToKioskClientService = "SendReservationAuthorizeToKioskClientService";
+
+	public const string SendExpireAndCancelReservationToKioskClientService = "SendExpireAndCancelReservationToKioskClientService";
+
+	public const string SendReconcileToKioskClientService = "SendReconcileToKioskClientService";
+
+	public const string SendInventorySnapshotToKioskClientService = "SendInventorySnapshotToKioskClientService";
+
+	public const string KioskClientServiceInventorySnapshotTimeout = "KioskClientServiceInventorySnapshotTimeout";
+
+	public const string SendReservationPickupToKioskClientService = "SendReservationPickupToKioskClientService";
+
+	public const string SendCustomerOffersToKioskClientService = "SendCustomerOffersToKioskClientService";
+
+	public const string SendDiscActionToKioskClientService = "SendDiscActionToKioskClientService";
+
+	public const string KioskClientServiceDiscActionTimeout = "KioskClientServiceDiscActionTimeout";
+
+	public const string SendPickupValidationToKioskClientService = "SendPickupValidationToKioskClientService";
+
+	public const string SendDiscFraudToKioskClientService = "SendDiscFraudToKioskClientService";
+
+	public const string KioskClientServiceDiscFraudTimeout = "KioskClientServiceDiscFraudTimeout";
+
+	public const string SendAuthenticationApisToKioskClientService = "SendAuthenticationApisToKioskClientService";
+
+	public const string SendInstallerApisToKioskClientService = "SendInstallerApisToKioskClientService";
+
+	public const string SendMarketingApisToKioskClientService = "SendMarketingApisToKioskClientService";
+
+	public const string SendEstimateAccrualToKioskClientService = "SendEstimateAccrualToKioskClientService";
+
+	public const string KioskClientServiceEstimateAccrualTimeout = "KioskClientServiceEstimateAccrualTimeout";
+
+	public const string SendEstimateRedemptionToKioskClientService = "SendEstimateRedemptionToKioskClientService";
+
+	public const string KioskClientServiceEstimateRedemptionTimeout = "KioskClientServiceEstimateRedemptionTimeout";
+
+	public const string SendPromoCodeValidationToKioskClientService = "SendPromoCodeValidationToKioskClientService";
+
+	public const string KioskClientServicePromoCodeValidationTimeout = "KioskClientServicePromoCodeValidationTimeout";
+
+	public const string SendUpdateAccountToKioskClientService = "SendUpdateAccountToKioskClientService";
+
+	public const string KioskClientServiceUpdateAccountTimeout = "KioskClientServiceUpdateAccountTimeout";
+
+	public const string KioskEngineApiServiceBaseUrl = "KioskEngineApiServiceBaseUrl";
+
+	public const string UseLegacyBrokerService = "UseLegacyBrokerService";
+
+	public const string UseAWSBrokerService = "UseAWSBrokerService";
 }

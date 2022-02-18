@@ -2,21 +2,20 @@ using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Services.ShoppingCart;
 
 public class ComingSoonOptinInfo : IComingSoonOptinInfo
 {
-	private List<IOptInItem> _optInItems = new List<IOptInItem>();
-
 	public string EmailAddress { get; set; }
 
-	public List<IOptInItem> OptInItems => _optInItems;
+	public List<IOptInItem> OptInItems { get; } = new List<IOptInItem>();
 
 	public void AddProduct(long productId)
 	{
-		IOptInItem optInItem = ServiceLocator.Instance.GetService<IPromotionServices>()?.NewOptInItem();
+		IOptInItem optInItem = ServiceLocator.Instance.GetService<IMarketingServices>()?.NewOptInItem();
 		if (optInItem != null)
 		{
 			optInItem.ItemId = productId;

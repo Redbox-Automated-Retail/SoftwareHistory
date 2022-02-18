@@ -689,7 +689,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 		else
 		{
 			string processName = ProcessFunctions.CombinePaths(text, "mshaltester.exe");
-			string text2 = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser ?? "N/A";
+			string text2 = ServiceLocator.Instance.GetService<IControlPanelService>()?.LoggedInUser.CheckNotAvailable();
 			ProcessFunctions.LaunchProcess(processName, "--secure --username:" + text2, hiddenProcess: false);
 		}
 	}

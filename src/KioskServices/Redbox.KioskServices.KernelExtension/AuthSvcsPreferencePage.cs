@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy;
 using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.KioskServices.KernelExtension;
@@ -67,13 +67,14 @@ public class AuthSvcsPreferencePage : UserControl, IPreferencePageHost
 			m_responseTypeComboBox.Items.Add(item);
 		}
 		m_responseTypeComboBox.SelectedIndex = 0;
-		m_liveCallCheckBox.Checked = AuthenticationServicesProxy.Instance.LiveCall;
-		m_simulateServerBusyCheckBox.Checked = AuthenticationServicesProxy.Instance.SimulateServerBusyError;
-		m_enableLocalAccountCachingCheckBox.Checked = AuthenticationServicesProxy.Instance.EnableLocalAccountCaching;
-		m_simulateCommunicationsFailureCheckBox.Checked = AuthenticationServicesProxy.Instance.SimulateCommunicationsFailure;
+		IAuthenticationServices service = ServiceLocator.Instance.GetService<IAuthenticationServices>();
+		m_liveCallCheckBox.Checked = service.LiveCall;
+		m_simulateServerBusyCheckBox.Checked = service.SimulateServerBusyError;
+		m_enableLocalAccountCachingCheckBox.Checked = service.EnableLocalAccountCaching;
+		m_simulateCommunicationsFailureCheckBox.Checked = service.SimulateCommunicationsFailure;
 		m_usersListView.BeginUpdate();
 		m_usersListView.Items.Clear();
-		names = AuthenticationServicesProxy.Instance.Users;
+		names = service.Users;
 		for (int i = 0; i < names.Length; i++)
 		{
 			string[] array = names[i].Split(new char[1] { '|' }, StringSplitOptions.RemoveEmptyEntries);
@@ -125,7 +126,7 @@ public class AuthSvcsPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			AuthenticationServicesProxy.Instance.LiveCall = m_liveCallCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IAuthenticationServices>().LiveCall = m_liveCallCheckBox.Checked;
 		}
 	}
 
@@ -133,7 +134,7 @@ public class AuthSvcsPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			AuthenticationServicesProxy.Instance.SimulateServerBusyError = m_simulateServerBusyCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IAuthenticationServices>().SimulateServerBusyError = m_simulateServerBusyCheckBox.Checked;
 		}
 	}
 
@@ -141,7 +142,7 @@ public class AuthSvcsPreferencePage : UserControl, IPreferencePageHost
 	{
 		if (m_isLoaded)
 		{
-			AuthenticationServicesProxy.Instance.SimulateCommunicationsFailure = m_simulateCommunicationsFailureCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IAuthenticationServices>().SimulateCommunicationsFailure = m_simulateCommunicationsFailureCheckBox.Checked;
 		}
 	}
 
@@ -152,14 +153,14 @@ public class AuthSvcsPreferencePage : UserControl, IPreferencePageHost
 		{
 			list.Add($"{item.SubItems[0].Text}|{item.SubItems[1].Text}");
 		}
-		AuthenticationServicesProxy.Instance.Users = list.ToArray();
+		ServiceLocator.Instance.GetService<IAuthenticationServices>().Users = list.ToArray();
 	}
 
 	private void OnEnableLocalAccountCachingCheckChanged(object sender, EventArgs e)
 	{
 		if (m_isLoaded)
 		{
-			AuthenticationServicesProxy.Instance.EnableLocalAccountCaching = m_enableLocalAccountCachingCheckBox.Checked;
+			ServiceLocator.Instance.GetService<IAuthenticationServices>().EnableLocalAccountCaching = m_enableLocalAccountCachingCheckBox.Checked;
 		}
 	}
 

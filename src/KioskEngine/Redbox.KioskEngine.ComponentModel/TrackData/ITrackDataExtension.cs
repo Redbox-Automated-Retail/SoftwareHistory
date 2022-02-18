@@ -39,6 +39,33 @@ public static class ITrackDataExtension
 		return false;
 	}
 
+	public static bool CardSourceTypeIsMobileAndHasPayAndNotVas(this ITrackData td)
+	{
+		if (td != null && td.CardSourceType == CardSourceType.Mobile && td.HasPay)
+		{
+			return !td.HasVas;
+		}
+		return false;
+	}
+
+	public static bool WalletTypeIsGoogleAndHasPayAndHasVas(this ITrackData td)
+	{
+		if (td != null && td.WalletType == WalletType.Google && td.HasPay)
+		{
+			return td.HasVas;
+		}
+		return false;
+	}
+
+	public static bool WalletTypeIsGoogleAndNotVas(this ITrackData td)
+	{
+		if (td != null && td.WalletType == WalletType.Google)
+		{
+			return !td.HasVas;
+		}
+		return false;
+	}
+
 	public static bool HasErrors(this ITrackData td)
 	{
 		if (td != null && td.Errors != null)

@@ -1,4 +1,4 @@
-using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService.Ads;
 
 namespace Redbox.Rental.Services.KioskClientService.Ads;

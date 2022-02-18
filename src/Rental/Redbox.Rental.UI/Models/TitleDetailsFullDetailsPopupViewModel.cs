@@ -41,6 +41,8 @@ public class TitleDetailsFullDetailsPopupViewModel : BrowseItemModel
 
 	public string OneNightPriceLabel { get; set; }
 
+	public string FormatInfo { get; set; }
+
 	public string OneNightPrices { get; set; }
 
 	public string OneNightReturnTimeLabel { get; set; }

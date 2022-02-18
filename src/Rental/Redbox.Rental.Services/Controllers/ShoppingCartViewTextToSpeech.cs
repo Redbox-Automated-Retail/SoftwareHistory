@@ -217,7 +217,7 @@ public class ShoppingCartViewTextToSpeech
 		{
 			int num2 = 0;
 			List<SpeechPart> speechParts = new List<SpeechPart>();
-			foreach (IRentalShoppingCartItem eachCartItem in RentalShoppingCartService.CurrentRentalShoppingCart.Items)
+			foreach (IRentalShoppingCartTitleItem eachCartItem in RentalShoppingCartService.CurrentRentalShoppingCart.TitleItems)
 			{
 				int speechPartIndex = num2;
 				speechParts.Add(new SpeechPart
@@ -291,7 +291,7 @@ public class ShoppingCartViewTextToSpeech
 				{
 					speechPart2.Texts.Add(new TextPart
 					{
-						Text = shoppingCartViewModel?.PointsEstimateText
+						Text = string.Format($"You'll earn {shoppingCartViewModel?.PointsEstimateText} for the stuff in your bag.")
 					});
 				}
 			}

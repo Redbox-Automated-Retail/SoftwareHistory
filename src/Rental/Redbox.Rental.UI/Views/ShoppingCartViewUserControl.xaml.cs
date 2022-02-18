@@ -46,20 +46,10 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 		HandleWPFHit();
 	}
 
-	private void PromoCodeCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = Model?.PromoCodeButtonEnabled ?? false;
-	}
-
 	private void PayCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		Model?.ProcessOnPayButtonClicked();
 		HandleWPFHit();
-	}
-
-	private void PayCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = Model?.PayButtonEnabled ?? false;
 	}
 
 	private void AddMovieCommandCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -129,18 +119,47 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 		Model?.ProcessOnSignInButtonClicked();
 	}
 
-	private void UsePointsCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = Model?.UsePointsButtonEnabled ?? false;
-	}
-
 	private void UsePointsCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		Model?.ProcessOnUsePointsButtonClicked();
 	}
 
+	private void PointsBalanceInfoCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		Model?.ProcessOnPointsBalanceInfoButtonClicked();
+	}
+
+	private void ViewOfferDetailsCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		DisplayCheckoutProductModel displayProductModel = (e.OriginalSource as FrameworkElement)?.DataContext as DisplayCheckoutProductModel;
+		if (Model != null)
+		{
+			Model.ProcessOnViewOfferDetailsButtonClicked(displayProductModel);
+		}
+	}
+
+	private void ScanStarzQRCodeCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		Model?.ProcessOnScanStarzQRCodeButtonClicked();
+	}
+
 	private void ShoppingCartViewUserControl_Loaded(object sender, RoutedEventArgs e)
 	{
 		Model?.ProcessOnLoaded();
+	}
+
+	private void ViewRedboxPlusOfferCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		Model?.ProcessOnViewRedboxPlusOfferButtonClicked();
+	}
+
+	private void ScanRedboxPlusQRCodeCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		Model?.ProcessOnScanRedboxPlusQRCodeButtonClicked();
+	}
+
+	private void ViewStarzOfferCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		Model?.ProcessOnViewStarzOfferButtonClicked();
 	}
 }

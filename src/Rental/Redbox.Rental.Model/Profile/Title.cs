@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.Model.Profile;
 
@@ -89,6 +90,20 @@ public class Title : ILuaKeyValue
 		}
 	}
 
+	public DateTime? RedboxPlusEligibleDate { get; set; }
+
+	public bool IsRedboxPlusEligible
+	{
+		get
+		{
+			if (!RedboxPlusEligibleDate.HasValue)
+			{
+				return false;
+			}
+			return RedboxPlusEligibleDate <= DateTime.Now;
+		}
+	}
+
 	public bool DoNotRent
 	{
 		get
@@ -102,6 +117,8 @@ public class Title : ILuaKeyValue
 	}
 
 	public bool IsAvailable => DateTime.Now > (MerchandiseDate ?? DateTime.Today);
+
+	public DiscountRestriction DiscountRestriction { get; set; }
 
 	public override string ToString()
 	{

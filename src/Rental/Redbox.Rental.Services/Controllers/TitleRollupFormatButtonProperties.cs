@@ -14,4 +14,10 @@ public class TitleRollupFormatButtonProperties
 	public Visibility Visibility { get; set; }
 
 	public bool IsEnabled { get; set; }
+
+	public void HideAndDisableButton()
+	{
+		Visibility = Visibility.Collapsed;
+		IsEnabled = false;
+	}
 }

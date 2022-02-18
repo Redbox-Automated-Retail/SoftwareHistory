@@ -532,6 +532,32 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 		}
 	}
 
+	public DateTime? RedboxPlusEligibleDate => _primaryTitle?.RedboxPlusEligibleDate;
+
+	public bool IsRedboxPlusEligible
+	{
+		get
+		{
+			if (!RedboxPlusEligibleDate.HasValue)
+			{
+				return false;
+			}
+			return RedboxPlusEligibleDate <= DateTime.Now;
+		}
+	}
+
+	public DiscountRestriction DiscountRestriction
+	{
+		get
+		{
+			if (_primaryTitle != null)
+			{
+				return _primaryTitle.DiscountRestriction;
+			}
+			return DiscountRestriction.None;
+		}
+	}
+
 	public TitleRollupProduct(ProductGroup productGroup, Dictionary<long, ITitleProduct> titleProducts, Dictionary<long, MDVProduct> mdvProducts, IProfileDataInstance profile, Store store)
 		: base(store)
 	{

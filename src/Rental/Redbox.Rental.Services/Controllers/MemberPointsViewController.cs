@@ -94,16 +94,16 @@ public class MemberPointsViewController : BaseLoyaltyController
 		{
 			return;
 		}
-		foreach (IRentalShoppingCartItem item in rentalShoppingCart.Items)
+		foreach (IRentalShoppingCartTitleItem titleItem in rentalShoppingCart.TitleItems)
 		{
 			IKioskProduct kioskProduct = null;
-			BaseViewController.DataService.GetProduct(item.ProductId, excludeTitleRollup: true, out kioskProduct);
+			BaseViewController.DataService.GetProduct(titleItem.ProductId, excludeTitleRollup: true, out kioskProduct);
 			if (kioskProduct != null)
 			{
 				DisplayProductModel displayProductModel = new DisplayProductModel
 				{
 					Name = kioskProduct.ProductName,
-					Data = item,
+					Data = titleItem,
 					Image = OrchestrationService.GetProductBitmapImage(kioskProduct)
 				};
 				displayProductModel.ConfigureForUpdateADACart();
@@ -114,11 +114,11 @@ public class MemberPointsViewController : BaseLoyaltyController
 				ConfigureProductFlag(displayProductModel, ProductFlags.Points);
 				model.DisplayProductModels.Add(displayProductModel);
 			}
-			if (item.LoyaltyPointsRecord != null && item.LoyaltyPointsRecord.ToBeRedeemed)
+			if (titleItem.LoyaltyPointsRecord != null && titleItem.LoyaltyPointsRecord.ToBeRedeemed)
 			{
-				model.SelectedProductIds.Add(item.ProductId);
-				model.EntryShoppingProductIds.Add(item.ProductId);
-				item.LoyaltyPointsRecord.ToBeRedeemed = false;
+				model.SelectedProductIds.Add(titleItem.ProductId);
+				model.EntryShoppingProductIds.Add(titleItem.ProductId);
+				titleItem.LoyaltyPointsRecord.ToBeRedeemed = false;
 			}
 		}
 	}
@@ -132,10 +132,10 @@ public class MemberPointsViewController : BaseLoyaltyController
 		IEstimateRedemptionPointsResult estimateRedemptionPoints = pointsInfo.EstimateRedemptionPoints;
 		if (estimateRedemptionPoints != null && estimateRedemptionPoints.Success)
 		{
-			IList<IRentalShoppingCartItem> source = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.Items;
+			IList<IRentalShoppingCartTitleItem> source = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.TitleItems;
 			foreach (IProductEstimatedRedemptionPoints productEstimatedRedemptionPoints in estimateRedemptionPoints.ProductEstimatedRedemptionPointsList)
 			{
-				IRentalShoppingCartItem rentalShoppingCartItem = source.FirstOrDefault((IRentalShoppingCartItem x) => x.ProductId == productEstimatedRedemptionPoints.ProductId);
+				IRentalShoppingCartTitleItem rentalShoppingCartItem = source.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.ProductId == productEstimatedRedemptionPoints.ProductId);
 				if (rentalShoppingCartItem != null)
 				{
 					if (rentalShoppingCartItem.LoyaltyPointsRecord == null)
@@ -174,7 +174,7 @@ public class MemberPointsViewController : BaseLoyaltyController
 		displayProductModel.FlagStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), productFlag?.FlagStyleName);
 		if (displayProductModel.FlagVisibility == Visibility.Visible)
 		{
-			displayProductModel.FlagMargin = new Thickness(0.0, 45.0, 0.0, 0.0);
+			displayProductModel.FlagMargin = new Thickness(0.0, 31.0, 0.0, 0.0);
 		}
 		double imageOpacity = 1.0;
 		if (pointsRecord != null)
@@ -210,10 +210,10 @@ public class MemberPointsViewController : BaseLoyaltyController
 		BaseViewController.StopIdleTimer();
 		MemberPointsModel viewModel = BaseViewController.GetViewModel<MemberPointsModel>();
 		List<long> entryShoppingProductIds = viewModel.EntryShoppingProductIds;
-		IList<IRentalShoppingCartItem> list = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.Items;
+		IList<IRentalShoppingCartTitleItem> list = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.TitleItems;
 		if (list != null && viewModel != null)
 		{
-			foreach (IRentalShoppingCartItem item in list)
+			foreach (IRentalShoppingCartTitleItem item in list)
 			{
 				if (item.LoyaltyPointsRecord != null)
 				{
@@ -242,15 +242,15 @@ public class MemberPointsViewController : BaseLoyaltyController
 	{
 		BaseViewController.StopIdleTimer();
 		MemberPointsModel viewModel = BaseViewController.GetViewModel<MemberPointsModel>();
-		IList<IRentalShoppingCartItem> list = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.Items;
+		IList<IRentalShoppingCartTitleItem> list = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.TitleItems;
 		if (list != null && viewModel != null)
 		{
 			foreach (long selectedProductId in viewModel.SelectedProductIds)
 			{
-				IRentalShoppingCartItem rentalShoppingCartItem = list.FirstOrDefault((IRentalShoppingCartItem x) => x.ProductId == selectedProductId);
-				if (rentalShoppingCartItem != null && rentalShoppingCartItem.LoyaltyPointsRecord != null)
+				IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = list.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.ProductId == selectedProductId);
+				if (rentalShoppingCartTitleItem != null && rentalShoppingCartTitleItem.LoyaltyPointsRecord != null)
 				{
-					rentalShoppingCartItem.LoyaltyPointsRecord.ToBeRedeemed = true;
+					rentalShoppingCartTitleItem.LoyaltyPointsRecord.ToBeRedeemed = true;
 				}
 			}
 		}

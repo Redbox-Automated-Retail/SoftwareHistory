@@ -7,7 +7,7 @@
     <CommandBinding Command="{x:Static localbase:Commands.Add4kUhdCommand}" Executed="Add4kUhdCommand_Executed" CanExecute="Add4kUhdCommand_CanExecute" />
   </UIElement.CommandBindings>
   <Grid>
-    <Border Name="Border" CornerRadius="1" BorderThickness="2" BorderBrush="#E42045">
+    <Border Name="Border" CornerRadius="1" BorderThickness="1" BorderBrush="#BBBBBB">
       <Grid ShowGridLines="False">
         <Panel.Background>
           <SolidColorBrush Color="Black" Opacity="0.8" />

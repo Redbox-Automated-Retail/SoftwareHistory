@@ -121,6 +121,10 @@ public class Constants
 
 		public const string KeyboardPerksSignupView = "KeyboardPerksSignupView";
 
+		public const string KeyboardStarzSignupView = "KeyboardStarzSignupView";
+
+		public const string KeyboardRedboxPlusSignupView = "KeyboardRedboxPlusSignupView";
+
 		public const string PerksSignUpInfoPopupView = "PerksSignUpInfoPopupView";
 
 		public const string PerksConfirmView = "PerksConfirmView";
@@ -136,6 +140,30 @@ public class Constants
 		public const string TitleDetailsFullDetailsPopupView = "TitleDetailsFullDetailsPopupView";
 
 		public const string SonySweepstakesConfirmationView = "SonySweepstakesConfirmationView";
+
+		public const string SignInThanksView = "SignInThanksView";
+
+		public const string StarzOfferDetailView = "StarzOfferDetailView";
+
+		public const string StarzTermsAcceptanceView = "StarzTermsAcceptanceView";
+
+		public const string SubscriptionSignUpConfirmationView = "SubscriptionSignUpConfirmationView";
+
+		public const string RedboxPlusInfoPopupView = "RedboxPlusInfoPopupView";
+
+		public const string RedboxPlusOfferSelectionView = "RedboxPlusOfferSelectionView";
+
+		public const string RedboxPlusOfferDetailView = "RedboxPlusOfferDetailView";
+
+		public const string RedboxPlusTermsAcceptanceView = "RedboxPlusTermsAcceptanceView";
+
+		public const string AvodLeadGenerationOfferView = "AvodLeadGenerationOfferView";
+
+		public const string RedboxPlusLeadGenerationOfferView = "RedboxPlusLeadGenerationOfferView";
+
+		public const string KeyboardLeadGenerationSignupView = "KeyboardLeadGenerationSignupView";
+
+		public const string LeadGenerationOfferConfirmationView = "LeadGenerationOfferConfirmationView";
 	}
 
 	public class ViewNames
@@ -206,6 +234,8 @@ public class Constants
 
 		public const string _4kAlertPopupView = "4K_warning_popup_view";
 
+		public const string RemoveSubscriptionPopupView = "remove_subscription_popup_view";
+
 		public const string MultiDiscAlertPopupView = "multi_disc_warning_popup_view";
 
 		public const string HelpView = "help_document_view";
@@ -266,6 +296,10 @@ public class Constants
 
 		public const string KeyboardPerksSignupView = "keyboard_perks_signup_view";
 
+		public const string KeyboardStarzSignupView = "keyboard_starz_signup_view";
+
+		public const string KeyboardRedboxPlusSignupView = "keyboard_redbox_plus_signup_view";
+
 		public const string PerksSignUpInfoPopupView = "perks_signup_info_popup_view";
 
 		public const string PerksConfirmView = "perks_confirm_view";
@@ -281,6 +315,36 @@ public class Constants
 		public const string TitleDetailsFullDetailsPopupView = "title_details_full_details_popup_view";
 
 		public const string SonySweepstakesConfirmationView = "sony_sweepstakes_confirmation_view";
+
+		public const string SignInThanksView = "sign_in_thanks_view";
+
+		public const string StarzOfferDetailView = "starz_offer_detail_view";
+
+		public const string StarzTermsAcceptanceView = "starz_terms_acceptance_view";
+
+		public const string SubscriptionSignUpConfirmationView = "subscription_sign_up_confirmation_view";
+
+		public const string BrowseMessagePopupView = "browse_message_popup_view";
+
+		public const string StarzBrowseMessagePopupView = "starz_browse_message_popup_view";
+
+		public const string BrowseMessagePopupLearnMorePopupView = "browse_message_popup_learn_more_popup_view";
+
+		public const string RedboxPlusInfoPopupView = "redbox_plus_info_popup_view";
+
+		public const string RedboxPlusOfferSelectionView = "redbox_plus_offer_selection_view";
+
+		public const string RedboxPlusOfferDetailView = "redbox_plus_offer_detail_view";
+
+		public const string RedboxPlusTermsAcceptanceView = "redbox_plus_terms_acceptance_view";
+
+		public const string AvodLeadGenerationOfferView = "avod_lead_generation_offer_view";
+
+		public const string RedboxPlusLeadGenerationOfferView = "redbox_plus_lead_generation_offer_view";
+
+		public const string KeyboardLeadGenerationSignupView = "keyboard_lead_generation_signup_view";
+
+		public const string LeadGenerationOfferConfirmationView = "lead_generation_offer_confirmation_view";
 	}
 
 	public class ThemeNames
@@ -299,6 +363,8 @@ public class Constants
 		private static BitmapImage _movieMissingBoxArt;
 
 		private static BitmapImage _gameMissingBoxArt;
+
+		private static BitmapImage _starzBoxArt;
 
 		public static BitmapImage CollectionsCarousel
 		{
@@ -333,6 +399,30 @@ public class Constants
 					_gameMissingBoxArt = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "game-missing-image.png")));
 				}
 				return _gameMissingBoxArt;
+			}
+		}
+
+		public static BitmapImage StarzBoxArt
+		{
+			get
+			{
+				if (_starzBoxArt == null)
+				{
+					_starzBoxArt = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "starz-box-art.png")));
+				}
+				return _starzBoxArt;
+			}
+		}
+
+		public static BitmapImage RedboxPlusBoxArt
+		{
+			get
+			{
+				if (_starzBoxArt == null)
+				{
+					_starzBoxArt = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "redbox-plus-box-art.png")));
+				}
+				return _starzBoxArt;
 			}
 		}
 	}

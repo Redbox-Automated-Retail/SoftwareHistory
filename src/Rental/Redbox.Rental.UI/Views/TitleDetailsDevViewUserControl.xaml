@@ -29,6 +29,7 @@
           <localControls:TitleDetailsDevLabelValueUserControl LabelText="RELEASE_DATE" ValueText="{Binding Path=CurrentProduct.ReleaseDate}" />
           <localControls:TitleDetailsDevLabelValueUserControl LabelText="RAITING_ID" ValueText="{Binding Path=CurrentProduct.RaitingId}" />
           <localControls:TitleDetailsDevLabelValueUserControl LabelText="PRODUCT_GROUP_ID" ValueText="{Binding Path=CurrentProduct.TitleRollupProductGroupId}" />
+          <localControls:TitleDetailsDevLabelValueUserControl LabelText="DISCOUNT_RESTRICTION" ValueText="{Binding Path=CurrentProduct.DiscountRestriction}" />
         </StackPanel>
         <StackPanel Name="PricingData" Orientation="Vertical">
           <TextBlock Name="PricingBlock" Text="Pricing" Margin="4,0,0,0" Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="13" Style="{StaticResource font_target_smaller}" />

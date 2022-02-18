@@ -9,5 +9,7 @@ public enum BannerType
 	MultipleDisc,
 	DigitalCode,
 	_4KUHD,
-	DVD
+	DVD,
+	Subscription,
+	Plan
 }

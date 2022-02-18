@@ -3,6 +3,8 @@ using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.Personalization;
+using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI;
 using Redbox.Rental.UI.ControllersLogic;
@@ -25,6 +27,7 @@ public class ApplyPromoViewController : BaseViewController
 			{
 				applyPromoViewModel = new ApplyPromoViewModel();
 			}
+			OrchestrationService.SetCurrentUICulture();
 			applyPromoViewModel.CancelButtonText = Resources.perks_cancel_btn_text;
 			applyPromoViewModel.EnterPromoButtonText = Resources.apply_promo_enter_promo_button_text;
 			applyPromoViewModel.EnterPromoMessage = Resources.apply_promo_enter_promo_message;
@@ -74,7 +77,7 @@ public class ApplyPromoViewController : BaseViewController
 		{
 			activePromoCode = BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.Promotion?.Name;
 		}
-		PromoListLogic.CreateOfferListItemModels(viewModel, personalizationSession, activePromoCode, 'X', includeOffers: false);
+		PromoListLogic.CreateOfferListItemModels(viewModel, personalizationSession, activePromoCode, 'X', includeOffers: false, Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption);
 	}
 
 	private static void AddOrRemovePromoCommand_Execute(StoredPromoCodeModel model, Action<string> applyPromoAction)
@@ -83,26 +86,85 @@ public class ApplyPromoViewController : BaseViewController
 		model.Logic.AddRemovePromoButtonPressedAnalytics(model);
 		if (!model.IsAdded)
 		{
-			PromoConfirmationInfo promoConfirmationInfo = new PromoConfirmationInfo();
-			promoConfirmationInfo.promoCodeModel = model;
-			promoConfirmationInfo.ApplyPromoCodeAction = delegate(string p)
+			if (model != null && model.IsRedboxPlusPromo)
 			{
-				OrchestrationService.ViewGoBackSafe("ApplyPromoView AddOrRemovePromoSelected", popOnly: false);
-				applyPromoAction(p);
-			};
-			promoConfirmationInfo.CancelAction = delegate
+				AddRedboxPlusFreeOneNightRentalDiscount();
+			}
+			else
 			{
+				ValidateStoredPromoWillNotConflictWithRedboxPlusBenefit(model, applyPromoAction);
+			}
+			return;
+		}
+		if (model != null && model.IsRedboxPlusPromo)
+		{
+			ClearRedboxPlusDiscount(model);
+			return;
+		}
+		if (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart != null)
+		{
+			BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ClearPromoCode();
+			BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ClearLoyaltyPointsToBeEarned();
+		}
+		OrchestrationService.ViewGoBackSafe("ApplyPromoView AddOrRemovePromoSelected", popOnly: false);
+	}
+
+	private static void ValidateStoredPromoWillNotConflictWithRedboxPlusBenefit(StoredPromoCodeModel model, Action<string> applyPromoAction)
+	{
+		RedboxPlusFunctions.ValidatePromoWillNotConflictWithRedboxPlusBenefit(delegate
+		{
+			OrchestrationService.ViewGoBackSafe("ApplyPromoView DeclinedStoredPromo because of Redbox+ conflict.", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.ViewGoBackSafe("ApplyPromoView StoredPromoSelected", popOnly: false);
+			ConfirmPromo(model, applyPromoAction);
+		}, delegate
+		{
+			ConfirmPromo(model, applyPromoAction);
+		});
+	}
+
+	private static void ConfirmPromo(StoredPromoCodeModel model, Action<string> applyPromoAction)
+	{
+		PromoConfirmationInfo promoConfirmationInfo = new PromoConfirmationInfo();
+		promoConfirmationInfo.promoCodeModel = model;
+		promoConfirmationInfo.ApplyPromoCodeAction = delegate(string p)
+		{
+			OrchestrationService.ViewGoBackSafe("ApplyPromoView AddOrRemovePromoSelected", popOnly: false);
+			applyPromoAction(p);
+		};
+		promoConfirmationInfo.CancelAction = delegate
+		{
+		};
+		OrchestrationService.ViewShow("promo_confirmation_view", promoConfirmationInfo);
+	}
+
+	private static void ClearRedboxPlusDiscount(StoredPromoCodeModel model)
+	{
+		bool flag = model?.IsRedboxPlusPromo ?? false;
+		if (flag)
+		{
+			RedboxPlusFunctions.ClearFreeOneNightRental();
+		}
+		OrchestrationService.UnwindToSafe("shopping_cart_view", discard: true, flag ? "ApplyPromoView Removed Redbox+ Free 1 night rental discount" : "ApplyPromoView Removed Redbox+ purchase discount");
+	}
+
+	private static void AddRedboxPlusFreeOneNightRentalDiscount()
+	{
+		IRentalShoppingCartTitleItem bestFreeOneNightRentalEligibleItem = RedboxPlusFunctions.GetBestFreeOneNightRentalEligibleItem();
+		if (bestFreeOneNightRentalEligibleItem == null)
+		{
+			string contextMessage = "ApplyPromoView failed to add Redbox+ Free 1 night rental discount.  No eligible items in cart.";
+			LogHelper.Instance.Log(contextMessage);
+			Action action = delegate
+			{
+				OrchestrationService.ViewGoBackSafe(contextMessage, popOnly: false);
 			};
-			OrchestrationService.ViewShow("promo_confirmation_view", promoConfirmationInfo);
+			MessagePopupViewController.ShowMissingRedboxPlusRentalItemMessage(action, action, action);
 		}
 		else
 		{
-			if (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart != null)
-			{
-				BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ClearPromoCode();
-				BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ClearLoyaltyPointsToBeEarned();
-			}
-			OrchestrationService.ViewGoBackSafe("ApplyPromoView AddOrRemovePromoSelected", popOnly: false);
+			RedboxPlusFunctions.ValidateAndSetFreeOneNightRental(bestFreeOneNightRentalEligibleItem, showConfirmationMessage: true, "shopping_cart_view");
 		}
 	}
 
@@ -110,18 +172,28 @@ public class ApplyPromoViewController : BaseViewController
 	{
 		BaseViewController.ProcessWPFHit();
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("ApplyPromoEnterPromo");
-		OrchestrationService.ViewGoBackSafe("ApplyPromoView EnterPromoSelected", popOnly: false);
-		OrchestrationService.ViewShow("keyboard_promo_view", new KeyboardInfo
+		Action showEnterPromoCodeKeyboardScreen = delegate
 		{
-			MaxLength = 31,
-			KeyboardText = "",
-			IsValidEntry = ValidationServices.IsValidPromoCode,
-			CancelAction = delegate
+			OrchestrationService.ViewShow("keyboard_promo_view", new KeyboardInfo
 			{
-				OrchestrationService.ViewGoBack("go back", popOnly: false);
-			},
-			ContinueAction = applyPromoAction
-		});
+				MaxLength = 31,
+				KeyboardText = "",
+				IsValidEntry = ValidationServices.IsValidPromoCode,
+				CancelAction = delegate
+				{
+					OrchestrationService.ViewGoBack("go back", popOnly: false);
+				},
+				ContinueAction = applyPromoAction
+			});
+		};
+		RedboxPlusFunctions.ValidatePromoWillNotConflictWithRedboxPlusBenefit(delegate
+		{
+			OrchestrationService.ViewGoBackSafe("ApplyPromoView DeclinedEnterPromo because of Redbox+ conflict.", popOnly: false);
+		}, delegate
+		{
+			OrchestrationService.ViewGoBackSafe("ApplyPromoView EnterPromoSelected", popOnly: false);
+			showEnterPromoCodeKeyboardScreen();
+		}, showEnterPromoCodeKeyboardScreen);
 	}
 
 	private static void ConfigureTTS(ApplyPromoViewModel viewModel)

@@ -28,6 +28,8 @@ public class Commands
 
 	public static readonly RoutedCommand SignOutCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand SignInTooltipCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand ExitBurnInViewCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand BannerClickCommand = new RoutedCommand();
@@ -47,6 +49,8 @@ public class Commands
 	public static readonly RoutedCommand BluRayCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand SeeFullDetailsCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand RedboxPlusInfoCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand BrowseItemSelectedCommand = new RoutedCommand();
 
@@ -92,6 +96,8 @@ public class Commands
 
 	public static readonly RoutedCommand BrowseMessagePopupCloseCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand BrowseRedboxPlusTooltipCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand TermsAndPrivacyCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand PromoCodeCommand = new RoutedCommand();
@@ -100,11 +106,23 @@ public class Commands
 
 	public static readonly RoutedCommand UsePointsCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand PointsBalanceInfoCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand AddMovieCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand AddGameCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand UpdateBagCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand ViewOfferDetailsCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand ScanStarzQRCodeCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand ScanRedboxPlusQRCodeCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand ViewStarzOfferCommand = new RoutedCommand();
+
+	public static readonly RoutedCommand ViewRedboxPlusOfferCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand Button1Command = new RoutedCommand();
 
@@ -159,6 +177,8 @@ public class Commands
 	public static readonly DynamicRoutedCommand PromoButtonCommand = new DynamicRoutedCommand();
 
 	public static readonly DynamicRoutedCommand OtherButtonCommand = new DynamicRoutedCommand();
+
+	public static readonly DynamicRoutedCommand SeeRedboxPlusMoviesButtonCommand = new DynamicRoutedCommand();
 
 	public static readonly DynamicRoutedCommand PhonePinButtonCommand = new DynamicRoutedCommand();
 

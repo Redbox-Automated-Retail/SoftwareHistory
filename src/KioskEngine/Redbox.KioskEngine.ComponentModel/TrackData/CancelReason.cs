@@ -5,6 +5,7 @@ public enum CancelReason
 	None,
 	LeavingStartView,
 	LeavingSwipeView,
+	LeavingSignInView,
 	RestartingCardRead,
 	EndingSession
 }

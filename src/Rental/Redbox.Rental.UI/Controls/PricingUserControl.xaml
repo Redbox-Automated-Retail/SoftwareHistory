@@ -11,8 +11,8 @@
       <RowDefinition Height="auto" />
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="60*" />
-      <ColumnDefinition Width="40*" />
+      <ColumnDefinition Width="63*" />
+      <ColumnDefinition Width="37*" />
     </Grid.ColumnDefinitions>
     <TextBlock Name="ReservedDiscsLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource font_montserrat_regular_16}" Foreground="#481b54" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=ReservedDiscsLabelText, FallbackValue=Reserved Discs}" Visibility="{Binding Path=ReservedDiscsLineVisibility}" />
     <TextBlock Name="ReservedDiscsFeeValue" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Style="{StaticResource font_montserrat_regular_16}" Foreground="#481b54" Margin="{Binding Path=PricingLineMargin, FallbackValue='0, 7, 0, 7'}" Text="{Binding Path=ReservedDiscsValueText, FallbackValue=$0.00}" Visibility="{Binding Path=ReservedDiscsLineVisibility}" />

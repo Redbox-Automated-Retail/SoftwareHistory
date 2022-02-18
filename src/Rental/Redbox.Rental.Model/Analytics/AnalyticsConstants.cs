@@ -13,6 +13,8 @@ public static class AnalyticsConstants
 		public const string Timeout = "Timeout";
 
 		public const string OfferDisplayed = "offerDisplayed";
+
+		public const string Login = "Login";
 	}
 
 	public static class SessionProperties
@@ -85,6 +87,8 @@ public static class AnalyticsConstants
 
 		public const string BrowseFunctionsGotit = "BrowseFunctionsGotit";
 
+		public const string BrowseFunctionsRemove = "BrowseFunctionsRemove";
+
 		public const string BrowseFunctionsCancelDigitalCodeIncart = "BrowseFunctionsCancelDigitalCodeIncart";
 
 		public const string BrowseFunctionsOkDigitalCodeIncart = "BrowseFunctionsOkDigitalCodeIncart";
@@ -101,9 +105,9 @@ public static class AnalyticsConstants
 
 		public const string BrowseFilterChange = "browse-filter-change";
 
-		public const string BrowseStartOver = "BrowseStartOver";
-
 		public const string BrowseHome = "BrowseHome";
+
+		public const string BrowseQuit = "BrowseQuit";
 
 		public const string BrowseFormat = "BrowseFormat";
 
@@ -135,9 +139,25 @@ public static class AnalyticsConstants
 
 		public const string BrowseShoppingCartRemoveItem = "BrowseShoppingCartRemoveItem";
 
+		public const string BrowseBackToAllMovies = "BrowseBackToAllMovies";
+
+		public const string ViewRedboxPlusMovies = "ViewRedboxPlusMovies";
+
+		public const string Continue = "Continue";
+
+		public const string BrowseRedboxPlusTooltip = "BrowseRedboxPlusTooltip";
+
 		public const string BrowseBrowseMessagePopupInfo = "BrowseBrowseMessagePopupInfo";
 
+		public const string BrowseStarzBrowseMessagePopupInfo = "BrowseStarzBrowseMessagePopupInfo";
+
 		public const string BrowseBrowseMessagePopupClose = "BrowseBrowseMessagePopupClose";
+
+		public const string BrowseStarzBrowseMessagePopupClose = "BrowseStarzBrowseMessagePopupClose";
+
+		public const string BrowseQuitMessagePopupKeepBrowsing = "BrowseQuitMessagePopupKeepBrowsing";
+
+		public const string BrowseQuitMessagePopupQuit = "BrowseQuitMessagePopupQuit";
 
 		public const string BulletListPopupReserveOnlineGotit = "BulletListPopupReserveOnlineGotit";
 
@@ -176,6 +196,12 @@ public static class AnalyticsConstants
 		public const string LoyaltySignUpJoinPerksMarketingOptin = "LoyaltySignUpJoinPerksMarketingOptin";
 
 		public const string LoyaltySignUpBack = "LoyaltySignUpBack";
+
+		public const string MemberPerksViewSeeRedboxPlusMovies = "MemberPerksViewSeeRedboxPlusMovies";
+
+		public const string MemberPerksViewTerms = "MemberPerksViewTerms";
+
+		public const string MemberPerksLogicRedboxPlus = "MemberPerksLogicRedboxPlus";
 
 		public const string MemberPerksLogicPerks = "MemberPerksLogicPerks";
 
@@ -218,6 +244,8 @@ public static class AnalyticsConstants
 		public const string PersonalizationFunctionsSignOut = "PersonalizationFunctionsSignOut";
 
 		public const string PersonalizationFunctionsNotEnoughPointsGotit = "PersonalizationFunctionsNotEnoughPointsGotit";
+
+		public const string PersonalizationFunctionsPerksPassErrorGotIt = "PersonalizationFunctionsPerksPassErrorGotIt";
 
 		public const string PhoneAndPinStartBrowsing = "PhoneAndPinStartBrowsing";
 
@@ -285,7 +313,15 @@ public static class AnalyticsConstants
 
 		public const string RecommendedTitlesPopupRecommendedAddItem = "RecommendedTitlesPopupRecommendedAddItem";
 
+		public const string RecommendedTitlesPopupRelatedHowPointsWork = "RecommendedTitlesPopupRelatedHowPointsWork";
+
+		public const string RecommendedTitlesPopupRelatedPickup = "RecommendedTitlesPopupRelatedPickup";
+
 		public const string RecommendedTitlesPopupRelatedNoThanks = "RecommendedTitlesPopupRelatedNoThanks";
+
+		public const string RecommendedTitlesPopupRecommendedHowPointsWork = "RecommendedTitlesPopupRecommendedHowPointsWork";
+
+		public const string RecommendedTitlesPopupRecommendedPickup = "RecommendedTitlesPopupRecommendedPickup";
 
 		public const string RecommendedTitlesPopupRecommendedNoThanks = "RecommendedTitlesPopupRecommendedNoThanks";
 
@@ -302,6 +338,8 @@ public static class AnalyticsConstants
 		public const string ShoppingCartPayNow = "ShoppingCartPayNow";
 
 		public const string ShoppingCartUsePoints = "ShoppingCartUsePoints";
+
+		public const string ShoppingCartPointsBalanceInfo = "ShoppingCartPointsBalanceInfo";
 
 		public const string ShoppingCartSignIn = "ShoppingCartSignIn";
 
@@ -323,6 +361,18 @@ public static class AnalyticsConstants
 
 		public const string ShoppingCartUpdateBag = "ShoppingCartUpdateBag";
 
+		public const string ShoppingCartViewStarzOffer = "ShoppingCartViewStarzOffer";
+
+		public const string ShoppingCartViewOfferDetails = "ShoppingCartViewOfferDetails";
+
+		public const string ShoppingCartScanStarzQRCode = "ShoppingCartScanStarzQRCode";
+
+		public const string ShoppingCartScanRedboxPlusQRCode = "ShoppingCartScanRedboxPlusQRCode";
+
+		public const string ShoppingCartViewRedboxPlusOffer = "ShoppingCartViewRedboxPlusOffer";
+
+		public const string ShoppingCartRedboxPlusInfo = "ShoppingCartRedboxPlusInfo";
+
 		public const string ShoppingCartViewFunctionsInCartPromoDecline = "ShoppingCartViewFunctionsInCartPromoDecline";
 
 		public const string ShoppingCartViewFunctionsInCartPromoAccept = "ShoppingCartViewFunctionsInCartPromoAccept";
@@ -342,6 +392,8 @@ public static class AnalyticsConstants
 		public const string SignUp = "SignUp";
 
 		public const string SignUpInfo = "SignUpInfo";
+
+		public const string MobilePerksPass = "MobilePerksPass";
 
 		public const string StartStartBrowsing = "StartStartBrowsing";
 
@@ -371,6 +423,8 @@ public static class AnalyticsConstants
 
 		public const string StartSignInHome = "StartSignInHome";
 
+		public const string StartSignInTooltip = "StartSignInTooltip";
+
 		public const string StartBannerBluRays = "StartBannerBluRays";
 
 		public const string StartBannerGames = "StartBannerGames";
@@ -399,6 +453,8 @@ public static class AnalyticsConstants
 
 		public const string StartScreenSaverGames = "StartScreenSaverGames";
 
+		public const string SwipeViewMessageButton = "SwipeViewMessageButton";
+
 		public const string SwipeCardSwipeBack = "SwipeCardSwipeBack";
 
 		public const string TitleDetailsRentButton = "TitleDetailsRentButton";
@@ -418,6 +474,8 @@ public static class AnalyticsConstants
 		public const string TitleDetailsBuy = "TitleDetailsBuy";
 
 		public const string TitleDetailsBack = "TitleDetailsBack";
+
+		public const string TitleDetailsRedboxPlusInfo = "TitleDetailsRedboxPlusInfo";
 
 		public const string TitleDetailsPageNext = "TitleDetailsPageNext";
 
@@ -460,6 +518,68 @@ public static class AnalyticsConstants
 		public const string PerksSignupInfoPopupOK = "PerksSignupInfoPopupOK";
 
 		public const string TextMessageAlertOK = "TextMessageAlertOK";
+
+		public const string StarzOfferDetailBackButton = "StarzOfferDetailBackButton";
+
+		public const string StarzOfferDetailAcceptButton = "StarzOfferDetailAcceptButton";
+
+		public const string StarzOfferScanQRCodeButton = "StarzOfferScanQRCodeButton";
+
+		public const string StarzOfferTermsButton = "StarzOfferTermsButton";
+
+		public const string StarzOfferViewInBagButton = "StarzOfferViewInBagButton";
+
+		public const string StarzTermsAcceptanceCheckMark = "StarzTermsAcceptanceCheckMark";
+
+		public const string StarzTermsAcceptanceAcceptButton = "StarzTermsAcceptanceAcceptButton";
+
+		public const string StarzTermsAcceptanceBackButton = "StarzTermsAcceptanceBackButton";
+
+		public const string StarzTermsAcceptanceTermsAndPrivacyButton = "StarzTermsAcceptanceTermsAndPrivacyButton";
+
+		public const string RedboxPlusInfoPopupClose = "RedboxPlusInfoPopupClose";
+
+		public const string SubscriptionSignUpConfirmationGotItButton = "SubscriptionSignUpConfirmationGotItButton";
+
+		public const string RedboxPlusOfferSelectionBackButton = "RedboxPlusOfferSelectionBackButton";
+
+		public const string RedboxPlusOfferSelectionTermsButton = "RedboxPlusOfferSelectionTermsButton";
+
+		public const string RedboxPlusOfferSelectionTier1AcceptButton = "RedboxPlusOfferSelectionTier1AcceptButton";
+
+		public const string RedboxPlusOfferSelectionTier2AcceptButton = "RedboxPlusOfferSelectionTier2AcceptButton";
+
+		public const string RedboxPlusOfferSelectionScanQRCodeButton = "RedboxPlusOfferSelectionScanQRCodeButton";
+
+		public const string RedboxPlusOfferDetailBackButton = "RedboxPlusOfferDetailBackButton";
+
+		public const string RedboxPlusOfferDetailTermsButton = "RedboxPlusOfferDetailTermsButton";
+
+		public const string RedboxPlusOfferDetailAcceptButton = "RedboxPlusOfferDetailAcceptButton";
+
+		public const string RedboxPlusOfferDetailViewInBagButton = "RedboxPlusOfferDetailViewInBagButton";
+
+		public const string RedboxPlusTermsAcceptanceCheckMark = "RedboxPlusTermsAcceptanceCheckMark";
+
+		public const string RedboxPlusTermsAcceptanceAcceptButton = "RedboxPlusTermsAcceptanceAcceptButton";
+
+		public const string RedboxPlusTermsAcceptanceBackButton = "RedboxPlusTermsAcceptanceBackButton";
+
+		public const string RedboxPlusTermsAcceptanceTermsAndPrivacyButton = "RedboxPlusTermsAcceptanceTermsAndPrivacyButton";
+
+		public const string AvodLeadGenerationOfferNoButton = "AvodLeadGenerationOfferNoButton";
+
+		public const string AvodLeadGenerationOfferEmailButton = "AvodLeadGenerationOfferEmailButton";
+
+		public const string AvodLeadGenerationOfferQRCodeButton = "AvodLeadGenerationOfferQRCodeButton";
+
+		public const string RedboxPlusLeadGenerationOfferNoButton = "RedboxPlusLeadGenerationOfferNoButton";
+
+		public const string RedboxPlusLeadGenerationOfferEmailButton = "RedboxPlusLeadGenerationOfferEmailButton";
+
+		public const string RedboxPlusLeadGenerationOfferQRCodeButton = "RedboxPlusLeadGenerationOfferQRCodeButton";
+
+		public const string LeadGenerationOfferConfirmationGotItButton = "LeadGenerationOfferConfirmationGotItButton";
 	}
 
 	public static class DataTypeNames

@@ -7,7 +7,8 @@ using DeviceService.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TrackData;
-using Redbox.KioskServices.Proxy.Requests;
+using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskServices.Proxy.ComponentModel.Loyalty;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Session;
@@ -29,11 +30,10 @@ public class ProxyMessageHelper
 
 	public static CartMessage CreateCartMessage(Guid sessionId, string customerProfileNumber, string messageType)
 	{
-		int result;
 		return new CartMessage
 		{
 			MessageType = messageType,
-			KioskId = (int.TryParse(StoreServicesProxy.Instance.StoreNumber, out result) ? result : 0),
+			KioskId = ServiceLocator.Instance.GetService<IStoreServices>().StoreNumberInteger,
 			CustomerProfileNumber = customerProfileNumber,
 			ShoppingCart = CreateShoppingCart(sessionId)
 		};
@@ -53,9 +53,9 @@ public class ProxyMessageHelper
 	public static ShoppingCart CreateShoppingCart(IRentalShoppingCart rentalShoppingCart, IPromotion promo)
 	{
 		ShoppingCart shoppingCart = new ShoppingCart();
-		if (rentalShoppingCart?.Items?.Any() ?? false)
+		if (rentalShoppingCart?.TitleItems?.Any() ?? false)
 		{
-			(rentalShoppingCart?.Items?.Where((IRentalShoppingCartItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.ForEach(delegate(IRentalShoppingCartItem x)
+			(rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.ForEach(delegate(IRentalShoppingCartTitleItem x)
 			{
 				shoppingCart.Discounts.Add(new Discount
 				{
@@ -81,12 +81,12 @@ public class ProxyMessageHelper
 					});
 				});
 			}
-			foreach (IGrouping<RentalShoppingCartItemAction, IRentalShoppingCartItem> item in from x in rentalShoppingCart.Items
+			foreach (IGrouping<RentalShoppingCartItemAction, IRentalShoppingCartTitleItem> item in from x in rentalShoppingCart.TitleItems
 				group x by x.Action)
 			{
 				LineItemGroupType groupType = ((item.Key == RentalShoppingCartItemAction.rental) ? LineItemGroupType.Rental : LineItemGroupType.Purchase);
 				List<LineItem> list = new List<LineItem>();
-				foreach (IRentalShoppingCartItem item2 in item)
+				foreach (IRentalShoppingCartTitleItem item2 in item)
 				{
 					IUpsellItem upsellItemByRentalShoppingCartItem = rentalShoppingCart.UpsellInfo.GetUpsellItemByRentalShoppingCartItem(item2);
 					BlurayUpsell blurayUpsell = null;

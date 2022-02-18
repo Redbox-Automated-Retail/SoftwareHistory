@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 
 namespace Redbox.KioskEngine.ComponentModel;
@@ -12,7 +13,7 @@ public interface IPreferenceService
 
 	void RemoveAll();
 
-	IPreferencePage AddPreferencePage(string name, string settingPath, string displayPath, PreferencePageTarget target, IPreferencePageHost host);
+	IPreferencePage AddPreferencePage(string name, string settingPath, string displayPath, PreferencePageTarget target, IPreferencePageHost host, Func<IPreferencePageHost> getPreferencePageHost = null);
 
 	bool RemovePreferencePage(string pageName);
 

@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskEngine.Environment;
 
-public class ObfuscationHelper
+public class ObfuscationHelper : IObfuscationService
 {
 	public class Constants
 	{
@@ -60,6 +61,10 @@ public class ObfuscationHelper
 
 		public const string ReaderSerialNumber = "ReaderSerialNumber";
 
+		public const string user_name = "user_name";
+
+		public const string password = "password";
+
 		public const char X = 'x';
 
 		public const char PoundSign = '#';
@@ -76,7 +81,7 @@ public class ObfuscationHelper
 		public int NumberOfNonObfuscatedTrailingCharacters { get; set; }
 	}
 
-	private static List<string> _keyRemovalList = new List<string> { "Username", "Password", "Pin", "CardHash", "CardId", "Track2", "Number" };
+	private static List<string> _keyRemovalList = new List<string> { "Username", "Password", "Pin", "CardHash", "CardId", "Track2", "Number", "user_name", "password" };
 
 	private static List<ObfuscationInstance> _obfuscationsList = new List<ObfuscationInstance>
 	{
@@ -222,20 +227,35 @@ public class ObfuscationHelper
 		}
 	};
 
-	public static string ObfuscateMessageData(string msgText, char newChar, int leading, int trailing)
+	public string ObfuscateMessageData(string msgText, char newChar, int leading, int trailing)
 	{
-		if (leading + trailing > msgText.Length)
+		string result = null;
+		if (!string.IsNullOrEmpty(msgText))
 		{
-			leading = 0;
-			trailing = 0;
+			if (leading + trailing > msgText.Length)
+			{
+				leading = 0;
+				trailing = 0;
+			}
+			string obj = ((leading > 0) ? msgText.Substring(0, leading) : string.Empty);
+			string text = ((trailing > 0) ? msgText.Substring(msgText.Length - trailing, trailing) : string.Empty);
+			string text2 = new string(newChar, msgText.Length - (leading + trailing));
+			result = obj + text2 + text;
 		}
-		string obj = ((leading > 0) ? msgText.Substring(0, leading) : string.Empty);
-		string text = ((trailing > 0) ? msgText.Substring(msgText.Length - trailing, trailing) : string.Empty);
-		string text2 = new string(newChar, msgText.Length - (leading + trailing));
-		return obj + text2 + text;
+		return result;
 	}
 
-	public static void ObfuscateDictionary(Dictionary<string, object> workDictionary)
+	public string ObfuscateStringData(string value, int leading, int trailing)
+	{
+		return ObfuscateMessageData(value, 'x', leading, trailing);
+	}
+
+	public string ObfuscateNumericData(string value, int leading, int trailing)
+	{
+		return ObfuscateMessageData(value, '#', leading, trailing);
+	}
+
+	public void ObfuscateDictionary(Dictionary<string, object> workDictionary)
 	{
 		foreach (string keyRemoval in _keyRemovalList)
 		{

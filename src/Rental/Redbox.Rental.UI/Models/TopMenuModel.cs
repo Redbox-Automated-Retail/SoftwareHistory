@@ -11,6 +11,10 @@ public class TopMenuModel : DependencyObject
 
 	public static readonly DependencyProperty MenuTextStyleProperty = DependencyProperty.Register("MenuTextStyle", typeof(Style), typeof(TopMenuModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty MenuBackgroundTextProperty = DependencyProperty.Register("MenuBackgroundText", typeof(string), typeof(TopMenuModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty RedboxPlusLogoVisiblityProperty = DependencyProperty.Register("RedboxPlusLogoVisiblity", typeof(Visibility), typeof(TopMenuModel), new FrameworkPropertyMetadata(null));
+
 	private List<BrowseMenuButton> _menuButtons = new List<BrowseMenuButton>();
 
 	public List<BrowseMenuButton> MenuButtons
@@ -27,7 +31,20 @@ public class TopMenuModel : DependencyObject
 
 	public Visibility MenuBackgroundVisibility { get; set; }
 
-	public string MenuBackgroundText { get; set; }
+	public string MenuBackgroundText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(MenuBackgroundTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MenuBackgroundTextProperty, value);
+			});
+		}
+	}
 
 	public Style MenuTextStyle
 	{
@@ -55,6 +72,21 @@ public class TopMenuModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(MenuBackgroundStyleProperty, value);
+			});
+		}
+	}
+
+	public Visibility RedboxPlusLogoVisiblity
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(RedboxPlusLogoVisiblityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RedboxPlusLogoVisiblityProperty, value);
 			});
 		}
 	}

@@ -46,19 +46,23 @@ public class RecommendedTitlesPopupViewTextToSpeech
 			RecommendedTitlesPopupViewModel recommendedTitlesPopupViewModel = getRecommendedTitlesPopupViewModelFunction();
 			if (recommendedTitlesPopupViewModel != null && recommendedTitlesPopupViewModel.BrowseProductControlModel != null)
 			{
+				if (recommendedTitlesPopupViewModel.PerksInfoBorderVisibility == Visibility.Visible)
+				{
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = recommendedTitlesPopupViewModel.PerksHeadingText
+					});
+					speechPart.Texts.Add(new TextPart
+					{
+						Text = recommendedTitlesPopupViewModel.PerksMessageText
+					});
+				}
 				if (recommendedTitlesPopupViewModel.BrowseProductControlModel.PageNumber == 1)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
 						Text = recommendedTitlesPopupViewModel.HeaderText
 					});
-					if (recommendedTitlesPopupViewModel.OfferTextVisibility == Visibility.Visible)
-					{
-						speechPart.Texts.Add(new TextPart
-						{
-							Text = recommendedTitlesPopupViewModel.OfferText
-						});
-					}
 				}
 				speechPart.Texts.Add(new TextPart
 				{

@@ -15,12 +15,15 @@ public class RentalFormatSelectionViewParameter
 
 	public Func<decimal, decimal> DiscountedPriceCalc { get; set; }
 
-	public RentalFormatSelectionViewParameter(TitleRollupProduct rollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null)
+	public int? RedboxPlusBenefitId { get; set; }
+
+	public RentalFormatSelectionViewParameter(TitleRollupProduct rollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null, int? redboxPlusBenefitId = null)
 	{
 		RollupProduct = rollupProduct;
 		IsPurchase = isPurchase;
 		CancelAction = cancelAction;
 		ShowMnp = showMnp;
 		DiscountedPriceCalc = discountedPriceCalc;
+		RedboxPlusBenefitId = redboxPlusBenefitId;
 	}
 }

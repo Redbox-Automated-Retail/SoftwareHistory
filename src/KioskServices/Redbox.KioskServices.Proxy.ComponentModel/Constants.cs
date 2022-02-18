@@ -19,6 +19,8 @@ public static class Constants
 		public const string Return = "Return";
 
 		public const string SoftSync = "SoftSync";
+
+		public const string UpdateAccount = "UpdateAccount";
 	}
 
 	public static class PropertyNames

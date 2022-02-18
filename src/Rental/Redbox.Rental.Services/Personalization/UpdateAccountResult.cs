@@ -12,6 +12,8 @@ public class UpdateAccountResult : IUpdateAccountResult
 
 	public string MobilePhoneNumber { get; set; }
 
+	public string TempPassword { get; set; }
+
 	public UpdateAccountResponseErrors UpdateAccountResponseError { get; set; }
 
 	public string ErrorMessage { get; set; }

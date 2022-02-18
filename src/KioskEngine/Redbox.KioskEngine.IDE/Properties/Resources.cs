@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.KioskEngine.IDE.Properties;
 
-[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
 [DebuggerNonUserCode]
 [CompilerGenerated]
 internal class Resources
@@ -112,10 +112,6 @@ internal class Resources
 	internal static Bitmap Print => (Bitmap)ResourceManager.GetObject("Print", resourceCulture);
 
 	internal static Bitmap Properties => (Bitmap)ResourceManager.GetObject("Properties", resourceCulture);
-
-	internal static Bitmap RedboxBoxLogo => (Bitmap)ResourceManager.GetObject("RedboxBoxLogo", resourceCulture);
-
-	internal static Bitmap RedboxNameLogo => (Bitmap)ResourceManager.GetObject("RedboxNameLogo", resourceCulture);
 
 	internal static Bitmap Redo => (Bitmap)ResourceManager.GetObject("Redo", resourceCulture);
 

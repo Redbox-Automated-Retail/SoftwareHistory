@@ -5,6 +5,7 @@ using System.Security;
 using System.Threading.Tasks;
 using DeviceService.ComponentModel;
 using DeviceService.ComponentModel.Commands;
+using DeviceService.ComponentModel.Requests;
 using DeviceService.ComponentModel.Responses;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -32,6 +33,10 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 
 	private object _lockObject = new object();
 
+	private IReadCardJob _readCardJob;
+
+	private bool _cardReadAborted;
+
 	public bool IsOlderReader => false;
 
 	public bool IsNewReader => true;
@@ -54,39 +59,47 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 
 	public FallbackType? NextFallbackReason { get; set; }
 
-	public event CardReadCompleteHandler OnCardReadComplete;
+	private bool IsCardReadInProgress => _readCardJob != null;
 
-	public event CardReadStartedEventHandler OnCardReadStarted;
-
-	public void ClearCardReadHandlers()
-	{
-		OnCardReadComplete = null;
-		OnCardReadStarted = null;
-	}
-
-	public void StartCardRead(int timeout, bool isZeroTouchRead, DeviceInputType deviceInputType, Action<IReadCardJob> cardReadStartedAction, Guid sessionId)
+	public void StartCardRead(CardReadRequestInfo request, Action<IReadCardJob> onReadJobStart, Action<Guid> onCardProcessing, Action<CardReadRequestInfo, CardReadCompleteDetails> onComplete)
 	{
 		IDeviceServiceClientHelper deviceServiceClientHelper = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
 		if (deviceServiceClientHelper == null)
 		{
 			return;
 		}
+		_cardReadAborted = false;
 		Task.Run(delegate
 		{
 			try
 			{
-				IReadCardJob readCardJob = deviceServiceClientHelper.StartCardRead(deviceInputType, CardReadResponseHandler, CardReadEventHandler, timeout);
+				Action<BaseResponseEvent, CardReadRequestInfo, Action<CardReadRequestInfo, CardReadCompleteDetails>> cardReadHandler = null;
+				if (VasMode.VasOnly == request.VasMode)
+				{
+					cardReadHandler = CardReadVasOnlyResponseHandler;
+				}
+				else
+				{
+					cardReadHandler = CardReadResponseHandler;
+				}
+				IReadCardJob readCardJob = deviceServiceClientHelper.StartCardRead(request.InputType, delegate(BaseResponseEvent result)
+				{
+					cardReadHandler?.Invoke(result, request, onComplete);
+				}, delegate(BaseResponseEvent result)
+				{
+					CardReadEventHandler(result, onCardProcessing);
+				}, request.Timeout, request.VasMode);
 				lock (_lockObject)
 				{
 					_readCardJobs.Add(new ReadCardJobEntry
 					{
 						ReadCardJob = readCardJob,
-						SessionId = sessionId,
-						IsZeroTouchRead = isZeroTouchRead
+						SessionId = request.SessionId,
+						IsZeroTouchRead = request.IsZeroTouchRead
 					});
 					LogHelper.Instance.Log($"Adding ReadCardJobEntry {readCardJob.RequestId}.  list count= {_readCardJobs?.Count}");
 				}
-				cardReadStartedAction?.Invoke(readCardJob);
+				onReadJobStart?.Invoke(readCardJob);
 			}
 			catch (Exception e)
 			{
@@ -103,6 +116,10 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 			if (activeCardReadJobEntry != null)
 			{
 				CancelReadCardJobEntry(cancelReason, activeCardReadJobEntry);
+			}
+			else
+			{
+				LogHelper.Instance.Log($"Failed to StopCardRead with cancel reason: {cancelReason} because no active card read was available.  Possible that card read has already returned data, please report auth result.");
 			}
 		}
 	}
@@ -179,11 +196,11 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		return result;
 	}
 
-	private void CardReadEventHandler(BaseResponseEvent baseResponseEvent)
+	private void CardReadEventHandler(BaseResponseEvent baseResponseEvent, Action<Guid> OnCardProcessing)
 	{
-		if (baseResponseEvent?.EventName == "CardProcessingStartedResponseEvent")
+		if (!_cardReadAborted && IsCardReadInProgress && baseResponseEvent?.EventName == "CardProcessingStartedResponseEvent")
 		{
-			OnCardReadStarted?.Invoke(baseResponseEvent.RequestId);
+			OnCardProcessing?.Invoke(baseResponseEvent.RequestId);
 		}
 	}
 
@@ -218,45 +235,58 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		}
 	}
 
-	private void CardReadResponseHandler(BaseResponseEvent baseResponseEvent)
+	private void CardReadResponseHandler(BaseResponseEvent baseResponseEvent, CardReadRequestInfo request, Action<CardReadRequestInfo, CardReadCompleteDetails> onComplete)
 	{
-		ReadCardJobEntry readCardJobEntry = RemoveReadCardJobEntry(baseResponseEvent.RequestId);
+		_readCardJob = null;
+		ReadCardJobEntry readEntry = RemoveReadCardJobEntry(baseResponseEvent.RequestId);
 		bool chipCardRemovedFromReader = true;
-		ITrackData trackData = GetTrackDataFromEMVCardReadResponseEvent(baseResponseEvent, ref chipCardRemovedFromReader);
-		if (trackData == null)
+		ITrackData trackDataFromResponseEvent = GetTrackDataFromResponseEvent(baseResponseEvent, ref chipCardRemovedFromReader);
+		UpdateTechnicalFallbackState(trackDataFromResponseEvent);
+		DeclineChipEnabledCardThatWasSwiped(trackDataFromResponseEvent);
+		DeclineAmexFallback(trackDataFromResponseEvent);
+		DeclineReservationMobileWallet(trackDataFromResponseEvent);
+		UpdateCardReadTechnicalFallbackInfo(trackDataFromResponseEvent);
+		UpdateNextCardReadTechnicalFallbackState(trackDataFromResponseEvent);
+		CardHelper.CheckForTrackDataErrors(trackDataFromResponseEvent);
+		UpdateCreditCardHealthService(trackDataFromResponseEvent, baseResponseEvent, readEntry);
+		if (onComplete == null)
 		{
-			trackData = GetTrackDataFromEncryptedCardReadResponseEvent(baseResponseEvent);
-			if (trackData == null)
-			{
-				trackData = GetTrackDataFromUnencryptedCardReadResponseEvent(baseResponseEvent);
-				if (trackData == null)
-				{
-					trackData = GetTrackDataFromCardReadUnencryptedResponseEvent(baseResponseEvent);
-				}
-			}
-		}
-		UpdateTechnicalFallbackState(trackData);
-		DeclineChipEnabledCardThatWasSwiped(trackData);
-		DeclineAmexFallback(trackData);
-		DeclineReservationMobileWallet(trackData);
-		UpdateCardReadTechnicalFallbackInfo(trackData);
-		UpdateNextCardReadTechnicalFallbackState(trackData);
-		CardHelper.CheckForTrackDataErrors(trackData);
-		UpdateCreditCardHealthService(trackData, baseResponseEvent, readCardJobEntry);
-		if (readCardJobEntry != null && !readCardJobEntry.AttemptedCancel)
-		{
-			if (OnCardReadComplete == null)
-			{
-				LogHelper.Instance.Log("Unable to Process OnCardReadComplete, no actions are registered.");
-			}
-			else
-			{
-				OnCardReadComplete(trackData, chipCardRemovedFromReader, baseResponseEvent?.RequestId);
-			}
+			LogHelper.Instance.Log("Unable to Process OnCardReadComplete, no actions are registered.");
 		}
 		else
 		{
-			LogHelper.Instance.Log($"Not calling OnCardReadComplete because CardReadJob was cancelled for {readCardJobEntry?.ReadCardJob?.RequestId}");
+			onComplete(request, new CardReadCompleteDetails
+			{
+				TrackData = trackDataFromResponseEvent,
+				VasData = (baseResponseEvent as ICardReadResponseEvent)?.GetBase87CardReadModel()?.VasData,
+				CardRemoved = chipCardRemovedFromReader,
+				RequestId = baseResponseEvent?.RequestId,
+				Success = (baseResponseEvent?.Success ?? false)
+			});
+		}
+		if (trackDataFromResponseEvent != null && !trackDataFromResponseEvent.HasValidData())
+		{
+			ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>().ReportAuthorizeResult(authorizeSuccessful: false);
+		}
+	}
+
+	private void CardReadVasOnlyResponseHandler(BaseResponseEvent baseResponseEvent, CardReadRequestInfo request, Action<CardReadRequestInfo, CardReadCompleteDetails> onComplete)
+	{
+		_readCardJob = null;
+		bool chipCardRemovedFromReader = false;
+		ITrackData trackDataFromResponseEvent = GetTrackDataFromResponseEvent(baseResponseEvent, ref chipCardRemovedFromReader);
+		Base87CardReadModel base87CardReadModel = (baseResponseEvent as ICardReadResponseEvent)?.GetBase87CardReadModel();
+		bool success = baseResponseEvent != null && baseResponseEvent.Success && base87CardReadModel != null && base87CardReadModel.Status == ResponseStatus.Success && base87CardReadModel.HasVasData;
+		if (!_cardReadAborted)
+		{
+			onComplete?.Invoke(request, new CardReadCompleteDetails
+			{
+				RequestId = baseResponseEvent.RequestId,
+				Success = success,
+				TrackData = trackDataFromResponseEvent,
+				VasData = base87CardReadModel?.VasData,
+				CardRemoved = true
+			});
 		}
 	}
 
@@ -264,7 +294,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 	{
 		if (ResponseEventIsTimedOut(responseEvent) || (readEntry != null && readEntry.IsZeroTouchRead) || GetCardReadAttemptCancelled(responseEvent) || GetCardReadResponseCancelledOrBlocked(responseEvent))
 		{
-			LogHelper.Instance.Log("Card Read Cancelled or Blocked or Timed Out, Don't Notify Health Service.");
+			LogHelper.Instance.Log("Card Read Cancelled or Blocked or ZeroTouch or Timed Out, Don't Notify Health Service.");
 			return;
 		}
 		ICCReaderHealth service = ServiceLocator.Instance.GetService<ICCReaderHealth>();
@@ -398,7 +428,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 	private void DeclineReservationMobileWallet(ITrackData trackData)
 	{
 		ISession session = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
-		if (trackData != null && session != null && !session.IsInZeroTouchMode && trackData.CardSourceType == CardSourceType.Mobile)
+		if (trackData != null && session != null && !session.IsInZeroTouchMode && session.IsInReservationFlow && trackData.CardSourceType == CardSourceType.Mobile)
 		{
 			trackData.Errors.Add(CardHelper.ErrorCodes.NewReservationMobileDeviceError());
 		}
@@ -476,6 +506,41 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		return true;
 	}
 
+	private ITrackData GetTrackDataFromResponseEvent(BaseResponseEvent baseResponseEvent, ref bool chipCardRemovedFromReader)
+	{
+		ITrackData trackData = GetTrackDataFromEMVCardReadResponseEvent(baseResponseEvent, ref chipCardRemovedFromReader);
+		if (trackData == null)
+		{
+			trackData = GetTrackDataFromEncryptedCardReadResponseEvent(baseResponseEvent);
+			if (trackData == null)
+			{
+				trackData = GetTrackDataFromUnencryptedCardReadResponseEvent(baseResponseEvent);
+				if (trackData == null)
+				{
+					trackData = GetTrackDataFromCancelResponseEvent(baseResponseEvent);
+					if (trackData == null)
+					{
+						trackData = GetTrackDataFromCardReadUnencryptedResponseEvent(baseResponseEvent);
+					}
+				}
+			}
+		}
+		return trackData;
+	}
+
+	private ITrackData GetTrackDataFromCancelResponseEvent(BaseResponseEvent baseResponseEvent)
+	{
+		ITrackData result = null;
+		if (baseResponseEvent is CancelCommandResponseEvent)
+		{
+			result = new UnencryptedTrackData
+			{
+				ReadStatus = ResponseStatus.Cancelled
+			};
+		}
+		return result;
+	}
+
 	private ITrackData GetTrackDataFromUnencryptedCardReadResponseEvent(BaseResponseEvent baseResponseEvent)
 	{
 		ITrackData trackData = null;
@@ -513,6 +578,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		trackData.FallbackStatusAction = baseCardReadModel.FallbackStatusAction;
 		trackData.FallbackReason = baseCardReadModel.FallbackReason;
 		trackData.CardHasChip = baseCardReadModel.HasChip;
+		trackData.WalletType = baseCardReadModel.WalletFormat;
 		trackData.CardSourceType = baseCardReadModel.CardSource;
 		trackData.FirstSix = baseCardReadModel?.FirstSix;
 		trackData.LastFour = baseCardReadModel?.LastFour;
@@ -539,6 +605,10 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		{
 			trackData.ExpiryYear = ((baseCardReadModel != null && baseCardReadModel.Expiry != null && baseCardReadModel.Expiry.Length == 4) ? baseCardReadModel.Expiry.Substring(0, 2) : null);
 			trackData.ExpiryMonth = ((baseCardReadModel != null && baseCardReadModel.Expiry != null && baseCardReadModel.Expiry.Length == 4) ? baseCardReadModel.Expiry.Substring(2, 2) : null);
+		}
+		if (baseCardReadModel.HasVasData)
+		{
+			trackData.VasIdentifier = baseCardReadModel.VasData;
 		}
 		AddTamperedCardReadErrorsToTrackData(trackData, baseCardReadModel);
 	}

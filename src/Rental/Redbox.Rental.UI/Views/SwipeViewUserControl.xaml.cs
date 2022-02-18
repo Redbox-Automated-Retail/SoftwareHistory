@@ -166,7 +166,7 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 			},
 			{
 				SwipeViewType.EncryptedSwipeReservationPickup,
-				typeof(EncryptedSwipeRegularCheckoutUserControl)
+				typeof(EncryptedSwipeReservationPickupUserControl)
 			},
 			{
 				SwipeViewType.EncryptedSwipeRegularCheckOut,
@@ -199,6 +199,10 @@ public partial class SwipeViewUserControl : TextToSpeechUserControl, IWPFActor, 
 			{
 				SwipeViewType.EMVInsertReservationPickup,
 				typeof(EMVInsertRegularCheckoutUserControl)
+			},
+			{
+				SwipeViewType.EMVTapToLogin,
+				typeof(EMVTapSignInUserControl)
 			}
 		};
 	}

@@ -50,7 +50,7 @@ public class TitleRollupOverlayButtonTextValues : ITitleRollupFormatButtonTextVa
 		}
 	}
 
-	public string Add
+	public string Rent
 	{
 		get
 		{

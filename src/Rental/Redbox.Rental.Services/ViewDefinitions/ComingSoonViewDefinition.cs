@@ -4,7 +4,7 @@ using Redbox.Rental.Services.Controllers;
 
 namespace Redbox.Rental.Services.ViewDefinitions;
 
-[ViewDefinition(ViewName = "collection_message_view")]
+[ViewDefinition(ViewName = "coming_soon_view")]
 public class ComingSoonViewDefinition : BaseViewDefinition, IViewDefinition
 {
 	public ComingSoonViewDefinition()
@@ -14,7 +14,7 @@ public class ComingSoonViewDefinition : BaseViewDefinition, IViewDefinition
 		base.ControlName = "ComingSoonView";
 		base.OnEnter = delegate
 		{
-			ComingSoonViewController.ConfigureComingSoonView(ComingSoonViewController.GetComingSoonTitles());
+			ComingSoonViewController.ConfigureComingSoonView();
 		};
 	}
 }

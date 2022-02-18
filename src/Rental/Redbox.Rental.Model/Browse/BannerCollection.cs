@@ -58,6 +58,20 @@ public class BannerCollection : List<Banner>
 						BannerType = BannerType.DigitalCode,
 						BannerStyleName = "banner_format_background",
 						TextResourceName = "digital_code_banner"
+					},
+					new Banner
+					{
+						BannerType = BannerType.Subscription,
+						BannerStyleName = "banner_subscription_background",
+						TextResourceName = "mini_cart_subscription_text",
+						BannerSize = BannerSize.Mini
+					},
+					new Banner
+					{
+						BannerType = BannerType.Plan,
+						BannerStyleName = "banner_plan_background",
+						TextResourceName = "mini_cart_plan_text",
+						BannerSize = BannerSize.Mini
 					}
 				};
 			}

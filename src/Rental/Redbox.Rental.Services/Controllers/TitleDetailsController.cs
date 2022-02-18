@@ -36,6 +36,8 @@ public class TitleDetailsController : BaseViewController
 
 	private static IViewService ViewService => ServiceLocator.Instance.GetService<IViewService>();
 
+	private static bool HasActiveRedboxPlusSubscription => (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession)?.RedboxPlusSession?.HasActiveSubscription ?? false;
+
 	public static void ConfigureView()
 	{
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
@@ -60,6 +62,7 @@ public class TitleDetailsController : BaseViewController
 		titleDetailModel.MoreInfoHit += OnMoreInfoHit;
 		titleDetailModel.GoBackHit += OnGoBack;
 		titleDetailModel.SeeFullDetails += OnSeeFullDetails;
+		titleDetailModel.RedboxPlusInfo += OnRedboxPlusInfo;
 		titleDetailModel.BackText = Resources.back_button.ToUpper();
 		return titleDetailModel;
 	}
@@ -167,7 +170,7 @@ public class TitleDetailsController : BaseViewController
 		if (kioskProduct is TitleRollupProduct { IsEmptyCase: false } titleRollupProduct)
 		{
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsBuy");
-			OrchestrationService.ViewShow("purchase_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase: true));
+			BrowseFunctions.ShowPurchasePopupView(titleRollupProduct, isPurchase: true);
 		}
 		else
 		{
@@ -224,21 +227,7 @@ public class TitleDetailsController : BaseViewController
 			bool flag = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
 			if ((titleProduct2.HasMultiNightPrice || (titleProduct2.IsSellableAndInStock && (titleProduct2.IsMovie || titleProduct2.IsGame))) && !flag)
 			{
-				string viewAnalyticsName = "multi_night_pricing_popup_view";
-				if (titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock)
-				{
-					viewAnalyticsName = "multi_night_pricing_with_buy_button_popup_view";
-				}
-				else if (!titleProduct2.HasMultiNightPrice && titleProduct2.IsSellableAndInStock)
-				{
-					viewAnalyticsName = "non_multi_night_pricing_with_buy_button_popup_view";
-				}
-				OrchestrationService.ViewShow("multi_night_pricing_popup_view", new MultiNightPricingPopupInfo
-				{
-					TitleProduct = titleProduct2,
-					ShownFromView = "product_detail_view",
-					ViewAnalyticsName = viewAnalyticsName
-				});
+				BrowseFunctions.AddMultiNightPricedProductToCart(titleProduct2, "product_detail_view");
 			}
 			else
 			{
@@ -354,6 +343,12 @@ public class TitleDetailsController : BaseViewController
 		}
 	}
 
+	public static void OnRedboxPlusInfo()
+	{
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsRedboxPlusInfo");
+		OrchestrationService.ViewShow("redbox_plus_info_popup_view");
+	}
+
 	private static void PopulateTitleDetailProperties(DisplayProductModel displayProductModel, bool loadAd)
 	{
 		if (displayProductModel.TitleDetailPropertiesInitialized)
@@ -403,6 +398,7 @@ public class TitleDetailsController : BaseViewController
 		IRentalShoppingCart rentalShoppingCart = displayProductModel.DisplayProductModelConstants.RentalShoppingCartService?.CurrentRentalShoppingCart;
 		bool flag2 = rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel;
 		int num = (int)(((rentalShoppingCart != null && rentalShoppingCart.ServiceFeeEnabled) ? rentalShoppingCart.DefaultServiceFee : 0m) * 100m);
+		DateTime dateTime = DateTime.Today.Add(Redbox.Rental.Services.Session.Session.Instance?.RentalReturnTime ?? TimeSpan.FromHours(21.0));
 		displayProductModel.Description = titleProduct.ProductDescription;
 		displayProductModel.Rating = value?.Name;
 		displayProductModel.Format = format;
@@ -426,7 +422,7 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.RatingDescription = ratingDescription;
 		displayProductModel.RatingVisibility = ratingVisibility;
 		displayProductModel.OneNightReturnTime = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? GetReturnTimeText(titleProduct, 0, displayProductModel.DisplayProductModelConstants) : null);
-		displayProductModel.OneNightReturnTimeWithText = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? string.Format(Resources.title_details_return_time_text, DateTime.Now.AddDays(1.0).ToShortDateString()) : null);
+		displayProductModel.OneNightReturnTimeWithText = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? string.Format(Resources.title_details_return_time_text, dateTime.ToString("h:mm tt"), DateTime.Now.AddDays(1.0).ToShortDateString()) : null);
 		displayProductModel.OneNightReturnTimeLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModel.DisplayProductModelConstants.OneNightReturnTimeLabel : null);
 		displayProductModel.MultiNightReturnTime = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? GetReturnTimeText(titleProduct, 1, displayProductModel.DisplayProductModelConstants) : null);
 		displayProductModel.MultiNightReturnTimeLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModel.DisplayProductModelConstants.MultiNightReturnTimeLabel : null);
@@ -444,17 +440,21 @@ public class TitleDetailsController : BaseViewController
 				if (true)
 				{
 					releaseYearVisibility = 0;
-					goto IL_05a8;
+					goto IL_05e2;
 				}
 			}
 		}
 		releaseYearVisibility = 2;
-		goto IL_05a8;
-		IL_05a8:
+		goto IL_05e2;
+		IL_05e2:
 		displayProductModel.ReleaseYearVisibility = (Visibility)releaseYearVisibility;
 		displayProductModel.RatingBorderThickness = ((displayProductModel.RunningTimeVisibility == Visibility.Visible || displayProductModel.ReleaseYearVisibility == Visibility.Visible || displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 		displayProductModel.RunningTimeBorderThickness = ((displayProductModel.ReleaseYearVisibility == Visibility.Visible || displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 		displayProductModel.ReleaseYearBorderThickness = ((displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
+		displayProductModel.RedboxPlusInfoText = Resources.redbox_plus_info_button_text;
+		displayProductModel.RedboxPlusInfoVisibility = ((BaseViewController.ApplicationState.IsADAAccessible || !displayProductModel.DisplayProductModelConstants.EnableRedboxPlus || !HasActiveRedboxPlusSubscription || titleProduct == null || !titleProduct.IsRedboxPlusEligible) ? Visibility.Collapsed : Visibility.Visible);
+		displayProductModel.RedboxPlusInfoADAVisibility = ((!BaseViewController.ApplicationState.IsADAAccessible || !displayProductModel.DisplayProductModelConstants.EnableRedboxPlus || !HasActiveRedboxPlusSubscription || titleProduct == null || !titleProduct.IsRedboxPlusEligible) ? Visibility.Collapsed : Visibility.Visible);
+		displayProductModel.RedboxPlusInfoADAGridHeight = ((displayProductModel.RedboxPlusInfoADAVisibility == Visibility.Visible) ? 38 : 0);
 		displayProductModel.MoreLikeThisText = Resources.title_details_more_like_this_text;
 		displayProductModel.MainHeight = displayProductModel.DisplayProductModelConstants.MainHeight;
 		displayProductModel.NotEmptyCaseVisibility = ((titleProduct != null && titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
@@ -490,18 +490,9 @@ public class TitleDetailsController : BaseViewController
 			Ad = ad,
 			AdLocation = AdLocation.TitleDetail
 		} : null);
-		if (displayProductModel.AdImageVisibility == Visibility.Visible)
-		{
-			displayProductModel.BoxArtGridWidth = 459;
-			displayProductModel.DetailsGridWidth = 565;
-			displayProductModel.DescriptionMaxHeight = 72;
-		}
-		else
-		{
-			displayProductModel.BoxArtGridWidth = 529;
-			displayProductModel.DetailsGridWidth = 495;
-			displayProductModel.DescriptionMaxHeight = 144;
-		}
+		displayProductModel.BoxArtGridWidth = ((ad != null) ? 512 : 512);
+		displayProductModel.DetailsGridWidth = ((ad != null) ? 512 : 512);
+		displayProductModel.DescriptionMaxHeight = ((ad != null) ? 72 : 144);
 	}
 
 	private static void PopulateModelMoreLikeThis(DisplayProductModel displayProductModel, ITitleProduct titleProduct)
@@ -635,10 +626,11 @@ public class TitleDetailsController : BaseViewController
 				IPricingRecord pricingRecord = ((list != null && list.Count > pricingRecordIndex) ? list[pricingRecordIndex] : null);
 				if (pricingRecord != null)
 				{
-					DateTime dateTime = DateTime.Now.AddDays(pricingRecord.InitialDays ?? 1);
-					string arg = Resources.ResourceManager.GetString(dateTime.DayOfWeek.ToString());
-					string arg2 = ((pricingRecordIndex > 0 && TitleTypeProperties.Properties.ContainsKey(tp.TitleType) && TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager) != null) ? $" {displayProductModelConstants.PriceFor} {TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager)}" : string.Empty);
-					returnTimeText.Add($"9pm {arg}, {dateTime.ToShortDateString()}{arg2}");
+					DateTime dateTime = DateTime.Today.Add(Redbox.Rental.Services.Session.Session.Instance?.RentalReturnTime ?? TimeSpan.FromHours(21.0));
+					DateTime dateTime2 = DateTime.Now.AddDays(pricingRecord.InitialDays ?? 1);
+					string text = Resources.ResourceManager.GetString(dateTime2.DayOfWeek.ToString());
+					string text2 = ((pricingRecordIndex > 0 && TitleTypeProperties.Properties.ContainsKey(tp.TitleType) && TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager) != null) ? $" {displayProductModelConstants.PriceFor} {TitleTypeProperties.Properties[tp.TitleType].GetName(Resources.ResourceManager)}" : string.Empty);
+					returnTimeText.Add(string.Format("{0} {1}, {2}{3}", dateTime.ToString("h:mm tt"), text, dateTime2.ToShortDateString(), text2));
 				}
 			}
 		});

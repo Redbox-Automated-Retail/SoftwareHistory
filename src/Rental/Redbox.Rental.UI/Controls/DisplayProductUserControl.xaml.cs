@@ -42,6 +42,7 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 	public void ApplyStyle()
 	{
 		(ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme)?.SetStyle(AddButton);
+		AddButton.IsAnimated = false;
 		AddButton.IsEnabled = true;
 	}
 
@@ -99,8 +100,16 @@ public partial class DisplayProductUserControl : UserControl, IComponentConnecto
 
 	private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
-		Flag.Height = ImageBorder.ActualHeight * 0.18;
-		Flag.Width = ImageBorder.ActualWidth * 0.9;
+		if (_displayProductModel != null && _displayProductModel.IsTitleDetailsFlag)
+		{
+			Flag.Height = ImageBorder.ActualHeight * 0.11;
+			Flag.Width = ImageBorder.ActualWidth * 0.65;
+		}
+		else
+		{
+			Flag.Height = ImageBorder.ActualHeight * 0.25;
+			Flag.Width = ImageBorder.ActualWidth;
+		}
 		double num = (0.0 - Flag.Height) / 2.0;
 		Flag.Margin = new Thickness(num * 2.0 / 3.0, num, 0.0, 0.0);
 		AddButton.IsEnabled = true;
