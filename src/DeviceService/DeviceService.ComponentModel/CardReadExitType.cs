@@ -14,5 +14,6 @@ public enum CardReadExitType
 	BadFormatOf23 = 9,
 	AmountWasNotSetAndContactlessReaderWasNotEnabled = 10,
 	AtLeastOneSpecifiedReaderIsDisabled = 11,
+	InvalidExitCode = 998,
 	NotPerformed = 999
 }

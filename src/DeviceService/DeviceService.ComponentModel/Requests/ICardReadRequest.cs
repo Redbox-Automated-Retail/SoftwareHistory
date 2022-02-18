@@ -14,4 +14,10 @@ public interface ICardReadRequest
 	Guid? SessionId { get; set; }
 
 	IEnumerable<CardBrandAndSource> ExcludeCardBrandBySource { get; set; }
+
+	VasMode VasMode { get; }
+
+	string AppleVasUrl { get; set; }
+
+	string GoogleVasUrl { get; set; }
 }

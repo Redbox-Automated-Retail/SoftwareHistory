@@ -18,9 +18,9 @@ public class DeviceStatus
 
 	public string TgzVersion { get; set; }
 
-	public string EMVClessVersion { get; set; }
+	public int RevisionNumber { get; set; }
 
 	public string EMVContactVersion { get; set; }
 
-	public int RevisionNumber { get; set; }
+	public string EMVClessVersion { get; set; }
 }

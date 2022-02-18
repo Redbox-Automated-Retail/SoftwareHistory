@@ -8,5 +8,6 @@ public enum CardSourceType
 	QuickChip,
 	MSDContactless,
 	EMVContactless,
-	Mobile
+	Mobile,
+	VASOnly
 }

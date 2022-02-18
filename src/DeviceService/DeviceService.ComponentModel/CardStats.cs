@@ -30,4 +30,13 @@ public class CardStats
 	public string ErrorCode { get; set; }
 
 	public int RevisionNumber { get; set; }
+
+	public bool HasVasData { get; set; }
+
+	public bool HasPayData { get; set; }
+
+	[JsonConverter(typeof(StringEnumConverter))]
+	public WalletType WalletFormat { get; set; }
+
+	public string VasErrorCode { get; set; }
 }

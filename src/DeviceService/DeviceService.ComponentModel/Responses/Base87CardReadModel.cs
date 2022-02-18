@@ -49,6 +49,16 @@ public abstract class Base87CardReadModel : ResponseBaseModel
 
 	public string ErrorCode { get; set; }
 
+	public string VasData { get; set; }
+
+	public WalletType WalletFormat { get; set; }
+
+	public bool HasVasData => !string.IsNullOrWhiteSpace(VasData);
+
+	public bool HasPayData => !string.IsNullOrWhiteSpace(FirstSix);
+
+	public string VasErrorCode { get; set; }
+
 	public Base87CardReadModel()
 	{
 	}
