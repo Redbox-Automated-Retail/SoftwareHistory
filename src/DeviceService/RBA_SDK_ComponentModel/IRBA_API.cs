@@ -22,6 +22,8 @@ public interface IRBA_API
 
 	string GetParam(PARAMETER_ID id);
 
+	int GetParamLen(PARAMETER_ID id);
+
 	ERROR_ID AddTagParam(MESSAGE_ID msg, int tagId, byte[] data);
 
 	ERROR_ID AddTagParam(MESSAGE_ID msg, int tagId, string data);

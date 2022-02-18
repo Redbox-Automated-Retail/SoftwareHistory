@@ -1,17 +1,12 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-[assembly: AssemblyTitle("DeviceService.Domain")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("DeviceService.Domain")]
+[assembly: AssemblyConfiguration("Release")]
+[assembly: AssemblyFileVersion("1.10.6")]
+[assembly: AssemblyInformationalVersion("1.0.0")]
 [assembly: AssemblyProduct("DeviceService.Domain")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
-[assembly: AssemblyTrademark("")]
-[assembly: ComVisible(false)]
-[assembly: Guid("3566B558-66EB-46C0-B079-D676FB98A7E3")]
-[assembly: AssemblyFileVersion("1.5.3.7")]
-[assembly: AssemblyVersion("1.5.3.7")]
+[assembly: AssemblyTitle("DeviceService.Domain")]
+[assembly: AssemblyVersion("1.10.6.0")]

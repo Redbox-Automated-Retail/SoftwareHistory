@@ -320,15 +320,15 @@ public class FileUpdateService : IFileUpdateService
 					{
 						if (!flag)
 						{
-							Log($"Processing zip file updates in {Path.GetFileName(activeZipFileUpdateResult.FileName)}");
+							Log("Processing zip file updates in " + Path.GetFileName(activeZipFileUpdateResult.FileName));
 							using (ZipArchive zipArchive = ZipFile.OpenRead(activeZipFileUpdateResult.FileName))
 							{
 								int num = activeZipFileUpdateResult.FileUpdateResultCollection.Max((IFileUpdateResult x) => x.UpdateFileModel.Order);
 								foreach (IFileUpdateResult item in activeZipFileUpdateResult.FileUpdateResultCollection.OrderBy((IFileUpdateResult x) => x.UpdateFileModel.Order))
 								{
 									bool flag2 = item.UpdateFileModel.Order == num;
-									string arg = (flag2 ? "  - Forcing device reboot because this is the last file in the update." : null);
-									Log($"    Processing file: {item.UpdateFileModel.Path}{arg}");
+									string text = (flag2 ? "  - Forcing device reboot because this is the last file in the update." : null);
+									Log("    Processing file: " + item.UpdateFileModel.Path + text);
 									bool flag3 = false;
 									ZipArchiveEntry zipArchiveEntry = zipArchive?.GetEntry(item.UpdateFileModel.Path);
 									if (zipArchiveEntry != null)
@@ -341,9 +341,9 @@ public class FileUpdateService : IFileUpdateService
 											task.Wait();
 											flag3 = task.Result;
 										}
-										catch (Exception arg2)
+										catch (Exception arg)
 										{
-											Log($"Exception while opening/reading stream.  {arg2}");
+											Log($"Exception while opening/reading stream.  {arg}");
 										}
 										Log($"    file update for {item.UpdateFileModel.Path} success = {flag3}");
 										if (!flag3)
@@ -351,7 +351,7 @@ public class FileUpdateService : IFileUpdateService
 											flag = true;
 											item.FileUpdateStatus = FileUpdateStatus.Errored;
 											activeZipFileUpdateResult.Status = ZipFileUpdateStatus.Errored;
-											activeZipFileUpdateResult.StatusMessage = $"Update of {item.UpdateFileModel.Path} failed.";
+											activeZipFileUpdateResult.StatusMessage = "Update of " + item.UpdateFileModel.Path + " failed.";
 											break;
 										}
 										item.FileUpdateStatus = FileUpdateStatus.Updated;
@@ -360,14 +360,14 @@ public class FileUpdateService : IFileUpdateService
 									flag = true;
 									item.FileUpdateStatus = FileUpdateStatus.Errored;
 									activeZipFileUpdateResult.Status = ZipFileUpdateStatus.Errored;
-									activeZipFileUpdateResult.StatusMessage = $"    Unable to find zip archive entry {item.UpdateFileModel.Path}";
+									activeZipFileUpdateResult.StatusMessage = "    Unable to find zip archive entry " + item.UpdateFileModel.Path;
 									break;
 								}
 							}
 							if (!flag)
 							{
-								Log($"Updating IUC285 file update revision number to {activeZipFileUpdateResult?.UpdateFileManifestProperties?.Revision ?? 0}");
-								if (activeZipFileUpdateResult?.UpdateFileManifestProperties != null && FileUpdater.SetFileUpdateRevisionNumber(activeZipFileUpdateResult.UpdateFileManifestProperties.Revision))
+								Log($"Updating IUC285 file update revision number to {(activeZipFileUpdateResult?.UpdateFileManifestProperties?.Revision).GetValueOrDefault()}");
+								if (activeZipFileUpdateResult?.UpdateFileManifestProperties != null && FileUpdater.SetFileUpdateRevisionNumber(activeZipFileUpdateResult.UpdateFileManifestProperties.Revision.ToString()))
 								{
 									CompleteUpdate(activeZipFileUpdateResult);
 									FileUpdater?.PostDeviceStatus();
@@ -378,13 +378,13 @@ public class FileUpdateService : IFileUpdateService
 									activeZipFileUpdateResult.StatusMessage = "Unable to update revision number on device.";
 								}
 							}
-							Log($"Finished Processing zip file updates in {Path.GetFileName(activeZipFileUpdateResult.FileName)}");
+							Log("Finished Processing zip file updates in " + Path.GetFileName(activeZipFileUpdateResult.FileName));
 						}
 						else
 						{
 							activeZipFileUpdateResult.Status = ZipFileUpdateStatus.Skipped;
 							activeZipFileUpdateResult.StatusMessage = "Skipped processing because prior update file failed.";
-							Log($"Skipping processing of zip file updates in {Path.GetFileName(activeZipFileUpdateResult.FileName)} because prior update file failed.");
+							Log("Skipping processing of zip file updates in " + Path.GetFileName(activeZipFileUpdateResult.FileName) + " because prior update file failed.");
 						}
 					}
 				}
@@ -414,7 +414,7 @@ public class FileUpdateService : IFileUpdateService
 			{
 				if (!File.Exists(item.FileName))
 				{
-					Log($"Unable to move file {item.FileName} because it no longer exists.");
+					Log("Unable to move file " + item.FileName + " because it no longer exists.");
 				}
 				else
 				{
@@ -472,13 +472,13 @@ public class FileUpdateService : IFileUpdateService
 
 	private void FindZipFileUpdates(IFileUpdateResults fileUpdateResults)
 	{
-		Log($"Looking for update zip files in: {UpdateFolderPath}");
+		Log("Looking for update zip files in: " + UpdateFolderPath);
 		if (Directory.Exists(UpdateFolderPath))
 		{
 			bool flag = false;
 			foreach (string item in Directory.EnumerateFiles(UpdateFolderPath, "*.zip"))
 			{
-				Log($"Found update file: {Path.GetFileName(item)}");
+				Log("Found update file: " + Path.GetFileName(item));
 				flag = true;
 				fileUpdateResults.ZipFileUpdateResultCollection.Add(new ZipFileUpdateResult
 				{
@@ -495,7 +495,7 @@ public class FileUpdateService : IFileUpdateService
 		}
 		else
 		{
-			Log($"Update Folder {UpdateFolderPath} does not exist. No files found to update.");
+			Log("Update Folder " + UpdateFolderPath + " does not exist. No files found to update.");
 		}
 	}
 
@@ -532,7 +532,7 @@ public class FileUpdateService : IFileUpdateService
 					{
 						fileUpdateResult.FileUpdateStatus = FileUpdateStatus.FileNameTooLong;
 						item.Status = ZipFileUpdateStatus.Errored;
-						item.StatusMessage = $"Error in Manifest file.  File Name is too long {Path.GetFileName(fileUpdateResult.UpdateFileModel.Path)}";
+						item.StatusMessage = "Error in Manifest file.  File Name is too long " + Path.GetFileName(fileUpdateResult.UpdateFileModel.Path);
 					}
 					item.FileUpdateResultCollection.Add(fileUpdateResult);
 				}
@@ -550,7 +550,7 @@ public class FileUpdateService : IFileUpdateService
 				return result;
 			});
 			string[] value = fileUpdateResults.ZipFileUpdateResultCollection.Select((IZipFileUpdateResult eachZipFileUpdate) => $"{Path.GetFileName(eachZipFileUpdate?.FileName)} revision: {eachZipFileUpdate?.UpdateFileManifestProperties.Revision ?? (-1)}").ToArray();
-			Log(string.Format("Sorted update files by revision: {0}", string.Join(", ", value)));
+			Log("Sorted update files by revision: " + string.Join(", ", value));
 		}
 		UpdateFileUpdateResultStatus(fileUpdateResults);
 	}
@@ -561,7 +561,7 @@ public class FileUpdateService : IFileUpdateService
 		{
 			try
 			{
-				Log($"Creating FileUpdateService CompletedFolderPath: {CompletedFolderPath}");
+				Log("Creating FileUpdateService CompletedFolderPath: " + CompletedFolderPath);
 				Directory.CreateDirectory(CompletedFolderPath);
 			}
 			catch (Exception arg)
@@ -575,7 +575,7 @@ public class FileUpdateService : IFileUpdateService
 		{
 			try
 			{
-				Log($"Creating FileUpdateService NotProcessedFolderPath: {NotProcessedFolderPath}");
+				Log("Creating FileUpdateService NotProcessedFolderPath: " + NotProcessedFolderPath);
 				Directory.CreateDirectory(NotProcessedFolderPath);
 			}
 			catch (Exception arg2)
@@ -598,7 +598,7 @@ public class FileUpdateService : IFileUpdateService
 		{
 			if (!File.Exists(zipFileName))
 			{
-				Log($"GetManifestData No File Found at location: {zipFileName}");
+				Log("GetManifestData No File Found at location: " + zipFileName);
 				return;
 			}
 			using ZipArchive zipArchive = ZipFile.OpenRead(zipFileName);
@@ -606,7 +606,7 @@ public class FileUpdateService : IFileUpdateService
 			if (entry == null)
 			{
 				manifestData.Status = ManifestPropertiesStatus.MissingManifestFile;
-				Log($"GetManifestData No Manifest File Found in zip file update: {zipFileName}");
+				Log("GetManifestData No Manifest File Found in zip file update: " + zipFileName);
 				return;
 			}
 			UpdateFileManifest updateFileManifest = null;
@@ -675,7 +675,7 @@ public class FileUpdateService : IFileUpdateService
 			else if (updateFileManifest == null)
 			{
 				manifestData.Status = ManifestPropertiesStatus.CorruptedManifestFile;
-				Log($"Error: Unable to deserialize manifest file from file update {zipFileName}");
+				Log("Error: Unable to deserialize manifest file from file update " + zipFileName);
 			}
 		}
 		catch (Exception arg2)
@@ -691,7 +691,7 @@ public class FileUpdateService : IFileUpdateService
 		zipFileUpdateResult.StatusMessage = "File successfully updated.";
 		if (!File.Exists(zipFileUpdateResult.FileName))
 		{
-			Log($"Unable to move file {zipFileUpdateResult.FileName} because it no longer exists.");
+			Log("Unable to move file " + zipFileUpdateResult.FileName + " because it no longer exists.");
 		}
 		else
 		{
@@ -709,7 +709,7 @@ public class FileUpdateService : IFileUpdateService
 				text = GetUniqueFileName(text);
 			}
 			File.Move(zipFileUpdateResult.FileName, text);
-			Log($"Moved file {Path.GetFileName(zipFileUpdateResult.FileName)} to folder {text}");
+			Log("Moved file " + Path.GetFileName(zipFileUpdateResult.FileName) + " to folder " + text);
 		}
 		catch (Exception arg)
 		{

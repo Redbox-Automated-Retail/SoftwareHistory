@@ -23,7 +23,7 @@ public class IUC285Notifier : IIUC285Notifier
 		_deviceServiceClient = new DeviceServiceClient(httpService);
 		_deviceServiceClient.OnLog += _deviceServiceClient_OnLog;
 		_url = GetDeviceServiceClientUrl();
-		Log($"Configuring IUC285Notifier with DeviceServiceClientUrl: {_url}");
+		Log("Configuring IUC285Notifier with DeviceServiceClientUrl: " + _url);
 	}
 
 	private void _deviceServiceClient_OnLog(string logText)

@@ -28,6 +28,6 @@ public class FileUpdateResults : IFileUpdateResults
 
 	public override string ToString()
 	{
-		return $"FileUpdateResults: {JsonConvert.SerializeObject(this, Formatting.Indented)}";
+		return "FileUpdateResults: " + JsonConvert.SerializeObject(this, Formatting.Indented);
 	}
 }

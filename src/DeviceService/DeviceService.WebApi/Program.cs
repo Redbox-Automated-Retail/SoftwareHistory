@@ -14,7 +14,7 @@ public class Program
 {
 	private const string ASPNETCORE_ENVIRONMENT = "ASPNETCORE_ENVIRONMENT";
 
-	public static IConfiguration Configuration { get; } = GetConfiguration();
+	public static IConfiguration Configuration { get; } = GetConfiguration(new ConfigurationBuilder()).Build();
 
 	public static void Main(string[] args)
 	{
@@ -29,7 +29,7 @@ public class Program
 		try
 		{
 			Log.Information("------------------------------------ Starting web host -------------------------------------");
-			Log.Information(string.Format("ASPNETCORE_ENVIRONMENT: {0}", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")));
+			Log.Information("ASPNETCORE_ENVIRONMENT: " + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
 			Log.Information($"DeviceService version: {DeviceService.Domain.DeviceService.AssemblyVersion}");
 			if (!flag)
 			{
@@ -59,7 +59,10 @@ public class Program
 		Log.Information($"CreateWebHostBuilder: url={deviceServiceUri.AbsoluteUri}  port={deviceServiceUri.Port}");
 		return WebHost.CreateDefaultBuilder(args).UseContentRoot(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)).UseUrls(deviceServiceUri.AbsoluteUri)
 			.UseSetting("Port", deviceServiceUri.Port.ToString())
-			.UseConfiguration(Configuration)
+			.ConfigureAppConfiguration(delegate(WebHostBuilderContext builder, IConfigurationBuilder conf)
+			{
+				GetConfiguration(conf);
+			})
 			.UseSerilog()
 			.UseStartup<Startup>();
 	}
@@ -69,13 +72,13 @@ public class Program
 		return new Uri(config.GetValue<string>("AppSettings:DeviceServiceUrl"));
 	}
 
-	private static IConfiguration GetConfiguration()
+	private static IConfigurationBuilder GetConfiguration(IConfigurationBuilder builder)
 	{
-		IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+		builder.SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddJsonFile("Data\\DeviceServiceConfig.json", optional: true, reloadOnChange: true);
 		if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null)
 		{
-			configurationBuilder.AddJsonFile(string.Format("appsettings.{0}.json", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")), optional: true, reloadOnChange: true);
+			builder.AddJsonFile("appsettings." + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") + ".json", optional: true, reloadOnChange: true);
 		}
-		return configurationBuilder.Build();
+		return builder;
 	}
 }

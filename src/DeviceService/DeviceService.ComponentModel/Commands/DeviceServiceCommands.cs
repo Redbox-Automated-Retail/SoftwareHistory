@@ -12,6 +12,10 @@ public class DeviceServiceCommands
 
 	public const string IsConnected = "IsConnected";
 
+	public const string ValidateVersion = "ValidateVersion";
+
+	public const string SupportsEMV = "SupportsEMV";
+
 	public const string GetUnitHealth = "GetUnitHealth";
 
 	public const string ReadCard = "ReadCard";
@@ -24,13 +28,9 @@ public class DeviceServiceCommands
 
 	public const string ReportAuthorizeResult = "ReportAuthorizeResult";
 
-	public const string ValidateVersion = "ValidateVersion";
-
 	public const string CheckActivation = "CheckActivation";
 
 	public const string CheckDeviceStatus = "CheckDeviceStatus";
 
 	public const string GetCardInsertedStatus = "GetCardInsertedStatus";
-
-	public const string SupportsEMV = "SupportsEMV";
 }

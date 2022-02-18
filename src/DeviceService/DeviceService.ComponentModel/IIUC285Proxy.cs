@@ -14,6 +14,14 @@ public interface IIUC285Proxy
 
 	bool SupportsEMV { get; }
 
+	bool SupportsVas { get; }
+
+	bool HasValidVasRKI { get; }
+
+	bool HasInvalidVasRKI { get; }
+
+	bool HasIntermediateVasRepairKey { get; }
+
 	event OnConnected OnConnectedHandler;
 
 	event OnDisconnected OnDisconnectedHandler;
@@ -32,7 +40,7 @@ public interface IIUC285Proxy
 
 	bool Reconnect();
 
-	bool Reboot();
+	bool Reboot(RebootType reboot = RebootType.Manual);
 
 	void ReadCancel();
 

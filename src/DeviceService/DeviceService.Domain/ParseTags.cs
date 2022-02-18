@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using DeviceService.ComponentModel;
@@ -68,7 +69,7 @@ public class ParseTags
 
 	public bool Tag9F27CryptogramDeclined { get; set; }
 
-	public void ParseEMVTags(string Tag, int TagLength, string TagDataStr, byte[] TagDataByte, CardSourceType transactionType, Action<string> log)
+	public void ParseEMVTags(string Tag, int TagLength, string TagDataStr, byte[] TagDataByte, CardSourceType transactionType, Action<string> log, IList<Error> errors)
 	{
 		GeneralSourceType generalSourceType = transactionType.GetGeneralSourceType();
 		string text = "[Pii Data]";
@@ -105,7 +106,7 @@ public class ParseTags
 		}
 		else if (Tag == "50")
 		{
-			ApplicationLabel = ConvertHexToString(TagDataStr).ToUpper();
+			ApplicationLabel = ConvertHexToString(TagDataStr, errors).ToUpper();
 		}
 		else if (Tag == "57")
 		{
@@ -3256,8 +3257,8 @@ public class ParseTags
 					IUC285Proxy.Log("---------Device Type (MasterCard) (9F6E)----------");
 					if (TagDataStr.Length > 12)
 					{
-						string text259 = ConvertHexToString(TagDataStr.Substring(8, 4));
-						IUC285Proxy.Log($"DeviceType: {text259}");
+						string text259 = ConvertHexToString(TagDataStr.Substring(8, 4), errors);
+						IUC285Proxy.Log("DeviceType: " + text259);
 						if (int.TryParse(text259, out var result) && result > 0)
 						{
 							IsMobileWallet = true;
@@ -3274,7 +3275,7 @@ public class ParseTags
 					IUC285Proxy.Log("---------Device Type (VISA) (9F6E)----------");
 					if (TagDataStr.Length >= 4)
 					{
-						IUC285Proxy.Log($"DeviceType: {TagDataStr}");
+						IUC285Proxy.Log("DeviceType: " + TagDataStr);
 						if ((Convert.ToInt16(TagDataStr.Substring(1, 1), 16) & 2) > 0)
 						{
 							IsMobileWallet = true;
@@ -3323,40 +3324,47 @@ public class ParseTags
 					stringBuilder.Append(char.ConvertFromUtf32(utf));
 				}
 				ErrorCode = stringBuilder.ToString();
-				IUC285Proxy.Log($"Error response code = {ErrorCode}");
+				IUC285Proxy.Log("Error response code = " + ErrorCode);
 				IUC285Proxy.Log("----------------------------------------------------");
 				Fallback = (_fallbackErrorStatusActions.TryGetValue(ErrorCode, out var value) ? value : FallbackStatusAction.NoAction);
-				string errorCode = ErrorCode;
-				if (!(errorCode == "CDIV"))
+				switch (ErrorCode)
 				{
-					if (errorCode == "CNSUP")
-					{
-						FallbackReason = FallbackType.CardNotSupported;
-					}
-				}
-				else
-				{
+				case "CDIV":
 					FallbackReason = FallbackType.CardDataInvalid;
+					break;
+				case "CNSUP":
+					FallbackReason = FallbackType.CardNotSupported;
+					break;
 				}
 			}
 			else if (Tag == "5F20")
 			{
-				string cardHolderName = ConvertHexToString(TagDataStr);
+				string cardHolderName = ConvertHexToString(TagDataStr, errors);
 				CardHolderName = cardHolderName;
 			}
 			else if (Tag == "FF1F")
 			{
-				FF1FOnGuardCardData = ConvertHexToString(TagDataStr);
+				FF1FOnGuardCardData = ConvertHexToString(TagDataStr, errors);
 			}
 		}
 	}
 
-	public static string ConvertHexToString(string hexString)
+	public static string ConvertHexToString(string hexString, IList<Error> errors)
 	{
 		StringBuilder stringBuilder = new StringBuilder();
 		for (int i = 0; i < hexString.Length; i += 2)
 		{
-			stringBuilder.Append(Convert.ToChar(Convert.ToInt32(hexString.Substring(i, 2), 16)));
+			if (int.TryParse(hexString.Substring(i, 2), NumberStyles.HexNumber, null, out var result))
+			{
+				stringBuilder.Append(Convert.ToChar(result));
+				continue;
+			}
+			errors?.Add(new Error
+			{
+				Code = "HTS001",
+				Message = "Failed to Convert Data to string."
+			});
+			return null;
 		}
 		return stringBuilder.ToString();
 	}

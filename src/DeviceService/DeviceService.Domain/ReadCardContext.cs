@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using DeviceService.ComponentModel;
 using DeviceService.ComponentModel.Requests;
@@ -13,11 +14,28 @@ public class ReadCardContext
 {
 	private readonly ILogger<IUC285Proxy> _logger;
 
+	private const int DEFAULT_TIMEOUT = 30000;
+
 	private bool CompleteCallbackSent;
+
+	public Guid Id { get; set; }
 
 	public ICardReadRequest Request { get; set; }
 
-	public int TimeRemainingUntilTimeout => Math.Max(0, (int)((Request?.Timeout ?? 30000) - (Watch?.ElapsedMilliseconds ?? 0)));
+	public int? UserInteractionTimeout { get; set; }
+
+	public int TimeRemainingUntilTimeout
+	{
+		get
+		{
+			int? num = Request?.Timeout;
+			if (_sentCardProcessing)
+			{
+				num = UserInteractionTimeout;
+			}
+			return Math.Max(0, (int)((num ?? 30000) - (Watch?.ElapsedMilliseconds ?? 0)));
+		}
+	}
 
 	public CancellationToken CancelToken { get; set; }
 
@@ -31,7 +49,7 @@ public class ReadCardContext
 
 	public IList<Error> Errors { get; set; } = new List<Error>();
 
-	public ReadCardContextState State { get; set; }
+	public ReadCardContextState State { get; set; } = ReadCardContextState.Continue;
 
 	public Base87CardReadModel ResponseDataModel { get; set; }
 
@@ -43,13 +61,97 @@ public class ReadCardContext
 
 	public UnitDataModel UnitData { get; set; }
 
-	public CardReadExitType ExitType { get; set; }
+	public CardReadExitType ExitType { get; set; } = CardReadExitType.NotPerformed;
+
+	public bool IsVasEnabled
+	{
+		get
+		{
+			if (Request.VasMode != VasMode.VasOnly)
+			{
+				return Request.VasMode == VasMode.VasAndPay;
+			}
+			return true;
+		}
+	}
+
+	public bool IsPayEnabled
+	{
+		get
+		{
+			if (Request.VasMode != VasMode.PayOnly)
+			{
+				return Request.VasMode == VasMode.VasAndPay;
+			}
+			return true;
+		}
+	}
+
+	public string VasData { get; set; }
+
+	public WalletType Wallet { get; set; }
+
+	private bool _sentCardProcessing { get; set; }
 
 	public ReadCardContext(ILogger<IUC285Proxy> logger)
 	{
 		_logger = logger;
 		Watch = new Stopwatch();
 		Watch.Start();
+		Id = Guid.NewGuid();
+	}
+
+	public bool CanContinue(VasMode mode)
+	{
+		bool result = false;
+		switch (mode)
+		{
+		case VasMode.PayOnly:
+			result = IsPayEnabled && State.HasFlag(ReadCardContextState.PayContinue);
+			break;
+		case VasMode.VasOnly:
+			result = IsVasEnabled && State.HasFlag(ReadCardContextState.VasContinue);
+			break;
+		case VasMode.VasAndPay:
+			result = State == ReadCardContextState.Continue || (IsVasEnabled && State == ReadCardContextState.VasContinue) || (IsPayEnabled && State == ReadCardContextState.PayContinue);
+			break;
+		}
+		return result;
+	}
+
+	public void UpdateStopStateFor(VasMode mode)
+	{
+		ReadCardContextState state = State;
+		switch (mode)
+		{
+		case VasMode.VasOnly:
+			if (State == ReadCardContextState.VasContinue)
+			{
+				State = ReadCardContextState.Stop;
+			}
+			else if (State == ReadCardContextState.Continue)
+			{
+				State = ReadCardContextState.PayContinue;
+			}
+			break;
+		case VasMode.PayOnly:
+			if (State == ReadCardContextState.PayContinue)
+			{
+				State = ReadCardContextState.Stop;
+			}
+			else if (State == ReadCardContextState.Continue)
+			{
+				State = ReadCardContextState.VasContinue;
+			}
+			break;
+		case VasMode.VasAndPay:
+			if (State.HasFlag(ReadCardContextState.Continue))
+			{
+				State = ReadCardContextState.Stop;
+			}
+			break;
+		}
+		_logger?.LogInformation($"Update Stop State for VasMode: {mode} - State Change From: {state} To: {State}");
 	}
 
 	public void SendCompletedCallback()
@@ -65,6 +167,9 @@ public class ReadCardContext
 		{
 			switch (CardSource)
 			{
+			case CardSourceType.VASOnly:
+				ResponseDataModel = new EMVCardReadModel();
+				break;
 			case CardSourceType.EMVContact:
 			case CardSourceType.QuickChip:
 				ResponseDataModel = new EMVCardReadModel();
@@ -87,7 +192,7 @@ public class ReadCardContext
 				});
 				ResponseDataModel.Status = ResponseStatus.Tampered;
 				break;
-			case ReadCardContextState.Cancelled:
+			case ReadCardContextState.Canceled:
 				Errors.Add(new Error
 				{
 					Code = "CANCELLED",
@@ -107,17 +212,20 @@ public class ReadCardContext
 				Errors.Add(new Error
 				{
 					Code = "BLOCKED",
-					Message = $"Card brand {CardBrand.ToString()} and it's source {CardSource} is disabled in system.config"
+					Message = $"Card brand {CardBrand} and it's source {CardSource} is disabled in system.config"
 				});
 				ResponseDataModel.Status = ResponseStatus.Blocked;
 				break;
 			default:
-				ResponseDataModel.Status = ResponseStatus.Errored;
-				Errors.Add(new Error
+				if (!IsVasEnabled || VasData == null)
 				{
-					Code = "SCC001",
-					Message = "Sending Default Error, ResponseDataModel Missing."
-				});
+					ResponseDataModel.Status = ResponseStatus.Errored;
+					Errors.Add(new Error
+					{
+						Code = "SCC001",
+						Message = "Sending Default Error, ResponseDataModel Missing."
+					});
+				}
 				break;
 			}
 		}
@@ -125,19 +233,33 @@ public class ReadCardContext
 		{
 			((EMVCardReadModel)ResponseDataModel).CardRemoved = CardRemoved;
 		}
+		if (IsPayEnabled && (CardSource == CardSourceType.EMVContactless || CardSource == CardSourceType.MSDContactless) && Wallet != WalletType.None)
+		{
+			CardSource = CardSourceType.Mobile;
+		}
 		ResponseDataModel.TimeTaken = Watch.Elapsed;
 		ResponseDataModel.AddErrors(Errors);
 		ResponseDataModel.CardSource = CardSource;
+		ResponseDataModel.VasData = VasData;
+		ResponseDataModel.WalletFormat = Wallet;
+		if (ResponseDataModel.Status == ResponseStatus.Success && ResponseDataModel.Errors.Any())
+		{
+			ResponseDataModel.Status = ResponseStatus.Errored;
+		}
 		CardStats = new CardStats
 		{
 			SessionId = Request?.SessionId,
 			Id = Guid.NewGuid(),
 			CardBrand = CardBrand,
-			ManufacturerSerialNumber = UnitData.ManufacturingSerialNumber,
+			ManufacturerSerialNumber = UnitData?.ManufacturingSerialNumber,
 			RBAVersion = UnitData?.GetApplicationVersionString(),
 			ReadResult = ExitType,
 			SourceType = CardSource,
-			ErrorCode = ResponseDataModel.ErrorCode
+			ErrorCode = ResponseDataModel.ErrorCode,
+			WalletFormat = Wallet,
+			HasPayData = ResponseDataModel.HasPayData,
+			HasVasData = ResponseDataModel.HasVasData,
+			VasErrorCode = ResponseDataModel.VasErrorCode
 		};
 		JobCompletedCallback?.Invoke(ResponseDataModel);
 	}
@@ -150,7 +272,13 @@ public class ReadCardContext
 
 	public void SendCardProcessing()
 	{
-		EventsCallback?.Invoke("CardProcessingStartedResponseEvent", CardSource.ToString());
+		if (!_sentCardProcessing)
+		{
+			EventsCallback?.Invoke("CardProcessingStartedResponseEvent", CardSource.ToString());
+			_sentCardProcessing = true;
+			Watch.Restart();
+			_logger.LogInformation($"Set New Timeout: {UserInteractionTimeout}");
+		}
 	}
 
 	public bool CardBrandAndSourceIsDeactivated()

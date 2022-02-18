@@ -7,5 +7,6 @@ public enum RebootType
 	Manual,
 	Automatic,
 	Disconnect,
-	FileUpdate
+	FileUpdate,
+	OfflineCommandFailure
 }

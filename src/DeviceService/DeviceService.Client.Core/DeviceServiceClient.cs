@@ -72,7 +72,7 @@ public class DeviceServiceClient : IDeviceServiceClientCore
 	public void StartConnectionToDeviceService(string url)
 	{
 		_url = url;
-		Log($"Begin Connecting to DeviceService at url: {_url}");
+		Log("Begin Connecting to DeviceService at url: " + _url);
 		_signalRClient.Connect(_url);
 	}
 
@@ -129,7 +129,7 @@ public class DeviceServiceClient : IDeviceServiceClientCore
 
 	private void LogEvent(BaseEvent baseEvent)
 	{
-		Log($">>> {baseEvent.EventName}: {JsonConvert.SerializeObject(baseEvent)}");
+		Log(">>> " + baseEvent.EventName + ": " + JsonConvert.SerializeObject(baseEvent));
 	}
 
 	private void Log(string logText)

@@ -49,7 +49,7 @@ public class ApplicationControl : IApplicationControl
 		}
 		if (!string.IsNullOrEmpty(text))
 		{
-			text = $"  Reason: {text}";
+			text = "  Reason: " + text;
 		}
 		_logger?.LogInformation($"ApplicationControl.CanShutDown: {_canShutDownClientResponse} {text}");
 		return _canShutDownClientResponse;
@@ -88,7 +88,7 @@ public class ApplicationControl : IApplicationControl
 						}
 						else
 						{
-							_logger?.LogError(string.Format("Unable to find service {0}.  Unable to shut down windows service.", "device$service"));
+							_logger?.LogError("Unable to find service device$service.  Unable to shut down windows service.");
 						}
 					}
 					else

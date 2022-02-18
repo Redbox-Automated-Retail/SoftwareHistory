@@ -6,6 +6,7 @@ using DeviceService.ComponentModel.Requests;
 using DeviceService.ComponentModel.Responses;
 using DeviceService.Domain;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace DeviceService.WebApi.Controllers;
 
@@ -13,20 +14,23 @@ namespace DeviceService.WebApi.Controllers;
 [ApiController]
 public class DeviceController : ControllerBase
 {
-	private IIUC285Proxy _proxy;
+	private readonly IIUC285Proxy _proxy;
 
-	private IActivationService _activationService;
+	private readonly IActivationService _activationService;
 
-	private IDeviceStatusService _deviceStatusService;
+	private readonly IDeviceStatusService _deviceStatusService;
 
-	private IApplicationControl _applicationControl;
+	private readonly IApplicationControl _applicationControl;
 
-	public DeviceController(IIUC285Proxy proxy, IActivationService activationService, IDeviceStatusService deviceStatusService, IApplicationControl applicationControl)
+	private readonly ILogger<DeviceController> _logger;
+
+	public DeviceController(IIUC285Proxy proxy, IActivationService activationService, IDeviceStatusService deviceStatusService, IApplicationControl applicationControl, ILogger<DeviceController> logger)
 	{
 		_proxy = proxy;
 		_activationService = activationService;
 		_deviceStatusService = deviceStatusService;
 		_applicationControl = applicationControl;
+		_logger = logger;
 	}
 
 	[HttpGet("IsConnected")]
@@ -54,7 +58,10 @@ public class DeviceController : ControllerBase
 		await _proxy.ReadCard(request, token, delegate(Base87CardReadModel r)
 		{
 			result = r;
-		}, null);
+		}, delegate(string evt, string cardSource)
+		{
+			_logger.LogInformation(evt + " - " + cardSource);
+		});
 		return result;
 	}
 
@@ -143,5 +150,12 @@ public class DeviceController : ControllerBase
 	public ActionResult<bool> CanShutdown(ShutDownReason shutDownReason)
 	{
 		return _applicationControl?.CanShutDown(shutDownReason) ?? false;
+	}
+
+	[HttpGet("CardReaderState")]
+	[ProducesResponseType(typeof(CardReaderState), 200)]
+	public ActionResult<CardReaderState> GetCardReaderState()
+	{
+		return _proxy.GetCardReaderState();
 	}
 }

@@ -136,15 +136,14 @@ public class ActivationService : IActivationService
 
 	private void LogErrors(string message, StandardResponse response)
 	{
-		int? num = response?.Errors?.Count;
-		if (!num.HasValue || num.GetValueOrDefault() == 0)
+		if ((response?.Errors?.Count).GetValueOrDefault() == 0)
 		{
 			return;
 		}
 		_logger.Log(LogLevel.Error, message);
 		foreach (Error error in response.Errors)
 		{
-			_logger.Log(LogLevel.Error, $"Code: {error.Code} Message: {error.Message}");
+			_logger.Log(LogLevel.Error, "Code: " + error.Code + " Message: " + error.Message);
 		}
 	}
 }

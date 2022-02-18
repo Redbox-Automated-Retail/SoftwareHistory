@@ -512,19 +512,18 @@ public class RBA_API : IRBA_API
 		vsUnmanagedBatteryLevelCallBack = unmanagedBatteryLevelCallBack;
 		vsUnmanagedConnectCallBack = unmanagedConnectCallBack;
 		vsUnmanagedDisconnectCallBack = unmanagedDisconnectCallBack;
+		vsUnmanagedTraceLog = unmanagedTraceLog;
 	}
 
 	private void unmanagedTraceLog(string line)
 	{
 		try
 		{
-			if (logHandler != null)
-			{
-				logHandler(line);
-			}
+			logHandler?.Invoke(line);
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			logHandler?.Invoke(ex.ToString());
 		}
 	}
 
@@ -551,13 +550,11 @@ public class RBA_API : IRBA_API
 	{
 		try
 		{
-			if (batterylevelHandler != null)
-			{
-				batterylevelHandler(level, btSate, btLevelState);
-			}
+			batterylevelHandler?.Invoke(level, btSate, btLevelState);
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			logHandler?.Invoke(ex.ToString());
 		}
 	}
 
@@ -574,8 +571,9 @@ public class RBA_API : IRBA_API
 				LogOut("RBA_SDK_C#", LOG_LEVEL.WARNING, "No connectHandler defined");
 			}
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			logHandler?.Invoke(ex.ToString());
 		}
 	}
 
@@ -592,8 +590,9 @@ public class RBA_API : IRBA_API
 				LogOut("RBA_SDK_C#", LOG_LEVEL.WARNING, "No disconnectHandler defined");
 			}
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			logHandler?.Invoke(ex.ToString());
 		}
 	}
 
@@ -1012,8 +1011,9 @@ public class RBA_API : IRBA_API
 		{
 			LogOutNative(moduleName, logLevel, logString);
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			logHandler?.Invoke(ex?.ToString());
 		}
 	}
 

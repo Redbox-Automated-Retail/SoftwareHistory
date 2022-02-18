@@ -39,7 +39,7 @@ public class DeviceStatusService : IDeviceStatusService
 		else
 		{
 			standardResponse = new StandardResponse(new Exception("KioskData.json not found in Data folder"));
-			_logger.LogInformation($"PostDeviceStatus Result: {JsonConvert.SerializeObject(standardResponse)}");
+			_logger.LogInformation("PostDeviceStatus Result: " + JsonConvert.SerializeObject(standardResponse));
 		}
 		return standardResponse;
 	}
@@ -69,6 +69,6 @@ public class DeviceStatusService : IDeviceStatusService
 
 	private void LogException(string message, Exception e)
 	{
-		_logger?.LogError(e, $"Unhandled Exception in {message}");
+		_logger?.LogError(e, "Unhandled Exception in " + message);
 	}
 }

@@ -10,6 +10,8 @@ public class DeviceServiceShutDownCommand : BaseCommandRequest
 
 	public ShutDownReason Reason { get; set; }
 
+	public override bool IsQueuedCommand => false;
+
 	public DeviceServiceShutDownCommand(Version deviceServiceClientVersion)
 		: base("DeviceServiceShutDown", deviceServiceClientVersion)
 	{

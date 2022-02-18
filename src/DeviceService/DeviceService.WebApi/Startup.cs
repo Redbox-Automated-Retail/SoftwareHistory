@@ -51,14 +51,15 @@ public class Startup
 			});
 		});
 		services.Configure<ApplicationSettings>(Configuration.GetSection("AppSettings"));
+		services.Configure<DeviceServiceConfig>(Configuration.GetSection("DeviceServiceConfig"));
 		ServiceProvider provider = services.BuildServiceProvider();
 		ApplicationSettings value = provider.GetRequiredService<IOptionsSnapshot<ApplicationSettings>>().Value;
 		services.AddSingleton((IApplicationSettings)value);
 		ILogger<Startup> requiredService = provider.GetRequiredService<ILogger<Startup>>();
 		requiredService.LogInformation($"AppSettings - UseSimulator: {value.UseSimulator}");
-		requiredService.LogInformation($"AppSettings - DataFilePath: {value.DataFilePath}");
-		requiredService.LogInformation($"AppSettings - DeviceServiceUrl: {value.DeviceServiceUrl}");
-		requiredService.LogInformation($"AppSettings - DeviceServiceClientPath: {value.DeviceServiceClientPath}");
+		requiredService.LogInformation("AppSettings - DataFilePath: " + value.DataFilePath);
+		requiredService.LogInformation("AppSettings - DeviceServiceUrl: " + value.DeviceServiceUrl);
+		requiredService.LogInformation("AppSettings - DeviceServiceClientPath: " + value.DeviceServiceClientPath);
 		if (value.UseSimulator)
 		{
 			if (File.Exists(".\\RBA_SDK_Simulator.dll"))
@@ -89,7 +90,7 @@ public class Startup
 		{
 			if (singletonIUC285Proxy == null)
 			{
-				singletonIUC285Proxy = new IUC285Proxy(provider2.GetRequiredService<IRBA_API>(), provider2.GetRequiredService<ILogger<IUC285Proxy>>(), provider2.GetRequiredService<IIUC285Notifier>(), provider2.GetRequiredService<IKioskDataServiceClient>(), provider2.GetRequiredService<IApplicationSettings>());
+				singletonIUC285Proxy = new IUC285Proxy(provider2.GetRequiredService<IRBA_API>(), provider2.GetRequiredService<ILogger<IUC285Proxy>>(), provider2.GetRequiredService<IIUC285Notifier>(), provider2.GetRequiredService<IKioskDataServiceClient>(), provider2.GetRequiredService<IApplicationSettings>(), provider2.GetRequiredService<IOptionsMonitor<DeviceServiceConfig>>());
 				Log.Information("Begin Connect");
 				(singletonIUC285Proxy as IUC285Proxy)?.Connect();
 			}

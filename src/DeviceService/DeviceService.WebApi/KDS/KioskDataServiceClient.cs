@@ -40,7 +40,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 
 	public void LogException(string message, Exception e)
 	{
-		_logger?.LogError(e, $"Unhandled Exception in {message}");
+		_logger?.LogError(e, "Unhandled Exception in " + message);
 	}
 
 	public async Task<StandardResponse> PostDeviceStatus(DeviceStatus deviceStatus)
@@ -56,7 +56,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		{
 			standardResponse = new StandardResponse(e);
 		}
-		_logger.LogInformation($"PostDeviceStatus Result: {JsonConvert.SerializeObject(standardResponse)}");
+		_logger.LogInformation("PostDeviceStatus Result: " + JsonConvert.SerializeObject(standardResponse));
 		return standardResponse;
 	}
 
@@ -73,7 +73,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		{
 			standardResponse = new StandardResponse(e);
 		}
-		_logger.LogInformation($"PostRebootStatus Result: {JsonConvert.SerializeObject(standardResponse)}");
+		_logger.LogInformation("PostRebootStatus Result: " + JsonConvert.SerializeObject(standardResponse));
 		return standardResponse;
 	}
 
@@ -91,7 +91,7 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 		{
 			standardResponse = new StandardResponse(e);
 		}
-		_logger.LogInformation($"PostCardStats Result: {JsonConvert.SerializeObject(standardResponse)}");
+		_logger.LogInformation("PostCardStats Result: " + JsonConvert.SerializeObject(standardResponse));
 		return standardResponse;
 	}
 }

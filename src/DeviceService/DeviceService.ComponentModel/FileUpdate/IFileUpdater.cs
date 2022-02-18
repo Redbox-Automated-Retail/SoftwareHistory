@@ -12,7 +12,7 @@ public interface IFileUpdater
 
 	int GetFileUpdateRevisionNumber();
 
-	bool SetFileUpdateRevisionNumber(int revisionNumber);
+	bool SetFileUpdateRevisionNumber(string revisionNumber);
 
 	void PrepareToUpdateFiles();
 

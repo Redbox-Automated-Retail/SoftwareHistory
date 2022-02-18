@@ -10,7 +10,8 @@ public class DeviceService
 	{
 		new Version(1, 3),
 		new Version(1, 4),
-		new Version(1, 5)
+		new Version(1, 5),
+		new Version(1, 8)
 	};
 
 	public static Version AssemblyVersion => Assembly.GetExecutingAssembly().GetName().Version;

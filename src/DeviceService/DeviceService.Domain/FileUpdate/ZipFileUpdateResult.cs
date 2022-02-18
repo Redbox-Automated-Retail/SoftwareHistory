@@ -30,6 +30,6 @@ public class ZipFileUpdateResult : IZipFileUpdateResult
 
 	public override string ToString()
 	{
-		return $"ZipFileUpdateResult: {JsonConvert.SerializeObject(this)}";
+		return "ZipFileUpdateResult: " + JsonConvert.SerializeObject(this);
 	}
 }
