@@ -113,24 +113,9 @@
 				enabled="true" />
 
 			<actor
-				name="rented_discs_value"
-				x="266"
-				y="120"
-				width="125"
-				height="20"
-				text=" "
-				font="medium_font"
-				verticalAlignment="near"
-				horizontalAlignment="near"
-				optionFlags="Text, TextShadow"
-				foregroundColor="white"
-				visible="false"
-				enabled="true" />
-
-			<actor
 				name="empty_slots_label"
 				x="56"
-				y="142"
+				y="132"
 				width="200"
 				height="20"
 				text="Empty Slots:"
@@ -145,7 +130,7 @@
 			<actor
 				name="empty_slots_value"
 				x="266"
-				y="142"
+				y="132"
 				width="125"
 				height="20"
 				text=" "
@@ -160,7 +145,7 @@
 			<actor
 				name="empty_case_count_label"
 				x="56"
-				y="164"
+				y="154"
 				width="200"
 				height="20"
 				text="Empty Cases:"
@@ -175,7 +160,7 @@
 			<actor
 				name="empty_case_count_value"
 				x="266"
-				y="164"
+				y="154"
 				width="125"
 				height="20"
 				text=" "
@@ -190,7 +175,7 @@
 			<actor
 				name="unknown_count_label"
 				x="56"
-				y="186"
+				y="176"
 				width="200"
 				height="20"
 				text="Unknown Count:"
@@ -205,7 +190,7 @@
 			<actor
 				name="unknown_count_value"
 				x="266"
-				y="186"
+				y="176"
 				width="125"
 				height="20"
 				text=" "
@@ -220,7 +205,7 @@
 			<actor
 				name="thins_outside_vmz_label"
 				x="56"
-				y="208"
+				y="198"
 				width="200"
 				height="20"
 				text="Thins Outside VMZ:"
@@ -235,7 +220,7 @@
 			<actor
 				name="thins_outside_vmz_value"
 				x="266"
-				y="208"
+				y="198"
 				width="125"
 				height="20"
 				text=" "
@@ -250,7 +235,7 @@
 			<actor
 				name="thin_redeploys_outside_vmz_label"
 				x="56"
-				y="230"
+				y="220"
 				width="200"
 				height="20"
 				text="Redeploys Outside VMZ:"
@@ -265,7 +250,7 @@
 			<actor
 				name="thin_redeploys_outside_vmz_value"
 				x="266"
-				y="230"
+				y="220"
 				width="125"
 				height="20"
 				text=" "
@@ -280,7 +265,7 @@
 			<actor
 				name="fraud_discs_count_label"
 				x="56"
-				y="252"
+				y="242"
 				width="200"
 				height="20"
 				text="Fraud Discs:"
@@ -295,7 +280,7 @@
 			<actor
 				name="fraud_discs_count_value"
 				x="266"
-				y="252"
+				y="242"
 				width="125"
 				height="20"
 				text=" "
@@ -310,7 +295,7 @@
 			<actor
 				name="DNR_disc_count_label"
 				x="56"
-				y="274"
+				y="264"
 				width="200"
 				height="20"
 				text="Do Not Rent Discs:"
@@ -325,7 +310,7 @@
 			<actor
 				name="DNR_disc_count_value"
 				x="266"
-				y="274"
+				y="264"
 				width="125"
 				height="20"
 				text=" "
@@ -340,7 +325,7 @@
 			<actor
 				name="damaged_discs_count_label"
 				x="56"
-				y="296"
+				y="286"
 				width="200"
 				height="20"
 				text="Damaged Discs:"
@@ -355,7 +340,7 @@
 			<actor
 				name="damaged_discs_count_value"
 				x="266"
-				y="296"
+				y="286"
 				width="125"
 				height="20"
 				text=" "
@@ -370,7 +355,7 @@
 			<actor
 				name="distinct_title_count_label"
 				x="56"
-				y="318"
+				y="308"
 				width="200"
 				height="20"
 				text="Distinct Titles:"
@@ -385,7 +370,7 @@
 			<actor
 				name="distinct_title_count_value"
 				x="266"
-				y="318"
+				y="308"
 				width="125"
 				height="20"
 				text=" "
@@ -400,7 +385,7 @@
 			<actor
 				name="reserved_disc_count_label"
 				x="56"
-				y="340"
+				y="330"
 				width="200"
 				height="20"
 				text="Reserved Discs:"
@@ -415,7 +400,7 @@
 			<actor
 				name="reserved_disc_count_value"
 				x="266"
-				y="340"
+				y="330"
 				width="125"
 				height="20"
 				text=" "
@@ -430,7 +415,7 @@
 			<actor
 				name="rebalance_disc_count_label"
 				x="56"
-				y="362"
+				y="352"
 				width="200"
 				height="20"
 				text="Rebalance Discs:"
@@ -445,7 +430,7 @@
 			<actor
 				name="rebalance_disc_count_value"
 				x="266"
-				y="362"
+				y="352"
 				width="125"
 				height="20"
 				text=" "
@@ -766,7 +751,30 @@
 				onHit="show_inventory_mgt"
 				/>
 
-<!-- JOB SCHEDULING BUTTONS -->
+      <!-- Planogram Button -->
+      <actor
+				name="planogram_button"
+				x="360"
+				y="550"
+				width="170"
+				height="90"
+				text="Planogram"
+				font="medium_large_font"
+				verticalAlignment="center"
+				horizontalAlignment="center"
+				foregroundColor="white"
+				backgroundColor="DarkRed"
+				strokeWeight="3.0"
+				borderColor="White"
+				cornerSize="15,15"
+				optionFlags="Background, Text, TextShadow, DrawBorder"
+				visible="false"
+				enabled="true"
+				hitFlags="Enabled"
+				onHit="show_select_planogram"
+				/>
+
+      <!-- JOB SCHEDULING BUTTONS -->
 
 			<actor
 				name="job_scheduling_label"
@@ -865,12 +873,35 @@
 				enabled="true"
 				hitFlags="Enabled"
 				onHit="show_hal_tester" />
-
-			<!-- Secure Browser Button-->
+      
+      <!-- Touchscreen Calibration button-->
+      <actor
+				name="touchscreen_calibration_button"
+				x="780"
+				y="220"
+				width="170"
+				height="90"
+				text="Touchscreen&#10;Calibration"
+				tag="touchscreen_calibration"
+				font="medium_large_font"
+				verticalAlignment="center"
+				horizontalAlignment="center"
+				foregroundColor="white"
+				backgroundColor="DarkRed"
+				strokeWeight="3.0"
+				borderColor="White"
+				cornerSize="15,15"
+				optionFlags="Background, Text, TextShadow, DrawBorder"
+				visible="true"
+				enabled="true"
+				hitFlags="Enabled"
+        onHit="show_touchscreen_calibration" />
+      
+      <!-- Secure Browser Button-->
 			<actor
 				name="secure_browser_button"
 				x="780"
-				y="220"
+				y="330"
 				width="170"
 				height="90"
 				text="Secure&#10;Browser"
@@ -893,7 +924,7 @@
 			<actor
 				name="send_inventory_alert_button"
 				x="780"
-				y="330"
+				y="440"
 				width="170"
 				height="90"
 				text="Send Inventory&#10;Alert*"
@@ -915,7 +946,7 @@
 			<actor
 				name="door_status_button"
 				x="780"
-				y="440"
+				y="550"
 				width="170"
 				height="90"
 				text="Door Status:&#10;Checking..."
@@ -938,7 +969,7 @@
 			<actor
 				name="air_exchanger_button"
 				x="780"
-				y="550"
+				y="660"
 				width="170"
 				height="90"
 				text="Turn off&#10;Air Exchanger Fan"
@@ -955,6 +986,6 @@
 				visible="false"
 				enabled="true"
 				hitFlags="Enabled" />
-		</scene>
+    </scene>
 	</aspect>
 </resource>

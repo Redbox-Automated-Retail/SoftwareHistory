@@ -87,7 +87,6 @@ local function start_the_application()
 		view_show( "login_view" )
 		idle_timer:start()
 		EmptySlots = nil
-		RentedDiscs = nil
 		QlmMonitor = newqlmmonitor()
 		QlmMonitor:start( 5000 )
 		HardSyncMonitor = newhardsyncmonitor()

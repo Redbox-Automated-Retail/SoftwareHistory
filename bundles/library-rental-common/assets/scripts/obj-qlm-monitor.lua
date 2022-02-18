@@ -499,6 +499,14 @@ function newqlmmonitor()
 						local job_name_label = string.upper( v.program )
 						if job_name_label == "THIN-VMZ" then
 							job_name_label = "THIN"
+							if v.label == "Automated Rebalance" then
+								kernel.log( "QLMMonitor Force Clean VMZ")
+								--shedule clean-vmz
+								hardwaremgr:clean_vmz( 
+									function()
+										kernel.log("QLMMonitor Clean VMZ Finished.")
+									end)
+							end
 						end
 						local func = msg_creators[ v.program ]
 						if func ~= nil then

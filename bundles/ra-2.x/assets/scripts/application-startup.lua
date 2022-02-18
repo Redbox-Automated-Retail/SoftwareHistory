@@ -293,23 +293,6 @@ local function create_coming_soon_cache_tables()
 	or ( ProfileVersion.generated_on ~= nil and tostring( coming_soon_updated ) < ProfileVersion.generated_on.date )
 	then
 		local coming_soon_generator = newcomingsoongenerator()
-		-- First build the titles used during Vend 'slot machine' effect
-		-- 1000 is the rating used when none can be determined for an item in the cart
-		coming_soon_generator:build_cache( "game", 16, 100 )
-		coming_soon_generator:build_cache( "game", 20, 100 )
-		coming_soon_generator:build_cache( "game", 1000, 100 )
-		coming_soon_generator:build_cache( "bluray", 5, 3 )
-		coming_soon_generator:build_cache( "bluray", 6, 3 )
-		coming_soon_generator:build_cache( "bluray", 7, 3 )
-		coming_soon_generator:build_cache( "bluray", 8, 3 )
-		coming_soon_generator:build_cache( "bluray", 10, 3 )
-		coming_soon_generator:build_cache( "bluray", 1000, 3 )
-		coming_soon_generator:build_cache( "dvd", 5, 3 )
-		coming_soon_generator:build_cache( "dvd", 6, 3 )
-		coming_soon_generator:build_cache( "dvd", 7, 3 )
-		coming_soon_generator:build_cache( "dvd", 8, 3 )
-		coming_soon_generator:build_cache( "dvd", 10, 3 )
-		coming_soon_generator:build_cache( "dvd", 1000, 3 )
 		-- Create browsable products in the local ProductCatalog
 		coming_soon_generator:create_browse_titles()
 		-- Update the last modified timestamp
@@ -320,15 +303,6 @@ local function create_coming_soon_cache_tables()
 		kernel.log( "Coming soon is up to date, skipping the cache build" )
 	end
 end
-
-local function register_get_coming_soon_products_callback( )
-    local get_coming_soon_products_callback = function ( )
-        return coming_soon_product_list
-    end
-
-    kernel.register_get_coming_soon_products_callback( get_coming_soon_products_callback )
-end
-
 
 local function register_default_hardware_handlers()
 	-- Hook up default hardware event handlers
@@ -490,15 +464,12 @@ local function start_new_rental_session_callback()
 	    language_switch = false
     end
 
-    ProductCatalog:get_default_family()
-
-
     function GetUsedMemory()
 	    collectgarbage( "collect" )
     end
 
     GetUsedMemory()
-
+    kernel.log( "> Finished start_new_rental_session_callback" )
 end
 
 -- callback from the .net side now that the start_idle_time is in .net
@@ -541,7 +512,6 @@ kernel.register_idle_timer_expire_session_callback(idle_timer_expire_session)
 kernel.register_start_new_rental_session_callback(start_new_rental_session_callback)
 kernel.register_start_idle_timer_callback(start_idle_timer_callback)
 kernel.register_localization_reload_callback(localization_reload_resources)
-register_get_coming_soon_products_callback()
 
 --************************************************
 --

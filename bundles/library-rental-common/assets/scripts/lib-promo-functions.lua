@@ -4,10 +4,6 @@
 -- All Rights Reserved
 --
 
-function GetInCartPromoCode()
-    return kernel.get_in_cart_promo_code()
-end
-
 local function is_excluded( exclude_ids, product_id )
     for _, id in ipairs( exclude_ids ) do
         if id == tostring( product_id ) then

@@ -82,24 +82,6 @@ if hardwarejobs then
   end
 end
 
-kernel.invsvcs_getrentalcount(
-	StoreID,
-	function( result )
-		if result.success == false then
-			kernel.log( "Main Menu Enter: GetRentalCount call failed" )
-			return
-		end
-		local count = result.properties["rental_count"]
-		if count == nil then
-			kernel.log( "Main Menu Enter: Rental count was not returned in the properties" )
-			return
-		end
-		RentedDiscs = count
-		kernel.setactortext(
-			"rented_discs_value",
-			tostring(count) )
-end )
-
 if maintenance_mode == nil then
 	maintenance_mode = kernel.getmachinevalue( "Field Maintenance", "MaintenanceMode" ) == "true"
 	kernel.setmachinevalue( "Field Maintenance", "MaintenanceMode", tostring(maintenance_mode) )
@@ -121,7 +103,6 @@ elseif maintenance_mode == false then
 end
 
 -- All stats values will be refreshed each time the page loads
-kernel.setactortext( "rented_discs_value", tostring(RentedDiscs) )
 kernel.setactortext( "empty_slots_value", tostring(EmptySlots) )
 kernel.setactortext( "empty_case_count_value", tostring(getinventorycountbyproductid( 1139 )) )
 kernel.setactortext( "unknown_count_value", tostring(getinventorycount( "Unknown" )) )
@@ -212,9 +193,9 @@ local air_exchanger_query = function()
 				HardwareManager:executeimmediate("AIRXCHGR  FANSTATUS", false, function( command2, success2, stack2 )
 					if success2 or ForcedAirExchangerConfigured then
 						if IsDoorSensorConfigured then
-							kernel.setactory( "air_exchanger_button", 550 )
+							kernel.setactory( "air_exchanger_button", 660 )
 						else
-							kernel.setactory( "air_exchanger_button", 440 )
+							kernel.setactory( "air_exchanger_button", 550 )
 						end
 						if string.lower(tostring(stack2[1])) == "on" then
 							AirExchangerFanOn = true
@@ -311,6 +292,11 @@ else
 		qlm_info:refresh()
 	end
 	kernel.setactortext( "info_label", tostring( qlm_info ) )
+end
+
+if (kernel.planogramsexist()) then
+	kernel.enableactor("planogram_button")
+	kernel.showactor("planogram_button")
 end
 
 if SafetyTipsPopupShown == false then

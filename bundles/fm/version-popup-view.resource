@@ -40,7 +40,7 @@
 		y="2"
 		optionFlags="Background, Text, TextShadow, DrawRoundedCorners"
 		backgroundColor="DarkRed"
-		text="  Software Versions - Yes"
+		text="  Software Versions - Lincoln"
 		foregroundColor="White"
 		verticalAlignment="center"
 		font="medium_larger_font"

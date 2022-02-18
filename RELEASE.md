@@ -1,17 +1,17 @@
-# Yes SR3 (2020-08-04)
+# Lincoln SR2 (2022-02-18)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2020-08-04
-- Store labels: kop-rental-bundles-YesSR3
+- Date (first download in the snapshots): 2022-02-18
+- Store labels: kop-rental-bundles-LincolnSR2
 - Package revisions:
-  - `kop-rental-bundles` revision 134 (`786F33AACFD33A817F597A8BC36779F0EF1BF20E`)
+  - `kop-rental-bundles` revision 157 (`74ABACA8A672D58B8017081F4C110D53FF5170C3`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `47C8132E6B642553A721FB8D7E943FC3423C110F` | exact |
-| `fm.bundle` |  |  | `0CDBA880AE12029FC3376581018BEBFD3E265E58` | exact |
-| `library-rental-common.bundle` |  |  | `5F74FECEAA5D9DC328E6DD02AA0C9D9DF09FE24B` | exact |
-| `ra-2.x.bundle` |  |  | `BB3193DC2C65D4A26177314A0FB8AC3D92C02C7E` | exact |
+| `cp.bundle` |  |  | `F6BC8A7C8BB50DF78F179C84095CF3651208D2DB` | exact |
+| `fm.bundle` |  |  | `6AA236372A71C423E310BC114D3DF9448FA3B00D` | exact |
+| `library-rental-common.bundle` |  |  | `73271BA3C3C76986EFFA82A17309B9D79EFD9764` | exact |
+| `ra-2.x.bundle` |  |  | `E1C03B5FB9270805748481B7D31B6BB167C3A445` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

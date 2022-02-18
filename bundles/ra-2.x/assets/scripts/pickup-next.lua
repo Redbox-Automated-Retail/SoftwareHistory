@@ -505,16 +505,14 @@ swipe_view_next_func = function()
 			view_show_safe( "recommendation_on_pickup_view" )
 		end
 
-		local function cancel_all_account_reservations()
-			for index, ref in ipairs(non_rap_reference_numbers) do
-				kernel.cancel_reservation( ref )
-			end
-			for index, ref in ipairs( rap_reference_numbers ) do
+		local function cancel_all_account_reservations(cancel_reason_code)
+			for index, ref in ipairs( reference_numbers ) do
 				kernel.cancel_reservation( ref )
 					
 				kernel.resvsvcs_cancel(
 					StoreManager:get_number(),
 					ref,
+					cancel_reason_code,
 					nil
 				)
 			end
@@ -609,28 +607,34 @@ swipe_view_next_func = function()
 								end
 							end
 						end
-					elseif kernel.session_get_is_blocklisted(ShoppingCart.session_id) == true then
-						view_analytics_event( "context", "blocklisted" )
-						cancel_all_account_reservations()
-
-						on_pickup_validation_failure()
-
-						local blocklisted_complete = function()
-							message_view_manager:hide( true )
-							kernel.close_open_session_and_start_new_rental_session()
-						end
-						message_view_manager:hide_title()
-						message_view_manager:show()
-						message_view_manager:set_message( strings.authorization_failure_message )
-						message_view_manager:hide_first_button()
-						message_view_manager:show_second_button( strings.continue_button, blocklisted_complete )
-						message_view_manager:start_timer( blocklisted_complete )
 					else
-						cancel_all_account_reservations()
-						kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
+						local cancel_reason_code = result.properties.cancel_reason;
+						if kernel.session_get_is_blocklisted(ShoppingCart.session_id) == true then
+						    cancel_reason_code = "CUSTOMER BLOCKLISTED"
+						end
+						if cancel_reason_code ~= nil then
+							view_analytics_event( "context", "blocklisted" )
+							cancel_all_account_reservations(cancel_reason_code)
 
-						kernel.analyticsserviceaddropflowfalse()
-						show_customer_blacklisted_message( on_pickup_validation_failure )
+							on_pickup_validation_failure()
+
+							local blocklisted_complete = function()
+								message_view_manager:hide( true )
+								kernel.close_open_session_and_start_new_rental_session()
+							end
+							message_view_manager:hide_title()
+							message_view_manager:show()
+							message_view_manager:set_message( strings.authorization_failure_message )
+							message_view_manager:hide_first_button()
+							message_view_manager:show_second_button( strings.continue_button, blocklisted_complete )
+							message_view_manager:start_timer( blocklisted_complete )
+						else
+							cancel_all_account_reservations()
+							kernel.analyticsaddelement( "session", "recommendationsFlow", "False", ShoppingCart.session_id )
+
+							kernel.analyticsserviceaddropflowfalse()
+							show_customer_blacklisted_message( on_pickup_validation_failure )
+						end
 					end
 				end
 			)

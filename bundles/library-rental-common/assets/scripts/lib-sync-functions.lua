@@ -239,42 +239,6 @@ function register_initial_sync_config_callback()
 	end )
 end
 
---[[function run_server_snapshot( items, to_be_deleted )
-	local function on_complete( result )
-		kernel.log( "run_server_snapshot - on_complete: success = " .. tostring( result.success ) )
-		kernel.log( result )
-		
-		if result.success == true then 
-			if #items > 0 then
-				kernel.log( "> deleting " .. tostring( #to_be_deleted ) .. " rows from RemovedQueue" )			
-				for k, v in ipairs( to_be_deleted ) do
-					RemovedQueue:remove( v )
-				end
-			end
-		else
-			kernel.timercreate( "force_server_snapshot_retry", 300000, 300000,
-				function()
-					kernel.log( "5 minute retry of snapshot" )
-					local hardware_manager = newhardwaremanager()
-					hardware_manager:soft_sync(
-						function( soft_sync_result )
-							force_server_snapshot( soft_sync_result.results )
-						end
-					)
-					kernel.timerremove( "force_server_snapshot_retry" )
-				end
-			)
-			kernel.timerstart( "force_server_snapshot_retry" )
-		end
-		
-		kernel.timerstart( "hard-sync-monitor" )
-	end
-	
-	kernel.log( "run_server_snapshot - starting" )
-	kernel.timerstop( "hard-sync-monitor" )
-	kernel.invsvcs_snapshotimmediate( StoreManager:get_number(), items, on_complete )
-end]]
-
 function force_server_snapshot( soft_sync_results )
 	kernel.log("Force server snapshot called")
 	--kernel.log(">> Soft Sync Results: ".. DataDumper( result_table, nil, true ) )
@@ -314,25 +278,6 @@ function force_server_snapshot( soft_sync_results )
 		-- Sending up an empty Items{} array will clear the kiosk inventory on the server...
 		-- We are getting empty soft sync results when they should not be.. so this safety check is created...
 		-- we really should figure out how we get empty soft sync results...
-		local to_be_deleted = {}
-		RemovedQueue:prime_cache_keys()
-		for k, v in RemovedQueue:pairs() do
-			--if VerboseLogging == true then kernel.log( "> RemovedQueue k:" .. tostring( k ) .. ", v.barcode:" .. tostring( v.barcode )) end
-			if 	v.barcode ~= nil 
-			and v.barcode ~= ""
-			and v.barcode ~= "UNKNOWN"
-			then
-				table.insert(
-					items,
-					{ barcode = v.barcode, status = "Removed" } )
-			end
-			to_be_deleted[#to_be_deleted+1] = k
-		end
-		kernel.log( "> deleting " .. tostring(#to_be_deleted) .. " rows from RemovedQueue" )
-		for k, v in ipairs( to_be_deleted ) do
-			RemovedQueue:remove( v )
-		end
-	
 		kernel.log("Total Barcodes reported: ".. tostring(#items) )
 		kernel.invsvcs_snapshot(
 			StoreManager:get_number(),

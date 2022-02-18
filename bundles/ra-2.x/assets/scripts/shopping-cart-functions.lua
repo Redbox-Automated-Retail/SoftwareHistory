@@ -17,22 +17,15 @@ function newshoppingcart()
         kernel.close_shopping_cart_analytics(self.session_id, abandoned)
 	end
 
-	t.end_session = function( self )
-        kernel.shopping_cart_end_session(self.session_id)
-	end
-
-	t.save_session = function( self )
-		kernel.sessionend2( self.session_id )
-	end
-
 	t.start_new = function( self )
-		kernel.log("Shopping cart start_new() " )
+		kernel.log("Starting Shopping cart start_new()")
 		kernel.rental_promotion_clear_promotion()
 		self.vend_manager:init()
 		self.session_id = kernel.sessionstartnew2( StoreManager:get_number() )
 		kernel.log(">  session_id = " .. self.session_id )
 		kernel.sessionsetcurrent( self.session_id )
         kernel.create_rental_shopping_cart( self.session_id )
+		kernel.log("Finished Shopping cart start_new()")
 	end
 
 	t.add_session_event = function( self, event_type, event_description )
@@ -144,17 +137,6 @@ function newshoppingcart()
 		)
 	end
 
-	t.reconcile = function( self )
-		kernel.log("Shopping cart reconcile() " )
-		if kernel.get_session_value("UserInfo.Email") ~= nil then
-			kernel.sessionsetemail2( self.session_id, kernel.get_session_value("UserInfo.Email") )
-		end
-        
-        local customer_profile_number = kernel.get_session_value("PersonalizationSession.CustomerProfileNumber")
-		kernel.merchsvcs_reconcile( self.session_id, customer_profile_number )
-		self:end_session()
-	end
-	
 	t.pickupauthorize = function( self, reference_number, cart_was_modified, on_complete )
 		if kernel.get_session_value("UserInfo.PostalCode") ~= nil then
 			kernel.sessionsetpostalcode2( self.session_id, kernel.get_session_value("UserInfo.PostalCode") )
@@ -207,61 +189,7 @@ function newshoppingcart()
 		self.vend_manager:prepos_vend(
 			barcodes_to_vend,
 			function( vend_results )
-				for _, v in ipairs( vend_results ) do
-					kernel.log( "> vend_results b:" .. tostring( v.barcode ) .. ", s:" .. tostring( v.status ) )
-                    local item_index = kernel.get_rental_shopping_cart_item_index_by_barcode( self.session_id, v.barcode )
-                    if item_index > 0 then
-                        kernel.rental_shopping_cart_update_item_status( self.session_id, item_index, v.status )
-                    end
-				end
-				local all_vended = true
-				local at_least_one_game = false
-                local shopping_cart_items = kernel.get_rental_shopping_cart_items( self.session_id )
-                for _,v in ipairs( shopping_cart_items ) do
-					kernel.log( "> local cart item : " .. tostring( v.barcode ) )
-					if v.status == "Pending"
-					or v.status == "ProductSelected" then
-                        -- update status in the lua object and on the .net side 
-                        kernel.log( "item not fullfilled" )
-						v.status = "NotFullfilled"
-                        kernel.rental_shopping_cart_update_item_status( self.session_id, _, "NotFullfilled" )
-					end
-
-					-- this is where I need to add any barcodes which did not get added earlier due to prior pre-picker inventory issues!!
-					kernel.log("Session update Line Item: " .. tostring( v.barcode ) .. " for ".. tostring( v.action ) .. " Price: " .. tostring( v.price ) ..
-						" ".. tostring( v.product_family ) .. "-" .. tostring( v.product_type ) )
-
-					if v.status ~= "Fullfilled" then
-						all_vended = false
-					end
-					if v.status == "Fullfilled" and v.product_family == "Games" then
-						at_least_one_game = true
-					end
-				end
-
-				-- Clear in-cart promo if all items did not vend successfully
-				local promo_code = kernel.rental_promotion_get_promotion()
-				if all_vended == false
-				and promo_code ~= nil
-				and promo_code.name ~= nil
-				and promo_code.name == GetInCartPromoCode() then
-					kernel.log( "Not all items vended, clearing InCart promotion" )
-					self:clear_promo_code()
-				end
-
-				-- Clear Game required promo if no game was vended
-				if at_least_one_game == false
-				and promo_code ~= nil
-				and promo_code.intent == "FirstNightGameGameRequired" then
-					kernel.log( "No game was vended, clearing GamesRequired promotion" )
-					self:clear_promo_code()
-				end
-
-				if kernel.is_session_committed(self.session_id) then
-					self:reconcile()
-				end
-				self:close_analytics( "False" )
-				kernel.sessionend2( self.session_id )
+				 kernel.regular_checkout_preposition_vend_complete(vend_results)
 			end )
 			
 		if self.vend_manager.vending == false then

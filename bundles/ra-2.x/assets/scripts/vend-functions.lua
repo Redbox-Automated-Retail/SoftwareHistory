@@ -6,7 +6,6 @@
 
 function newvendmanager()
 	local t = {}
-    coming_soon_product_list = nil
 	t.vending = false
 	t.aborted_jobs = {}
 	t.job_id = nil
@@ -59,7 +58,7 @@ function newvendmanager()
                         kernel.log( "Show VSM" )
                         t.show_vsm_view()
                     end
-                elseif coming_soon_product_list ~= nil and t.show_wait_screen == false then
+                elseif kernel.has_coming_soon_titles() and t.show_wait_screen == false then
                     view_show_safe( "coming_soon_view" )
 			    else
 				    view_unwindto_safe( "vend_view", false, "HardwareManager.hardware_event_responders.VendGraphicDisplay" )
@@ -335,40 +334,11 @@ function newvendmanager()
 					function()
 						kernel.log( ">  timer executing" )
 						kernel.timerstop( "coming-soon-timer")
-						local title_generator = newcomingsoongenerator()
 
-						local items_to_vend = kernel.get_rental_shopping_cart_items( ShoppingCart.session_id )
-						if #items_to_vend == 0 then
-							for _, barcode in ipairs( barcodes_to_vend ) do
-								local barcode_to_product = BarcodeToProduct[barcode]
-								local current_product_id = nil
-								local master_product = nil
-								if barcode_to_product ~= nil then
-									current_product_id = barcode_to_product.product_id
-								end
-								if current_product_id ~= nil then
-									master_product = MasterProductCatalog[current_product_id]
-								end
-								if master_product ~= nil then
-									table.insert( items_to_vend, master_product )
-								end
-							end
-						end
-
-						local results = title_generator:get_products( items_to_vend, 3 )
-						kernel.log( ">  generator results received" )
-						--view_analytics_event2( "comingSoonShown", tostring( #results ), ShoppingCart.session_id )
-						if #results == 0 then
-							if coming_soon_scene_manager ~= nil then
-								coming_soon_scene_manager:clear()
-							end
-                            t.show_animation()
-						else
-							kernel.log( ">  generator results being displayed" )
-                            -- yup another ugly global
-                            coming_soon_product_list = results
+						if kernel.has_coming_soon_titles() then
                             view_show_safe( "coming_soon_view" )
-							kernel.analyticsaddattribute( "vendingMovie", "type", "comingSoon", ShoppingCart.session_id )
+						else
+                            t.show_animation()
 						end
 
 						kernel.timerremove( "coming-soon-timer" )
@@ -377,7 +347,6 @@ function newvendmanager()
 				kernel.timerstart( "coming-soon-timer" )
 			end
 		end
-		--kernel.analyticsclose(ShoppingCart.session_id, "False") --Need to wait until after the cart has been processed during the Reconcile()
 	end
 
 	return t
