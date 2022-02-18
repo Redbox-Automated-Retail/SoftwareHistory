@@ -9,6 +9,8 @@ public class RenewIoTCertificates : ICommandIoTController
 
 	public CommandEnum CommandEnum => CommandEnum.RenewIoTCertificates;
 
+	public int Version => 1;
+
 	public RenewIoTCertificates(ICertificateService certificateInstaller)
 	{
 		_certificateInstaller = certificateInstaller;
@@ -16,6 +18,6 @@ public class RenewIoTCertificates : ICommandIoTController
 
 	public async Task Execute(IoTCommandModel ioTCommand)
 	{
-		await _certificateInstaller.GenerateNewCertificatesAsync();
+		await _certificateInstaller.GetCertificateAsync(forceNew: true);
 	}
 }

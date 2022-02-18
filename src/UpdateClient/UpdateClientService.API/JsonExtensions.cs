@@ -19,4 +19,9 @@ public static class JsonExtensions
 			NullValueHandling = NullValueHandling.Ignore
 		});
 	}
+
+	public static T ToObject<T>(this string obj)
+	{
+		return JsonConvert.DeserializeObject<T>(obj);
+	}
 }

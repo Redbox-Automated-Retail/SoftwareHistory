@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Redbox.NetCore.Middleware.Http;
 
 namespace UpdateClientService.API.App;
 
+[Obsolete("Use ApiBaseResponse in middleware.")]
 public abstract class BaseResponse
 {
 	[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
@@ -21,5 +24,20 @@ public abstract class BaseResponse
 	protected BaseResponse(int statusCode)
 	{
 		StatusCode = statusCode;
+	}
+
+	protected BaseResponse(IList<Error> errors, int? statusCode)
+	{
+		StatusCode = statusCode ?? 500;
+		Errors = errors;
+		Success = false;
+	}
+
+	public ObjectResult ToObjectResult()
+	{
+		return new ObjectResult(this)
+		{
+			StatusCode = StatusCode
+		};
 	}
 }

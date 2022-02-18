@@ -24,4 +24,6 @@ public class DownloadFileJob
 	public string PresignedScriptUrl { get; set; }
 
 	public List<long> TargetKiosks { get; set; }
+
+	public Guid BitsJobId { get; set; }
 }

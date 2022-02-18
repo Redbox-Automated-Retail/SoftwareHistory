@@ -8,6 +8,13 @@ public enum FileTypeEnum
 	HALLogs,
 	KioskClientServiceLogs,
 	UpdateClientServiceLogs,
+	UpdateManagerLogs,
 	KioskEngineAnalyticsSessions,
-	KioskEngineDataDirectory
+	KioskEngineDataDirectory,
+	VMZ,
+	Vend,
+	Unknowns,
+	Sync,
+	Return,
+	ErrorLogs
 }

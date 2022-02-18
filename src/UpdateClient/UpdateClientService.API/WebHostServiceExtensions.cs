@@ -7,7 +7,7 @@ namespace UpdateClientService.API;
 
 public static class WebHostServiceExtensions
 {
-	public static void RunAsDeviceServiceService(this IWebHost host)
+	public static void RunAsWindowsService(this IWebHost host)
 	{
 		using (host.Services.CreateScope())
 		{

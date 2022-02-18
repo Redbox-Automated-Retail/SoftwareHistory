@@ -4,5 +4,5 @@ namespace UpdateClientService.API.Services.IoT.Commands;
 
 public interface IIoTCommandService
 {
-	Task SubscribeToCommandTopics();
+	Task Execute(byte[] message, string topic);
 }

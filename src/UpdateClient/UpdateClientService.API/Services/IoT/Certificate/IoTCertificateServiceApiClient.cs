@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using UpdateClientService.API.App;
+using Redbox.NetCore.Middleware.Http;
 
 namespace UpdateClientService.API.Services.IoT.Certificate;
 
@@ -15,9 +15,7 @@ public class IoTCertificateServiceApiClient : IIoTCertificateServiceApiClient
 
 	private readonly AppSettings _appSettings;
 
-	private const string ThingType = "kiosks";
-
-	private readonly object _lockObj = new object();
+	private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
 	public IoTCertificateServiceApiClient(IHttpService httpService, IStoreService store, IOptions<AppSettings> appSettings)
 	{
@@ -27,57 +25,76 @@ public class IoTCertificateServiceApiClient : IIoTCertificateServiceApiClient
 		_httpService.Timeout = 90000;
 	}
 
-	public async Task<bool> IsCertificateValid(string certificateId)
+	public async Task<IsCertificateValidResponse> IsCertificateValid(string kioskId, string thingType, string password, string certificateId)
 	{
-		Monitor.Enter(_lockObj);
-		APIResponse<bool> result;
-		try
+		IsCertificateValidResponse response = new IsCertificateValidResponse
 		{
-			result = _httpService.SendRequest<bool>(_appSettings.IoTCertificateServiceUrl, string.Format("api/thing-types/{0}/things/{1}/certificates/{2}/is-valid", "kiosks", _store.KioskId, certificateId), null, HttpMethod.Post, new List<Header>
-			{
-				new Header("x-api-key", _appSettings.IoTCertificateServiceApiKey)
-			}).GetAwaiter().GetResult();
-		}
-		finally
+			IsValid = null
+		};
+		var requestObject = new
 		{
-			Monitor.Exit(_lockObj);
+			type = thingType,
+			name = kioskId,
+			thingGroupName = _store.Market,
+			certificateId = certificateId
+		};
+		APIResponse<bool> aPIResponse = await _httpService.SendRequestAsync<bool>(_appSettings.IoTCertificateServiceUrl, "api/thing-types/certificate-valid", requestObject, HttpMethod.Post, new List<Header>
+		{
+			new Header("x-api-key", _appSettings.IoTCertificateServiceApiKey),
+			new Header("password", password)
+		}, isForm: false, null, "IsCertificateValid", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/IoTCertificateServiceApiClient.cs");
+		if (aPIResponse.IsSuccessStatusCode)
+		{
+			response.IsValid = aPIResponse.Response;
 		}
-		return result?.Response ?? false;
+		else
+		{
+			response.IsValid = null;
+		}
+		return response;
 	}
 
-	public async Task<IoTCertificateServiceResponse> GetCertificates()
+	public async Task<IoTCertificateServiceResponse> GetCertificates(string kioskId, string thingType, string password)
 	{
-		Monitor.Enter(_lockObj);
-		APIResponse<IoTCertificateServiceResponse> result;
-		try
+		await _lock.WaitAsync();
+		var requestObject = new
 		{
-			result = _httpService.SendRequest<IoTCertificateServiceResponse>(_appSettings.IoTCertificateServiceUrl, string.Format("api/thing-types/{0}/things/{1}/certificates?thingGroupName={2}", "kiosks", _store.KioskId, _store.Market), null, HttpMethod.Get, new List<Header>
-			{
-				new Header("x-api-key", _appSettings.IoTCertificateServiceApiKey)
-			}).GetAwaiter().GetResult();
-		}
-		finally
+			type = thingType,
+			name = kioskId,
+			thingGroupName = _store.Market
+		};
+		APIResponse<IoTCertificateServiceResponse> aPIResponse = await _httpService.SendRequestAsync<IoTCertificateServiceResponse>(_appSettings.IoTCertificateServiceUrl, "api/thing-types/get-certificates", requestObject, HttpMethod.Post, new List<Header>
 		{
-			Monitor.Exit(_lockObj);
-		}
-		return result?.Response;
+			new Header("x-api-key", _appSettings.IoTCertificateServiceApiKey),
+			new Header("password", password)
+		}, isForm: false, null, "GetCertificates", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/IoTCertificateServiceApiClient.cs", null, logRequest: true, logResponse: false);
+		_lock.Release();
+		return aPIResponse?.Response;
 	}
 
-	public async Task<IoTCertificateServiceResponse> GenerateNewCertificates()
+	public async Task<IoTCertificateServiceResponse> GenerateNewCertificates(string kioskId, string thingType, string password)
 	{
-		Monitor.Enter(_lockObj);
-		APIResponse<IoTCertificateServiceResponse> result;
+		_ = 1;
+		APIResponse<IoTCertificateServiceResponse> aPIResponse;
 		try
 		{
-			result = _httpService.SendRequest<IoTCertificateServiceResponse>(_appSettings.IoTCertificateServiceUrl, string.Format("api/thing-types/{0}/things/{1}/certificates?thingGroupName={2}", "kiosks", _store.KioskId, _store.Market), null, HttpMethod.Post, new List<Header>
+			await _lock.WaitAsync();
+			var requestObject = new
 			{
-				new Header("x-api-key", _appSettings.IoTCertificateServiceApiKey)
-			}).GetAwaiter().GetResult();
+				type = thingType,
+				name = kioskId,
+				thingGroupName = _store.Market
+			};
+			aPIResponse = await _httpService.SendRequestAsync<IoTCertificateServiceResponse>(_appSettings.IoTCertificateServiceUrl, "api/thing-types/certificates", requestObject, HttpMethod.Post, new List<Header>
+			{
+				new Header("x-api-key", _appSettings.IoTCertificateServiceApiKey),
+				new Header("password", password)
+			}, isForm: false, null, "GenerateNewCertificates", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/IoTCertificateServiceApiClient.cs", null, logRequest: true, logResponse: false);
 		}
 		finally
 		{
-			Monitor.Exit(_lockObj);
+			_lock.Release();
 		}
-		return result?.Response;
+		return aPIResponse?.Response;
 	}
 }

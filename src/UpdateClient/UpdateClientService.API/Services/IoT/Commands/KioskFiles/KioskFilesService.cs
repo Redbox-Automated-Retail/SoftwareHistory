@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using UpdateClientService.API.Services.Files;
+using UpdateClientService.API.Services.IoT.IoTCommand;
 
 namespace UpdateClientService.API.Services.IoT.Commands.KioskFiles;
 
@@ -12,98 +14,213 @@ public class KioskFilesService : IKioskFilesService
 {
 	private readonly ILogger<KioskFilesService> _logger;
 
-	public KioskFilesService(ILogger<KioskFilesService> logger)
+	private readonly IFileService _fileService;
+
+	private readonly IIoTProcessStatusService _ioTProcessStatusService;
+
+	public KioskFilesService(ILogger<KioskFilesService> logger, IFileService fileService, IIoTProcessStatusService ioTProcessStatusService, IIoTCommandClient iotCommandClient)
 	{
 		_logger = logger;
+		_fileService = fileService;
+		_ioTProcessStatusService = ioTProcessStatusService;
 	}
 
-	public async Task<MqttResponse<Dictionary<string, string>>> PeekRequestedFilessAsync(KioskFilePeekRequest logRequestModel)
+	public async Task<MqttResponse<Dictionary<string, string>>> PeekRequestedFilesAsync(KioskFilePeekRequest logRequestModel)
 	{
 		MqttResponse<Dictionary<string, string>> mqttResponse = new MqttResponse<Dictionary<string, string>>
 		{
 			Data = new Dictionary<string, string>()
 		};
-		DirectoryInfo directoryInfo = new DirectoryInfo(await GetRequestedLogPath(logRequestModel.FileType));
 		new List<FileInfo>();
-		List<FileInfo> list = ((!logRequestModel.Date.Equals(null)) ? (from x in directoryInfo.GetFiles()
-			where x.LastWriteTime.ToShortDateString() == logRequestModel.Date?.ToShortDateString()
-			select x).ToList() : directoryInfo.GetFiles().ToList());
-		foreach (FileInfo item in list)
+		try
 		{
-			mqttResponse.Data.Add(item.Name, item.LastWriteTime.ToString());
+			List<FileInfo> files;
+			if (string.IsNullOrWhiteSpace(logRequestModel.FileQuery?.Path))
+			{
+				(files, mqttResponse.Error) = GetFilesByFileType(logRequestModel);
+			}
+			else
+			{
+				(files, mqttResponse.Error) = await GetFilesByQuery(logRequestModel);
+			}
+			if (files != null && files.Count > 0)
+			{
+				FilterFilesByDate(ref files, logRequestModel.Date, logRequestModel.EndDate);
+			}
+			files?.ForEach(delegate(FileInfo file)
+			{
+				string value = file.LastWriteTime.ToString();
+				if (!string.IsNullOrWhiteSpace(logRequestModel.FileQuery?.Path))
+				{
+					FileQuery fileQuery = logRequestModel.FileQuery;
+					if (fileQuery != null && fileQuery.SearchOptions?.RecurseSubdirectories == true)
+					{
+						mqttResponse.Data.Add(Path.GetRelativePath(logRequestModel.FileQuery.Path, file.FullName), value);
+						return;
+					}
+				}
+				mqttResponse.Data.Add(file.Name, value);
+			});
+			if (!mqttResponse.Data.Any())
+			{
+				mqttResponse.Error = "There were no files found for given request. Request -> " + logRequestModel.ToJson() + ", Additional Errors -> " + mqttResponse.Error;
+			}
 		}
-		if (!mqttResponse.Data.Any())
+		catch (Exception ex)
 		{
-			mqttResponse.Error = "There's no file found from given date. " + mqttResponse.Error;
+			_logger.LogErrorWithSource(ex, "PeekRequestedFilesAsync");
+			mqttResponse.Error = ex.Message + ". Logged full exception in UpdateClientService logs, take a look at it if you want to see the full exception details.";
+			return mqttResponse;
 		}
-		_logger.LogInfoWithSource("Returning peeked file list: " + mqttResponse.ToJson(), "PeekRequestedFilessAsync");
+		_logger.LogInfoWithSource($"Returning ${mqttResponse.Data.Count} files.", "PeekRequestedFilesAsync");
 		return mqttResponse;
 	}
 
-	public async Task<MqttResponse<string>> GetKioskFileAsync(KioskFileRequest kioskFileRequest)
+	public async Task<MqttResponse<string>> UploadFilesAsync(KioskUploadFileRequest kioskFileRequest)
 	{
+		if (_ioTProcessStatusService.UploadFilesStatus == IoTProcessStatusEnum.InProgress)
+		{
+			_logger.LogWarningWithSource("There was another upload files request while uploading files for another request.", "UploadFilesAsync");
+			return new MqttResponse<string>
+			{
+				Error = "UpdateClientService: Already uploading files for another request, please try again in 1 or 2 minutes."
+			};
+		}
+		if (kioskFileRequest.FileNames.Count > 30)
+		{
+			return new MqttResponse<string>
+			{
+				Error = "UpdateClientService: Can't upload more than 30 files at one time. Contact Kiosk Devs for questions."
+			};
+		}
 		MqttResponse<string> mqttResponse = new MqttResponse<string>
 		{
 			Data = kioskFileRequest.S3PreSignedUrl
 		};
-		string path = await GetRequestedLogPath(kioskFileRequest.FileType) + "\\" + kioskFileRequest.FileName;
-		HttpWebResponse httpWebResponse = new HttpWebResponse();
+		string path;
+		string error;
+		if (!string.IsNullOrWhiteSpace(kioskFileRequest?.BasePath))
+		{
+			path = kioskFileRequest.BasePath;
+		}
+		else if (!TryGetRequestedLogPath(kioskFileRequest.FileType, out path, out error))
+		{
+			_logger.LogErrorWithSource("An error occurred while trying to upload requested file to S3. Request Model -> " + kioskFileRequest.ToJson() + ". Error -> " + error, "UploadFilesAsync");
+			mqttResponse.Error = "An error occurred while trying to upload requested file to S3. Take a look at UCS logs for full exception details. Error -> " + error;
+			_ioTProcessStatusService.UploadFilesStatus = IoTProcessStatusEnum.Errored;
+			return mqttResponse;
+		}
 		try
 		{
-			HttpWebRequest httpWebRequest = WebRequest.Create(kioskFileRequest.S3PreSignedUrl) as HttpWebRequest;
-			httpWebRequest.Method = "PUT";
-			using (Stream stream = httpWebRequest.GetRequestStream())
+			_ioTProcessStatusService.UploadFilesStatus = IoTProcessStatusEnum.InProgress;
+			if (kioskFileRequest.FileNames.Count > 1 || kioskFileRequest.ZipFiles)
 			{
-				byte[] array = new byte[8000];
-				using FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-				int count;
-				while ((count = fileStream.Read(array, 0, array.Length)) > 0)
+				List<FileInfo> list = new List<FileInfo>();
+				foreach (string fileName2 in kioskFileRequest.FileNames)
 				{
-					stream.Write(array, 0, count);
+					string fileName = Path.Combine(path, fileName2);
+					list.Add(new FileInfo(fileName));
 				}
+				await _fileService.ZipAndUploadToS3(list, kioskFileRequest.S3PreSignedUrl);
 			}
-			httpWebResponse = httpWebRequest.GetResponse() as HttpWebResponse;
+			else
+			{
+				string filePath = Path.Combine(path, kioskFileRequest.FileNames[0]);
+				await _fileService.UploadFileToS3(kioskFileRequest.S3PreSignedUrl, filePath);
+			}
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Error occured while trying to upload requested file to S3. Request Model: " + kioskFileRequest.ToJson());
-			mqttResponse.Error = $"Error occured while uploading requested file to S3. Error: {ex}";
+			_logger.LogErrorWithSource(ex, "An error occurred while trying to upload requested file to S3. Request Model -> " + kioskFileRequest.ToJson());
+			mqttResponse.Error = "An error occurred while trying to upload requested file to S3. Take a look at UCS logs for full exception details. Error -> " + ex.Message;
+			_ioTProcessStatusService.UploadFilesStatus = IoTProcessStatusEnum.Errored;
 		}
 		finally
 		{
-			httpWebResponse.Dispose();
+			_ioTProcessStatusService.UploadFilesStatus = ((_ioTProcessStatusService.UploadFilesStatus == IoTProcessStatusEnum.Errored) ? IoTProcessStatusEnum.Errored : IoTProcessStatusEnum.Finished);
 		}
-		_logger.LogInfoWithSource("Returning mqttresponse: " + mqttResponse.ToJson(), "GetKioskFileAsync");
+		_logger.LogInfoWithSource("Returning mqttresponse: " + mqttResponse.ToJson(), "UploadFilesAsync");
 		return mqttResponse;
 	}
 
-	private async Task<string> GetRequestedLogPath(FileTypeEnum logType)
+	private (List<FileInfo> files, string error) GetFilesByFileType(KioskFilePeekRequest logRequestModel)
 	{
-		string result = string.Empty;
-		switch (logType)
+		List<FileInfo> item = new List<FileInfo>();
+		string error;
+		try
 		{
-		case FileTypeEnum.DeviceServiceLogs:
-			result = "C:\\Program Files\\Redbox\\REDS\\DeviceService\\logs";
-			break;
-		case FileTypeEnum.HALLogs:
-			result = "C:\\Program Files\\Redbox\\KioskLogs\\Service";
-			break;
-		case FileTypeEnum.KioskEngineLogs:
-			result = "C:\\Program Files\\Redbox\\reds\\Kiosk Engine\\logs";
-			break;
-		case FileTypeEnum.KioskClientServiceLogs:
-			result = "C:\\ProgramData\\Redbox\\KioskClient\\Logs";
-			break;
-		case FileTypeEnum.UpdateClientServiceLogs:
-			result = "C:\\ProgramData\\Redbox\\UpdateClient\\Logs";
-			break;
-		case FileTypeEnum.KioskEngineAnalyticsSessions:
-			result = "C:\\Program Files\\Redbox\\reds\\Kiosk Engine\\data\\AnalyticsSessions";
-			break;
-		case FileTypeEnum.KioskEngineDataDirectory:
-			result = "C:\\Program Files\\Redbox\\reds\\Kiosk Engine\\data";
-			break;
+			if (!TryGetRequestedLogPath(logRequestModel.FileType, out var path, out error))
+			{
+				return (files: null, error: "Couldn't get path of " + (logRequestModel.FileType ?? "null") + ". Error -> " + error);
+			}
+			DirectoryInfo directoryInfo = new DirectoryInfo(path);
+			item = directoryInfo.GetFiles()?.ToList() ?? new List<FileInfo>();
 		}
-		return result;
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "GetFilesByFileType");
+			error = ex.Message;
+		}
+		return (files: item, error: error);
+	}
+
+	private async Task<(List<FileInfo> files, string error)> GetFilesByQuery(KioskFilePeekRequest logRequestModel, TimeSpan? timeout = null)
+	{
+		CancellationTokenSource cancellationTokenSource = (timeout.HasValue ? new CancellationTokenSource(timeout.Value) : new CancellationTokenSource(TimeSpan.FromSeconds(90.0)));
+		return await Task.Run(delegate
+		{
+			List<FileInfo> item = new List<FileInfo>();
+			string item2 = null;
+			try
+			{
+				FileQuery fileQuery = logRequestModel.FileQuery;
+				DirectoryInfo directoryInfo = new DirectoryInfo(fileQuery.Path);
+				item = directoryInfo.GetFiles((!string.IsNullOrWhiteSpace(fileQuery.SearchPattern)) ? fileQuery.SearchPattern : "*", fileQuery.SearchOptions ?? new EnumerationOptions()).ToList() ?? new List<FileInfo>();
+			}
+			catch (Exception ex)
+			{
+				_logger.LogErrorWithSource(ex, "GetFilesByQuery");
+				item2 = ex.Message;
+			}
+			return (files: item, error: item2);
+		}, cancellationTokenSource.Token);
+	}
+
+	private static void FilterFilesByDate(ref List<FileInfo> files, DateTime? date, DateTime? endDate)
+	{
+		if (files == null || files.Count == 0)
+		{
+			return;
+		}
+		if (!date.Equals(null) && !endDate.Equals(null))
+		{
+			files = files.Where(delegate(FileInfo x)
+			{
+				DateTime lastWriteTime = x.LastWriteTime;
+				DateTime? dateTime = date;
+				return lastWriteTime >= dateTime && x.LastWriteTime <= endDate.Value.AddDays(1.0);
+			}).ToList();
+		}
+		else if (!date.Equals(null))
+		{
+			files = files.Where((FileInfo x) => x.LastWriteTime.ToShortDateString() == date?.ToShortDateString()).ToList();
+		}
+		else
+		{
+			files = files.ToList();
+		}
+	}
+
+	private bool TryGetRequestedLogPath(string logType, out string path, out string error)
+	{
+		path = null;
+		error = null;
+		if (Enum.TryParse<FileTypeEnum>(logType, out var result) && FilePaths.TypeMappings.TryGetValue(result, out path) && !string.IsNullOrWhiteSpace(path))
+		{
+			return true;
+		}
+		error = (logType ?? "null") + " was not found in FilePaths";
+		_logger.LogErrorWithSource(error, "TryGetRequestedLogPath");
+		return false;
 	}
 }

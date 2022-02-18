@@ -1,19 +1,15 @@
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using uPLibrary.Networking.M2Mqtt.Messages;
+using UpdateClientService.API.Services.IoT.Commands;
 
 namespace UpdateClientService.API.Services.IoT;
 
 public interface IMqttProxy
 {
-	int LastAvailableUSInstance { get; set; }
+	Task<bool> PublishAwsRuleActionAsync(string ruleTopicName, string payload, bool logMessage = true, QualityOfServiceLevel qualityOfServiceLevel = QualityOfServiceLevel.AtMostOnce);
 
-	Task PublishMessageAsync(string topicName, string message);
+	Task<bool> PublishIoTCommandAsync(string topicName, IoTCommandModel request);
 
-	Task SubscribeToTopicsAsync(List<string> topics, Action<object, MqttMsgPublishEventArgs> callback);
+	Task<bool> CheckConnectionAsync();
 
-	Task SubscribeToTemporaryTopicsAsync(List<string> topics, TimeSpan stopSubscription, Action<object, MqttMsgPublishEventArgs> callback);
-
-	Task CheckConnectionAsync();
+	Task Disconnect();
 }

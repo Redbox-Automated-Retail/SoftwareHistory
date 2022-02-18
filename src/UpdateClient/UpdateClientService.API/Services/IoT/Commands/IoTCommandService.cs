@@ -6,61 +6,81 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using UpdateClientService.API.Services.IoT.Commands.Controller;
-using uPLibrary.Networking.M2Mqtt.Messages;
 
 namespace UpdateClientService.API.Services.IoT.Commands;
 
 public class IoTCommandService : IIoTCommandService
 {
-	private readonly IMqttProxy _mqttProxy;
-
-	private readonly IStoreService _store;
-
 	private readonly List<ICommandIoTController> _commandList;
 
 	private readonly ILogger<IoTCommandService> _logger;
 
-	public IoTCommandService(IMqttProxy mqttProxy, IStoreService store, List<ICommandIoTController> commandList, ILogger<IoTCommandService> logger)
+	private readonly IActiveResponseService _activeResponseService;
+
+	public IoTCommandService(IActiveResponseService activeResponseService, List<ICommandIoTController> commandList, ILogger<IoTCommandService> logger)
 	{
-		_mqttProxy = mqttProxy;
-		_store = store;
+		_activeResponseService = activeResponseService;
 		_commandList = commandList;
 		_logger = logger;
 	}
 
-	public async Task SubscribeToCommandTopics()
+	public async Task Execute(byte[] message, string topic)
 	{
-		await _mqttProxy.SubscribeToTopicsAsync(new List<string>
-		{
-			$"redbox/kiosk/{_store.KioskId}/command",
-			"redbox/kiosk/market/" + _store.Market + "/command",
-			"redbox/kiosk/all/command"
-		}, async delegate(object sender, MqttMsgPublishEventArgs args)
-		{
-			await IoTCommandCallbackMethodAsync(args);
-		});
+		await IoTCommandCallbackMethodAsync(message, topic);
 	}
 
-	private async Task IoTCommandCallbackMethodAsync(MqttMsgPublishEventArgs args)
+	private async Task IoTCommandCallbackMethodAsync(byte[] mqttMessage, string mqttTopic)
 	{
+		_ = 1;
 		try
 		{
-			string text = Encoding.UTF8.GetString(args.Message);
-			_logger.LogInfoWithSource("message received topic: " + args.Topic + ", message: " + text, "IoTCommandCallbackMethodAsync");
-			IoTCommandModel iotCommandModel = JsonConvert.DeserializeObject<IoTCommandModel>(text);
-			ICommandIoTController requestedCommand = _commandList?.FirstOrDefault((ICommandIoTController x) => x.CommandEnum == iotCommandModel.Command);
-			if (requestedCommand == null)
+			string text = Encoding.UTF8.GetString(mqttMessage);
+			IoTCommandModel ioTCommandModel = JsonConvert.DeserializeObject<IoTCommandModel>(text);
+			if (ioTCommandModel == null)
 			{
-				_logger.LogErrorWithSource($"IoT Command {iotCommandModel.Command} could not found in registered command list: {_commandList?.ToJson()}.", "IoTCommandCallbackMethodAsync");
+				_logger.LogErrorWithSource("Error occured in callback from topic " + mqttTopic + ", message failed deserialization: " + text, "IoTCommandCallbackMethodAsync");
 				return;
 			}
-			_logger.LogInfoWithSource($"Processing command: {requestedCommand.CommandEnum}", "IoTCommandCallbackMethodAsync");
-			await requestedCommand.Execute(iotCommandModel);
-			_logger.LogInfoWithSource($"Finished processing command: {requestedCommand.CommandEnum}. Returning. . .", "IoTCommandCallbackMethodAsync");
+			string text2 = (ioTCommandModel.LogPayload ? (", message: " + text) : $", command: {ioTCommandModel.Command}, MessageType: {ioTCommandModel.MessageType}, RequestId: {ioTCommandModel.RequestId}, Payload length: {(ioTCommandModel.Payload?.ToString()?.Length).GetValueOrDefault()}");
+			_logger.LogInfoWithSource("message received topic: " + mqttTopic + text2, "IoTCommandCallbackMethodAsync");
+			if (ioTCommandModel.MessageType == MessageTypeEnum.Request)
+			{
+				await ExecuteRequest(ioTCommandModel);
+			}
+			else if (ioTCommandModel.MessageType == MessageTypeEnum.Response)
+			{
+				await ExecuteResponse(ioTCommandModel);
+			}
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Error occured in callback from topic " + args.Topic + ", message was: " + Encoding.UTF8.GetString(args.Message));
+			_logger.LogErrorWithSource(ex, "Error occured in callback from topic " + mqttTopic + ", message was: " + Encoding.UTF8.GetString(mqttMessage));
 		}
+	}
+
+	private async Task ExecuteRequest(IoTCommandModel iotCommandModel)
+	{
+		ICommandIoTController requestedCommand = _commandList?.FirstOrDefault((ICommandIoTController x) => x.CommandEnum == iotCommandModel.Command && x.Version == iotCommandModel.Version);
+		if (requestedCommand == null)
+		{
+			_logger.LogErrorWithSource($"IoT Command: {iotCommandModel.Command}, Version: {iotCommandModel.Version} could not found in registered command list: {_commandList?.ToJson()}.", "ExecuteRequest");
+			return;
+		}
+		_logger.LogInfoWithSource($"Processing command: {requestedCommand.CommandEnum} for RequestId: {iotCommandModel.RequestId}", "ExecuteRequest");
+		await requestedCommand.Execute(iotCommandModel);
+		_logger.LogInfoWithSource($"Finished processing command: {requestedCommand.CommandEnum} for RequestId: {iotCommandModel.RequestId}. Returning. . .", "ExecuteRequest");
+	}
+
+	private async Task ExecuteResponse(IoTCommandModel iotCommandModel)
+	{
+		Action<IoTCommandModel> responseListenerAction = _activeResponseService.GetResponseListenerAction(iotCommandModel.RequestId);
+		if (responseListenerAction == null)
+		{
+			_logger.LogInfoWithSource("ActiveResponseListener could not be found for RequestId: " + iotCommandModel.RequestId + ".  Ignoring response.", "ExecuteResponse");
+			return;
+		}
+		_logger.LogInfoWithSource($"Processing Response Type: {iotCommandModel.Command} for RequestId: {iotCommandModel.RequestId}", "ExecuteResponse");
+		responseListenerAction?.Invoke(iotCommandModel);
+		_activeResponseService.RemoveResponseListener(iotCommandModel.RequestId);
 	}
 }

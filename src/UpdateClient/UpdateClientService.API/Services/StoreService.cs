@@ -23,18 +23,15 @@ public class StoreService : IStoreService
 		{
 			try
 			{
-				if (_kioskId == 0L)
+				string text = "ID";
+				string text2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store";
+				string value = Registry.GetValue(text2, text, "")?.ToString();
+				if (string.IsNullOrEmpty(value))
 				{
-					string text = "ID";
-					string text2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Redbox\\REDS\\Kiosk Engine\\Store";
-					object value = Registry.GetValue(text2, text, "");
-					if (value == null || string.IsNullOrEmpty(value.ToString()))
-					{
-						_logger.LogInformation("Kiosk ID is not set in the registry at {0}\\{1}", text2, text);
-						return 0L;
-					}
-					_kioskId = Convert.ToInt32(value);
+					_logger.LogInformation("Kiosk ID is not set in the registry at {0}\\{1}", text2, text);
+					return 0L;
 				}
+				_kioskId = Convert.ToInt32(value);
 			}
 			catch (Exception exception)
 			{

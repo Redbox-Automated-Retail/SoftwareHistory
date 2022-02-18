@@ -6,5 +6,7 @@ public enum JobStatus
 	InProgress,
 	Scheduled,
 	Complete,
-	Error
+	Error,
+	CancelRequested,
+	Canceled
 }
