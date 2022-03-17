@@ -132,6 +132,7 @@ public class PricingService : IPricingService
 		if (_storeService.KioskId == 0L)
 		{
 			_logger?.LogErrorWithSource("KioskId must be > 0", "RefreshDefaultPricing");
+			return;
 		}
 		APIResponse<KioskRentalDefaultPricingResponse> aPIResponse = await _proxyApi.GetRentalDefaultPricing(_storeService.KioskId);
 		IList<FormatPricing> list = aPIResponse?.Response?.FormatPricing;
@@ -155,6 +156,7 @@ public class PricingService : IPricingService
 		if (_storeService.KioskId == 0L)
 		{
 			_logger?.LogErrorWithSource("KioskId must be > 0", "RefreshRentalPricingByPrice");
+			return;
 		}
 		APIResponse<KioskRentalPricingByPriceResponse> aPIResponse = await _proxyApi.GetRentalPricingByPrice(_storeService.KioskId);
 		IList<RentalPricingByPrice> list = aPIResponse?.Response?.RentalPricing;
@@ -178,6 +180,7 @@ public class PricingService : IPricingService
 		if (_storeService.KioskId == 0L)
 		{
 			_logger?.LogErrorWithSource("KioskId must be > 0", "RefreshPurchasePricingByPrice");
+			return;
 		}
 		APIResponse<KioskPurchasePricingByPriceResponse> aPIResponse = await _proxyApi.GetPurchasePricingByPrice(_storeService.KioskId);
 		IList<PurchasePricingByPrice> list = aPIResponse?.Response?.PurchasePricing;

@@ -43,16 +43,16 @@ public class LoggingActionFilter : IAsyncActionFilter, IFilterMetadata
 		StringBuilder stringBuilder = new StringBuilder();
 		if (actionExecutedContext != null && actionExecutedContext.Result != null)
 		{
-			if (actionExecutedContext.Result is OkObjectResult)
+			if (actionExecutedContext.Result is ObjectResult)
 			{
-				OkObjectResult okObjectResult = actionExecutedContext.Result as OkObjectResult;
-				if (okObjectResult.Value != null && okObjectResult.Value is IMessageScrub)
+				ObjectResult objectResult = actionExecutedContext.Result as ObjectResult;
+				if (objectResult.Value != null && objectResult.Value is IMessageScrub)
 				{
-					stringBuilder.Append($"{(okObjectResult.Value as IMessageScrub).Scrub()}");
+					stringBuilder.Append($"{(objectResult.Value as IMessageScrub).Scrub()}");
 				}
 				else
 				{
-					stringBuilder.Append($"{okObjectResult.StatusCode}");
+					stringBuilder.Append($"{objectResult.StatusCode}");
 				}
 			}
 			else if (actionExecutedContext.Result is ContentResult)
@@ -66,7 +66,7 @@ public class LoggingActionFilter : IAsyncActionFilter, IFilterMetadata
 			stringBuilder.Append("none");
 		}
 		requestTimer.Stop();
-		_logger.LogInformation($"{controllerName}.{actionName},response={stringBuilder}");
-		_logger.LogInformation($"END: {controllerName}.{actionName},statuscode={(HttpStatusCode)context.HttpContext.Response.StatusCode},elapsed={requestTimer.ElapsedMilliseconds}");
+		_logger.LogInformation($"{controllerName}.{actionName}, response={stringBuilder}");
+		_logger.LogInformation($"END: {controllerName}.{actionName}, statuscode={(HttpStatusCode)context.HttpContext.Response.StatusCode}, elapsed={requestTimer.ElapsedMilliseconds}");
 	}
 }

@@ -31,5 +31,10 @@ public static class KioskModels
 			: base(200)
 		{
 		}
+
+		public override object Scrub()
+		{
+			return this.ToJson();
+		}
 	}
 }
