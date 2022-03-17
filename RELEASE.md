@@ -1,17 +1,17 @@
-# Lincoln SR2 (2022-02-18)
+# McLaren (2022-03-17)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-02-18
-- Store labels: kop-rental-bundles-LincolnSR2
+- Date (first download in the snapshots): 2022-03-17
+- Store labels: kop-rental-bundles-McLaren
 - Package revisions:
-  - `kop-rental-bundles` revision 157 (`74ABACA8A672D58B8017081F4C110D53FF5170C3`)
+  - `kop-rental-bundles` revision 158 (`CE0AD226233E49A8E1EC801A2010C52211140F91`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `F6BC8A7C8BB50DF78F179C84095CF3651208D2DB` | exact |
-| `fm.bundle` |  |  | `6AA236372A71C423E310BC114D3DF9448FA3B00D` | exact |
-| `library-rental-common.bundle` |  |  | `73271BA3C3C76986EFFA82A17309B9D79EFD9764` | exact |
-| `ra-2.x.bundle` |  |  | `E1C03B5FB9270805748481B7D31B6BB167C3A445` | exact |
+| `cp.bundle` |  |  | `C7A89C39B71C45581223021DAA9998AE352AF84C` | exact |
+| `fm.bundle` |  |  | `A3963CB961AC513A20FFF52C4006240F04C6D47C` | exact |
+| `library-rental-common.bundle` |  |  | `B182222435011EACBB5027021B39E67B7F876330` | exact |
+| `ra-2.x.bundle` |  |  | `C3E2D5A5B783B113EFA93FE4DD80EC72B7FB574B` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
