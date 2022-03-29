@@ -1185,6 +1185,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
+  <Style x:Key="font_montserrat_bold_38" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="38" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
   <Style x:Key="font_montserrat_extrabold_14" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
     <Setter Property="FontSize" Value="14" />
@@ -1231,6 +1237,18 @@
   <Style x:Key="font_montserrat_bold_48" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="48" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_bold_52" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="52" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_bold_170" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="170" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>

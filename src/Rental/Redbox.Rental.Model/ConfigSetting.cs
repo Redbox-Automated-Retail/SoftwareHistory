@@ -192,6 +192,14 @@ public static class ConfigSetting
 
 	public const string EnableMeijerVSM = "EnableMeijerVSM";
 
+	public const string ReturnVisitPromoOfferEnabled = "ReturnVisitPromoOfferEnabled";
+
+	public const string ReturnVisitPromoOfferPromotionName = "ReturnVisitPromoOfferPromotionName";
+
+	public const string ReturnVisitPromoOfferPromotionPrice = "ReturnVisitPromoOfferPromotionPrice";
+
+	public const string ReturnVisitPromoOfferPromotionExpirationDate = "ReturnVisitPromoOfferPromotionExpirationDate";
+
 	public const string FAQDocument = "FAQDocument";
 
 	public const string TermsDocument = "TermsDocument";

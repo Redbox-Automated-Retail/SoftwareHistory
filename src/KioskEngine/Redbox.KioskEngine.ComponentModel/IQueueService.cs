@@ -4,9 +4,7 @@ namespace Redbox.KioskEngine.ComponentModel;
 
 public interface IQueueService : IDisposable
 {
-	int QueueReadPeriodMin { get; set; }
-
-	int QueueReadPeriodMax { get; set; }
+	int QueueReadPeriod { get; }
 
 	ErrorList Clear();
 

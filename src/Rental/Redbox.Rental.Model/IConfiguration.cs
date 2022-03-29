@@ -200,6 +200,14 @@ public interface IConfiguration
 
 	bool ShowOptinForNormalCheckout { get; }
 
+	bool ReturnVisitPromoOfferEnabled { get; }
+
+	string ReturnVisitPromoOfferPromotionName { get; }
+
+	decimal ReturnVisitPromoOfferPromotionPrice { get; }
+
+	string ReturnVisitPromoOfferPromotionExpirationDate { get; }
+
 	string KioskDataServicesUrl { get; }
 
 	string KioskDataServicesKey { get; }

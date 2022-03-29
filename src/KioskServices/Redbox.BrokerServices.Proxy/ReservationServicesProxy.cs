@@ -397,7 +397,6 @@ public class ReservationServicesProxy : IReservationServices
 		{
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			bool flag = false;
-			bool flag2 = false;
 			IServiceProxy serviceProxy = null;
 			IObjectCacheService service = ServiceLocator.Instance.GetService<IObjectCacheService>();
 			if (service != null)
@@ -405,8 +404,7 @@ public class ReservationServicesProxy : IReservationServices
 				serviceProxy = service.GetObject<IServiceProxy>("Kiosk Services Proxy");
 				if (serviceProxy != null)
 				{
-					flag = serviceProxy.GetProperty<bool>("IsOnline");
-					flag2 = serviceProxy.GetProperty<bool>("IsStandAlone");
+					flag = serviceProxy.GetProperty<bool>("IsStandAlone");
 					RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
 					remoteServiceResult.Properties["is_online"] = true;
 					remoteServiceResult.Properties["reservations"] = new List<IReservation>();
@@ -415,7 +413,7 @@ public class ReservationServicesProxy : IReservationServices
 						Interlocked.Increment(ref m_working);
 						if (LiveCall)
 						{
-							if (flag && !flag2)
+							if (!flag)
 							{
 								LogHelper.Instance.Log("Live call to remote IReservationServices.GetReservations, URL: {0}", serviceProxy.GetProperty<string>("Url"));
 								IMacroService service2 = ServiceLocator.Instance.GetService<IMacroService>();
@@ -462,7 +460,7 @@ public class ReservationServicesProxy : IReservationServices
 							}
 							else
 							{
-								LogHelper.Instance.Log("IsOnline is false or stand alone, not issuing realtime call to IReservationServices.GetReservations.", LogEntryType.Info);
+								LogHelper.Instance.Log("Stand alone is true, not issuing realtime call to IReservationServices.GetReservations.", LogEntryType.Info);
 								remoteServiceResult.Properties["is_online"] = false;
 							}
 						}
@@ -483,7 +481,7 @@ public class ReservationServicesProxy : IReservationServices
 						try
 						{
 							remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
-							remoteServiceResult.Properties["stand_alone"] = flag2;
+							remoteServiceResult.Properties["stand_alone"] = flag;
 							ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
 							{
 								Callback = completeCallback,

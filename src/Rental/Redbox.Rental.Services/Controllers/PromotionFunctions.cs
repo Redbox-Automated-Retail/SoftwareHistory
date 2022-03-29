@@ -7,6 +7,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Promotion;
@@ -89,12 +90,13 @@ public class PromotionFunctions
 									shoppingCartService.CurrentRentalShoppingCart.ClearLoyaltyPointsToBeEarned();
 									doneAction();
 								});
+								ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddViewEvent(new DiscountRestrictionEvent(promotion.Name, defaultPromotion.Name));
 							}
 							else
 							{
 								doneAction();
 							}
-							goto IL_04d0;
+							goto IL_0501;
 						}
 					}
 					if (!promoCodeValidationInfo.IsCartValid && (promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing || promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal))
@@ -153,8 +155,8 @@ public class PromotionFunctions
 					}
 				}
 			}
-			goto IL_04d0;
-			IL_04d0:
+			goto IL_0501;
+			IL_0501:
 			if (!promoCodeValidationResult.Success)
 			{
 				ServiceLocator.Instance.GetService<IPersonalizationService>()?.ClearSelectedPromo();

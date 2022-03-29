@@ -15,6 +15,8 @@ public static class AnalyticsConstants
 		public const string OfferDisplayed = "offerDisplayed";
 
 		public const string Login = "Login";
+
+		public const string DiscountRestriction = "DiscountRestriction";
 	}
 
 	public static class SessionProperties
@@ -580,6 +582,10 @@ public static class AnalyticsConstants
 		public const string RedboxPlusLeadGenerationOfferQRCodeButton = "RedboxPlusLeadGenerationOfferQRCodeButton";
 
 		public const string LeadGenerationOfferConfirmationGotItButton = "LeadGenerationOfferConfirmationGotItButton";
+
+		public const string ReturnVisitPromoOfferClose = "ReturnVisitPromoOfferClose";
+
+		public const string ReturnVisitPromoOfferUseNow = "ReturnVisitPromoOfferUseNow";
 	}
 
 	public static class DataTypeNames

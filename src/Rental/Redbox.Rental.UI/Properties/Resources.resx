@@ -729,6 +729,7 @@ By the way, we'd love to have you as a customer, so stick around and browse what
   <data name="redbox_plus_info_close_button_text" xml:space="preserve"><value>OKAY</value></data>
   <data name="perks_signup_info_earn_header" xml:space="preserve"><value>Earn Points</value></data>
   <data name="transaction_terms_button" xml:space="preserve"><value>Transaction Terms</value></data>
+  <data name="return_visit_promo_offer_legal_text" xml:space="preserve"><value>Valid for stated discount off the fee for an eligible 1-night disc or On Demand rental before the expiration date indicated above. 1 use; 1 code per transaction. Your payment card, necessary for rental, is charged the balance of the daily rental fee for a disc and the full daily rental fee for add'l discs + tax (except where tax isn't charged) for the 1st rental day. You're charged the full daily rental fee + tax (if appl.) for add'l days you keep each disc. Can't be combined with other offers, applied to prior rentals, or redeemed for cash. May be cancelled/changed at any time. Void where prohibited.</value></data>
   <data name="add_to_cart_label2" xml:space="preserve"><value>to add items</value></data>
   <data name="add_to_cart_label1" xml:space="preserve"><value>Press</value></data>
   <data name="coming_label_Upper" xml:space="preserve"><value>COMING</value></data>
@@ -772,6 +773,8 @@ in Redbox+</value></data>
   <data name="app_info_bullet_5" xml:space="preserve"><value>Turn on push notifications to unlock special deals</value></data>
   <data name="app_info_bullet_4" xml:space="preserve"><value>Watch trailers and add stuf to your Wish List</value></data>
   <data name="redbox_sweepstakes_and_redbox_plus_accept_and_pay_text" xml:space="preserve"><value>By pressing "Accept &amp; Pay" you agree to the Redbox Terms of Use and Transaction Terms &amp; Conditions. Redbox+ payments will show as “Redbox+ Plan” on your statement. Providing your email enters you for a chance to win $10,000 &amp; you agree to the Official Rules at redbox.com/10ksweeps. Limit 3 entries per day; Free email entry available; see rules for details.</value></data>
+  <data name="return_visit_promo_offer_title_text" xml:space="preserve"><value>Return complete!
+You've unlocked a special offer</value></data>
   <data name="points_notice" xml:space="preserve"><value>Please wait while points are being retrieved.</value></data>
   <data name="promo_expires_tomorrow" xml:space="preserve"><value>1 DAY LEFT</value></data>
   <data name="title_detail_buy" xml:space="preserve"><value>BUY IT</value></data>
@@ -1068,6 +1071,7 @@ to get special deals</value></data>
   <data name="starz_offer_3_bullet1_2" xml:space="preserve"><value> Originals
 on the STARZ app or starz.com</value></data>
   <data name="starz_offer_3_bullet1_1" xml:space="preserve"><value>Watch thousands of movies and Obsessable</value></data>
+  <data name="return_visit_promo_offer_message_text" xml:space="preserve"><value>your next 1-night rental</value></data>
   <data name="multi_disc_vend_header" xml:space="preserve"><value>Don't Forget</value></data>
   <data name="sign_in_mobile_message_text" xml:space="preserve"><value>Hold phone near reader now</value></data>
   <data name="starz_terms_acceptance_terms_header" xml:space="preserve"><value>Also, please agree to our subscription terms:</value></data>
@@ -1284,6 +1288,7 @@ Visit {0} or</value></data>
   <data name="starz_offer_bullet1" xml:space="preserve"><value>Watch Obsessable® originals and thousands
 of movies on the STARZ app or starz.com</value></data>
   <data name="starz_offer_bullet3" xml:space="preserve"><value>No commitment – cancel anytime</value></data>
+  <data name="use_now_button_text" xml:space="preserve"><value>Use Now</value></data>
   <data name="return_time_label" xml:space="preserve"><value>Return: </value></data>
   <data name="postal_code_prompt_message" xml:space="preserve"><value>Please enter the ZIP code associated with your payment card's billing address, and press "ENTER".</value></data>
   <data name="sign_in_point_two_text" xml:space="preserve"><value>Special deals just for you</value></data>
@@ -1367,6 +1372,7 @@ Please try a different card</value></data>
 + 9 Redbox 1-night disc rentals (3/mo)</value></data>
   <data name="regular_checkout_swipe_message" xml:space="preserve"><value>You can swipe your card up
 or down - it doesn't matter.</value></data>
+  <data name="return_visit_promo_offer_amount_text" xml:space="preserve"><value>{0:C} OFF</value></data>
   <data name="back_uppercase_button" xml:space="preserve"><value>BACK</value></data>
   <data name="keypad_clear_all_button_text" xml:space="preserve"><value>CLEAR
 ALL</value></data>
@@ -1375,6 +1381,7 @@ ALL</value></data>
   <data name="games_button_rent_label" xml:space="preserve"><value>Rent</value></data>
   <data name="title_rollup_overlay_digital_code_info" xml:space="preserve"><value>What's a Digital Code?</value></data>
   <data name="my_bag" xml:space="preserve"><value>My Bag</value></data>
+  <data name="return_visit_promo_offer_expiration_text" xml:space="preserve"><value>Expires {0:M/d}</value></data>
   <data name="first_day_price" xml:space="preserve"><value>First Day Price:</value></data>
   <data name="phone_and_pin_default_pin_display" xml:space="preserve"><value>_ _ _ _</value></data>
   <data name="blu_ray_button" xml:space="preserve"><value>Blu-ray</value></data>
@@ -1564,6 +1571,7 @@ You won't be charged for any discs you didn't get, but you might see a pending c
   <data name="email_receipt_comment" xml:space="preserve"><value>To update your email, visit redbox.com/account</value></data>
   <data name="authorization_failure_message" xml:space="preserve"><value>Your card could not be authorized.  Please try again.</value></data>
   <data name="edit_button" xml:space="preserve"><value>EDIT</value></data>
+  <data name="return_visit_promo_offer_promo_code_text" xml:space="preserve"><value>promo code: {0}</value></data>
   <data name="perks_signup_already_member_optin_comment" xml:space="preserve"><value>You’re already a member</value></data>
   <data name="redbox_plus_mini_cart_unavailable_tier1_message_text" xml:space="preserve"><value>Come back next month for your Redbox+ Free 1-night rental</value></data>
   <data name="filter_movies_empty" xml:space="preserve"><value>Sorry, nothing matches that search.

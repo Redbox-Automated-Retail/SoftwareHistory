@@ -351,6 +351,14 @@ public class Configuration : IConfiguration
 
 	public bool EnableMeijerVSM { get; private set; }
 
+	public bool ReturnVisitPromoOfferEnabled { get; private set; }
+
+	public string ReturnVisitPromoOfferPromotionName { get; private set; }
+
+	public decimal ReturnVisitPromoOfferPromotionPrice { get; private set; }
+
+	public string ReturnVisitPromoOfferPromotionExpirationDate { get; private set; }
+
 	public string KioskDataServicesUrl { get; private set; }
 
 	public string KioskDataServicesKey { get; private set; }
@@ -574,6 +582,10 @@ public class Configuration : IConfiguration
 		EnableRedboxPlusOffer = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusOffer", defaultValue: false);
 		EnableRedboxPlusRedemption = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusRedemption", defaultValue: false);
 		EnableMeijerVSM = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableMeijerVSM", defaultValue: false);
+		ReturnVisitPromoOfferEnabled = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferEnabled", defaultValue: false);
+		ReturnVisitPromoOfferPromotionName = ConfigGetValue<string>(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionName", null);
+		ReturnVisitPromoOfferPromotionPrice = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionPrice", 0m);
+		ReturnVisitPromoOfferPromotionExpirationDate = ConfigGetValue<string>(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionExpirationDate", null);
 		EarlyIdEnabled = ConfigGetValue(service, "system", "Personalization", "EarlyIDEnabled", defaultValue: false);
 		LoyaltyEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltyEnabled", defaultValue: false);
 		PerksPassEnabled = ConfigGetValue(service, "system", "Personalization", "PerksPassEnabled", defaultValue: false);

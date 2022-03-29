@@ -164,6 +164,8 @@ public class Constants
 		public const string KeyboardLeadGenerationSignupView = "KeyboardLeadGenerationSignupView";
 
 		public const string LeadGenerationOfferConfirmationView = "LeadGenerationOfferConfirmationView";
+
+		public const string ReturnVisitPromoOfferView = "ReturnVisitPromoOfferView";
 	}
 
 	public class ViewNames
@@ -345,6 +347,8 @@ public class Constants
 		public const string KeyboardLeadGenerationSignupView = "keyboard_lead_generation_signup_view";
 
 		public const string LeadGenerationOfferConfirmationView = "lead_generation_offer_confirmation_view";
+
+		public const string ReturnVisitPromoOfferView = "return_visit_promo_offer_view";
 	}
 
 	public class ThemeNames

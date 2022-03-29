@@ -231,7 +231,7 @@ internal class StoreServices : IStoreServices
 		get
 		{
 			IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
-			if (service != null && service.IsOnline && !service.IsServerBusy)
+			if (service != null && !service.IsServerBusy)
 			{
 				return !IsStandAlone;
 			}

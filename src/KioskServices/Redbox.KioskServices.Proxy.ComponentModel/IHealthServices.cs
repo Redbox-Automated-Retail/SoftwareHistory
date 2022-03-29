@@ -7,10 +7,6 @@ namespace Redbox.KioskServices.Proxy.ComponentModel;
 
 public interface IHealthServices
 {
-	bool IsOnline { get; set; }
-
-	bool IsNotOnline { get; }
-
 	bool IsServerBusy { get; set; }
 
 	bool LiveCall { get; set; }
@@ -49,5 +45,5 @@ public interface IHealthServices
 
 	void UpdateOnlineStatus(IDictionary<string, object> response);
 
-	void UpdateOnlineStatus(bool isServerBusy, bool isOnline);
+	void UpdateOnlineStatus(bool isServerBusy);
 }

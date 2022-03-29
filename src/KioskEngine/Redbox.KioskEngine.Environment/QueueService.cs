@@ -50,9 +50,7 @@ public class QueueService : IQueueService, IDisposable
 		}
 	}
 
-	internal const int DefaultQueueReadPeriodMin = 8000;
-
-	internal const int DefaultQueueReadPeriodMax = 30000;
+	internal const int DefaultQueueReadPeriod = 60000;
 
 	private TimeSpan _overnightPriorityStartTime = TimeSpan.FromHours(1.0);
 
@@ -76,29 +74,7 @@ public class QueueService : IQueueService, IDisposable
 
 	public static QueueService Instance => Singleton<QueueService>.Instance;
 
-	public int QueueReadPeriodMin
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Queue Service", "ReadPeriodMin", 8000);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Queue Service", "ReadPeriodMin", value);
-		}
-	}
-
-	public int QueueReadPeriodMax
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Queue Service", "ReadPeriodMax", 30000);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Queue Service", "ReadPeriodMax", value);
-		}
-	}
+	public int QueueReadPeriod => 60000;
 
 	public void StopQueueWorker()
 	{
@@ -210,9 +186,9 @@ public class QueueService : IQueueService, IDisposable
 								{
 									q.BeforeMessageProcessing?.Invoke(message, out clientData);
 								}
-								catch (Exception e3)
+								catch (Exception e2)
 								{
-									LogHelper.Instance.Log("An unhandled exception was raised while running BeforeMessageProcessing in QueueService.StartQueueWorker.", e3);
+									LogHelper.Instance.Log("An unhandled exception was raised while running BeforeMessageProcessing in QueueService.StartQueueWorker.", e2);
 								}
 								if (q.ProcessMessage != null)
 								{
@@ -221,9 +197,9 @@ public class QueueService : IQueueService, IDisposable
 									{
 										result &= q.ProcessMessage(message, out response);
 									}
-									catch (Exception e4)
+									catch (Exception e3)
 									{
-										LogHelper.Instance.Log("An unhandled exception was raised while running ProcessMessage in QueueService.StartQueueWorker.", e4);
+										LogHelper.Instance.Log("An unhandled exception was raised while running ProcessMessage in QueueService.StartQueueWorker.", e3);
 										errored = true;
 									}
 									if (result)
@@ -232,9 +208,9 @@ public class QueueService : IQueueService, IDisposable
 										{
 											q.MessageProcessedSuccessfully?.Invoke(message, response, clientData);
 										}
-										catch (Exception e5)
+										catch (Exception e4)
 										{
-											LogHelper.Instance.Log("An unhandled exception was raised while running MessageProcessed in QueueService.StartQueueWorker.", e5);
+											LogHelper.Instance.Log("An unhandled exception was raised while running MessageProcessed in QueueService.StartQueueWorker.", e4);
 											errored = true;
 										}
 									}
@@ -242,9 +218,9 @@ public class QueueService : IQueueService, IDisposable
 									{
 										q.AfterMessageProcessed?.Invoke(message, clientData);
 									}
-									catch (Exception e6)
+									catch (Exception e5)
 									{
-										LogHelper.Instance.Log("An unhandled exception was raised while running AfterMessageProcessed in QueueService.StartQueueWorker.", e6);
+										LogHelper.Instance.Log("An unhandled exception was raised while running AfterMessageProcessed in QueueService.StartQueueWorker.", e5);
 									}
 								}
 							});
@@ -259,9 +235,9 @@ public class QueueService : IQueueService, IDisposable
 							errored = true;
 						}
 					}
-					catch (Exception e2)
+					catch (Exception e)
 					{
-						LogHelper.Instance.Log($"Exception in Dequeue predicate processing message type {message?.Type}!", e2);
+						LogHelper.Instance.Log($"Exception in Dequeue predicate processing message type {message?.Type}!", e);
 						errored = true;
 					}
 					return !errored && result;
@@ -280,22 +256,10 @@ public class QueueService : IQueueService, IDisposable
 			}
 			finally
 			{
-				try
-				{
-					int randomNumber = GetRandomNumber(QueueReadPeriodMin, QueueReadPeriodMax);
-					m_queueTimer?.Change(randomNumber, randomNumber);
-				}
-				catch (Exception e)
-				{
-					LogHelper.Instance.Log("An unhandled exception was raised during m_queueTimer.Change in QueueService.StartQueueWorker.", e);
-				}
-				finally
-				{
-					m_isProcessingMessage = false;
-				}
+				m_isProcessingMessage = false;
 			}
-		}, null, QueueReadPeriodMin, QueueReadPeriodMax);
-		LogHelper.Instance.Log("Queue worker started at read period of: {0}", QueueReadPeriodMin);
+		}, null, QueueReadPeriod, QueueReadPeriod);
+		LogHelper.Instance.Log("Queue worker started at read period of: {0}", QueueReadPeriod);
 	}
 
 	public void Dispose()

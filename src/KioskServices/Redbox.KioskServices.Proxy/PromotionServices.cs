@@ -106,7 +106,7 @@ public class PromotionServices : IPromotionServices
 				IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 				bool sendPromoCodeValidationToKioskClientService = service.SendPromoCodeValidationToKioskClientService;
 				string arg = (sendPromoCodeValidationToKioskClientService ? service.KioskClientServiceBaseUrl : KioskServicesProxy.Instance.Url);
-				if (HealthServicesProxy.Instance.IsOnline && !ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
+				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 				{
 					LogHelper.Instance.Log($"Live call to remote IPromotionServices.ValidatePromotionCode, URL: {arg}");
 					if (!int.TryParse(storeNumber, out var kioskId))
@@ -177,7 +177,7 @@ public class PromotionServices : IPromotionServices
 				}
 				else
 				{
-					LogHelper.Instance.Log("IsOnline is false or in stand alone mode, not issuing realtime call to ValidatePromotionCode.", LogEntryType.Info);
+					LogHelper.Instance.Log("In stand alone mode, not issuing realtime call to ValidatePromotionCode.", LogEntryType.Info);
 					result.Properties["response"] = PromotionValidationResponse.Error.ToString();
 					result.Properties["is_online"] = false;
 				}

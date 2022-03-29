@@ -14,6 +14,8 @@ public static class ConfigCategory
 
 	public const string MarketingGeneral = "MarketingGeneral";
 
+	public const string MarketingReturn = "MarketingReturn";
+
 	public const string Documents = "Documents";
 
 	public const string Personalization = "Personalization";

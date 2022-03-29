@@ -137,7 +137,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 				{
 					authorizeResult.Response = response;
 				}
-				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false, authorizeResult.IsOnline);
+				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false);
 				PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
 			}
 			else
@@ -255,7 +255,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 				{
 					authorizeResult.Response = response;
 				}
-				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false, authorizeResult.IsOnline);
+				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false);
 				PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
 			}
 			else
@@ -368,7 +368,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 				{
 					authorizeResult.Response = response;
 				}
-				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false, authorizeResult.IsOnline);
+				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false);
 				PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
 			}
 			else
@@ -570,7 +570,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 					ReferenceNumbers = referenceNumbers
 				};
 				DeserializablePickupValidationResult deserializablePickupValidationResult = await CallPickupValidationAsync(validationRequest);
-				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false, isOnline: true);
+				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false);
 				result.Success = deserializablePickupValidationResult?.Success ?? false;
 				result.Response = AuthorizeResponse.Approved.ToString();
 				result.IsOnline = deserializablePickupValidationResult != null && !deserializablePickupValidationResult.Errors.Any((Redbox.Rental.Model.Error error2) => error2.Code == "PV999");

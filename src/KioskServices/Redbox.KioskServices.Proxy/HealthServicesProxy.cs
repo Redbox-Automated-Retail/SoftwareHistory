@@ -59,20 +59,6 @@ public class HealthServicesProxy : IHealthServices
 		}
 	}
 
-	public bool IsOnline
-	{
-		get
-		{
-			return ServiceLocator.Instance.GetService<IMachineSettingsStore>().GetValue("Remote Services\\Health Services", "IsOnline", defaultValue: true);
-		}
-		set
-		{
-			ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Remote Services\\Health Services", "IsOnline", value);
-		}
-	}
-
-	public bool IsNotOnline => !IsOnline;
-
 	public bool IsServerBusy
 	{
 		get
@@ -294,14 +280,12 @@ public class HealthServicesProxy : IHealthServices
 	{
 		bool flag = response.ContainsKey("ServerBusy") && (bool)response["ServerBusy"];
 		IsServerBusy = flag;
-		IsOnline = response.ContainsKey("IsOnline") && (bool)response["IsOnline"];
 		RemoteServicesStatus = (flag ? "Busy" : "Normal");
 	}
 
-	public void UpdateOnlineStatus(bool isServerBusy, bool isOnline)
+	public void UpdateOnlineStatus(bool isServerBusy)
 	{
 		IsServerBusy = IsServerBusy;
-		IsOnline = isOnline;
 		RemoteServicesStatus = (isServerBusy ? "Busy" : "Normal");
 	}
 

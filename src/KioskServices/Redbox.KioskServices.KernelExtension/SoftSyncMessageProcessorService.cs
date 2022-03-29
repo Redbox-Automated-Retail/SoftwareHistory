@@ -49,7 +49,7 @@ internal class SoftSyncMessageProcessorService : BaseQueueMessageProcessorServic
 	{
 		response = new Dictionary<string, object>();
 		IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
-		if (service == null || service.IsNotOnline || service.IsServerBusy || ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
+		if (service == null || service.IsServerBusy || ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 		{
 			return false;
 		}

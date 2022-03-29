@@ -33,7 +33,7 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 
 	private ToolStripLabel toolStripLabel1;
 
-	private ToolStripTextBox m_refreshRateMinToolStripTextBox;
+	private ToolStripTextBox m_refreshRateToolStripTextBox;
 
 	private ToolStripSeparator toolStripSeparator1;
 
@@ -59,10 +59,6 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 
 	private ToolStripSeparator toolStripSeparator5;
 
-	private ToolStripTextBox m_refreshRateMaxToolStripTextBox;
-
-	private ToolStripLabel toolStripLabel2;
-
 	private ToolStripLabel toolStripLabel3;
 
 	private ToolStripLabel toolStripLabel4;
@@ -83,8 +79,7 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 	public void LoadValues(IPreferencePage preferencePage)
 	{
 		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		m_refreshRateMinToolStripTextBox.Text = service.QueueReadPeriodMin.ToString();
-		m_refreshRateMaxToolStripTextBox.Text = service.QueueReadPeriodMax.ToString();
+		m_refreshRateToolStripTextBox.Text = service.QueueReadPeriod.ToString();
 		SetButtonState();
 		RefreshList();
 	}
@@ -209,60 +204,6 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		}
 	}
 
-	private void OnQueueReadPeriodMinLeave(object sender, EventArgs e)
-	{
-		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		m_errorProvider.SetError(m_refreshRateMinToolStripTextBox.TextBox, string.Empty);
-		try
-		{
-			int num = (int)ConversionHelper.ChangeType(m_refreshRateMinToolStripTextBox.Text, typeof(int));
-			if (num < 0)
-			{
-				m_errorProvider.SetError(m_refreshRateMinToolStripTextBox.TextBox, "A positive integer value is required.");
-				return;
-			}
-			if (num > service.QueueReadPeriodMax)
-			{
-				m_errorProvider.SetError(m_refreshRateMinToolStripTextBox.TextBox, "The minimum value cannot exceed the maximum value.");
-				return;
-			}
-			service.QueueReadPeriodMin = num;
-			service.StopQueueWorker();
-			service.StartQueueWorker();
-		}
-		catch (Exception)
-		{
-			m_errorProvider.SetError(m_refreshRateMinToolStripTextBox.TextBox, "An integer value is required.");
-		}
-	}
-
-	private void OnQueueReadPeriodMaxLeave(object sender, EventArgs e)
-	{
-		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		m_errorProvider.SetError(m_refreshRateMaxToolStripTextBox.TextBox, string.Empty);
-		try
-		{
-			int num = (int)ConversionHelper.ChangeType(m_refreshRateMaxToolStripTextBox.Text, typeof(int));
-			if (num < 0)
-			{
-				m_errorProvider.SetError(m_refreshRateMaxToolStripTextBox.TextBox, "A positive integer value is required.");
-				return;
-			}
-			if (num < service.QueueReadPeriodMin)
-			{
-				m_errorProvider.SetError(m_refreshRateMinToolStripTextBox.TextBox, "The maximum value cannot be less than the minimum value.");
-				return;
-			}
-			service.QueueReadPeriodMax = num;
-			service.StopQueueWorker();
-			service.StartQueueWorker();
-		}
-		catch (Exception)
-		{
-			m_errorProvider.SetError(m_refreshRateMaxToolStripTextBox.TextBox, "An integer value is required.");
-		}
-	}
-
 	private void OnRefresh(object sender, EventArgs e)
 	{
 		RefreshList();
@@ -341,10 +282,8 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_errorProvider = new System.Windows.Forms.ErrorProvider(this.components);
 		this.m_toolStrip = new System.Windows.Forms.ToolStrip();
 		this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
-		this.m_refreshRateMinToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
+		this.m_refreshRateToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
 		this.toolStripLabel3 = new System.Windows.Forms.ToolStripLabel();
-		this.toolStripLabel2 = new System.Windows.Forms.ToolStripLabel();
-		this.m_refreshRateMaxToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
 		this.toolStripLabel4 = new System.Windows.Forms.ToolStripLabel();
 		this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
 		this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
@@ -366,9 +305,10 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_queueListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[4] { this.m_idColumnHeader, this.m_typeColumnHeader, this.m_priorityColumnHeader, this.m_createdOnColumnHeader });
 		this.m_queueListView.FullRowSelect = true;
 		this.m_queueListView.HideSelection = false;
-		this.m_queueListView.Location = new System.Drawing.Point(0, 69);
+		this.m_queueListView.Location = new System.Drawing.Point(0, 85);
+		this.m_queueListView.Margin = new System.Windows.Forms.Padding(4);
 		this.m_queueListView.Name = "m_queueListView";
-		this.m_queueListView.Size = new System.Drawing.Size(542, 307);
+		this.m_queueListView.Size = new System.Drawing.Size(721, 377);
 		this.m_queueListView.TabIndex = 12;
 		this.m_queueListView.UseCompatibleStateImageBehavior = false;
 		this.m_queueListView.View = System.Windows.Forms.View.Details;
@@ -384,38 +324,30 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_errorProvider.ContainerControl = this;
 		this.m_toolStrip.CanOverflow = false;
 		this.m_toolStrip.Dock = System.Windows.Forms.DockStyle.None;
-		this.m_toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[17]
+		this.m_toolStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
+		this.m_toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[15]
 		{
-			this.toolStripLabel1, this.m_refreshRateMinToolStripTextBox, this.toolStripLabel3, this.toolStripLabel2, this.m_refreshRateMaxToolStripTextBox, this.toolStripLabel4, this.toolStripSeparator1, this.toolStripButton1, this.toolStripSeparator2, this.m_startQueueWorkerToolStripButton,
-			this.m_stopQueueWorkerToolStripButton, this.toolStripSeparator3, this.m_saveToolStripButton, this.m_removeToolStripButton, this.toolStripSeparator5, this.m_exportToolStripButton, this.m_cleanToolStripButton
+			this.toolStripLabel1, this.m_refreshRateToolStripTextBox, this.toolStripLabel3, this.toolStripLabel4, this.toolStripSeparator1, this.toolStripButton1, this.toolStripSeparator2, this.m_startQueueWorkerToolStripButton, this.m_stopQueueWorkerToolStripButton, this.toolStripSeparator3,
+			this.m_saveToolStripButton, this.m_removeToolStripButton, this.toolStripSeparator5, this.m_exportToolStripButton, this.m_cleanToolStripButton
 		});
 		this.m_toolStrip.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
-		this.m_toolStrip.Location = new System.Drawing.Point(4, 43);
+		this.m_toolStrip.Location = new System.Drawing.Point(5, 53);
 		this.m_toolStrip.Name = "m_toolStrip";
-		this.m_toolStrip.Size = new System.Drawing.Size(465, 23);
+		this.m_toolStrip.Size = new System.Drawing.Size(524, 27);
 		this.m_toolStrip.TabIndex = 20;
 		this.m_toolStrip.Text = "toolStrip1";
 		this.toolStripLabel1.AutoSize = false;
 		this.toolStripLabel1.Name = "toolStripLabel1";
-		this.toolStripLabel1.Size = new System.Drawing.Size(75, 20);
-		this.toolStripLabel1.Text = "Poll Min (ms):";
-		this.m_refreshRateMinToolStripTextBox.MaxLength = 6;
-		this.m_refreshRateMinToolStripTextBox.Name = "m_refreshRateMinToolStripTextBox";
-		this.m_refreshRateMinToolStripTextBox.Size = new System.Drawing.Size(65, 23);
-		this.m_refreshRateMinToolStripTextBox.Leave += new System.EventHandler(OnQueueReadPeriodMinLeave);
+		this.toolStripLabel1.Size = new System.Drawing.Size(120, 20);
+		this.toolStripLabel1.Text = "Poll Interval (ms):";
+		this.m_refreshRateToolStripTextBox.MaxLength = 6;
+		this.m_refreshRateToolStripTextBox.Name = "m_refreshRateToolStripTextBox";
+		this.m_refreshRateToolStripTextBox.Size = new System.Drawing.Size(85, 27);
 		this.toolStripLabel3.Name = "toolStripLabel3";
-		this.toolStripLabel3.Size = new System.Drawing.Size(19, 15);
+		this.toolStripLabel3.Size = new System.Drawing.Size(25, 20);
 		this.toolStripLabel3.Text = "    ";
-		this.toolStripLabel2.AutoSize = false;
-		this.toolStripLabel2.Name = "toolStripLabel2";
-		this.toolStripLabel2.Size = new System.Drawing.Size(55, 20);
-		this.toolStripLabel2.Text = "Max (ms):";
-		this.m_refreshRateMaxToolStripTextBox.MaxLength = 6;
-		this.m_refreshRateMaxToolStripTextBox.Name = "m_refreshRateMaxToolStripTextBox";
-		this.m_refreshRateMaxToolStripTextBox.Size = new System.Drawing.Size(65, 23);
-		this.m_refreshRateMaxToolStripTextBox.Leave += new System.EventHandler(OnQueueReadPeriodMaxLeave);
 		this.toolStripLabel4.Name = "toolStripLabel4";
-		this.toolStripLabel4.Size = new System.Drawing.Size(19, 15);
+		this.toolStripLabel4.Size = new System.Drawing.Size(25, 20);
 		this.toolStripLabel4.Text = "    ";
 		this.toolStripSeparator1.Name = "toolStripSeparator1";
 		this.toolStripSeparator1.Size = new System.Drawing.Size(6, 23);
@@ -423,7 +355,7 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.toolStripButton1.Image = Redbox.KioskEngine.IDE.Properties.Resources.Refresh;
 		this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
 		this.toolStripButton1.Name = "toolStripButton1";
-		this.toolStripButton1.Size = new System.Drawing.Size(23, 20);
+		this.toolStripButton1.Size = new System.Drawing.Size(29, 24);
 		this.toolStripButton1.Text = "Refresh";
 		this.toolStripButton1.Click += new System.EventHandler(OnRefresh);
 		this.toolStripSeparator2.Name = "toolStripSeparator2";
@@ -432,14 +364,14 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_startQueueWorkerToolStripButton.Image = Redbox.KioskEngine.IDE.Properties.Resources.DebugPlay;
 		this.m_startQueueWorkerToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 		this.m_startQueueWorkerToolStripButton.Name = "m_startQueueWorkerToolStripButton";
-		this.m_startQueueWorkerToolStripButton.Size = new System.Drawing.Size(23, 20);
+		this.m_startQueueWorkerToolStripButton.Size = new System.Drawing.Size(29, 24);
 		this.m_startQueueWorkerToolStripButton.Text = "Start Queue Worker";
 		this.m_startQueueWorkerToolStripButton.Click += new System.EventHandler(OnStartQueueWorker);
 		this.m_stopQueueWorkerToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
 		this.m_stopQueueWorkerToolStripButton.Image = Redbox.KioskEngine.IDE.Properties.Resources.DebugStop;
 		this.m_stopQueueWorkerToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 		this.m_stopQueueWorkerToolStripButton.Name = "m_stopQueueWorkerToolStripButton";
-		this.m_stopQueueWorkerToolStripButton.Size = new System.Drawing.Size(23, 20);
+		this.m_stopQueueWorkerToolStripButton.Size = new System.Drawing.Size(29, 24);
 		this.m_stopQueueWorkerToolStripButton.Text = "Stop Queue Worker";
 		this.m_stopQueueWorkerToolStripButton.Click += new System.EventHandler(OnStopQueueWorker);
 		this.toolStripSeparator3.Name = "toolStripSeparator3";
@@ -449,14 +381,14 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_saveToolStripButton.Image = Redbox.KioskEngine.IDE.Properties.Resources.Save;
 		this.m_saveToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 		this.m_saveToolStripButton.Name = "m_saveToolStripButton";
-		this.m_saveToolStripButton.Size = new System.Drawing.Size(23, 20);
+		this.m_saveToolStripButton.Size = new System.Drawing.Size(29, 24);
 		this.m_saveToolStripButton.Text = "Save";
 		this.m_saveToolStripButton.Click += new System.EventHandler(OnSave);
 		this.m_removeToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
 		this.m_removeToolStripButton.Image = Redbox.KioskEngine.IDE.Properties.Resources.Delete;
 		this.m_removeToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 		this.m_removeToolStripButton.Name = "m_removeToolStripButton";
-		this.m_removeToolStripButton.Size = new System.Drawing.Size(23, 20);
+		this.m_removeToolStripButton.Size = new System.Drawing.Size(29, 24);
 		this.m_removeToolStripButton.Text = "Remove";
 		this.m_removeToolStripButton.ToolTipText = "Remove";
 		this.m_removeToolStripButton.Click += new System.EventHandler(OnRemove);
@@ -466,14 +398,14 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_exportToolStripButton.Image = Redbox.KioskEngine.IDE.Properties.Resources.SaveAs;
 		this.m_exportToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 		this.m_exportToolStripButton.Name = "m_exportToolStripButton";
-		this.m_exportToolStripButton.Size = new System.Drawing.Size(23, 20);
+		this.m_exportToolStripButton.Size = new System.Drawing.Size(29, 24);
 		this.m_exportToolStripButton.Text = "Export";
 		this.m_exportToolStripButton.Click += new System.EventHandler(OnExport);
 		this.m_cleanToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
 		this.m_cleanToolStripButton.Image = Redbox.KioskEngine.IDE.Properties.Resources.Clean;
 		this.m_cleanToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
 		this.m_cleanToolStripButton.Name = "m_cleanToolStripButton";
-		this.m_cleanToolStripButton.Size = new System.Drawing.Size(23, 20);
+		this.m_cleanToolStripButton.Size = new System.Drawing.Size(29, 24);
 		this.m_cleanToolStripButton.Text = "Clear";
 		this.m_cleanToolStripButton.Visible = false;
 		this.m_cleanToolStripButton.Click += new System.EventHandler(OnClear);
@@ -492,15 +424,16 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_syntaxBoxControl.InfoTipPosition = null;
 		this.m_syntaxBoxControl.InfoTipSelectedIndex = 1;
 		this.m_syntaxBoxControl.InfoTipVisible = false;
-		this.m_syntaxBoxControl.Location = new System.Drawing.Point(-1, 382);
+		this.m_syntaxBoxControl.Location = new System.Drawing.Point(-1, 470);
 		this.m_syntaxBoxControl.LockCursorUpdate = false;
+		this.m_syntaxBoxControl.Margin = new System.Windows.Forms.Padding(4);
 		this.m_syntaxBoxControl.Name = "m_syntaxBoxControl";
 		this.m_syntaxBoxControl.ShowEOLMarker = true;
 		this.m_syntaxBoxControl.ShowGutterMargin = false;
 		this.m_syntaxBoxControl.ShowScopeIndicator = false;
 		this.m_syntaxBoxControl.ShowTabGuides = true;
 		this.m_syntaxBoxControl.ShowWhitespace = true;
-		this.m_syntaxBoxControl.Size = new System.Drawing.Size(542, 124);
+		this.m_syntaxBoxControl.Size = new System.Drawing.Size(723, 153);
 		this.m_syntaxBoxControl.SmoothScroll = false;
 		this.m_syntaxBoxControl.SplitView = false;
 		this.m_syntaxBoxControl.SplitviewH = -4;
@@ -519,19 +452,21 @@ public class QueuePreferencePage : UserControl, IPreferencePageHost
 		this.m_headerLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25f, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 0);
 		this.m_headerLabel.ForeColor = System.Drawing.Color.White;
 		this.m_headerLabel.Location = new System.Drawing.Point(0, 0);
+		this.m_headerLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
 		this.m_headerLabel.Name = "m_headerLabel";
-		this.m_headerLabel.Size = new System.Drawing.Size(542, 38);
+		this.m_headerLabel.Size = new System.Drawing.Size(723, 47);
 		this.m_headerLabel.TabIndex = 23;
 		this.m_headerLabel.Text = "  Engine Core: Message Queue";
 		this.m_headerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-		base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 13f);
+		base.AutoScaleDimensions = new System.Drawing.SizeF(8f, 16f);
 		base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		base.Controls.Add(this.m_headerLabel);
 		base.Controls.Add(this.m_syntaxBoxControl);
 		base.Controls.Add(this.m_queueListView);
 		base.Controls.Add(this.m_toolStrip);
+		base.Margin = new System.Windows.Forms.Padding(4);
 		base.Name = "QueuePreferencePage";
-		base.Size = new System.Drawing.Size(542, 506);
+		base.Size = new System.Drawing.Size(723, 623);
 		((System.ComponentModel.ISupportInitialize)this.m_errorProvider).EndInit();
 		this.m_toolStrip.ResumeLayout(false);
 		this.m_toolStrip.PerformLayout();

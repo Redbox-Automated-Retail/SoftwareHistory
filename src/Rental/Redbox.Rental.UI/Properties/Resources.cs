@@ -2010,6 +2010,18 @@ public class Resources
 
 	public static string return_touchless_banner_title => ResourceManager.GetString("return_touchless_banner_title", resourceCulture);
 
+	public static string return_visit_promo_offer_amount_text => ResourceManager.GetString("return_visit_promo_offer_amount_text", resourceCulture);
+
+	public static string return_visit_promo_offer_expiration_text => ResourceManager.GetString("return_visit_promo_offer_expiration_text", resourceCulture);
+
+	public static string return_visit_promo_offer_legal_text => ResourceManager.GetString("return_visit_promo_offer_legal_text", resourceCulture);
+
+	public static string return_visit_promo_offer_message_text => ResourceManager.GetString("return_visit_promo_offer_message_text", resourceCulture);
+
+	public static string return_visit_promo_offer_promo_code_text => ResourceManager.GetString("return_visit_promo_offer_promo_code_text", resourceCulture);
+
+	public static string return_visit_promo_offer_title_text => ResourceManager.GetString("return_visit_promo_offer_title_text", resourceCulture);
+
 	public static string rop_auth_fail_header => ResourceManager.GetString("rop_auth_fail_header", resourceCulture);
 
 	public static string rop_auth_fail_message_line_one => ResourceManager.GetString("rop_auth_fail_message_line_one", resourceCulture);
@@ -2653,6 +2665,8 @@ public class Resources
 	public static string upsell_from_DVD_title => ResourceManager.GetString("upsell_from_DVD_title", resourceCulture);
 
 	public static string use_and_earn_points => ResourceManager.GetString("use_and_earn_points", resourceCulture);
+
+	public static string use_now_button_text => ResourceManager.GetString("use_now_button_text", resourceCulture);
 
 	public static string use_points => ResourceManager.GetString("use_points", resourceCulture);
 

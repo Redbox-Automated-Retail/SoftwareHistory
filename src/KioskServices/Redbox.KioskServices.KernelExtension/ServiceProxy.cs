@@ -9,13 +9,15 @@ public class ServiceProxy : IServiceProxy
 {
 	public T GetProperty<T>(string name)
 	{
-		return name switch
+		if (name == "IsStandAlone")
 		{
-			"IsOnline" => (T)(object)ServiceLocator.Instance.GetService<IHealthServices>().IsOnline, 
-			"IsStandAlone" => (T)(object)ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone, 
-			"Url" => (T)(object)KioskServicesProxy.Instance.Url, 
-			_ => default(T), 
-		};
+			return (T)(object)ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
+		}
+		if (name == "Url")
+		{
+			return (T)(object)KioskServicesProxy.Instance.Url;
+		}
+		return default(T);
 	}
 
 	public void SetProperty<T>(string name, T value)

@@ -75,7 +75,6 @@ internal class KioskServicesHealthListener : BaseHealthServicesBroadcast
 			catch (Exception e)
 			{
 				LogHelper.Instance.Log("An unhandled exception was raised in KioskServicesHealthListener.Ping.", e);
-				base.Caller.IsOnline = false;
 			}
 		});
 	}

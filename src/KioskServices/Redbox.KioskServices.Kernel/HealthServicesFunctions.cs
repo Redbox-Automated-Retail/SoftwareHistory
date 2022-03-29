@@ -58,32 +58,6 @@ internal static class HealthServicesFunctions
 		ServiceLocator.Instance.GetService<IHealthServices>()?.EnqueueProperty(name, value);
 	}
 
-	[KernelFunction(Name = "kernel.healthsvcs_isonline")]
-	internal static bool IsOnline()
-	{
-		return ServiceLocator.Instance.GetService<IHealthServices>()?.IsOnline ?? false;
-	}
-
-	[KernelFunction(Name = "kernel.healthsvcs_takeoffline")]
-	internal static void TakeOffline()
-	{
-		IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
-		if (service != null)
-		{
-			service.IsOnline = false;
-		}
-	}
-
-	[KernelFunction(Name = "kernel.healthsvcs_bringonline")]
-	internal static void BringOnline()
-	{
-		IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
-		if (service != null)
-		{
-			service.IsOnline = true;
-		}
-	}
-
 	[KernelFunction(Name = "kernel.healthsvcs_queuedepth")]
 	internal static int QueueDepth()
 	{

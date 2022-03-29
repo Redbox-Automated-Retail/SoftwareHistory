@@ -326,7 +326,7 @@ public class PromotionService : IPromotionService
 									}
 									else if (promotionRule.OfferCondition == PromotionRule.Constants.Cart)
 									{
-										num2 = rentalShoppingCart.GetTitleItemsByCriteria(promotionRule.Action, promotionRule.Sequence, TitleType.All, TitleFamily.All, null, null, null, null, null, includeMultiNightPricedItems: true, includeFlashDeals: true, includeLoyaltyRedeemedItems: true, null, includeDiscountRestrictionItems: true)?.Count ?? 0;
+										num2 = rentalShoppingCart.GetTitleItemsByCriteria(promotionRule.Action, promotionRule.Sequence, TitleType.All, TitleFamily.All, null, null, null, null, null, includeMultiNightPricedItems: true, includeFlashDeals: false, includeLoyaltyRedeemedItems: true, null, includeDiscountRestrictionItems: true)?.Count ?? 0;
 									}
 									else if (promotionRule.OfferCondition == PromotionRule.Constants.BrowseMinimumQuantity)
 									{

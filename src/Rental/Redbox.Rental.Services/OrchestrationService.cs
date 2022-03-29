@@ -870,8 +870,7 @@ public static class OrchestrationService
 	public static bool IsCardBlocklisted()
 	{
 		bool result = false;
-		bool flag = ServiceLocator.Instance.GetService<IHealthServices>()?.IsOnline ?? false;
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.OfflineBlockListEnabled && !flag && !IsGiftCard())
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.OfflineBlockListEnabled && !IsGiftCard())
 		{
 			ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
 			if (trackData != null && trackData.HasValidData())
