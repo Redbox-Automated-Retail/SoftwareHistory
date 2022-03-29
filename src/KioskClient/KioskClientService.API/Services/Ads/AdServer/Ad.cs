@@ -7,6 +7,8 @@ public class Ad
 {
 	public string Id { get; set; } = Guid.NewGuid().ToString();
 
+	public string AssetId { get; set; }
+
 	public virtual AdProviderName Provider { get; }
 
 	public virtual bool Expirable { get; }

@@ -230,7 +230,7 @@ public class AdServerService : IAdService
 			}
 			_assetService.ManageAssets(((IEnumerable<Ad>)data).Select((Func<Ad, BaseAsset>)((Ad a) => new AdServerAsset
 			{
-				AssetId = a.Id,
+				AssetId = a.AssetId,
 				AssetUrl = a.AssetUrl,
 				MimeType = a.MimeType
 			})).ToList());
@@ -279,7 +279,7 @@ public class AdServerService : IAdService
 				Ad = a,
 				RequestedTime = DateTime.Now
 			};
-			Asset asset = _assetService.GetAsset(adServerCachedAdvertisement.Ad.Id);
+			Asset asset = _assetService.GetAsset(adServerCachedAdvertisement.Ad.AssetId);
 			if (asset == null)
 			{
 				_logger?.LogErrorWithSource("DownloadAd succeeded but asset was not cached. Expiring get ad request now.", "GetAdsAndCache");
@@ -403,13 +403,13 @@ public class AdServerService : IAdService
 			Ad = data,
 			RequestedTime = DateTime.Now
 		};
-		Asset asset = _assetService.GetAsset(cached.Ad.Id);
+		Asset asset = _assetService.GetAsset(cached.Ad.AssetId);
 		if (asset == null)
 		{
 			_logger?.LogError("DownloadAd succeeded but asset was not cached.  Expiring get ad request now.");
 			if (data.Expirable)
 			{
-				await _adServerClient.PostExpire(asset.AssetId);
+				await _adServerClient.PostExpire(data.Id);
 			}
 			_assetService.DownloadAsset(cached.Ad.ToAdServerAsset());
 		}

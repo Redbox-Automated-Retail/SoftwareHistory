@@ -30,7 +30,7 @@ public static class AssetExtensions
 	{
 		return new AdServerAsset
 		{
-			AssetId = ad.Id,
+			AssetId = ad.AssetId,
 			AssetUrl = ad.AssetUrl,
 			MimeType = ad.MimeType
 		};
