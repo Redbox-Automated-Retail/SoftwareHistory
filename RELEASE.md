@@ -1,17 +1,17 @@
-# McLaren (2022-03-17)
+# Nova (2022-03-28)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-03-17
-- Store labels: kop-rental-bundles-McLaren
+- Date (first download in the snapshots): 2022-03-28
+- Store labels: kop-rental-bundles-Nova
 - Package revisions:
-  - `kop-rental-bundles` revision 158 (`CE0AD226233E49A8E1EC801A2010C52211140F91`)
+  - `kop-rental-bundles` revision 159 (`AE681630227C05B64B81EC6F33063DC677420FFA`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `C7A89C39B71C45581223021DAA9998AE352AF84C` | exact |
-| `fm.bundle` |  |  | `A3963CB961AC513A20FFF52C4006240F04C6D47C` | exact |
-| `library-rental-common.bundle` |  |  | `B182222435011EACBB5027021B39E67B7F876330` | exact |
-| `ra-2.x.bundle` |  |  | `C3E2D5A5B783B113EFA93FE4DD80EC72B7FB574B` | exact |
+| `cp.bundle` |  |  | `EED3DCAC48245481F6B455DFD30FA25E9452E9FE` | exact |
+| `fm.bundle` |  |  | `12A1F8020581718B4773AA040DC1FAF4E191B7E3` | exact |
+| `library-rental-common.bundle` |  |  | `B01980DE5CF7EC1CB72B4D77CD35F7F8A422FDCC` | exact |
+| `ra-2.x.bundle` |  |  | `BF87D656D89C9D1348FD885429C359874B71CF8A` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

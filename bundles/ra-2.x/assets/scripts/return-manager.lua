@@ -76,7 +76,12 @@ function newreturnmanager( shopping_cart )
 			    kernel.shopping_cart_commit(self.shopping_cart.session_id, "User successfully returned product with barcode: " .. tostring( item_id ), true )
 		    end
 
-            kernel.show_message_popup_view_return_success(switch_culture_unwind)
+			if kernel.can_show_return_visit_promo_offer_view() then
+				kernel.show_return_visit_promo_offer_view(switch_culture_unwind)
+			else
+				kernel.show_message_popup_view_return_success(switch_culture_unwind)
+			end
+
             kernel.log("return ended by showing success message for job id: " .. tostring(job_id))
 		    self.has_ended = true
             kernel.set_session_value("BrowseState.InReturnFlow", false)
@@ -295,12 +300,17 @@ function newreturnmanager( shopping_cart )
                 if self.has_shown_return_view == false then
                     self.has_shown_return_view = true
 				    ShoppingCart:add_session_event( "Hardware", "HAL return job is running." )
+
                     if kernel.is_message_popup_view_showing() then
                         kernel.hide_message_popup_view(true)
                     end
 				    if return_manager_error_message_view_manager.is_showing then
 					    return_manager_error_message_view_manager:hide( true )
 				    end
+					if kernel.peekview() == "return_visit_promo_offer_view" then
+						kernel.view_goback_safe("return_visit_promo_offer_view", true)
+				    end
+
 				    view_show_safe( "return_view" )
 				    self.has_ended = false
 				    -- Analytic session is only started AFTER the view changes
@@ -473,10 +483,10 @@ function newreturnmanager( shopping_cart )
 				end
 
                 local current_view = kernel.peekview()
-
 				if ( current_view == "return_view"
                 or current_view == "error_message_view"
-				or kernel.is_message_popup_view_showing() )
+				or kernel.is_message_popup_view_showing()
+				or current_view == "return_visit_promo_offer_view" )
 				and self.is_machine_full == false
 				and not self.has_ended then
                     kernel.log("Return flow complete catch all processing for job id" .. tostring(job_result.job_id))
