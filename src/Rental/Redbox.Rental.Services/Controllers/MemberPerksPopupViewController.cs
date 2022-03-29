@@ -58,7 +58,8 @@ public class MemberPerksPopupViewController : BaseViewController
 				{
 					Resources.perks_level0_message1,
 					Resources.perks_level0_message2,
-					Resources.perks_level0_message3
+					Resources.perks_level0_message3,
+					Resources.perks_level0_message4
 				};
 				break;
 			case "star":
@@ -68,7 +69,8 @@ public class MemberPerksPopupViewController : BaseViewController
 				{
 					Resources.perks_level1_message1,
 					Resources.perks_level1_message2,
-					Resources.perks_level1_message3
+					Resources.perks_level1_message3,
+					Resources.perks_level1_message4
 				};
 				break;
 			case "superstar":

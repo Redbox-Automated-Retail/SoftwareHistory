@@ -23,7 +23,7 @@
         <ColumnDefinition Width="1*" />
         <ColumnDefinition Width="4*" />
       </Grid.ColumnDefinitions>
-      <Image Name="redbox_logo" Grid.Column="0" Margin="32,32,0,0" Width="133" Height="40" VerticalAlignment="Top" HorizontalAlignment="Left" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite.png">
+      <Image Name="redbox_logo" Grid.Column="0" Margin="32,32,0,0" Width="133" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite2_icon.png">
         <UIElement.InputBindings>
           <MouseBinding Gesture="LeftClick" Command="{x:Static local:HelpViewCommands.RedboxLogoCommand}" />
         </UIElement.InputBindings>

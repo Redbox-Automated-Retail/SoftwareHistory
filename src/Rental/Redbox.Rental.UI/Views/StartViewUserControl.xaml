@@ -39,14 +39,14 @@
           </UIElement.InputBindings>
         </Image>
       </Grid>
-      <Grid Name="navigation_side_bar" Background="{StaticResource RubineToDarkPurpleGradientBrush}" Width="265" Height="768" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="1.0" />
-      <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite2.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="35,40,0,0" Height="47" />
+      <Grid Name="navigation_side_bar" Background="{StaticResource DarkPurpleToRubineGradientBrush}" Width="265" Height="768" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="1.0" />
+      <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite2_icon.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,40,0,0" Height="49" />
       <Grid Margin="24,280,0,0" Height="488" VerticalAlignment="Top">
         <StackPanel VerticalAlignment="Top">
-          <Redbox:RoundedButton Name="all_movies_button" Style="{StaticResource white_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Height="80" Width="217" CornerRadius="40" Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Focusable="False" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}}">
+          <Redbox:RoundedButton Name="all_movies_button" Style="{StaticResource white_and_warm_purple_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Height="80" Width="217" CornerRadius="40" Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Focusable="False" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}}">
             <Grid>
               <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}">
-                <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/movieicon.png" HorizontalAlignment="Left" Margin="19,0,0,0" Width="50" />
+                <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/movieIcon_purple.png" HorizontalAlignment="Left" Margin="19,0,0,0" Width="50" />
               </DockPanel>
               <StackPanel VerticalAlignment="Center" Margin="79,0,0,0">
                 <TextBlock Name="all_movies_button_text_line1" Style="{Binding Path=AllMoviesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=AllMoviesButtonTextLine1, FallbackValue=RENT}" Visibility="{Binding Path=RentMoviesGamesTextVisibility, FallbackValue=Visible}" />
@@ -56,7 +56,7 @@
               </StackPanel>
             </Grid>
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="games_button" Style="{StaticResource white_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="80" Width="217" CornerRadius="40" Command="{x:Static localbase:Commands.RentOrBuyGamesCommand}" Focusable="False" Visibility="{Binding Path=RentOrBuyGamesButtonVisibility, FallbackValue=Collapsed}" IsEnabled="{Binding RentGamesEnabled}">
+          <Redbox:RoundedButton Name="games_button" Style="{StaticResource white_and_warm_purple_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="80" Width="217" CornerRadius="40" Command="{x:Static localbase:Commands.RentOrBuyGamesCommand}" Focusable="False" Visibility="{Binding Path=RentOrBuyGamesButtonVisibility, FallbackValue=Collapsed}" IsEnabled="{Binding RentGamesEnabled}">
             <Grid>
               <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}">
                 <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/gameControllerIconCopy.png" HorizontalAlignment="Left" Margin="24,0,0,1" Width="45" />
@@ -69,22 +69,22 @@
               </StackPanel>
             </Grid>
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="buy_movies_button" Style="{StaticResource white_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="56" Width="217" CornerRadius="28" Command="{x:Static localbase:Commands.BuyMoviesCommand}" Focusable="False" Visibility="{Binding Path=BuyMoviesOrGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding BuyMoviesEnabled}">
+          <Redbox:RoundedButton Name="buy_movies_button" Style="{StaticResource white_and_warm_purple_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="56" Width="217" CornerRadius="28" Command="{x:Static localbase:Commands.BuyMoviesCommand}" Focusable="False" Visibility="{Binding Path=BuyMoviesOrGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding BuyMoviesEnabled}">
             <Grid>
               <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}" />
               <TextBlock Name="buy_movies_button_text_line1" HorizontalAlignment="Center" Style="{Binding Path=BuyMoviesOrGamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=BuyMoviesOrGamesButtonTextLine1, FallbackValue=BUY MOVIES}" />
             </Grid>
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="buy_games_button" Style="{StaticResource white_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="56" Width="217" CornerRadius="28" Command="{x:Static localbase:Commands.BuyGamesCommand}" Focusable="False" Visibility="{Binding Path=BuyGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding BuyGamesEnabled}">
+          <Redbox:RoundedButton Name="buy_games_button" Style="{StaticResource white_and_warm_purple_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="56" Width="217" CornerRadius="28" Command="{x:Static localbase:Commands.BuyGamesCommand}" Focusable="False" Visibility="{Binding Path=BuyGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding BuyGamesEnabled}">
             <Grid>
               <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}" />
               <TextBlock Name="buy_games_button_text_line1" HorizontalAlignment="Center" Style="{Binding Path=BuyGamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=BuyGamesButtonTextLine1, FallbackValue=BUY GAMES}" />
             </Grid>
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="online_pickup_button" Style="{StaticResource darkpurple_white_border_button_style}" Margin="0,20,0,0" Width="217" Height="56" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="28" BorderThickness="3" Command="{x:Static localbase:Commands.PickupProductCommand}" Focusable="False" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}}">
+          <Redbox:RoundedButton Name="online_pickup_button" Style="{StaticResource darkpurple_to_lightpurple_white_border_button_style}" Margin="0,20,0,0" Width="217" Height="56" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="28" BorderThickness="3" Command="{x:Static localbase:Commands.PickupProductCommand}" Focusable="False" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}}">
             <TextBlock Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=PickUpButtonText, FallbackValue=PICK UP}" />
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="return_button" Style="{StaticResource darkpurple_white_border_button_style}" Margin="0,15,0,0" Width="217" Height="56" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="28" BorderThickness="3" Command="{x:Static localbase:Commands.ReturnProductCommand}" Focusable="False">
+          <Redbox:RoundedButton Name="return_button" Style="{StaticResource darkpurple_to_lightpurple_white_border_button_style2}" Margin="0,15,0,0" Width="217" Height="56" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="28" BorderThickness="3" Command="{x:Static localbase:Commands.ReturnProductCommand}" Focusable="False">
             <TextBlock Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=ReturnButtonText, FallbackValue=RETURN}" />
           </Redbox:RoundedButton>
         </StackPanel>
@@ -93,18 +93,18 @@
             <UIElement.InputBindings>
               <MouseBinding Gesture="LeftClick" Command="{x:Static localbase:Commands.SignInTooltipCommand}" />
             </UIElement.InputBindings>
-            <Border Width="338" Height="75" Background="#DDB4E8" BorderBrush="#FFFFFFFF" BorderThickness="2" CornerRadius="8">
+            <Border Width="338" Height="75" Background="#E3D1E8" BorderBrush="#FFFFFFFF" BorderThickness="3" CornerRadius="8">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="306" />
                   <ColumnDefinition Width="32" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Row="0" Grid.Column="0" Margin="13,13,0,13" Style="{StaticResource font_montserrat_bold_16}" LineHeight="24" Foreground="#FF000000" Text="{Binding Path=SignInButtonTooltipText, FallbackValue=Check your Redbox Perks points.&#xA;You may have a FREE 1-night rental}" />
-                <Image Grid.Row="0" Grid.Column="1" Margin="0,10,16,0" HorizontalAlignment="Right" VerticalAlignment="Top" Width="15" Height="15" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/black-purple-close-icon.png" />
+                <TextBlock Grid.Row="0" Grid.Column="0" Margin="13,13,0,13" Style="{StaticResource font_montserrat_bold_16}" LineHeight="24" Foreground="#481B54" Text="{Binding Path=SignInButtonTooltipText, FallbackValue=Check your Redbox Perks points.&#xA;You may have a FREE 1-night rental}" />
+                <Image Grid.Row="0" Grid.Column="1" Margin="0,10,16,0" HorizontalAlignment="Right" VerticalAlignment="Top" Width="15" Height="15" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/darkpurple-lightpurple-close-icon.png" />
               </Grid>
             </Border>
-            <Polygon Points="0,0 20,0 10,16" Margin="52,-4,0,0" HorizontalAlignment="Left" Fill="#DDB4E8" />
-            <Path Stroke="#FFFFFFFF" StrokeThickness="2" Margin="52,-13,0,0" HorizontalAlignment="Left">
+            <Polygon Points="0,0 20,0 10,16" Margin="52,-4,0,0" HorizontalAlignment="Left" Fill="#E3D1E8" />
+            <Path Stroke="#FFFFFFFF" StrokeThickness="3" Margin="52,-13,0,0" HorizontalAlignment="Left">
               <Path.Data>
                 <GeometryGroup>
                   <LineGeometry StartPoint="1,0" EndPoint="10,14" />

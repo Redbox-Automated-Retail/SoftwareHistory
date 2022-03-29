@@ -23,10 +23,7 @@
       <TextBlock Name="LeftSubtitle2Text" Style="{StaticResource font_montserrat_medium_14}" Foreground="#FFFFFFFF" Margin="0,16,0,0" Width="364" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Text="{Binding LeftSubtitle2Text, FallbackValue=Cancel anytime}" />
     </StackPanel>
     <StackPanel Grid.Column="1" Grid.Row="1">
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-        <Image Name="RedboxIcon" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/redbox-icon-with-dot.png" Height="44" />
-        <Image Name="RedboxLogo" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite2.png" Height="31" Margin="10,0,0,0" />
-      </StackPanel>
+      <Image Name="RedboxLogo" HorizontalAlignment="Center" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/logoWhite2_icon.png" Height="44" />
       <TextBlock Name="RightTitleText" Grid.Column="1" Grid.Row="1" Style="{StaticResource font_montserrat_bold_40}" Foreground="#fdba4d" HorizontalAlignment="Center" Margin="0,16,0,0" Text="{Binding RightTitleText, FallbackValue=2 Free Rentals/Mo*}" />
       <TextBlock Name="RightSubtitleText" Style="{StaticResource font_montserrat_semibold_20}" Foreground="#FFFFFFFF" Margin="0,4,20,0" Width="364" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Text="{Binding RightSubtitleText, FallbackValue=For the next 12 months - 24 in total after trial}" />
       <TextBlock Name="RightSubtitle2Text" Style="{StaticResource font_montserrat_medium_14}" Foreground="#FFFFFFFF" Margin="0,16,0,0" Width="364" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Text="{Binding RightSubtitle2Text, FallbackValue=Valid for 1-night disc rentals only.}" />

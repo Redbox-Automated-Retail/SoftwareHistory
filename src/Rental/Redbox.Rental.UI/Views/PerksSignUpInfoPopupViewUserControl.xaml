@@ -16,7 +16,7 @@
               <Redbox:GridExt RowHeights="*,*,*,*" DockPanel.Dock="Left">
                 <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}">
                   <TextBlock.Inlines>
-                    <Run Text="{Binding EarnOption1Desc, FallbackValue=Rent DVD}" /> <Run Text="=" /> <Run Text="{Binding EarnOption1Value, FallbackValue=earn 100 points / night}" /></TextBlock.Inlines>
+                    <Run Text="{Binding EarnOption1Desc, FallbackValue=Rent DVD}" /> <Run Text="=" /> <Run Text="{Binding EarnOption1Value, FallbackValue=earn 125 points / night}" /></TextBlock.Inlines>
                 </TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}">
                   <TextBlock.Inlines>

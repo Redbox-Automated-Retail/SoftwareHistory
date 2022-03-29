@@ -15,7 +15,7 @@
       <ColumnDefinition />
       <ColumnDefinition />
     </Grid.ColumnDefinitions>
-    <Border Grid.Column="0" Grid.Row="0" Margin="32,24,0,24" CornerRadius="20" Background="{StaticResource RubineToDarkPurpleGradientBrush}">
+    <Border Grid.Column="0" Grid.Row="0" Margin="32,24,0,24" CornerRadius="20" Background="{StaticResource DarkPurpleToRubineGradientBrush}">
       <DockPanel Margin="48,44,48,5">
         <Image DockPanel.Dock="Top" HorizontalAlignment="Left" Source="{Binding HeaderImage, FallbackValue='pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/perks-white-logo.png'}" Style="{Binding HeaderImageStyle, FallbackValue={StaticResource sign_in_up_perks_header_image}}" />
         <StackPanel DockPanel.Dock="Bottom" Orientation="Vertical" VerticalAlignment="Bottom" MinHeight="450">
@@ -45,7 +45,7 @@
             <TextBlock Name="bullet_3" Margin="20,0,0,0" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_semibold_20}" Text="{Binding Path=Bullet3Text, FallbackValue=B-day gift}" />
           </BulletDecorator>
           <TextBlock Name="bottom_message" Margin="0,45,0,0" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_semibold_14}" HorizontalAlignment="Center" Text="{Binding Path=BottomMessageText, FallbackValue=It’s fast and easy – only 2 steps!}" />
-          <Redbox:RoundedButton Name="SignUpButton" VerticalAlignment="Top" Margin="0,10,0,0" MinHeight="56" Height="Auto" UsedDefaultCornerRadius="True" Style="{StaticResource white_button_style}" Command="{Binding SignUpButtonCommand}">
+          <Redbox:RoundedButton Name="SignUpButton" VerticalAlignment="Top" Margin="0,10,0,0" MinHeight="56" Height="Auto" UsedDefaultCornerRadius="True" Style="{StaticResource white_and_warm_purple_button_style}" Command="{Binding SignUpButtonCommand}">
             <TextBlock Margin="40,0" TextWrapping="Wrap" TextAlignment="Center" Style="{Binding ButtonTextStyle, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=SignUpButtonText, FallbackValue=SIGN UP}" />
           </Redbox:RoundedButton>
           <Redbox:RoundedButton Name="InfoButton" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,10,0,0" Height="Auto" UsedDefaultCornerRadius="True" Style="{StaticResource transparent_button_style}" IsEnabled="True" Command="{Binding InfoButtonCommand}">

@@ -65,7 +65,7 @@ public class KioskClientServicePricing : BaseKioskClientService, IKioskClientSer
 		string arg = "KCS.Pricing.GetRentalDefaultPricing";
 		LogHelper.Instance.Log($"{arg}");
 		HttpRequestMessage request = _httpService.GenerateRequest(base.KioskClientServiceBaseUrl, string.Format("{0}/rentaldefault", "api/pricing"), null, HttpMethod.Get);
-		return await _httpService.SendRequestAsync<GetRentalDefaultPricingResponse>(request, null, "GetRentalDefaultPricing", "D:\\work\\626\\SC\\Redbox.Rental.Services\\Pricing\\KioskClientServicePricing.cs");
+		return await _httpService.SendRequestAsync<GetRentalDefaultPricingResponse>(request, null, "GetRentalDefaultPricing", "D:\\work\\634\\SC\\Redbox.Rental.Services\\Pricing\\KioskClientServicePricing.cs");
 	}
 
 	private async Task<APIResponse<GetRentalPricingByPriceResponse>> GetRentalPricing()
@@ -73,7 +73,7 @@ public class KioskClientServicePricing : BaseKioskClientService, IKioskClientSer
 		string arg = "KCS.Pricing.GetRentalPricingByPriceResponse";
 		LogHelper.Instance.Log($"{arg}");
 		HttpRequestMessage request = _httpService.GenerateRequest(base.KioskClientServiceBaseUrl, string.Format("{0}/rental", "api/pricing"), null, HttpMethod.Get);
-		return await _httpService.SendRequestAsync<GetRentalPricingByPriceResponse>(request, null, "GetRentalPricing", "D:\\work\\626\\SC\\Redbox.Rental.Services\\Pricing\\KioskClientServicePricing.cs");
+		return await _httpService.SendRequestAsync<GetRentalPricingByPriceResponse>(request, null, "GetRentalPricing", "D:\\work\\634\\SC\\Redbox.Rental.Services\\Pricing\\KioskClientServicePricing.cs");
 	}
 
 	private async Task<APIResponse<GetPurchasePricingByPriceResponse>> GetPurchasePricing()
@@ -81,7 +81,7 @@ public class KioskClientServicePricing : BaseKioskClientService, IKioskClientSer
 		string arg = "KCS.Pricing.GetPurchasePricingByPriceResponse";
 		LogHelper.Instance.Log($"{arg}");
 		HttpRequestMessage request = _httpService.GenerateRequest(base.KioskClientServiceBaseUrl, string.Format("{0}/purchase", "api/pricing"), null, HttpMethod.Get);
-		return await _httpService.SendRequestAsync<GetPurchasePricingByPriceResponse>(request, null, "GetPurchasePricing", "D:\\work\\626\\SC\\Redbox.Rental.Services\\Pricing\\KioskClientServicePricing.cs");
+		return await _httpService.SendRequestAsync<GetPurchasePricingByPriceResponse>(request, null, "GetPurchasePricing", "D:\\work\\634\\SC\\Redbox.Rental.Services\\Pricing\\KioskClientServicePricing.cs");
 	}
 
 	private async Task<APIResponse<GetProductPricingResponse>> GetProductPricing(ProductPricingRequest request)
@@ -89,7 +89,7 @@ public class KioskClientServicePricing : BaseKioskClientService, IKioskClientSer
 		string arg = "KCS.Pricing.GetPurchasePricingByPriceResponse";
 		LogHelper.Instance.Log($"{arg}");
 		HttpRequestMessage request2 = _httpService.GenerateRequest(base.KioskClientServiceBaseUrl, string.Format("{0}/product", "api/pricing"), request, HttpMethod.Post);
-		return await _httpService.SendRequestAsync<GetProductPricingResponse>(request2, null, "GetProductPricing", "D:\\work\\626\\SC\\Redbox.Rental.Services\\Pricing\\KioskClientServicePricing.cs");
+		return await _httpService.SendRequestAsync<GetProductPricingResponse>(request2, null, "GetProductPricing", "D:\\work\\634\\SC\\Redbox.Rental.Services\\Pricing\\KioskClientServicePricing.cs");
 	}
 
 	public ProductPricing GetLocalProductPricing(long productId, PriceLevelType priceLevelType, decimal rentalTaxRate, decimal purchaseTaxRate, string state)

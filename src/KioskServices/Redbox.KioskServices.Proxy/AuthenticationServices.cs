@@ -199,6 +199,7 @@ internal class AuthenticationServices : IAuthenticationServices
 		Task.Run(delegate
 		{
 			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
+			remoteServiceResult.Properties["is_online"] = true;
 			using ExecutionTimer executionTimer = new ExecutionTimer();
 			try
 			{
@@ -225,21 +226,18 @@ internal class AuthenticationServices : IAuthenticationServices
 					{
 						remoteServiceResult.Properties["response"] = AuthenticationResponse.Valid.ToString();
 						remoteServiceResult.Success = true;
-						remoteServiceResult.Properties["is_online"] = true;
 					}
 					else
 					{
 						remoteServiceResult.Success = false;
 						Redbox.Rental.Model.Error error = authenticateResponse.Errors.FirstOrDefault();
 						remoteServiceResult.Properties["response"] = ((error == null) ? AuthenticationResponse.Error.ToString() : error.Code);
-						remoteServiceResult.Properties["is_online"] = false;
 					}
 				}
 				else
 				{
 					LogHelper.Instance.Log("In stand alone mode, skipping call to authenticate.", LogEntryType.Info);
 					remoteServiceResult.Properties["response"] = ((!useLdapAuthentication) ? AuthenticationResponse.AuthenticationFailed.ToString() : AuthenticationResponse.Valid.ToString());
-					remoteServiceResult.Properties["is_online"] = false;
 				}
 			}
 			catch (Exception e)

@@ -230,7 +230,7 @@ Your Redbox 1-night disc rentals will be available after trial.</value></data>
   <data name="faq_button" xml:space="preserve"><value>Rental FAQs</value></data>
   <data name="discount_label_points_and_redbox_plus_benefit_text" xml:space="preserve"><value>Points &amp; Redbox+ Benefit</value></data>
   <data name="four_k_uhd" xml:space="preserve"><value>4K UHD</value></data>
-  <data name="rbplus_offer_2_subtitle" xml:space="preserve"><value>That's over $44 in value!*</value></data>
+  <data name="rbplus_offer_2_subtitle" xml:space="preserve"><value>That's over $47 in value!*</value></data>
   <data name="pickup_uppercase" xml:space="preserve"><value>PICK UP</value></data>
   <data name="starz_offer_4_left_subtitle_2" xml:space="preserve"><value>Cancel anytime</value></data>
   <data name="perks_how_points_work_button_text" xml:space="preserve"><value>HOW POINTS WORK</value></data>
@@ -496,10 +496,10 @@ To confirm that you would like to make this purchase, press "Buy Used DVD(s)". I
   <data name="esrb_mature" xml:space="preserve"><value>Mature</value></data>
   <data name="receipt_email_error" xml:space="preserve"><value>That email was a dud - give it another try.</value></data>
   <data name="keyboard_change_cancel_btn" xml:space="preserve"><value>Cancel</value></data>
-  <data name="perks_level2_message4" xml:space="preserve"><value>Earn triple points 2x a year</value></data>
-  <data name="perks_level2_message1" xml:space="preserve"><value>Free 1-night rental in your b-day month</value></data>
-  <data name="perks_level2_message3" xml:space="preserve"><value>Get alerts for the hottest new releases</value></data>
-  <data name="perks_level2_message2" xml:space="preserve"><value>3 free Blu-ray upgrades per year</value></data>
+  <data name="perks_level2_message4" xml:space="preserve"><value>Early updates on new releases</value></data>
+  <data name="perks_level2_message1" xml:space="preserve"><value>$2 off reward code for b-day gift</value></data>
+  <data name="perks_level2_message3" xml:space="preserve"><value>Bonus points days 2x per year</value></data>
+  <data name="perks_level2_message2" xml:space="preserve"><value>(3) 50¢ off reward codes for anniversary gift</value></data>
   <data name="sign_in_redbox_plus_header_text" xml:space="preserve"><value>Create an Account</value></data>
   <data name="keyboard_email_button_text" xml:space="preserve"><value>Email</value></data>
   <data name="title_type_name_xboxone" xml:space="preserve"><value>Xbox One</value></data>
@@ -739,9 +739,10 @@ By the way, we'd love to have you as a customer, so stick around and browse what
   <data name="rental_limit_exceeded_message_header" xml:space="preserve"><value>Hmm, you’re all maxed out</value></data>
   <data name="points_message" xml:space="preserve"><value>You have {0:N0} Redbox Perks points. Select title(s) to use your points:</value></data>
   <data name="recommended_titles_pickup_button_text" xml:space="preserve"><value>PICK UP RESERVATION</value></data>
-  <data name="perks_level1_message2" xml:space="preserve"><value>Free 1-night rental in your b-day month</value></data>
-  <data name="perks_level1_message3" xml:space="preserve"><value>2 free Blu-ray upgrades per year</value></data>
-  <data name="perks_level1_message1" xml:space="preserve"><value>Additional promos for special savings</value></data>
+  <data name="perks_level1_message4" xml:space="preserve"><value>Early updates on new releases</value></data>
+  <data name="perks_level1_message2" xml:space="preserve"><value>(2) 50¢ off reward codes for anniversary gift</value></data>
+  <data name="perks_level1_message3" xml:space="preserve"><value>Extra promos just for you</value></data>
+  <data name="perks_level1_message1" xml:space="preserve"><value>$2 off reward code for b-day gift</value></data>
   <data name="my_points_error_title" xml:space="preserve"><value>Bummer, you don’t have enough points for that</value></data>
   <data name="horror_filter_button" xml:space="preserve"><value>Horror</value></data>
   <data name="redbox_plus_free_monthly_text" xml:space="preserve"><value>FREE monthly
@@ -814,7 +815,7 @@ reading your card</value></data>
   <data name="starz_offer_2_bullet2" xml:space="preserve"><value>After first 3 months, $8.99/month + 2 FREE Redbox 1-night 
 disc rentals/month for the next 9 months = 18 in total*</value></data>
   <data name="starz_offer_2_bullet3" xml:space="preserve"><value>Cancel anytime</value></data>
-  <data name="redbox_plus_offer_selection_tier2_subtitle" xml:space="preserve"><value>That's over $44 in value!**</value></data>
+  <data name="redbox_plus_offer_selection_tier2_subtitle" xml:space="preserve"><value>That's over $47 in value!**</value></data>
   <data name="perks_level3_message" xml:space="preserve"><value>Woohoo – you're at the top!</value></data>
   <data name="keyboard_change_message" xml:space="preserve"><value>If your email has changed, let us know</value></data>
   <data name="redbox_plus_lead_generation_qr_code_image_url" xml:space="preserve"><value>https://www.redbox.com/redbox-plus?icamp=qrleadgen</value></data>
@@ -1239,9 +1240,10 @@ These temporary authorizations will disappear in 7-30 days.</value></data>
   <data name="starz_offer_1_signup_confirmation_new_customer_message_1" xml:space="preserve"><value>To enjoy your FREE STARZ</value></data>
   <data name="starz_offer_1_signup_confirmation_new_customer_message_2" xml:space="preserve"><value> trial &amp; Redbox 1-night disc
 rentals, you'll need to complete your enrollment</value></data>
-  <data name="perks_level0_message3" xml:space="preserve"><value>Free 1-night DVD rental in your b-day month</value></data>
-  <data name="perks_level0_message2" xml:space="preserve"><value>Additional promos for special savings</value></data>
-  <data name="perks_level0_message1" xml:space="preserve"><value>Free 1-night DVD rental as a welcome gift</value></data>
+  <data name="perks_level0_message4" xml:space="preserve"><value>Early updates on new releases</value></data>
+  <data name="perks_level0_message3" xml:space="preserve"><value>Extra promos just for you</value></data>
+  <data name="perks_level0_message2" xml:space="preserve"><value>$2 off reward code for b-day gift</value></data>
+  <data name="perks_level0_message1" xml:space="preserve"><value>FREE 1-night DVD rental welcome offer</value></data>
   <data name="reservation_checkout_emv_swipe_message" xml:space="preserve"><value /></data>
   <data name="redbox_plus_info_description_line3" xml:space="preserve"><value>Tap "USE REDBOX+ OR PROMO"</value></data>
   <data name="redbox_plus_info_description_line2" xml:space="preserve"><value>Go to checkout</value></data>
@@ -1492,7 +1494,7 @@ COLLECTIONS</value></data>
   <data name="loyalty_offer_one_day_left" xml:space="preserve"><value>1 Day Left</value></data>
   <data name="perks_signup_info_earn_points_2" xml:space="preserve"><value>earn 125 points / night</value></data>
   <data name="perks_signup_info_earn_points_3" xml:space="preserve"><value>earn points / $1 spent</value></data>
-  <data name="perks_signup_info_earn_points_1" xml:space="preserve"><value>earn 100 points / night</value></data>
+  <data name="perks_signup_info_earn_points_1" xml:space="preserve"><value>earn 125 points / night</value></data>
   <data name="perks_signup_info_earn_points_4" xml:space="preserve"><value>earn 125+ points / transaction</value></data>
   <data name="vending_disc_please_wait_message" xml:space="preserve"><value>Please wait for your disc.</value></data>
   <data name="starz_offer_4_signup_confirmation_new_customer_message" xml:space="preserve"><value>To enjoy your FREE trial of STARZ &amp; your Redbox 1-night
@@ -1578,10 +1580,10 @@ to pick up your
 reservation.</value></data>
   <data name="perks_promo_add_message" xml:space="preserve"><value>Success - {0} is in your bag!</value></data>
   <data name="email_second_button_text" xml:space="preserve"><value>ENTER MY     EMAIL</value></data>
-  <data name="perks_level3_message4" xml:space="preserve"><value>Earn triple points 3x a year</value></data>
-  <data name="perks_level3_message1" xml:space="preserve"><value>2 free 1-night rentals in your b-day month</value></data>
-  <data name="perks_level3_message2" xml:space="preserve"><value>5 free Blu-ray upgrades per year</value></data>
-  <data name="perks_level3_message3" xml:space="preserve"><value>Get alerts for the hottest new releases</value></data>
+  <data name="perks_level3_message4" xml:space="preserve"><value>Early updates on new releases</value></data>
+  <data name="perks_level3_message1" xml:space="preserve"><value>(2) $2 off reward codes for b-day gift</value></data>
+  <data name="perks_level3_message2" xml:space="preserve"><value>(5) 50¢ off reward codes for anniversary gift</value></data>
+  <data name="perks_level3_message3" xml:space="preserve"><value>Bonus points days 3x per year</value></data>
   <data name="loyalty_offer_days_left" xml:space="preserve"><value>{0} Days left</value></data>
   <data name="disc" xml:space="preserve"><value>Disc</value></data>
   <data name="game" xml:space="preserve"><value>Game</value></data>

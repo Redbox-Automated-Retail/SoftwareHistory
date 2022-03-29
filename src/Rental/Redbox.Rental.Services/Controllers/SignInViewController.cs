@@ -47,7 +47,7 @@ public class SignInViewController : BaseViewController
 		if (viewUserControl != null)
 		{
 			SignInViewModel signInViewModel = new SignInViewModel();
-			string arg = ((signInViewParameters.SignUpType == SignUpType.Perks) ? "perks-white-logo.png" : "logoWhite2.png");
+			string arg = ((signInViewParameters.SignUpType == SignUpType.Perks) ? "perks-white-logo.png" : "logoWhite2_icon.png");
 			signInViewModel.HeaderImage = new BitmapImage(new Uri($"pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{arg}"));
 			string styleName = ((signInViewParameters.SignUpType == SignUpType.Perks) ? "sign_in_up_perks_header_image" : "sign_in_up_redbox_header_image");
 			signInViewModel.HeaderImageStyle = WPFFunctions.GetStyle(viewUserControl, styleName);

@@ -114,7 +114,7 @@ public class PerksSignUpInfoPopupViewController : BaseViewController
 				});
 				part.Texts.Add(new TextPart
 				{
-					Text = "Renting a DVD will earn 100 points per night"
+					Text = "Renting a DVD will earn 125 points per night"
 				});
 				part.Texts.Add(new TextPart
 				{

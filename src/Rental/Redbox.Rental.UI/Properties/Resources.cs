@@ -1164,6 +1164,8 @@ public class Resources
 
 	public static string perks_level0_message3 => ResourceManager.GetString("perks_level0_message3", resourceCulture);
 
+	public static string perks_level0_message4 => ResourceManager.GetString("perks_level0_message4", resourceCulture);
+
 	public static string perks_level1_message => ResourceManager.GetString("perks_level1_message", resourceCulture);
 
 	public static string perks_level1_message1 => ResourceManager.GetString("perks_level1_message1", resourceCulture);
@@ -1171,6 +1173,8 @@ public class Resources
 	public static string perks_level1_message2 => ResourceManager.GetString("perks_level1_message2", resourceCulture);
 
 	public static string perks_level1_message3 => ResourceManager.GetString("perks_level1_message3", resourceCulture);
+
+	public static string perks_level1_message4 => ResourceManager.GetString("perks_level1_message4", resourceCulture);
 
 	public static string perks_level2_message => ResourceManager.GetString("perks_level2_message", resourceCulture);
 

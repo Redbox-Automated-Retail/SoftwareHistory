@@ -21,7 +21,7 @@ public class UpdateClientServiceKioskHealth : BaseUpdateClientService, IUpdateCl
 			new Header("app-name", pingRequest?.AppName),
 			new Header("x-redbox-activityid", pingRequest?.MessageId.ToString())
 		});
-		APIResponse<HttpResponseMessage> aPIResponse = await service.SendRequestAsync<HttpResponseMessage>(request, null, "SendPing", "D:\\work\\626\\SC\\Redbox.Rental.Services\\UpdateClientService\\KioskHealth\\UpdateClientServiceKioskHealth.cs", pingRequest);
+		APIResponse<HttpResponseMessage> aPIResponse = await service.SendRequestAsync<HttpResponseMessage>(request, null, "SendPing", "D:\\work\\634\\SC\\Redbox.Rental.Services\\UpdateClientService\\KioskHealth\\UpdateClientServiceKioskHealth.cs", pingRequest);
 		PingResponse pingResponse = new PingResponse
 		{
 			StatusCode = (int)aPIResponse.StatusCode,
