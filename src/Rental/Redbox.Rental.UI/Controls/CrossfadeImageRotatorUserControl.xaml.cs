@@ -178,7 +178,7 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 	private void _timer_Tick(object sender, EventArgs e)
 	{
 		StopTimer();
-		if ((MarketingScreenSaverModel?.WelcomeScreenTimingABTestVersion == "D" || MarketingScreenSaverModel?.WelcomeScreenTimingABTestVersion == "F") && _currentImageIndex >= ImageModels.Count - 1)
+		if (_currentImageIndex >= ImageModels.Count - 1)
 		{
 			MarketingScreenSaverModel?.OnLeaveLastImage?.Invoke();
 		}

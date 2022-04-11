@@ -33,6 +33,29 @@ public class ProductData : AnalyticsData
 		base.DataType = "Product";
 	}
 
+	public static ProductData ToProductData(long productGroupId)
+	{
+		return new ProductData
+		{
+			TitleRollupProductGroupId = productGroupId
+		};
+	}
+
+	public static ProductData ToProductData(ITitleRollupProduct titleRollupProduct)
+	{
+		if (titleRollupProduct == null)
+		{
+			return null;
+		}
+		return new ProductData
+		{
+			ProductId = titleRollupProduct.ProductId,
+			TitleRollupProductGroupId = titleRollupProduct.TitleRollupProductGroupId,
+			ProductTypeId = titleRollupProduct.ProductTypeId,
+			TitleFamily = titleRollupProduct.TitleFamily
+		};
+	}
+
 	public static ProductData ToProductData(ITitleProduct titleProduct)
 	{
 		if (titleProduct == null)

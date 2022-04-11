@@ -160,9 +160,9 @@ public class StartViewController : BaseViewController
 	{
 		get
 		{
-			if (!(ABTestVersion == "B") && !(ABTestVersion == "D") && !(WelcomeScreenTimingABTestVersion == "C") && !(WelcomeScreenTimingABTestVersion == "D") && !(WelcomeScreenTimingABTestVersion == "E"))
+			if (!(ABTestVersion == "B") && !(ABTestVersion == "D"))
 			{
-				return WelcomeScreenTimingABTestVersion == "F";
+				return WelcomeScreenTimingABTestVersion == "B";
 			}
 			return true;
 		}
@@ -700,39 +700,31 @@ public class StartViewController : BaseViewController
 	private static ObservableCollection<ClickableImageModel> ConfigureScreenSaverImages()
 	{
 		ObservableCollection<ClickableImageModel> observableCollection = new ObservableCollection<ClickableImageModel>();
-		observableCollection.Add(new ClickableImageModel
-		{
-			ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.1_KioskScreenTest_PRM-Screen_1024x576.jpg",
-			ClickAction = delegate
-			{
-				GoToForSaleMovieBrowseViewFromScreenSaver();
-			}
-		});
-		observableCollection.Add(new ClickableImageModel
-		{
-			ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.5_KioskScreenTest_Perks_1024x576.jpg",
-			ClickAction = delegate
-			{
-				ShowPerksInfoPopupView();
-			}
-		});
-		if (WelcomeScreenTimingABTestVersion == "E" || WelcomeScreenTimingABTestVersion == "F")
+		if (WelcomeScreenTimingABTestVersion == "B")
 		{
 			observableCollection.Add(new ClickableImageModel
 			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/2475.4_App_KioskScreenTest_App_1024x576.jpg",
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR-7131.1_KioskWelcome_SpidermanNWH.jpg",
 				ClickAction = delegate
 				{
-					ShowReserveOnlinePopupView();
+					GoToTitleDetailsViewFromScreenSaver(215139L);
 				}
 			});
-		}
-		if (WelcomeScreenTimingABTestVersion == "C" || WelcomeScreenTimingABTestVersion == "D")
-		{
 			observableCollection.Add(new ClickableImageModel
 			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/4118.1_DoorDash-Kiosk-Homescreen_Kiosk_VendScreen_1024x576_rev.jpg",
-				ClickAction = null
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR-7131.2_KioskWelcome_Sing2.jpg",
+				ClickAction = delegate
+				{
+					GoToTitleDetailsViewFromScreenSaver(215265L);
+				}
+			});
+			observableCollection.Add(new ClickableImageModel
+			{
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR-7131.3_KioskWelcome_Scream.jpg",
+				ClickAction = delegate
+				{
+					GoToTitleDetailsViewFromScreenSaver(215266L);
+				}
 			});
 		}
 		return observableCollection;
@@ -1531,6 +1523,31 @@ public class StartViewController : BaseViewController
 		GoToBrowseView("screen_saver_buy_movies", TitleFamily.Movies, "StartScreenSaverBuyMovies");
 	}
 
+	private static void GoToTitleDetailsViewFromScreenSaver(long productGroupId)
+	{
+		BaseViewController.ProcessWPFHit();
+		PrepareToLeaveStartView();
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowBrowseView));
+		IKioskProduct kioskProduct = null;
+		ServiceLocator.Instance.GetService<IDataService>()?.GetTitleRollupProduct(productGroupId, out kioskProduct);
+		ITitleRollupProduct titleRollupProduct = kioskProduct as ITitleRollupProduct;
+		if (titleRollupProduct != null)
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverTitleDetails")?.AddData(ProductData.ToProductData(titleRollupProduct));
+		}
+		else
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverTitleDetails")?.AddData(ProductData.ToProductData(productGroupId));
+		}
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
+		OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
+		if (titleRollupProduct != null && titleRollupProduct.IsRentableAndInStock)
+		{
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct = kioskProduct;
+			OrchestrationService.ViewShow("product_detail_view");
+		}
+	}
+
 	private static void GoToForSaleGamesBrowseView()
 	{
 		PrepareToLeaveStartView();
@@ -1548,12 +1565,6 @@ public class StartViewController : BaseViewController
 	{
 		PrepareToLeaveStartView();
 		GoToBrowseView("rent_and_buy_games_button", TitleFamily.Games, "StartRentAndBuyGames");
-	}
-
-	private static void GoToGamesBrowseViewFromScreenSaver()
-	{
-		PrepareToLeaveStartView();
-		GoToBrowseView("screen_saver_games", TitleFamily.Games, "StartScreenSaverGames");
 	}
 
 	private static void GoToBrowseView(string pressedButtonName, TitleFamily titleFamily, string analyticsButtonName)
