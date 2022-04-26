@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.App;
 using UpdateClientService.API.Services.FileSets;
@@ -47,7 +48,7 @@ public class KioskFileSetVersionsService : IKioskFileSetVersionsService
 		})).StatusCode == 200;
 		if (!flag)
 		{
-			_logger.LogErrorWithSource("Something went wrong while reporting FileSet version: " + version.ToJson(), "ReportFileVersion");
+			_logger.LogErrorWithSource("Something went wrong while reporting FileSet version: " + version.ToJson(), "ReportFileVersion", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
 		}
 		return flag;
 	}
@@ -57,7 +58,7 @@ public class KioskFileSetVersionsService : IKioskFileSetVersionsService
 		var (payload, list) = GetPollRequest();
 		if (list.Any())
 		{
-			_logger.LogErrorWithSource("Couldn't report file set versions! Errors: " + list.ToJson(), "ReportFileVersions");
+			_logger.LogErrorWithSource("Couldn't report file set versions! Errors: " + list.ToJson(), "ReportFileVersions", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
 			return;
 		}
 		IoTCommandResponse<ObjectResult> ioTCommandResponse = await _iotCommandClient.PerformIoTCommand<ObjectResult>(new IoTCommandModel
@@ -90,7 +91,7 @@ public class KioskFileSetVersionsService : IKioskFileSetVersionsService
 			{
 				return (requestList: null, errors: list);
 			}
-			_logger.LogInfoWithSource("Store file poll request: " + fileSetPollRequestList.ToJson(), "GetPollRequest");
+			_logger.LogInfoWithSource("Store file poll request: " + fileSetPollRequestList.ToJson(), "GetPollRequest", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
 		}
 		catch (Exception e)
 		{

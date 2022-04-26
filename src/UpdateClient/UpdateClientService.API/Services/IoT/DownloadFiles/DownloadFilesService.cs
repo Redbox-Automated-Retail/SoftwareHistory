@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Redbox.NetCore.Logging.Extensions;
 using UpdateClientService.API.App;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.IoT.Commands;
@@ -103,7 +104,7 @@ public class DownloadFilesService : IDownloadFilesService
 
 	public async Task CancelDownloadFileJob(DownloadFileJob job)
 	{
-		_logger.LogInfoWithSource("Canceling job -> " + job.ToJson(), "CancelDownloadFileJob");
+		_logger.LogInfoWithSource("Canceling job -> " + job.ToJson(), "CancelDownloadFileJob", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 		DownloadFileJobExecution execution = new DownloadFileJobExecution
 		{
 			DownloadFileJobId = job.DownloadFileJobId,
@@ -119,16 +120,16 @@ public class DownloadFilesService : IDownloadFilesService
 			}
 			catch (Exception ex)
 			{
-				_logger.LogErrorWithSource(ex, "An error occurred while canceling " + download.Key, "CancelDownloadFileJob");
+				_logger.LogErrorWithSource(ex, "An error occurred while canceling " + download.Key, "CancelDownloadFileJob", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 			}
 		}
 		try
 		{
-			await _cache.DeleteLike(job.BitsJobId.ToString());
+			await _cache.DeleteLike(job.BitsJobId.ToString(), UpdateClientServiceConstants.DownloadDataFolder);
 		}
 		catch (Exception ex2)
 		{
-			_logger.LogErrorWithSource(ex2, $"An error occurred while deleting jobs like {job.BitsJobId}", "CancelDownloadFileJob");
+			_logger.LogErrorWithSource(ex2, $"An error occurred while deleting jobs like {job.BitsJobId}", "CancelDownloadFileJob", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 		}
 		execution.Status = JobStatus.Canceled;
 		await SendDownloadFileJobExecutionStatusUpdate(execution);
@@ -144,7 +145,7 @@ public class DownloadFilesService : IDownloadFilesService
 		PersistentDataWrapper<DownloadFileJobList> persistentDataWrapper = await _cache.Read<DownloadFileJobList>("downloadFileList.json", useCache: false, UpdateClientServiceConstants.DownloadDataFolder);
 		persistentDataWrapper.Data.JobList.RemoveAll((DownloadFileJob j) => j.DownloadFileJobId == job.DownloadFileJobId);
 		await _cache.Write(persistentDataWrapper.Data, "downloadFileList.json", UpdateClientServiceConstants.DownloadDataFolder);
-		await _cache.DeleteLike(job.BitsJobId.ToString());
+		await _cache.DeleteLike(job.BitsJobId.ToString(), UpdateClientServiceConstants.DownloadDataFolder);
 	}
 
 	private async Task AddDownloads(DownloadFileJob job)
@@ -160,7 +161,7 @@ public class DownloadFilesService : IDownloadFilesService
 		{
 			if (string.IsNullOrWhiteSpace(job.Metadata?.FileName) && string.IsNullOrWhiteSpace(job.Metadata?.ActivationScriptName))
 			{
-				_logger.LogErrorWithSource("FileName and ActivationScriptName cannot both be null", "AddDownloads");
+				_logger.LogErrorWithSource("FileName and ActivationScriptName cannot both be null", "AddDownloads", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 				execution.CompletedOn = DateTime.Now;
 				execution.Status = JobStatus.Error;
 				await CleanupCache(job);
@@ -241,7 +242,7 @@ public class DownloadFilesService : IDownloadFilesService
 						}
 						if (num != 0)
 						{
-							_logger.LogErrorWithSource("Script " + (job.Metadata.ActivationScriptName ?? "null") + " does not have a valid PowerShell extension of '.ps1'", "HandleExistingDownloads");
+							_logger.LogErrorWithSource("Script " + (job.Metadata.ActivationScriptName ?? "null") + " does not have a valid PowerShell extension of '.ps1'", "HandleExistingDownloads", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 							downloadFileJobExecution.Status = JobStatus.Error;
 						}
 						else
@@ -282,7 +283,7 @@ public class DownloadFilesService : IDownloadFilesService
 				persistentDataWrapper.Data = new DownloadFileJobList();
 			}
 			persistentDataWrapper.Data.JobList = persistentDataWrapper.Data.JobList?.Distinct(new DownloadFileJobComparer()).ToList();
-			_logger.LogInfoWithSource("Handling scheduled jobs, " + (persistentDataWrapper.Data.JobList?.ToJson() ?? "null"), "HandleScheduledJobs");
+			_logger.LogInfoWithSource("Handling scheduled jobs, " + (persistentDataWrapper.Data.JobList?.ToJson() ?? "null"), "HandleScheduledJobs", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 			foreach (DownloadFileJob job in persistentDataWrapper.Data.JobList)
 			{
 				if (job.StartDateUtc.Add(job.StartTime) < DateTimeOffset.Now)

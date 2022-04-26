@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.DownloadService;
 
@@ -65,7 +66,7 @@ public class ChangeSetFileService : IChangeSetFileService
 			string changeSetDirectory = GetChangeSetDirectory();
 			if (!Directory.Exists(changeSetDirectory))
 			{
-				_logger.LogErrorWithSource("Error, no directory found at " + changeSetDirectory, "CleanUp");
+				_logger.LogErrorWithSource("Error, no directory found at " + changeSetDirectory, "CleanUp", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 				return;
 			}
 			string[] files = Directory.GetFiles(changeSetDirectory, '*' + ".changeSet", SearchOption.TopDirectoryOnly);
@@ -76,7 +77,7 @@ public class ChangeSetFileService : IChangeSetFileService
 				if (creationTime <= dateTime)
 				{
 					Shared.SafeDelete(text);
-					_logger.LogInfoWithSource("Deleting file > 60 days old: " + text, "CleanUp");
+					_logger.LogInfoWithSource("Deleting file > 60 days old: " + text, "CleanUp", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 				}
 			}
 		}
@@ -397,7 +398,7 @@ public class ChangeSetFileService : IChangeSetFileService
 		{
 			return errors;
 		}
-		_logger.LogInfoWithSource($"ChangeSet received fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckReceived");
+		_logger.LogInfoWithSource($"ChangeSet received fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckReceived", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 		try
 		{
 			if (_revisionDownloader.Exists(revisionChangeSet.FileSetId, revisionChangeSet.RevisionId, revisionChangeSet.PatchRevisionId))
@@ -440,7 +441,7 @@ public class ChangeSetFileService : IChangeSetFileService
 		{
 			return list;
 		}
-		_logger.LogInfoWithSource($"ChangeSet downloading fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckDownloadingRevision");
+		_logger.LogInfoWithSource($"ChangeSet downloading fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckDownloadingRevision", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 		try
 		{
 			if (_revisionDownloader.Exists(revisionChangeSet.FileSetId, revisionChangeSet.RevisionId, revisionChangeSet.PatchRevisionId))
@@ -489,7 +490,7 @@ public class ChangeSetFileService : IChangeSetFileService
 		{
 			return errors;
 		}
-		_logger.LogInfoWithSource($"ChangeSet downloaded fileset: {revisionChangeSet.FileSetId}, revision: {revisionChangeSet.RevisionId}, patchRevision: {revisionChangeSet.PatchRevisionId}", "CheckDownloadedRevision");
+		_logger.LogInfoWithSource($"ChangeSet downloaded fileset: {revisionChangeSet.FileSetId}, revision: {revisionChangeSet.RevisionId}, patchRevision: {revisionChangeSet.PatchRevisionId}", "CheckDownloadedRevision", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 		try
 		{
 			ClientFileSetRevision revision = _revisionDownloader.GetRevision(revisionChangeSet.FileSetId, revisionChangeSet.RevisionId, revisionChangeSet.PatchRevisionId);
@@ -534,7 +535,7 @@ public class ChangeSetFileService : IChangeSetFileService
 		{
 			return list;
 		}
-		_logger.LogInfoWithSource($"ChangeSet CheckDownloadingFileSet fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckDownloadingFileSet");
+		_logger.LogInfoWithSource($"ChangeSet CheckDownloadingFileSet fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckDownloadingFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 		try
 		{
 			ClientFileSetRevision revision = _revisionDownloader.GetRevision(revisionChangeSet.FileSetId, revisionChangeSet.RevisionId, revisionChangeSet.PatchRevisionId);
@@ -583,7 +584,7 @@ public class ChangeSetFileService : IChangeSetFileService
 		{
 			return list;
 		}
-		_logger.LogInfoWithSource($"ChangeSet CheckDownloadedFileSet fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckDownloadedFileSet");
+		_logger.LogInfoWithSource($"ChangeSet CheckDownloadedFileSet fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckDownloadedFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 		try
 		{
 			SetState(ChangesetState.Staging, revisionChangeSet);
@@ -607,7 +608,7 @@ public class ChangeSetFileService : IChangeSetFileService
 		{
 			return list;
 		}
-		_logger.LogInfoWithSource($"ChangeSet CheckStagingFileSet fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckStagingFileSet");
+		_logger.LogInfoWithSource($"ChangeSet CheckStagingFileSet fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckStagingFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 		try
 		{
 			ClientFileSetRevision revision = _revisionDownloader.GetRevision(revisionChangeSet.FileSetId, revisionChangeSet.RevisionId, revisionChangeSet.PatchRevisionId);
@@ -644,7 +645,7 @@ public class ChangeSetFileService : IChangeSetFileService
 		{
 			return list;
 		}
-		_logger.LogInfoWithSource($"ChangeSet CheckStagedFileSet fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckStagedFileSet");
+		_logger.LogInfoWithSource($"ChangeSet CheckStagedFileSet fileset {revisionChangeSet.FileSetId} revision {revisionChangeSet.RevisionId}", "CheckStagedFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 		try
 		{
 			SetState(ChangesetState.ActivationDependencyCheck, revisionChangeSet);
@@ -858,7 +859,7 @@ public class ChangeSetFileService : IChangeSetFileService
 
 	private void Log(string methodName, string message, RevisionChangeSet revisionChangeSet)
 	{
-		_logger.LogInfoWithSource($"{methodName} FileSet {revisionChangeSet.FileSetId} Revision {revisionChangeSet.RevisionId} Message: {message}", "Log");
+		_logger.LogInfoWithSource($"{methodName} FileSet {revisionChangeSet.FileSetId} Revision {revisionChangeSet.RevisionId} Message: {message}", "Log", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 	}
 
 	private void SetState(ChangesetState state, RevisionChangeSet revisionChangeSet)
@@ -907,7 +908,7 @@ public class ChangeSetFileService : IChangeSetFileService
 		{
 			message = message + ", Errors -> " + errors.ToJson();
 		}
-		_logger.LogErrorWithSource($"Setting ChangeSet Error for FileSet: {revisionChangeSet.FileSetId} Revision: {revisionChangeSet.RevisionId} ({message})", "SetError");
+		_logger.LogErrorWithSource($"Setting ChangeSet Error for FileSet: {revisionChangeSet.FileSetId} Revision: {revisionChangeSet.RevisionId} ({message})", "SetError", "/sln/src/UpdateClientService.API/Services/FileSets/ChangeSetFileService.cs");
 		revisionChangeSet.Message = message;
 		revisionChangeSet.RetryCount++;
 		if (revisionChangeSet.RetryCount > 2)

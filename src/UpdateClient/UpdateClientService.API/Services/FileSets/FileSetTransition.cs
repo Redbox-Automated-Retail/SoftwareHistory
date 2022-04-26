@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.FileCache;
 using UpdateClientService.API.Services.Utilities;
@@ -139,7 +140,7 @@ public class FileSetTransition : IFileSetTransition
 			{
 				if (!dependencyStates.ContainsKey(dep.DependsOnFileSetId))
 				{
-					_logger.LogWarningWithSource($"FileSet {_revision.FileSetId} Revision {_revision.RevisionId} Message: Depends on FileSet {dep.DependsOnFileSetId} not found.", "CheckMeetsDependency");
+					_logger.LogWarningWithSource($"FileSet {_revision.FileSetId} Revision {_revision.RevisionId} Message: Depends on FileSet {dep.DependsOnFileSetId} not found.", "CheckMeetsDependency", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 					meetsAll = false;
 				}
 				else
@@ -147,7 +148,7 @@ public class FileSetTransition : IFileSetTransition
 					FileSetDependencyState fileSetDependencyState = dependencyStates[dep.DependsOnFileSetId];
 					if (!fileSetDependencyState.IsDependencyMet(dep.DependencyType, dep.MinimumVersion, dep.MaximumVersion))
 					{
-						_logger.LogWarningWithSource($"FileSet {_revision.FileSetId} Revision {_revision.RevisionId} Message: Dependency not met. Expected version {ExpectedDependencyVersionInfo(dep, fileSetDependencyState)}. Current version: '{((fileSetDependencyState.InProgressRevisionId > 0) ? fileSetDependencyState.InProgressVersion : fileSetDependencyState.ActiveVersion)}'", "CheckMeetsDependency");
+						_logger.LogWarningWithSource($"FileSet {_revision.FileSetId} Revision {_revision.RevisionId} Message: Dependency not met. Expected version {ExpectedDependencyVersionInfo(dep, fileSetDependencyState)}. Current version: '{((fileSetDependencyState.InProgressRevisionId > 0) ? fileSetDependencyState.InProgressVersion : fileSetDependencyState.ActiveVersion)}'", "CheckMeetsDependency", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 						meetsAll = false;
 					}
 				}
@@ -193,7 +194,7 @@ public class FileSetTransition : IFileSetTransition
 			FileSetJsonModel fileSetJsonModel = GetFileSetJsonModel(beforeActivations: true);
 			if (fileSetJsonModel == null)
 			{
-				_logger.LogWarningWithSource("FileSetJson was null skipping BeforeActivate.", "BeforeActivate");
+				_logger.LogWarningWithSource("FileSetJson was null skipping BeforeActivate.", "BeforeActivate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 				return list;
 			}
 			if (fileSetJsonModel?.WindowsServiceName == "updateclient$service")
@@ -241,7 +242,7 @@ public class FileSetTransition : IFileSetTransition
 		FileData fileData2 = fileData.Where((FileData item) => Path.GetFileName(item.FileDestination).ToLower() == "fileset.json").FirstOrDefault();
 		if (fileData2 == null)
 		{
-			_logger.LogWarningWithSource("fileset.json is not exist for revision: " + _revision.ToJson(), "GetFileSetJsonModel");
+			_logger.LogWarningWithSource("fileset.json is not exist for revision: " + _revision.ToJson(), "GetFileSetJsonModel", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 			return null;
 		}
 		string text = (beforeActivations ? File.ReadAllText(fileData2?.StagePath) : File.ReadAllText(fileData2?.FileDestination));
@@ -264,7 +265,7 @@ public class FileSetTransition : IFileSetTransition
 			FileSetJsonModel fileSetJsonModel = GetFileSetJsonModel(beforeActivations: false);
 			if (fileSetJsonModel == null)
 			{
-				_logger.LogWarningWithSource("FileSetJson was null skipping AfterActivate.", "AfterActivate");
+				_logger.LogWarningWithSource("FileSetJson was null skipping AfterActivate.", "AfterActivate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 				return list;
 			}
 			if (!string.IsNullOrWhiteSpace(fileSetJsonModel?.WindowsServiceName))
@@ -309,7 +310,7 @@ public class FileSetTransition : IFileSetTransition
 			else
 			{
 				string message = "There's a windowsServiceName: " + fileSetJson.WindowsServiceName + " in fileSetJson but windowsServiceStartPath was null!";
-				_logger.LogErrorWithSource(message, "AfterActivateHandleWindowsServices");
+				_logger.LogErrorWithSource(message, "AfterActivateHandleWindowsServices", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 				list.Add(new Error
 				{
 					Message = message
@@ -359,7 +360,7 @@ public class FileSetTransition : IFileSetTransition
 				{
 					try
 					{
-						_logger.LogInfoWithSource(f.FileDestination + " is locked by anther process attempting to retry.", "Activate");
+						_logger.LogInfoWithSource(f.FileDestination + " is locked by anther process attempting to retry.", "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 						_logger.LogErrorWithSource(ex, "Error from activate copy - retrying.");
 						ManualResetEvent manualResetEvent = new ManualResetEvent(initialState: false);
 						manualResetEvent.WaitOne(TimeSpan.FromMilliseconds(100.0));
@@ -372,7 +373,7 @@ public class FileSetTransition : IFileSetTransition
 					}
 					catch (Exception ex2)
 					{
-						_logger.LogInfoWithSource(f.FileDestination + " is locked by anther process doing a deferred move.", "Activate");
+						_logger.LogInfoWithSource(f.FileDestination + " is locked by anther process doing a deferred move.", "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 						_logger.LogErrorWithSource(ex2, "Error from activate copy.");
 						string tempFileName = Path.GetTempFileName();
 						if (File.Exists(tempFileName))
@@ -436,7 +437,7 @@ public class FileSetTransition : IFileSetTransition
 		{
 			if (string.IsNullOrEmpty(script))
 			{
-				_logger.LogWarningWithSource($"Script for FileSet {_revision.FileSetId} Revision {_revision.RevisionId} was empty. Skipping...", "RunScript");
+				_logger.LogWarningWithSource($"Script for FileSet {_revision.FileSetId} Revision {_revision.RevisionId} was empty. Skipping...", "RunScript", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 				return true;
 			}
 			if (Path.GetExtension(script) == ".file")

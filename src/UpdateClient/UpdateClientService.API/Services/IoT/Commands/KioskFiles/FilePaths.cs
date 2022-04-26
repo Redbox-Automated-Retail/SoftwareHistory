@@ -59,8 +59,16 @@ public static class FilePaths
 			"C:\\Program Files\\Redbox\\reds\\Kiosk Engine\\data\\AnalyticsSessions"
 		},
 		{
+			FileTypeEnum.Configuration,
+			"C:\\ProgramData\\Redbox\\Configuration"
+		},
+		{
 			FileTypeEnum.KioskEngineDataDirectory,
 			"C:\\Program Files\\Redbox\\reds\\Kiosk Engine\\data"
+		},
+		{
+			FileTypeEnum.Segment,
+			"C:\\ProgramData\\Redbox\\Segmentation"
 		}
 	};
 }

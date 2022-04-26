@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 
 namespace UpdateClientService.API.Services;
@@ -48,7 +49,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		{
 			if (log)
 			{
-				_logger?.LogInfoWithSource($"Read({fileName},useCache={useCache})", "Read");
+				_logger?.LogInfoWithSource($"Read({fileName},useCache={useCache})", "Read", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			}
 			if (useCache && _cache.TryGetValue(fileName, out var value) && value != null)
 			{
@@ -134,7 +135,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		try
 		{
-			_logger?.LogInfoWithSource("Write(" + fileName + ")", "Write");
+			_logger?.LogInfoWithSource("Write(" + fileName + ")", "Write", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			PersistentDataWrapper<T> persistentDataWrapper = new PersistentDataWrapper<T>();
 			persistentDataWrapper.Data = data;
 			persistentDataWrapper.Modified = DateTime.Now;
@@ -186,12 +187,12 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		return errors;
 	}
 
-	public async Task<bool> Delete(string fileName, string filePath = null)
+	public async Task<bool> Delete(string fileName, string baseDirectory = null)
 	{
 		try
 		{
-			_logger?.LogInfoWithSource("Delete(" + fileName + ")", "Delete");
-			string path = filePath ?? GetDataFilePath(fileName);
+			_logger?.LogInfoWithSource("Delete(" + fileName + ")", "Delete", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
+			string path = ((baseDirectory == null) ? GetDataFilePath(fileName) : Path.Combine(baseDirectory, fileName));
 			if (File.Exists(path))
 			{
 				File.Delete(path);
@@ -210,7 +211,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		try
 		{
-			_logger?.LogInfoWithSource("DeleteLike(" + pattern + ")", "DeleteLike");
+			_logger?.LogInfoWithSource("DeleteLike(" + pattern + ")", "DeleteLike", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			directory = directory ?? DataCachePath;
 			if (Directory.Exists(directory))
 			{

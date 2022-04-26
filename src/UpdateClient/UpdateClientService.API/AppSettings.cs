@@ -30,4 +30,6 @@ public class AppSettings
 	public DownloadFilesSettings DownloadFiles { get; set; } = new DownloadFilesSettings();
 
 	public ConfigurationSettings ConfigurationSettings { get; set; } = new ConfigurationSettings();
+
+	public SyncTimeSettings SyncTime { get; set; } = new SyncTimeSettings();
 }

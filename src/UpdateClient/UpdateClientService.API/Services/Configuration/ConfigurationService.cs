@@ -11,9 +11,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.IoT;
 using UpdateClientService.API.Services.IoT.Commands;
+using UpdateClientService.API.Services.IoT.Commands.KioskFiles;
 using UpdateClientService.API.Services.IoT.IoTCommand;
 
 namespace UpdateClientService.API.Services.Configuration;
@@ -65,9 +67,11 @@ public class ConfigurationService : IConfigurationService
 
 	private int _processingChanges;
 
-	private string ConfigurationFilePath => _settings?.CurrentValue?.ConfigurationSettings?.FilePath;
+	private static string ConfigurationFileDirectory => FilePaths.TypeMappings[FileTypeEnum.Configuration];
 
-	private string OldConfigurationFilePath => Path.Combine(Path.GetDirectoryName(ConfigurationFilePath), "configuration old.json");
+	public static string ConfigurationFilePath => Path.Combine(ConfigurationFileDirectory, "configuration.json");
+
+	private string OldConfigurationFilePath => Path.Combine(ConfigurationFileDirectory, "configuration old.json");
 
 	public ConfigurationService(ILogger<IConfigurationService> logger, IStoreService storeService, IIoTCommandClient ioTCommandClient, IOptionsMonitor<AppSettings> settings, IPersistentDataCacheService persistentDataCacheService)
 	{
@@ -136,13 +140,13 @@ public class ConfigurationService : IConfigurationService
 				else
 				{
 					response.StatusCode = HttpStatusCode.InternalServerError;
-					_logger.LogErrorWithSource("Error updating configuration status.", "UpdateConfigurationStatus");
+					_logger.LogErrorWithSource("Error updating configuration status.", "UpdateConfigurationStatus", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 				}
 			}
 			else
 			{
 				response.StatusCode = HttpStatusCode.InternalServerError;
-				_logger.LogErrorWithSource("Error updating configuration status.", "UpdateConfigurationStatus");
+				_logger.LogErrorWithSource("Error updating configuration status.", "UpdateConfigurationStatus", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			}
 		}
 		catch (Exception ex)
@@ -223,7 +227,7 @@ public class ConfigurationService : IConfigurationService
 					Task.Run(async delegate
 					{
 						int num = new Random().Next((int)triggerUpdateConfigStatusRequest.ExecutionTimeFrameMs.Value);
-						_logger.LogInfoWithSource($"waiting {num} ms before calling UpdateConfigurationStatus", "TriggerUpdateConfigurationStatus");
+						_logger.LogInfoWithSource($"waiting {num} ms before calling UpdateConfigurationStatus", "TriggerUpdateConfigurationStatus", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 						await Task.Delay(num);
 						await UpdateConfigurationStatus();
 					});
@@ -231,7 +235,7 @@ public class ConfigurationService : IConfigurationService
 			}
 			else
 			{
-				_logger.LogErrorWithSource("parameter triggerUpdateConfigStatusRequest must not be null.", "TriggerUpdateConfigurationStatus");
+				_logger.LogErrorWithSource("parameter triggerUpdateConfigStatusRequest must not be null.", "TriggerUpdateConfigurationStatus", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 				apiResponse.StatusCode = HttpStatusCode.InternalServerError;
 			}
 		}
@@ -264,7 +268,7 @@ public class ConfigurationService : IConfigurationService
 					Task.Run(async delegate
 					{
 						int randomMs = new Random().Next((int)triggerGetConfigChangesRequest.ExecutionTimeFrameMs.Value);
-						_logger.LogInfoWithSource($"waiting {randomMs} ms before calling GetKioskConfigurationSettingChanges", "TriggerGetKioskConfigurationSettingChanges");
+						_logger.LogInfoWithSource($"waiting {randomMs} ms before calling GetKioskConfigurationSettingChanges", "TriggerGetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 						DateTime lastCall = await GetLastCallToGetKioskConfigurationSettingChanges();
 						await Task.Delay(randomMs);
 						DateTime dateTime = lastCall;
@@ -277,7 +281,7 @@ public class ConfigurationService : IConfigurationService
 			}
 			else
 			{
-				_logger.LogErrorWithSource("parameter triggerGetConfigChangesRequest must not be null.", "TriggerGetKioskConfigurationSettingChanges");
+				_logger.LogErrorWithSource("parameter triggerGetConfigChangesRequest must not be null.", "TriggerGetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 				apiResponse.StatusCode = HttpStatusCode.InternalServerError;
 			}
 		}
@@ -298,7 +302,7 @@ public class ConfigurationService : IConfigurationService
 			ConfigurationStatusResponse configurationStatusResponse = await GetConfigurationStatus();
 			if (configurationStatusResponse == null || !configurationStatusResponse.ConfigurationStatus.EnableUpdates)
 			{
-				_logger.LogInfoWithSource("aborting GetKioskConfigurationSettingChanges because ConfigurationStatus.EnableUpdates = false", "GetKioskConfigurationSettingChanges");
+				_logger.LogInfoWithSource("aborting GetKioskConfigurationSettingChanges because ConfigurationStatus.EnableUpdates = false", "GetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 				response.StatusCode = HttpStatusCode.ServiceUnavailable;
 				return response;
 			}
@@ -332,7 +336,7 @@ public class ConfigurationService : IConfigurationService
 							configurationSettingChangesData.KioskConfigurationChangesResponse = kioskSettingChangesResponse;
 							if (!kioskSettingChangesResponse.IsLastPage)
 							{
-								_logger.LogInfoWithSource($"Response has {kioskSettingChangesResponse?.PageCount} pages", "GetKioskConfigurationSettingChanges");
+								_logger.LogInfoWithSource($"Response has {kioskSettingChangesResponse?.PageCount} pages", "GetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 							}
 						}
 						if (kioskSettingChangesResponse.IsLastPage)
@@ -355,14 +359,14 @@ public class ConfigurationService : IConfigurationService
 					else
 					{
 						response.StatusCode = HttpStatusCode.InternalServerError;
-						_logger.LogErrorWithSource("Unable to deserialize Iot command payload as GetKioskConfigurationSettingChangesResponse", "GetKioskConfigurationSettingChanges");
+						_logger.LogErrorWithSource("Unable to deserialize Iot command payload as GetKioskConfigurationSettingChangesResponse", "GetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 						configurationSettingChangesData.AllPagesLoadedOrAborted = true;
 					}
 				}
 				else
 				{
 					response.StatusCode = HttpStatusCode.InternalServerError;
-					_logger.LogErrorWithSource($"Iot command {CommandEnum.GetConfigChanges} returned statuscode {ioTCommandResponse?.StatusCode}", "GetKioskConfigurationSettingChanges");
+					_logger.LogErrorWithSource($"Iot command {CommandEnum.GetConfigChanges} returned statuscode {ioTCommandResponse?.StatusCode}", "GetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 					configurationSettingChangesData.AllPagesLoadedOrAborted = true;
 				}
 			}
@@ -391,7 +395,7 @@ public class ConfigurationService : IConfigurationService
 		}
 		else
 		{
-			_logger.LogErrorWithSource("Lock failed. Unable to get last call to GetKioskConfigurationSettingChanges", "GetLastCallToGetKioskConfigurationSettingChanges");
+			_logger.LogErrorWithSource("Lock failed. Unable to get last call to GetKioskConfigurationSettingChanges", "GetLastCallToGetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		return result;
 	}
@@ -410,7 +414,7 @@ public class ConfigurationService : IConfigurationService
 				_lock.Release();
 			}
 		}
-		_logger.LogErrorWithSource("Lock failed. Unable to set last call to GetKioskConfigurationSettingChanges", "SetLastCallToGetKioskConfigurationSettingChanges");
+		_logger.LogErrorWithSource("Lock failed. Unable to set last call to GetKioskConfigurationSettingChanges", "SetLastCallToGetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 	}
 
 	private async Task ActivateConfigurationVersion(KioskConfigurationVersionActivationRequest kioskConfigurationVersionActivationRequest)
@@ -428,7 +432,7 @@ public class ConfigurationService : IConfigurationService
 			IoTTopic = "$aws/rules/kioskrestcall",
 			WaitForResponse = true
 		})).StatusCode == 200) ? "successful" : "failed");
-		_logger.LogInfoWithSource($"Activation of configuration version {kioskConfigurationVersionActivationRequest.ConfigurationVersionId} {arg}", "ActivateConfigurationVersion");
+		_logger.LogInfoWithSource($"Activation of configuration version {kioskConfigurationVersionActivationRequest.ConfigurationVersionId} {arg}", "ActivateConfigurationVersion", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 	}
 
 	private async Task<ConfigurationSettingChangesData> CreateKioskConfigurationSettingChangesRequest(long? requestedConfigurationVersionId)
@@ -499,7 +503,7 @@ public class ConfigurationService : IConfigurationService
 	{
 		if (Interlocked.CompareExchange(ref _processingChanges, 1, 0) == 1)
 		{
-			_logger.LogInfoWithSource($"Prevented attempt to process configuration setting changes for version {configurationSettingChangesData?.NewVersionId}.", "ProcessConfigurationSettingChanges");
+			_logger.LogInfoWithSource($"Prevented attempt to process configuration setting changes for version {configurationSettingChangesData?.NewVersionId}.", "ProcessConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			return false;
 		}
 		try
@@ -523,12 +527,12 @@ public class ConfigurationService : IConfigurationService
 		}
 		if (configurationSettingChangesData.IsVersionCurrent)
 		{
-			_logger.LogInfoWithSource($"No configuration changes to process.  Version {configurationSettingChangesData.CurrentVersionId} is current.", "ProcessConfigurationSettingChanges");
+			_logger.LogInfoWithSource($"No configuration changes to process.  Version {configurationSettingChangesData.CurrentVersionId} is current.", "ProcessConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		else
 		{
 			string arg = (configurationSettingChangesData.Success ? "Successful" : "Failed");
-			_logger.LogInfoWithSource($"Processing of configuration changes from verion {configurationSettingChangesData.CurrentVersionId} to version {configurationSettingChangesData.NewVersionId} {arg}", "ProcessConfigurationSettingChanges");
+			_logger.LogInfoWithSource($"Processing of configuration changes from verion {configurationSettingChangesData.CurrentVersionId} to version {configurationSettingChangesData.NewVersionId} {arg}", "ProcessConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		return configurationSettingChangesData.Success;
 	}
@@ -566,7 +570,7 @@ public class ConfigurationService : IConfigurationService
 			if (configurationSettingChangesData.KioskConfigurationChangesResponse.OriginalConfigurationVersionId != configurationSettingChangesData.CurrentVersionId)
 			{
 				configurationSettingChangesData.Success = false;
-				_logger.LogErrorWithSource($"Error in processing configuration changes.  Current configuration version id {configurationSettingChangesData?.CurrentVersionId} doesn't match change results original configuration version id {configurationSettingChangesData?.KioskConfigurationChangesResponse?.OriginalConfigurationVersionId}", "ValidateResponse");
+				_logger.LogErrorWithSource($"Error in processing configuration changes.  Current configuration version id {configurationSettingChangesData?.CurrentVersionId} doesn't match change results original configuration version id {configurationSettingChangesData?.KioskConfigurationChangesResponse?.OriginalConfigurationVersionId}", "ValidateResponse", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			}
 		});
 	}
@@ -657,7 +661,7 @@ public class ConfigurationService : IConfigurationService
 		kioskConfigurationSettingValues.ConfigurationVersion = getKioskConfigurationSettingValues.ConfigurationVersion;
 		kioskConfigurationSettingValues.ConfigurationVersionHash = configurationSettingChangesData.KioskConfigurationChangesResponse?.ConfigurationVersionHash;
 		kioskConfigurationSettingValues.KioskId = getKioskConfigurationSettingValues.KioskId;
-		_logger.LogInfoWithSource($"Updating {getKioskConfigurationSettingValues.Categories.Sum((KioskConfigurationCategory c) => c.Settings.Sum((KioskSetting s) => s.SettingValues.Count))} setting Values", "AddNewSettings");
+		_logger.LogInfoWithSource($"Updating {getKioskConfigurationSettingValues.Categories.Sum((KioskConfigurationCategory c) => c.Settings.Sum((KioskSetting s) => s.SettingValues.Count))} setting Values", "AddNewSettings", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		await AddNewSettings(kioskConfigurationSettingValues, getKioskConfigurationSettingValues);
 	}
 
@@ -835,12 +839,11 @@ public class ConfigurationService : IConfigurationService
 	{
 		if (configurationSettingChangesData.Success)
 		{
-			string configFilePath = Path.GetDirectoryName(ConfigurationFilePath);
 			ConfigurationSettingChangesData configurationSettingChangesData2 = configurationSettingChangesData;
-			configurationSettingChangesData2.Success = await CreateConfigFilePathIfNeeded(configFilePath);
+			configurationSettingChangesData2.Success = await CreateConfigFilePathIfNeeded(ConfigurationFileDirectory);
 			if (configurationSettingChangesData.Success)
 			{
-				configurationSettingChangesData.TempConfigFileName = Path.Combine(configFilePath, $"configuration v{configurationSettingChangesData?.KioskConfigurationChangesResponse?.NewConfigurationSettingValues?.ConfigurationVersion}.json");
+				configurationSettingChangesData.TempConfigFileName = Path.Combine(ConfigurationFileDirectory, $"configuration v{configurationSettingChangesData?.KioskConfigurationChangesResponse?.NewConfigurationSettingValues?.ConfigurationVersion}.json");
 				configurationSettingChangesData2 = configurationSettingChangesData;
 				configurationSettingChangesData2.Success = await DeleteTempConfigurationFile(configurationSettingChangesData);
 			}
@@ -858,7 +861,7 @@ public class ConfigurationService : IConfigurationService
 				if (!directoryInfo.Exists)
 				{
 					result = false;
-					_logger.LogErrorWithSource("Unable to create configuration path " + configFilePath, "CreateConfigFilePathIfNeeded");
+					_logger.LogErrorWithSource("Unable to create configuration path " + configFilePath, "CreateConfigFilePathIfNeeded", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 				}
 			}
 		});

@@ -16,5 +16,7 @@ public enum FileTypeEnum
 	Unknowns,
 	Sync,
 	Return,
-	ErrorLogs
+	ErrorLogs,
+	Configuration,
+	Segment
 }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.App;
 using UpdateClientService.API.Services.Transfer;
@@ -78,7 +79,7 @@ public class BitsDownloader : BaseDownloader
 				DownloadData downloadData = downloadList.Where((DownloadData d) => d.BitsGuid == job.ID).FirstOrDefault();
 				if (downloadData == null)
 				{
-					_logger.LogInfoWithSource($"Clearing bits job, guid {job.ID} that has no download file changeset.", "Cleanup");
+					_logger.LogInfoWithSource($"Clearing bits job, guid {job.ID} that has no download file changeset.", "Cleanup", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 					list.AddRange(job.Cancel());
 				}
 			}
@@ -107,7 +108,7 @@ public class BitsDownloader : BaseDownloader
 		_transferService.GetJob(data.BitsGuid, out var job);
 		if (job == null)
 		{
-			_logger.LogInfoWithSource("Job was null for " + data.ToJson(), "SetBitTransferStatus");
+			_logger.LogInfoWithSource("Job was null for " + data.ToJson(), "SetBitTransferStatus", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 			return;
 		}
 		try
@@ -117,7 +118,7 @@ public class BitsDownloader : BaseDownloader
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Something went wrong while updating transfer status.", "SetBitTransferStatus");
+			_logger.LogErrorWithSource(ex, "Something went wrong while updating transfer status.", "SetBitTransferStatus", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 		}
 	}
 
@@ -149,7 +150,7 @@ public class BitsDownloader : BaseDownloader
 		{
 			return errors;
 		}
-		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckNone");
+		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckNone", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 		try
 		{
 			string name = $"<UCS::~{data.Key}~::UCS>";
@@ -195,7 +196,7 @@ public class BitsDownloader : BaseDownloader
 			data.DownloadState = DownloadState.Downloading;
 			list = errors;
 			list.AddRange(await SaveDownload(data));
-			_logger.LogInfoWithSource($"Download Name: {data.Key} has been put on the download queue. BITS job started with name: {name} and guid: {job.ID}.", "CheckNone");
+			_logger.LogInfoWithSource($"Download Name: {data.Key} has been put on the download queue. BITS job started with name: {name} and guid: {job.ID}.", "CheckNone", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 		}
 		catch (Exception e)
 		{
@@ -214,7 +215,7 @@ public class BitsDownloader : BaseDownloader
 		{
 			return errors;
 		}
-		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckDownloading");
+		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckDownloading", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 		try
 		{
 			errors.AddRange(GetDownloadFileBitsJobs(out var jobs));
@@ -281,7 +282,7 @@ public class BitsDownloader : BaseDownloader
 		List<Error> errors = new List<Error>();
 		try
 		{
-			_logger.LogInfoWithSource("Bits downloader FinishBitsDownload for " + data.Key, "FinishBitsDownload");
+			_logger.LogInfoWithSource("Bits downloader FinishBitsDownload for " + data.Key, "FinishBitsDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 			errors.AddRange(job.GetItems(out var items));
 			errors.AddRange(job.Complete());
 			List<Error> list;
@@ -320,7 +321,7 @@ public class BitsDownloader : BaseDownloader
 			list.AddRange(await SaveDownload(data));
 			if (string.IsNullOrWhiteSpace(data.Hash))
 			{
-				_logger.LogInfoWithSource("Download file: " + data.Key + " was not provided with a hash to compare against. Ignoring check.", "FinishBitsDownload");
+				_logger.LogInfoWithSource("Download file: " + data.Key + " was not provided with a hash to compare against. Ignoring check.", "FinishBitsDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 			}
 		}
 		catch (Exception e)
@@ -340,7 +341,7 @@ public class BitsDownloader : BaseDownloader
 		{
 			return errors;
 		}
-		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckPostDownload");
+		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckPostDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 		if (data.CompleteOnFinish)
 		{
 			List<Error> list = errors;
@@ -356,7 +357,7 @@ public class BitsDownloader : BaseDownloader
 		{
 			return errors;
 		}
-		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckComplete");
+		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckComplete", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 		List<Error> list = errors;
 		list.AddRange(await DeleteDownload(data));
 		return errors;
@@ -369,7 +370,7 @@ public class BitsDownloader : BaseDownloader
 		{
 			return errors;
 		}
-		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckError");
+		_logger.LogInfoWithSource(string.Format("{0} checking state: {1} for {2}", "Bits downloader", data.DownloadState, data.Key), "CheckError", "/sln/src/UpdateClientService.API/Services/DownloadService/BitsDownloader.cs");
 		_ = data.BitsGuid;
 		errors.AddRange(GetDownloadFileBitsJobs(out var jobs));
 		if (!errors.Any())

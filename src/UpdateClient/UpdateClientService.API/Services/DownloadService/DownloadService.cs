@@ -45,7 +45,7 @@ public class DownloadService : IDownloadService, IInvocable
 		{
 			if (!(await Lock.WaitAsync(0)))
 			{
-				_logger.LogWarningWithSource("DownloadService is already being invoked. Skipping...", "Invoke");
+				_logger.LogWarningWithSource("DownloadService is already being invoked. Skipping...", "Invoke", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 				return;
 			}
 		}
@@ -59,12 +59,12 @@ public class DownloadService : IDownloadService, IInvocable
 			List<Error> source = await ProcessDownloads();
 			if (source.Any())
 			{
-				_logger.LogErrorWithSource(string.Join(",", source.Select((Error e) => e.Message)), "Invoke");
+				_logger.LogErrorWithSource(string.Join(",", source.Select((Error e) => e.Message)), "Invoke", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 			}
 		}
 		catch (Exception ex2)
 		{
-			_logger.LogErrorWithSource(ex2, "An unhandled exception occurred.", "Invoke");
+			_logger.LogErrorWithSource(ex2, "An unhandled exception occurred.", "Invoke", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 		}
 		finally
 		{
@@ -111,7 +111,7 @@ public class DownloadService : IDownloadService, IInvocable
 	public async Task<List<Error>> AddDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish)
 	{
 		List<Error> errors = new List<Error>();
-		_logger.LogInfoWithSource($"Adding download key: {key} hash: {hash} url: {url} priority: {priority}", "AddDownload");
+		_logger.LogInfoWithSource($"Adding download key: {key} hash: {hash} url: {url} priority: {priority}", "AddDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 		try
 		{
 			DownloadData data = InitializeDownloadData(key, hash, url, priority, completeOnFinish);
@@ -136,7 +136,7 @@ public class DownloadService : IDownloadService, IInvocable
 	{
 		List<Error> errors = new List<Error>();
 		DownloadData data = null;
-		_logger.LogInfoWithSource($"Adding download key: {key} hash: {hash} url: {url} priority: {priority}", "AddRetrieveDownload");
+		_logger.LogInfoWithSource($"Adding download key: {key} hash: {hash} url: {url} priority: {priority}", "AddRetrieveDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 		try
 		{
 			data = InitializeDownloadData(key, hash, url, priority, completeOnFinish);
@@ -160,7 +160,7 @@ public class DownloadService : IDownloadService, IInvocable
 	public async Task<List<Error>> CancelDownload(string key)
 	{
 		List<Error> errors = new List<Error>();
-		_logger.LogInfoWithSource("Deleting download matching key: " + key, "CancelDownload");
+		_logger.LogInfoWithSource("Deleting download matching key: " + key, "CancelDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 		try
 		{
 			DownloadData downloadData = await GetDownloadData(key);
@@ -183,7 +183,7 @@ public class DownloadService : IDownloadService, IInvocable
 	public async Task<List<Error>> CompleteDownload(string key)
 	{
 		List<Error> errors = new List<Error>();
-		_logger.LogInfoWithSource("Completing download matching key: " + key, "CompleteDownload");
+		_logger.LogInfoWithSource("Completing download matching key: " + key, "CompleteDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 		try
 		{
 			DownloadData downloadData = await GetDownloadData(key);
@@ -235,7 +235,7 @@ public class DownloadService : IDownloadService, IInvocable
 		}, performIoTCommandParameters);
 		if (string.IsNullOrEmpty(text) || !Uri.TryCreate(text, UriKind.Absolute, out Uri _))
 		{
-			_logger.LogErrorWithSource("Url '" + text + "' is not a valid Url", "GetProxiedS3Url");
+			_logger.LogErrorWithSource("Url '" + text + "' is not a valid Url", "GetProxiedS3Url", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 			text = null;
 		}
 		return text;
@@ -254,7 +254,7 @@ public class DownloadService : IDownloadService, IInvocable
 			List<DownloadData> downloads = await GetDownloads();
 			if (downloads != null && downloads.Count > 0)
 			{
-				_logger.LogInfoWithSource($"Start processing {downloads.Count} downloads", "ProcessDownloads");
+				_logger.LogInfoWithSource($"Start processing {downloads.Count} downloads", "ProcessDownloads", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 			}
 			foreach (DownloadData item in downloads)
 			{
@@ -264,7 +264,7 @@ public class DownloadService : IDownloadService, IInvocable
 			errors.AddRange(_downloader.Cleanup(downloads));
 			if (downloads != null && downloads.Count > 0)
 			{
-				_logger.LogInfoWithSource("Finished executing", "ProcessDownloads");
+				_logger.LogInfoWithSource("Finished executing", "ProcessDownloads", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 			}
 		}
 		catch (Exception e)

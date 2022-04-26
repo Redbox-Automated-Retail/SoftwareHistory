@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 
 namespace UpdateClientService.API.Services.Files;
 
@@ -21,7 +22,7 @@ public class FileService : IFileService
 	{
 		int num = new Random().Next();
 		string zipPath = Path.GetTempPath() + $"{num}.zip";
-		_logger.LogInfoWithSource("Created temporary zip path: " + zipPath, "ZipAndUploadToS3");
+		_logger.LogInfoWithSource("Created temporary zip path: " + zipPath, "ZipAndUploadToS3", "/sln/src/UpdateClientService.API/Services/Files/FileService.cs");
 		Exception exception = null;
 		try
 		{
@@ -29,7 +30,7 @@ public class FileService : IFileService
 			{
 				foreach (FileInfo item in fileToUpload)
 				{
-					_logger.LogInfoWithSource("Adding " + item.Name + " into " + zipPath + " zip file.", "ZipAndUploadToS3");
+					_logger.LogInfoWithSource("Adding " + item.Name + " into " + zipPath + " zip file.", "ZipAndUploadToS3", "/sln/src/UpdateClientService.API/Services/Files/FileService.cs");
 					if (item.Length > 30000000)
 					{
 						throw new Exception($"File: {item.Name} size is {item.Length} byte, exceeds 30 mb limit. Can't zip file that is larger than 30mb. Contact kiosk team for questions.");
@@ -49,7 +50,7 @@ public class FileService : IFileService
 		}
 		finally
 		{
-			_logger.LogInfoWithSource("Deleting temporary zip file: " + zipPath, "ZipAndUploadToS3");
+			_logger.LogInfoWithSource("Deleting temporary zip file: " + zipPath, "ZipAndUploadToS3", "/sln/src/UpdateClientService.API/Services/Files/FileService.cs");
 			File.Delete(zipPath);
 		}
 		if (exception != null)
@@ -60,7 +61,7 @@ public class FileService : IFileService
 
 	public async Task UploadFileToS3(string presignedS3, string filePath)
 	{
-		_logger.LogInfoWithSource("Uploading file: $" + filePath + " to given s3 presigned Url", "UploadFileToS3");
+		_logger.LogInfoWithSource("Uploading file: $" + filePath + " to given s3 presigned Url", "UploadFileToS3", "/sln/src/UpdateClientService.API/Services/Files/FileService.cs");
 		using (new HttpWebResponse())
 		{
 			HttpWebRequest httpRequest = WebRequest.Create(presignedS3) as HttpWebRequest;
@@ -76,7 +77,7 @@ public class FileService : IFileService
 				}
 			}
 			httpRequest.GetResponse();
-			_logger.LogInfoWithSource("Successfully uploaded " + filePath + " to the s3", "UploadFileToS3");
+			_logger.LogInfoWithSource("Successfully uploaded " + filePath + " to the s3", "UploadFileToS3", "/sln/src/UpdateClientService.API/Services/Files/FileService.cs");
 		}
 	}
 }

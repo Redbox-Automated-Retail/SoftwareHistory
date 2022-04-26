@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 
 namespace UpdateClientService.API.Services.IoT.Commands.Controller;
@@ -62,15 +63,15 @@ public class ExecuteHttpRequestV2 : ICommandIoTController
 				goto IL_02f9;
 			}
 		}
-		goto IL_0376;
+		goto IL_037b;
 		IL_02f9:
 		string text3 = text2;
 		string text4 = ((ioTCommandRequest != null && ioTCommandRequest.LogResponse == true) ? $"{mqttResponse}" : string.Empty);
-		_logger.LogErrorWithSource("ExecuteHttpRequestV2 has failed. Result: " + text4 + "." + text + text3, "Execute");
-		goto IL_0376;
-		IL_0376:
+		_logger.LogErrorWithSource("ExecuteHttpRequestV2 has failed. Result: " + text4 + "." + text + text3, "Execute", "/sln/src/UpdateClientService.API/Services/IoT/Commands/Controller/ExecuteHttpRequestV2.cs");
+		goto IL_037b;
+		IL_037b:
 		string text5 = ((ioTCommandRequest != null && ioTCommandRequest.LogResponse == true) ? $"Received response: {aPIResponse?.Response}" : string.Empty);
-		_logger.LogInfoWithSource("Executed http v2 request." + text5, "Execute");
+		_logger.LogInfoWithSource("Executed http v2 request." + text5, "Execute", "/sln/src/UpdateClientService.API/Services/IoT/Commands/Controller/ExecuteHttpRequestV2.cs");
 		await _mqttProxy.PublishIoTCommandAsync("redbox/updateservice-instance/" + ioTCommandRequest.SourceId + "/request", new IoTCommandModel
 		{
 			RequestId = ioTCommandRequest.RequestId,

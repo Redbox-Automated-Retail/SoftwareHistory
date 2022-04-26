@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 
 namespace UpdateClientService.API.Services.KioskEngine;
@@ -72,7 +73,7 @@ public class KioskEngineService : IKioskEngineService
 			HandleException(response, e);
 		}
 		response.ProcessId = KioskEngineProcessId;
-		_logger.LogInfoWithSource("Result -> " + response.ToJson(), "PerformShutdown");
+		_logger.LogInfoWithSource("Result -> " + response.ToJson(), "PerformShutdown", "/sln/src/UpdateClientService.API/Services/KioskEngine/KioskEngineService.cs");
 		KioskEngineProcessId = null;
 		return response;
 	}
@@ -88,7 +89,7 @@ public class KioskEngineService : IKioskEngineService
 				APIResponse<PerformShutdownResponse> aPIResponse = await _http.SendRequestAsync<PerformShutdownResponse>(request, null, "PerformShutdown", "/sln/src/UpdateClientService.API/Services/KioskEngine/KioskEngineService.cs", null, logRequest: false, logResponse: false);
 				if (!aPIResponse.IsSuccessStatusCode)
 				{
-					_logger.LogErrorWithSource("Encountered an error while requesting shutdown from Kiosk Engine. Response -> " + aPIResponse.GetErrors(), "PerformShutdown");
+					_logger.LogErrorWithSource("Encountered an error while requesting shutdown from Kiosk Engine. Response -> " + aPIResponse.GetErrors(), "PerformShutdown", "/sln/src/UpdateClientService.API/Services/KioskEngine/KioskEngineService.cs");
 					return false;
 				}
 				KioskEngineProcessId = aPIResponse.Response?.ProcessId;

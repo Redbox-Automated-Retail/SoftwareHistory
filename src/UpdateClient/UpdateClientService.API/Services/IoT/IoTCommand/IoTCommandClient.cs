@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Nito.AsyncEx;
+using Redbox.NetCore.Logging.Extensions;
 using UpdateClientService.API.Services.IoT.Commands;
 
 namespace UpdateClientService.API.Services.IoT.IoTCommand;
@@ -107,7 +108,7 @@ public class IoTCommandClient : IIoTCommandClient
 			{
 				response = responseIotCommandModel;
 				mre.Set();
-				_logger.LogInfoWithSource($"Received response from update service for request id {request?.RequestId}, IotCommand: {request?.Command},  IoT Topic: {parameters?.IoTTopic}.", "PublishIoTCommandAndWaitForResponse");
+				_logger.LogInfoWithSource($"Received response from update service for request id {request?.RequestId}, IotCommand: {request?.Command},  IoT Topic: {parameters?.IoTTopic}.", "PublishIoTCommandAndWaitForResponse", "/sln/src/UpdateClientService.API/Services/IoT/IoTCommand/IoTCommandClient.cs");
 			});
 			TimeSpan iotCommandTimeout = parameters.RequestTimeout ?? _requestTimeoutDefault;
 			if (await PublishIoTCommandAsync(request, parameters))
@@ -145,7 +146,7 @@ public class IoTCommandClient : IIoTCommandClient
 		{
 			string instanceString = GetInstanceString(request?.ReturnServerId);
 			parameters.IoTTopic = "redbox/updateservice-instance/" + instanceString + "/request";
-			_logger.LogInfoWithSource("Using IoT Topic: " + parameters.IoTTopic + " for request id: " + request.RequestId, "AdjustIoTTopicIfNeeded");
+			_logger.LogInfoWithSource("Using IoT Topic: " + parameters.IoTTopic + " for request id: " + request.RequestId, "AdjustIoTTopicIfNeeded", "/sln/src/UpdateClientService.API/Services/IoT/IoTCommand/IoTCommandClient.cs");
 		}
 	}
 

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Coravel.Invocable;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 
 namespace UpdateClientService.API.Services.Configuration;
 
@@ -18,7 +19,7 @@ public class ConfigurationServiceUpdateStatusJob : IConfigurationServiceUpdateSt
 
 	public async Task Invoke()
 	{
-		_logger.LogInfoWithSource("Invoking ConfigurationService.UpdateConfigurationStatusIfNeeded", "Invoke");
+		_logger.LogInfoWithSource("Invoking ConfigurationService.UpdateConfigurationStatusIfNeeded", "Invoke", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationServiceUpdateStatusJob.cs");
 		await _configurationService.UpdateConfigurationStatusIfNeeded();
 	}
 }

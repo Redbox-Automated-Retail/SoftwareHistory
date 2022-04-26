@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Coravel.Invocable;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 
 namespace UpdateClientService.API.Services.FileSets;
 
@@ -22,9 +23,9 @@ public class FileSetCleanupJob : IFileSetCleanupJob, IInvocable
 		return Task.Run(delegate
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
-			_logger.LogInfoWithSource("Starting FileSetCleanup", "Invoke");
+			_logger.LogInfoWithSource("Starting FileSetCleanup", "Invoke", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetCleanupJob.cs");
 			_cleanup.Run();
-			_logger.LogInfoWithSource($"Finished FileSetCleanup in {stopwatch.ElapsedMilliseconds}ms", "Invoke");
+			_logger.LogInfoWithSource($"Finished FileSetCleanup in {stopwatch.ElapsedMilliseconds}ms", "Invoke", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetCleanupJob.cs");
 		});
 	}
 }

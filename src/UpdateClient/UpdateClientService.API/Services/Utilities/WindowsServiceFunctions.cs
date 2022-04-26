@@ -1,6 +1,7 @@
 using System;
 using System.ServiceProcess;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 
 namespace UpdateClientService.API.Services.Utilities;
 
@@ -38,7 +39,7 @@ public class WindowsServiceFunctions : IWindowsServiceFunctions
 			{
 				serviceController.Start();
 				serviceController.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromMinutes(5.0));
-				_logger.LogInfoWithSource($"Exiting from startService. Service name: {name} was {serviceController.Status}", "StartService");
+				_logger.LogInfoWithSource($"Exiting from startService. Service name: {name} was {serviceController.Status}", "StartService", "/sln/src/UpdateClientService.API/Services/Utilities/WindowsServiceFunctions.cs");
 			}
 			finally
 			{
@@ -60,7 +61,7 @@ public class WindowsServiceFunctions : IWindowsServiceFunctions
 			{
 				serviceController.Stop();
 				serviceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromMinutes(5.0));
-				_logger.LogInfoWithSource($"Exiting from stopService. Service name: {name} was {serviceController.Status}", "StopService");
+				_logger.LogInfoWithSource($"Exiting from stopService. Service name: {name} was {serviceController.Status}", "StopService", "/sln/src/UpdateClientService.API/Services/Utilities/WindowsServiceFunctions.cs");
 			}
 			finally
 			{

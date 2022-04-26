@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.FileCache;
@@ -60,7 +61,7 @@ public class FileSetDownloader : IFileSetDownloader
 		{
 			List<FileSetFileInfo> fileSetInfoList = GetFileSetInfoList(revision);
 			DownloadMethod downloadMethod = GetDownloadMethod(revision, fileSetInfoList);
-			_logger.LogInfoWithSource($"Download method is {downloadMethod} for FileSet {revision.FileSetId}, RevisionId {revision.RevisionId}, PatchRevisionId {revision.PatchRevisionId}", "DownloadFileSet");
+			_logger.LogInfoWithSource($"Download method is {downloadMethod} for FileSet {revision.FileSetId}, RevisionId {revision.RevisionId}, PatchRevisionId {revision.PatchRevisionId}", "DownloadFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
 			switch (downloadMethod)
 			{
 			case DownloadMethod.None:

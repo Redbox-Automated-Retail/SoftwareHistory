@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.FileSets;
@@ -121,7 +122,7 @@ public class FileCacheService : IFileCacheService
 			}
 			string fileInfoPath = GetFileInfoPath(fileSetId, fileId, fileRevisionId);
 			File.WriteAllText(fileInfoPath, info);
-			_logger.LogInfoWithSource("FileCacheService.AddFilePatch - Info: " + info, "AddFilePatch");
+			_logger.LogInfoWithSource("FileCacheService.AddFilePatch - Info: " + info, "AddFilePatch", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 		}
 		catch (Exception arg)
 		{
@@ -143,7 +144,7 @@ public class FileCacheService : IFileCacheService
 			File.WriteAllBytes(revisionPath, data);
 			string revisionInfoPath = GetRevisionInfoPath(fileSetId, revisionId, patchRevisionId);
 			File.WriteAllText(revisionInfoPath, info);
-			_logger.LogInfoWithSource("FileCacheService.AddRevision - Info: " + info, "AddRevision");
+			_logger.LogInfoWithSource("FileCacheService.AddRevision - Info: " + info, "AddRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 		}
 		catch (Exception arg)
 		{
@@ -202,10 +203,10 @@ public class FileCacheService : IFileCacheService
 			double totalDays = (DateTime.Now - File.GetCreationTime(filePath)).TotalDays;
 			if (totalDays <= 1.0)
 			{
-				_logger.LogInfoWithSource($"Cannot delete files less than a day old - FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile");
+				_logger.LogInfoWithSource($"Cannot delete files less than a day old - FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 				return;
 			}
-			_logger.LogInfoWithSource($"FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile");
+			_logger.LogInfoWithSource($"FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 			if (File.Exists(filePath))
 			{
 				File.Delete(filePath);
@@ -230,7 +231,7 @@ public class FileCacheService : IFileCacheService
 		List<Error> list = new List<Error>();
 		try
 		{
-			_logger.LogInfoWithSource($"FileSetId {fileSetId}, RevisionId {revisionId}, PatchRevisionId {patchRevisionId}", "DeleteRevision");
+			_logger.LogInfoWithSource($"FileSetId {fileSetId}, RevisionId {revisionId}, PatchRevisionId {patchRevisionId}", "DeleteRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 			string revisionPath = GetRevisionPath(fileSetId, revisionId, patchRevisionId);
 			if (File.Exists(revisionPath))
 			{

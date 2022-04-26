@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Redbox.NetCore.Logging.Extensions;
 using UpdateClientService.API.Services.IoT.Security.Certificate;
 
 namespace UpdateClientService.API.Services.IoT.Certificate;
@@ -64,24 +65,24 @@ internal class CertificateService : ICertificateService
 
 	public async Task<IotCert> GetCertificateAsync(bool forceNew = false)
 	{
-		_logger.LogInfoWithSource($"force = {forceNew}", "GetCertificateAsync");
+		_logger.LogInfoWithSource($"force = {forceNew}", "GetCertificateAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		try
 		{
 			long kioskId = _store.KioskId;
 			if (kioskId <= 0)
 			{
-				_logger.LogErrorWithSource($"KioskId: {_store.KioskId} is not valid, no cert to return", "GetCertificateAsync");
+				_logger.LogErrorWithSource($"KioskId: {_store.KioskId} is not valid, no cert to return", "GetCertificateAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				return null;
 			}
 			if (!(await UpdateIotData()))
 			{
-				_logger.LogErrorWithSource("IotData failed so we couldn't get certificate", "GetCertificateAsync");
+				_logger.LogErrorWithSource("IotData failed so we couldn't get certificate", "GetCertificateAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				return null;
 			}
 			bool flag = IsExecutingAssemblyNewerThanCertificate();
 			if (flag)
 			{
-				_logger.LogInfoWithSource("Executing Assembly is newer than IoT Certificate. Forcing creation of new certificate.", "GetCertificateAsync");
+				_logger.LogInfoWithSource("Executing Assembly is newer than IoT Certificate. Forcing creation of new certificate.", "GetCertificateAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			}
 			if (forceNew | flag)
 			{
@@ -111,12 +112,12 @@ internal class CertificateService : ICertificateService
 
 	public async Task Validate()
 	{
-		_logger.LogInfoWithSource("Attempting to run Validate", "Validate");
+		_logger.LogInfoWithSource("Attempting to run Validate", "Validate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		try
 		{
 			if (!(await UpdateIotData()))
 			{
-				_logger.LogErrorWithSource("Validate failed because IotData was not valid", "Validate");
+				_logger.LogErrorWithSource("Validate failed because IotData was not valid", "Validate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			}
 			else if (!((await IsCertificateValid()) ?? true))
 			{
@@ -132,7 +133,7 @@ internal class CertificateService : ICertificateService
 	private bool IsExecutingAssemblyNewerThanCertificate()
 	{
 		bool flag = false;
-		_logger.LogInfoWithSource("Attempting to check if Executing Assembly is newer than cert", "IsExecutingAssemblyNewerThanCertificate");
+		_logger.LogInfoWithSource("Attempting to check if Executing Assembly is newer than cert", "IsExecutingAssemblyNewerThanCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		try
 		{
 			if (File.Exists(IoTCertificateDataFilePath))
@@ -143,7 +144,7 @@ internal class CertificateService : ICertificateService
 				flag = lastWriteTimeUtc2 > lastWriteTimeUtc;
 				if (flag)
 				{
-					_logger.LogInfoWithSource($"Assembly date {lastWriteTimeUtc2} is newer than certificate date {lastWriteTimeUtc}", "IsExecutingAssemblyNewerThanCertificate");
+					_logger.LogInfoWithSource($"Assembly date {lastWriteTimeUtc2} is newer than certificate date {lastWriteTimeUtc}", "IsExecutingAssemblyNewerThanCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				}
 			}
 		}
@@ -156,25 +157,25 @@ internal class CertificateService : ICertificateService
 
 	private async Task<bool> UpdateIotData()
 	{
-		_logger.LogInfoWithSource("Running UpdateIotData", "UpdateIotData");
+		_logger.LogInfoWithSource("Running UpdateIotData", "UpdateIotData", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		try
 		{
 			long kioskId = _store.KioskId;
 			if (kioskId <= 0)
 			{
-				_logger.LogErrorWithSource($"KioskId: {_store.KioskId} is not valid", "UpdateIotData");
+				_logger.LogErrorWithSource($"KioskId: {_store.KioskId} is not valid", "UpdateIotData", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				_kioskId = 0L;
 			}
 			if (kioskId == _kioskId && !string.IsNullOrEmpty(_encryptedKioskId) && !string.IsNullOrEmpty(_ioTCertificateServicePassword) && !string.IsNullOrEmpty(_encryptedThingType))
 			{
-				_logger.LogInfoWithSource("IotData is already loaded", "UpdateIotData");
+				_logger.LogInfoWithSource("IotData is already loaded", "UpdateIotData", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				return true;
 			}
 			_kioskId = kioskId;
 			_encryptedKioskId = await _securityService.Encrypt(_store.KioskId.ToString());
 			_encryptedThingType = await _securityService.Encrypt("kiosks");
 			_ioTCertificateServicePassword = await _securityService.GetIoTCertServicePassword(_store.KioskId.ToString());
-			_logger.LogInfoWithSource("Finished loading Iot data", "UpdateIotData");
+			_logger.LogInfoWithSource("Finished loading Iot data", "UpdateIotData", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return true;
 		}
 		catch (Exception ex)
@@ -186,28 +187,28 @@ internal class CertificateService : ICertificateService
 
 	private async Task<bool?> IsCertificateValid()
 	{
-		_logger.LogInfoWithSource("Attempting to run IsCertificateValid", "IsCertificateValid");
+		_logger.LogInfoWithSource("Attempting to run IsCertificateValid", "IsCertificateValid", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		try
 		{
 			IotCert iotCert = await LoadCertificate();
 			if (iotCert == null)
 			{
-				_logger.LogInfoWithSource("iIotCert is null, cert is not valid", "IsCertificateValid");
+				_logger.LogInfoWithSource("iIotCert is null, cert is not valid", "IsCertificateValid", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				return false;
 			}
 			string certificateId = await _securityService.Encrypt(iotCert.CertificateId);
 			IsCertificateValidResponse isCertificateValidResponse = await _iotCertApiClient.IsCertificateValid(_encryptedKioskId, _encryptedThingType, _ioTCertificateServicePassword, certificateId);
 			if (!isCertificateValidResponse.IsValid.HasValue)
 			{
-				_logger.LogInfoWithSource("iotCertApiClient.IsCertificateValid was null, call failed can't tell if valid or not", "IsCertificateValid");
+				_logger.LogInfoWithSource("iotCertApiClient.IsCertificateValid was null, call failed can't tell if valid or not", "IsCertificateValid", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				return null;
 			}
 			if (isCertificateValidResponse.IsValid.Value)
 			{
-				_logger.LogInfoWithSource("iotCertApiClient.IsCertificateValid was true, cert is valid", "IsCertificateValid");
+				_logger.LogInfoWithSource("iotCertApiClient.IsCertificateValid was true, cert is valid", "IsCertificateValid", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				return true;
 			}
-			_logger.LogInfoWithSource("iotCertApiClient.IsCertificateValid was false, cert is not valid", "IsCertificateValid");
+			_logger.LogInfoWithSource("iotCertApiClient.IsCertificateValid was false, cert is not valid", "IsCertificateValid", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return false;
 		}
 		catch (Exception ex)
@@ -219,10 +220,10 @@ internal class CertificateService : ICertificateService
 
 	private async Task DeleteLocalCertificate()
 	{
-		_logger.LogInfoWithSource("Deleting the local certificate file: " + IoTCertificateDataFilePath, "DeleteLocalCertificate");
+		_logger.LogInfoWithSource("Deleting the local certificate file: " + IoTCertificateDataFilePath, "DeleteLocalCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		if (!(await _lock.WaitAsync(_lockWait)))
 		{
-			_logger.LogErrorWithSource("Lock failed, certificate not deleted", "DeleteLocalCertificate");
+			_logger.LogErrorWithSource("Lock failed, certificate not deleted", "DeleteLocalCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return;
 		}
 		try
@@ -241,17 +242,17 @@ internal class CertificateService : ICertificateService
 
 	private async Task<IotCert> LoadCertificate()
 	{
-		_logger.LogInfoWithSource("Attempting to load Certificate", "LoadCertificate");
+		_logger.LogInfoWithSource("Attempting to load Certificate", "LoadCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		if (!(await _lock.WaitAsync(_lockWait)))
 		{
-			_logger.LogErrorWithSource("Lock failed, certificate cannot be loaded", "LoadCertificate");
+			_logger.LogErrorWithSource("Lock failed, certificate cannot be loaded", "LoadCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return null;
 		}
 		try
 		{
 			if (!File.Exists(IoTCertificateDataFilePath))
 			{
-				_logger.LogErrorWithSource("Certificate file does not exist: " + IoTCertificateDataFilePath, "LoadCertificate");
+				_logger.LogErrorWithSource("Certificate file does not exist: " + IoTCertificateDataFilePath, "LoadCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 				return null;
 			}
 			string value = File.ReadAllText(IoTCertificateDataFilePath);
@@ -274,14 +275,14 @@ internal class CertificateService : ICertificateService
 	{
 		if (response == null)
 		{
-			_logger.LogInfoWithSource("Response was null or not successful, skipping writing certificates", "WriteIoTCertificateDataFileAsync");
+			_logger.LogInfoWithSource("Response was null or not successful, skipping writing certificates", "WriteIoTCertificateDataFileAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			await DeleteLocalCertificate();
 			return false;
 		}
-		_logger.LogInfoWithSource("Attempting to write certificate to a file", "WriteIoTCertificateDataFileAsync");
+		_logger.LogInfoWithSource("Attempting to write certificate to a file", "WriteIoTCertificateDataFileAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		if (!(await _lock.WaitAsync(_lockWait)))
 		{
-			_logger.LogErrorWithSource("Lock failed, certificate cannot be saved", "WriteIoTCertificateDataFileAsync");
+			_logger.LogErrorWithSource("Lock failed, certificate cannot be saved", "WriteIoTCertificateDataFileAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return false;
 		}
 		try

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using UpdateClientService.API.Services.Files;
 using UpdateClientService.API.Services.IoT.IoTCommand;
 
@@ -72,7 +73,7 @@ public class KioskFilesService : IKioskFilesService
 			mqttResponse.Error = ex.Message + ". Logged full exception in UpdateClientService logs, take a look at it if you want to see the full exception details.";
 			return mqttResponse;
 		}
-		_logger.LogInfoWithSource($"Returning ${mqttResponse.Data.Count} files.", "PeekRequestedFilesAsync");
+		_logger.LogInfoWithSource($"Returning ${mqttResponse.Data.Count} files.", "PeekRequestedFilesAsync", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 		return mqttResponse;
 	}
 
@@ -80,7 +81,7 @@ public class KioskFilesService : IKioskFilesService
 	{
 		if (_ioTProcessStatusService.UploadFilesStatus == IoTProcessStatusEnum.InProgress)
 		{
-			_logger.LogWarningWithSource("There was another upload files request while uploading files for another request.", "UploadFilesAsync");
+			_logger.LogWarningWithSource("There was another upload files request while uploading files for another request.", "UploadFilesAsync", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 			return new MqttResponse<string>
 			{
 				Error = "UpdateClientService: Already uploading files for another request, please try again in 1 or 2 minutes."
@@ -105,7 +106,7 @@ public class KioskFilesService : IKioskFilesService
 		}
 		else if (!TryGetRequestedLogPath(kioskFileRequest.FileType, out path, out error))
 		{
-			_logger.LogErrorWithSource("An error occurred while trying to upload requested file to S3. Request Model -> " + kioskFileRequest.ToJson() + ". Error -> " + error, "UploadFilesAsync");
+			_logger.LogErrorWithSource("An error occurred while trying to upload requested file to S3. Request Model -> " + kioskFileRequest.ToJson() + ". Error -> " + error, "UploadFilesAsync", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 			mqttResponse.Error = "An error occurred while trying to upload requested file to S3. Take a look at UCS logs for full exception details. Error -> " + error;
 			_ioTProcessStatusService.UploadFilesStatus = IoTProcessStatusEnum.Errored;
 			return mqttResponse;
@@ -139,7 +140,7 @@ public class KioskFilesService : IKioskFilesService
 		{
 			_ioTProcessStatusService.UploadFilesStatus = ((_ioTProcessStatusService.UploadFilesStatus == IoTProcessStatusEnum.Errored) ? IoTProcessStatusEnum.Errored : IoTProcessStatusEnum.Finished);
 		}
-		_logger.LogInfoWithSource("Returning mqttresponse: " + mqttResponse.ToJson(), "UploadFilesAsync");
+		_logger.LogInfoWithSource("Returning mqttresponse: " + mqttResponse.ToJson(), "UploadFilesAsync", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 		return mqttResponse;
 	}
 
@@ -220,7 +221,7 @@ public class KioskFilesService : IKioskFilesService
 			return true;
 		}
 		error = (logType ?? "null") + " was not found in FilePaths";
-		_logger.LogErrorWithSource(error, "TryGetRequestedLogPath");
+		_logger.LogErrorWithSource(error, "TryGetRequestedLogPath", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 		return false;
 	}
 }

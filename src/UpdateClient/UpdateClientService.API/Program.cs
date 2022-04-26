@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Redbox.NetCore.Middleware.Extensions;
 using Serilog;
 using Serilog.Core;
+using UpdateClientService.API.Services.Configuration;
 
 namespace UpdateClientService.API;
 
@@ -17,7 +18,7 @@ public class Program
 {
 	private const string ASPNETCORE_ENVIRONMENT = "ASPNETCORE_ENVIRONMENT";
 
-	public static IConfiguration Configuration { get; } = GetConfiguration();
+	public static IConfiguration Configuration { get; } = GetConfiguration(new ConfigurationBuilder()).Build();
 
 	public static void Main(string[] args)
 	{
@@ -72,7 +73,10 @@ public class Program
 		Log.Information($"CreateWebHostBuilder: url={serviceUri.AbsoluteUri}  port={serviceUri.Port}");
 		return WebHost.CreateDefaultBuilder(args).UseUrls(serviceUri.AbsoluteUri).UseSetting("Port", serviceUri.Port.ToString())
 			.UseSerilog()
-			.UseConfiguration(Configuration)
+			.ConfigureAppConfiguration(delegate(WebHostBuilderContext webHostBuilderContext, IConfigurationBuilder conf)
+			{
+				GetConfiguration(conf, webHostBuilderContext);
+			})
 			.UseStartup<Startup>()
 			.UseAppMetrics();
 	}
@@ -82,13 +86,11 @@ public class Program
 		return new Uri(config.GetValue("AppSettings:BaseServiceUrl", string.Empty));
 	}
 
-	private static IConfiguration GetConfiguration()
+	private static IConfigurationBuilder GetConfiguration(IConfigurationBuilder builder, WebHostBuilderContext webHostBuilderContext = null)
 	{
-		IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-		if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null)
-		{
-			configurationBuilder.AddJsonFile("appsettings." + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") + ".json", optional: true, reloadOnChange: true);
-		}
-		return configurationBuilder.Build();
+		builder.SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddJsonFile(ConfigurationService.ConfigurationFilePath, optional: true, reloadOnChange: true);
+		string text = webHostBuilderContext?.HostingEnvironment?.EnvironmentName ?? "Production";
+		builder.AddJsonFile("appsettings." + text + ".json", optional: true, reloadOnChange: true);
+		return builder;
 	}
 }

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Coravel.Invocable;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.App;
 using UpdateClientService.API.Services.DownloadService;
@@ -146,7 +147,7 @@ public class FileSetService : IFileSetService, IInvocable
 		}
 		errors.ForEach(delegate(Error x)
 		{
-			_logger.LogErrorWithSource(x.Message, "ProcessPollReply");
+			_logger.LogErrorWithSource(x.Message, "ProcessPollReply", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 		});
 		return errors;
 	}
@@ -158,7 +159,7 @@ public class FileSetService : IFileSetService, IInvocable
 		{
 			if (changeSet == null)
 			{
-				_logger.LogWarningWithSource("Changeset was null. Skipping...", "ProcessChangeSet");
+				_logger.LogWarningWithSource("Changeset was null. Skipping...", "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 				return errors;
 			}
 			try
@@ -206,7 +207,7 @@ public class FileSetService : IFileSetService, IInvocable
 		}
 		if (errors.Count > 0)
 		{
-			_logger.LogErrorWithSource("Something went wrong while processing ChangeSet " + changeSet.ToJson() + ", " + errors.ToJson(), "ProcessChangeSet");
+			_logger.LogErrorWithSource("Something went wrong while processing ChangeSet " + changeSet.ToJson() + ", " + errors.ToJson(), "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 		}
 		return errors;
 	}
@@ -217,7 +218,7 @@ public class FileSetService : IFileSetService, IInvocable
 		{
 			if (!(await Lock.WaitAsync(_processLockTimeout)))
 			{
-				_logger.LogErrorWithSource("Timeout expired prior to acquiring the lock.", "Invoke");
+				_logger.LogErrorWithSource("Timeout expired prior to acquiring the lock.", "Invoke", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 				return;
 			}
 		}
@@ -230,7 +231,7 @@ public class FileSetService : IFileSetService, IInvocable
 			List<Error> list = await ProcessChangeSetWork();
 			if (list != null && list.Count > 0)
 			{
-				_logger.LogWarningWithSource("Finished Invoke with errors. " + list.ToJson(), "Invoke");
+				_logger.LogWarningWithSource("Finished Invoke with errors. " + list.ToJson(), "Invoke", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 			}
 		}
 		catch (Exception ex2)
@@ -250,7 +251,7 @@ public class FileSetService : IFileSetService, IInvocable
 	private List<Error> ProcessChangeSets(IEnumerable<ClientFileSetRevisionChangeSet> changeSets)
 	{
 		List<Error> list = new List<Error>();
-		_logger.LogInfoWithSource("Executing FileSetService.ProcessChangeSets", "ProcessChangeSets");
+		_logger.LogInfoWithSource("Executing FileSetService.ProcessChangeSets", "ProcessChangeSets", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 		try
 		{
 			foreach (ClientFileSetRevisionChangeSet changeSet in changeSets)

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Coravel.Invocable;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 
 namespace UpdateClientService.API.Services.IoT.FileSets;
 
@@ -18,7 +19,7 @@ public class KioskFileSetVersionsServiceJob : IInvocable
 
 	public async Task Invoke()
 	{
-		_logger.LogInfoWithSource("ReportFileVersions", "Invoke");
+		_logger.LogInfoWithSource("ReportFileVersions", "Invoke", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsServiceJob.cs");
 		await _kioskFileSetVersionsService.ReportFileVersions();
 	}
 }

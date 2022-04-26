@@ -39,6 +39,7 @@ using UpdateClientService.API.Services.IoT.IoTCommand;
 using UpdateClientService.API.Services.IoT.Security.Certificate;
 using UpdateClientService.API.Services.Kernel;
 using UpdateClientService.API.Services.KioskEngine;
+using UpdateClientService.API.Services.Segment;
 using UpdateClientService.API.Services.Transfer;
 using UpdateClientService.API.Services.Utilities;
 
@@ -101,7 +102,8 @@ public class Startup
 		services.AddScoped<ICommandLineService, CommandLineService>();
 		services.AddScoped<IWindowsServiceFunctions, WindowsServiceFunctions>();
 		services.AddScoped<IKernelService, KernelService>();
-		services.AddConfigurationService();
+		services.AddConfigurationService(Configuration);
+		services.AddSegmentService();
 		services.AddScheduler();
 		services.AddHttpService(trackMetrics: true, () => new HttpClientHandler
 		{
@@ -223,6 +225,15 @@ public class Startup
 			else
 			{
 				scheduler.Schedule<IConfigurationServiceUpdateStatusJob>().Cron(CronConstants.AtRandomMinuteEveryXHours(2)).PreventOverlapping("IConfigurationServiceUpdateStatusJob");
+			}
+			if (env.IsDevelopment())
+			{
+				scheduler.OnWorker("ISegmentServiceJob").Schedule<ISegmentServiceJob>().EveryFiveMinutes()
+					.PreventOverlapping("ISegmentServiceJob");
+			}
+			else
+			{
+				scheduler.Schedule<ISegmentServiceJob>().Cron(CronConstants.AtRandomMinuteEveryXHours(1)).PreventOverlapping("ISegmentServiceJob");
 			}
 		}).OnError(delegate(Exception exception)
 		{

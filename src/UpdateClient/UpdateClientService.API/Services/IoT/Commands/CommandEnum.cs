@@ -26,5 +26,7 @@ public enum CommandEnum
 	TriggerGetConfigChanges,
 	GetConfigStatus,
 	TriggerUpdateConfigStatus,
-	TestDummy
+	TestDummy,
+	SyncTimestampAndTimezone,
+	GetKioskSegments
 }

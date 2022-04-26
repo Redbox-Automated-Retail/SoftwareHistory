@@ -7,6 +7,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Redbox.NetCore.Logging.Extensions;
 
 namespace UpdateClientService.API.Services;
 
@@ -30,7 +31,7 @@ public class StatusService : IStatusService
 		IEnumerable<string> enumerable = _settings?.CurrentValue?.FileVersionPaths;
 		if (enumerable == null || !enumerable.Any())
 		{
-			_logger.LogErrorWithSource("No filepaths found or specified.", "GetFileVersions");
+			_logger.LogErrorWithSource("No filepaths found or specified.", "GetFileVersions", "/sln/src/UpdateClientService.API/Services/Status/StatusService.cs");
 			fileVersionDataResponse.StatusCode = HttpStatusCode.BadRequest;
 			return fileVersionDataResponse;
 		}

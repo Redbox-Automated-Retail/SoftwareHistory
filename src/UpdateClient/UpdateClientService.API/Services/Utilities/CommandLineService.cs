@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 
 namespace UpdateClientService.API.Services.Utilities;
 
@@ -74,11 +75,11 @@ public class CommandLineService : ICommandLineService
 		}
 		if (!string.IsNullOrWhiteSpace(text))
 		{
-			_logger.LogInfoWithSource(text, "Execute");
+			_logger.LogInfoWithSource(text, "Execute", "/sln/src/UpdateClientService.API/Services/Utilities/CommandLineService.cs");
 		}
 		if (!string.IsNullOrWhiteSpace(text2))
 		{
-			_logger.LogErrorWithSource("An error occurred while running a command. Error: " + text2, "Execute");
+			_logger.LogErrorWithSource("An error occurred while running a command. Error: " + text2, "Execute", "/sln/src/UpdateClientService.API/Services/Utilities/CommandLineService.cs");
 		}
 		return string.IsNullOrWhiteSpace(text2);
 	}

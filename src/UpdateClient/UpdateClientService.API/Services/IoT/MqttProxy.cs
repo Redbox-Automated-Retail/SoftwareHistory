@@ -19,6 +19,7 @@ using MQTTnet.Formatter;
 using MQTTnet.Protocol;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Redbox.NetCore.Logging.Extensions;
 using UpdateClientService.API.Services.IoT.Certificate;
 using UpdateClientService.API.Services.IoT.Commands;
 
@@ -78,19 +79,19 @@ public class MqttProxy : IMqttProxy
 		{
 			await DisconnectedHandler(e);
 		});
-		_logger.LogInfoWithSource("MqttProxy instantiated", ".ctor");
+		_logger.LogInfoWithSource("MqttProxy instantiated", ".ctor", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 	}
 
 	private async Task ConnectedHandler(MqttClientConnectedEventArgs e)
 	{
-		_logger.LogInfoWithSource("Connected Result: " + e.ConnectResult.ToJson(), "ConnectedHandler");
+		_logger.LogInfoWithSource("Connected Result: " + e.ConnectResult.ToJson(), "ConnectedHandler", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 	}
 
 	private async Task DisconnectedHandler(MqttClientDisconnectedEventArgs e)
 	{
 		if (e.Exception == null)
 		{
-			_logger.LogInfoWithSource($"Received DisconnectedHandler Event Reason: {e.Reason}", "DisconnectedHandler");
+			_logger.LogInfoWithSource($"Received DisconnectedHandler Event Reason: {e.Reason}", "DisconnectedHandler", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		else
 		{
@@ -103,12 +104,12 @@ public class MqttProxy : IMqttProxy
 		byte[] payload = e?.ApplicationMessage?.Payload;
 		if (payload == null)
 		{
-			_logger.LogInfoWithSource($"Message received Topic = {e.ApplicationMessage?.Topic}, Payload Length = 0, QoS = {e?.ApplicationMessage?.QualityOfServiceLevel}, Retain = {e?.ApplicationMessage?.Retain}", "MessageReceivedHandler");
+			_logger.LogInfoWithSource($"Message received Topic = {e.ApplicationMessage?.Topic}, Payload Length = 0, QoS = {e?.ApplicationMessage?.QualityOfServiceLevel}, Retain = {e?.ApplicationMessage?.Retain}", "MessageReceivedHandler", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		else
 		{
 			string text = Encoding.UTF8.GetString(payload);
-			_logger.LogInfoWithSource($"Message received Topic = {e?.ApplicationMessage?.Topic}, Payload Length = {text?.Length ?? 0}, QoS = {e?.ApplicationMessage?.QualityOfServiceLevel}, Retain = {e?.ApplicationMessage?.Retain}", "MessageReceivedHandler");
+			_logger.LogInfoWithSource($"Message received Topic = {e?.ApplicationMessage?.Topic}, Payload Length = {text?.Length ?? 0}, QoS = {e?.ApplicationMessage?.QualityOfServiceLevel}, Retain = {e?.ApplicationMessage?.Retain}", "MessageReceivedHandler", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		Task.Run(async delegate
 		{
@@ -130,11 +131,11 @@ public class MqttProxy : IMqttProxy
 	{
 		if (!IsMqttConnected)
 		{
-			_logger.LogInfoWithSource("Not connected. Cannot publish to topic: " + topicName, "PublishMessageAsync");
+			_logger.LogInfoWithSource("Not connected. Cannot publish to topic: " + topicName, "PublishMessageAsync", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 			return false;
 		}
 		string text = (logMessage ? ("Message : " + message) : $"Message length: {message?.Length ?? 0}");
-		_logger.LogInfoWithSource("Publishing message to topic: " + topicName + " ." + text, "PublishMessageAsync");
+		_logger.LogInfoWithSource("Publishing message to topic: " + topicName + " ." + text, "PublishMessageAsync", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		bool result;
 		try
 		{
@@ -151,17 +152,17 @@ public class MqttProxy : IMqttProxy
 				if (mqttClientPublishResult.ReasonCode == MqttClientPublishReasonCode.Success)
 				{
 					result = true;
-					_logger.LogInfoWithSource($"Publish successfully for Packet Identifier: {mqttClientPublishResult.PacketIdentifier}, Topic: {topicName}, QoS Level {qualityOfServiceLevel}, Duration: {elapsedMilliseconds}", "PublishMessageAsync");
+					_logger.LogInfoWithSource($"Publish successfully for Packet Identifier: {mqttClientPublishResult.PacketIdentifier}, Topic: {topicName}, QoS Level {qualityOfServiceLevel}, Duration: {elapsedMilliseconds}", "PublishMessageAsync", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 				}
 				else
 				{
-					_logger.LogErrorWithSource($"Publish failed for ReasonCode: {mqttClientPublishResult.ReasonCode} - {mqttClientPublishResult.ReasonString}, Topic: {topicName}, QoS Level {qualityOfServiceLevel}, Duration: {elapsedMilliseconds}", "PublishMessageAsync");
+					_logger.LogErrorWithSource($"Publish failed for ReasonCode: {mqttClientPublishResult.ReasonCode} - {mqttClientPublishResult.ReasonString}, Topic: {topicName}, QoS Level {qualityOfServiceLevel}, Duration: {elapsedMilliseconds}", "PublishMessageAsync", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 					result = false;
 				}
 			}
 			catch (TaskCanceledException)
 			{
-				_logger.LogErrorWithSource("Message " + topicName + " Timed Out", "PublishMessageAsync");
+				_logger.LogErrorWithSource("Message " + topicName + " Timed Out", "PublishMessageAsync", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 				result = false;
 			}
 		}
@@ -175,13 +176,13 @@ public class MqttProxy : IMqttProxy
 
 	private async Task<bool> SubscribeTopics(IEnumerable<string> topics)
 	{
-		_logger.LogInfoWithSource("Attempting to subscribe to topics", "SubscribeTopics");
+		_logger.LogInfoWithSource("Attempting to subscribe to topics", "SubscribeTopics", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		_isSubscribed = false;
 		if ((topics != null && topics.Count() == 0) || !IsMqttConnected)
 		{
 			return false;
 		}
-		_logger.LogInfoWithSource("calling _iotClient.Subscribe for topics: " + topics.ToJson(), "SubscribeTopics");
+		_logger.LogInfoWithSource("calling _iotClient.Subscribe for topics: " + topics.ToJson(), "SubscribeTopics", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		MqttClientSubscribeOptionsBuilder builder = new MqttClientSubscribeOptionsBuilder();
 		topics.ToList().ForEach(delegate(string t)
 		{
@@ -199,15 +200,15 @@ public class MqttProxy : IMqttProxy
 		}
 		catch (TaskCanceledException)
 		{
-			_logger.LogErrorWithSource("Subscribed Timed Out", "SubscribeTopics");
+			_logger.LogErrorWithSource("Subscribed Timed Out", "SubscribeTopics", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		if (_isSubscribed)
 		{
-			_logger.LogInfoWithSource("Successfully subscribed to Topics: " + topics.ToJson(), "SubscribeTopics");
+			_logger.LogInfoWithSource("Successfully subscribed to Topics: " + topics.ToJson(), "SubscribeTopics", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		else
 		{
-			_logger.LogErrorWithSource("Failed to subscription to Topics: " + topics.ToJson(), "SubscribeTopics");
+			_logger.LogErrorWithSource("Failed to subscription to Topics: " + topics.ToJson(), "SubscribeTopics", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		return _isSubscribed;
 	}
@@ -231,7 +232,7 @@ public class MqttProxy : IMqttProxy
 
 	private async Task<bool> Connect()
 	{
-		_ = 2;
+		_ = 1;
 		try
 		{
 			if (!IsMqttConnected)
@@ -244,7 +245,7 @@ public class MqttProxy : IMqttProxy
 			}
 			if (IsMqttConnected && _isSubscribed && !_isRegistered)
 			{
-				await RegisterUCSVersion();
+				Task.WaitAll(RegisterUCSVersion(), SyncTimestampAndTimezone());
 			}
 			return IsMqttConnected && _isSubscribed && _isRegistered;
 		}
@@ -276,11 +277,11 @@ public class MqttProxy : IMqttProxy
 
 	private async Task ConnectToMqtt()
 	{
-		_logger.LogInfoWithSource($"Attempting to connect KioskId: {_store.KioskId} to mqtt", "ConnectToMqtt");
+		_logger.LogInfoWithSource($"Attempting to connect KioskId: {_store.KioskId} to mqtt", "ConnectToMqtt", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		IotCert iotCert = await _certService.GetCertificateAsync();
 		if (iotCert == null)
 		{
-			_logger.LogErrorWithSource("No cert, aborting connection attempt", "ConnectToMqtt");
+			_logger.LogErrorWithSource("No cert, aborting connection attempt", "ConnectToMqtt", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 			return;
 		}
 		try
@@ -298,7 +299,7 @@ public class MqttProxy : IMqttProxy
 				.Build();
 			CancellationToken token = new CancellationTokenSource(20000).Token;
 			MqttClientConnectResult mqttClientConnectResult = await _iotClient.ConnectAsync(options, token);
-			_logger.LogInfoWithSource($"MqttClient ConnectAsync completed with KioskId: {_store.KioskId}, and ResultCode: {mqttClientConnectResult.ResultCode}", "ConnectToMqtt");
+			_logger.LogInfoWithSource($"MqttClient ConnectAsync completed with KioskId: {_store.KioskId}, and ResultCode: {mqttClientConnectResult.ResultCode}", "ConnectToMqtt", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		catch (Exception ex)
 		{
@@ -310,7 +311,7 @@ public class MqttProxy : IMqttProxy
 	private async Task<bool> RegisterUCSVersion()
 	{
 		_isRegistered = false;
-		_logger.LogInfoWithSource("Attempting to register ucs", "RegisterUCSVersion");
+		_logger.LogInfoWithSource("Attempting to register ucs", "RegisterUCSVersion", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		UCSRegisterMessage message = new UCSRegisterMessage
 		{
 			KioskId = _store.KioskId,
@@ -320,12 +321,28 @@ public class MqttProxy : IMqttProxy
 		_isRegistered = await PublishMessageAsync("$aws/rules/kioskucsregister", message.ToJson());
 		if (_isRegistered)
 		{
-			_logger.LogInfoWithSource("Register UCS version " + message.Version + " succeeded", "RegisterUCSVersion");
+			_logger.LogInfoWithSource("Register UCS version " + message.Version + " succeeded", "RegisterUCSVersion", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		else
 		{
-			_logger.LogErrorWithSource("Register UCS version " + message.Version + " failed", "RegisterUCSVersion");
+			_logger.LogErrorWithSource("Register UCS version " + message.Version + " failed", "RegisterUCSVersion", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		return _isRegistered;
+	}
+
+	private async Task<bool> SyncTimestampAndTimezone()
+	{
+		string topicName = "$aws/rules/kioskrestcall";
+		IoTCommandModel request = new IoTCommandModel
+		{
+			RequestId = Guid.NewGuid().ToString(),
+			Command = CommandEnum.SyncTimestampAndTimezone,
+			MessageType = MessageTypeEnum.Request,
+			Version = 1,
+			SourceId = _store?.KioskId.ToString(),
+			LogRequest = true,
+			QualityOfServiceLevel = QualityOfServiceLevel.AtLeastOnce
+		};
+		return await PublishIoTCommandAsync(topicName, request);
 	}
 }

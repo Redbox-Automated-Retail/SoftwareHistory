@@ -433,7 +433,7 @@ public class StateFile
 					}
 					else
 					{
-						_logger.LogWarningWithSource("State for path " + item + " was null", "GetAllFiles");
+						_logger.LogWarningWithSource("State for path " + item + " was null", "GetAllFiles", "/sln/src/UpdateClientService.API/Services/FileSets/StateFile.cs");
 						Shared.SafeDelete(item);
 					}
 					stateFiles.Add(clientFileSetState);

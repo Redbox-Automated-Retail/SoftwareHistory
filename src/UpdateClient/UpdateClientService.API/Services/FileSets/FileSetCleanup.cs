@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.FileCache;
 
@@ -30,7 +31,7 @@ public class FileSetCleanup : IFileSetCleanup
 			List<Error> all = StateFile.GetAll(out var stateFiles);
 			if (all.Any())
 			{
-				_logger.LogErrorWithSource("Encountered errors getting state files. Errors -> " + all.ToJson(), "Run");
+				_logger.LogErrorWithSource("Encountered errors getting state files. Errors -> " + all.ToJson(), "Run", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetCleanup.cs");
 				return;
 			}
 			List<long> allFileSets = _fileCacheService.GetAllFileSets();
@@ -103,7 +104,7 @@ public class FileSetCleanup : IFileSetCleanup
 										if (flag3 | flag2)
 										{
 											flag = false;
-											_logger.LogInfoWithSource($"Deleting FileSetId: {fileSetId} RevisionId {revision.RevisionId} PatchRevisionId {revision.PatchRevisionId} CountDelete {flag3} DateDelete {flag2} ", "Run");
+											_logger.LogInfoWithSource($"Deleting FileSetId: {fileSetId} RevisionId {revision.RevisionId} PatchRevisionId {revision.PatchRevisionId} CountDelete {flag3} DateDelete {flag2} ", "Run", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetCleanup.cs");
 											_fileCacheService.DeleteRevision(fileSetId, revision.RevisionId, revision.PatchRevisionId);
 										}
 									}
@@ -150,7 +151,7 @@ public class FileSetCleanup : IFileSetCleanup
 		List<FileSetFileInfo> list = allFileInfos.Except(requiredFiles.Distinct()).ToList();
 		list.ForEach(delegate(FileSetFileInfo r)
 		{
-			_logger.LogInfoWithSource($"Deleting FileSetId: {fileSetId} FileId {r.FileId} FileRevisionId {r.FileRevisionId}", "RemoveFiles");
+			_logger.LogInfoWithSource($"Deleting FileSetId: {fileSetId} FileId {r.FileId} FileRevisionId {r.FileRevisionId}", "RemoveFiles", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetCleanup.cs");
 			_fileCacheService.DeleteFile(fileSetId, r.FileId, r.FileRevisionId);
 		});
 	}

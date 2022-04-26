@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using UpdateClientService.API.App;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.IoT.DownloadFiles;
@@ -42,11 +43,11 @@ public class GetDownloadFileJobStatusV2 : ICommandIoTController
 		catch (Exception ex)
 		{
 			result.Error = ex.GetFullMessage();
-			_logger.LogErrorWithSource(ex, "An unhandled exception occurred while getting download file job status for request " + ioTCommand.RequestId, "Execute");
+			_logger.LogErrorWithSource(ex, "An unhandled exception occurred while getting download file job status for request " + ioTCommand.RequestId, "Execute", "/sln/src/UpdateClientService.API/Services/IoT/Commands/Controller/GetDownloadFileJobStatusV2.cs");
 		}
 		try
 		{
-			_logger.LogInfoWithSource("Publishing response to requestId " + ioTCommand.RequestId + " -> " + result.ToJson(), "Execute");
+			_logger.LogInfoWithSource("Publishing response to requestId " + ioTCommand.RequestId + " -> " + result.ToJson(), "Execute", "/sln/src/UpdateClientService.API/Services/IoT/Commands/Controller/GetDownloadFileJobStatusV2.cs");
 			await _mqtt.PublishIoTCommandAsync("redbox/updateservice-instance/" + ioTCommand.SourceId + "/request", new IoTCommandModel
 			{
 				RequestId = ioTCommand.RequestId,
@@ -59,7 +60,7 @@ public class GetDownloadFileJobStatusV2 : ICommandIoTController
 		}
 		catch (Exception ex2)
 		{
-			_logger.LogErrorWithSource(ex2, "An unhandled exception occurred while publishing the IoT response", "Execute");
+			_logger.LogErrorWithSource(ex2, "An unhandled exception occurred while publishing the IoT response", "Execute", "/sln/src/UpdateClientService.API/Services/IoT/Commands/Controller/GetDownloadFileJobStatusV2.cs");
 		}
 	}
 }
