@@ -442,10 +442,20 @@ public class MessagePopupViewController : BaseViewController
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.oops, null, message, null, null, null, null, Resources.continue_button, null, null, null, null, null, null, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "PromoCodeRxGxInvalidWarning", null, null, default(Thickness), "rxgxWarning"));
 	}
 
-	public static void ShowPromoCodeInvalidForCartItemsWarning(Action timeOutAction, Action continueAction, string title)
+	public static void ShowPromoCodeInvalidForCartItemsWarning(Action timeOutAction, Action continueAction, string title, string message)
 	{
 		LogHelper.Instance.Log("Showing promo code invalid for cart items warning");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(title, (string)null, (string)null, (string)null, (string)null, (string)null, (string)null, Resources.continue_button, (string)null, (string)null, (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(), (Action)null, continueAction, timeOutAction, "PromoCodeInvalidForCartItemsWarning", (UserControl)null, (string)null, default(Thickness), (string)null, (string)null, Visibility.Collapsed));
+		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		{
+			CultureSpecificTitle = title,
+			CultureSpecificMessage = message,
+			CultureSpecificButtonText = Resources.continue_button,
+			TimeOut = GetDefaultMessageTimeOut(),
+			ContinueAction = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "PromoCodeInvalidForCartItemsWarning",
+			Context = new List<string> { "promoCodeInvalidForCartItemsWarning" }
+		});
 	}
 
 	public static void ShowPromoCodeAlreadyUsedWarning(Action timeOutAction, Action continueAction)

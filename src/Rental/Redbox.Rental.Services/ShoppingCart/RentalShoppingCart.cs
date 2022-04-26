@@ -207,8 +207,6 @@ public class RentalShoppingCart : IRentalShoppingCart
 
 	public bool HasRedboxPlusFreeOneNightRentalSelected => TitleItems.Any((IRentalShoppingCartTitleItem x) => x?.IsRedboxPlusFreeOneNightRental ?? false);
 
-	public bool HasDiscountRestriction => TitleItems.Any((IRentalShoppingCartTitleItem x) => (x.TitleProduct?.DiscountRestriction ?? DiscountRestriction.None) != DiscountRestriction.None);
-
 	public IServiceFee ServiceFee
 	{
 		get
@@ -675,7 +673,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 					});
 				}
 			}
-			LogHelper.Instance.Log(string.Format("Validate Promo {0}.  IsValid:{1}{2}{3}{4}  Total Promo discounts: {5}", Promotion?.Intent, promoCodeValidationInfo.IsCartValid, promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing ? " InvalidBecauseOfMultiNightPricing" : null, promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal ? " InvalidBecauseOfFlashDeal" : null, promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction ? " InvalidBecauseOfDiscountRestriction" : null, promoCodeValidationInfo.Price));
+			LogHelper.Instance.Log(string.Format("Validate Promo {0}.  IsValid:{1}{2}{3}{4}  Total Promo discounts: {5}", Promotion?.Intent, promoCodeValidationInfo.IsCartValid, promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal ? " InvalidBecauseOfFlashDeal" : null, promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing ? " InvalidBecauseOfMultiNightPricing" : null, promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction ? " InvalidBecauseOfDiscountRestriction" : null, promoCodeValidationInfo.Price));
 			LogHelper.Instance.Log("Promo Qualifying items: {0}", promoCodeValidationInfo.QualifyingItems.Select((IRentalShoppingCartTitleItem x) => x.ProductId).ToList().Join(", "));
 			LogHelper.Instance.Log("Promo Redemption items: {0}", promoCodeValidationInfo.PromotionItems.Select((IPromotionItem x) => $"{x.RentalShoppingCartItem?.ProductId} {x.PromotionAmount:C2}").ToList().Join(", "));
 			LogHelper.Instance.Log("Loyalty Redemption items: {0}", (from x in TitleItems
@@ -1134,18 +1132,43 @@ public class RentalShoppingCart : IRentalShoppingCart
 		{
 			IPromoCodeValidationInfo promoCodeValidationInfo2 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
 			{
-				IncludeDiscountRestrictionItems = true
+				IncludeFlashDeals = true
 			});
 			IPromoCodeValidationInfo promoCodeValidationInfo3 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
 			{
 				IncludeMultiNightPricingItems = true
 			});
+			IPromoCodeValidationInfo promoCodeValidationInfo4 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
+			{
+				IncludeDiscountRestrictionItems = true
+			});
+			IPromoCodeValidationInfo promoCodeValidationInfo5 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
+			{
+				IncludeFlashDeals = true,
+				IncludeMultiNightPricingItems = true
+			});
+			IPromoCodeValidationInfo promoCodeValidationInfo6 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
+			{
+				IncludeFlashDeals = true,
+				IncludeDiscountRestrictionItems = true
+			});
+			IPromoCodeValidationInfo promoCodeValidationInfo7 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
+			{
+				IncludeMultiNightPricingItems = true,
+				IncludeDiscountRestrictionItems = true
+			});
+			IPromoCodeValidationInfo promoCodeValidationInfo8 = validationFunction(promotion, new PromotionFunctionFilters(promotion)
+			{
+				IncludeFlashDeals = true,
+				IncludeMultiNightPricingItems = true,
+				IncludeDiscountRestrictionItems = true
+			});
 			if (promoCodeValidationInfo2.IsCartValid)
 			{
 				OrchestrationService.SetCurrentUICulture();
-				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items;
-				promoCodeValidationInfo.Message = null;
-				promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction = true;
+				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items_flash_deal_title;
+				promoCodeValidationInfo.Message = Resources.promo_code_error_invalid_cart_items_flash_deal_message;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal = true;
 			}
 			else if (promoCodeValidationInfo3.IsCartValid)
 			{
@@ -1154,15 +1177,45 @@ public class RentalShoppingCart : IRentalShoppingCart
 				promoCodeValidationInfo.Message = null;
 				promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing = true;
 			}
-			else if (validationFunction(promotion, new PromotionFunctionFilters(promotion)
-			{
-				IncludeFlashDeals = true
-			}).IsCartValid)
+			else if (promoCodeValidationInfo4.IsCartValid)
 			{
 				OrchestrationService.SetCurrentUICulture();
 				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items;
 				promoCodeValidationInfo.Message = null;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction = true;
+			}
+			else if (promoCodeValidationInfo5.IsCartValid)
+			{
+				OrchestrationService.SetCurrentUICulture();
+				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items_flash_deal_title;
+				promoCodeValidationInfo.Message = Resources.promo_code_error_invalid_cart_items_flash_deal_message;
 				promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal = true;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing = true;
+			}
+			else if (promoCodeValidationInfo6.IsCartValid)
+			{
+				OrchestrationService.SetCurrentUICulture();
+				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items_flash_deal_title;
+				promoCodeValidationInfo.Message = Resources.promo_code_error_invalid_cart_items_flash_deal_message;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal = true;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction = true;
+			}
+			else if (promoCodeValidationInfo7.IsCartValid)
+			{
+				OrchestrationService.SetCurrentUICulture();
+				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items;
+				promoCodeValidationInfo.Message = null;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing = true;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction = true;
+			}
+			else if (promoCodeValidationInfo8.IsCartValid)
+			{
+				OrchestrationService.SetCurrentUICulture();
+				promoCodeValidationInfo.Title = Resources.promo_code_error_invalid_cart_items_flash_deal_title;
+				promoCodeValidationInfo.Message = Resources.promo_code_error_invalid_cart_items_flash_deal_message;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal = true;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing = true;
+				promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction = true;
 			}
 		}
 		return promoCodeValidationInfo;

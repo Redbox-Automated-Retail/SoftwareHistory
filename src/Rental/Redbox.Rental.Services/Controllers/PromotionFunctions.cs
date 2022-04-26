@@ -65,88 +65,65 @@ public class PromotionFunctions
 					promoCodeValidationResult.Success = false;
 					promoCodeValidationResult.Response = "GameRequired";
 				}
-				else
+				else if (!promoCodeValidationInfo.IsCartValid && (promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal || promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing))
+				{
+					MessagePopupViewController.ShowPromoCodeInvalidForCartItemsWarning(doneAction, doneAction, promoCodeValidationInfo.Title, promoCodeValidationInfo.Message);
+				}
+				else if (!promoCodeValidationInfo.IsCartValid && promoCodeValidationInfo.IsCartInvalidBecauseOfDiscountRestriction && !promotion.AllowFullDiscount && promotion.DefaultPromo != null)
+				{
+					IPromotion defaultPromotion = CreatePromotionFromDefaultPromo(promotion.DefaultPromo);
+					if (defaultPromotion != null)
+					{
+						string arg = ((defaultPromotion.Intent == PromotionIntentCode.PercentOffCartTotal) ? $"{defaultPromotion.Percent:P0}" : $"{defaultPromotion.Price:C}");
+						MessagePopupViewController.ShowPromoCodeDiscountRestrictionWarning(string.Format(Resources.promo_code_discount_restriction_warning_title, arg), string.Format(Resources.apply_promo_amount_off_button, arg), delegate
+						{
+							doneAction();
+						}, delegate
+						{
+							doneAction();
+						}, delegate
+						{
+							PromotionService.Instance?.SetPromotion(defaultPromotion);
+							shoppingCartService.CurrentRentalShoppingCart.ValidateAndUpdatePromoCode();
+							shoppingCartService.CurrentRentalShoppingCart.UpdateServiceFee();
+							shoppingCartService.CurrentRentalShoppingCart.ClearLoyaltyPointsToBeEarned();
+							doneAction();
+						});
+						ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddViewEvent(new DiscountRestrictionEvent(promotion.Name, defaultPromotion.Name));
+					}
+					else
+					{
+						doneAction();
+					}
+				}
+				else if (promotion.Intent == PromotionIntentCode.RxGx)
 				{
 					if (!promoCodeValidationInfo.IsCartValid)
 					{
-						bool? flag = shoppingCartService?.CurrentRentalShoppingCart?.HasDiscountRestriction;
-						if (flag.HasValue && flag == true && !promotion.AllowFullDiscount && promotion.DefaultPromo != null)
+						MessagePopupViewController.ShowRxGxPromoCodeInvalidWarning(doneAction, doneAction, promoCodeValidationInfo.Title + Environment.NewLine + Environment.NewLine + promoCodeValidationInfo.Message);
+					}
+					else
+					{
+						doneAction();
+					}
+				}
+				else if (promotion.Intent == PromotionIntentCode.FirstNightFreeItem && (promotion.CampaignTitles?.Titles?.Count ?? 0) <= 0)
+				{
+					if (!promoCodeValidationInfo.IsCartValid)
+					{
+						if (promotion.ProductTypeId.HasValue)
 						{
-							IPromotion defaultPromotion = CreatePromotionFromDefaultPromo(promotion.DefaultPromo);
-							if (defaultPromotion != null)
-							{
-								string arg = ((defaultPromotion.Intent == PromotionIntentCode.PercentOffCartTotal) ? $"{defaultPromotion.Percent:P0}" : $"{defaultPromotion.Price:C}");
-								MessagePopupViewController.ShowPromoCodeDiscountRestrictionWarning(string.Format(Resources.promo_code_discount_restriction_warning_title, arg), string.Format(Resources.apply_promo_amount_off_button, arg), delegate
-								{
-									doneAction();
-								}, delegate
-								{
-									doneAction();
-								}, delegate
-								{
-									PromotionService.Instance?.SetPromotion(defaultPromotion);
-									shoppingCartService.CurrentRentalShoppingCart.ValidateAndUpdatePromoCode();
-									shoppingCartService.CurrentRentalShoppingCart.UpdateServiceFee();
-									shoppingCartService.CurrentRentalShoppingCart.ClearLoyaltyPointsToBeEarned();
-									doneAction();
-								});
-								ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddViewEvent(new DiscountRestrictionEvent(promotion.Name, defaultPromotion.Name));
-							}
-							else
-							{
-								doneAction();
-							}
-							goto IL_0501;
+							string firstNightFreePromoCodeInvalidWarningMessage = GetFirstNightFreePromoCodeInvalidWarningMessage(promotion.ProductTypeId);
+							MessagePopupViewController.ShowFirstNightFreePromoCodeInvalidWarning(doneAction, doneAction, firstNightFreePromoCodeInvalidWarningMessage);
 						}
-					}
-					if (!promoCodeValidationInfo.IsCartValid && (promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing || promoCodeValidationInfo.IsCartInvalidBecauseOfFlashDeal))
-					{
-						MessagePopupViewController.ShowPromoCodeInvalidForCartItemsWarning(doneAction, doneAction, promoCodeValidationInfo.Title);
-					}
-					else if (promotion.Intent == PromotionIntentCode.RxGx)
-					{
-						if (!promoCodeValidationInfo.IsCartValid)
+						else if ((promotion.FormatIds?.Count ?? 0) > 0)
 						{
-							MessagePopupViewController.ShowRxGxPromoCodeInvalidWarning(doneAction, doneAction, promoCodeValidationInfo.Title + Environment.NewLine + Environment.NewLine + promoCodeValidationInfo.Message);
+							string firstNightFreePromoCodeInvalidWarningMessage2 = GetFirstNightFreePromoCodeInvalidWarningMessage(promotion.FormatIds);
+							MessagePopupViewController.ShowFirstNightFreePromoCodeInvalidWarning(doneAction, doneAction, firstNightFreePromoCodeInvalidWarningMessage2);
 						}
 						else
-						{
-							doneAction();
-						}
-					}
-					else if (promotion.Intent == PromotionIntentCode.FirstNightFreeItem && (promotion.CampaignTitles?.Titles?.Count ?? 0) <= 0)
-					{
-						if (!promoCodeValidationInfo.IsCartValid)
-						{
-							if (promotion.ProductTypeId.HasValue)
-							{
-								string firstNightFreePromoCodeInvalidWarningMessage = GetFirstNightFreePromoCodeInvalidWarningMessage(promotion.ProductTypeId);
-								MessagePopupViewController.ShowFirstNightFreePromoCodeInvalidWarning(doneAction, doneAction, firstNightFreePromoCodeInvalidWarningMessage);
-							}
-							else if ((promotion.FormatIds?.Count ?? 0) > 0)
-							{
-								string firstNightFreePromoCodeInvalidWarningMessage2 = GetFirstNightFreePromoCodeInvalidWarningMessage(promotion.FormatIds);
-								MessagePopupViewController.ShowFirstNightFreePromoCodeInvalidWarning(doneAction, doneAction, firstNightFreePromoCodeInvalidWarningMessage2);
-							}
-							else
-							{
-								MessagePopupViewController.ShowTitleLevelPromoCodeInvalidWarning(doneAction, doneAction);
-							}
-						}
-						else
-						{
-							doneAction();
-						}
-					}
-					else if ((promotion.CampaignTitles?.Titles?.Count ?? 0) > 0)
-					{
-						if (!promoCodeValidationInfo.IsCartValid)
 						{
 							MessagePopupViewController.ShowTitleLevelPromoCodeInvalidWarning(doneAction, doneAction);
-						}
-						else
-						{
-							doneAction();
 						}
 					}
 					else
@@ -154,9 +131,22 @@ public class PromotionFunctions
 						doneAction();
 					}
 				}
+				else if ((promotion.CampaignTitles?.Titles?.Count ?? 0) > 0)
+				{
+					if (!promoCodeValidationInfo.IsCartValid)
+					{
+						MessagePopupViewController.ShowTitleLevelPromoCodeInvalidWarning(doneAction, doneAction);
+					}
+					else
+					{
+						doneAction();
+					}
+				}
+				else
+				{
+					doneAction();
+				}
 			}
-			goto IL_0501;
-			IL_0501:
 			if (!promoCodeValidationResult.Success)
 			{
 				ServiceLocator.Instance.GetService<IPersonalizationService>()?.ClearSelectedPromo();

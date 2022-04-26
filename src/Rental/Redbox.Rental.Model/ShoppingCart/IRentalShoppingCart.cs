@@ -55,8 +55,6 @@ public interface IRentalShoppingCart
 
 	bool HasRedboxPlusFreeOneNightRentalSelected { get; }
 
-	bool HasDiscountRestriction { get; }
-
 	IServiceFee ServiceFee { get; set; }
 
 	bool ServiceFeeEnabled { get; }

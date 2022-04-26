@@ -766,6 +766,7 @@ disc rentals/month for the next 9 months = 18 in total*</value></data>
 in Redbox+</value></data>
   <data name="email_tag" xml:space="preserve"><value>EMAIL ADDRESS</value></data>
   <data name="genres_label" xml:space="preserve"><value>Category: </value></data>
+  <data name="promo_code_error_invalid_cart_items_flash_deal_message" xml:space="preserve"><value>Your item is discounted, but you can still use your promo code on a full-priced item</value></data>
   <data name="app_info_bullet_3" xml:space="preserve"><value>See how your Redbox Perks points are powering up</value></data>
   <data name="app_info_bullet_2" xml:space="preserve"><value>Load your library and watch On Demand
 (anywhere you want!)</value></data>
@@ -1021,6 +1022,7 @@ Please swipe a credit card or try again later.</value></data>
 to get special deals</value></data>
   <data name="mobile_faq_title_abe" xml:space="preserve"><value>Frequently Asked Questions</value></data>
   <data name="email_first_button_text" xml:space="preserve"><value>NO THANKS</value></data>
+  <data name="promo_code_error_invalid_cart_items_flash_deal_title" xml:space="preserve"><value>That promo code can’t be used on discounted items</value></data>
   <data name="perks_confirm_terms_text" xml:space="preserve"><value>By pressing 'Accept &amp; Sign Up' you are agreeing to the Rewards Terms, Redbox Terms of Use, Privacy Policy and also to get Redbox emails and special offers. Payment card required to use Redbox Perks Points at the Kiosk.</value></data>
   <data name="reservation_emv_tap_title" xml:space="preserve"><value>Tap to pick up your reservation</value></data>
   <data name="starz_offer_4_signup_confirmation_new_customer_sub_message" xml:space="preserve"><value>Note: Redbox 1-night disc rentals will be available after trial</value></data>
