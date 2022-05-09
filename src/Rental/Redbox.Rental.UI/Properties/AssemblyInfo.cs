@@ -14,5 +14,5 @@ using System.Windows;
 [assembly: AssemblyTrademark("")]
 [assembly: ComVisible(false)]
 [assembly: ThemeInfo(ResourceDictionaryLocation.None, ResourceDictionaryLocation.SourceAssembly)]
-[assembly: AssemblyFileVersion("1.73.0.27")]
-[assembly: AssemblyVersion("1.73.0.27")]
+[assembly: AssemblyFileVersion("1.73.0.28")]
+[assembly: AssemblyVersion("1.73.0.28")]

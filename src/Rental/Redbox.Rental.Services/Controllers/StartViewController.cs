@@ -704,26 +704,26 @@ public class StartViewController : BaseViewController
 		{
 			observableCollection.Add(new ClickableImageModel
 			{
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7206.2_May_KioskWelcome_Dog.jpg",
+				ClickAction = delegate
+				{
+					GoToTitleDetailsViewFromScreenSaver(215522L);
+				}
+			});
+			observableCollection.Add(new ClickableImageModel
+			{
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7206.1_May_KioskWelcome_Uncharted.jpg",
+				ClickAction = delegate
+				{
+					GoToTitleDetailsViewFromScreenSaver(215468L);
+				}
+			});
+			observableCollection.Add(new ClickableImageModel
+			{
 				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR-7131.1_KioskWelcome_SpidermanNWH.jpg",
 				ClickAction = delegate
 				{
 					GoToTitleDetailsViewFromScreenSaver(215139L);
-				}
-			});
-			observableCollection.Add(new ClickableImageModel
-			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR-7131.2_KioskWelcome_Sing2.jpg",
-				ClickAction = delegate
-				{
-					GoToTitleDetailsViewFromScreenSaver(215265L);
-				}
-			});
-			observableCollection.Add(new ClickableImageModel
-			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR-7131.3_KioskWelcome_Scream.jpg",
-				ClickAction = delegate
-				{
-					GoToTitleDetailsViewFromScreenSaver(215266L);
 				}
 			});
 		}
