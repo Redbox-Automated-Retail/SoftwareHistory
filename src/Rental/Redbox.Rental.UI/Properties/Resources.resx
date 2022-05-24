@@ -1414,7 +1414,7 @@ Thanks for your patience.</value></data>
   <data name="regular_checkout_swipe_title" xml:space="preserve"><value>Ready. Set.
 Swipe!</value></data>
   <data name="release_date_sort" xml:space="preserve"><value>by RELEASE DATE</value></data>
-  <data name="title_details_return_time_text" xml:space="preserve"><value>Return by {0} {1}. Nightly rates shown below.</value></data>
+  <data name="title_details_return_time_text" xml:space="preserve"><value>Return by {0} {1}. Nightly rates shown below. Reg rates apply on add'l nights.</value></data>
   <data name="offline_game_limit_exceeded_message_games" xml:space="preserve"><value>games</value></data>
   <data name="signed_in_empty_cart_quit_popup_message" xml:space="preserve"><value>Are you sure you want to sign out?</value></data>
   <data name="starz_offer_1_signup_confirmation_message" xml:space="preserve"><value>Look for your welcome email</value></data>

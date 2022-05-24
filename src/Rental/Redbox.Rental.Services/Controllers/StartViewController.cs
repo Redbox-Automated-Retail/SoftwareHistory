@@ -704,6 +704,11 @@ public class StartViewController : BaseViewController
 		{
 			observableCollection.Add(new ClickableImageModel
 			{
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/ENT_7194.16_MegaMovieSale_Kiosk_WelcomeScreen.jpg",
+				ClickAction = null
+			});
+			observableCollection.Add(new ClickableImageModel
+			{
 				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7206.2_May_KioskWelcome_Dog.jpg",
 				ClickAction = delegate
 				{
