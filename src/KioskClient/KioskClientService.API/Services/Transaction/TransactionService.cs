@@ -7,6 +7,7 @@ using KioskClientService.API.App;
 using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.TestData;
 using KioskClientService.API.Services.Transaction.API;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.Transaction;
@@ -104,7 +105,11 @@ public class TransactionService : ITransactionService
 		}
 	}
 
+	private const int _cacheExpiry = 30;
+
 	private readonly ITransactionApiClient _transactionClient;
+
+	private readonly IMemoryCache _cache;
 
 	private readonly ILogger<ITransactionService> _logger;
 
@@ -112,13 +117,18 @@ public class TransactionService : ITransactionService
 
 	private readonly ITestDataService _testDataService;
 
+	private readonly string _promoCheckCachePrefix = "[RPC]";
+
+	private readonly TimeSpan _promoCheckCacheMinutes = TimeSpan.FromMinutes(30.0);
+
 	private static readonly List<string> _subscriptionErrorCodes = new List<string> { "(A030)", "(A031)", "(A033)", "(A034)" };
 
-	public TransactionService(IApplicationConfiguration applicationConfiguration, ITestDataService testDataService, ITransactionApiClient client, ILogger<ITransactionService> logger)
+	public TransactionService(IApplicationConfiguration applicationConfiguration, ITestDataService testDataService, IMemoryCache cache, ITransactionApiClient client, ILogger<ITransactionService> logger)
 	{
 		_applicationConfiguration = applicationConfiguration;
 		_testDataService = testDataService;
 		_transactionClient = client;
+		_cache = cache;
 		_logger = logger;
 	}
 
@@ -306,6 +316,85 @@ public class TransactionService : ITransactionService
 			LogResponseErrors(aPIResponse);
 		}
 		return aPIResponse;
+	}
+
+	public async Task<ReturnPromoCheckResponse> ReturnPromoCheck(string barcode)
+	{
+		ReturnPromoCheckResponse result = new ReturnPromoCheckResponse
+		{
+			StatusCode = HttpStatusCode.OK,
+			IsLastDisc = false
+		};
+		if (!_cache.TryGetValue<ReturnPromoCheckApiResponse>(ToRpcKey(barcode), out var value) || value == null)
+		{
+			value = await CallReturnPromoCheck(barcode);
+			if (value == null || value.StatusCode != HttpStatusCode.OK)
+			{
+				result.StatusCode = value.StatusCode;
+				result.Promotion = null;
+				return result;
+			}
+		}
+		else
+		{
+			_logger.LogDebugWithSource("Promo check response for barcode " + barcode + " retrieved from cache", "ReturnPromoCheck");
+		}
+		if (value.Discs.Any((DiscReturnStatus d) => !d.IsReturned && d.Barcode != barcode))
+		{
+			_logger.LogDebugWithSource("Not all discs are returned, returning null promotion.", "ReturnPromoCheck");
+			foreach (DiscReturnStatus disc in value.Discs)
+			{
+				if (disc.Barcode == barcode)
+				{
+					disc.IsReturned = true;
+				}
+			}
+			foreach (DiscReturnStatus disc2 in value.Discs)
+			{
+				_cache.Set(ToRpcKey(disc2.Barcode), value, _promoCheckCacheMinutes);
+			}
+			result.Promotion = null;
+		}
+		else
+		{
+			result.Promotion = value.Promotion;
+			result.IsLastDisc = true;
+		}
+		return result;
+	}
+
+	private string ToRpcKey(string key)
+	{
+		return _promoCheckCachePrefix + " " + key;
+	}
+
+	private async Task<ReturnPromoCheckApiResponse> CallReturnPromoCheck(string barcode)
+	{
+		APIResponse<ReturnPromoCheckApiResponse> aPIResponse = await _transactionClient.ReturnPromoCheck(barcode);
+		ReturnPromoCheckApiResponse returnPromoCheckApiResponse = aPIResponse.Response;
+		if (!aPIResponse.IsSuccessStatusCode)
+		{
+			string text = $"ReturnPromoCheck was unsuccessful. Status Code: {aPIResponse.StatusCode}";
+			if (returnPromoCheckApiResponse != null)
+			{
+				returnPromoCheckApiResponse.StatusCode = aPIResponse.StatusCode;
+				text = text + " Message: " + returnPromoCheckApiResponse.Error;
+			}
+			else
+			{
+				returnPromoCheckApiResponse = new ReturnPromoCheckApiResponse
+				{
+					StatusCode = aPIResponse.StatusCode
+				};
+				if ((aPIResponse.Errors?.Count ?? 0) > 0)
+				{
+					returnPromoCheckApiResponse.Error = aPIResponse.Errors.First().Message;
+				}
+			}
+			_logger.LogErrorWithSource(text, "CallReturnPromoCheck");
+			LogResponseErrors(aPIResponse);
+		}
+		return returnPromoCheckApiResponse;
 	}
 
 	private async Task<AuthorizeResponse> GetTestDataAuthorizeResponse(AuthorizeRequest authorizeRequest)

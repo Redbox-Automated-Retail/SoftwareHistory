@@ -91,7 +91,15 @@ public static class DataModels
 
 		public override object Scrub()
 		{
-			return this.ToJsonIndented();
+			return new
+			{
+				CreatedOn = CreatedOn,
+				CreatedOnLocal = CreatedOnLocal,
+				KioskEventsData = KioskEventsData.EllipseAt(30),
+				MessageId = base.MessageId,
+				KioskId = base.KioskId,
+				SendToTable = base.SendToTable
+			}.ToJsonIndented();
 		}
 	}
 

@@ -26,4 +26,6 @@ public interface ITransactionService
 	Task<APIResponse<GetCustomerOffersResponse>> GetCustomerOffers(GetCustomerOffersRequest request);
 
 	Task<APIResponse<PickupValidationResponse>> PickupValidation(PickupValidationRequest request);
+
+	Task<ReturnPromoCheckResponse> ReturnPromoCheck(string barcode);
 }

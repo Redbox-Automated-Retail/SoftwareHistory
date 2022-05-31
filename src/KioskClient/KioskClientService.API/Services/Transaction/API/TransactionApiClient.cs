@@ -113,4 +113,11 @@ public class TransactionApiClient : ITransactionApiClient
 	{
 		return await _httpService.SendRequest<PickupValidationResponse>(_applicationConfiguration.TransactionApi.Url, "api/reservation/validatepickup", request, HttpMethod.Post, _requestHeaders);
 	}
+
+	public async Task<APIResponse<ReturnPromoCheckApiResponse>> ReturnPromoCheck(string barcode)
+	{
+		string endpoint = "api/transaction/return/" + barcode + "/promocheck";
+		_httpService.Timeout = _applicationConfiguration.TransactionApi.ReturnPromoCheckTimeout ?? 6000;
+		return await _httpService.SendRequest<ReturnPromoCheckApiResponse>(_applicationConfiguration.TransactionApi.Url, endpoint, null, HttpMethod.Get, _requestHeaders);
+	}
 }

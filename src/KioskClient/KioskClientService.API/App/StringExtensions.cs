@@ -36,4 +36,9 @@ public static class StringExtensions
 	{
 		return Convert.FromBase64String(source);
 	}
+
+	public static string EllipseAt(this string source, int length)
+	{
+		return source.Substring(0, length) + "...";
+	}
 }

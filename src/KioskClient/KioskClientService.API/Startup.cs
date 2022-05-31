@@ -152,6 +152,7 @@ public class Startup
 		services.AddSyncPlanogramsJob();
 		services.AddLoyaltyService();
 		services.AddDataService();
+		services.AddMemoryCache();
 	}
 
 	public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime, ILogger<Startup> logger, IApplicationSettings applicationSettings, IApplicationConfiguration applicationConfiguration, IConfigurationService configuration, IStoreService store, IProductGroupSortOrderService productGroupSortOrderService, ISubscriptionService subscriptionService)
@@ -187,6 +188,7 @@ public class Startup
 			logger.LogInformation("Scheduling SubscriptionJob at */5");
 			logger.LogInformation("Scheduling PricingJob at */5");
 			logger.LogInformation("Scheduling SyncPlanogramsJob at */5");
+			logger.LogInformation("Scheduling ExpireMemoryDataCacheJob at */5");
 		});
 		app.UseMvc();
 		LogAppSettings(logger, applicationSettings, applicationConfiguration);

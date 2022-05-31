@@ -50,7 +50,7 @@ public class MoreLikeThisService : IMoreLikeThisService
 
 	public async Task RefreshMoreLikeThisAsync(List<long> productGroupIds)
 	{
-		_logger.LogInfoWithSource($"Total received productGroupIds: {productGroupIds.Count}. Received items: {string.Join(',', productGroupIds)}", "RefreshMoreLikeThisAsync");
+		_logger.LogInfoWithSource($"Total received productGroupIds: {productGroupIds.Count}.", "RefreshMoreLikeThisAsync");
 		if (_moreLikeThisData.FileContentExpireTime < DateTime.Now || _moreLikeThisCache.TotalCount() < 1)
 		{
 			_logger.LogInfoWithSource($"FileContentExpireTime was {_moreLikeThisData.FileContentExpireTime.Date}. FullRefresh time has arrived, will update whole morelikethis data file.", "RefreshMoreLikeThisAsync");

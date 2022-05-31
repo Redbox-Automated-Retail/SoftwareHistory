@@ -12,6 +12,12 @@ public static class LoggerExtensions
 		logger.LogInformation(name + "." + memberName + " -> " + message);
 	}
 
+	public static void LogDebugWithSource<T>(this ILogger<T> logger, string message, [CallerMemberName] string memberName = "")
+	{
+		string name = typeof(T).Name;
+		logger.LogDebug(name + "." + memberName + " -> " + message);
+	}
+
 	public static void LogErrorWithSource<T>(this ILogger<T> logger, Exception ex, string message, [CallerMemberName] string memberName = "")
 	{
 		string name = typeof(T).Name;

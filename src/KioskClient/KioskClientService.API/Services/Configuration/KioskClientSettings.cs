@@ -16,6 +16,8 @@ public static class KioskClientSettings
 
 	public const string TransactionApiKey = "TransactionApiKey";
 
+	public const string ReturnPromoCheckTimeout = "ReturnPromoCheckTimeout";
+
 	public const string PricingActive = "PricingActive";
 
 	public const string PlanogramSyncEnabled = "PlanogramSyncEnabled";

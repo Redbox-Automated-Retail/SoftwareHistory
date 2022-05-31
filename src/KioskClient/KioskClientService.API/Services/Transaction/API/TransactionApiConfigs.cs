@@ -8,6 +8,8 @@ public class TransactionApiConfigs : KioskCloudClientConfiguration
 
 	public int? Timeout { get; set; }
 
+	public int? ReturnPromoCheckTimeout { get; set; }
+
 	public TransactionApiConfigs()
 	{
 		base.AuthHeader = "x-api-key";

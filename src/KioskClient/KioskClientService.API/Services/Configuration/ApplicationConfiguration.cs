@@ -143,7 +143,8 @@ public class ApplicationConfiguration : IApplicationConfiguration
 	{
 		Url = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "TransactionApiUrl", null),
 		Timeout = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "TransactionApiTimeout", 60000),
-		APIKey = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "TransactionApiKey", null)
+		APIKey = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "TransactionApiKey", null),
+		ReturnPromoCheckTimeout = _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "ReturnPromoCheckTimeout", 8000)
 	};
 
 	public bool PricingActive => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientDefault, "PricingActive", defaultValue: true);

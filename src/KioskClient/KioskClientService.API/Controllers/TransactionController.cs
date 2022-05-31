@@ -199,4 +199,13 @@ public class TransactionController : ControllerBase
 		}
 		return aPIResponse.Response.ToObjectResult();
 	}
+
+	[Route("return/{barcode}/promocheck")]
+	[HttpGet]
+	[ProducesResponseType(typeof(ReturnPromoCheckResponse), 200)]
+	[ProducesResponseType(typeof(ReturnPromoCheckResponse), 500)]
+	public async Task<ActionResult<ReturnPromoCheckResponse>> ReturnPromoCheck(string barcode)
+	{
+		return (await _transactionService.ReturnPromoCheck(barcode)).ToObjectResult();
+	}
 }

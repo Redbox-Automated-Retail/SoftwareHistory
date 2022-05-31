@@ -28,9 +28,16 @@ public class Program
 			Directory.SetCurrentDirectory(directoryName);
 		}
 		ApplicationControl.IsService = flag;
-		IConfiguration configuration = Configuration;
-		Logger logger = new LoggerConfiguration().ReadFrom.Configuration(configuration).Enrich.WithThreadId().Enrich.FromLogContext().WriteTo.Console().CreateLogger();
-		Log.Logger = logger;
+		try
+		{
+			Logger logger = new LoggerConfiguration().ReadFrom.Configuration(Configuration).Enrich.WithThreadId().Enrich.FromLogContext().WriteTo.Console().CreateLogger();
+			Log.Logger = logger;
+		}
+		catch (Exception arg)
+		{
+			Console.WriteLine($"Encountered unhandled exception while configuring logger. Exception -> {arg}");
+			return;
+		}
 		try
 		{
 			Log.Information("------------------------------------ Starting web host -------------------------------------");
@@ -39,12 +46,12 @@ public class Program
 			if (!flag)
 			{
 				Log.Information("Program.Main - Starting as a console application");
-				CreateWebHostBuilder(args, configuration).Build().Run();
+				CreateWebHostBuilder(args).Build().Run();
 			}
 			else
 			{
 				Log.Information("Program.Main - Starting as a Windows Service");
-				CreateWebHostBuilder(args, configuration).Build().RunAsDeviceServiceService();
+				CreateWebHostBuilder(args).Build().RunAsDeviceServiceService();
 			}
 		}
 		catch (Exception exception)
@@ -58,35 +65,28 @@ public class Program
 		}
 	}
 
-	public static IWebHostBuilder CreateWebHostBuilder(string[] args, IConfiguration config = null)
+	public static IWebHostBuilder CreateWebHostBuilder(string[] args)
 	{
-		IWebHostBuilder webHostBuilder = WebHost.CreateDefaultBuilder(args).UseContentRoot(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)).ConfigureAppConfiguration(delegate(WebHostBuilderContext builder, IConfigurationBuilder conf)
-		{
-			GetConfiguration(conf);
-		})
+		Uri serviceUri = GetServiceUri(Configuration);
+		Log.Information($"CreateWebHostBuilder: url={serviceUri.AbsoluteUri}  port={serviceUri.Port}");
+		return WebHost.CreateDefaultBuilder(args).UseContentRoot(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName)).UseUrls(serviceUri.AbsoluteUri)
+			.UseSetting("Port", serviceUri.Port.ToString())
 			.UseSerilog()
+			.ConfigureAppConfiguration(delegate(WebHostBuilderContext builder, IConfigurationBuilder conf)
+			{
+				GetConfiguration(conf, builder);
+			})
 			.UseStartup<Startup>();
-		if (config != null)
-		{
-			Uri serviceUri = GetServiceUri(config);
-			Log.Information($"CreateWebHostBuilder: url={serviceUri.AbsoluteUri}  port={serviceUri.Port}");
-			webHostBuilder.UseUrls(serviceUri.AbsoluteUri).UseSetting("Port", serviceUri.Port.ToString());
-		}
-		return webHostBuilder;
 	}
 
-	public static Uri GetServiceUri(IConfiguration config)
+	private static Uri GetServiceUri(IConfiguration config)
 	{
-		return new Uri(config.GetValue<string>("AppSettings:ServiceUrl"));
+		return new Uri(config.GetValue("AppSettings:ServiceUrl", string.Empty));
 	}
 
-	private static IConfigurationBuilder GetConfiguration(IConfigurationBuilder builder)
+	private static IConfigurationBuilder GetConfiguration(IConfigurationBuilder builder, WebHostBuilderContext webHostBuilderContext = null)
 	{
-		builder.SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddJsonFile(KioskConfigurationConstants.ConfigurationFilePath, optional: true, reloadOnChange: true);
-		if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null)
-		{
-			builder.AddJsonFile("appsettings." + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") + ".json", optional: true, reloadOnChange: true);
-		}
-		return builder;
+		return builder.SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddJsonFile(KioskConfigurationConstants.ConfigurationFilePath, optional: true, reloadOnChange: true)
+			.AddJsonFile("appsettings." + (webHostBuilderContext?.HostingEnvironment?.EnvironmentName ?? "Production") + ".json", optional: true, reloadOnChange: true);
 	}
 }
