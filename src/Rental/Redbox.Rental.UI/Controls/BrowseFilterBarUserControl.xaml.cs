@@ -1,16 +1,17 @@
+using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
-using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Redbox.Controls;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.UI.Models;
-using Redbox.Rental.UI.Properties;
 
 namespace Redbox.Rental.UI.Controls;
 
@@ -19,6 +20,8 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 	public IActor Actor { get; set; }
 
 	private FilterBarModel FilterBarModel => base.DataContext as FilterBarModel;
+
+	private static bool IsADAMode => ServiceLocator.Instance.GetService<IApplicationState>()?.IsADAAccessible ?? false;
 
 	public event WPFHitHandler OnWPFHit;
 
@@ -58,20 +61,22 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 		{
 			return;
 		}
+		AZFilterButtonContainer.Children.Clear();
 		FilterButtonContainer.Children.Clear();
 		if (filterBarModel.Filters == null)
 		{
 			return;
 		}
-		bool flag = ServiceLocator.Instance.GetService<IConfiguration>()?.ShowExpandedFormatButtonsNewText ?? true;
+		ServiceLocator.Instance.GetService<IConfiguration>();
 		ITheme theme = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
-		double num = ((filterBarModel.Filters.Count > 6) ? 8 : 10);
+		int num = filterBarModel.Filters.Count((BrowseFilter browseFilter) => browseFilter.IsVisible) + ((filterBarModel.FormatFilterButtonVisibility == Visibility.Visible) ? 1 : 0) + ((filterBarModel.PriceRangeFilterButtonVisibility == Visibility.Visible) ? 1 : 0);
+		FilterButtonPanel.Margin = new Thickness(0.0, 0.0, (num <= 4) ? 178 : 0, 0.0);
 		foreach (BrowseFilter filter in filterBarModel.Filters)
 		{
 			RoundedButton roundedButton = new RoundedButton
 			{
 				DataContext = filter,
-				Style = GetStyle(this, "classic_rubine_radio_button_style"),
+				Style = GetStyle(this, "purple_with_purple_border_button_style"),
 				CornerRadius = 16.0,
 				MinWidth = filter.Width,
 				Height = filter.Height,
@@ -92,7 +97,7 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 			{
 				Text = filter.Text.ToUpper(),
 				Style = GetStyle(this, "font_montserrat_extrabold_14"),
-				Margin = new Thickness(num, 0.0, num, 0.0),
+				Margin = new Thickness(10.0, 0.0, 10.0, 0.0),
 				VerticalAlignment = VerticalAlignment.Center
 			};
 			textBlock.SetBinding(TextBlock.TextProperty, new Binding
@@ -100,28 +105,60 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 				Path = new PropertyPath("Text"),
 				Source = filter
 			});
-			if ((filter.ButtonType == BrowseFilterType._4KUHD) & flag)
+			if (filter.ButtonType == BrowseFilterType.AtoZ)
 			{
 				StackPanel stackPanel = new StackPanel
 				{
 					Orientation = Orientation.Horizontal
 				};
-				stackPanel.Children.Add(textBlock);
-				stackPanel.Children.Add(new TextBlock
+				if (!IsADAMode)
 				{
-					Text = Redbox.Rental.UI.Properties.Resources.format_button_new_text,
-					Style = GetStyle(this, "font_montserrat_regular_10"),
-					VerticalAlignment = VerticalAlignment.Center,
-					Padding = new Thickness(4.0, 4.0, 4.0, 4.0),
-					Background = (filter.IsSelected ? ((Brush)FindResource("RubineRedBrush")) : ((Brush)FindResource("WarmPurpleBrush")))
-				});
+					stackPanel.Children.Add(new Image
+					{
+						Source = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/magnifying-glass-icon.png")),
+						Width = 17.0,
+						Height = 17.0
+					});
+				}
+				stackPanel.Children.Add(textBlock);
 				roundedButton.Content = stackPanel;
+				StackPanel stackPanel2 = new StackPanel
+				{
+					Orientation = Orientation.Horizontal
+				};
+				stackPanel2.Children.Add(roundedButton);
+				if (filter.IsSelected && filter.IsVisible)
+				{
+					stackPanel2.Children.Add(new Image
+					{
+						Source = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-sm.png")),
+						Width = 19.0,
+						Height = 18.0,
+						Margin = new Thickness(-11.0, -15.0, -9.0, 0.0)
+					});
+				}
+				AZFilterButtonContainer.Children.Add(stackPanel2);
 			}
 			else
 			{
 				roundedButton.Content = textBlock;
+				StackPanel stackPanel3 = new StackPanel
+				{
+					Orientation = Orientation.Horizontal
+				};
+				stackPanel3.Children.Add(roundedButton);
+				if (filter.IsSelected && filter.IsVisible)
+				{
+					stackPanel3.Children.Add(new Image
+					{
+						Source = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-sm.png")),
+						Width = 19.0,
+						Height = 18.0,
+						Margin = new Thickness(-11.0, -15.0, -9.0, 0.0)
+					});
+				}
+				FilterButtonContainer.Children.Add(stackPanel3);
 			}
-			FilterButtonContainer.Children.Add(roundedButton);
 			theme?.SetStyle(roundedButton);
 		}
 	}

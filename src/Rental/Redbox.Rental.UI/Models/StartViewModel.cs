@@ -1048,6 +1048,10 @@ public class StartViewModel : DependencyObject
 
 	public IAdImpression AdImpression { get; set; }
 
+	public DateTime CreatedDateTime { get; set; } = DateTime.Now;
+
+	public TimeSpan Age => DateTime.Now - CreatedDateTime;
+
 	public event Action OnRentMoviesButtonClicked;
 
 	public event Action OnRentOrBuyGameButtonClicked;
@@ -1076,6 +1080,8 @@ public class StartViewModel : DependencyObject
 
 	public event Action OnExitBurnInView;
 
+	public event Action OnExitTestScreenSaver;
+
 	public event Action OnBannerClicked;
 
 	public void ProcessBannerClicked()
@@ -1086,6 +1092,11 @@ public class StartViewModel : DependencyObject
 	public void ProcessExitBurnInView()
 	{
 		OnExitBurnInView?.Invoke();
+	}
+
+	public void ProcessExitTestScreenSaver()
+	{
+		OnExitTestScreenSaver?.Invoke();
 	}
 
 	public void ProcessToggleLanguage()

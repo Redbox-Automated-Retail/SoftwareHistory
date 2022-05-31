@@ -217,8 +217,6 @@ public class BrowseState : IBrowseState
 
 	public bool NeedMarketingConfirm { get; set; }
 
-	public bool ExpandedFormatButtonsShown { get; set; }
-
 	public bool EnableBrowseMessagePopup { get; set; }
 
 	public bool EnableStarzOffer { get; set; }

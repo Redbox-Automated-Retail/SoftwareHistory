@@ -32,18 +32,19 @@
       </Redbox:RoundedButton>
       <TextBlock Name="FilterBarText" Margin="0,10,0,10" VerticalAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Style="{StaticResource font_montserrat_extrabold_14}" Text="{Binding Path=FilterBarText, FallbackValue=Filter Bar Text Goes here...}" Visibility="{Binding Path=FilterBarTextVisibility, FallbackValue=Collapsed}" />
       <StackPanel Name="FilterButtonPanel" VerticalAlignment="Center" Orientation="Horizontal" HorizontalAlignment="Center">
-        <Redbox:RoundedButton Name="FormatFilterButton" Command="{x:Static localbase:Commands.FormatFilterPopupCommand}" Height="32" Width="Auto" MinWidth="96" DockPanel.Dock="Right" Style="{Binding Path=FormatFilterButtonStyle, FallbackValue={StaticResource classic_rubine_radio_button_style}}" Margin="{Binding FilterMargin}" Visibility="{Binding Path=FormatFilterButtonVisibility, FallbackValue=Visible}">
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Name="FormatFilterButtonText" Style="{StaticResource font_montserrat_extrabold_14}" Margin="15,0,0,0" Text="{Binding Path=FormatFilterButtonText, FallbackValue=FORMAT}" />
-            <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/chevron.png" Height="8" Margin="5,0,15,0" />
-          </StackPanel>
-        </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="PriceRangeFilterButton" Command="{x:Static localbase:Commands.ForSaleFilterPopupCommand}" Height="32" Width="Auto" MinWidth="80" DockPanel.Dock="Right" Style="{Binding Path=PriceRangeFilterButtonStyle, FallbackValue={StaticResource classic_rubine_radio_button_style}}" Margin="{Binding FilterMargin}" Visibility="{Binding Path=PriceRangeFilterButtonVisibility, FallbackValue=Visible}">
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Name="PriceRangeFilterButtonText" Style="{StaticResource font_montserrat_extrabold_14}" Margin="15,0,0,0" Text="{Binding Path=PriceRangeFilterButtonText, FallbackValue=FOR SALE}" />
-            <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/chevron.png" Height="8" Margin="5,0,15,0" />
-          </StackPanel>
-        </Redbox:RoundedButton>
+        <StackPanel Name="AZFilterButtonContainer" VerticalAlignment="Center" Orientation="Horizontal" HorizontalAlignment="Center" />
+        <StackPanel Name="FormatFilterButtonStackPanel" Orientation="Horizontal">
+          <Redbox:RoundedButton Name="FormatFilterButton" Command="{x:Static localbase:Commands.FormatFilterPopupCommand}" Height="32" Width="Auto" MinWidth="98" DockPanel.Dock="Right" Style="{Binding Path=FormatFilterButtonStyle, FallbackValue={StaticResource purple_with_purple_border_button_style}}" Margin="{Binding FilterMargin}" Visibility="{Binding Path=FormatFilterButtonVisibility, FallbackValue=Visible}">
+            <TextBlock Name="FormatFilterButtonText" Style="{StaticResource font_montserrat_extrabold_14}" Margin="10,0,10,0" Text="{Binding Path=FormatFilterButtonText, FallbackValue=FORMAT &gt;}" />
+          </Redbox:RoundedButton>
+          <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-sm.png" Width="19" Height="18" Margin="-11,-15,-9,0" Visibility="{Binding Path=FormatFilterButtonCheckmarkVisibility, FallbackValue=Collapsed}" />
+        </StackPanel>
+        <StackPanel Name="PriceRangeFilterButtonStackPanel" Orientation="Horizontal">
+          <Redbox:RoundedButton Name="PriceRangeFilterButton" Command="{x:Static localbase:Commands.ForSaleFilterPopupCommand}" Height="32" Width="Auto" MinWidth="80" DockPanel.Dock="Right" Style="{Binding Path=PriceRangeFilterButtonStyle, FallbackValue={StaticResource purple_with_purple_border_button_style}}" Margin="{Binding FilterMargin}" Visibility="{Binding Path=PriceRangeFilterButtonVisibility, FallbackValue=Visible}">
+            <TextBlock Name="PriceRangeFilterButtonText" Style="{StaticResource font_montserrat_extrabold_14}" Margin="10,0,10,0" Text="{Binding Path=PriceRangeFilterButtonText, FallbackValue=PRICE &gt;}" />
+          </Redbox:RoundedButton>
+          <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-sm.png" Width="19" Height="18" Margin="-11,-15,-9,0" Visibility="{Binding Path=PriceRangeFilterButtonCheckmarkVisibility, FallbackValue=Collapsed}" />
+        </StackPanel>
         <StackPanel Name="FilterButtonContainer" VerticalAlignment="Center" Orientation="Horizontal" HorizontalAlignment="Center" />
       </StackPanel>
     </DockPanel>

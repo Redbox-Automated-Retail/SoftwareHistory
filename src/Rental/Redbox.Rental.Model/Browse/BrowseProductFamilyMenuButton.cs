@@ -10,9 +10,8 @@ public class BrowseProductFamilyMenuButton : BrowseMenuButton
 
 	public BrowseProductFamilyMenuButton()
 	{
-		base.Height = 74;
-		base.Width = 144;
-		base.FixedWidth = true;
-		base.TextStyleName = "font_montserrat_bold_13";
+		base.Height = 56;
+		base.Width = 184;
+		base.TextStyleName = "font_montserrat_bold_14";
 	}
 }

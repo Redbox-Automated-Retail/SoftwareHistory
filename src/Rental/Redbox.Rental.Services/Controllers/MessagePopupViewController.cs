@@ -663,6 +663,23 @@ public class MessagePopupViewController : BaseViewController
 		});
 	}
 
+	public static void ShowMessagePopupViewReturnSuccessWithBrowse(Action timeOutAction, Action backAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing Return Success with Browse message popup");
+		ShowGenericDialogMessage3(new GenericDialogParameters
+		{
+			CultureSpecificTitle = Resources.return_success_with_browse_popup_title,
+			CultureSpecificMessage = Resources.return_success_with_browse_popup_message,
+			CultureSpecificCancelButtonText = Resources.close_button.ToUpper(),
+			CultureSpecificContinueButtonText = Resources.see_new_movies_button_text.ToUpper(),
+			TimeOutAction = timeOutAction,
+			BackAction = backAction,
+			ContinueAction = continueAction,
+			ViewName = "ReturnSuccessWithBrowseMessagePopupView",
+			Context = new List<string> { "ReturnSuccessWithBrowseMessagePopupView" }
+		});
+	}
+
 	public static void ShowMessageCartFull(Action timeoutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Cart Full message popup");
@@ -672,19 +689,48 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowMessagePopupViewHardwareError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Hardware Error message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter((string)null, Resources.hardware_error_message, (string)null, Resources.continue_button, GetDefaultMessageTimeOut(), (Action)null, continueAction, timeOutAction, "ViewHardwareError", (string)null));
+		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		{
+			CultureSpecificMessage = Resources.hardware_error_message,
+			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(),
+			ContinueAction = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "ViewHardwareError",
+			Context = new List<string> { "hardwareError" }
+		});
 	}
 
 	public static void ShowMessagePopupViewReturnBackwardInserted(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Return Backward Inserted message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.return_error, Resources.backward_insert_error, (string)null, Resources.continue_button, GetDefaultMessageTimeOut(), (Action)null, continueAction, timeOutAction, "ViewReturnBackwardInserted", (string)null));
+		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		{
+			CultureSpecificTitle = Resources.backward_insert_error_title,
+			CultureSpecificMessage = Resources.backward_insert_error,
+			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(),
+			ContinueAction = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "ViewReturnBackwardInserted",
+			Context = new List<string> { "returnBackwardInserted" }
+		});
 	}
 
 	public static void ShowMessagePopupViewReturnUnrecognizedBarcode(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Return Unrecognized Barcode message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.oops, Resources.unrecognized_barcode_returned_message, (string)null, Resources.continue_button, GetDefaultMessageTimeOut(), (Action)null, continueAction, timeOutAction, "ViewReturnUnrecognizedBarcode", (string)null));
+		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		{
+			CultureSpecificTitle = Resources.oops,
+			CultureSpecificMessage = Resources.unrecognized_barcode_returned_message,
+			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(),
+			ContinueAction = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "ViewReturnUnrecognizedBarcode",
+			Context = new List<string> { "returnUnrecognizedBarcode" }
+		});
 	}
 
 	public static void ShowMessagePopupViewCardNotRecognized(Action timeOutAction, Action continueAction)
@@ -945,7 +991,17 @@ public class MessagePopupViewController : BaseViewController
 	{
 		OrchestrationService.SetCurrentUICulture();
 		LogHelper.Instance.Log("Showing machine full warning");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.machine_full_title, null, Resources.machine_full_message, null, null, null, null, Resources.okay_button, null, null, null, null, null, null, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "MachineFullWarning", null, null, default(Thickness), "machineFullWarning"));
+		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		{
+			CultureSpecificTitle = Resources.machine_full_title,
+			CultureSpecificMessage = Resources.machine_full_message,
+			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(),
+			ContinueAction = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "MachineFullWarning",
+			Context = new List<string> { "machineFullWarning" }
+		});
 	}
 
 	public static void ShowBrowseMessagePopupLearnMorePopup(Action timeOutAction, Action continueAction)

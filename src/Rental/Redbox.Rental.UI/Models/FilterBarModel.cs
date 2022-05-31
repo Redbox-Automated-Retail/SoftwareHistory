@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using Redbox.Core;
+using Redbox.Rental.Model;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
 
@@ -28,6 +30,8 @@ public class FilterBarModel : DependencyObject
 
 	public static readonly DependencyProperty FormatFilterButtonVisibilityProperty = DependencyProperty.Register("FormatFilterButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
+	public static readonly DependencyProperty FormatFilterButtonCheckmarkVisibilityProperty = DependencyProperty.Register("FormatFilterButtonCheckmarkVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
 	public static readonly DependencyProperty FormatFilterButtonTextProperty = DependencyProperty.Register("FormatFilterButtonText", typeof(string), typeof(FilterBarModel), new FrameworkPropertyMetadata(string.Empty));
 
 	public static readonly DependencyProperty FormatFilterButtonStyleProperty = DependencyProperty.Register("FormatFilterButtonStyle", typeof(Style), typeof(FilterBarModel), new FrameworkPropertyMetadata(null));
@@ -35,6 +39,8 @@ public class FilterBarModel : DependencyObject
 	public static readonly DependencyProperty SelectedFormatProperty = DependencyProperty.Register("SelectedFormat", typeof(TitleType?), typeof(FilterBarModel), new FrameworkPropertyMetadata(null, SelectedFormatChanged));
 
 	public static readonly DependencyProperty PriceRangeFilterButtonVisibilityProperty = DependencyProperty.Register("PriceRangeFilterButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty PriceRangeFilterButtonCheckmarkVisibilityProperty = DependencyProperty.Register("PriceRangeFilterButtonCheckmarkVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty PriceRangeFilterButtonTextProperty = DependencyProperty.Register("PriceRangeFilterButtonText", typeof(string), typeof(FilterBarModel), new FrameworkPropertyMetadata(string.Empty));
 
@@ -176,6 +182,21 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
+	public Visibility FormatFilterButtonCheckmarkVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(FormatFilterButtonCheckmarkVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(FormatFilterButtonCheckmarkVisibilityProperty, value);
+			});
+		}
+	}
+
 	public Visibility FilterBarTextVisibility
 	{
 		get
@@ -266,6 +287,21 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
+	public Visibility PriceRangeFilterButtonCheckmarkVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PriceRangeFilterButtonCheckmarkVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PriceRangeFilterButtonCheckmarkVisibilityProperty, value);
+			});
+		}
+	}
+
 	public Style PriceRangeFilterButtonStyle
 	{
 		get
@@ -310,6 +346,8 @@ public class FilterBarModel : DependencyObject
 			});
 		}
 	}
+
+	private static bool IsADAMode => ServiceLocator.Instance.GetService<IApplicationState>()?.IsADAAccessible ?? false;
 
 	public event Action OnStartOverButtonClicked;
 
@@ -388,11 +426,13 @@ public class FilterBarModel : DependencyObject
 			{
 				filterBarModel.PriceRangeFilterButtonText = browsePriceRangeParameter.buttonText;
 				filterBarModel.PriceRangeFilterButtonStyle = filterBarModel.FilterButtonSelectedStyle;
+				filterBarModel.PriceRangeFilterButtonCheckmarkVisibility = ((!IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 			}
 			else
 			{
-				filterBarModel.PriceRangeFilterButtonStyle = filterBarModel.FilterButtonUnselectedStyle;
 				filterBarModel.PriceRangeFilterButtonText = filterBarModel.PriceRangeButtonDefaultText;
+				filterBarModel.PriceRangeFilterButtonStyle = filterBarModel.FilterButtonUnselectedStyle;
+				filterBarModel.PriceRangeFilterButtonCheckmarkVisibility = Visibility.Collapsed;
 			}
 		}
 	}
@@ -407,6 +447,7 @@ public class FilterBarModel : DependencyObject
 			{
 				filterBarModel.FormatFilterButtonText = filterBarModel.FormatFilterButtonStrings[titleType];
 				filterBarModel.FormatFilterButtonStyle = ((titleType == TitleType.All) ? filterBarModel.FilterButtonUnselectedStyle : filterBarModel.FilterButtonSelectedStyle);
+				filterBarModel.FormatFilterButtonCheckmarkVisibility = ((titleType == TitleType.All) ? Visibility.Collapsed : Visibility.Visible);
 			}
 		}
 	}

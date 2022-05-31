@@ -101,13 +101,18 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 
 	private static void ModelsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
-		if (!(d is CrossfadeImageRotatorUserControl { ImageModels: not null } crossfadeImageRotatorUserControl))
+		(d as CrossfadeImageRotatorUserControl).InitializeModels();
+	}
+
+	public void InitializeModels()
+	{
+		if (ImageModels == null)
 		{
 			return;
 		}
-		for (int i = 0; i < crossfadeImageRotatorUserControl.ImageModels.Count; i++)
+		for (int i = 0; i < ImageModels.Count; i++)
 		{
-			ClickableImageModel clickableImageModel = crossfadeImageRotatorUserControl.ImageModels[i];
+			ClickableImageModel clickableImageModel = ImageModels[i];
 			if (i == 0)
 			{
 				clickableImageModel.Opacity = 1.0;
@@ -116,9 +121,9 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 			{
 				clickableImageModel.Opacity = 0.0;
 			}
-			clickableImageModel.ZIndex = crossfadeImageRotatorUserControl.ImageModels.Count - i;
+			clickableImageModel.ZIndex = ImageModels.Count - i;
 		}
-		crossfadeImageRotatorUserControl._currentImageIndex = 0;
+		_currentImageIndex = 0;
 	}
 
 	private static void DisplayDurationChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -150,6 +155,7 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 		{
 			StopTimer();
 			ImageModels[_currentImageIndex].ClickAction();
+			InitializeModels();
 		}
 	}
 
@@ -181,6 +187,7 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 		if (_currentImageIndex >= ImageModels.Count - 1)
 		{
 			MarketingScreenSaverModel?.OnLeaveLastImage?.Invoke();
+			InitializeModels();
 		}
 		else
 		{

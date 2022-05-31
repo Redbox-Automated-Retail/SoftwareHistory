@@ -47,4 +47,8 @@ public interface IKioskClientServiceTransaction
 	void ValidatePickup(string sessionId, List<long> referenceNumbers, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback);
 
 	Task<IPickupValidationResult> ValidatePickupAsync(string sessionId, List<long> referenceNumbers);
+
+	void ReturnPromoCheck(string barcode, Action<ReturnVisitPromotionInfo> completeCallback);
+
+	Task<ReturnVisitPromotionInfo> ReturnPromoCheckAsync(string barcode);
 }

@@ -545,18 +545,18 @@
     </Style.Triggers>
   </Style>
   <Style x:Key="classic_rubine_menu_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
-    <Setter Property="Redbox:RoundedButton.BorderColor" Value="White" />
-    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="White" />
-    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#E42045" />
-    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#E42045" />
-    <Setter Property="Foreground" Value="#FFFFFFFF" />
+    <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
+    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
+    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#EDE3EF" />
+    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#EDE3EF" />
+    <Setter Property="Foreground" Value="#481B54" />
     <Style.Triggers>
       <Trigger Property="IsEnabled" Value="False">
-        <Setter Property="Redbox:RoundedButton.BorderColor" Value="White" />
-        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="White" />
-        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#792D8D" />
-        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#792D8D" />
-        <Setter Property="Foreground" Value="#FFFFFFFF" />
+        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
+        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
+        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="White" />
+        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="White" />
+        <Setter Property="Foreground" Value="#481B54" />
       </Trigger>
     </Style.Triggers>
   </Style>
@@ -616,23 +616,39 @@
       </Trigger>
     </Style.Triggers>
   </Style>
-  <Style x:Key="classic_purple_radio_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
-    <Setter Property="Redbox:RoundedButton.BorderColor" Value="White" />
-    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="White" />
-    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#792D8D" />
-    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#792D8D" />
-    <Setter Property="Foreground" Value="#FFFFFFFF" />
+  <Style x:Key="purple_with_purple_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+    <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
+    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
+    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#EDE3EF" />
+    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#EDE3EF" />
+    <Setter Property="Foreground" Value="#481B54" />
     <Setter Property="BorderThickness" Value="2" />
     <Style.Triggers>
       <Trigger Property="IsEnabled" Value="False">
-        <Setter Property="Redbox:RoundedButton.BackgroundGradientEndPoint" Value="0.5,0.5" />
-        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#FFFFFF" />
-        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#262626" />
-        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#FFFFFF" />
-        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#7F7F7F" />
-        <Setter Property="Foreground" Value="#FF000000" />
-        <Setter Property="Redbox:RoundedButton.DropShadowOpacity" Value="0" />
-        <Setter Property="BorderThickness" Value="3" />
+        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
+        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
+        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="White" />
+        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="White" />
+        <Setter Property="Foreground" Value="#481B54" />
+        <Setter Property="BorderThickness" Value="2" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="white_with_purple_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+    <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
+    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
+    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="White" />
+    <Setter Property="Foreground" Value="#481B54" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
+        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
+        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#EDE3EF" />
+        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#EDE3EF" />
+        <Setter Property="Foreground" Value="#481B54" />
+        <Setter Property="BorderThickness" Value="2" />
       </Trigger>
     </Style.Triggers>
   </Style>
@@ -675,13 +691,13 @@
   </Style>
   <Style x:Key="classic_menu_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource classic_rubine_menu_button_style}">
     <Setter Property="VerticalAlignment" Value="Top" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="0" />
-  </Style>
-  <Style x:Key="gradient_menu_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource gradient_rubine_menu_button_style}">
-    <Setter Property="VerticalAlignment" Value="Top" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="0" />
+    <Setter Property="BorderThickness" Value="3" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="28" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="BorderThickness" Value="2" />
+      </Trigger>
+    </Style.Triggers>
   </Style>
   <Style x:Key="glass_menu_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource gray_glass_rounded_menu_button_style}">
     <Setter Property="VerticalAlignment" Value="Top" />
@@ -2771,6 +2787,9 @@
   <Style x:Key="browse_top_menu_redbox_plus_background_style" TargetType="{x:Type Border}">
     <Setter Property="Background" Value="{StaticResource AnotherDarkPurpleBrush}" />
   </Style>
+  <Style x:Key="browse_top_menu_white_background_style" TargetType="{x:Type Border}">
+    <Setter Property="Background" Value="#FFFFFFFF" />
+  </Style>
   <Style x:Key="rubine_white_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource inactive_button_style}">
     <Setter Property="Redbox:RoundedButton.BorderColor" Value="White" />
     <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="White" />
@@ -3544,7 +3563,7 @@
   </Style>
   <Style x:Key="message_popup_dialog_inner_grid_medium_generic_error_style3" TargetType="{x:Type Grid}">
     <Setter Property="Margin" Value="76,76,76,0" />
-    <Setter Property="MaxWidth" Value="566" />
+    <Setter Property="Width" Value="566" />
   </Style>
   <Style x:Key="message_popup_dialog_inner_grid_large_generic_error_style" TargetType="{x:Type Grid}">
     <Setter Property="Margin" Value="76,76,76,0" />

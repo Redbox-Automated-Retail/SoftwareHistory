@@ -156,6 +156,8 @@ public class Resources
 
 	public static string backward_insert_error => ResourceManager.GetString("backward_insert_error", resourceCulture);
 
+	public static string backward_insert_error_title => ResourceManager.GetString("backward_insert_error_title", resourceCulture);
+
 	public static string bad_chip_read_message => ResourceManager.GetString("bad_chip_read_message", resourceCulture);
 
 	public static string bad_chip_read_title => ResourceManager.GetString("bad_chip_read_title", resourceCulture);
@@ -2002,7 +2004,9 @@ public class Resources
 
 	public static string return_button_label => ResourceManager.GetString("return_button_label", resourceCulture);
 
-	public static string return_error => ResourceManager.GetString("return_error", resourceCulture);
+	public static string return_success_with_browse_popup_message => ResourceManager.GetString("return_success_with_browse_popup_message", resourceCulture);
+
+	public static string return_success_with_browse_popup_title => ResourceManager.GetString("return_success_with_browse_popup_title", resourceCulture);
 
 	public static string return_time_label => ResourceManager.GetString("return_time_label", resourceCulture);
 
@@ -2035,6 +2039,8 @@ public class Resources
 	public static string Saturday => ResourceManager.GetString("Saturday", resourceCulture);
 
 	public static string screen_saver_start_button_text => ResourceManager.GetString("screen_saver_start_button_text", resourceCulture);
+
+	public static string see_new_movies_button_text => ResourceManager.GetString("see_new_movies_button_text", resourceCulture);
 
 	public static string select_a_platform => ResourceManager.GetString("select_a_platform", resourceCulture);
 

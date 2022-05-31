@@ -693,7 +693,10 @@ public class StartViewController : BaseViewController
 		});
 		marketingScreenSaverModel.ImageModels = ConfigureScreenSaverImages();
 		marketingScreenSaverModel.WelcomeScreenTimingABTestVersion = WelcomeScreenTimingABTestVersion;
-		marketingScreenSaverModel.OnLeaveLastImage = (Action)Delegate.Combine(marketingScreenSaverModel.OnLeaveLastImage, new Action(GoToStartViewFromScreenSaverLastImage));
+		marketingScreenSaverModel.OnLeaveLastImage = delegate
+		{
+			GoToStartViewFromScreenSaverLastImage(startViewModel);
+		};
 		startViewModel.ScreenSaverModel = marketingScreenSaverModel;
 	}
 
@@ -702,11 +705,15 @@ public class StartViewController : BaseViewController
 		ObservableCollection<ClickableImageModel> observableCollection = new ObservableCollection<ClickableImageModel>();
 		if (WelcomeScreenTimingABTestVersion == "B")
 		{
-			observableCollection.Add(new ClickableImageModel
+			DateTime dateTime = new DateTime(2022, 6, 7);
+			if (DateTime.Now < dateTime)
 			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/ENT_7194.16_MegaMovieSale_Kiosk_WelcomeScreen.jpg",
-				ClickAction = null
-			});
+				observableCollection.Add(new ClickableImageModel
+				{
+					ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/ENT_7194.16_MegaMovieSale_Kiosk_WelcomeScreen.jpg",
+					ClickAction = null
+				});
+			}
 			observableCollection.Add(new ClickableImageModel
 			{
 				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7206.2_May_KioskWelcome_Dog.jpg",
@@ -1090,6 +1097,7 @@ public class StartViewController : BaseViewController
 			turnOffBurnInView();
 		});
 		startViewModel.OnExitBurnInView += value;
+		startViewModel.OnExitTestScreenSaver += turnOffBurnInView;
 	}
 
 	private static void ToggleAdaMode()
@@ -1501,11 +1509,20 @@ public class StartViewController : BaseViewController
 		ResetToStartView("start_browsing_button");
 	}
 
-	private static void GoToStartViewFromScreenSaverLastImage()
+	private static void GoToStartViewFromScreenSaverLastImage(StartViewModel startViewModel)
 	{
 		BaseViewController.ProcessWPFHit();
-		PrepareToLeaveStartView();
-		OrchestrationService.ResetCurrentView();
+		if (startViewModel.Age.TotalMilliseconds >= (double)Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewAdTimeout)
+		{
+			PrepareToLeaveStartView();
+			OrchestrationService.ResetCurrentView();
+			return;
+		}
+		if (startViewModel?.ScreenSaverModel != null)
+		{
+			startViewModel.ScreenSaverModel.IsAnimationOn = false;
+		}
+		startViewModel?.ProcessExitTestScreenSaver();
 	}
 
 	private static void GoToForSaleMovieBrowseView()

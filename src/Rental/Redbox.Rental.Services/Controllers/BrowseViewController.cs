@@ -80,8 +80,6 @@ public class BrowseViewController : BaseViewController
 		}
 	}
 
-	private static bool IsSpanish => BundleFunctions.GetCulture() == "es-MX";
-
 	private static bool EndGames
 	{
 		get
@@ -172,13 +170,17 @@ public class BrowseViewController : BaseViewController
 
 	private static void ConfigureTopMenu(BrowseViewModel browseViewModel)
 	{
+		if (browseViewModel == null)
+		{
+			return;
+		}
 		OrchestrationService.SetCurrentUICulture();
 		TopMenuModel topMenuModel = new TopMenuModel();
 		if (!BaseViewController.IsADAMode && !InTitleMarketingMode)
 		{
 			CreateMenuButtons(topMenuModel);
 		}
-		topMenuModel.MenuBackgroundStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), BrowseFunctions.IsRedboxPlusBrowseMode ? "browse_top_menu_redbox_plus_background_style" : "browse_top_menu_background_style");
+		topMenuModel.MenuBackgroundStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), (!BaseViewController.IsADAMode) ? "browse_top_menu_white_background_style" : (BrowseFunctions.IsRedboxPlusBrowseMode ? "browse_top_menu_redbox_plus_background_style" : "browse_top_menu_background_style"));
 		topMenuModel.MenuBackgroundText = null;
 		if (BaseViewController.IsADAMode || InTitleMarketingMode)
 		{
@@ -198,10 +200,11 @@ public class BrowseViewController : BaseViewController
 		}
 		else if (BrowseState.BrowseCollectionProduct != null)
 		{
+			topMenuModel.MenuBackgroundStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "browse_top_menu_background_style");
 			topMenuModel.MenuBackgroundText = BrowseState.BrowseCollectionProduct.ProductName;
 			topMenuModel.MenuTextStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "browse_top_menu_text_collection_style");
 		}
-		topMenuModel.RedboxPlusLogoVisiblity = ((!BrowseFunctions.IsRedboxPlusBrowseMode) ? Visibility.Collapsed : Visibility.Visible);
+		topMenuModel.RedboxPlusLogoVisiblity = ((!BaseViewController.IsADAMode || !BrowseFunctions.IsRedboxPlusBrowseMode) ? Visibility.Collapsed : Visibility.Visible);
 		topMenuModel.OnBrowseMenuButtonClicked += HandleBrowseMenuButtonClick;
 		browseViewModel.BrowseTopMenuModel = topMenuModel;
 	}
@@ -336,6 +339,7 @@ public class BrowseViewController : BaseViewController
 				menuButton.IsSelected = browseMenuButton == menuButton || (browseProductFamilyMenuButton != null && browseProductFamilyMenuButton.FilterValue == TitleFamily.Movies && browseGenreMenuButton2 != null && !browseGenreMenuButton2.FilterValue.HasValue) || (browseProductFamilyMenuButton != null && browseProductFamilyMenuButton.FilterValue == TitleFamily.Games && browseGenreMenuButton2 != null && !browseGenreMenuButton2.FilterValue.HasValue);
 			}
 		}
+		ConfigureTopMenu();
 		UpdateQuitButtonsText();
 	}
 
@@ -343,31 +347,33 @@ public class BrowseViewController : BaseViewController
 	{
 		if (BrowseState.BrowseCollections || BrowseState.BrowseCollectionProduct == null)
 		{
-			TitleFamily titleFamily = BrowseState.TitleFamily;
 			bool highlightSelectedGenre = !BrowseState.BrowseCollections;
-			if (titleFamily == TitleFamily.Movies)
+			if (BrowseState.TitleFamily == TitleFamily.Movies)
 			{
+				bool flag = PersonalizationFunctions.IsSignedIn && RedboxPlusFunctions.CanShowRedboxPlusRedemption;
 				BrowseMenuButton browseMenuButton = null;
-				browseMenuButton = ((!OrchestrationService.RentalIsCollectionsEnabled()) ? ((BrowseMenuButton)CreateGenreMenuButton(Genres.Top20Movies, highlightSelectedGenre, null)) : ((BrowseMenuButton)new BrowseCollectionsMenuButton
+				int width = (OrchestrationService.IsCultureSpanish() ? 142 : (OrchestrationService.RentalIsCollectionsEnabled() ? 131 : 121));
+				browseMenuButton = ((!OrchestrationService.RentalIsCollectionsEnabled()) ? ((BrowseMenuButton)CreateGenreMenuButton(Genres.Top20Movies, highlightSelectedGenre, width)) : ((BrowseMenuButton)new BrowseCollectionsMenuButton
 				{
 					Text = Resources.Collections,
-					IsSelected = BrowseState.BrowseCollections
+					IsSelected = BrowseState.BrowseCollections,
+					Width = width
 				}));
 				topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton>
 				{
-					CreateGenreMenuButton(null, highlightSelectedGenre, null),
+					CreateGenreMenuButton(Genres.ActionAndAdventure, highlightSelectedGenre, flag ? 101 : 121),
+					CreateGenreMenuButton(Genres.Comedy, highlightSelectedGenre, flag ? 101 : 121),
+					CreateGenreMenuButton(Genres.FamilyMovies, highlightSelectedGenre, flag ? 101 : 121),
+					CreateGenreMenuButton(Genres.Horror, highlightSelectedGenre, flag ? 101 : 121),
+					CreateGenreMenuButton(Genres.Drama, highlightSelectedGenre, flag ? 101 : 121),
 					browseMenuButton,
-					CreateGenreMenuButton(Genres.ActionAndAdventure, highlightSelectedGenre, null),
-					CreateGenreMenuButton(Genres.Drama, highlightSelectedGenre, null),
-					CreateGenreMenuButton(Genres.Horror, highlightSelectedGenre, null),
-					CreateGenreMenuButton(Genres.Comedy, highlightSelectedGenre, null),
-					CreateGenreMenuButton(Genres.FamilyMovies, highlightSelectedGenre, null)
+					CreateGenreMenuButton(null, highlightSelectedGenre, OrchestrationService.IsCultureSpanish() ? 121 : (OrchestrationService.RentalIsCollectionsEnabled() ? 132 : 142))
 				});
 				if (!EndGames)
 				{
 					topMenuModel.MenuButtons.Add(CreateProductFamilyMenuButton(TitleFamily.Games, ArrowDirection.Right));
 				}
-				if (PersonalizationFunctions.IsSignedIn && RedboxPlusFunctions.CanShowRedboxPlusRedemption)
+				if (flag)
 				{
 					topMenuModel.MenuButtons.Add(CreateSignOutMenuButton());
 				}
@@ -376,8 +382,8 @@ public class BrowseViewController : BaseViewController
 			{
 				topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton>
 				{
-					CreateGenreMenuButton(null, highlightSelectedGenre, 126),
-					CreateProductFamilyMenuButton(TitleFamily.Movies, ArrowDirection.Right, 880)
+					CreateGenreMenuButton(null, highlightSelectedGenre, 184),
+					CreateProductFamilyMenuButton(TitleFamily.Movies, ArrowDirection.Right, 792)
 				});
 			}
 		}
@@ -386,7 +392,7 @@ public class BrowseViewController : BaseViewController
 			topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton> { CreateProductFamilyMenuButton(TitleFamily.Movies, ArrowDirection.Left, 0) });
 			if (!EndGames)
 			{
-				topMenuModel.MenuButtons.Add(CreateProductFamilyMenuButton(TitleFamily.Games, ArrowDirection.Right, 880));
+				topMenuModel.MenuButtons.Add(CreateProductFamilyMenuButton(TitleFamily.Games, ArrowDirection.Right, 792));
 			}
 		}
 	}
@@ -401,7 +407,8 @@ public class BrowseViewController : BaseViewController
 		return new SignOutMenuButton
 		{
 			Text = Resources.sign_out_button,
-			IsSelected = false
+			IsSelected = false,
+			Width = 101
 		};
 	}
 
@@ -423,14 +430,14 @@ public class BrowseViewController : BaseViewController
 		return browseProductFamilyMenuButton;
 	}
 
-	private static BrowseGenreMenuButton CreateGenreMenuButton(Genres? genre, bool highlightSelectedGenre, int? width)
+	private static BrowseGenreMenuButton CreateGenreMenuButton(Genres? genre, bool highlightSelectedGenre, int width)
 	{
 		Genres? genre2 = BrowseState.Genre;
-		BrowseGenreMenuButton browseGenreMenuButton = new BrowseGenreMenuButton
+		BrowseGenreMenuButton obj = new BrowseGenreMenuButton
 		{
-			FilterValue = genre
+			FilterValue = genre,
+			IsSelected = (highlightSelectedGenre && genre2 == genre)
 		};
-		browseGenreMenuButton.IsSelected = highlightSelectedGenre && genre2 == genre;
 		string name = "Games_ALL";
 		if (genre.HasValue)
 		{
@@ -440,13 +447,9 @@ public class BrowseViewController : BaseViewController
 		{
 			name = "Movies_ALL";
 		}
-		browseGenreMenuButton.Text = Resources.ResourceManager.GetString(name);
-		if (width.HasValue)
-		{
-			browseGenreMenuButton.Width = width.Value;
-			browseGenreMenuButton.FixedWidth = true;
-		}
-		return browseGenreMenuButton;
+		obj.Text = Resources.ResourceManager.GetString(name);
+		obj.Width = width;
+		return obj;
 	}
 
 	private static void ConfigureTTS(BrowseViewModel browseViewModel)
@@ -461,6 +464,10 @@ public class BrowseViewController : BaseViewController
 
 	private static void ConfigureCheckOutBar(BrowseViewModel browseViewModel)
 	{
+		if (browseViewModel == null)
+		{
+			return;
+		}
 		OrchestrationService.SetCurrentUICulture();
 		browseViewModel.OnCheckOutButtonClicked = delegate
 		{
@@ -552,12 +559,12 @@ public class BrowseViewController : BaseViewController
 			if ((browseState == null || !browseState.BrowseCollections) && BrowseState?.BrowseCollectionProduct == null)
 			{
 				viewRedboxPlusMoviesButtonVisibility = 0;
-				goto IL_035d;
+				goto IL_0363;
 			}
 		}
 		viewRedboxPlusMoviesButtonVisibility = 2;
-		goto IL_035d;
-		IL_035d:
+		goto IL_0363;
+		IL_0363:
 		browseViewModel.ViewRedboxPlusMoviesButtonVisibility = (Visibility)viewRedboxPlusMoviesButtonVisibility;
 	}
 
@@ -698,8 +705,8 @@ public class BrowseViewController : BaseViewController
 		filterBarModel.FormatFilterButtonStrings.Add(TitleType.Bluray, Resources.blu_ray.ToUpper());
 		filterBarModel.FormatFilterButtonStrings.Add(TitleType.DigitalCode, Resources.digital_code.ToUpper());
 		filterBarModel.FormatFilterButtonStrings.Add(TitleType._4KUHD, Resources.four_k_uhd);
-		filterBarModel.FilterButtonSelectedStyle = WPFFunctions.GetStyle(browseViewUserControl, "classic_purple_radio_button_style");
-		filterBarModel.FilterButtonUnselectedStyle = WPFFunctions.GetStyle(browseViewUserControl, "classic_rubine_radio_button_style");
+		filterBarModel.FilterButtonSelectedStyle = WPFFunctions.GetStyle(browseViewUserControl, "white_with_purple_border_button_style");
+		filterBarModel.FilterButtonUnselectedStyle = WPFFunctions.GetStyle(browseViewUserControl, "purple_with_purple_border_button_style");
 		filterBarModel.SelectedFormat = BrowseState.TitleType;
 		filterBarModel.PriceRangeButtonDefaultText = Resources.price_range_select_button;
 		filterBarModel.PriceRangeFilterButtonVisibility = ((!ShouldShowPriceRangeFilterButton()) ? Visibility.Collapsed : Visibility.Visible);
@@ -711,7 +718,7 @@ public class BrowseViewController : BaseViewController
 			filters = CreateBrowseFilters(instance);
 		}
 		filterBarModel.Filters = filters;
-		filterBarModel.FilterMargin = new Thickness((BaseViewController.IsADAMode || BrowseState.TitleFamily == TitleFamily.Games) ? 8 : 16, 0.0, 0.0, 0.0);
+		filterBarModel.FilterMargin = new Thickness((!BaseViewController.IsADAMode && BrowseState.TitleFamily != TitleFamily.Games) ? 16 : (OrchestrationService.IsCultureSpanish() ? 6 : 8), 0.0, 0.0, 0.0);
 		filterBarModel.OnBrowseFilterButtonClicked += delegate(BrowseFilter browseFilter)
 		{
 			foreach (BrowseFilter filter in filterBarModel.Filters)
@@ -908,18 +915,9 @@ public class BrowseViewController : BaseViewController
 
 	private static bool ShouldShowFormatFilterButton()
 	{
-		if (BrowseState.TitleFamily == TitleFamily.Movies && !BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null && !InTitleMarketingMode)
+		if (BrowseState.TitleFamily == TitleFamily.Movies && !BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null)
 		{
-			return !ShouldShowExpandedFormatButtons();
-		}
-		return false;
-	}
-
-	private static bool ShouldShowExpandedFormatButtons()
-	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowExpandedFormatButtons && !BrowseState.ExpandedFormatButtonsShown && !BaseViewController.IsADAMode && BrowseState.TitleFamily == TitleFamily.Movies && BrowseState.BrowseSelectedSort != BrowseSelectedSort.Alpha && BrowseState.BrowseSelectedSort != BrowseSelectedSort.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.ComingSoon && !BrowseState.BrowseCollections && BrowseState.BrowseCollectionProduct == null && !InTitleMarketingMode)
-		{
-			return !Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes;
+			return !InTitleMarketingMode;
 		}
 		return false;
 	}
@@ -979,19 +977,15 @@ public class BrowseViewController : BaseViewController
 			SetBrowseFilters(BrowseFunctions.GetBrowseMode(TitleType.All), BrowseSelectedSort.Newest, TitleType.All, "browse-filter-family,Newest", 1);
 			break;
 		case BrowseFilterType.BluRay:
-			BrowseState.ExpandedFormatButtonsShown = true;
 			SetBrowseFilters(BrowseFunctions.GetBrowseMode(TitleType.Bluray), BrowseSelectedSort.Bluray, TitleType.Bluray, "browse-filter-family,Blu-ray", 1);
 			break;
 		case BrowseFilterType.Dvd:
-			BrowseState.ExpandedFormatButtonsShown = true;
 			SetBrowseFilters(BrowseFunctions.GetBrowseMode(TitleType.DVD), BrowseSelectedSort.Dvd, TitleType.DVD, "browse-filter-family,DVD", 1);
 			break;
 		case BrowseFilterType._4KUHD:
-			BrowseState.ExpandedFormatButtonsShown = true;
 			SetBrowseFilters(BrowseFunctions.GetBrowseMode(TitleType._4KUHD), BrowseSelectedSort._4KUHD, TitleType._4KUHD, "browse-filter-family,4K-UHD", 1);
 			break;
 		case BrowseFilterType.ForSale:
-			BrowseState.ExpandedFormatButtonsShown = true;
 			SetBrowseFilters(BrowseViewFilter.ForSale, BrowseSelectedSort.ForSale, TitleType.All, "browse-filter-family,for-sale", 1);
 			if (ShouldShowPriceRangeFilterButton())
 			{
@@ -999,16 +993,13 @@ public class BrowseViewController : BaseViewController
 			}
 			break;
 		case BrowseFilterType.ComingSoon:
-			BrowseState.ExpandedFormatButtonsShown = true;
 			SetBrowseFilters(BrowseViewFilter.ComingSoon, BrowseSelectedSort.ComingSoon, TitleType.All, "browse-filter-family,Coming-soon", 1);
 			break;
 		case BrowseFilterType.AtoZ:
-			BrowseState.ExpandedFormatButtonsShown = true;
 			BrowseState.SelectedAlphaGroupName = null;
 			SetBrowseFilters(BrowseFunctions.GetBrowseMode(TitleType.All), BrowseSelectedSort.Alpha, TitleType.All, "browse-filter-family,alpha", 1);
 			break;
 		case BrowseFilterType.DigitalCode:
-			BrowseState.ExpandedFormatButtonsShown = true;
 			SetBrowseFilters(BrowseViewFilter.ForSale, BrowseSelectedSort.DigitalCode, TitleType.DigitalCode, "browse-filter-family,Digital Code", 1);
 			break;
 		case BrowseFilterType.XboxOne:
@@ -1097,7 +1088,7 @@ public class BrowseViewController : BaseViewController
 				}
 				else if (filter.ButtonType == BrowseFilterType.Dvd || filter.ButtonType == BrowseFilterType.BluRay || filter.ButtonType == BrowseFilterType._4KUHD)
 				{
-					filter.IsVisible = ShouldShowExpandedFormatButtons();
+					filter.IsVisible = false;
 					viewModel.BrowseFilterBarModel.SelectedFormat = BrowseState.TitleType;
 				}
 				else if (filter.ButtonType == BrowseFilterType.ComingSoon)
@@ -1208,7 +1199,7 @@ public class BrowseViewController : BaseViewController
 		if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 		{
 			browseProductControl.LayoutDirection = BrowseLayoutDirection.TopToBottomThenLeftToRight;
-			browseProductControl.BrowseItemMargin = new Thickness(12.0, 1.0, 10.0, 0.0);
+			browseProductControl.BrowseItemMargin = new Thickness(12.0, 0.0, 10.0, 0.0);
 			browseProductControl.ShowBorderItems = false;
 			displayGroupSelectionModel.BrowseGroupSelectionVisibility = Visibility.Visible;
 			browseProductControl.PaddleOverlapWidth = 0.0;
@@ -1217,15 +1208,15 @@ public class BrowseViewController : BaseViewController
 			{
 				browseProductControl.RowCount = 5;
 				browseProductControl.ColumnCount = 2;
-				browseProductControl.Margin = new Thickness(0.0, 0.0, 0.0, 40.0);
-				displayGroupSelectionModel.BrowseGroupSelectionMargin = new Thickness(35.0, 522.0, 35.0, 0.0);
+				browseProductControl.Margin = new Thickness(0.0, 0.0, 0.0, 50.0);
+				displayGroupSelectionModel.BrowseGroupSelectionMargin = new Thickness(38.0, 517.0, 38.0, 0.0);
 			}
 			else
 			{
 				browseProductControl.RowCount = 6;
 				browseProductControl.ColumnCount = 3;
-				browseProductControl.Margin = new Thickness(0.0, 55.0, 0.0, 0.0);
-				displayGroupSelectionModel.BrowseGroupSelectionMargin = new Thickness(38.0, 84.0, 38.0, 0.0);
+				browseProductControl.Margin = new Thickness(0.0, 50.0, 0.0, 4.0);
+				displayGroupSelectionModel.BrowseGroupSelectionMargin = new Thickness(38.0, 88.0, 38.0, 0.0);
 			}
 		}
 		else
@@ -1235,7 +1226,7 @@ public class BrowseViewController : BaseViewController
 			{
 				browseProductControl.RowCount = 2;
 				browseProductControl.ColumnCount = 3;
-				browseProductControl.BrowseItemMargin = new Thickness(8.0, 20.0, 8.0, 3.0);
+				browseProductControl.BrowseItemMargin = new Thickness(8.0, 34.0, 8.0, 0.0);
 			}
 			else
 			{
@@ -2384,43 +2375,6 @@ public class BrowseViewController : BaseViewController
 		IBrowseState browseState = BrowseState;
 		int height = 32;
 		int width = (BaseViewController.IsADAMode ? 77 : 96);
-		if (ShouldShowExpandedFormatButtons())
-		{
-			if (IsTitleTypeAvailable(TitleType.DVD))
-			{
-				list.Add(new BrowseFilter
-				{
-					ButtonType = BrowseFilterType.Dvd,
-					Name = "dvd_button",
-					Height = height,
-					Width = 59,
-					IsSelected = (browseState.BrowseSelectedSort == BrowseSelectedSort.Dvd)
-				});
-			}
-			if (IsTitleTypeAvailable(TitleType.Bluray))
-			{
-				list.Add(new BrowseFilter
-				{
-					ButtonType = BrowseFilterType.BluRay,
-					Name = "bluray_button",
-					Height = height,
-					Width = 89,
-					IsSelected = (browseState.BrowseSelectedSort == BrowseSelectedSort.Bluray)
-				});
-			}
-			if (IsTitleTypeAvailable(TitleType._4KUHD))
-			{
-				list.Add(new BrowseFilter
-				{
-					ButtonType = BrowseFilterType._4KUHD,
-					Name = "_4k_button",
-					Height = height,
-					Width = (configuration.ShowExpandedFormatButtonsNewText ? 139 : 79),
-					IsSelected = (browseState.BrowseSelectedSort == BrowseSelectedSort._4KUHD)
-				});
-			}
-			BrowseState.ExpandedFormatButtonsShown = true;
-		}
 		if (browseState.TitleFamily == TitleFamily.Movies)
 		{
 			list.Add(new BrowseFilter
@@ -2428,7 +2382,7 @@ public class BrowseViewController : BaseViewController
 				ButtonType = BrowseFilterType.AtoZ,
 				Name = "abc_button",
 				Height = height,
-				Width = 59,
+				Width = (BaseViewController.IsADAMode ? 56 : 93),
 				IsSelected = (browseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 			});
 		}
@@ -2750,19 +2704,19 @@ public class BrowseViewController : BaseViewController
 			});
 			list.Add(new BrowseFilter
 			{
-				ButtonType = BrowseFilterType.Horror,
-				Name = "horror_filter_button",
-				Height = height,
-				Width = 77,
-				IsSelected = IsGenreButtonSelected(BrowseSelectedSort.Horror, Genres.Horror)
-			});
-			list.Add(new BrowseFilter
-			{
 				ButtonType = BrowseFilterType.Comedy,
 				Name = "comedy_filter_button",
 				Height = height,
 				Width = 77,
 				IsSelected = IsGenreButtonSelected(BrowseSelectedSort.Comedy, Genres.Comedy)
+			});
+			list.Add(new BrowseFilter
+			{
+				ButtonType = BrowseFilterType.Horror,
+				Name = "horror_filter_button",
+				Height = height,
+				Width = 77,
+				IsSelected = IsGenreButtonSelected(BrowseSelectedSort.Horror, Genres.Horror)
 			});
 			list.Add(new BrowseFilter
 			{

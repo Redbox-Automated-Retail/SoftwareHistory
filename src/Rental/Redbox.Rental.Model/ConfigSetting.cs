@@ -166,10 +166,6 @@ public static class ConfigSetting
 
 	public const string Show99CentsBrowseFilterButton = "Show99CentsBrowseFilterButton";
 
-	public const string ShowExpandedFormatButtons = "ShowExpandedFormatButtons";
-
-	public const string ShowExpandedFormatButtonsNewText = "ShowExpandedFormatButtonsNewText";
-
 	public const string EnableBrowseMessagePopup = "EnableBrowseMessagePopup";
 
 	public const string BrowseMessagePopupDuration = "BrowseMessagePopupDuration";
@@ -199,6 +195,12 @@ public static class ConfigSetting
 	public const string ReturnVisitPromoOfferPromotionPrice = "ReturnVisitPromoOfferPromotionPrice";
 
 	public const string ReturnVisitPromoOfferPromotionExpirationDate = "ReturnVisitPromoOfferPromotionExpirationDate";
+
+	public const string CallReturnVisitPromoCheck = "CallReturnVisitPromoCheck";
+
+	public const string ReturnVisitPromoCheckTimeout = "ReturnVisitPromoCheckTimeout";
+
+	public const string StartViewAdTimeout = "StartViewAdTimeout";
 
 	public const string FAQDocument = "FAQDocument";
 

@@ -5,7 +5,7 @@
   </UIElement.CommandBindings>
   <FrameworkElement.Resources>
     <ResourceDictionary>
-      <Thickness x:Key="DefaultBrowseGroupSelectionMargin" Left="35" Top="80" Right="35" />
+      <Thickness x:Key="DefaultBrowseGroupSelectionMargin" Left="38" Top="88" Right="38" />
     </ResourceDictionary>
   </FrameworkElement.Resources>
   <Grid Background="#FFFFFFFF">
@@ -14,7 +14,7 @@
       <localControls:BrowseFilterBarUserControl DataContext="{Binding Path=BrowseFilterBarModel}" />
       <localControls:BrowseCheckOutBarUserControl />
     </StackPanel>
-    <localControls:BrowseUserControl x:Name="BrowseProductControl" Margin="0,70,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="494" Width="1024" ShowPaddles="True" DataContext="{Binding Path=BrowseProductControlModel}" />
+    <localControls:BrowseUserControl x:Name="BrowseProductControl" Margin="0,80,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="484" Width="1024" ShowPaddles="True" DataContext="{Binding Path=BrowseProductControlModel}" />
     <localControls:BrowseTopMenuUserControl VerticalAlignment="Top" DataContext="{Binding Path=BrowseTopMenuModel}" />
     <localControls:BrowseGroupSelectionUserControl Height="37" VerticalAlignment="Top" DataContext="{Binding Path=BrowseGroupSelection}" Margin="{Binding Path=BrowseGroupSelectionMargin, FallbackValue={StaticResource DefaultBrowseGroupSelectionMargin}}" Visibility="{Binding Path=BrowseGroupSelectionVisibility}" />
     <localControls:BrowseMessagePopupUserControl VerticalAlignment="Bottom" Margin="0,0,0,-14" DataContext="{Binding Path=BrowseMessagePopupModel}" Visibility="{Binding Path=BrowseMessagePopupUserControlVisibility, FallbackValue=Collapsed}" />

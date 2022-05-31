@@ -205,10 +205,6 @@ public class Configuration : IConfiguration
 
 	public bool Show99CentsBrowseFilterButton { get; private set; }
 
-	public bool ShowExpandedFormatButtons { get; private set; }
-
-	public bool ShowExpandedFormatButtonsNewText { get; private set; }
-
 	public bool EnableBrowseMessagePopup { get; private set; }
 
 	public int BrowseMessagePopupDuration { get; private set; }
@@ -358,6 +354,12 @@ public class Configuration : IConfiguration
 	public decimal ReturnVisitPromoOfferPromotionPrice { get; private set; }
 
 	public string ReturnVisitPromoOfferPromotionExpirationDate { get; private set; }
+
+	public bool CallReturnVisitPromoCheck { get; private set; }
+
+	public int ReturnVisitPromoCheckTimeout { get; private set; }
+
+	public int StartViewAdTimeout { get; private set; }
 
 	public string KioskDataServicesUrl { get; private set; }
 
@@ -566,8 +568,6 @@ public class Configuration : IConfiguration
 		FlashDealPrices = ParseFlashDealPrices(ConfigGetValue<string>(service, "marketing", "MarketingGeneral", "FlashDealPrices", null));
 		ShowBrowse10Titles = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowBrowse10Titles", defaultValue: false);
 		Show99CentsBrowseFilterButton = ConfigGetValue(service, "marketing", "MarketingGeneral", "Show99CentsBrowseFilterButton", defaultValue: false);
-		ShowExpandedFormatButtons = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowExpandedFormatButtons", defaultValue: false);
-		ShowExpandedFormatButtonsNewText = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowExpandedFormatButtonsNewText", defaultValue: true);
 		ShowAfterSwipePersonalizedOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowAfterSwipePersonalizedOffers", defaultValue: false);
 		ShowKMTInCartOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowKMTInCartOffers", defaultValue: true);
 		UseDiscountsForPmnpOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "UseDiscountsForPmnpOffers", defaultValue: false);
@@ -586,6 +586,9 @@ public class Configuration : IConfiguration
 		ReturnVisitPromoOfferPromotionName = ConfigGetValue<string>(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionName", null);
 		ReturnVisitPromoOfferPromotionPrice = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionPrice", 0m);
 		ReturnVisitPromoOfferPromotionExpirationDate = ConfigGetValue<string>(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionExpirationDate", null);
+		CallReturnVisitPromoCheck = ConfigGetValue(service, "marketing", "MarketingReturn", "CallReturnVisitPromoCheck", defaultValue: false);
+		ReturnVisitPromoCheckTimeout = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoCheckTimeout", 10000);
+		StartViewAdTimeout = ConfigGetValue(service, "marketing", "MarketingAd", "StartViewAdTimeout", 120000);
 		EarlyIdEnabled = ConfigGetValue(service, "system", "Personalization", "EarlyIDEnabled", defaultValue: false);
 		LoyaltyEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltyEnabled", defaultValue: false);
 		PerksPassEnabled = ConfigGetValue(service, "system", "Personalization", "PerksPassEnabled", defaultValue: false);

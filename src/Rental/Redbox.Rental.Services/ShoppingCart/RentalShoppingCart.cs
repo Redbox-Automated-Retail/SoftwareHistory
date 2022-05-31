@@ -1415,6 +1415,38 @@ public class RentalShoppingCart : IRentalShoppingCart
 		return num;
 	}
 
+	private bool IsDiscountRestrictionAndFullValuePromotion(IRentalShoppingCartTitleItem rentalShoppingCartTitleItem)
+	{
+		bool num = (rentalShoppingCartTitleItem?.TitleProduct?.DiscountRestriction ?? DiscountRestriction.None) != DiscountRestriction.None;
+		int num4;
+		if (!((Promotion?.OriginalPrice ?? 0m) >= (rentalShoppingCartTitleItem?.Price ?? 0m)))
+		{
+			decimal? num2 = Promotion?.OriginalPercent;
+			decimal num3 = 1;
+			if (!(num2.GetValueOrDefault() == num3) || !num2.HasValue)
+			{
+				IPromotion promotion = Promotion;
+				if (promotion == null || promotion.Intent != PromotionIntentCode.FirstNightDVD)
+				{
+					IPromotion promotion2 = Promotion;
+					if (promotion2 == null || promotion2.Intent != PromotionIntentCode.FirstNightBluray)
+					{
+						IPromotion promotion3 = Promotion;
+						num4 = ((promotion3 != null && promotion3.Intent == PromotionIntentCode.FirstNightFreeItem) ? 1 : 0);
+						goto IL_0102;
+					}
+				}
+				num4 = 1;
+				goto IL_0102;
+			}
+		}
+		num4 = 1;
+		goto IL_0102;
+		IL_0102:
+		bool flag = (byte)num4 != 0;
+		return num & flag;
+	}
+
 	public List<IRentalShoppingCartTitleItem> GetTitleItemsByCriteria(IRentalShoppingCartFilterCriteria filterCriteria)
 	{
 		return GetTitleItemsByCriteria(filterCriteria.Action, filterCriteria.Sequence, filterCriteria.TitleType, filterCriteria.TitleFamily, filterCriteria.IncludeProducts, filterCriteria.ExcludeProducts, filterCriteria.ProductTypes, filterCriteria.ProductTypeId, filterCriteria.FormatIds, filterCriteria.IncludeMultiNightPricedItems, filterCriteria.IncludeFlashDeals, filterCriteria.IncludeLoyaltyRedeemedItems, filterCriteria.IncludeRedboxPlusFreeOneNightRentalItems, filterCriteria.IncludeDiscountRestrictionItems);
@@ -1443,7 +1475,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 					}
 				}
 			}
-			if ((includeDiscountRestrictionItems || (titleItem?.TitleProduct?.DiscountRestriction ?? DiscountRestriction.None) == DiscountRestriction.None) && (!_isAfterVend || titleItem.Status == LineItemStatus.Fullfilled))
+			if ((includeDiscountRestrictionItems || !IsDiscountRestrictionAndFullValuePromotion(titleItem)) && (!_isAfterVend || titleItem.Status == LineItemStatus.Fullfilled))
 			{
 				list.Add(titleItem);
 			}

@@ -54,10 +54,6 @@ public interface IConfiguration
 
 	bool Show99CentsBrowseFilterButton { get; }
 
-	bool ShowExpandedFormatButtons { get; }
-
-	bool ShowExpandedFormatButtonsNewText { get; }
-
 	bool EnableBrowseMessagePopup { get; }
 
 	int BrowseMessagePopupDuration { get; }
@@ -208,6 +204,10 @@ public interface IConfiguration
 
 	string ReturnVisitPromoOfferPromotionExpirationDate { get; }
 
+	bool CallReturnVisitPromoCheck { get; }
+
+	int ReturnVisitPromoCheckTimeout { get; }
+
 	string KioskDataServicesUrl { get; }
 
 	string KioskDataServicesKey { get; }
@@ -357,6 +357,8 @@ public interface IConfiguration
 	bool UseKCSPricing { get; }
 
 	bool ButtonAnimationEnabled { get; }
+
+	int StartViewAdTimeout { get; }
 
 	void SessionReload();
 

@@ -858,6 +858,42 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		return null;
 	}
 
+	public void ReturnPromoCheck(string barcode, Action<ReturnVisitPromotionInfo> completeCallback)
+	{
+		Task.Run(delegate
+		{
+			ReturnVisitPromotionInfo result = ReturnPromoCheckAsync(barcode).Result;
+			completeCallback(result);
+		});
+	}
+
+	public async Task<ReturnVisitPromotionInfo> ReturnPromoCheckAsync(string barcode)
+	{
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		ReturnVisitPromotionInfo result = new ReturnVisitPromotionInfo
+		{
+			Success = false
+		};
+		try
+		{
+			LogHelper.Instance.Log($"KioskClientServiceTransaction.ReturnPromoCheckAsync - sending request for barcode: {barcode}");
+			WebResult<ReturnPromoCheckResponse> webResult = await ExecuteAsyncWebRequest<ReturnPromoCheckResponse>(new Uri(string.Format("{0}/{1}/return/{2}/promocheck", base.KioskClientServiceBaseUrl, "api/transaction", barcode)), null, "GET", service.ReturnVisitPromoCheckTimeout);
+			if (webResult.IsSuccessStatusCode)
+			{
+				result.Promo = webResult.Response.Promotion;
+				result.Success = true;
+				result.IsLastDisc = webResult.Response.IsLastDisc;
+				return result;
+			}
+			LogHelper.Instance.Log(string.Format("KioskClientServiceTransaction.ReturnPromoCheckAsync - received result {0} message: {1}", webResult.StatusCode, webResult.Response?.Error ?? "null"));
+		}
+		catch (Exception e)
+		{
+			LogHelper.Instance.LogException("An unhandled exception was raised in KioskClientServiceTransactions.ReturnPromoCheckAsync.", e);
+		}
+		return result;
+	}
+
 	private bool AuthErrorCodeIndicatesOnline(string response)
 	{
 		if (Enum.TryParse<AuthorizeResponse>(response, out var result))

@@ -72,8 +72,6 @@ public interface IBrowseState
 
 	bool NeedMarketingConfirm { get; set; }
 
-	bool ExpandedFormatButtonsShown { get; set; }
-
 	bool EnableBrowseMessagePopup { get; set; }
 
 	bool EnableStarzOffer { get; set; }

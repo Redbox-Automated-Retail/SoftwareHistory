@@ -588,6 +588,10 @@ public static class AnalyticsConstants
 		public const string ReturnVisitPromoOfferClose = "ReturnVisitPromoOfferClose";
 
 		public const string ReturnVisitPromoOfferUseNow = "ReturnVisitPromoOfferUseNow";
+
+		public const string ReturnSuccessWithBrowseClose = "ReturnSuccessWithBrowseClose";
+
+		public const string ReturnSuccessWithBrowseSeeNewMovies = "ReturnSuccessWithBrowseSeeNewMovies";
 	}
 
 	public static class DataTypeNames

@@ -8,11 +8,11 @@ public class BrowseMenuButton : DependencyObject
 
 	public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(BrowseMenuButton), new FrameworkPropertyMetadata(null));
 
-	private string _textStyleName = "font_montserrat_bold_12";
+	private string _textStyleName = "font_montserrat_bold_14";
 
 	private int _y;
 
-	private int _height = 70;
+	private int _height = 56;
 
 	private bool _isSelected;
 
@@ -91,8 +91,6 @@ public class BrowseMenuButton : DependencyObject
 			});
 		}
 	}
-
-	public bool FixedWidth { get; set; }
 
 	public bool FixedPosition { get; set; }
 
