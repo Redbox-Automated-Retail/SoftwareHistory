@@ -76,11 +76,7 @@ function newreturnmanager( shopping_cart )
 			    kernel.shopping_cart_commit(self.shopping_cart.session_id, "User successfully returned product with barcode: " .. tostring( item_id ), true )
 		    end
 
-			if kernel.can_show_return_visit_promo_offer_view() then
-				kernel.show_return_visit_promo_offer_view(switch_culture_unwind)
-			else
-				kernel.show_message_popup_view_return_success(switch_culture_unwind)
-			end
+			kernel.show_return_complete_view_with_promo_check(item_id, switch_culture_unwind)
 
             kernel.log("return ended by showing success message for job id: " .. tostring(job_id))
 		    self.has_ended = true
@@ -114,6 +110,8 @@ function newreturnmanager( shopping_cart )
 
 		self.has_ended = true
         kernel.set_session_value("BrowseState.InReturnFlow", false)
+
+		view_analytics_event2( "context", "UnrecognizedBarcodeReturned", tostring( self.shopping_cart.session_id ) )
 	end
 
 	t.begin_return = function( self, return_type )
@@ -203,9 +201,12 @@ function newreturnmanager( shopping_cart )
 					if #args > 0 then
 						item_id = args[1]
 					end
-					--if item_id ~= "UNKNOWN" then -- This should work but we need the message code to take down the movie and switch the views...
-						return_manager:show_success_message( item_id,  jobid)
-					--end
+
+					if kernel.is_valid_barcode( item_id ) then
+						return_manager:show_success_message( item_id,  jobid )
+					else
+						return_manager:show_unrecognized_barcode_returned_message()
+					end
 				end
 			end
 
@@ -223,7 +224,7 @@ function newreturnmanager( shopping_cart )
 				end
 			end
 
-			hardware_manager.hardware_event_responders.UnrecognizedBarcodeReturned = function( args, jobid )
+			--[[hardware_manager.hardware_event_responders.UnrecognizedBarcodeReturned = function( args, jobid )
                 if last_return_job_id ~= jobid then 
                     kernel.log("hardware_event_responders.UnrecognizedBarcodeReturned not executed.  Jobid does not match. last_return_job = " .. tostring(last_return_job_id).. " jobid " .. tostring(jobid))
                     return 
@@ -235,7 +236,7 @@ function newreturnmanager( shopping_cart )
 					return_manager:show_unrecognized_barcode_returned_message()
                     view_analytics_event2( "context", "UnrecognizedBarcodeReturned", tostring( self.shopping_cart.session_id ) )
 				end
-			end
+			end]]
 
 			hardware_manager.hardware_event_responders.ReturnRetry = function( args, jobid )
                 if last_return_job_id ~= jobid then 

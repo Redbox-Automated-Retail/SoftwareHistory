@@ -1,17 +1,17 @@
-# Nova (2022-03-28)
+# Omni (2022-05-30)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-03-28
-- Store labels: kop-rental-bundles-Nova
+- Date (first download in the snapshots): 2022-05-30
+- Store labels: kop-rental-bundles-Omni
 - Package revisions:
-  - `kop-rental-bundles` revision 159 (`AE681630227C05B64B81EC6F33063DC677420FFA`)
+  - `kop-rental-bundles` revision 161 (`3A122C90D0225D97F137682DEC69CEDBE794D1C3`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `EED3DCAC48245481F6B455DFD30FA25E9452E9FE` | exact |
-| `fm.bundle` |  |  | `12A1F8020581718B4773AA040DC1FAF4E191B7E3` | exact |
-| `library-rental-common.bundle` |  |  | `B01980DE5CF7EC1CB72B4D77CD35F7F8A422FDCC` | exact |
-| `ra-2.x.bundle` |  |  | `BF87D656D89C9D1348FD885429C359874B71CF8A` | exact |
+| `cp.bundle` |  |  | `FBF361621539ED332584415410EE8D14F7C70804` | exact |
+| `fm.bundle` |  |  | `05BE69496FD5B86F5342BDF5BFFF6EB6E7C02CC9` | exact |
+| `library-rental-common.bundle` |  |  | `1296A12411ACB1655BF493CE60BD6737B622ECE8` | exact |
+| `ra-2.x.bundle` |  |  | `355787E20CB98A4519103A91D0677546E27F4F5D` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
