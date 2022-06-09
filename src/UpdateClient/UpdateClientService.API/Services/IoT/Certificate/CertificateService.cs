@@ -110,7 +110,7 @@ internal class CertificateService : ICertificateService
 		}
 	}
 
-	public async Task Validate()
+	public async Task<bool> Validate()
 	{
 		_logger.LogInfoWithSource("Attempting to run Validate", "Validate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		try
@@ -118,16 +118,19 @@ internal class CertificateService : ICertificateService
 			if (!(await UpdateIotData()))
 			{
 				_logger.LogErrorWithSource("Validate failed because IotData was not valid", "Validate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
+				return false;
 			}
-			else if (!((await IsCertificateValid()) ?? true))
+			if ((await IsCertificateValid()) ?? true)
 			{
-				await DeleteLocalCertificate();
+				return true;
 			}
+			await DeleteLocalCertificate();
 		}
 		catch (Exception ex)
 		{
 			_logger.LogErrorWithSource(ex, "Exception running validate");
 		}
+		return false;
 	}
 
 	private bool IsExecutingAssemblyNewerThanCertificate()
@@ -185,6 +188,13 @@ internal class CertificateService : ICertificateService
 		}
 	}
 
+	private void Clear()
+	{
+		_encryptedKioskId = null;
+		_encryptedThingType = null;
+		_ioTCertificateServicePassword = null;
+	}
+
 	private async Task<bool?> IsCertificateValid()
 	{
 		_logger.LogInfoWithSource("Attempting to run IsCertificateValid", "IsCertificateValid", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
@@ -228,6 +238,7 @@ internal class CertificateService : ICertificateService
 		}
 		try
 		{
+			Clear();
 			File.Delete(IoTCertificateDataFilePath);
 		}
 		catch (Exception ex)

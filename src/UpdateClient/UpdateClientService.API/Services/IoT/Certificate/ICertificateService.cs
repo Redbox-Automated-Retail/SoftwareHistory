@@ -6,5 +6,5 @@ public interface ICertificateService
 {
 	Task<IotCert> GetCertificateAsync(bool forceNew = false);
 
-	Task Validate();
+	Task<bool> Validate();
 }
