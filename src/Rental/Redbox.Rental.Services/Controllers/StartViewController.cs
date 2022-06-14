@@ -705,37 +705,28 @@ public class StartViewController : BaseViewController
 		ObservableCollection<ClickableImageModel> observableCollection = new ObservableCollection<ClickableImageModel>();
 		if (WelcomeScreenTimingABTestVersion == "B")
 		{
-			DateTime dateTime = new DateTime(2022, 6, 7);
-			if (DateTime.Now < dateTime)
-			{
-				observableCollection.Add(new ClickableImageModel
-				{
-					ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/ENT_7194.16_MegaMovieSale_Kiosk_WelcomeScreen.jpg",
-					ClickAction = null
-				});
-			}
 			observableCollection.Add(new ClickableImageModel
 			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7206.2_May_KioskWelcome_Dog.jpg",
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.3_June_KioskWelcome_TheBatman.jpg",
 				ClickAction = delegate
 				{
-					GoToTitleDetailsViewFromScreenSaver(215522L);
+					GoToTitleDetailsViewFromScreenSaver(215943L);
 				}
 			});
 			observableCollection.Add(new ClickableImageModel
 			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7206.1_May_KioskWelcome_Uncharted.jpg",
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.1_June_KioskWelcome_Morbius.jpg",
 				ClickAction = delegate
 				{
-					GoToTitleDetailsViewFromScreenSaver(215468L);
+					GoToTitleDetailsViewFromScreenSaver(211703L);
 				}
 			});
 			observableCollection.Add(new ClickableImageModel
 			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR-7131.1_KioskWelcome_SpidermanNWH.jpg",
+				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.2_June_KioskWelcome_Ambulance.jpg",
 				ClickAction = delegate
 				{
-					GoToTitleDetailsViewFromScreenSaver(215139L);
+					GoToTitleDetailsViewFromScreenSaver(216146L);
 				}
 			});
 		}
