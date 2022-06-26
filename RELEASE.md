@@ -1,17 +1,17 @@
-# Omni (2022-05-30)
+# Pinto (2022-06-26)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-05-30
-- Store labels: kop-rental-bundles-Omni
+- Date (first download in the snapshots): 2022-06-26
+- Store labels: kop-rental-bundles-Pinto
 - Package revisions:
-  - `kop-rental-bundles` revision 161 (`3A122C90D0225D97F137682DEC69CEDBE794D1C3`)
+  - `kop-rental-bundles` revision 162 (`7AA356DF2A08075211DBF11648A43345CDDA73CB`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `FBF361621539ED332584415410EE8D14F7C70804` | exact |
-| `fm.bundle` |  |  | `05BE69496FD5B86F5342BDF5BFFF6EB6E7C02CC9` | exact |
-| `library-rental-common.bundle` |  |  | `1296A12411ACB1655BF493CE60BD6737B622ECE8` | exact |
-| `ra-2.x.bundle` |  |  | `355787E20CB98A4519103A91D0677546E27F4F5D` | exact |
+| `cp.bundle` |  |  | `422566DAB9B326E82F1750D1526256D250C86C23` | exact |
+| `fm.bundle` |  |  | `F78836DD231683FB04F38E841B206F4FD85D1970` | exact |
+| `library-rental-common.bundle` |  |  | `980ABB53E269940414A24A9D8EFC162A65D5A360` | exact |
+| `ra-2.x.bundle` |  |  | `F5A88D42125B1C2E840E5415B3583D2D55FAC88C` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
