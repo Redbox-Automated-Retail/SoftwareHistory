@@ -18,7 +18,6 @@ using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
-using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Services.Configuration;
@@ -855,14 +854,13 @@ public class SwipeViewController : BaseViewController
 	private static void OnGetThePassClicked()
 	{
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("SwipeViewMessageButton");
-		BitmapImage qrCodeImage = ServiceLocator.Instance.GetService<IKioskClientService>()?.QRCodeUtilities?.GetQRCodeImage(Resources.mobile_pass_login_qr_code_url, returnDefaultOnError: true);
-		MessagePopupViewController.ShowPerksPassLoginDialogMessageAndQRCode(Resources.mobile_pass_login_get_pass_header, Resources.mobile_pass_login_get_pass_message, delegate
+		MessagePopupViewController.ShowPerksPassLoginDialogMessageAndQRCode(delegate
 		{
 			OrchestrationService.ViewGoBackSafe("SwipeViewMessageButtonContinue", popOnly: false);
 		}, delegate
 		{
 			OrchestrationService.ViewGoBackSafe("SwipeViewMessageButtonTimeOut", popOnly: false);
-		}, qrCodeImage);
+		});
 	}
 
 	private static void OnBackButtonPressed()

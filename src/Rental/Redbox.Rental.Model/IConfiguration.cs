@@ -192,7 +192,7 @@ public interface IConfiguration
 
 	bool EnableRedboxPlusRedemption { get; }
 
-	bool EnableMeijerVSM { get; }
+	bool ShowKioskClosingVSM { get; }
 
 	bool ShowOptinForNormalCheckout { get; }
 

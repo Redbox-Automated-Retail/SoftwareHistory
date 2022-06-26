@@ -49,7 +49,7 @@
             <TextBlock HorizontalAlignment="Left" Margin="0,0,0,13" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_bold_24}" LineHeight="40" Text="{Binding BalanceHeading, FallbackValue=My Points Balance: 0 points}" />
           </StackPanel>
           <Border Grid.Row="1" VerticalAlignment="Top" Height="1" Background="{StaticResource CarlosPurple1Brush}" />
-          <Redbox:RoundedButton Name="CancelButtonElem" Grid.Row="1" VerticalAlignment="Center" Height="56" UsedDefaultCornerRadius="True" Style="{StaticResource thin_border_button_style}" IsEnabled="True" HorizontalAlignment="{Binding OKButtonHorizontalAlignment, FallbackValue=Center}" Command="{Binding OKButtonCommand}">
+          <Redbox:RoundedButton Name="CancelButtonElem" Grid.Row="1" VerticalAlignment="Center" Style="{StaticResource button_light_large_secondary_style}" IsEnabled="True" HorizontalAlignment="{Binding OKButtonHorizontalAlignment, FallbackValue=Center}" Command="{Binding OKButtonCommand}">
             <TextBlock Name="CancelButtonTextElem" Margin="46,14,46,14" VerticalAlignment="Center" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding OKButtonText, FallbackValue=OKAY}" />
           </Redbox:RoundedButton>
         </Grid>

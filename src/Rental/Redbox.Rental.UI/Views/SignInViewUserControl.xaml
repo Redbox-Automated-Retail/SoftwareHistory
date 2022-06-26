@@ -78,7 +78,7 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <Grid Name="SeparatorLine" Background="#060208" Height="1" Margin="24,0,24,0" ColumnSpan="3" VerticalAlignment="Top" />
-      <Redbox:RoundedButton Name="CancelButton" VerticalAlignment="Center" HorizontalAlignment="Left" Width="104" Height="48" UsedDefaultCornerRadius="True" Margin="32,0,0,0" Style="{StaticResource thin_border_button_style}" Command="{Binding CancelButtonCommand}">
+      <Redbox:RoundedButton Name="CancelButton" VerticalAlignment="Center" HorizontalAlignment="Left" Width="104" Height="48" UsedDefaultCornerRadius="True" Margin="32,0,0,0" Style="{StaticResource button_light_secondary_style}" Command="{Binding CancelButtonCommand}">
         <TextBlock Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=CancelButtonText, FallbackValue=BACK}" />
       </Redbox:RoundedButton>
       <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">

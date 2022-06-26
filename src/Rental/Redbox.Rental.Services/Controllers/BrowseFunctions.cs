@@ -553,7 +553,6 @@ public class BrowseFunctions
 			{
 				string title = string.Format(Resources.multi_disc_warning_title, addProductToCartParameters.TitleProduct.RequiredAdditionalTitles.Count + 1);
 				string empty = string.Empty;
-				string multi_disc_warning_button_text = Resources.multi_disc_warning_button_text;
 				IPricingService service = ServiceLocator.Instance.GetService<IPricingService>();
 				IDataService service2 = ServiceLocator.Instance.GetService<IDataService>();
 				IPricingRecord oneDayProductPricingRecord = service.GetOneDayProductPricingRecord(addProductToCartParameters.TitleProduct.ProductId);
@@ -596,7 +595,7 @@ public class BrowseFunctions
 					empty = string.Format(Resources.multi_disc_warning_2_disc_message, arg2, initialNight.ToString("0.00"));
 				}
 				_multiDiscWarningShown = true;
-				MessagePopupViewController.ShowMultiDiscAlert(title, empty, multi_disc_warning_button_text, delegate
+				MessagePopupViewController.ShowMultiDiscAlert(title, empty, delegate
 				{
 					if (Redbox.Rental.Services.Session.Session.Instance != null)
 					{
@@ -609,7 +608,7 @@ public class BrowseFunctions
 					AnalyticsService?.AddButtonPressEvent("BrowseFunctionsOkay");
 					ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("multi_disc_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
 					AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
-				}, "MultiDiscWarningDialog");
+				});
 			}
 		}
 		return flag;
@@ -695,7 +694,7 @@ public class BrowseFunctions
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsGotit");
 				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
 				AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
-			}, "4KDialog");
+			});
 		}
 		return result;
 	}

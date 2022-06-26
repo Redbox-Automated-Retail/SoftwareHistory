@@ -345,7 +345,7 @@ public class Configuration : IConfiguration
 
 	public bool EnableRedboxPlusRedemption { get; private set; }
 
-	public bool EnableMeijerVSM { get; private set; }
+	public bool ShowKioskClosingVSM { get; private set; }
 
 	public bool ReturnVisitPromoOfferEnabled { get; private set; }
 
@@ -581,7 +581,7 @@ public class Configuration : IConfiguration
 		EnableStarzOffer = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableStarzOffer", defaultValue: false);
 		EnableRedboxPlusOffer = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusOffer", defaultValue: false);
 		EnableRedboxPlusRedemption = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusRedemption", defaultValue: false);
-		EnableMeijerVSM = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableMeijerVSM", defaultValue: false);
+		ShowKioskClosingVSM = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowKioskClosingVSM", defaultValue: false);
 		ReturnVisitPromoOfferEnabled = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferEnabled", defaultValue: false);
 		ReturnVisitPromoOfferPromotionName = ConfigGetValue<string>(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionName", null);
 		ReturnVisitPromoOfferPromotionPrice = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionPrice", 0m);

@@ -18,19 +18,30 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class MessagePopupViewController : BaseViewController
 {
-	private class GenericErrorMessageParameters
+	private enum ModalType
 	{
-		public string CultureSpecificTitle { get; set; }
+		Informational,
+		Dialog,
+		Error
+	}
 
-		public string CultureSpecificMessage { get; set; }
+	private class ModalParameters
+	{
+		public ModalType ModalType { get; set; }
 
-		public string CultureSpecificButtonText { get; set; }
+		public string TitleText { get; set; }
 
-		public string InnerGridStyle { get; set; }
+		public string MessageText { get; set; }
+
+		public string Button1Text { get; set; }
+
+		public string Button2Text { get; set; }
 
 		public int? TimeOut { get; set; }
 
-		public Action ContinueAction { get; set; }
+		public Action Button1Action { get; set; }
+
+		public Action Button2Action { get; set; }
 
 		public Action TimeOutAction { get; set; }
 
@@ -38,35 +49,20 @@ public class MessagePopupViewController : BaseViewController
 
 		public UserControl ContentUserControl { get; set; }
 
-		public List<string> Context { get; set; }
-	}
-
-	private class GenericDialogParameters
-	{
-		public string CultureSpecificTitle { get; set; }
-
-		public string CultureSpecificMessage { get; set; }
-
-		public string CultureSpecificCancelButtonText { get; set; }
-
-		public string CultureSpecificContinueButtonText { get; set; }
-
-		public Action TimeOutAction { get; set; }
-
-		public Action BackAction { get; set; }
-
-		public Action ContinueAction { get; set; }
+		public List<string> AnalyticsContextList { get; set; }
 
 		public string ViewName { get; set; }
 
-		public int? Timeout { get; set; }
-
-		public List<string> Context { get; set; }
+		public ModalParameters(ModalType modalType)
+		{
+			ModalType = modalType;
+		}
 	}
 
-	public static void ReenableTimer()
+	private static void ShowModal(ModalParameters modalParameters)
 	{
-		((MessagePopupViewUserControl)BaseViewController.GetViewUserControl())?.ReenableTimer();
+		LogHelper.Instance.Log($"Showing Modal {modalParameters?.TitleText}");
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(modalParameters?.TitleText, (!string.IsNullOrWhiteSpace(modalParameters?.TitleText)) ? ((modalParameters != null && modalParameters.ModalType == ModalType.Error) ? "error_modal_title_title_style" : "modal_title_title_style") : ((modalParameters != null && modalParameters.ModalType == ModalType.Error) ? "error_modal_no_title_title_style" : "modal_no_title_title_style"), modalParameters?.MessageText, string.IsNullOrWhiteSpace(modalParameters?.MessageText) ? "modal_no_message_message_style" : "modal_message_message_style", modalParameters?.Button1Text, "button_text_style", (!string.IsNullOrWhiteSpace(modalParameters?.Button2Text)) ? "modal_two_buttons_button1_style" : "modal_one_button_button1_style", modalParameters?.Button2Text, "button_text_style", "modal_two_buttons_button2_style", "modal_button_grid_style", "modal_button_inner_grid_style", null, (modalParameters?.ContentUserControl != null) ? "modal_content_user_control_message_dock_panel_style" : "modal_no_content_user_control_message_dock_panel_style", (modalParameters != null && modalParameters.TimeOut.HasValue) ? modalParameters.TimeOut.Value : GetDefaultMessageTimeOut(), modalParameters?.Button1Action, modalParameters?.Button2Action, modalParameters?.TimeOutAction, modalParameters?.ActorTag, modalParameters?.ContentUserControl, "Transparent", new Thickness(0.0, 0.0, 0.0, 0.0), modalParameters?.AnalyticsContextList, modalParameters?.ViewName, Visibility.Visible, isAutoSized: true));
 	}
 
 	public static void ShowRecommendationOnPickupPrompt(Action timeOutAction, Action pickupAction, Action continueBrowsingAction)
@@ -87,110 +83,98 @@ public class MessagePopupViewController : BaseViewController
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.related_movies_popup_header, "message_popup_dialog_title_rbpurple_style", Resources.related_movies_not_found_message, "font_montserrat_small_rbpurple", null, null, null, Resources.got_it_button, "font_museo_slab_900_20", "message_popup_warmpurple_button_style", null, null, null, null, GetDefaultMessageTimeOut(30000, "long"), null, continueAction, timeOutAction, "RelatedTitlesNotFoundMessage", null, "Transparent", new Thickness(52.0, 250.0, 52.0, 220.0), context));
 	}
 
-	private static void ShowGenericErrorMessage(GenericErrorMessageParameters genericErrorMessageParameters)
-	{
-		LogHelper.Instance.Log("Showing Generic Error Message: {0}", genericErrorMessageParameters?.CultureSpecificTitle);
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(genericErrorMessageParameters?.CultureSpecificTitle, "message_popup_dialog_title_generic_error_style", genericErrorMessageParameters?.CultureSpecificMessage, "message_popup_dialog_message_generic_error_style", null, null, null, genericErrorMessageParameters?.CultureSpecificButtonText, "font_montserrat_extrabold_20", "message_popup_dialog_button_style6", "message_popup_dialog_button_grid_generic_error_style", (genericErrorMessageParameters != null && genericErrorMessageParameters.InnerGridStyle != null) ? genericErrorMessageParameters.InnerGridStyle : "message_popup_dialog_inner_grid_medium_generic_error_style", null, "message_popup_dialog_message_dock_panel_generic_error_style", (genericErrorMessageParameters != null && genericErrorMessageParameters.TimeOut.HasValue) ? genericErrorMessageParameters.TimeOut.Value : GetDefaultMessageTimeOut(30000, "long"), null, genericErrorMessageParameters?.ContinueAction, genericErrorMessageParameters?.TimeOutAction, (genericErrorMessageParameters != null && genericErrorMessageParameters.ActorTag != null) ? genericErrorMessageParameters.ActorTag : "GenericErrorMessage", genericErrorMessageParameters?.ContentUserControl, "Transparent", new Thickness(0.0, 0.0, 0.0, 0.0), (genericErrorMessageParameters?.Context != null) ? genericErrorMessageParameters.Context : new List<string> { "GenericErrorMessage" }, null, Visibility.Visible, isAutoSized: true));
-	}
-
-	private static void ShowGenericErrorMessageWithQRCode(GenericErrorMessageParameters genericErrorMessageParameters)
-	{
-		LogHelper.Instance.Log("Showing Generic Error Message with QR Code: {0}", genericErrorMessageParameters?.CultureSpecificTitle);
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(genericErrorMessageParameters?.CultureSpecificTitle, "message_popup_dialog_title_generic_error_style", genericErrorMessageParameters?.CultureSpecificMessage, "message_popup_dialog_message_generic_error_style2", null, null, null, genericErrorMessageParameters?.CultureSpecificButtonText, "font_montserrat_extrabold_20", "message_popup_dialog_button_style6", "message_popup_dialog_button_grid_generic_error_style2", (genericErrorMessageParameters != null && genericErrorMessageParameters.InnerGridStyle != null) ? genericErrorMessageParameters.InnerGridStyle : "message_popup_dialog_inner_grid_large_generic_error_style", null, "message_popup_dialog_message_dock_panel_generic_error_style", (genericErrorMessageParameters != null && genericErrorMessageParameters.TimeOut.HasValue) ? genericErrorMessageParameters.TimeOut.Value : GetDefaultMessageTimeOut(30000, "long"), null, genericErrorMessageParameters?.ContinueAction, genericErrorMessageParameters?.TimeOutAction, (genericErrorMessageParameters != null && genericErrorMessageParameters.ActorTag != null) ? genericErrorMessageParameters.ActorTag : "GenericErrorMessageWithQRCode", genericErrorMessageParameters?.ContentUserControl, "Transparent", new Thickness(0.0, 0.0, 0.0, 0.0), (genericErrorMessageParameters?.Context != null) ? genericErrorMessageParameters.Context : new List<string> { "GenericErrorMessageWithQRCode" }, null, Visibility.Collapsed, isAutoSized: true));
-	}
-
 	public static void ShowStarzExistingAccountErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.starz_signup_existing_account_error_title,
-			CultureSpecificMessage = Resources.starz_signup_existing_account_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.starz_signup_existing_account_error_title,
+			MessageText = Resources.starz_signup_existing_account_error_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Starz signup error existing Redbox Account" }
+			AnalyticsContextList = new List<string> { "Starz signup error existing Redbox Account" }
 		});
 	}
 
 	public static void ShowStarzGenericErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.starz_signup_generic_error_title,
-			CultureSpecificMessage = Resources.starz_signup_generic_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.starz_signup_generic_error_title,
+			MessageText = Resources.starz_signup_generic_error_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Starz signup generic error" }
+			AnalyticsContextList = new List<string> { "Starz signup generic error" }
 		});
 	}
 
 	public static void ShowStarzExistingSubscriptionErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.starz_signup_existing_subscription_error_title,
-			CultureSpecificMessage = Resources.starz_signup_existing_subscription_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.starz_signup_existing_subscription_error_title,
+			MessageText = Resources.starz_signup_existing_subscription_error_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Starz signup existing subscription error" }
+			AnalyticsContextList = new List<string> { "Starz signup existing subscription error" }
 		});
 	}
 
 	public static void ShowStarzEligibilityErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.starz_signup_eligibility_error_title,
-			CultureSpecificMessage = Resources.starz_signup_eligibility_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.starz_signup_eligibility_error_title,
+			MessageText = Resources.starz_signup_eligibility_error_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Starz signup eligibility error" }
+			AnalyticsContextList = new List<string> { "Starz signup eligibility error" }
 		});
 	}
 
 	public static void ShowStarzAuthorizeErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.auth_error_starz_auth_declined_title,
-			CultureSpecificMessage = Resources.auth_error_starz_auth_declined_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.auth_error_starz_auth_declined_title,
+			MessageText = Resources.auth_error_starz_auth_declined_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Starz signup authorize error" }
+			AnalyticsContextList = new List<string> { "Starz signup authorize error" }
 		});
 	}
 
 	public static void ShowAuthErrorMessage(string cultureSpecificTitle, string cultureSpecificMessage, string cultureSpecificButtonText, Action continueAction, Action timeOutAction, List<string> analyticsContexts = null)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = cultureSpecificTitle,
-			CultureSpecificMessage = cultureSpecificMessage,
-			CultureSpecificButtonText = cultureSpecificButtonText,
-			ContinueAction = continueAction,
+			TitleText = cultureSpecificTitle,
+			MessageText = cultureSpecificMessage,
+			Button1Text = cultureSpecificButtonText,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
-			Context = analyticsContexts
+			AnalyticsContextList = analyticsContexts
 		});
 	}
 
 	public static void ShowLogOutWarning(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Log out warning message");
-		ShowGenericDialogMessage(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = Resources.sign_out_dialog_title,
-			CultureSpecificMessage = Resources.sign_out_dialog_message,
-			CultureSpecificCancelButtonText = Resources.back_button,
-			CultureSpecificContinueButtonText = Resources.sign_out_button,
+			TitleText = Resources.sign_out_dialog_title,
+			MessageText = Resources.sign_out_dialog_message,
+			Button1Text = Resources.back_button.ToUpper(),
+			Button2Text = Resources.sign_out_button,
 			TimeOutAction = timeOutAction,
-			BackAction = backAction,
-			ContinueAction = continueAction,
+			Button1Action = backAction,
+			Button2Action = continueAction,
 			ViewName = "SignOutWarningMessage",
-			Timeout = GetDefaultMessageTimeOut(30000, "long")
+			TimeOut = GetDefaultMessageTimeOut(30000, "long")
 		});
 	}
 
@@ -209,64 +193,63 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowMissingRedboxPlusRentalItemMessage(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing missing redbox+ rental item message");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_missing_item_error_title,
-			CultureSpecificMessage = Resources.redbox_plus_missing_item_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
+			TitleText = Resources.redbox_plus_missing_item_error_title,
+			MessageText = Resources.redbox_plus_missing_item_error_message,
+			Button1Text = Resources.okay.ToUpper(),
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction
+			Button1Action = continueAction
 		});
 	}
 
 	public static void ShowRedboxPlusCartFullMessage(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing redbox+ cart full message");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_cart_full_message_title,
-			CultureSpecificMessage = Resources.redbox_plus_cart_full_message_body,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
+			TitleText = Resources.redbox_plus_cart_full_message_title,
+			MessageText = Resources.redbox_plus_cart_full_message_body,
+			Button1Text = Resources.okay.ToUpper(),
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction
+			Button1Action = continueAction
 		});
 	}
 
 	public static void ShowRedboxPlusFreeOneNightRentalAlreadyUsedTier1Message(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing redbox+ monthly free 1-night rental already used tier1 message");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_already_used_tier1_header,
-			CultureSpecificMessage = Resources.redbox_plus_already_used_tier1_message,
-			CultureSpecificButtonText = Resources.redbox_plus_already_used_close_button_text,
+			TitleText = Resources.redbox_plus_already_used_tier1_header,
+			MessageText = Resources.redbox_plus_already_used_tier1_message,
+			Button1Text = Resources.redbox_plus_already_used_close_button_text,
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction,
-			InnerGridStyle = "message_popup_dialog_inner_grid_large_generic_error_style"
+			Button1Action = continueAction
 		});
 	}
 
 	public static void ShowRedboxPlusFreeOneNightRentalAlreadyUsedTier2Message(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing redbox+ monthly free 1-night rental already used tier2 message");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_already_used_tier2_header,
-			CultureSpecificMessage = Resources.redbox_plus_already_used_tier2_message,
-			CultureSpecificButtonText = Resources.redbox_plus_already_used_close_button_text,
+			TitleText = Resources.redbox_plus_already_used_tier2_header,
+			MessageText = Resources.redbox_plus_already_used_tier2_message,
+			Button1Text = Resources.redbox_plus_already_used_close_button_text,
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction
+			Button1Action = continueAction
 		});
 	}
 
 	public static void ShowRedboxPlusFreeOneNightRentalApplied(Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing redbox+ monthly free 1-night rental appllied message");
-		ShowGenericDialogMessage(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Informational)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_added_free_1_night_rental_title,
-			CultureSpecificContinueButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.redbox_plus_added_free_1_night_rental_title,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction
 		});
 	}
@@ -274,65 +257,65 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowRedboxPlusPerksPointErrorMessage(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing redbox+ cart full message");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_perks_points_redemption_error_title,
-			CultureSpecificMessage = Resources.redbox_plus_perks_points_redemption_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
+			TitleText = Resources.redbox_plus_perks_points_redemption_error_title,
+			MessageText = Resources.redbox_plus_perks_points_redemption_error_message,
+			Button1Text = Resources.okay.ToUpper(),
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction
+			Button1Action = continueAction
 		});
 	}
 
 	public static void ShowRedboxPlusMultiNightPriceErrorMessage(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing redbox+ multi-night price error message");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_multi_night_error_title,
-			CultureSpecificMessage = Resources.redbox_plus_multi_night_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
+			TitleText = Resources.redbox_plus_multi_night_error_title,
+			MessageText = Resources.redbox_plus_multi_night_error_message,
+			Button1Text = Resources.okay.ToUpper(),
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction
+			Button1Action = continueAction
 		});
 	}
 
 	public static void ShowRedboxPlusGenericErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_signup_generic_error_title,
-			CultureSpecificMessage = Resources.redbox_plus_signup_generic_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.redbox_plus_signup_generic_error_title,
+			MessageText = Resources.redbox_plus_signup_generic_error_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Redbox+ signup generic error" }
+			AnalyticsContextList = new List<string> { "Redbox+ signup generic error" }
 		});
 	}
 
 	public static void ShowRedboxPlusExistingSubscriptionErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_signup_existing_subscription_error_title,
-			CultureSpecificMessage = Resources.redbox_plus_signup_existing_subscription_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.redbox_plus_signup_existing_subscription_error_title,
+			MessageText = Resources.redbox_plus_signup_existing_subscription_error_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Redbox+ signup existing subscription error" }
+			AnalyticsContextList = new List<string> { "Redbox+ signup existing subscription error" }
 		});
 	}
 
 	public static void ShowRedboxPlusExistingAccountErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.redbox_plus_signup_existing_account_error_title,
-			CultureSpecificMessage = Resources.redbox_plus_signup_existing_account_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.redbox_plus_signup_existing_account_error_title,
+			MessageText = Resources.redbox_plus_signup_existing_account_error_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Redbox+ signup error existing Redbox Account" }
+			AnalyticsContextList = new List<string> { "Redbox+ signup error existing Redbox Account" }
 		});
 	}
 
@@ -345,15 +328,15 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowSwapPromoForRedboxPlusBenefitMessage(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing swap promo for Redbox+ free one night rental message");
-		ShowGenericDialogMessage(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = Resources.swap_promo_with_redbox_plus_benefit,
-			CultureSpecificContinueButtonText = Resources.yes_button,
-			CultureSpecificCancelButtonText = Resources.no_button,
-			BackAction = backAction,
+			TitleText = Resources.swap_promo_with_redbox_plus_benefit,
+			Button2Text = Resources.yes_button,
+			Button1Text = Resources.no_button,
+			Button1Action = backAction,
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction,
-			Timeout = GetDefaultMessageTimeOut(30000, "short"),
+			Button2Action = continueAction,
+			TimeOut = GetDefaultMessageTimeOut(30000, "short"),
 			ViewName = "SwapPromoForRedboxPlusFreeOneNightRental"
 		});
 	}
@@ -361,29 +344,29 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowSwapRedboxPlusBenefitForPromoMessage(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing swap Redbox+ benefit for promo message");
-		ShowGenericDialogMessage(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = Resources.swap_redbox_plus_benefit_with_promo,
-			CultureSpecificContinueButtonText = Resources.yes_button,
-			CultureSpecificCancelButtonText = Resources.no_button,
-			BackAction = backAction,
+			TitleText = Resources.swap_redbox_plus_benefit_with_promo,
+			Button2Text = Resources.yes_button,
+			Button1Text = Resources.no_button,
+			Button1Action = backAction,
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction,
-			Timeout = GetDefaultMessageTimeOut(30000, "short"),
+			Button2Action = continueAction,
+			TimeOut = GetDefaultMessageTimeOut(30000, "short"),
 			ViewName = "SwapRedboxPlusBenefitForPromo"
 		});
 	}
 
 	public static void ShowRedboxPlusAuthorizeErrorMessage(Action continueAction)
 	{
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.auth_error_redbox_plus_auth_declined_title,
-			CultureSpecificMessage = Resources.auth_error_redbox_plus_auth_declined_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = Resources.auth_error_redbox_plus_auth_declined_title,
+			MessageText = Resources.auth_error_redbox_plus_auth_declined_message,
+			Button1Text = Resources.okay.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = continueAction,
-			Context = new List<string> { "Redbox+ signup authorize error" }
+			AnalyticsContextList = new List<string> { "Redbox+ signup authorize error" }
 		});
 	}
 
@@ -397,7 +380,18 @@ public class MessagePopupViewController : BaseViewController
 	{
 		LogHelper.Instance.Log("Showing in cart offer message");
 		InCartOfferMessageText inCartOfferMessageText = PromotionService.Instance.GetInCartOfferMessageText();
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(inCartOfferMessageText.Header, "message_popup_dialog_title_style2", inCartOfferMessageText.Message, (string)null, (PromotionService.Instance.IsFreeInCartOfferRunning || (PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance.ValidateRentTwoInCartPromo().IsCartValid)) ? null : inCartOfferMessageText.NoButtonText, (string)null, (string)null, inCartOfferMessageText.YesButtonText, (string)null, (string)null, (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(30000, "long"), backAction, continueAction, timeOutAction, "InCartOfferMessage", (UserControl)null, (string)null, default(Thickness), (string)null, (string)null, Visibility.Collapsed));
+		ShowModal(new ModalParameters(ModalType.Dialog)
+		{
+			TitleText = inCartOfferMessageText.Header,
+			MessageText = inCartOfferMessageText.Message,
+			Button1Text = ((PromotionService.Instance.IsFreeInCartOfferRunning || (PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance.ValidateRentTwoInCartPromo().IsCartValid)) ? null : inCartOfferMessageText.NoButtonText),
+			Button2Text = inCartOfferMessageText.YesButtonText,
+			TimeOut = GetDefaultMessageTimeOut(30000, "long"),
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "InCartOfferMessage"
+		});
 	}
 
 	public static void ShowGiftCardNotEnabledMessage(Action timeOutAction, Action continueAction)
@@ -409,13 +403,13 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowTitleLevelPromoCodeInvalidWarning(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing promo code invalid warning");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.tsp_invalid_header, "message_popup_dialog_title_style2", Resources.tsp_invalid_message, (string)null, Resources.do_not_use_promo_button, "font_target_small_medium", (string)null, Resources.use_promo_button, "font_target_small_medium", (string)null, (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "PromoCodeInvalidWarning", (UserControl)null, (string)null, default(Thickness), (string)null, (string)null, Visibility.Collapsed));
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.tsp_invalid_header2, "message_popup_dialog_title_style2", Resources.tsp_invalid_message, (string)null, Resources.do_not_use_promo_button, "font_target_small_medium", (string)null, Resources.use_promo_button, "font_target_small_medium", (string)null, (string)null, (string)null, (string)null, (string)null, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "PromoCodeInvalidWarning", (UserControl)null, (string)null, default(Thickness), (string)null, (string)null, Visibility.Collapsed));
 	}
 
 	public static void ShowTitleLevelPromoCodeInvalidWarning(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing title level promo code invalid warning");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.tsp_invalid_header, "message_popup_dialog_title_style2", Resources.tsp_invalid_message, null, null, null, null, Resources.continue_button, null, null, null, null, null, null, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "TitleLevelPromoCodeInvalidWarning", null, null, default(Thickness), "titlelevelpromoWarning"));
+		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.tsp_invalid_header2, "message_popup_dialog_title_style2", Resources.tsp_invalid_message, null, null, null, null, Resources.continue_button, null, null, null, null, null, null, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "TitleLevelPromoCodeInvalidWarning", null, null, default(Thickness), "titlelevelpromoWarning"));
 	}
 
 	public static void ShowFirstNightFreePromoCodeInvalidWarning(Action timeOutAction, Action backAction, Action continueAction, string message)
@@ -445,16 +439,16 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowPromoCodeInvalidForCartItemsWarning(Action timeOutAction, Action continueAction, string title, string message)
 	{
 		LogHelper.Instance.Log("Showing promo code invalid for cart items warning");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = title,
-			CultureSpecificMessage = message,
-			CultureSpecificButtonText = Resources.continue_button,
+			TitleText = title,
+			MessageText = message,
+			Button1Text = Resources.continue_button,
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "PromoCodeInvalidForCartItemsWarning",
-			Context = new List<string> { "promoCodeInvalidForCartItemsWarning" }
+			AnalyticsContextList = new List<string> { "promoCodeInvalidForCartItemsWarning" }
 		});
 	}
 
@@ -497,166 +491,233 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowPromoCodeDiscountRestrictionWarning(string title, string continueButtonText, Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing promo code discount restriction warning message");
-		ShowGenericDialogMessage3(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = title,
-			CultureSpecificMessage = Resources.promo_code_discount_restriction_warning_message,
-			CultureSpecificCancelButtonText = Resources.no_thanks_button.ToUpper(),
-			CultureSpecificContinueButtonText = continueButtonText,
+			TitleText = title,
+			MessageText = Resources.promo_code_discount_restriction_warning_message,
+			Button1Text = Resources.no_thanks_button.ToUpper(),
+			Button2Text = continueButtonText,
 			TimeOutAction = timeOutAction,
-			BackAction = backAction,
-			ContinueAction = continueAction,
+			Button1Action = backAction,
+			Button2Action = continueAction,
 			ViewName = "PromoCodeDiscountRestrictionWarningPopupView",
-			Context = new List<string> { "PromoCodeDiscountRestrictionWarningPopupView" }
+			AnalyticsContextList = new List<string> { "PromoCodeDiscountRestrictionWarningPopupView" }
 		});
 	}
 
 	public static void ShowInCartCancelWarning(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing in cart offer cancel warning message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.in_cart_remove_item_warning_header, (string)null, Resources.in_cart_remove_item_warning_message, (string)null, Resources.back_button, Resources.continue_button, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "InCartCancelWarning", (string)null));
+		ShowModal(new ModalParameters(ModalType.Dialog)
+		{
+			TitleText = Resources.in_cart_remove_item_warning_header,
+			MessageText = Resources.in_cart_remove_item_warning_message,
+			Button1Text = Resources.back_button.ToUpper(),
+			Button2Text = Resources.continue_button,
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "InCartCancelWarning"
+		});
 	}
 
 	public static void ShowSubPlatformWarning(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Sub Platform Warning message popup");
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string titleText = service["Subplatform:Header"];
-		string messageText = service["Subplatform:Message"];
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(titleText, null, messageText, null, Resources.back_uppercase_button, Resources.okay_button, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "SubPlatformWarning", "subplatformWarning"));
+		ShowModal(new ModalParameters(ModalType.Dialog)
+		{
+			TitleText = service["Subplatform:Header"],
+			MessageText = service["Subplatform:Message"],
+			Button1Text = Resources.back_uppercase_button,
+			Button2Text = Resources.okay_button,
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "SubPlatformWarning",
+			AnalyticsContextList = new List<string> { "subplatformWarning" }
+		});
 	}
 
 	public static void ShowADAPurchaseWarning(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing ADA Purchase Warning message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(ServiceLocator.Instance.GetService<IMacroService>()["ADAPurchaseWarning:Header"], "message_popup_dialog_title_style2", (string)null, (string)null, Resources.back_uppercase_button, Resources.okay_button, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "ADAPurchaseWarning", (string)null));
+		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
+		ShowModal(new ModalParameters(ModalType.Dialog)
+		{
+			TitleText = service["ADAPurchaseWarning:Header"],
+			Button1Text = Resources.back_uppercase_button,
+			Button2Text = Resources.okay_button,
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "ADAPurchaseWarning"
+		});
 	}
 
 	public static void ShowPurchaseWarning(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Purchase Warning message popup");
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string titleText = service["PurchaseWarning:Header"];
-		string messageText = service["PurchaseWarning:Message"];
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(titleText, null, messageText, null, Resources.back_uppercase_button, Resources.okay_button, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "PurchaseWarning", "purchaseWarning"));
+		ShowModal(new ModalParameters(ModalType.Dialog)
+		{
+			TitleText = service["PurchaseWarning:Header"],
+			MessageText = service["PurchaseWarning:Message"],
+			Button1Text = Resources.back_uppercase_button,
+			Button2Text = Resources.okay_button,
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "PurchaseWarning",
+			AnalyticsContextList = new List<string> { "purchaseWarning" }
+		});
 	}
 
 	public static void ShowMatureWarning(Action timeOutAction, Action backAction, Action continueAction, List<string> analyticsContexts)
 	{
 		LogHelper.Instance.Log("Showing Mature Warning message popup");
 		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		string titleText = service["MatureWarning:Header"];
-		string messageText = service["MatureWarning:Message"];
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(titleText, "message_popup_dialog_title_style2", messageText, null, Resources.back_uppercase_button, Resources.okay_button, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "MatureWarning", analyticsContexts));
+		ShowModal(new ModalParameters(ModalType.Dialog)
+		{
+			TitleText = service["MatureWarning:Header"],
+			MessageText = service["MatureWarning:Message"],
+			Button1Text = Resources.back_uppercase_button,
+			Button2Text = Resources.okay_button,
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "MatureWarning",
+			AnalyticsContextList = analyticsContexts
+		});
 	}
 
-	public static void Show4KAlert(Action timeOutAction, Action backAction, Action continueAction, string analyticsContext)
+	public static void Show4KAlert(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing 4K UHD Alert message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.four_k_alert_title, "message_popup_dialog_title_style3", Resources.four_k_alert, "message_popup_dialog_mesg_style3", Resources.cancel_button, "font_museo_slab_900_20", "message_popup_white_rubine_to_warm_purple_border_button_with_dropshadow_style", Resources.got_it_button, "font_museo_slab_900_20", "message_popup_warmpurple_button_style", null, null, null, null, GetDefaultMessageTimeOut(), backAction, continueAction, timeOutAction, "4KUHDAlert", null, "White", new Thickness(180.0, 192.0, 180.0, 192.0), analyticsContext, "4K_warning_popup_view"));
-	}
-
-	private static void ShowGenericDialogMessage(GenericDialogParameters genericDialogParameters)
-	{
-		LogHelper.Instance.Log($"Showing Generic dialog message {genericDialogParameters?.CultureSpecificTitle}");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(genericDialogParameters?.CultureSpecificTitle, "message_popup_dialog_title_generic_dialog_style", genericDialogParameters?.CultureSpecificMessage, "message_popup_dialog_message_generic_error_style", genericDialogParameters?.CultureSpecificCancelButtonText, "font_montserrat_extrabold_20", "message_popup_dialog_button_style6", genericDialogParameters?.CultureSpecificContinueButtonText, "font_montserrat_extrabold_20", "message_popup_dialog_button_style6", "message_popup_dialog_button_grid_generic_error_style", "message_popup_dialog_inner_grid_medium_generic_error_style", null, "message_popup_dialog_message_dock_panel_generic_error_style", (genericDialogParameters != null && genericDialogParameters.Timeout.HasValue) ? genericDialogParameters.Timeout.Value : GetDefaultMessageTimeOut(), genericDialogParameters?.BackAction, genericDialogParameters?.ContinueAction, genericDialogParameters?.TimeOutAction, "GenericDialogMessage", null, "White", default(Thickness), genericDialogParameters?.Context, genericDialogParameters?.ViewName, Visibility.Visible, isAutoSized: true));
-	}
-
-	private static void ShowGenericDialogMessage2(GenericDialogParameters genericDialogParameters)
-	{
-		LogHelper.Instance.Log($"Showing Generic dialog message 2 {genericDialogParameters?.CultureSpecificTitle}");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(genericDialogParameters?.CultureSpecificTitle, "message_popup_dialog_title_generic_dialog_style", genericDialogParameters?.CultureSpecificMessage, "message_popup_dialog_message_generic_error_style", genericDialogParameters?.CultureSpecificCancelButtonText, "font_montserrat_extrabold_20", "message_popup_dialog_button_style8", genericDialogParameters?.CultureSpecificContinueButtonText, "font_montserrat_extrabold_20", "message_popup_dialog_button_style9", "message_popup_dialog_button_grid_generic_error_style", "message_popup_dialog_inner_grid_medium_generic_error_style2", null, "message_popup_dialog_message_dock_panel_generic_error_style2", (genericDialogParameters != null && genericDialogParameters.Timeout.HasValue) ? genericDialogParameters.Timeout.Value : GetDefaultMessageTimeOut(), genericDialogParameters?.BackAction, genericDialogParameters?.ContinueAction, genericDialogParameters?.TimeOutAction, "GenericDialogMessage2", null, "Transparent", default(Thickness), genericDialogParameters?.Context, genericDialogParameters?.ViewName, Visibility.Visible, isAutoSized: true));
-	}
-
-	private static void ShowGenericDialogMessage3(GenericDialogParameters genericDialogParameters)
-	{
-		LogHelper.Instance.Log($"Showing Generic dialog message 3 {genericDialogParameters?.CultureSpecificTitle}");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(genericDialogParameters?.CultureSpecificTitle, "message_popup_dialog_title_generic_dialog_style", genericDialogParameters?.CultureSpecificMessage, "message_popup_dialog_message_generic_error_style", genericDialogParameters?.CultureSpecificCancelButtonText, "font_montserrat_extrabold_20", "message_popup_dialog_button_style10", genericDialogParameters?.CultureSpecificContinueButtonText, "font_montserrat_extrabold_20", "message_popup_dialog_button_style11", "message_popup_dialog_button_grid_generic_error_style", "message_popup_dialog_inner_grid_medium_generic_error_style3", null, "message_popup_dialog_message_dock_panel_generic_error_style", (genericDialogParameters != null && genericDialogParameters.Timeout.HasValue) ? genericDialogParameters.Timeout.Value : GetDefaultMessageTimeOut(), genericDialogParameters?.BackAction, genericDialogParameters?.ContinueAction, genericDialogParameters?.TimeOutAction, "GenericDialogMessage3", null, "Transparent", default(Thickness), genericDialogParameters?.Context, genericDialogParameters?.ViewName, Visibility.Visible, isAutoSized: true));
+		ShowModal(new ModalParameters(ModalType.Dialog)
+		{
+			TitleText = Resources.four_k_alert_title,
+			MessageText = Resources.four_k_alert,
+			Button1Text = Resources.cancel_button.ToUpper(),
+			Button2Text = Resources.got_it_button.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "4KUHDAlert",
+			AnalyticsContextList = new List<string> { "4KDialog" },
+			ViewName = "4K_warning_popup_view"
+		});
 	}
 
 	public static void ShowItemInCartQuitMessagePopupView(Action timeOutAction, Action backAction, Action continueAction)
 	{
-		ShowGenericDialogMessage2(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = Resources.item_in_cart_quit_popup_message,
-			CultureSpecificMessage = null,
-			CultureSpecificCancelButtonText = Resources.keep_browsing_button.ToUpper(),
-			CultureSpecificContinueButtonText = Resources.quit_confirm_button.ToUpper(),
+			TitleText = Resources.item_in_cart_quit_popup_message,
+			Button1Text = Resources.keep_browsing_button.ToUpper(),
+			Button2Text = Resources.quit_confirm_button.ToUpper(),
 			TimeOutAction = timeOutAction,
-			BackAction = backAction,
-			ContinueAction = continueAction,
+			Button1Action = backAction,
+			Button2Action = continueAction,
 			ViewName = "ItemInCartQuitMessagePopupView",
-			Context = new List<string> { "ItemInCartQuitMessagePopupView" }
+			AnalyticsContextList = new List<string> { "ItemInCartQuitMessagePopupView" }
 		});
 	}
 
 	public static void ShowSignedInEmptyCartQuitMessagePopupView(Action timeOutAction, Action backAction, Action continueAction)
 	{
-		ShowGenericDialogMessage2(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = Resources.signed_in_empty_cart_quit_popup_message,
-			CultureSpecificMessage = null,
-			CultureSpecificCancelButtonText = Resources.keep_browsing_button.ToUpper(),
-			CultureSpecificContinueButtonText = Resources.quit_confirm_button.ToUpper(),
+			TitleText = Resources.signed_in_empty_cart_quit_popup_message,
+			Button1Text = Resources.keep_browsing_button.ToUpper(),
+			Button2Text = Resources.quit_confirm_button.ToUpper(),
 			TimeOutAction = timeOutAction,
-			BackAction = backAction,
-			ContinueAction = continueAction,
+			Button1Action = backAction,
+			Button2Action = continueAction,
 			ViewName = "SignedInEmptyCartQuitMessagePopupView",
-			Context = new List<string> { "SignedInEmptyCartQuitMessagePopupView" }
+			AnalyticsContextList = new List<string> { "SignedInEmptyCartQuitMessagePopupView" }
 		});
 	}
 
 	public static void ShowSignedInItemInCartQuitMessagePopupView(Action timeOutAction, Action backAction, Action continueAction)
 	{
-		ShowGenericDialogMessage2(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = Resources.signed_in_item_in_cart_quit_popup_message,
-			CultureSpecificMessage = null,
-			CultureSpecificCancelButtonText = Resources.keep_browsing_button.ToUpper(),
-			CultureSpecificContinueButtonText = Resources.quit_confirm_button.ToUpper(),
+			TitleText = Resources.signed_in_item_in_cart_quit_popup_message,
+			Button1Text = Resources.keep_browsing_button.ToUpper(),
+			Button2Text = Resources.quit_confirm_button.ToUpper(),
 			TimeOutAction = timeOutAction,
-			BackAction = backAction,
-			ContinueAction = continueAction,
+			Button1Action = backAction,
+			Button2Action = continueAction,
 			ViewName = "SignedInItemInCartQuitMessagePopupView",
-			Context = new List<string> { "SignedInItemInCartQuitMessagePopupView" }
+			AnalyticsContextList = new List<string> { "SignedInItemInCartQuitMessagePopupView" }
 		});
 	}
 
 	public static void ShowRemoveSubscriptionWarning(Action timeOutAction, Action backAction, Action continueAction)
 	{
-		ShowGenericDialogMessage(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = Resources.subscription_removal_title,
-			CultureSpecificMessage = Resources.subscription_removal_message,
-			CultureSpecificCancelButtonText = Resources.cancel_button.ToUpper(),
-			CultureSpecificContinueButtonText = Resources.remove_button,
+			TitleText = Resources.subscription_removal_title,
+			MessageText = Resources.subscription_removal_message,
+			Button1Text = Resources.cancel_button.ToUpper(),
+			Button2Text = Resources.remove_button,
 			TimeOutAction = timeOutAction,
-			BackAction = backAction,
-			ContinueAction = continueAction,
+			Button1Action = backAction,
+			Button2Action = continueAction,
 			ViewName = "remove_subscription_popup_view",
-			Context = new List<string> { "RemoveSubscription" }
+			AnalyticsContextList = new List<string> { "RemoveSubscription" }
 		});
 	}
 
-	public static void ShowMultiDiscAlert(string title, string message, string buttonText, Action timeOutAction, Action continueAction, string analyticsContext)
+	public static void ShowMultiDiscAlert(string title, string message, Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Multi Disc Alert message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(title, "message_popup_dialog_title_style3", message, "message_popup_dialog_mesg_style3", null, null, null, buttonText, "font_museo_slab_900_20", "message_popup_warmpurple_button_style", null, null, null, null, GetDefaultMessageTimeOut(), null, continueAction, timeOutAction, "MultiDiscAlert", null, "White", new Thickness(185.0, 144.0, 185.0, 124.0), analyticsContext, "multi_disc_warning_popup_view"));
+		ShowModal(new ModalParameters(ModalType.Informational)
+		{
+			TitleText = title,
+			MessageText = message,
+			Button1Text = Resources.multi_disc_warning_button_text.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "MultiDiscAlert",
+			AnalyticsContextList = new List<string> { "MultiDiscWarningDialog" },
+			ViewName = "multi_disc_warning_popup_view"
+		});
 	}
 
 	public static void ShowDigitalCodeAlert(Action backAction, Action okAction, Action timeOutAction)
 	{
 		LogHelper.Instance.Log("Showing Digital Code Alert message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.digital_code_alert_title, Resources.digital_code_alert_message, Resources.back_uppercase_button, Resources.okay_button, GetDefaultMessageTimeOut(), backAction, okAction, timeOutAction, "DigitalCodeAlert", "digitalcodeincart_message_view"));
+		ShowModal(new ModalParameters(ModalType.Dialog)
+		{
+			TitleText = Resources.digital_code_alert_title,
+			MessageText = Resources.digital_code_alert_message,
+			Button1Text = Resources.back_uppercase_button,
+			Button2Text = Resources.okay_button,
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			Button2Action = okAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "DigitalCodeAlert",
+			AnalyticsContextList = new List<string> { "digitalcodeincart_message_view" }
+		});
 	}
 
 	public static void ShowMessagePopupViewReturnSuccess(Action timeOutAction)
 	{
 		LogHelper.Instance.Log("Showing Return Success message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.title_thanks,
-			CultureSpecificMessage = Resources.inventory_updated_message,
+			TitleText = Resources.title_thanks,
+			MessageText = Resources.inventory_updated_message,
 			TimeOut = GetDefaultMessageTimeOut(5000, "short"),
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewReturnSuccess"
@@ -666,286 +727,304 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowMessagePopupViewReturnSuccessWithBrowse(Action timeOutAction, Action backAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Return Success with Browse message popup");
-		ShowGenericDialogMessage3(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Dialog)
 		{
-			CultureSpecificTitle = Resources.return_success_with_browse_popup_title,
-			CultureSpecificMessage = Resources.return_success_with_browse_popup_message,
-			CultureSpecificCancelButtonText = Resources.close_button.ToUpper(),
-			CultureSpecificContinueButtonText = Resources.see_new_movies_button_text.ToUpper(),
+			TitleText = Resources.return_success_with_browse_popup_title,
+			MessageText = Resources.return_success_with_browse_popup_message,
+			Button1Text = Resources.close_button.ToUpper(),
+			Button2Text = Resources.see_new_movies_button_text.ToUpper(),
 			TimeOutAction = timeOutAction,
-			BackAction = backAction,
-			ContinueAction = continueAction,
+			Button1Action = backAction,
+			Button2Action = continueAction,
 			ViewName = "ReturnSuccessWithBrowseMessagePopupView",
-			Context = new List<string> { "ReturnSuccessWithBrowseMessagePopupView" }
+			AnalyticsContextList = new List<string> { "ReturnSuccessWithBrowseMessagePopupView" }
 		});
 	}
 
 	public static void ShowMessageCartFull(Action timeoutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Cart Full message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.cart_full_header, Resources.cart_full_body, (string)null, Resources.continue_button, OrchestrationService.GetIdleTimerTimeout(), (Action)null, continueAction, timeoutAction, "CartFull", (string)null));
+		ShowModal(new ModalParameters(ModalType.Informational)
+		{
+			TitleText = Resources.cart_full_header,
+			MessageText = Resources.cart_full_body,
+			Button1Text = Resources.continue_button,
+			TimeOut = OrchestrationService.GetIdleTimerTimeout(),
+			Button1Action = continueAction,
+			TimeOutAction = timeoutAction,
+			ActorTag = "CartFull"
+		});
 	}
 
 	public static void ShowMessagePopupViewHardwareError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Hardware Error message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificMessage = Resources.hardware_error_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			MessageText = Resources.hardware_error_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewHardwareError",
-			Context = new List<string> { "hardwareError" }
+			AnalyticsContextList = new List<string> { "hardwareError" }
 		});
 	}
 
 	public static void ShowMessagePopupViewReturnBackwardInserted(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Return Backward Inserted message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.backward_insert_error_title,
-			CultureSpecificMessage = Resources.backward_insert_error,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.backward_insert_error_title,
+			MessageText = Resources.backward_insert_error,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewReturnBackwardInserted",
-			Context = new List<string> { "returnBackwardInserted" }
+			AnalyticsContextList = new List<string> { "returnBackwardInserted" }
 		});
 	}
 
 	public static void ShowMessagePopupViewReturnUnrecognizedBarcode(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Return Unrecognized Barcode message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.oops,
-			CultureSpecificMessage = Resources.unrecognized_barcode_returned_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.oops,
+			MessageText = Resources.unrecognized_barcode_returned_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewReturnUnrecognizedBarcode",
-			Context = new List<string> { "returnUnrecognizedBarcode" }
+			AnalyticsContextList = new List<string> { "returnUnrecognizedBarcode" }
 		});
 	}
 
 	public static void ShowMessagePopupViewCardNotRecognized(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Card Not Recognized message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.invalid_card_title,
-			CultureSpecificMessage = Resources.invalid_card_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.invalid_card_title,
+			MessageText = Resources.invalid_card_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewCardNotRecognized",
-			Context = new List<string> { "cardNotRecognized" }
+			AnalyticsContextList = new List<string> { "cardNotRecognized" }
 		});
 	}
 
 	public static void ShowMessagePopupViewCheckoutCardReaderTampered(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Tampered card reader message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.card_reader_tampered_message_title,
-			CultureSpecificMessage = Resources.card_reader_tampered_checkout_flow_message_body,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.card_reader_tampered_message_title,
+			MessageText = Resources.card_reader_tampered_checkout_flow_message_body,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewSwipedCardIsChipEnabled",
-			Context = new List<string> { "swipedCardIsChipEnabled" }
+			AnalyticsContextList = new List<string> { "swipedCardIsChipEnabled" }
 		});
 	}
 
 	public static void ShowMessagePopupViewReservationCardReaderTampered(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Tampered card reader message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.card_reader_tampered_message_title,
-			CultureSpecificMessage = Resources.card_reader_tampered_reservation_flow_message_body,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.card_reader_tampered_message_title,
+			MessageText = Resources.card_reader_tampered_reservation_flow_message_body,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewSwipedCardIsChipEnabled",
-			Context = new List<string> { "swipedCardIsChipEnabled" }
+			AnalyticsContextList = new List<string> { "swipedCardIsChipEnabled" }
 		});
 	}
 
 	public static void ShowMessagePopupViewSwipedCardIsChipEnabled(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Swiped Card is chip enabled message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.swiped_card_is_chip_enabled_title,
-			CultureSpecificMessage = Resources.swiped_card_is_chip_enabled_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.swiped_card_is_chip_enabled_title,
+			MessageText = Resources.swiped_card_is_chip_enabled_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewSwipedCardIsChipEnabled",
-			Context = new List<string> { "swipedCardIsChipEnabled" }
+			AnalyticsContextList = new List<string> { "swipedCardIsChipEnabled" }
 		});
 	}
 
 	public static void ShowMessagePopupViewBadChipReadError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing bad chip read error message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.bad_chip_read_title,
-			CultureSpecificMessage = Resources.bad_chip_read_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.bad_chip_read_title,
+			MessageText = Resources.bad_chip_read_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewBadChipReadError",
-			Context = new List<string> { "badChipReadError" }
+			AnalyticsContextList = new List<string> { "badChipReadError" }
 		});
 	}
 
 	public static void ShowMessagePopupViewBadContactlessReadError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing bad contactless read error message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.bad_contactless_read_title,
-			CultureSpecificMessage = Resources.bad_contactless_read_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.bad_contactless_read_title,
+			MessageText = Resources.bad_contactless_read_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewBadContactlessReadError",
-			Context = new List<string> { "badContactlessReadError" }
+			AnalyticsContextList = new List<string> { "badContactlessReadError" }
 		});
 	}
 
 	public static void ShowMessagePopupViewReservationMobileWalletError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Reservation Mobile Wallet error message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.reservation_mobile_device_error_title,
-			CultureSpecificMessage = Resources.reservation_mobile_device_error_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.reservation_mobile_device_error_title,
+			MessageText = Resources.reservation_mobile_device_error_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewReservationMobileWalletError",
-			Context = new List<string> { "reservationMobileWalletError" }
+			AnalyticsContextList = new List<string> { "reservationMobileWalletError" }
 		});
 	}
 
 	public static void ShowMessagePopupViewCardNotRecognizedTechnicalFallback(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Card Not Recognized Technical Fallback message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.technical_fallback_title,
-			CultureSpecificMessage = Resources.technical_fallback_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.technical_fallback_title,
+			MessageText = Resources.technical_fallback_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(30000, "long"),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewCardNotRecognizedTechnicalFallback",
-			Context = new List<string> { "cardNotRecognizedTechnicalFallback" }
+			AnalyticsContextList = new List<string> { "cardNotRecognizedTechnicalFallback" }
 		});
 	}
 
 	public static void ShowMessagePopupViewGoogleWorkaroundError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Google Workaround error message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.google_workaround_error_title,
-			CultureSpecificMessage = Resources.google_workaround_error_message,
-			CultureSpecificButtonText = Resources.okay.ToUpper(),
+			TitleText = Resources.google_workaround_error_title,
+			MessageText = Resources.google_workaround_error_message,
+			Button1Text = Resources.okay.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewGoogleWorkaroundError",
-			Context = new List<string> { "googleWorkaroundError" }
+			AnalyticsContextList = new List<string> { "googleWorkaroundError" }
 		});
 	}
 
 	public static void ShowMessagePopupViewGoogleNoPassFoundError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Google No Pass Found error message popup");
-		BitmapImage qRCodeImage = ServiceLocator.Instance.GetService<IKioskClientService>()?.QRCodeUtilities?.GetQRCodeImage(Resources.mobile_pass_login_qr_code_url, returnDefaultOnError: true);
-		ShowGenericErrorMessageWithQRCode(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.mobile_pass_login_google_no_pass_found_error_header,
-			CultureSpecificMessage = Resources.mobile_pass_login_google_no_pass_found_error_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.mobile_pass_login_google_no_pass_found_error_header,
+			MessageText = Resources.mobile_pass_login_google_no_pass_found_error_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(30000, "long"),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewGoogleNoPassFoundError",
 			ContentUserControl = new QRCodeDisplayUserControl
 			{
 				DataContext = new
 				{
+					QRCodeImage = ServiceLocator.Instance.GetService<IKioskClientService>()?.QRCodeUtilities?.GetQRCodeImage(Resources.mobile_pass_login_qr_code_url, returnDefaultOnError: true),
 					MessageStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "message_popup_qr_code_message_style2"),
-					MessageText = string.Empty,
-					QRCodeImage = qRCodeImage
+					MessageText = string.Empty
 				}
 			},
-			Context = new List<string> { "googleNoPassFoundError" }
+			AnalyticsContextList = new List<string> { "googleNoPassFoundError" }
 		});
 	}
 
 	public static void ShowMessagePopupViewMobilePaymentCardNoPassFoundError(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Mobile Payment Card No Pass Found error message popup");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.mobile_payment_card_no_pass_found_error_title,
-			CultureSpecificMessage = Resources.mobile_payment_card_no_pass_found_error_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.mobile_payment_card_no_pass_found_error_title,
+			MessageText = Resources.mobile_payment_card_no_pass_found_error_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "ViewMobilePaymentCardNoPassFoundError",
-			Context = new List<string> { "mobilePaymentCardNoPassFoundError" }
+			AnalyticsContextList = new List<string> { "mobilePaymentCardNoPassFoundError" }
 		});
 	}
 
 	public static void ShowPerksPassLoginErrorMessage(string title, string message, Action continueAction, Action timeOutAction)
 	{
 		LogHelper.Instance.Log("Showing Perks Pass login error message");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = title,
-			CultureSpecificMessage = message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
-			ContinueAction = continueAction,
+			TitleText = title,
+			MessageText = message,
+			Button1Text = Resources.got_it_button.ToUpper(),
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
-			Context = new List<string> { "PerksPassLoginErrorMessage" },
-			InnerGridStyle = "message_popup_dialog_inner_grid_large_generic_error_style"
+			AnalyticsContextList = new List<string> { "PerksPassLoginErrorMessage" }
 		});
 	}
 
-	public static void ShowPerksPassLoginDialogMessageAndQRCode(string title, string message, Action continueAction, Action timeOutAction, BitmapImage qrCodeImage)
+	public static void ShowPerksPassLoginDialogMessageAndQRCode(Action continueAction, Action timeOutAction)
 	{
 		LogHelper.Instance.Log("Showing Perks Pass login dialog message and QR code");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(title, "message_popup_dialog_title_generic_dialog_style", message, "message_popup_dialog_message_generic_error_style2", null, null, null, Resources.got_it_button.ToUpper(), "font_montserrat_extrabold_20", "message_popup_dialog_button_style6", "message_popup_dialog_button_grid_generic_error_style2", "message_popup_dialog_inner_grid_large_generic_error_style", null, "message_popup_dialog_message_dock_panel_generic_error_style", GetDefaultMessageTimeOut(30000, "long"), null, continueAction, timeOutAction, "PerksPassLoginDialogMessageAndQACode", new QRCodeDisplayUserControl
+		ShowModal(new ModalParameters(ModalType.Informational)
 		{
-			DataContext = new
+			TitleText = Resources.mobile_pass_login_get_pass_header,
+			MessageText = Resources.mobile_pass_login_get_pass_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(30000, "long"),
+			Button1Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "PerksPassLoginDialogMessageAndQACode",
+			ContentUserControl = new QRCodeDisplayUserControl
 			{
-				MessageStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "message_popup_qr_code_message_style2"),
-				MessageText = string.Empty,
-				QRCodeImage = qrCodeImage
-			}
-		}, "White", new Thickness(0.0, 0.0, 0.0, 0.0), new List<string> { "PerksPassLoginDialogMessageAndQRCode" }, null, Visibility.Collapsed, isAutoSized: true));
+				DataContext = new
+				{
+					QRCodeImage = ServiceLocator.Instance.GetService<IKioskClientService>()?.QRCodeUtilities?.GetQRCodeImage(Resources.mobile_pass_login_qr_code_url, returnDefaultOnError: true),
+					MessageStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "message_popup_qr_code_message_style2"),
+					MessageText = string.Empty
+				}
+			},
+			AnalyticsContextList = new List<string> { "PerksPassLoginDialogMessageAndQRCode" }
+		});
 	}
 
 	public static void ShowMessagePopupViewVendError(Action timeOutAction, Action continueAction)
@@ -971,14 +1050,25 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowQRCodeDialog(BitmapImage qrCodeImage, string url, Action backAction, Action timeOutAction)
 	{
 		LogHelper.Instance.Log("Showing QR Code message popup");
-		ShowMessagePopupView(new ShowMessagePopupViewParameter(Resources.qr_code_dialog_title, "message_popup_dialog_title_style6", null, null, Resources.done_button, "font_montserrat_extrabold_20", "message_popup_dialog_button_style7", null, null, null, null, null, null, "message_popup_dialog_message_dock_panel_style", GetDefaultMessageTimeOut(), backAction, null, timeOutAction, "ViewQRCodeDialog", new QRCodeDisplayUserControl
+		ShowModal(new ModalParameters(ModalType.Informational)
 		{
-			DataContext = new
+			TitleText = Resources.qr_code_dialog_title,
+			Button1Text = Resources.done_button,
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "ViewQRCodeDialog",
+			ContentUserControl = new QRCodeDisplayUserControl
 			{
-				MessageText = string.Format(Resources.qr_code_dialog_message, url),
-				QRCodeImage = qrCodeImage
-			}
-		}, "White", new Thickness(176.0, 92.0, 176.0, 116.0), "qr_code_dialog_view"));
+				DataContext = new
+				{
+					QRCodeImage = qrCodeImage,
+					MessageStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "message_popup_qr_code_message_style"),
+					MessageText = string.Format(Resources.qr_code_dialog_message, url)
+				}
+			},
+			AnalyticsContextList = new List<string> { "qr_code_dialog_view" }
+		});
 	}
 
 	public static void ShowReserveOnlineRentDialog(Action timeOutAction, Action backAction, Action continueAction)
@@ -991,31 +1081,31 @@ public class MessagePopupViewController : BaseViewController
 	{
 		OrchestrationService.SetCurrentUICulture();
 		LogHelper.Instance.Log("Showing machine full warning");
-		ShowGenericErrorMessage(new GenericErrorMessageParameters
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			CultureSpecificTitle = Resources.machine_full_title,
-			CultureSpecificMessage = Resources.machine_full_message,
-			CultureSpecificButtonText = Resources.got_it_button.ToUpper(),
+			TitleText = Resources.machine_full_title,
+			MessageText = Resources.machine_full_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			TimeOutAction = timeOutAction,
 			ActorTag = "MachineFullWarning",
-			Context = new List<string> { "machineFullWarning" }
+			AnalyticsContextList = new List<string> { "machineFullWarning" }
 		});
 	}
 
 	public static void ShowBrowseMessagePopupLearnMorePopup(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing Browse Message Popup Learn More Popup");
-		ShowGenericDialogMessage(new GenericDialogParameters
+		ShowModal(new ModalParameters(ModalType.Informational)
 		{
-			CultureSpecificTitle = Resources.browse_message_popup_learn_more_popup_title,
-			CultureSpecificMessage = Resources.browse_message_popup_learn_more_popup_message,
-			CultureSpecificContinueButtonText = Resources.close_button.ToUpper(),
+			TitleText = Resources.browse_message_popup_learn_more_popup_title,
+			MessageText = Resources.browse_message_popup_learn_more_popup_message,
+			Button1Text = Resources.close_button.ToUpper(),
 			TimeOutAction = timeOutAction,
-			ContinueAction = continueAction,
+			Button1Action = continueAction,
 			ViewName = "browse_message_popup_learn_more_popup_view",
-			Context = new List<string> { "browse_message_popup_learn_more_popup_view" }
+			AnalyticsContextList = new List<string> { "browse_message_popup_learn_more_popup_view" }
 		});
 	}
 
@@ -1046,6 +1136,11 @@ public class MessagePopupViewController : BaseViewController
 		{
 			messagePopupViewUserControl.StopTimer();
 		}
+	}
+
+	public static void ReenableTimer()
+	{
+		((MessagePopupViewUserControl)BaseViewController.GetViewUserControl())?.ReenableTimer();
 	}
 
 	public static void ShowMessagePopupView(ShowMessagePopupViewParameter parameter)

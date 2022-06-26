@@ -27,7 +27,7 @@ public class DesignOptionSelectionDialogViewModel
 		ButtonData.Add(new ButtonData("Test Button 4", new DynamicRoutedCommand()));
 		HeaderText = "These are your options";
 		DescriptionText = "Please choose an option\r\nLine 2:";
-		CancelButtonText = "Cancel";
+		CancelButtonText = "CANCEL";
 		DialogHeight = 526;
 		DialogWidth = 720;
 	}

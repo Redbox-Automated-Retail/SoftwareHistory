@@ -56,38 +56,15 @@ public class VsmViewController : BaseViewController
 
 	private static void GetAdImage(VsmViewModel vsmViewModel)
 	{
-		MeijerVsmKiosk meijerVsmKiosk = null;
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableMeijerVSM)
-		{
-			meijerVsmKiosk = GetMeijerVsmKiosk();
-		}
-		if (meijerVsmKiosk != null && meijerVsmKiosk.NearestKiosk != null)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKioskClosingVSM)
 		{
 			vsmViewModel.MinimumDisplayTime = 7000;
 			vsmViewModel.AdImage = null;
 			vsmViewModel.HeaderHeight = 192f;
 			vsmViewModel.AdImpression = null;
 			vsmViewModel.ClosingLocationGridVisibility = Visibility.Visible;
-			vsmViewModel.ClosingLocationDateText = $"This location is\nclosing in {meijerVsmKiosk.DateText}";
-			vsmViewModel.ClosingLocationText = "Keep renting at your nearest location:";
-			vsmViewModel.ClosingLocationBannerVisibility = Visibility.Visible;
-			vsmViewModel.ClosingLocationBannerText = meijerVsmKiosk.NearestKiosk.Banner;
-			vsmViewModel.ClosingLocationAddressVisibility = Visibility.Visible;
-			vsmViewModel.ClosingLocationAddressText = meijerVsmKiosk.NearestKiosk.Address;
-			vsmViewModel.ClosingLocationCityVisibility = Visibility.Visible;
-			vsmViewModel.ClosingLocationCityText = meijerVsmKiosk.NearestKiosk.City;
-			vsmViewModel.ClosingLocationNoteVisibility = Visibility.Visible;
-			return;
-		}
-		if (meijerVsmKiosk != null && meijerVsmKiosk.NearestKiosk == null)
-		{
-			vsmViewModel.MinimumDisplayTime = 7000;
-			vsmViewModel.AdImage = null;
-			vsmViewModel.HeaderHeight = 192f;
-			vsmViewModel.AdImpression = null;
-			vsmViewModel.ClosingLocationGridVisibility = Visibility.Visible;
-			vsmViewModel.ClosingLocationDateText = $"This location is\nclosing in {meijerVsmKiosk.DateText}";
-			vsmViewModel.ClosingLocationText = "Visit redbox.com to stream movies On Demand\nand watch Free Movies & Live TV!";
+			vsmViewModel.ClosingLocationDateText = "This location is\nclosing in the next two weeks";
+			vsmViewModel.ClosingLocationText = "Visit redbox.com \"find a kiosk\" for the next closest location OR\ncheck out our app to watch On Demand";
 			return;
 		}
 		IAd ad = null;
@@ -164,7 +141,7 @@ public class VsmViewController : BaseViewController
 
 	public static bool IsVsmAdAvailable()
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableMeijerVSM && GetMeijerVsmKiosk() != null)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKioskClosingVSM)
 		{
 			return true;
 		}

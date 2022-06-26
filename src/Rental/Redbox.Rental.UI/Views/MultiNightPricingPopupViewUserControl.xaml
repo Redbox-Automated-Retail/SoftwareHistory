@@ -8,26 +8,34 @@
   </UIElement.CommandBindings>
   <Grid>
     <Grid Name="BackgroundGrid" Background="#FF000000" Opacity="0.6" />
-    <Border Height="600" Width="600" Background="#FFFFFFFF" CornerRadius="20">
-      <Grid>
-        <TextBlock Name="HeaderText" Width="504" Height="80" VerticalAlignment="Top" Margin="0,48,0,0" Foreground="#782D8D" TextWrapping="Wrap" Style="{StaticResource font_montserrat_bold_32}" LineHeight="40" Text="{Binding Path=HeaderText, FallbackValue=Power Rangers}" />
-        <TextBlock Name="DescriptionText" Width="504" Height="32" VerticalAlignment="Top" Margin="0,144,0,0" Foreground="#782D8D" Style="{StaticResource font_montserrat_regular_24}" LineHeight="32" Text="{Binding Path=DescriptionText, FallbackValue=How long do you want to keep it?}" />
-        <StackPanel Orientation="Vertical" VerticalAlignment="Top" Margin="0,176,0,0">
-          <Redbox:RoundedButton Name="OneNightButton" Width="504" Height="56" Margin="0,24,0,0" CornerRadius="28" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.OneNightCommand}" Visibility="{Binding Path=OneNightButtonVisibility, FallbackValue=Visible}">
-            <TextBlock Name="OneNightButtonText" Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=OneNightButtonText, FallbackValue=$1.50 for 1 night}" />
-          </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="MultiNightButton" Width="504" Height="56" Margin="0,24,0,0" CornerRadius="28" Style="{StaticResource style_rb_purple_white_border_button}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.MultiNightCommand}" Visibility="{Binding Path=MultiNightButtonVisibility, FallbackValue=Visible}">
-            <TextBlock Name="MultiNightButtonText" Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=MultiNightButtonText, FallbackValue=$2.00 for 3 nights}" />
-          </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="BuyButton" Width="504" Height="56" Margin="0,24,0,0" CornerRadius="28" Style="{StaticResource style_rubine_white_border_button}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.BuyCommand}" Visibility="{Binding Path=BuyButtonVisibility, FallbackValue=Visible}">
-            <TextBlock Name="BuyButtonText" Foreground="#FFFFFFFF" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=BuyButtonText, FallbackValue=$3.99 to buy it}" />
-          </Redbox:RoundedButton>
-        </StackPanel>
-        <Redbox:RoundedButton Name="CancelButton" Width="504" Height="56" VerticalAlignment="Top" Margin="0,444,0,0" CornerRadius="28" Style="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.CancelCommand}">
-          <TextBlock Name="CancelButtonText" Foreground="#E42045" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=CancelButtonText, FallbackValue=Cancel}" />
+    <Border VerticalAlignment="Center" Width="800" Background="#FFFFFFFF" CornerRadius="28">
+      <StackPanel Margin="76,76,76,24">
+        <TextBlock Name="HeaderText" Margin="0,0,0,24" Foreground="{StaticResource CarlosPurple1Brush}" TextWrapping="Wrap" Style="{StaticResource font_montserrat_bold_28}" LineHeight="40" Text="{Binding Path=HeaderText, FallbackValue=Power Rangers}" />
+        <TextBlock Name="DescriptionText" Margin="0,0,0,24" Foreground="{StaticResource CarlosPurple1Brush}" TextWrapping="Wrap" Style="{StaticResource font_montserrat_medium_20}" LineHeight="32" Text="{Binding Path=DescriptionText, FallbackValue=How long do you want to keep it?}" />
+        <Redbox:RoundedButton Name="OneNightButton" Width="336" Margin="0,0,0,24" Style="{StaticResource button_light_large_primary_style}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.OneNightCommand}" Visibility="{Binding Path=OneNightButtonVisibility, FallbackValue=Visible}">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Name="OneNightButtonText1" Style="{StaticResource button_text_style}" Width="168" TextAlignment="Left" Text="{Binding Path=OneNightButtonText1, FallbackValue=1 NIGHT}" />
+            <TextBlock Name="OneNightButtonText2" Style="{StaticResource button_text_style}" Width="168" TextAlignment="Right" Text="{Binding Path=OneNightButtonText2, FallbackValue=$1.50}" />
+          </StackPanel>
         </Redbox:RoundedButton>
-        <TextBlock Name="DisclaimerText" Width="504" Height="76" VerticalAlignment="Top" Margin="0,524,0,0" Foreground="#303539" TextWrapping="Wrap" Style="{StaticResource font_montserrat_regular_13}" LineHeight="20" Text="{Binding Path=DisclaimerText, FallbackValue='Our multi-night deal cant be combined with other offers. Your awesome rental rate is good during the multi-night period. If you keep your rental longer, thats totally fine - extra nights are $1.50.'}" />
-      </Grid>
+        <Redbox:RoundedButton Name="MultiNightButton" Width="336" Margin="0,0,0,24" Style="{StaticResource button_light_large_primary_style}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.MultiNightCommand}" Visibility="{Binding Path=MultiNightButtonVisibility, FallbackValue=Visible}">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Name="MultiNightButtonText1" Style="{StaticResource button_text_style}" Width="168" TextAlignment="Left" Text="{Binding Path=MultiNightButtonText1, FallbackValue=3 NIGHTS}" />
+            <TextBlock Name="MultiNightButtonText2" Style="{StaticResource button_text_style}" Width="168" TextAlignment="Right" Text="{Binding Path=MultiNightButtonText2, FallbackValue=$2.00}" />
+          </StackPanel>
+        </Redbox:RoundedButton>
+        <Redbox:RoundedButton Name="BuyButton" Width="336" Margin="0,0,0,24" Style="{StaticResource button_large_purchase_style}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.BuyCommand}" Visibility="{Binding Path=BuyButtonVisibility, FallbackValue=Visible}">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Name="BuyButtonText1" Style="{StaticResource button_text_style}" Width="168" TextAlignment="Left" Text="{Binding Path=BuyButtonText1, FallbackValue=BUY IT}" />
+            <TextBlock Name="BuyButtonText2" Style="{StaticResource button_text_style}" Width="168" TextAlignment="Right" Text="{Binding Path=BuyButtonText2, FallbackValue=$3.99}" />
+          </StackPanel>
+        </Redbox:RoundedButton>
+        <TextBlock Name="DisclaimerText" Margin="0,52,0,24" Foreground="{StaticResource CarlosPurple1Brush}" TextWrapping="Wrap" Style="{StaticResource font_montserrat_regular_13}" LineHeight="20" Text="{Binding Path=DisclaimerText, FallbackValue='Our multi-night deal cant be combined with other offers. Your awesome rental rate is good during the multi-night period. If you keep your rental longer, thats totally fine - extra nights are $1.50.'}" />
+        <Separator Style="{StaticResource modal_separator_style}" Margin="0,0,0,24" />
+        <Redbox:RoundedButton Name="CancelButton" HorizontalAlignment="Center" Style="{StaticResource modal_one_button_button1_style}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.CancelCommand}">
+          <TextBlock Name="CancelButtonText" Style="{StaticResource button_text_style}" Text="{Binding Path=CancelButtonText, FallbackValue=CANCEL}" />
+        </Redbox:RoundedButton>
+      </StackPanel>
     </Border>
   </Grid>
 </controls:TextToSpeechUserControl>

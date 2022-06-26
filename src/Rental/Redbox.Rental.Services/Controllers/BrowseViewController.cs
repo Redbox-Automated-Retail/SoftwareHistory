@@ -851,7 +851,7 @@ public class BrowseViewController : BaseViewController
 		OptionSelectionDialogInfo optionSelectionDialogInfo = new OptionSelectionDialogInfo
 		{
 			HeaderText = Resources.price_filter_title,
-			CancelButtonText = Resources.cancel_button,
+			CancelButtonText = Resources.cancel_button.ToUpper(),
 			ViewAnalyticsName = "filter_by_price_view",
 			ViewAnalyticsContext = "FilterByPriceDialog"
 		};
@@ -2121,30 +2121,7 @@ public class BrowseViewController : BaseViewController
 		browseItemModel.ComingSoonButtonVisibility = Visibility.Collapsed;
 		if (BrowseState.BrowseSelectedSort != BrowseSelectedSort.Alpha)
 		{
-			ITitleProduct titleProduct2 = titleProduct;
-			if (titleProduct2 != null && titleProduct2.ComingSoon)
-			{
-				bannerType = BannerType.ComingSoon;
-				string text = null;
-				if ((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.ComingSoonOptInInfo?.OptInItems)?.FirstOrDefault((IOptInItem x) => x.ItemId == (titleProduct?.ProductId ?? 0)) != null)
-				{
-					text = $"{Resources.email_optin_reminder_set_button_text}";
-					browseItemModel.ComingSoonButtonStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "classic_green_button_style");
-					browseItemModel.ComingSoonButtonCheckMarkVisibility = Visibility.Visible;
-				}
-				else
-				{
-					text = $"{Resources.email_optin_button_text}";
-					browseItemModel.ComingSoonButtonStyle = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "rubine_white_border_button_style");
-					browseItemModel.ComingSoonButtonCheckMarkVisibility = Visibility.Collapsed;
-				}
-				browseItemModel.ComingSoonButtonText = text;
-				browseItemModel.ComingSoonButtonVisibility = Visibility.Visible;
-			}
-			else
-			{
-				bannerType = BrowseFunctions.GetProductBannerType(titleProduct, BrowseState.TitleType != TitleType.All);
-			}
+			bannerType = ((titleProduct == null || !titleProduct.ComingSoon) ? BrowseFunctions.GetProductBannerType(titleProduct, BrowseState.TitleType != TitleType.All) : BannerType.ComingSoon);
 		}
 		bool flag = AreAllProductFormatsInCart(titleProduct, displayProductModelConstants);
 		bool flag2 = (!(displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B") || titleProduct.TitleFamily != TitleFamily.Movies) && !titleProduct.InStock;
@@ -2170,20 +2147,7 @@ public class BrowseViewController : BaseViewController
 		ProductFlags browseProductFlag = GetBrowseProductFlag(titleProduct, isEmptyCase, flag);
 		BrowseFunctions.ConfigureProductFlag(browseItemModel, browseProductFlag, isADAMiniCart, BaseViewController.GetViewUserControl(), titleProduct, displayProductModelConstants);
 		bool flag3 = (displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B" && titleProduct.TitleFamily == TitleFamily.Movies) || (titleProduct?.InStock ?? false);
-		int num;
-		if (BrowseFunctions.CanAddProductToCart)
-		{
-			ITitleProduct titleProduct3 = titleProduct;
-			if (titleProduct3 != null && titleProduct3.IsAvailable)
-			{
-				num = ((!flag || (BrowseFunctions.IsRedboxPlusBrowseMode && (!BaseViewController.IsADAMode || !RedboxPlusFunctions.IsTitleProductSelectedRedboxPlusFreeOneNightRental(titleProduct)))) ? 1 : 0);
-				goto IL_0343;
-			}
-		}
-		num = 0;
-		goto IL_0343;
-		IL_0343:
-		bool flag4 = (byte)((uint)num & (flag3 ? 1u : 0u)) != 0;
+		bool flag4 = (BrowseFunctions.CanAddProductToCart && titleProduct != null && titleProduct.IsAvailable && (!flag || (BrowseFunctions.IsRedboxPlusBrowseMode && (!BaseViewController.IsADAMode || !RedboxPlusFunctions.IsTitleProductSelectedRedboxPlusFreeOneNightRental(titleProduct))))) & flag3;
 		browseItemModel.CanAdd = flag4 || BrowseState.BrowseMode == BrowseViewFilter.ComingSoon;
 		Visibility visibility = ((!flag4 && !BaseViewController.IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.CornerAddButtonVisibility = ((!isADAMiniCart) ? visibility : Visibility.Collapsed);
@@ -2223,23 +2187,9 @@ public class BrowseViewController : BaseViewController
 			}
 		}
 		bool flag6 = (titleProduct.TitleFamily == TitleFamily.Movies && displayProductModelConstants.OutOfStockTitleDetailsABTestVersion == "B") || (titleProduct?.InStock ?? false);
-		int addButtonBarVisibility;
-		if (!BrowseFunctions.IsShoppingCartFull)
-		{
-			ITitleProduct titleProduct4 = titleProduct;
-			if ((titleProduct4 != null && !titleProduct4.ComingSoon) & flag6)
-			{
-				addButtonBarVisibility = 0;
-				goto IL_05ce;
-			}
-		}
-		addButtonBarVisibility = 2;
-		goto IL_05ce;
-		IL_05ce:
-		browseItemModel.AddButtonBarVisibility = (Visibility)addButtonBarVisibility;
+		browseItemModel.AddButtonBarVisibility = ((BrowseFunctions.IsShoppingCartFull || !((titleProduct != null && !titleProduct.ComingSoon) & flag6)) ? Visibility.Collapsed : Visibility.Visible);
 		browseItemModel.OutOfStockVisibility = ((flag6 || titleProduct.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
-		ITitleProduct titleProduct5 = titleProduct;
-		browseItemModel.ComingSoonVisibility = ((titleProduct5 == null || !titleProduct5.ComingSoon) ? Visibility.Collapsed : Visibility.Visible);
+		browseItemModel.ComingSoonVisibility = Visibility.Collapsed;
 	}
 
 	private static void AddFormatButtonData(DisplayProductModel browseItemModel, ITitleProduct product, bool isTitleRollup, DisplayProductModelConstants displayProductModelConstants)

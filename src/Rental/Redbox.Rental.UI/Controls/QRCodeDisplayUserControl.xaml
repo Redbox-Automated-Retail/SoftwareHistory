@@ -3,8 +3,7 @@
   <Grid>
     <StackPanel Orientation="Vertical">
       <Image Name="QRCodeImage" Width="156" Height="156" Source="{Binding QRCodeImage, FallbackValue='pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/qr-code-default-redbox.png'}" />
-      <TextBlock Name="MessageText" Foreground="#481B54" HorizontalAlignment="Center" Style="{Binding MessageStyle, FallbackValue={StaticResource message_popup_qr_code_message_style}}" Text="{Binding MessageText, FallbackValue=Or visit redbox.com}" />
-      <Grid Height="1" Width="520" Background="{StaticResource CarlosPurple1Brush}" Margin="0,0,0,23" />
+      <TextBlock Name="MessageText" HorizontalAlignment="Center" Style="{Binding MessageStyle, FallbackValue={StaticResource message_popup_qr_code_message_style}}" Text="{Binding MessageText, FallbackValue=Or visit redbox.com}" />
     </StackPanel>
   </Grid>
 </UserControl>

@@ -25,8 +25,8 @@
         </StackPanel>
         <StackPanel VerticalAlignment="Bottom" Margin="76,0,76,0">
           <Grid Name="AutoSizeGrid_ButtonGridSeparatorLine" Height="1" Background="{StaticResource CarlosPurple1Brush}" VerticalAlignment="Top" ColumnSpan="2" />
-          <Redbox:RoundedButton Name="CloseButton" Width="180" Height="56" VerticalAlignment="Bottom" Margin="0,23,0,24" CornerRadius="28" Style="{StaticResource message_popup_dialog_button_style6}" Command="{x:Static views:RedboxPlusInfoPopupViewUserControlCommands.CloseCommand}">
-            <TextBlock Name="CloseButtonText" Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=CloseButtonText, FallbackValue=OKAY}" />
+          <Redbox:RoundedButton Name="CloseButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,24,0,24" Style="{StaticResource button_light_large_secondary_style}" Command="{x:Static views:RedboxPlusInfoPopupViewUserControlCommands.CloseCommand}">
+            <TextBlock Name="CloseButtonText" Style="{StaticResource button_text_style}" Text="{Binding Path=CloseButtonText, FallbackValue=OKAY}" />
           </Redbox:RoundedButton>
         </StackPanel>
       </Grid>

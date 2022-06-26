@@ -16,6 +16,7 @@ using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskClientService.TestData;
 using Redbox.Rental.Model.KioskClientService.Transactions;
 using Redbox.Rental.Model.KioskClientService.Utilities;
+using Redbox.Rental.Model.KioskClientService.WelcomeScreenAssets;
 
 namespace Redbox.Rental.Model.KioskClientService;
 
@@ -56,4 +57,6 @@ public interface IKioskClientService
 	IKioskClientServiceTransaction Transaction { get; }
 
 	IKioskClientServicePlanogram Planogram { get; }
+
+	IKioskClientServiceWelcomeScreenAssets WelcomeScreenAssets { get; }
 }

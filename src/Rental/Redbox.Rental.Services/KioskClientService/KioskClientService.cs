@@ -18,6 +18,7 @@ using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskClientService.TestData;
 using Redbox.Rental.Model.KioskClientService.Transactions;
 using Redbox.Rental.Model.KioskClientService.Utilities;
+using Redbox.Rental.Model.KioskClientService.WelcomeScreenAssets;
 using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.KioskClientService.Application;
 using Redbox.Rental.Services.KioskClientService.Authentication;
@@ -36,6 +37,7 @@ using Redbox.Rental.Services.KioskClientService.Subscriptions;
 using Redbox.Rental.Services.KioskClientService.TestData;
 using Redbox.Rental.Services.KioskClientService.Transactions;
 using Redbox.Rental.Services.KioskClientService.Utilities;
+using Redbox.Rental.Services.KioskClientService.WelcomeScreenAssets;
 
 namespace Redbox.Rental.Services.KioskClientService;
 
@@ -79,6 +81,8 @@ public class KioskClientService : IKioskClientService
 
 	public IKioskClientServicePlanogram Planogram { get; private set; }
 
+	public IKioskClientServiceWelcomeScreenAssets WelcomeScreenAssets { get; private set; }
+
 	private KioskClientService()
 	{
 		Ads = new KioskClientServiceAds();
@@ -99,5 +103,6 @@ public class KioskClientService : IKioskClientService
 		TestData = new KioskClientServiceTestData();
 		Transaction = new KioskClientServiceTransaction();
 		Planogram = new KioskClientServicePlanogram();
+		WelcomeScreenAssets = new KioskClientServiceWelcomeScreenAssets();
 	}
 }

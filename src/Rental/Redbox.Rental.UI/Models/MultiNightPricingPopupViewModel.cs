@@ -29,15 +29,21 @@ public class MultiNightPricingPopupViewModel : DependencyObject
 
 	public Visibility OneNightButtonVisibility { get; set; }
 
-	public string OneNightButtonText { get; set; }
+	public string OneNightButtonText1 { get; set; }
+
+	public string OneNightButtonText2 { get; set; }
 
 	public Visibility MultiNightButtonVisibility { get; set; }
 
-	public string MultiNightButtonText { get; set; }
+	public string MultiNightButtonText1 { get; set; }
+
+	public string MultiNightButtonText2 { get; set; }
 
 	public Visibility BuyButtonVisibility { get; set; }
 
-	public string BuyButtonText { get; set; }
+	public string BuyButtonText1 { get; set; }
+
+	public string BuyButtonText2 { get; set; }
 
 	public string CancelButtonText { get; set; }
 

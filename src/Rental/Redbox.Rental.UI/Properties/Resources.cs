@@ -2648,6 +2648,8 @@ public class Resources
 
 	public static string tsp_invalid_header => ResourceManager.GetString("tsp_invalid_header", resourceCulture);
 
+	public static string tsp_invalid_header2 => ResourceManager.GetString("tsp_invalid_header2", resourceCulture);
+
 	public static string tsp_invalid_message => ResourceManager.GetString("tsp_invalid_message", resourceCulture);
 
 	public static string Tuesday => ResourceManager.GetString("Tuesday", resourceCulture);

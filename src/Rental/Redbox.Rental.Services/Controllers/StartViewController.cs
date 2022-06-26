@@ -23,6 +23,8 @@ using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.WelcomeScreenAssets;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Marketing;
@@ -685,13 +687,14 @@ public class StartViewController : BaseViewController
 
 	private static void ConfigureScreenSaver(StartViewModel startViewModel)
 	{
+		List<WelcomeScreenAsset> welcomeScreenAssets = ServiceLocator.Instance.GetService<IKioskClientService>()?.WelcomeScreenAssets?.GetWelcomeScreenAssets();
 		MarketingScreenSaverModel marketingScreenSaverModel = new MarketingScreenSaverModel();
 		marketingScreenSaverModel.StartButtonText = Resources.screen_saver_start_button_text;
 		marketingScreenSaverModel.BrowseCommand = DynamicRouting.RegisterRoutedCommand<PerksPopupInfo>(new DynamicRoutedCommand(), delegate
 		{
 			GoToStartViewFromScreenSaver();
 		});
-		marketingScreenSaverModel.ImageModels = ConfigureScreenSaverImages();
+		marketingScreenSaverModel.ImageModels = ConfigureScreenSaverImages(welcomeScreenAssets);
 		marketingScreenSaverModel.WelcomeScreenTimingABTestVersion = WelcomeScreenTimingABTestVersion;
 		marketingScreenSaverModel.OnLeaveLastImage = delegate
 		{
@@ -700,12 +703,26 @@ public class StartViewController : BaseViewController
 		startViewModel.ScreenSaverModel = marketingScreenSaverModel;
 	}
 
-	private static ObservableCollection<ClickableImageModel> ConfigureScreenSaverImages()
+	private static ObservableCollection<ClickableImageModel> ConfigureScreenSaverImages(List<WelcomeScreenAsset> welcomeScreenAssets)
 	{
-		ObservableCollection<ClickableImageModel> observableCollection = new ObservableCollection<ClickableImageModel>();
-		if (WelcomeScreenTimingABTestVersion == "B")
+		ObservableCollection<ClickableImageModel> imageList = new ObservableCollection<ClickableImageModel>();
+		if (welcomeScreenAssets != null)
 		{
-			observableCollection.Add(new ClickableImageModel
+			welcomeScreenAssets.ForEach(delegate(WelcomeScreenAsset welcomeScreenAsset)
+			{
+				imageList.Add(new ClickableImageModel
+				{
+					ImageUrl = welcomeScreenAsset.FilePath,
+					ClickAction = (welcomeScreenAsset.ProductGroupId.HasValue ? ((Action)delegate
+					{
+						GoToTitleDetailsViewFromScreenSaver(welcomeScreenAsset.ProductGroupId.Value);
+					}) : null)
+				});
+			});
+		}
+		else if (WelcomeScreenTimingABTestVersion == "B")
+		{
+			imageList.Add(new ClickableImageModel
 			{
 				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.3_June_KioskWelcome_TheBatman.jpg",
 				ClickAction = delegate
@@ -713,7 +730,7 @@ public class StartViewController : BaseViewController
 					GoToTitleDetailsViewFromScreenSaver(215943L);
 				}
 			});
-			observableCollection.Add(new ClickableImageModel
+			imageList.Add(new ClickableImageModel
 			{
 				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.1_June_KioskWelcome_Morbius.jpg",
 				ClickAction = delegate
@@ -721,7 +738,7 @@ public class StartViewController : BaseViewController
 					GoToTitleDetailsViewFromScreenSaver(211703L);
 				}
 			});
-			observableCollection.Add(new ClickableImageModel
+			imageList.Add(new ClickableImageModel
 			{
 				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.2_June_KioskWelcome_Ambulance.jpg",
 				ClickAction = delegate
@@ -730,7 +747,7 @@ public class StartViewController : BaseViewController
 				}
 			});
 		}
-		return observableCollection;
+		return imageList;
 	}
 
 	public static bool IsProductInCarousel(long productId)
@@ -1021,19 +1038,26 @@ public class StartViewController : BaseViewController
 			startViewModel.BurnInVisibility = Visibility.Collapsed;
 			startViewModel.UseTestStartView = false;
 			startViewModel.UseRentAndBuyTestStartView = false;
-			if (IsTestScreenSaverSelected && !startViewModel.IsReturnOnlyMode)
+			if (IsTestScreenSaverSelected)
 			{
-				startViewModel.UseTestScreenSaver = true;
-				startViewModel.ScreenSaverModel.IsAnimationOn = true;
-				startViewModel.UseClassicStartView = false;
+				MarketingScreenSaverModel screenSaverModel = startViewModel.ScreenSaverModel;
+				if (screenSaverModel != null)
+				{
+					int? num = screenSaverModel.ImageModels?.Count;
+					int num2 = 0;
+					if (num.GetValueOrDefault() > num2 && num.HasValue && !startViewModel.IsReturnOnlyMode)
+					{
+						startViewModel.UseTestScreenSaver = true;
+						startViewModel.ScreenSaverModel.IsAnimationOn = true;
+						startViewModel.UseClassicStartView = false;
+						return;
+					}
+				}
 			}
-			else
-			{
-				startViewModel.UseTestScreenSaver = false;
-				startViewModel.UseClassicStartView = true;
-				startViewModel.CarouselModel.IsAnimationOn = true;
-				timerService.GetTimer(Constants.BurnInViewDurationTimerName)?.Start();
-			}
+			startViewModel.UseTestScreenSaver = false;
+			startViewModel.UseClassicStartView = true;
+			startViewModel.CarouselModel.IsAnimationOn = true;
+			timerService.GetTimer(Constants.BurnInViewDurationTimerName)?.Start();
 		});
 		burnInIdleTimer.Start();
 		Action turnOffBurnInView = delegate

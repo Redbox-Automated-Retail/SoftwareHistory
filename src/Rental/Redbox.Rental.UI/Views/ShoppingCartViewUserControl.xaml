@@ -57,14 +57,14 @@
         <Line Name="DividingLine" Y1="0" Y2="654" Fill="#979797" Margin="0,23,0,23" Stroke="#979797" StrokeThickness="2" HorizontalAlignment="Right" Opacity="0.22" />
         <DockPanel Name="LeftSideDockPanel" LastChildFill="True">
           <DockPanel Name="ButtonBar" Height="80" Dock="Bottom" Margin="36,0,23,12">
-            <Redbox:RoundedButton Name="BackButton" Style="{StaticResource thin_border_button_style}" Height="48" UsedDefaultCornerRadius="True" VerticalAlignment="Center" HorizontalAlignment="Left" Command="{x:Static localbase:Commands.GoBackCommand}">
+            <Redbox:RoundedButton Name="BackButton" Style="{StaticResource button_light_secondary_style}" Height="48" UsedDefaultCornerRadius="True" VerticalAlignment="Center" HorizontalAlignment="Left" Command="{x:Static localbase:Commands.GoBackCommand}">
               <TextBlock Name="BackButtonText" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Margin="24,0,24,0" Text="{Binding Path=BackButtonText, FallbackValue=BACK}" />
             </Redbox:RoundedButton>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-              <Redbox:RoundedButton Name="AddMovieButton" Style="{StaticResource thin_border_button_style}" Height="48" Margin="15,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.AddMovieCommand}" Visibility="{Binding Path=AddMovieButtonVisibility}">
+              <Redbox:RoundedButton Name="AddMovieButton" Style="{StaticResource button_light_secondary_style}" Height="48" Margin="15,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.AddMovieCommand}" Visibility="{Binding Path=AddMovieButtonVisibility}">
                 <TextBlock Name="AddMovieButtonText" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Margin="24,0,24,0" Text="{Binding Path=AddMovieButtonText, FallbackValue=ADD MOVIE}" />
               </Redbox:RoundedButton>
-              <Redbox:RoundedButton Name="AddGameButton" Style="{StaticResource thin_border_button_style}" Height="48" Margin="15,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.AddGameCommand}" Visibility="{Binding Path=AddGameButtonVisibility}">
+              <Redbox:RoundedButton Name="AddGameButton" Style="{StaticResource button_light_secondary_style}" Height="48" Margin="15,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.AddGameCommand}" Visibility="{Binding Path=AddGameButtonVisibility}">
                 <TextBlock Name="AddGameButtonText" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Margin="24,0,24,0" Text="{Binding Path=AddGameButtonText, FallbackValue=ADD GAME}" />
               </Redbox:RoundedButton>
               <Redbox:RoundedButton Name="RedboxPlusInfoButton" Height="30" Margin="10,0,10,0" Style="{StaticResource transparent_button_style}" VerticalAlignment="Center" HorizontalAlignment="Right" Command="{Binding RedboxPlusInfoCommand}" Visibility="{Binding Path=RedboxPlusMovieInfoVisibility, FallbackValue=Visible}">
@@ -73,7 +73,7 @@
                   <Image Name="InfoImage" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/information.png" Width="28" Height="28" Margin="7,0,7,0" />
                 </StackPanel>
               </Redbox:RoundedButton>
-              <Redbox:RoundedButton Name="UpdateBagButton" Style="{StaticResource thin_border_button_style}" Height="48" Margin="15,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.UpdateBagCommand}" Visibility="{Binding Path=UpdateBagButtonVisibility}">
+              <Redbox:RoundedButton Name="UpdateBagButton" Style="{StaticResource button_light_secondary_style}" Height="48" Margin="15,0,0,0" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.UpdateBagCommand}" Visibility="{Binding Path=UpdateBagButtonVisibility}">
                 <TextBlock Name="UpdateBagButtonText" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Margin="24,0,24,0" Text="{Binding Path=UpdateBagButtonText, FallbackValue=UPDATE BAG}" />
               </Redbox:RoundedButton>
             </StackPanel>
@@ -167,10 +167,10 @@
               <Image Width="23" Height="21" Margin="0,-3,4,0" VerticalAlignment="Top" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/dark-purple-star-icon.png" />
               <TextBlock Width="296" Style="{StaticResource font_montserrat_bold_15}" Foreground="#481B54" TextWrapping="Wrap" Text="{Binding Path=PointsBalanceSufficientMessageText, FallbackValue=FREE 1-night rental available}" />
             </StackPanel>
-            <Redbox:RoundedButton Name="UsePointsButton" Style="{StaticResource thin_border_button_style}" Height="48" Width="324" UsedDefaultCornerRadius="True" Margin="0,0,0,16" Command="{x:Static localbase:Commands.UsePointsCommand}" Visibility="{Binding Path=UsePointsButtonVisibility}" IsEnabled="{Binding Path=UsePointsButtonEnabled, FallbackValue=False}">
+            <Redbox:RoundedButton Name="UsePointsButton" Style="{StaticResource button_light_secondary_style}" Height="48" Width="324" UsedDefaultCornerRadius="True" Margin="0,0,0,16" Command="{x:Static localbase:Commands.UsePointsCommand}" Visibility="{Binding Path=UsePointsButtonVisibility}" IsEnabled="{Binding Path=UsePointsButtonEnabled, FallbackValue=False}">
               <TextBlock Name="UsePointsButtonText" TextAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=UsePointsButtonText, FallbackValue=USE POINTS}" />
             </Redbox:RoundedButton>
-            <Redbox:RoundedButton Name="PromoCodeButton" Style="{StaticResource thin_border_button_style}" Height="48" Width="324" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.PromoCodeCommand}" Margin="{Binding Path=PromoCodeButtonMargin, FallbackValue='0,0,0,74'}" IsEnabled="{Binding Path=PromoCodeButtonEnabled, FallbackValue=True}">
+            <Redbox:RoundedButton Name="PromoCodeButton" Style="{StaticResource button_light_secondary_style}" Height="48" Width="324" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.PromoCodeCommand}" Margin="{Binding Path=PromoCodeButtonMargin, FallbackValue='0,0,0,74'}" IsEnabled="{Binding Path=PromoCodeButtonEnabled, FallbackValue=True}">
               <TextBlock Name="PromoCodeButtonText" TextAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=PromoCodeButtonText, FallbackValue=APPLY PROMO}" />
             </Redbox:RoundedButton>
             <StackPanel Orientation="Horizontal" Width="279" Margin="0,0,0,12" Visibility="{Binding Path=SignInIncentiveTextVisibility, FallbackValue=Visible}">

@@ -39,7 +39,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		{
 			formatSelectionPopupViewModel = new FormatSelectionPopupViewModel();
 		}
-		formatSelectionPopupViewModel.CancelButtonText = Resources.cancel_button;
+		formatSelectionPopupViewModel.CancelButtonText = Resources.cancel_button.ToUpper();
 		formatSelectionPopupViewModel.OnCancelButtonClicked = delegate
 		{
 			ProcessCancelButtonClick(parameter?.CancelAction);

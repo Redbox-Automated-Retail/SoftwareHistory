@@ -86,21 +86,21 @@ public class MultiNightPricingPopupViewTextToSpeech
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "For " + multiNightPricingPopupViewModel.OneNightButtonText + ", press 1."
+						Text = multiNightPricingPopupViewModel.OneNightButtonText1 + " FOR " + multiNightPricingPopupViewModel.OneNightButtonText2 + ", press 1."
 					});
 				}
 				if (multiNightPricingPopupViewModel.MultiNightButtonVisibility == Visibility.Visible)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "For " + multiNightPricingPopupViewModel.MultiNightButtonText + ", press 2."
+						Text = multiNightPricingPopupViewModel.MultiNightButtonText1 + " FOR " + multiNightPricingPopupViewModel.MultiNightButtonText2 + ", press 2."
 					});
 				}
 				if (multiNightPricingPopupViewModel.BuyButtonVisibility == Visibility.Visible)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = "For " + multiNightPricingPopupViewModel.BuyButtonText + ", press 3."
+						Text = multiNightPricingPopupViewModel.BuyButtonText1 + " FOR " + multiNightPricingPopupViewModel.BuyButtonText2 + ", press 3."
 					});
 				}
 				speechPart.Texts.Add(new TextPart

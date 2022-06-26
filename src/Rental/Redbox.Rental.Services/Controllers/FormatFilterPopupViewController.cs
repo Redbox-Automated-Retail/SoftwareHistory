@@ -43,7 +43,7 @@ public class FormatFilterPopupViewController : BaseViewController
 				formatSelectionPopupViewModel = new FormatSelectionPopupViewModel();
 			}
 			formatSelectionPopupViewModel.HeaderText = Resources.format_filter_popup_text;
-			formatSelectionPopupViewModel.CancelButtonText = Resources.cancel_button;
+			formatSelectionPopupViewModel.CancelButtonText = Resources.cancel_button.ToUpper();
 			formatSelectionPopupViewModel.OnCancelButtonClicked = delegate
 			{
 				ProcessButtonClick(TitleType.All, "cancel");
@@ -56,7 +56,7 @@ public class FormatFilterPopupViewController : BaseViewController
 			}
 			if (IsTitleTypeAvailable(TitleType.Bluray))
 			{
-				formatSelectionPopupViewModel.ButtonData.Add(new FormatButtonData(Resources.blu_ray, TitleType.Bluray));
+				formatSelectionPopupViewModel.ButtonData.Add(new FormatButtonData(Resources.blu_ray.ToUpper(), TitleType.Bluray));
 				num++;
 			}
 			if (IsTitleTypeAvailable(TitleType._4KUHD))
@@ -66,7 +66,7 @@ public class FormatFilterPopupViewController : BaseViewController
 			}
 			if (IsDigitalCodeButtonEnabled)
 			{
-				formatSelectionPopupViewModel.ButtonData.Add(new FormatButtonData(Resources.digital_code, TitleType.DigitalCode));
+				formatSelectionPopupViewModel.ButtonData.Add(new FormatButtonData(Resources.digital_code.ToUpper(), TitleType.DigitalCode));
 				num++;
 			}
 			formatSelectionPopupViewModel.OnFormatButtonClicked = delegate(TitleType type)

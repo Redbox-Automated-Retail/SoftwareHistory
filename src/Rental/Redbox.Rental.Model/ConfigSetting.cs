@@ -186,7 +186,7 @@ public static class ConfigSetting
 
 	public const string EnableRedboxPlusRedemption = "EnableRedboxPlusRedemption";
 
-	public const string EnableMeijerVSM = "EnableMeijerVSM";
+	public const string ShowKioskClosingVSM = "ShowKioskClosingVSM";
 
 	public const string ReturnVisitPromoOfferEnabled = "ReturnVisitPromoOfferEnabled";
 

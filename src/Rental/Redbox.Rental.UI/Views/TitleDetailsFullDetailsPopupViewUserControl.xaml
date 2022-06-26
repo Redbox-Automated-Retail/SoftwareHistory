@@ -48,8 +48,8 @@
           </StackPanel>
         </DockPanel>
         <Border Width="944" Height="104" CornerRadius="0,0,28,28" VerticalAlignment="Bottom" Background="#EBEBEB">
-          <Redbox:RoundedButton Name="CloseButton" Width="172" Height="56" CornerRadius="28" Style="{StaticResource thin_border_button_style}" Command="{x:Static views:TitleDetailsFullDetailsPopupViewUserControlCommands.CloseCommand}">
-            <TextBlock Name="CloseButtonText" Foreground="#E71A41" LineHeight="28" Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=CloseButtonText, FallbackValue=CLOSE}" />
+          <Redbox:RoundedButton Name="CloseButton" Width="172" Style="{StaticResource button_light_large_secondary_style}" Command="{x:Static views:TitleDetailsFullDetailsPopupViewUserControlCommands.CloseCommand}">
+            <TextBlock Name="CloseButtonText" Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=CloseButtonText, FallbackValue=CLOSE}" />
           </Redbox:RoundedButton>
         </Border>
       </Grid>

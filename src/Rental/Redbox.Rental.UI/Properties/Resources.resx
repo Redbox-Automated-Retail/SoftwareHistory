@@ -45,8 +45,7 @@
   <data name="do_not_sell_title" xml:space="preserve"><value>Do Not Sell My Info</value></data>
   <data name="auth_error_redbox_plus_auth_declined_title" xml:space="preserve"><value>We couldn’t process your Redbox+ payment</value></data>
   <data name="machine_full_message" xml:space="preserve"><value>You can wait for someone to rent a disc, or return it to another Kiosk. Here are some ways to find one:
--     Get the Redbox mobile app
-       and search for locations.
+-     Get the Redbox mobile app and search for locations.
 -     Text MYRETURN to 727272.*
 
 *Message and data rates may apply. Text HELP for help.</value></data>
@@ -105,9 +104,7 @@ your promo code</value></data>
   <data name="perks_earned_level3_message" xml:space="preserve"><value>You've earned 2 FREE 
 1-night DVD rentals</value></data>
   <data name="perks_snapshot_on_top" xml:space="preserve"><value>Keep on renting to stay on top</value></data>
-  <data name="tsp_invalid_message" xml:space="preserve"><value>Sorry about that. The promo code you entered does not apply to the title(s) in your cart.
-
-Please add a valid title to your cart to use this promo code.</value></data>
+  <data name="tsp_invalid_message" xml:space="preserve"><value>Check the offer details to see which movie(s) are eligible.</value></data>
   <data name="promo_code_not_valid_message" xml:space="preserve"><value>Sorry about that. Please double-check to make sure you entered it right.
 
 You might also want to check the expiration date to make sure it hasn't expired.</value></data>
@@ -395,8 +392,7 @@ Sorry for the inconvenience.</value></data>
   <data name="out_of_stock_violator_small_moniker" xml:space="preserve"><value>out_of_stock_violator_small_en_US</value></data>
   <data name="mobile_pass_login_get_pass_message" xml:space="preserve"><value>1- Make sure you have the Redbox app
 
-2- Go to My Redbox in the app, or scan the code to
-get your pass</value></data>
+2- Go to My Redbox in the app, or scan the code to get your pass</value></data>
   <data name="starz_offer_3_my_bag_title_line_2" xml:space="preserve"><value>$5/mo for the next 3 months | Then $8.99/mo after 3 months</value></data>
   <data name="starz_offer_1_my_bag_header" xml:space="preserve"><value>Limited Time Offer</value></data>
   <data name="starz_offer_2_subtitle_asterisk" xml:space="preserve"><value>*</value></data>
@@ -420,8 +416,7 @@ rentals/month for the next {3} ({4} in total)</value></data>
   <data name="subscriptions_title_abe" xml:space="preserve"><value>Subscriptions</value></data>
   <data name="mobile_pass_login_google_no_pass_found_error_message" xml:space="preserve"><value>To add one:
 1- Make sure you have the Redbox app
-2- Go to My Redbox in the app, or scan the code to
-get your pass</value></data>
+2- Go to My Redbox in the app, or scan the code to get your pass</value></data>
   <data name="perks_thanks_free_rental_icon_text" xml:space="preserve"><value>FREE 1-night
 DVD rental</value></data>
   <data name="To_Games" xml:space="preserve"><value>TO GAMES</value></data>
@@ -842,7 +837,7 @@ To confirm that you're at least 17 years of age, press OK to continue.</value></
   <data name="redbox_plus_mini_cart_empty_message_text" xml:space="preserve"><value>Add a movie from above to use your FREE 1-night rental</value></data>
   <data name="no_thanks_button" xml:space="preserve"><value>No Thanks</value></data>
   <data name="sign_in_legal_text" xml:space="preserve"><value>*Free 1-night DVD rental will show up as 1,500 points in your account within 48 hours of creating account. Payment card required to use Redbox Perks Points at the Kiosk. Charges apply for additional days. Can't be combined with other offers. Subject to terms at redbox.com/perks/terms.</value></data>
-  <data name="multi_night_pricing_popup_button_text" xml:space="preserve"><value>{0:C} for {1} night{2}</value></data>
+  <data name="multi_night_pricing_popup_button_text" xml:space="preserve"><value>{0} NIGHT{1}</value></data>
   <data name="perks_signup_info_title" xml:space="preserve"><value>How Points Work</value></data>
   <data name="rbplus_offer_2_benefit_2_detail_text" xml:space="preserve"><value>Keep your disc rentals until midnight local time 
 for no extra charge (that’s 3 hours longer!)</value></data>
@@ -958,6 +953,7 @@ for signing up</value></data>
   <data name="perks_marketing" xml:space="preserve"><value /></data>
   <data name="perks_signup_info_use_header" xml:space="preserve"><value>Use Points</value></data>
   <data name="pickup_game" xml:space="preserve"><value>You have {0} game ready for pickup:</value></data>
+  <data name="tsp_invalid_header2" xml:space="preserve"><value>That promo code can't be used for your movie(s).</value></data>
   <data name="promo_amount_off_purchase_browse_title_text" xml:space="preserve"><value>Add a {0} to buy below for ${1:C} OFF</value></data>
   <data name="starz_offer_2_acceptance_terms" xml:space="preserve"><value>I understand that I am enrolling in a monthly subscription that will auto-renew until I cancel at redbox.com/account. I will be charged $5.00 now and each month for the next 2 months (plus applicable taxes) and the then-current subscription price for each month thereafter (prices are subject to change) until I cancel. Cancellation is effective at the end of the current billing period. I authorize Redbox to charge any payment method they have on file for me, should my primary payment method fail. I understand I will receive 3 Redbox 1-night disc rental codes during each of the first 3 months and 2 codes in each of the next 9 months, if I remain a STARZ subscriber through Redbox. Codes expire 1 month from issue. See FAQs below for more info.
 
@@ -1094,7 +1090,7 @@ on the STARZ app or starz.com</value></data>
   <data name="joined_texing_title" xml:space="preserve"><value>Let’s verify</value></data>
   <data name="discount_label_points_text" xml:space="preserve"><value>Points</value></data>
   <data name="redbox_plus_already_in_cart_message" xml:space="preserve"><value>You already have {0} in your bag, if you want to apply a Redbox+ benefit, press your preferred format below.</value></data>
-  <data name="rental_limit_exceeded_new_customer_message" xml:space="preserve"><value>You can rent 3 discs. (If you use the same card, you can rent more next time!)
+  <data name="rental_limit_exceeded_new_customer_message" xml:space="preserve"><value>You can rent 5 discs. (If you use the same card, you can rent more next time!)
  
 Update your bag to continue.</value></data>
   <data name="offer_info_1_night_rental" xml:space="preserve"><value>YOUR 1-NIGHT {0} RENTAL</value></data>
@@ -1147,7 +1143,7 @@ To purchase ADA compatible seating call 1-866-REDBOX3 or visit redbox.com.</valu
   <data name="starz_signup_eligibility_error_title" xml:space="preserve"><value>Not Eligible</value></data>
   <data name="starz_offer_3_subtitle2" xml:space="preserve"><value>Includes 7-day FREE STARZ Trial</value></data>
   <data name="contact_redbox_label" xml:space="preserve"><value>Contact Redbox customer service at 1.866.REDBOX3 (1.866.733.2693)</value></data>
-  <data name="multi_night_pricing_popup_buy_button_text" xml:space="preserve"><value>to buy it</value></data>
+  <data name="multi_night_pricing_popup_buy_button_text" xml:space="preserve"><value>BUY IT</value></data>
   <data name="offer_skipped_message" xml:space="preserve"><value>Okay. We saved this offer
 for your next visit until it expires.</value></data>
   <data name="offer_info_single_banner_text" xml:space="preserve"><value>Just for you</value></data>
@@ -1582,8 +1578,7 @@ You won't be charged for any discs you didn't get, but you might see a pending c
   <data name="redbox_plus_mini_cart_unavailable_tier1_message_text" xml:space="preserve"><value>Come back next month for your Redbox+ Free 1-night rental</value></data>
   <data name="filter_movies_empty" xml:space="preserve"><value>Sorry, nothing matches that search.
 Touch another button for more movies.</value></data>
-  <data name="mobile_pass_login_google_no_pass_found_error_header" xml:space="preserve"><value>We didn't find a Redbox Mobile Pass
-on your phone</value></data>
+  <data name="mobile_pass_login_google_no_pass_found_error_header" xml:space="preserve"><value>We didn't find a Redbox Mobile Pass on your phone</value></data>
   <data name="offline_game_rental_limit_zero_message" xml:space="preserve"><value>At this time, we are temporarily unable to rent out any games.  So please remove them from your cart and continue on to rent up to {0} new release movies!  See you back here at the cart soon.</value></data>
   <data name="promo_code_button_apply_text" xml:space="preserve"><value>APPLY PROMO</value></data>
   <data name="recommended_titles_popup_header" xml:space="preserve"><value>My Recommendations</value></data>
