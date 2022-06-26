@@ -9,6 +9,6 @@ public class KioskRentalPricingByPriceResponse : ApiBaseResponse
 
 	public new object Scrub()
 	{
-		return this.ToJson();
+		return this.ToJson().EllipseAt(80);
 	}
 }

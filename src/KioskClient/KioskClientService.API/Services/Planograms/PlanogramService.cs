@@ -274,25 +274,15 @@ public class PlanogramService : IPlanogramService
 			try
 			{
 				_logger.LogInfoWithSource("Downloading planogram " + planogram.Filename, "DownloadPlanograms");
-				using FileStream file = File.OpenWrite(Path.Combine(path, planogram.Filename));
-				_ = 1;
 				try
 				{
 					APIResponse<byte[]> aPIResponse = await _httpService.DownloadFile(planogram.PresignedUrl);
-					if (aPIResponse.IsSuccessStatusCode)
+					if (!aPIResponse.IsSuccessStatusCode)
 					{
-						file.Write(aPIResponse.Response);
-						continue;
+						_logger.LogErrorWithSource($"Received status {aPIResponse.StatusCode} downloading Planogram {planogram.Filename} from {planogram.PresignedUrl}", "DownloadPlanograms");
+						return false;
 					}
-					_logger.LogErrorWithSource($"Received status {aPIResponse.StatusCode} downloading Planogram {planogram.Filename} from {planogram.PresignedUrl}", "DownloadPlanograms");
-					if (aPIResponse.Errors != null)
-					{
-						foreach (Error error in aPIResponse.Errors)
-						{
-							_ = error;
-						}
-					}
-					return false;
+					await File.WriteAllBytesAsync(Path.Combine(path, planogram.Filename), aPIResponse.Response);
 				}
 				catch (Exception ex)
 				{

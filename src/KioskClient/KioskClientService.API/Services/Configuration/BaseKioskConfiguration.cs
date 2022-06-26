@@ -9,6 +9,8 @@ public class BaseKioskConfiguration : BaseConfiguration, IKioskConfiguration
 
 	public MarketingGeneral MarketingGeneral { get; set; }
 
+	public MarketingWelcomeScreen MarketingWelcomeScreen { get; set; }
+
 	public BaseKioskConfiguration(ILogger<BaseKioskConfiguration> logger, IOptionsMonitor<KioskConfigurationSettings> optionsMonitorKioskConfigurationSettings)
 		: base(logger, optionsMonitorKioskConfigurationSettings)
 	{

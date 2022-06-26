@@ -68,7 +68,7 @@ public class APIResponse<T>
 		ResponseLength = content?.Length ?? 0;
 		try
 		{
-			if (!string.IsNullOrWhiteSpace(content))
+			if (!string.IsNullOrEmpty(content) && !string.IsNullOrWhiteSpace(content))
 			{
 				Response = JsonConvert.DeserializeObject<T>(content);
 				ResponseContent = ((!(Response is IMessageScrub)) ? JsonConvert.SerializeObject(Response, Formatting.None, new JsonSerializerSettings

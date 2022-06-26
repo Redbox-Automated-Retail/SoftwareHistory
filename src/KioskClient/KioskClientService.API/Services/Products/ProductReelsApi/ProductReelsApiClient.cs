@@ -37,7 +37,7 @@ public class ProductReelsApiClient : IProductReelsApiClient
 		{
 			productIds = list
 		};
-		APIResponse<List<BulkMoreLikeThisResponse>> aPIResponse = await _httpService.SendRequest<List<BulkMoreLikeThisResponse>>(_applicationConfiguration.ProductReelsApi.Url, "products/reels/bulkmorelikethis", requestObject, HttpMethod.Post);
+		APIResponse<List<BulkMoreLikeThisResponse>> aPIResponse = await _httpService.SendRequest<List<BulkMoreLikeThisResponse>>(_applicationConfiguration.ProductReelsApi.Url, "products/reels/bulkmorelikethis", requestObject, HttpMethod.Post, null, logResponseContent: false);
 		if (aPIResponse == null || !aPIResponse.IsSuccessStatusCode)
 		{
 			_logger.LogErrorWithSource(aPIResponse?.Exception, "Call to get bulkMoreLikeThis was not successful. Errors: " + string.Join(".", aPIResponse?.Errors?.Select((Error x) => x.Message)?.ToList() ?? new List<string>()), "MoreLikeThisBulkAsync");

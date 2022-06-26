@@ -47,7 +47,7 @@ public class InventoryApiClient : IInventoryApiClient
 		{
 			text = text + "?orderType=" + (int)orderType.Value;
 		}
-		return await _httpService.SendRequest<MerchandizingOrdersResponse>(_applicationConfiguration.InventoryApi.Url, text, null, HttpMethod.Get, _applicationConfiguration.InventoryApi.GetKioskCloudHeaders(null, _kioskId));
+		return await _httpService.SendRequest<MerchandizingOrdersResponse>(_applicationConfiguration.InventoryApi.Url, text, null, HttpMethod.Get, _applicationConfiguration.InventoryApi.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<MerchandStatusUpdateResponse>> UpdateMerchandizingStatuses(List<MerchandStatusUpdate> updates)

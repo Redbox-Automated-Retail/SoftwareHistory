@@ -49,25 +49,25 @@ public class HttpService : IHttpService
 		return httpRequest;
 	}
 
-	public async Task<APIResponse<T>> SendRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null)
+	public async Task<APIResponse<T>> SendRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null, bool logResponseContent = true)
 	{
 		using HttpRequestMessage genRequest = GenerateRequest(HttpExtensions.ToStandardPayloadContent, baseUrl, endpoint, requestObject, method, headers);
-		return await SendRequest<T>(genRequest);
+		return await SendRequest<T>(genRequest, logResponseContent);
 	}
 
-	public async Task<APIResponse<T>> SendGZipRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null)
+	public async Task<APIResponse<T>> SendGZipRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null, bool logResponseContent = true)
 	{
 		using HttpRequestMessage genRequest = GenerateRequest(HttpExtensions.ToGZipPayloadContent, baseUrl, endpoint, requestObject, method, headers);
-		return await SendRequest<T>(genRequest);
+		return await SendRequest<T>(genRequest, logResponseContent);
 	}
 
-	public async Task<APIResponse<T>> SendDeflateRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null)
+	public async Task<APIResponse<T>> SendDeflateRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null, bool logResponseContent = true)
 	{
 		using HttpRequestMessage genRequest = GenerateRequest(HttpExtensions.ToDeflatePayloadContent, baseUrl, endpoint, requestObject, method, headers);
-		return await SendRequest<T>(genRequest);
+		return await SendRequest<T>(genRequest, logResponseContent);
 	}
 
-	public async Task<APIResponse<T>> SendRequest<T>(HttpRequestMessage request)
+	public async Task<APIResponse<T>> SendRequest<T>(HttpRequestMessage request, bool logResponseContent = true)
 	{
 		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 		cancellationTokenSource.CancelAfter(Timeout);
@@ -93,7 +93,7 @@ public class HttpService : IHttpService
 			sw.Stop();
 			apiResponse.SetException(exception, (int)sw.ElapsedMilliseconds);
 		}
-		apiResponse.Log();
+		apiResponse.Log(logResponseContent);
 		return apiResponse;
 	}
 

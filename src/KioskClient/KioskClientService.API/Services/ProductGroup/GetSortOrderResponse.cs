@@ -1,6 +1,5 @@
 using KioskClientService.API.App;
 using KioskClientService.API.Services.Inventory.API;
-using Newtonsoft.Json;
 
 namespace KioskClientService.API.Services.ProductGroup;
 
@@ -16,7 +15,11 @@ public class GetSortOrderResponse : BaseResponse, IMessageScrub
 
 	public override object Scrub()
 	{
-		return JsonConvert.SerializeObject(this);
+		return new
+		{
+			Type = ProductGroupSortOrder.SortOrderType,
+			Count = ProductGroupSortOrder.SortOrders.Count
+		};
 	}
 
 	public void CopyFrom(GetProductGroupSortOrder pgo)

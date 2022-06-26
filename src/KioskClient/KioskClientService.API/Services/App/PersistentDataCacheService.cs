@@ -43,11 +43,11 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		try
 		{
-			_logger?.LogInfoWithSource($"Read({fileName},useCache={useCache})", "Read");
+			_logger?.LogDebugWithSource($"Read({fileName},useCache={useCache})", "Read");
 			PersistentDataWrapper<T> persistentDataWrapper = null;
 			if (useCache && _cache.TryGetValue(fileName, out var value) && value != null)
 			{
-				_logger?.LogInformation("Found cached value for file: " + fileName);
+				_logger?.LogDebugWithSource("Found cached value for file: " + fileName, "Read");
 				return value as PersistentDataWrapper<T>;
 			}
 			string dataFilePath = GetDataFilePath(fileName);
@@ -73,7 +73,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		try
 		{
-			_logger?.LogInfoWithSource("Write(" + fileName + ")", "Write");
+			_logger?.LogDebugWithSource("Write(" + fileName + ")", "Write");
 			PersistentDataWrapper<T> persistentDataWrapper = new PersistentDataWrapper<T>();
 			persistentDataWrapper.Data = data;
 			persistentDataWrapper.Modified = DateTime.Now;
@@ -102,7 +102,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		try
 		{
-			_logger?.LogInfoWithSource("Delete(" + fileName + ")", "Delete");
+			_logger?.LogDebugWithSource("Delete(" + fileName + ")", "Delete");
 			string dataFilePath = GetDataFilePath(fileName);
 			if (File.Exists(dataFilePath))
 			{
@@ -122,7 +122,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		if (_cache.ContainsKey(fileName))
 		{
-			_logger?.LogInformation("Clearing cached value " + fileName);
+			_logger?.LogDebugWithSource("Clearing cached value " + fileName, "ClearCache");
 			_cache.TryRemove(fileName, out var _);
 		}
 	}

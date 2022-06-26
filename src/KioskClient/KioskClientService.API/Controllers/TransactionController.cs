@@ -31,7 +31,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReturnResponse), 200)]
 	public async Task<ActionResult<AuthorizeResponse>> Authorize(AuthorizeRequest request)
 	{
-		_logger?.LogInfoWithSource($"Authorize called with request {request?.Scrub()}.", "Authorize");
 		return new OkObjectResult(await _transactionService.Authorize(request));
 	}
 
@@ -42,7 +41,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReturnResponse), 200)]
 	public async Task<ActionResult<GCAuthResponse>> GiftCardAuthorize(GCAuthRequest request)
 	{
-		_logger?.LogInfoWithSource($"GiftCardAuthorize called with request {request?.Scrub()}.", "GiftCardAuthorize");
 		return new OkObjectResult(await _transactionService.GiftCardAuthorize(request));
 	}
 
@@ -53,7 +51,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReturnResponse), 200)]
 	public async Task<ActionResult<AuthorizeResponse>> PickupAuthorize(PickupAuthorizeRequest request)
 	{
-		_logger?.LogInfoWithSource($"Authorize called with request {request?.Scrub()}.", "PickupAuthorize");
 		return new OkObjectResult(await _transactionService.PickupAuthorize(request));
 	}
 
@@ -64,7 +61,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReturnResponse), 200)]
 	public async Task<ActionResult<AuthorizeResponse>> ReservationAuthorize(ResvAuthRequest request)
 	{
-		_logger?.LogInfoWithSource($"Authorize called with request {request?.Scrub()}.", "ReservationAuthorize");
 		return new OkObjectResult(await _transactionService.ReservationAuthorize(request));
 	}
 
@@ -75,7 +71,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReturnResponse), 200)]
 	public async Task<ActionResult<BaseResponse>> CancelReservation(CancelReservationRequest request)
 	{
-		_logger?.LogInfoWithSource($"CancelReservation called with request {request?.Scrub()}.", "CancelReservation");
 		APIResponse<CancelReservationResponse> aPIResponse = await _transactionService.CancelReservation(request);
 		aPIResponse.CheckAndReplay(request.MessageId, base.ControllerContext.HttpContext.Request, _httpQueueService);
 		if (aPIResponse.Response == null)
@@ -95,7 +90,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReturnResponse), 200)]
 	public async Task<ActionResult<BaseResponse>> ExpireReservation(ExpireReservationRequest request)
 	{
-		_logger?.LogInfoWithSource($"ExpireReservation called with request {request?.Scrub()}.", "ExpireReservation");
 		APIResponse<ExpireReservationResponse> aPIResponse = await _transactionService.ExpireReservation(request);
 		aPIResponse.CheckAndReplay(request.MessageId, base.ControllerContext.HttpContext.Request, _httpQueueService);
 		if (aPIResponse.Response == null)
@@ -115,7 +109,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReconcileResponse), 200)]
 	public async Task<ActionResult<BaseResponse>> Reconcile(ReconcileRequest request)
 	{
-		_logger?.LogInfoWithSource($"Reconcile called with request {request?.Scrub()}.", "Reconcile");
 		APIResponse<ReconcileResponse> aPIResponse = await _transactionService.Reconcile(request);
 		aPIResponse.CheckAndReplay(request.MessageId, base.ControllerContext.HttpContext.Request, _httpQueueService);
 		if (aPIResponse.Response == null)
@@ -135,7 +128,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReconcileResponse), 200)]
 	public async Task<ActionResult<BaseResponse>> ReservationPickup(ReservationPickupRequest request)
 	{
-		_logger?.LogInfoWithSource($"ReservationPickup called with request {request?.Scrub()}.", "ReservationPickup");
 		APIResponse<ReconcileResponse> aPIResponse = await _transactionService.ReservationPickup(request);
 		aPIResponse.CheckAndReplay(request.MessageId, base.ControllerContext.HttpContext.Request, _httpQueueService);
 		if (aPIResponse.Response == null)
@@ -156,7 +148,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ReturnResponse), 200)]
 	public async Task<ActionResult<ReturnResponse>> Return(ReturnRequest request)
 	{
-		_logger?.LogInfoWithSource($"Return called with request {request?.Scrub()}.", "Return");
 		APIResponse<ReturnResponse> aPIResponse = await _transactionService.Return(request);
 		aPIResponse.CheckAndReplay(request.MessageId, base.ControllerContext.HttpContext.Request, _httpQueueService);
 		if (aPIResponse.Response == null)
@@ -176,7 +167,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(ConvertedGetCustomerOffersResponse), 200)]
 	public async Task<ActionResult<ConvertedGetCustomerOffersResponse>> GetCustomerOffers(GetCustomerOffersRequest request)
 	{
-		_logger?.LogInfoWithSource($"GetCustomerOffers called with request {request?.Scrub()}.", "GetCustomerOffers");
 		APIResponse<GetCustomerOffersResponse> aPIResponse = await _transactionService.GetCustomerOffers(request);
 		return aPIResponse.Response.ConvertExpirationDates().ToObjectResult((int)aPIResponse.StatusCode);
 	}
@@ -188,7 +178,6 @@ public class TransactionController : ControllerBase
 	[ProducesResponseType(typeof(PickupValidationResponse), 200)]
 	public async Task<ActionResult<PickupValidationResponse>> ValidatePickup(PickupValidationRequest request)
 	{
-		_logger?.LogInfoWithSource($"ValidatePickup called with request {request?.Scrub()}.", "ValidatePickup");
 		APIResponse<PickupValidationResponse> aPIResponse = await _transactionService.PickupValidation(request);
 		if (aPIResponse.Response == null)
 		{

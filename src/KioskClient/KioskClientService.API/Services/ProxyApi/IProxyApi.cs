@@ -43,4 +43,6 @@ public interface IProxyApi
 	Task<APIResponse<UpdateAccountResponse>> UpdateAccountAsync(UpdateAccountPayload payload);
 
 	Task<APIResponse<GetPlanogramsResponse>> GetPlanograms(long kioskId, DateTime? lastChange = null);
+
+	Task<APIResponse<GetWelcomeScreenAssetsResponse>> GetWelcomeScreenAssets(long kioskId, DateTime? lastChange = null);
 }

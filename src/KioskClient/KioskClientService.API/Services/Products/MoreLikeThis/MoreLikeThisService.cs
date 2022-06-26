@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KioskClientService.API.Services.Configuration;
+using KioskClientService.API.Services.ProductGroup;
 using KioskClientService.API.Services.Products.ProductReelsApi;
 using Microsoft.Extensions.Logging;
 
@@ -48,8 +49,9 @@ public class MoreLikeThisService : IMoreLikeThisService
 		return getMoreLikeThisResponse;
 	}
 
-	public async Task RefreshMoreLikeThisAsync(List<long> productGroupIds)
+	public async Task RefreshMoreLikeThisAsync(ScrubbedProductGroupIds productGroupIds)
 	{
+		productGroupIds.VerifyNoInvalidProductGroupIds();
 		_logger.LogInfoWithSource($"Total received productGroupIds: {productGroupIds.Count}.", "RefreshMoreLikeThisAsync");
 		if (_moreLikeThisData.FileContentExpireTime < DateTime.Now || _moreLikeThisCache.TotalCount() < 1)
 		{

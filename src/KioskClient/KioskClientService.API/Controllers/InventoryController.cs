@@ -31,7 +31,6 @@ public class InventoryController : ControllerBase
 	[HttpGet]
 	public async Task<ActionResult<GetMerchandizingOrdersResponse>> GetCurrentMerchandizingOrders()
 	{
-		_logger?.LogInfoWithSource("GetCurrentMerchandizingOrders called.", "GetCurrentMerchandizingOrders");
 		return new OkObjectResult(await _inventoryService.GetAllCurrentMerchandizingOrders());
 	}
 

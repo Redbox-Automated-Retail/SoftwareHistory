@@ -36,6 +36,8 @@ internal class ProxyApi : IProxyApi
 
 	private const string _planogram = "api/planogram";
 
+	private const string _welcomeScreenAssets = "api/welcomescreenassets";
+
 	public ProxyApi(IStoreService store, IApplicationConfiguration applicationConfiguration, IHttpService httpService, ILogger<IProxyApi> logger)
 	{
 		_applicationConfiguration = applicationConfiguration;
@@ -60,25 +62,25 @@ internal class ProxyApi : IProxyApi
 	public async Task<APIResponse<InstallerModels.PendingStatesResponse>> GetPendingStates()
 	{
 		string endpoint = "api/installer/getpendingstates";
-		return await _httpService.SendRequest<InstallerModels.PendingStatesResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId));
+		return await _httpService.SendRequest<InstallerModels.PendingStatesResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<InstallerModels.PendingBannersResponse>> GetPendingBanners(int stateid)
 	{
 		string endpoint = "api/installer" + $"/getpendingbanners?stateid={stateid}";
-		return await _httpService.SendRequest<InstallerModels.PendingBannersResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId));
+		return await _httpService.SendRequest<InstallerModels.PendingBannersResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<InstallerModels.PendingKiosksResponse>> GetPendingKiosks(short stateid, int bannerid)
 	{
 		string endpoint = "api/installer" + $"/getpendingkiosks?stateid={stateid}&bannerid={bannerid}";
-		return await _httpService.SendRequest<InstallerModels.PendingKiosksResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId));
+		return await _httpService.SendRequest<InstallerModels.PendingKiosksResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<InstallerModels.OpsMarketResponse>> GetOpsMarket(long kioskid)
 	{
 		string endpoint = "api/installer" + $"/getopsmarket?kioskid={kioskid}";
-		return await _httpService.SendRequest<InstallerModels.OpsMarketResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, kioskid));
+		return await _httpService.SendRequest<InstallerModels.OpsMarketResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, kioskid), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<KioskModels.KioskAuthenticateResponse>> Authenticate(KioskModels.KioskAuthenticateRequest request)
@@ -161,5 +163,15 @@ internal class ProxyApi : IProxyApi
 	{
 		List<Header> kioskCloudHeaders = _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(Guid.NewGuid(), kioskId);
 		return kioskCloudHeaders.AddCompression();
+	}
+
+	public async Task<APIResponse<GetWelcomeScreenAssetsResponse>> GetWelcomeScreenAssets(long kioskId, DateTime? lastChange = null)
+	{
+		string text = "api/welcomescreenassets";
+		if (lastChange.HasValue)
+		{
+			text = text + "?lastReportedTime=" + lastChange.Value.ToString("yyyy-MM-ddTHH:mm:ss");
+		}
+		return await _httpService.SendRequest<GetWelcomeScreenAssetsResponse>(_applicationConfiguration.ProxyApi.Url, text, null, HttpMethod.Get, GetHeaders(kioskId));
 	}
 }

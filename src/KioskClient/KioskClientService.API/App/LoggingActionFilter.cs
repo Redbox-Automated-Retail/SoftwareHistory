@@ -25,22 +25,28 @@ public class LoggingActionFilter : IAsyncActionFilter, IFilterMetadata
 		ControllerActionDescriptor controllerActionDescriptor = (ControllerActionDescriptor)context.ActionDescriptor;
 		string controllerName = controllerActionDescriptor.ControllerName.Trim();
 		string actionName = controllerActionDescriptor.ActionName.Trim();
-		StringBuilder scrubbedRequest = new StringBuilder();
-		context.ActionArguments.ToList().ForEach(delegate(KeyValuePair<string, object> arg)
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.Append("START: ").Append(controllerName).Append('.')
+			.Append(actionName);
+		if (context.ActionArguments.Any())
 		{
-			if (arg.Value is IMessageScrub)
+			stringBuilder.Append(", ");
+			bool flag = false;
+			foreach (KeyValuePair<string, object> actionArgument in context.ActionArguments)
 			{
-				scrubbedRequest.Append($",{arg.Key}:{(arg.Value as IMessageScrub).Scrub()}");
+				if (flag)
+				{
+					stringBuilder.Append(',');
+				}
+				stringBuilder.Append(actionArgument.Key).Append(':');
+				stringBuilder.Append((actionArgument.Value is IMessageScrub) ? (actionArgument.Value as IMessageScrub).Scrub() : actionArgument.Value);
+				flag = true;
 			}
-			else
-			{
-				scrubbedRequest.Append($",{arg.Key}:{arg.Value}");
-			}
-		});
-		_logger.LogInformation($"START: {controllerName}.{actionName} {scrubbedRequest}");
+		}
+		_logger.LogInformation(stringBuilder.ToString());
 		Stopwatch requestTimer = Stopwatch.StartNew();
 		ActionExecutedContext actionExecutedContext = await next();
-		StringBuilder stringBuilder = new StringBuilder();
+		StringBuilder stringBuilder2 = new StringBuilder();
 		if (actionExecutedContext != null && actionExecutedContext.Result != null)
 		{
 			if (actionExecutedContext.Result is ObjectResult)
@@ -48,25 +54,25 @@ public class LoggingActionFilter : IAsyncActionFilter, IFilterMetadata
 				ObjectResult objectResult = actionExecutedContext.Result as ObjectResult;
 				if (objectResult.Value != null && objectResult.Value is IMessageScrub)
 				{
-					stringBuilder.Append($"{(objectResult.Value as IMessageScrub).Scrub()}");
+					stringBuilder2.Append($"{(objectResult.Value as IMessageScrub).Scrub()}");
 				}
 				else
 				{
-					stringBuilder.Append($"{objectResult.StatusCode}");
+					stringBuilder2.Append($"{objectResult.StatusCode}");
 				}
 			}
 			else if (actionExecutedContext.Result is ContentResult)
 			{
 				ContentResult contentResult = actionExecutedContext.Result as ContentResult;
-				stringBuilder.Append(contentResult.Content);
+				stringBuilder2.Append(contentResult.Content);
 			}
 		}
 		else
 		{
-			stringBuilder.Append("none");
+			stringBuilder2.Append("none");
 		}
 		requestTimer.Stop();
-		_logger.LogInformation($"{controllerName}.{actionName}, response={stringBuilder}");
+		_logger.LogInformation($"{controllerName}.{actionName}, response={stringBuilder2}");
 		_logger.LogInformation($"END: {controllerName}.{actionName}, statuscode={(HttpStatusCode)context.HttpContext.Response.StatusCode}, elapsed={requestTimer.ElapsedMilliseconds}");
 	}
 }

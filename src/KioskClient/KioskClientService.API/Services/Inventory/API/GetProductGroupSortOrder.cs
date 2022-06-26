@@ -12,6 +12,6 @@ public class GetProductGroupSortOrder : IMessageScrub
 
 	public object Scrub()
 	{
-		return JsonConvert.SerializeObject(this);
+		return JsonConvert.SerializeObject(new { ProductGroupSortOrderType, ProductGroupSortOrders.Count });
 	}
 }

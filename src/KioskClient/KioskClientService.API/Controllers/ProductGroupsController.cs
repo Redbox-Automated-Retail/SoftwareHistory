@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
-using KioskClientService.API.Services.Inventory;
 using KioskClientService.API.Services.ProductGroup;
 using KioskClientService.API.Services.Products.MoreLikeThis;
 using Microsoft.AspNetCore.Mvc;
@@ -15,14 +13,11 @@ public class ProductGroupsController : ControllerBase
 {
 	private readonly IMoreLikeThisService _moreLikeThisService;
 
-	private readonly IInventoryService _inventoryService;
-
 	private readonly IProductGroupSortOrderService _productGroupOrderService;
 
-	public ProductGroupsController(IMoreLikeThisService moreLikeThisService, IInventoryService inventoryService, IProductGroupSortOrderService productGroupOrderService)
+	public ProductGroupsController(IMoreLikeThisService moreLikeThisService, IProductGroupSortOrderService productGroupOrderService)
 	{
 		_moreLikeThisService = moreLikeThisService;
-		_inventoryService = inventoryService;
 		_productGroupOrderService = productGroupOrderService;
 	}
 
@@ -42,7 +37,7 @@ public class ProductGroupsController : ControllerBase
 	}
 
 	[HttpPost("morelikethis/refresh")]
-	public async Task<ActionResult<BaseResponse>> CacheMoreLikeThisTitle([FromBody] List<long> productGroupIds)
+	public async Task<ActionResult<BaseResponse>> CacheMoreLikeThisTitle([FromBody] ScrubbedProductGroupIds productGroupIds)
 	{
 		Task.Run(() => _moreLikeThisService.RefreshMoreLikeThisAsync(productGroupIds));
 		return Ok();
