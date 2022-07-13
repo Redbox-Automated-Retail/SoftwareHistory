@@ -2186,6 +2186,10 @@ public class Resources
 
 	public static string start_over_button => ResourceManager.GetString("start_over_button", resourceCulture);
 
+	public static string start_view_kiosk_closing_message1 => ResourceManager.GetString("start_view_kiosk_closing_message1", resourceCulture);
+
+	public static string start_view_kiosk_closing_message2 => ResourceManager.GetString("start_view_kiosk_closing_message2", resourceCulture);
+
 	public static string start_view_rent_and_buy_button => ResourceManager.GetString("start_view_rent_and_buy_button", resourceCulture);
 
 	public static string start_view_rent_and_buy_games_button => ResourceManager.GetString("start_view_rent_and_buy_games_button", resourceCulture);

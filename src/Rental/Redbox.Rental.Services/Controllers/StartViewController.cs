@@ -625,6 +625,7 @@ public class StartViewController : BaseViewController
 			startViewModel.RentOrBuyGamesButtonVisibility = (((Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames) | flag2) ? Visibility.Collapsed : Visibility.Visible);
 			startViewModel.SecondaryButtonsColumn = ((startViewModel.BuyMoviesOrGamesButtonVisibility != Visibility.Visible && startViewModel.BuyGamesButtonVisibility != Visibility.Visible) ? 1 : 2);
 			startViewModel.SecondaryButtonsMargin = ((startViewModel.BuyMoviesOrGamesButtonVisibility != Visibility.Visible && startViewModel.BuyGamesButtonVisibility != Visibility.Visible) ? new Thickness(0.0, 0.0, 115.0, 0.0) : new Thickness(0.0, 0.0, 15.0, 0.0));
+			startViewModel.KioskClosingMessageVisibility = ((!flag2) ? Visibility.Collapsed : Visibility.Visible);
 			List<IKioskProduct> products = null;
 			Redbox.KioskEngine.ComponentModel.ErrorList source = service?.GetProducts(BrowseViewFilter.ForSale, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
 			bool buyGamesEnabled = !source.Any() && products.Any((IKioskProduct x) => ((ITitleProduct)x).TitleFamily == TitleFamily.Games);
@@ -669,6 +670,7 @@ public class StartViewController : BaseViewController
 		startViewModel.TextBlockForegroundBrush = System.Windows.Media.Brushes.White;
 		startViewModel.EspanolButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "white_warmpurple_border_button_style");
 		startViewModel.HelpButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "white_warmpurple_border_button_style");
+		startViewModel.KioskClosingMessageForeground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(72, 27, 84));
 	}
 
 	private static void SetDarkMode(StartViewModel startViewModel, FrameworkElement startViewUserControl)
@@ -683,6 +685,7 @@ public class StartViewController : BaseViewController
 		startViewModel.TextBlockForegroundBrush = System.Windows.Media.Brushes.Black;
 		startViewModel.EspanolButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "black_with_white_border_button_style");
 		startViewModel.HelpButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "black_with_white_border_button_style");
+		startViewModel.KioskClosingMessageForeground = System.Windows.Media.Brushes.White;
 	}
 
 	private static void ConfigureScreenSaver(StartViewModel startViewModel)
@@ -1480,6 +1483,8 @@ public class StartViewController : BaseViewController
 		startViewModel.SignInUpButtonSeparator = (PersonalizationFunctions.IsSignedIn ? null : Resources.button_sign_in_sign_up_separator);
 		startViewModel.SignInButtonTooltipText = Resources.sign_in_button_tooltip_text;
 		startViewModel.AdaTurnedOnLabelVisibility = ((!BaseViewController.ApplicationState.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
+		startViewModel.KioskClosingMessageText1 = Resources.start_view_kiosk_closing_message1;
+		startViewModel.KioskClosingMessageText2 = Resources.start_view_kiosk_closing_message2;
 	}
 
 	private static void PrepareToLeaveStartView()

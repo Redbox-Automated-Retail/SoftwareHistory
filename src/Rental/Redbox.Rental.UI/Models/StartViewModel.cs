@@ -128,6 +128,14 @@ public class StartViewModel : DependencyObject
 
 	public static readonly DependencyProperty TextBlockForegroundBrushProperty = DependencyProperty.Register("TextBlockForegroundBrush", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(Brushes.White));
 
+	public static readonly DependencyProperty KioskClosingMessageVisibilityProperty = DependencyProperty.Register("KioskClosingMessageVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
+	public static readonly DependencyProperty KioskClosingMessageForegroundProperty = DependencyProperty.Register("KioskClosingMessageForeground", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromRgb(72, 27, 84))));
+
+	public static readonly DependencyProperty KioskClosingMessageText1Property = DependencyProperty.Register("KioskClosingMessageText1", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty KioskClosingMessageText2Property = DependencyProperty.Register("KioskClosingMessageText2", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty EspanolButtonStyleProperty = DependencyProperty.Register("EspanolButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty HelpButtonStyleProperty = DependencyProperty.Register("HelpButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
@@ -1000,6 +1008,66 @@ public class StartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(TextBlockForegroundBrushProperty, value);
+			});
+		}
+	}
+
+	public Visibility KioskClosingMessageVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(KioskClosingMessageVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(KioskClosingMessageVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Brush KioskClosingMessageForeground
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(KioskClosingMessageForegroundProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(KioskClosingMessageForegroundProperty, value);
+			});
+		}
+	}
+
+	public string KioskClosingMessageText1
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(KioskClosingMessageText1Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(KioskClosingMessageText1Property, value);
+			});
+		}
+	}
+
+	public string KioskClosingMessageText2
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(KioskClosingMessageText2Property));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(KioskClosingMessageText2Property, value);
 			});
 		}
 	}

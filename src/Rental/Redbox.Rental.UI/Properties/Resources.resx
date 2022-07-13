@@ -748,6 +748,9 @@ By the way, we'd love to have you as a customer, so stick around and browse what
   <data name="redbox_plus_free_monthly_text" xml:space="preserve"><value>FREE monthly
 1-night rental</value></data>
   <data name="starz_offer_1_my_bag_title" xml:space="preserve"><value>STARZ® - Limited Time Offer</value></data>
+  <data name="start_view_kiosk_closing_message1" xml:space="preserve"><value>This location is closing</value></data>
+  <data name="start_view_kiosk_closing_message2" xml:space="preserve"><value>Visit redbox.com or check out our app
+to watch On Demand</value></data>
   <data name="redbox_plus_free_1_night_rental" xml:space="preserve"><value>Redbox+ FREE 1-night rental</value></data>
   <data name="multi_night_pricing_popup_disclaimer_text" xml:space="preserve"><value>Our multi-night deal can't be combined with other offers. Your awesome rental rate is good during the multi-night period. If you keep your rental longer, that's totally fine - extra nights are {0:C}.</value></data>
   <data name="redbox_plus_terms_acceptance_button_disabled_text" xml:space="preserve"><value>PLEASE CHECK BOX TO CONTINUE</value></data>

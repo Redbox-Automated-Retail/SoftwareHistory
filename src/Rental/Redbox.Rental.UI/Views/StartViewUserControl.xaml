@@ -154,6 +154,10 @@
         <Ellipse Width="24" Height="24" Margin="33,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Fill="{Binding Path=EllipseFillBrush, FallbackValue=#792D8D}" />
         <TextBlock Style="{StaticResource font_montserrat_bold_11}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="36,5,0,0" Foreground="{Binding Path=TextBlockForegroundBrush, FallbackValue=White}">ON</TextBlock>
       </Grid>
+      <StackPanel VerticalAlignment="Top" HorizontalAlignment="Left" Width="759" Margin="265,185,0,0" Visibility="{Binding Path=KioskClosingMessageVisibility, FallbackValue=Collapsed}">
+        <TextBlock Style="{StaticResource font_montserrat_bold_48}" TextAlignment="Center" TextWrapping="Wrap" Foreground="{Binding Path=KioskClosingMessageForeground, FallbackValue=#481B54}" Text="{Binding Path=KioskClosingMessageText1, FallbackValue=This location is closing}" />
+        <TextBlock Margin="0,50,0,0" Style="{StaticResource font_montserrat_medium_24}" TextAlignment="Center" TextWrapping="Wrap" Foreground="{Binding Path=KioskClosingMessageForeground, FallbackValue=#481B54}" Text="{Binding Path=KioskClosingMessageText2, FallbackValue=Visit redbox.com or check out our app&#xA;to watch On Demand}" />
+      </StackPanel>
       <Redbox:RoundedButton Name="espanol_button" BorderThickness="4" CornerRadius="24" Margin="496,685,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="132" Height="48" Command="{x:Static localbase:Commands.ToggleLanguageModeCommand}" Focusable="False" Style="{Binding Path=EspanolButtonStyle, FallbackValue={StaticResource white_warmpurple_border_button_style}}">
         <TextBlock VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=ToggleLanguageButtonText, FallbackValue=ESPAÑOL}" />
       </Redbox:RoundedButton>
