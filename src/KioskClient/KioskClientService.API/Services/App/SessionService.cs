@@ -21,14 +21,13 @@ public class SessionService : ISessionService
 
 	public ApplicationResponse Start(SessionType sessionType)
 	{
-		_logger?.LogInformation($"SessionService.Start - SessionType:{sessionType}");
+		_logger?.LogInfoWithSource($"SessionType:{sessionType}", "Start");
 		_adService.StartSession();
 		return new ApplicationResponse();
 	}
 
 	public ApplicationResponse End()
 	{
-		_logger?.LogInformation("SessionService.End");
 		_adService.EndSession();
 		return new ApplicationResponse();
 	}

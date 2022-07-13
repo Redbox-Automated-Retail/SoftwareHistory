@@ -72,7 +72,6 @@ public class PricingService : IPricingService
 
 	public async Task RefreshDefaultPricingIfNeeded()
 	{
-		_logger?.LogInfoWithSource("Started", "RefreshDefaultPricingIfNeeded");
 		PersistentDataWrapper<DefaultPricingData> persistentDataWrapper = await _persistentDataCacheService.Read<DefaultPricingData>(_cachePricingDefaultFileName, useCache: true);
 		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
 		{
@@ -88,7 +87,6 @@ public class PricingService : IPricingService
 
 	public async Task RefreshRentalPricingByPriceIfNeeded()
 	{
-		_logger?.LogInfoWithSource("Started", "RefreshRentalPricingByPriceIfNeeded");
 		PersistentDataWrapper<RentalPricingByPriceData> persistentDataWrapper = await _persistentDataCacheService.Read<RentalPricingByPriceData>(_cachePricingRentalByPriceFileName, useCache: true);
 		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
 		{
@@ -104,7 +102,6 @@ public class PricingService : IPricingService
 
 	public async Task RefreshPurchasdePricingByPriceIfNeeded()
 	{
-		_logger?.LogInfoWithSource("Started", "RefreshPurchasdePricingByPriceIfNeeded");
 		PersistentDataWrapper<PurchasePricingByPriceData> persistentDataWrapper = await _persistentDataCacheService.Read<PurchasePricingByPriceData>(_cachePricingPurchaseByPriceFileName, useCache: true);
 		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
 		{
@@ -378,7 +375,6 @@ public class PricingService : IPricingService
 
 	private async Task<DefaultPricingData> GetDefaultPricingData()
 	{
-		_logger?.LogInfoWithSource("Started", "GetDefaultPricingData");
 		PersistentDataWrapper<DefaultPricingData> persistentDataWrapper = await _persistentDataCacheService.Read<DefaultPricingData>(_cachePricingDefaultFileName, useCache: true);
 		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
 		{
@@ -390,7 +386,6 @@ public class PricingService : IPricingService
 
 	private async Task<RentalPricingByPriceData> GetRentalPricingByPriceData()
 	{
-		_logger?.LogInfoWithSource("Started", "GetRentalPricingByPriceData");
 		PersistentDataWrapper<RentalPricingByPriceData> persistentDataWrapper = await _persistentDataCacheService.Read<RentalPricingByPriceData>(_cachePricingRentalByPriceFileName, useCache: true);
 		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
 		{
@@ -402,7 +397,6 @@ public class PricingService : IPricingService
 
 	private async Task<PurchasePricingByPriceData> GetPurchasePricingByPriceData()
 	{
-		_logger?.LogInfoWithSource("Started", "GetPurchasePricingByPriceData");
 		PersistentDataWrapper<PurchasePricingByPriceData> persistentDataWrapper = await _persistentDataCacheService.Read<PurchasePricingByPriceData>(_cachePricingPurchaseByPriceFileName, useCache: true);
 		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
 		{

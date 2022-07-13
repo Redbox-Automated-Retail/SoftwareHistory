@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace KioskClientService.API.Services.Products.ProductReelsApi;
 
@@ -37,30 +38,50 @@ public class ProductReelsApiClient : IProductReelsApiClient
 		{
 			productIds = list
 		};
-		APIResponse<List<BulkMoreLikeThisResponse>> aPIResponse = await _httpService.SendRequest<List<BulkMoreLikeThisResponse>>(_applicationConfiguration.ProductReelsApi.Url, "products/reels/bulkmorelikethis", requestObject, HttpMethod.Post, null, logResponseContent: false);
-		if (aPIResponse == null || !aPIResponse.IsSuccessStatusCode)
+		HttpResponseMessage response = await _httpService.SendRequest(_applicationConfiguration.ProductReelsApi.Url, "products/reels/bulkmorelikethis", requestObject, HttpMethod.Post, null, logResponseContent: false);
+		if (response == null)
 		{
-			_logger.LogErrorWithSource(aPIResponse?.Exception, "Call to get bulkMoreLikeThis was not successful. Errors: " + string.Join(".", aPIResponse?.Errors?.Select((Error x) => x.Message)?.ToList() ?? new List<string>()), "MoreLikeThisBulkAsync");
+			_logger.LogErrorWithSource("Call to bulkmorelikethis returned no response!", "MoreLikeThisBulkAsync");
 		}
-		foreach (BulkMoreLikeThisResponse item in aPIResponse?.Response ?? new List<BulkMoreLikeThisResponse>())
+		else
 		{
-			if (!(item.MoreLikeThisTitles?.Any() ?? false))
+			string text = ((response.Content != null) ? (await response.Content.ReadAsStringAsync()) : string.Empty);
+			string text2 = text;
+			if (response.IsSuccessStatusCode)
 			{
-				continue;
-			}
-			List<long> list2 = new List<long>();
-			foreach (string moreLikeThisTitle in item.MoreLikeThisTitles)
-			{
-				long result2 = 0L;
-				if (long.TryParse(moreLikeThisTitle, out result2) && result2 > 0)
+				List<BulkMoreLikeThisResponse> list2;
+				try
 				{
-					list2.Add(result2);
+					list2 = JsonConvert.DeserializeObject<List<BulkMoreLikeThisResponse>>(text2);
+				}
+				catch (JsonReaderException ex)
+				{
+					_logger.LogCriticalWithSource(ex, "Exception deserializing bulkmorelikethis list!", "MoreLikeThisBulkAsync");
+					list2 = new List<BulkMoreLikeThisResponse>();
+				}
+				foreach (BulkMoreLikeThisResponse item in list2)
+				{
+					if (item.MoreLikeThisTitles == null || !item.MoreLikeThisTitles.Any())
+					{
+						continue;
+					}
+					List<long> list3 = new List<long>();
+					foreach (string moreLikeThisTitle in item.MoreLikeThisTitles)
+					{
+						if (long.TryParse(moreLikeThisTitle, out var result2) && result2 > 0)
+						{
+							list3.Add(result2);
+						}
+					}
+					if (long.TryParse(item.ProductGroupId, out var result3))
+					{
+						result.TryAdd(result3, list3);
+					}
 				}
 			}
-			long result3 = 0L;
-			if (long.TryParse(item.ProductGroupId, out result3))
+			else
 			{
-				result.TryAdd(result3, list2);
+				_logger.LogErrorWithSource($"Call to bulkMoreLikeThis returned status: {response.StatusCode}, content: {text2}", "MoreLikeThisBulkAsync");
 			}
 		}
 		return result;

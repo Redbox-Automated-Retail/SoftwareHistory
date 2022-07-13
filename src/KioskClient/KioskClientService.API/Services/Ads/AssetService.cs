@@ -61,7 +61,6 @@ public class AssetService : IAssetService
 
 	public async Task<CacheResponse> Cache()
 	{
-		_logger?.LogInformation("AssetService.Cache");
 		if (!_adsActive)
 		{
 			return new CacheResponse
@@ -79,14 +78,14 @@ public class AssetService : IAssetService
 			List<VistarAsset> asset = aPIResponse.Response.asset;
 			if (asset == null)
 			{
-				_logger.LogInformation("AssetService.Cache - GetAssets response did not contain any assets");
+				_logger.LogInfoWithSource("GetAssets response did not contain any assets", "Cache");
 				return cacheResponse;
 			}
 			ManageAssets(((IEnumerable<Asset>)asset.ToAssets()).Select((Func<Asset, BaseAsset>)((Asset a) => a)).ToList());
 			cacheResponse.AssetCacheCount = asset.Count;
 			return cacheResponse;
 		}
-		_logger.LogError("AssetService.Cache - did not return success");
+		_logger.LogErrorWithSource("did not return success", "Cache");
 		return cacheResponse;
 	}
 
@@ -114,7 +113,7 @@ public class AssetService : IAssetService
 
 	public void PurgeOldAssets(List<BaseAsset> currentAssets)
 	{
-		_logger?.LogInformation("AssetService - Checking for old assets to purge.");
+		_logger?.LogInfoWithSource("Checking for old assets to purge.", "PurgeOldAssets");
 		DirectoryInfo directoryInfo = new DirectoryInfo(AssetPath);
 		IEnumerable<FileInfo> enumerable = from f in directoryInfo.GetFiles("*.json")
 			where f.LastWriteTime < DateTime.Now.Date.AddDays(-14.0)
@@ -124,7 +123,7 @@ public class AssetService : IAssetService
 			string assetId = Asset.GetAssetIdFromFileName(item.Name);
 			if (!currentAssets.Any((BaseAsset a) => a.AssetId == assetId))
 			{
-				_logger?.LogInformation($"AssetService - Asset id {assetId} is {(DateTime.Now.Date - item.LastWriteTime.Date).Days} days old.  Deleting the asset files.");
+				_logger?.LogInfoWithSource($"Asset id {assetId} is {(DateTime.Now.Date - item.LastWriteTime.Date).Days} days old.  Deleting the asset files.", "PurgeOldAssets");
 				foreach (FileInfo item2 in directoryInfo.EnumerateFiles(assetId + ".*"))
 				{
 					try
@@ -133,41 +132,39 @@ public class AssetService : IAssetService
 					}
 					catch (Exception ex)
 					{
-						_logger?.LogError("AssetService - Unable delete file " + item2.Name + " : " + ex.Message);
+						_logger?.LogErrorWithSource("Unable delete file " + item2.Name + " : " + ex.Message, "PurgeOldAssets");
 					}
 				}
 			}
 			else
 			{
-				_logger?.LogInformation($"AssetService - Asset id {assetId} is {(DateTime.Now.Date - item.LastWriteTime.Date).Days} days old.  Not deleting because it is in the current asset list.");
+				_logger?.LogInfoWithSource($"Asset id {assetId} is {(DateTime.Now.Date - item.LastWriteTime.Date).Days} days old.  In current, not deleting.", "PurgeOldAssets");
 			}
 		}
 	}
 
 	public async Task<bool> DownloadAsset(BaseAsset asset)
 	{
-		_logger?.LogInformation("AssetService.DownloadAsset");
-		string adAsset = JsonConvert.SerializeObject(asset, Formatting.Indented, new JsonSerializerSettings
-		{
-			NullValueHandling = NullValueHandling.Ignore
-		});
-		_logger?.LogInformation("AssetService - downloading");
-		_logger?.LogInformation(adAsset);
+		_logger?.LogInfoWithSource("downloading " + asset.AssetUrl, "DownloadAsset");
 		string assetFilePath = GetAssetFilePath(asset);
 		string assetCreativeFilePath = GetAssetCreativeFilePath(asset);
 		if (File.Exists(assetFilePath) && File.Exists(assetCreativeFilePath))
 		{
-			_logger?.LogInformation("AssetService - asset already exists, skipping download");
+			_logger?.LogInfoWithSource("asset already exists, skipping download", "DownloadAsset");
 			return true;
 		}
 		APIResponse<byte[]> response = await _httpService.DownloadFile(asset.AssetUrl);
 		if (!response.IsSuccessStatusCode || response.ResponseLength == 0)
 		{
-			_logger?.LogInformation("AssetService - download failed");
+			_logger?.LogInfoWithSource("download failed", "DownloadAsset");
 			return false;
 		}
 		_analytics.DownloadAsset(response);
-		await File.WriteAllTextAsync(assetFilePath, adAsset);
+		string contents = JsonConvert.SerializeObject(asset, Formatting.Indented, new JsonSerializerSettings
+		{
+			NullValueHandling = NullValueHandling.Ignore
+		});
+		await File.WriteAllTextAsync(assetFilePath, contents);
 		await File.WriteAllBytesAsync(assetCreativeFilePath, response.Response);
 		return true;
 	}

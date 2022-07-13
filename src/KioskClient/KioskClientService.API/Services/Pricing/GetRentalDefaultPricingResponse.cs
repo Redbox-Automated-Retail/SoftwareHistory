@@ -10,6 +10,6 @@ public class GetRentalDefaultPricingResponse : ApiBaseResponse, IMessageScrub
 
 	public new object Scrub()
 	{
-		return this.ToJson().EllipseAt(80);
+		return $"ForrmatPricing count: {FormatPricing.Count}";
 	}
 }

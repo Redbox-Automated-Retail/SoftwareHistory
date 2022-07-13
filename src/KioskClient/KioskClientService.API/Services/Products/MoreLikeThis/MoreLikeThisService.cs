@@ -33,12 +33,12 @@ public class MoreLikeThisService : IMoreLikeThisService
 
 	public GetMoreLikeThisResponse GetMLT(long productGroupId)
 	{
-		_logger.LogInfoWithSource($"Getting more like this from cache for {productGroupId} .", "GetMLT");
+		_logger.LogInfoWithSource($"Getting more like this from cache for {productGroupId}", "GetMLT");
 		GetMoreLikeThisResponse getMoreLikeThisResponse = new GetMoreLikeThisResponse();
 		getMoreLikeThisResponse.MoreLikeThis = _moreLikeThisCache.Get(productGroupId);
 		if (!getMoreLikeThisResponse.MoreLikeThis.Any())
 		{
-			_logger.LogInfoWithSource($"productGroupId: {productGroupId} isn't exist in cached data.", "GetMLT");
+			_logger.LogInfoWithSource($"productGroupId: {productGroupId} not in cached data.", "GetMLT");
 			getMoreLikeThisResponse.Success = false;
 			getMoreLikeThisResponse.StatusCode = 404;
 		}

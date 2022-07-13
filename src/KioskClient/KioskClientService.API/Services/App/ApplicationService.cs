@@ -22,14 +22,12 @@ public class ApplicationService : IApplicationService
 
 	public async Task<ApplicationResponse> Start()
 	{
-		_logger?.LogInformation("ApplicationService.Start");
 		await (_adService?.StartApplication());
 		return new ApplicationResponse();
 	}
 
 	public async Task<ApplicationResponse> End()
 	{
-		_logger?.LogInformation("ApplicationService.End");
 		await _adService.EndApplication();
 		return new ApplicationResponse();
 	}

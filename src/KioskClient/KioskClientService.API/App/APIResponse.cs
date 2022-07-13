@@ -129,11 +129,7 @@ public class APIResponse<T>
 	{
 		if (HttpRequest != null)
 		{
-			_logger?.LogInformation($"Request: {HttpRequest.Method}, Uri: {HttpRequest.RequestUri}, Status: {StatusCode}({(int)StatusCode}), Time:{ResponseTime}, Length:{ResponseLength}");
-			if (RequestContent != null)
-			{
-				_logger?.LogInformation("Request Content: " + RequestContent);
-			}
+			_logger?.LogInformation($"Request: {HttpRequest.Method}, Uri: {HttpRequest.RequestUri}, Status: {StatusCode}, Time:{ResponseTime}, Length:{ResponseLength}");
 			if (responseContentLoggingEnabled && ResponseContent != null)
 			{
 				_logger?.LogInformation("Response Content: " + ResponseContent);

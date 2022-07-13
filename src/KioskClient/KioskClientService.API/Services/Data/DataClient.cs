@@ -60,7 +60,6 @@ internal class DataClient : IDataClient
 
 	private async Task<APIResponse<DataModels.KioskDataResponse>> Send(Guid messageId, long kioskId, DataModels.KioskBaseRequest payload, string api)
 	{
-		_logger.LogInfoWithSource("sending proxy KDS request to '" + api + "'", "Send");
 		return await _httpService.SendRequest<DataModels.KioskDataResponse>(_configuration.KioskDataService.Url, api, payload, HttpMethod.Post, _configuration.KioskDataService.GetKioskCloudHeaders(messageId, kioskId), logResponseContent: false);
 	}
 }

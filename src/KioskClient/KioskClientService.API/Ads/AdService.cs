@@ -86,7 +86,6 @@ public class AdService : IAdService
 
 	public SessionResponse StartSession()
 	{
-		_logger?.LogInformation("AdService.StartSession");
 		_adService = this;
 		_inSession = true;
 		PreLoadAds();
@@ -96,7 +95,6 @@ public class AdService : IAdService
 	public SessionResponse EndSession()
 	{
 		_inSession = false;
-		_logger?.LogInformation("AdService.EndSession");
 		return new SessionResponse();
 	}
 

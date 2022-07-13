@@ -29,7 +29,6 @@ public class AdsController : ControllerBase
 	[HttpGet]
 	public async Task<ActionResult<GetAdResponse>> GetAd(AdLocation location)
 	{
-		_logger?.LogInformation("AdController.GetAd");
 		GetAdResponse getAdResponse = await _adService.GetAd(new GetAdRequest
 		{
 			AdLocation = location

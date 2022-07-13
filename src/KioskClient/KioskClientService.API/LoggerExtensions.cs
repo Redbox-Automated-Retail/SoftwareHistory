@@ -29,4 +29,10 @@ public static class LoggerExtensions
 		string name = typeof(T).Name;
 		logger.LogError(name + "." + memberName + " -> " + message);
 	}
+
+	public static void LogCriticalWithSource<T>(this ILogger<T> logger, Exception ex, string message, [CallerMemberName] string memberName = "")
+	{
+		string name = typeof(T).Name;
+		logger.LogCritical(ex, name + "." + memberName + " -> " + message);
+	}
 }

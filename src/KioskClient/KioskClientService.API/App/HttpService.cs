@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -67,6 +68,12 @@ public class HttpService : IHttpService
 		return await SendRequest<T>(genRequest, logResponseContent);
 	}
 
+	public async Task<HttpResponseMessage> SendRequest(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null, bool logResponseContent = true)
+	{
+		using HttpRequestMessage genRequest = GenerateRequest(HttpExtensions.ToStandardPayloadContent, baseUrl, endpoint, requestObject, method, headers);
+		return await SendRequest(genRequest, logResponseContent);
+	}
+
 	public async Task<APIResponse<T>> SendRequest<T>(HttpRequestMessage request, bool logResponseContent = true)
 	{
 		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
@@ -95,6 +102,48 @@ public class HttpService : IHttpService
 		}
 		apiResponse.Log(logResponseContent);
 		return apiResponse;
+	}
+
+	public async Task<HttpResponseMessage> SendRequest(HttpRequestMessage request, bool logResponseContent = true)
+	{
+		CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+		cancellationTokenSource.CancelAfter(Timeout);
+		HttpResponseMessage result = null;
+		Stopwatch sw = new Stopwatch();
+		sw.Start();
+		StringBuilder builder = new StringBuilder();
+		try
+		{
+			if (request != null)
+			{
+				builder.Append("Request: ").Append(request.Method).AppendLine($", Uri: {request.RequestUri}");
+			}
+			result = await _httpClient.SendAsync(request, cancellationTokenSource.Token);
+			if (result != null)
+			{
+				builder.Append("Status: ").Append(result.StatusCode);
+				if (result.Content != null)
+				{
+					string text = await result.Content.ReadAsStringAsync();
+					builder.Append(", Response Length: ").Append(text.Length);
+					if (logResponseContent)
+					{
+						builder.Append(", Content: ").Append(text);
+					}
+				}
+			}
+		}
+		catch (Exception exception)
+		{
+			_logger?.LogError(exception, "Exception occured!");
+		}
+		finally
+		{
+			sw.Stop();
+			builder.AppendLine($"Time: {sw.ElapsedMilliseconds}");
+			_logger.LogInformation(builder.ToString());
+		}
+		return result;
 	}
 
 	public async Task<APIResponse<byte[]>> DownloadFile(string url)

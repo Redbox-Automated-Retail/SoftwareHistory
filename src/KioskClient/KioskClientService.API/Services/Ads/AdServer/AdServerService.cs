@@ -79,7 +79,6 @@ public class AdServerService : IAdService
 	{
 		try
 		{
-			_logger?.LogInfoWithSource($"Getting ad for {request.AdLocation}", "GetAd");
 			GetAdResponse result = new GetAdResponse
 			{
 				AdLocation = request.AdLocation

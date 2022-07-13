@@ -10,6 +10,6 @@ public class GetRentalPricingByPriceResponse : ApiBaseResponse, IMessageScrub
 
 	public new object Scrub()
 	{
-		return this.ToJson().EllipseAt(80);
+		return $"RentalPricing count: {RentalPricing.Count}";
 	}
 }

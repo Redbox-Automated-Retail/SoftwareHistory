@@ -9,6 +9,6 @@ public class KioskRentalDefaultPricingResponse : ApiBaseResponse
 
 	public new object Scrub()
 	{
-		return this.ToJson().EllipseAt(80);
+		return $"FormatPricing count: {FormatPricing.Count}";
 	}
 }

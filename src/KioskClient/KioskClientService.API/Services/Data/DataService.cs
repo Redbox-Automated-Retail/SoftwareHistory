@@ -59,7 +59,6 @@ internal class DataService : IDataService
 
 	private async Task<DataModels.KioskDataResponse> Send(string name, HttpRequest httpRequest, DataModels.KioskBaseRequest request, DataClientMethod method)
 	{
-		_logger.LogInfoWithSource("sending " + name + " data request", "Send");
 		APIResponse<DataModels.KioskDataResponse> aPIResponse = await method(request);
 		if (request != null)
 		{

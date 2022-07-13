@@ -10,6 +10,8 @@ public interface IHttpService
 
 	Task<APIResponse<T>> SendRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null, bool logResponseContent = true);
 
+	Task<HttpResponseMessage> SendRequest(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null, bool logResponseContent = true);
+
 	Task<APIResponse<T>> SendGZipRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null, bool logResponseContent = true);
 
 	Task<APIResponse<T>> SendDeflateRequest<T>(string baseUrl, string endpoint, object requestObject, HttpMethod method, List<Header> headers = null, bool logResponseContent = true);

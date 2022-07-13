@@ -23,7 +23,6 @@ public class ApplicationController : ControllerBase
 	[HttpPost("start")]
 	public async Task<ActionResult<ApplicationResponse>> StartApplication()
 	{
-		_logger?.LogInformation("ApplicationController.StartApplication");
 		await _applicationService.Start();
 		return new OkObjectResult(new ApplicationResponse());
 	}
@@ -31,7 +30,6 @@ public class ApplicationController : ControllerBase
 	[HttpPost("end")]
 	public async Task<ActionResult<ApplicationResponse>> EndApplication()
 	{
-		_logger?.LogInformation("ApplicationController.EndApplication");
 		await _applicationService.End();
 		return new OkObjectResult(new ApplicationResponse());
 	}
@@ -39,7 +37,6 @@ public class ApplicationController : ControllerBase
 	[HttpPost("viewchangedevent")]
 	public async Task<ActionResult<ViewShowResponse>> ViewChangedEvent(ViewStateChangedEvent e)
 	{
-		_logger?.LogInfoWithSource(e.ToJson(), "ViewChangedEvent");
 		await _applicationService.ViewChangedEvent(e);
 		return new OkObjectResult(new ViewShowResponse());
 	}

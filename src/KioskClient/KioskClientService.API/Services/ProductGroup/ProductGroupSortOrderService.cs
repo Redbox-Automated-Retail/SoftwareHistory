@@ -32,7 +32,6 @@ public class ProductGroupSortOrderService : IProductGroupSortOrderService
 
 	public async Task<ProductGroupSortOrder> GetSortOrder()
 	{
-		_logger?.LogInfoWithSource("Started", "GetSortOrder");
 		PersistentDataWrapper<ProductGroupSortOrder> persistentDataWrapper = await _persistentDataCacheService.Read<ProductGroupSortOrder>(_cacheFileName, useCache: true);
 		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
 		{
