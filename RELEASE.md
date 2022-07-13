@@ -1,17 +1,17 @@
-# Pinto (2022-06-26)
+# Quattro (2022-07-13)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-06-26
-- Store labels: kop-rental-bundles-Pinto
+- Date (first download in the snapshots): 2022-07-13
+- Store labels: kop-rental-bundles-Quattro
 - Package revisions:
-  - `kop-rental-bundles` revision 162 (`7AA356DF2A08075211DBF11648A43345CDDA73CB`)
+  - `kop-rental-bundles` revision 163 (`406B7C8F21BE5CC2421D3B495BE60CABE515455E`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `422566DAB9B326E82F1750D1526256D250C86C23` | exact |
-| `fm.bundle` |  |  | `F78836DD231683FB04F38E841B206F4FD85D1970` | exact |
-| `library-rental-common.bundle` |  |  | `980ABB53E269940414A24A9D8EFC162A65D5A360` | exact |
-| `ra-2.x.bundle` |  |  | `F5A88D42125B1C2E840E5415B3583D2D55FAC88C` | exact |
+| `cp.bundle` |  |  | `B1017F83A9A5F95FD33B66B0D4C961F224231BA3` | exact |
+| `fm.bundle` |  |  | `53D9EB8AF9B89CEF2D9D7BFEC51E8EB3DDD755BF` | exact |
+| `library-rental-common.bundle` |  |  | `129BEE4904A8D955553DE54DEAA83E7FCE1BA4EA` | exact |
+| `ra-2.x.bundle` |  |  | `EE899249AC78B99C7EB61FD76214547A774F6A4E` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
