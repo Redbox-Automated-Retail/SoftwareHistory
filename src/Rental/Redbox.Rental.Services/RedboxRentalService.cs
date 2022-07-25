@@ -87,7 +87,7 @@ public class RedboxRentalService : IRedboxRental
 		CheckForTamperedCardReader();
 	}
 
-	public void CloseOpenSessionAndStartNewRentalSession(string newSessionContext)
+	public void CloseOpenSessionAndStartNewRentalSession(string newSessionContext, bool clearAudioDeviceConnected = true)
 	{
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 		if (rentalShoppingCart != null)
@@ -95,6 +95,11 @@ public class RedboxRentalService : IRedboxRental
 			OrchestrationService.CloseShoppingCartAnalytics(rentalShoppingCart.ShoppingSessionId, isSessionAbandoned: true);
 			rentalShoppingCart.Abandon("User chose to abandon session.");
 			ApplicationState.Instance.IsADAAccessible = false;
+			ITextToSpeechService service = ServiceLocator.Instance.GetService<ITextToSpeechService>();
+			if ((service?.TTSEnabled ?? false) & clearAudioDeviceConnected)
+			{
+				service.ClearAudioDeviceConnected();
+			}
 		}
 		ICardReadAttemptCollection cardReadAttemptCollection = Redbox.Rental.Services.Session.Session.Instance?.CardReadAttemptCollection ?? null;
 		if (cardReadAttemptCollection != null && cardReadAttemptCollection.SupportsTechnicalFallbackTracking)
@@ -102,9 +107,9 @@ public class RedboxRentalService : IRedboxRental
 			ServiceLocator.Instance.GetService<IEMVReaderHealth>()?.SessionWasInTechnicalFallback(cardReadAttemptCollection.IsInTrackableTechnicalFallback);
 		}
 		Redbox.Rental.Services.Session.Session.Instance?.ClearTrackData();
-		ITrackDataService service = ServiceLocator.Instance.GetService<ITrackDataService>();
-		service?.StopAllSessionCardReads(rentalShoppingCart?.ShoppingSessionId ?? default(Guid), CancelReason.EndingSession);
-		if (service is IDeviceServiceTrackDataService)
+		ITrackDataService service2 = ServiceLocator.Instance.GetService<ITrackDataService>();
+		service2?.StopAllSessionCardReads(rentalShoppingCart?.ShoppingSessionId ?? default(Guid), CancelReason.EndingSession);
+		if (service2 is IDeviceServiceTrackDataService)
 		{
 			ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>()?.ReportAuthorizeResult(authorizeSuccessful: false);
 		}
@@ -533,12 +538,12 @@ public class RedboxRentalService : IRedboxRental
 			else if (CanForceStartOfNewRentalSession())
 			{
 				LogHelper.Instance.Log("TTS((> Restarting session due to headphones being connected.");
-				CloseOpenSessionAndStartNewRentalSession("TTS Audio Device connected");
+				CloseOpenSessionAndStartNewRentalSession("TTS Audio Device connected", clearAudioDeviceConnected: false);
 			}
 		}
 		else if (CanForceStartOfNewRentalSession())
 		{
-			CloseOpenSessionAndStartNewRentalSession("TTS Audio Device disconnected");
+			CloseOpenSessionAndStartNewRentalSession("TTS Audio Device disconnected", clearAudioDeviceConnected: false);
 		}
 	}
 

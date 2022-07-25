@@ -109,7 +109,7 @@ public class ViewUserControl : TextToSpeechUserControl, IWPFActor
 		{
 			return CreateSimpleSpeechControl();
 		}
-		return ((IBaseModel)base.DataContext)?.ProcessGetSpeechControl();
+		return (base.DataContext is IBaseModel { ProcessGetSpeechControl: not null } baseModel) ? baseModel.ProcessGetSpeechControl() : null;
 	}
 
 	protected static void InvokeRoutedCommand(DynamicRoutedCommand routeCommand, object parameter = null)

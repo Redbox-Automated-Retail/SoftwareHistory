@@ -14,6 +14,8 @@ public interface ITextToSpeechService
 
 	void TTSRepeatSequence();
 
+	void ClearAudioDeviceConnected();
+
 	int GetTimeout(string timeoutType, int defaultTimeout);
 
 	void ClearOnAudioDeviceConnectionChanged();

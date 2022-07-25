@@ -82,7 +82,6 @@ public class TextToSpeechService : ITextToSpeechService
 				m_audioDeviceConnected = value;
 				_speechControl = null;
 				_currentSpeechPart = null;
-				ServiceLocator.Instance.GetService<IViewService>();
 				if (!m_audioDeviceConnected)
 				{
 					LogHelper.Instance.Log("TTS((> Headphones disconnected.");
@@ -137,6 +136,15 @@ public class TextToSpeechService : ITextToSpeechService
 		m_keyHandlers.Clear();
 		m_speechRate = 0;
 		m_speechVolume = GetTextToSpeechVolume;
+	}
+
+	public void ClearAudioDeviceConnected()
+	{
+		m_audioDeviceConnected = false;
+		_speechControl = null;
+		_currentSpeechPart = null;
+		LogHelper.Instance.Log("TTS((> ClearAudioDeviceConnected");
+		Reset();
 	}
 
 	public int GetTimeout(string timeoutType, int defaultTimeout)

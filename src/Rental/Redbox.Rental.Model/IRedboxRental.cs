@@ -6,7 +6,7 @@ public interface IRedboxRental
 {
 	ErrorList Initialize();
 
-	void CloseOpenSessionAndStartNewRentalSession(string newSessionContext);
+	void CloseOpenSessionAndStartNewRentalSession(string newSessionContext, bool clearAudioDeviceConnected = true);
 
 	void RegisterEnvironmentChangeCallback();
 
