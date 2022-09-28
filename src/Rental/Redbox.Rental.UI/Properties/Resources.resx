@@ -197,6 +197,7 @@ To confirm that you're at least 17 years of age, press OK to continue.</value></
   <data name="redbox_plus_tier2_plan_renews_text" xml:space="preserve"><value>$19.99 Plan renews {0}</value></data>
   <data name="perks_earned_level0_message" xml:space="preserve"><value>Keep racking up points</value></data>
   <data name="starz_offer_3_my_bag_title" xml:space="preserve"><value>STARZ® - 7 Day FREE Trial</value></data>
+  <data name="keyboard_forgot_password_button_text" xml:space="preserve"><value>Forgot Password</value></data>
   <data name="starz_offer_3_my_bag_sub_text" xml:space="preserve"><value>Then $8.99/month</value></data>
   <data name="starz_signup_existing_account_error_title" xml:space="preserve"><value>You already have a Redbox Account</value></data>
   <data name="machine_full_title" xml:space="preserve"><value>This Kiosk can't hold any more discs</value></data>
@@ -549,6 +550,7 @@ FOR JUST</value></data>
   <data name="upsell_from_DVD_title" xml:space="preserve"><value>Wanna upgrade to Blu-ray?</value></data>
   <data name="starz_terms_acceptance_title_text" xml:space="preserve"><value>Just to Confirm…</value></data>
   <data name="shopping_cart_redbox_plus_accept_and_pay_text" xml:space="preserve"><value>Redbox+ payments will show as “Redbox+ Plan” on your statement.</value></data>
+  <data name="forgot_password_modal_message" xml:space="preserve"><value>Scan the QR code to reset your password on your smartphone</value></data>
   <data name="return_touchless_banner_title" xml:space="preserve"><value>Were you trying to do Touch-free pickup?</value></data>
   <data name="redbox_plus_ada_cart_full_message_text" xml:space="preserve"><value>Remove one item from your bag to get your free 1-night rental</value></data>
   <data name="starz_offer_4_left_title" xml:space="preserve"><value>7-Day FREE Trial</value></data>
@@ -614,6 +616,7 @@ Or simply select the pass in your wallet and tap again</value></data>
 Redbox Account</value></data>
   <data name="wii_button" xml:space="preserve"><value>Wii</value></data>
   <data name="promo_code_first_night_free_message" xml:space="preserve"><value>Please add at least 1 {0} to your cart.</value></data>
+  <data name="forgot_password_modal_url" xml:space="preserve"><value>redbox.com/forgotpassword</value></data>
   <data name="avod_lead_generation_qr_code_image_url" xml:space="preserve"><value>https://www.redbox.com/stream-free-movies?icamp=qrleadgen</value></data>
   <data name="game_limit_exceeded_message" xml:space="preserve"><value>If you’re using a credit card that’s never been to Redbox before, the rental limit is 3 discs, and only 1 may be a game.
 
@@ -1319,6 +1322,7 @@ Please remove discs from your cart to continue.</value></data>
   <data name="redbox_plus_signup_existing_subscription_error_message" xml:space="preserve"><value>Go to your Redbox+ Benefits page on redbox.com to keep track of your monthly status.</value></data>
   <data name="my_cart" xml:space="preserve"><value>MY CART</value></data>
   <data name="promo_code_button_use_redbox_plus_text" xml:space="preserve"><value>USE REDBOX+ OR PROMO</value></data>
+  <data name="forgot_password_modal_qr_message" xml:space="preserve"><value>or visit {0}</value></data>
   <data name="regular_checkout_emv_insert_tap_hide_mobile_title" xml:space="preserve"><value>Insert, swipe
 or tap your card</value></data>
   <data name="recommended_titles_perks_heading_text" xml:space="preserve"><value>My Available Perks</value></data>
@@ -1504,6 +1508,7 @@ You could also visit redbox.com or our app to reserve for pickup at a different 
   <data name="title_detail_collection_text" xml:space="preserve"><value>SEE RELATED
 COLLECTIONS</value></data>
   <data name="return_button_label" xml:space="preserve"><value>RETURN</value></data>
+  <data name="forgot_password_modal_title" xml:space="preserve"><value>Forgot Password</value></data>
   <data name="loyalty_offer_one_day_left" xml:space="preserve"><value>1 Day Left</value></data>
   <data name="perks_signup_info_earn_points_2" xml:space="preserve"><value>earn 125 points / night</value></data>
   <data name="perks_signup_info_earn_points_3" xml:space="preserve"><value>earn points / $1 spent</value></data>

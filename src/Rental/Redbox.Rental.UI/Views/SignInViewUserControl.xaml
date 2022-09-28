@@ -78,8 +78,8 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <Grid Name="SeparatorLine" Background="#060208" Height="1" Margin="24,0,24,0" ColumnSpan="3" VerticalAlignment="Top" />
-      <Redbox:RoundedButton Name="CancelButton" VerticalAlignment="Center" HorizontalAlignment="Left" Width="104" Height="48" UsedDefaultCornerRadius="True" Margin="32,0,0,0" Style="{StaticResource button_light_secondary_style}" Command="{Binding CancelButtonCommand}">
-        <TextBlock Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=CancelButtonText, FallbackValue=BACK}" />
+      <Redbox:RoundedButton Name="CancelButton" VerticalAlignment="Center" HorizontalAlignment="Left" Width="104" Margin="32,0,0,0" Style="{StaticResource button_light_medium_secondary_style}" Command="{Binding CancelButtonCommand}">
+        <TextBlock Style="{StaticResource button_text_medium_style}" Text="{Binding Path=CancelButtonText, FallbackValue=BACK}" />
       </Redbox:RoundedButton>
       <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
         <TextBlock Margin="37,0,49,0" VerticalAlignment="Center" TextWrapping="Wrap" Style="{StaticResource font_montserrat_medium_11}" Foreground="{StaticResource CarlosPurple1Brush}" Text="{Binding PrivacyText, FallbackValue='To review our Terms, Privacy Policy, including our CA Privacy Notice, or to exercise your Do Not Sell Rights, see Terms &amp; Privacy.'}" Visibility="{Binding PrivacyText, Converter={StaticResource NullToVisibility}}" />

@@ -795,7 +795,7 @@ public class PerksSignupService : IPerksSignupService
 	private void ShowUpdateAccountErrorMessage()
 	{
 		OrchestrationService.SetCurrentUICulture();
-		MessagePopupViewController.ShowSimpleOkMessage(string.Empty, Resources.perks_sign_up_cannot_create_account_message, TimeoutSignupFlow, ExitSignupFlow);
+		MessagePopupViewController.ShowPerksCreateAccountError(TimeoutSignupFlow, ExitSignupFlow);
 	}
 
 	private void ShowUpdateAccountErrorOnPhoneAndPinView(IUpdateAccountResult result)

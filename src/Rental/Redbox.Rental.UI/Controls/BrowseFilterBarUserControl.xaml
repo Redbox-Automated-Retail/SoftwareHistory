@@ -13,35 +13,35 @@
     <DockPanel LastChildFill="True" Margin="59,0,0,0">
       <Redbox:RoundedButton Name="startover_button" Style="{StaticResource button_light_secondary_style}" Height="32" Width="119" Command="{x:Static localbase:Commands.StartOverCommand}" HorizontalAlignment="Left" Margin="8,0" Focusable="False" Visibility="{Binding Path=StartOverButtonVisibility, FallbackValue=Visible}">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-          <TextBlock Style="{StaticResource font_montserrat_extrabold_14}" VerticalAlignment="Center" TextWrapping="NoWrap" TextAlignment="Center" Text="{Binding Path=StartOverButtonText, FallbackValue=QUIT}" />
+          <TextBlock Style="{StaticResource font_montserrat_extrabold_14_correct}" VerticalAlignment="Center" TextWrapping="NoWrap" TextAlignment="Center" Text="{Binding Path=StartOverButtonText, FallbackValue=QUIT}" />
         </StackPanel>
       </Redbox:RoundedButton>
       <Redbox:RoundedButton Name="home_button" Style="{StaticResource button_light_secondary_style}" Height="32" Width="119" Command="{x:Static localbase:Commands.HomeCommand}" HorizontalAlignment="Left" Margin="8,0" Focusable="False" Visibility="{Binding Path=HomeButtonVisibility, FallbackValue=Visible}">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-          <TextBlock Style="{StaticResource font_montserrat_extrabold_14}" VerticalAlignment="Center" TextWrapping="Wrap" Width="85" TextAlignment="Center" Text="{Binding Path=HomeButtonText, FallbackValue=QUIT}" />
+          <TextBlock Style="{StaticResource font_montserrat_extrabold_14_correct}" VerticalAlignment="Center" TextWrapping="Wrap" Width="85" TextAlignment="Center" Text="{Binding Path=HomeButtonText, FallbackValue=QUIT}" />
         </StackPanel>
       </Redbox:RoundedButton>
       <Redbox:RoundedButton Name="BackButton" Style="{StaticResource thin_border_button_style}" Height="32" Command="{x:Static localbase:Commands.GoBackCommand}" HorizontalAlignment="Left" Margin="8,0" Visibility="{Binding Path=BackButtonVisibility, FallbackValue=Collapsed}">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,0,5,0">
           <Image Width="15" Margin="5,0,0,0" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/startoverarrow.png" />
-          <TextBlock Style="{StaticResource font_montserrat_extrabold_14}" VerticalAlignment="Center" Width="50" TextAlignment="Center" Text="{Binding Path=BackButtonText, FallbackValue=BACK}" />
+          <TextBlock Style="{StaticResource font_montserrat_extrabold_14_correct}" VerticalAlignment="Center" Width="50" TextAlignment="Center" Text="{Binding Path=BackButtonText, FallbackValue=BACK}" />
         </StackPanel>
       </Redbox:RoundedButton>
       <Redbox:RoundedButton Name="MoreCollectionsButton" Style="{StaticResource rubine_white_border_button_style}" Command="{x:Static localbase:Commands.MoreCollectionsCommand}" Height="36" Width="200" Margin="8,0,8,0" DockPanel.Dock="Right" Visibility="{Binding Path=MoreCollectionsButtonVisibility, FallbackValue=Collapsed}">
-        <TextBlock Name="MoreCollectionsButtonText" Style="{StaticResource font_montserrat_extrabold_14}" Text="{Binding Path=MoreCollectionsButtonText, FallbackValue=More Collections}" />
+        <TextBlock Name="MoreCollectionsButtonText" Style="{StaticResource font_montserrat_extrabold_14_correct}" Text="{Binding Path=MoreCollectionsButtonText, FallbackValue=More Collections}" />
       </Redbox:RoundedButton>
       <TextBlock Name="FilterBarText" Margin="0,10,0,10" VerticalAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Style="{StaticResource font_montserrat_extrabold_14}" Text="{Binding Path=FilterBarText, FallbackValue=Filter Bar Text Goes here...}" Visibility="{Binding Path=FilterBarTextVisibility, FallbackValue=Collapsed}" />
       <StackPanel Name="FilterButtonPanel" VerticalAlignment="Center" Orientation="Horizontal" HorizontalAlignment="Center">
         <StackPanel Name="AZFilterButtonContainer" VerticalAlignment="Center" Orientation="Horizontal" HorizontalAlignment="Center" />
         <StackPanel Name="FormatFilterButtonStackPanel" Orientation="Horizontal">
           <Redbox:RoundedButton Name="FormatFilterButton" Command="{x:Static localbase:Commands.FormatFilterPopupCommand}" Height="32" Width="Auto" MinWidth="98" DockPanel.Dock="Right" Style="{Binding Path=FormatFilterButtonStyle, FallbackValue={StaticResource purple_with_purple_border_button_style}}" Margin="{Binding FilterMargin}" Visibility="{Binding Path=FormatFilterButtonVisibility, FallbackValue=Visible}">
-            <TextBlock Name="FormatFilterButtonText" Style="{StaticResource font_montserrat_extrabold_14}" Margin="10,0,10,0" Text="{Binding Path=FormatFilterButtonText, FallbackValue=FORMAT &gt;}" />
+            <TextBlock Name="FormatFilterButtonText" Style="{StaticResource font_montserrat_extrabold_14_correct}" Margin="10,0,10,0" Text="{Binding Path=FormatFilterButtonText, FallbackValue=FORMAT &gt;}" />
           </Redbox:RoundedButton>
           <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-sm.png" Width="19" Height="18" Margin="-11,-15,-9,0" Visibility="{Binding Path=FormatFilterButtonCheckmarkVisibility, FallbackValue=Collapsed}" />
         </StackPanel>
         <StackPanel Name="PriceRangeFilterButtonStackPanel" Orientation="Horizontal">
           <Redbox:RoundedButton Name="PriceRangeFilterButton" Command="{x:Static localbase:Commands.ForSaleFilterPopupCommand}" Height="32" Width="Auto" MinWidth="80" DockPanel.Dock="Right" Style="{Binding Path=PriceRangeFilterButtonStyle, FallbackValue={StaticResource purple_with_purple_border_button_style}}" Margin="{Binding FilterMargin}" Visibility="{Binding Path=PriceRangeFilterButtonVisibility, FallbackValue=Visible}">
-            <TextBlock Name="PriceRangeFilterButtonText" Style="{StaticResource font_montserrat_extrabold_14}" Margin="10,0,10,0" Text="{Binding Path=PriceRangeFilterButtonText, FallbackValue=PRICE &gt;}" />
+            <TextBlock Name="PriceRangeFilterButtonText" Style="{StaticResource font_montserrat_extrabold_14_correct}" Margin="10,0,10,0" Text="{Binding Path=PriceRangeFilterButtonText, FallbackValue=PRICE &gt;}" />
           </Redbox:RoundedButton>
           <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-sm.png" Width="19" Height="18" Margin="-11,-15,-9,0" Visibility="{Binding Path=PriceRangeFilterButtonCheckmarkVisibility, FallbackValue=Collapsed}" />
         </StackPanel>

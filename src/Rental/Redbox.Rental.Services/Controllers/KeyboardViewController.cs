@@ -50,6 +50,7 @@ public class KeyboardViewController : BaseViewController
 			keyboardLogic = new KeyboardLogic(keyboardModel)
 			{
 				Instructions = true,
+				ForgotPasswordAction = ProcessForgotPasswordAction,
 				CancelAction = ProcessCancelAction,
 				ContinueAction = ProcessContinueAction,
 				ContinueCodeAction = ProcessEmailCodeAction
@@ -115,6 +116,12 @@ public class KeyboardViewController : BaseViewController
 		}
 	}
 
+	private static void ProcessForgotPasswordAction()
+	{
+		GetKeyboardLogic()?.KeyboardInfo?.ForgotPasswordAction();
+		BaseViewController.ProcessWPFHit();
+	}
+
 	private static void ProcessCancelAction()
 	{
 		KeyboardLogic keyboardLogic = GetKeyboardLogic();
@@ -159,10 +166,11 @@ public class KeyboardViewController : BaseViewController
 		model.MessageText = Resources.keyboard_sign_in_message;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 		model.CodePromptText = Resources.keyboard_sign_in_password_prompt;
-		model.EmailButtonText = Resources.keyboard_email_button_text;
-		model.PasswordButtonText = Resources.keyboard_password_button_text;
-		model.CancelButtonText = Resources.keyboard_cancel_button_text;
-		model.ContinueButtonText = Resources.keyboard_continue_button_text;
+		model.ForgotPasswordButtonText = Resources.keyboard_forgot_password_button_text.ToUpper();
+		model.EmailButtonText = Resources.keyboard_email_button_text.ToUpper();
+		model.PasswordButtonText = Resources.keyboard_password_button_text.ToUpper();
+		model.CancelButtonText = Resources.keyboard_cancel_button_text.ToUpper();
+		model.ContinueButtonText = Resources.keyboard_continue_button_text.ToUpper();
 		if (BaseViewController.GetViewUserControl() is KeyboardSignInViewControl keyboardSignInViewControl)
 		{
 			keyboardSignInViewControl.UpdateKeyStates();
@@ -175,8 +183,8 @@ public class KeyboardViewController : BaseViewController
 		KeyboardModel model = keyboardLogic.Model;
 		model.MessageText = Resources.keyboard_change_message;
 		model.MarketingText = Resources.keyboard_change_marketing;
-		model.CancelButtonText = Resources.keyboard_change_cancel_btn;
-		model.ContinueButtonText = Resources.keyboard_change_continue_btn;
+		model.CancelButtonText = Resources.keyboard_change_cancel_btn.ToUpper();
+		model.ContinueButtonText = Resources.keyboard_change_continue_btn.ToUpper();
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 		BaseViewController.StartIdleTimer(reset: true);
 	}
@@ -187,8 +195,8 @@ public class KeyboardViewController : BaseViewController
 		model.TitleText = Resources.email_tag;
 		model.MessageText = Resources.email_prompt_message;
 		model.MarketingText = null;
-		model.CancelButtonText = Resources.keyboard_receipt_cancel_btn;
-		model.ContinueButtonText = Resources.keyboard_receipt_continue_btn;
+		model.CancelButtonText = Resources.keyboard_receipt_cancel_btn.ToUpper();
+		model.ContinueButtonText = Resources.keyboard_receipt_continue_btn.ToUpper();
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 		StartKeyboardIdleTimer(TimeOutAction);
 	}
@@ -199,8 +207,8 @@ public class KeyboardViewController : BaseViewController
 		model.MessageTextSize = 18;
 		model.MessageText = Resources.coming_soon_email_optin_email_prompt_message;
 		model.MarketingText = Resources.keyboard_change_marketing;
-		model.CancelButtonText = Resources.coming_soon_cancel_btn;
-		model.ContinueButtonText = Resources.coming_soon_continue_btn;
+		model.CancelButtonText = Resources.coming_soon_cancel_btn.ToUpper();
+		model.ContinueButtonText = Resources.coming_soon_continue_btn.ToUpper();
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;
 		BaseViewController.StartIdleTimer(reset: true);
 	}
@@ -212,8 +220,8 @@ public class KeyboardViewController : BaseViewController
 		model.TitleText = Resources.promo_code_tag;
 		model.MessageText = Resources.promo_code_prompt_message;
 		model.MarketingText = "";
-		model.CancelButtonText = Resources.promo_code_cancel_btn;
-		model.ContinueButtonText = Resources.promo_code_continue_btn;
+		model.CancelButtonText = Resources.promo_code_cancel_btn.ToUpper();
+		model.ContinueButtonText = Resources.promo_code_continue_btn.ToUpper();
 		model.EmailPromptText = Resources.promo_code_input_prompt;
 		BaseViewController.StartIdleTimer(reset: true);
 	}

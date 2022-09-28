@@ -111,7 +111,7 @@
           <DockPanel>
             <StackPanel Name="leftButtons" Orientation="Horizontal" DockPanel.Dock="Left" Margin="24,0,0,0">
               <Redbox:RoundedButton Name="go_back_button" Style="{StaticResource button_light_large_secondary_style}" Width="118" Command="{x:Static localbase:Commands.GoBackCommand}" Focusable="False">
-                <TextBlock Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=DataContext.BackText, FallbackValue=BACK, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:TitleDetailsUserControl}}}" />
+                <TextBlock Style="{StaticResource button_text_large_style}" Text="{Binding Path=DataContext.BackText, FallbackValue=BACK, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:TitleDetailsUserControl}}}" />
               </Redbox:RoundedButton>
             </StackPanel>
             <StackPanel Name="rightButtons" Orientation="Horizontal" DockPanel.Dock="Right" FlowDirection="RightToLeft" Margin="0,0,24,0" Visibility="{Binding AddButtonBarVisibility, FallbackValue=Collapsed}">

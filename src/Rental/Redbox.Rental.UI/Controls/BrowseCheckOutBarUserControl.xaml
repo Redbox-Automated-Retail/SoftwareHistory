@@ -17,24 +17,24 @@
         </Grid>
         <StackPanel Orientation="Vertical" Width="280">
           <TextBlock Name="DontMissYourPerksText" Style="{StaticResource font_montserrat_semibold_16}" Foreground="#FF000000" VerticalAlignment="Center" TextAlignment="Center" Margin="0,30,0,8" Text="{Binding Path=DontMissYourPerksText, FallbackValue=Earn FREE Rentals!}" Visibility="{Binding Path=SignInButtonVisibility, FallbackValue=Visible}" />
-          <Redbox:RoundedButton Name="SignInButton" Style="{StaticResource button_light_secondary_style}" Width="0" MinWidth="247" Height="48" UsedDefaultCornerRadius="True" Margin="0,0,0,0" Command="{x:Static localbase:Commands.SignInCommand}" Visibility="{Binding Path=SignInButtonVisibility, FallbackValue=Visible}">
+          <Redbox:RoundedButton Name="SignInButton" Style="{StaticResource button_light_medium_secondary_style}" Width="0" MinWidth="247" Command="{x:Static localbase:Commands.SignInCommand}" Visibility="{Binding Path=SignInButtonVisibility, FallbackValue=Visible}">
             <StackPanel Orientation="Horizontal" Margin="0,0" Width="Auto">
               <TextBlock Name="SignInButtonText" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=SignInButtonText, FallbackValue=SIGN IN}" />
               <TextBlock Name="SignInButtonSeparator" Style="{StaticResource font_montserrat_medium_16}" Text="{Binding Path=SignInUpButtonSeparator, FallbackValue= | }" />
               <TextBlock Name="SignUpButtonText" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=SignUpButtonText, FallbackValue=SIGN UP}" />
             </StackPanel>
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="ViewRedboxPlusMoviesButton" Style="{StaticResource button_light_secondary_style}" Width="236" Height="48" UsedDefaultCornerRadius="True" Margin="0,12,0,0" Command="{Binding ViewRedboxPlusMoviesCommand}" Visibility="{Binding Path=ViewRedboxPlusMoviesButtonVisibility, FallbackValue=Collapsed}">
+          <Redbox:RoundedButton Name="ViewRedboxPlusMoviesButton" Style="{StaticResource button_light_medium_secondary_style}" Width="236" Margin="0,12,0,0" Command="{Binding ViewRedboxPlusMoviesCommand}" Visibility="{Binding Path=ViewRedboxPlusMoviesButtonVisibility, FallbackValue=Collapsed}">
             <TextBlock Name="ViewRedboxPlusMoviesButtonText" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=ViewRedboxPlusMoviesButtonText, FallbackValue=VIEW REDBOX+ MOVIES}" />
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="BackToAllMoviesButton" Style="{StaticResource button_light_secondary_style}" Width="236" Height="48" UsedDefaultCornerRadius="True" Margin="0,12,0,0" Command="{Binding BackToAllMoviesCommand}" Visibility="{Binding Path=BackToAllMoviesButtonVisibility, FallbackValue=Collapsed}">
-            <TextBlock Name="BackToAllMoviesButtonText" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=BackToAllMoviesButtonText, FallbackValue=BACK TO ALL MOVIES}" />
+          <Redbox:RoundedButton Name="BackToAllMoviesButton" Style="{StaticResource button_light_medium_secondary_style}" Width="236" Margin="0,12,0,0" Command="{Binding BackToAllMoviesCommand}" Visibility="{Binding Path=BackToAllMoviesButtonVisibility, FallbackValue=Collapsed}">
+            <TextBlock Name="BackToAllMoviesButtonText" Style="{StaticResource button_text_medium_style}" Text="{Binding Path=BackToAllMoviesButtonText, FallbackValue=BACK TO ALL MOVIES}" />
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="MyPerksRedboxPlusButton" Style="{StaticResource button_light_secondary_style}" Width="236" Height="48" UsedDefaultCornerRadius="True" Margin="0,12,0,0" Command="{x:Static localbase:Commands.MyPerksCommand}" Visibility="{Binding Path=MyPerksRedboxPlusButtonVisibility, FallbackValue=Collapsed}">
-            <TextBlock Name="MyPerksRedboxPlusButtonText" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=MyPerksButtonText, FallbackValue=My Perks}" />
+          <Redbox:RoundedButton Name="MyPerksRedboxPlusButton" Style="{StaticResource button_light_medium_secondary_style}" Width="236" Margin="0,12,0,0" Command="{x:Static localbase:Commands.MyPerksCommand}" Visibility="{Binding Path=MyPerksRedboxPlusButtonVisibility, FallbackValue=Collapsed}">
+            <TextBlock Name="MyPerksRedboxPlusButtonText" Style="{StaticResource button_text_medium_style}" Text="{Binding Path=MyPerksButtonText, FallbackValue=My Perks}" />
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="MyPerksButton" Style="{StaticResource button_light_secondary_style}" Width="200" Height="48" UsedDefaultCornerRadius="True" Margin="0,24,0,0" Command="{x:Static localbase:Commands.MyPerksCommand}" Visibility="{Binding Path=MyPerksButtonVisibility, FallbackValue=Collapsed}">
-            <TextBlock Name="MyPerksButtonText" Style="{StaticResource font_montserrat_extrabold_18}" Text="{Binding Path=MyPerksButtonText, FallbackValue=My Perks}" />
+          <Redbox:RoundedButton Name="MyPerksButton" Style="{StaticResource button_light_medium_secondary_style}" Width="200" Margin="0,24,0,0" Command="{x:Static localbase:Commands.MyPerksCommand}" Visibility="{Binding Path=MyPerksButtonVisibility, FallbackValue=Collapsed}">
+            <TextBlock Name="MyPerksButtonText" Style="{StaticResource button_text_medium_style}" Text="{Binding Path=MyPerksButtonText, FallbackValue=My Perks}" />
           </Redbox:RoundedButton>
           <Redbox:RoundedButton Name="SignOutButton" Style="{StaticResource TransparentButton}" Width="200" Height="50" UsedDefaultCornerRadius="True" Margin="0,8,0,7" Command="{x:Static localbase:Commands.SignOutCommand}" Visibility="{Binding Path=SignOutButtonVisibility, FallbackValue=Collapsed}">
             <TextBlock Name="SignOutButtonText" Style="{StaticResource font_montserrat_bold_16}" TextDecorations="Underline" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource RubineRedBrush}" Text="{Binding Path=SignOutButtonText, FallbackValue=SIGN OUT}" />

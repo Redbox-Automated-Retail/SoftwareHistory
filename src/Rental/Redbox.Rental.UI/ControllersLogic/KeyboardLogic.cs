@@ -18,6 +18,8 @@ public class KeyboardLogic : BaseLogic
 
 	public int KeyboardTextMaxLength { get; set; }
 
+	public Action ForgotPasswordAction { get; set; }
+
 	public Action CancelAction { get; set; }
 
 	public Action<string> ContinueAction { get; set; }
@@ -42,6 +44,7 @@ public class KeyboardLogic : BaseLogic
 		Model.DomainButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.DomainButtonCommand, DomainButtonCommand_Execute);
 		Model.DotComButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.DotComButtonCommand, DotComButtonCommand_Execute);
 		Model.SpaceButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.SpaceButtonCommand, SpaceButtonCommand_Execute);
+		Model.ForgotPasswordButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.ForgotPasswordButtonCommand, ForgotPasswordButtonCommand_Execute);
 		Model.CancelButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.CancelButtonCommand, CancelButtonCommand_Execute);
 		Model.ContinueButtonCommand = DynamicRouting.RegisterRoutedCommand(Commands.ContinueButtonCommand, ContinueButtonCommand_Execute, ContinueButtonCommand_canExecute);
 		Model.EmailSelectedCommand = DynamicRouting.RegisterRoutedCommand(Commands.EmailSelectedCommand, EmailSelectedCommand_Execute);
@@ -137,8 +140,8 @@ public class KeyboardLogic : BaseLogic
 				{
 					StopIdleTimerAction?.Invoke();
 					ContinueCodeAction(Model.KeyboardText, BaseLogic.CreateSecureString(Model.KeyboardCode));
-					Model.KeyboardText = string.Empty;
 					Model.KeyboardCode = string.Empty;
+					Model.KeyEmailMode = false;
 				}
 			}
 			else if (ContinueAction != null)
@@ -280,6 +283,13 @@ public class KeyboardLogic : BaseLogic
 		UpdateContinue();
 	}
 
+	public void ForgotPasswordButtonCommand_Execute()
+	{
+		BaseLogic.AnalyticsService?.AddButtonPressEvent("KeyboardLogicSignInForgotPassword");
+		ForgotPasswordAction?.Invoke();
+		BaseLogic.HandleWPFHit();
+	}
+
 	public void CancelButtonCommand_Execute()
 	{
 		BaseLogic.AnalyticsService?.AddButtonPressEvent("KeyboardLogicStartBrowsing");
@@ -308,7 +318,7 @@ public class KeyboardLogic : BaseLogic
 		{
 			UpdateContinue(clearError: false);
 		}
-		else
+		else if (KeyboardMode != KeyboardMode.ACCOUNT_SIGN_IN)
 		{
 			Model.KeyboardText = "";
 		}

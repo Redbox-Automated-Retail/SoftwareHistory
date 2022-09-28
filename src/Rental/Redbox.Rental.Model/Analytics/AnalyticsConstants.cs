@@ -183,6 +183,8 @@ public static class AnalyticsConstants
 
 		public const string KeyboardLogicStartSignIn = "KeyboardLogicSignIn";
 
+		public const string KeyboardLogicSignInForgotPassword = "KeyboardLogicSignInForgotPassword";
+
 		public const string KeyboardOk = "KeyboardOk";
 
 		public const string KeyboardCancel = "KeyboardCancel";

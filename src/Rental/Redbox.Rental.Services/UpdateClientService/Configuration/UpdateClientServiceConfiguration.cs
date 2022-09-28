@@ -15,7 +15,7 @@ public class UpdateClientServiceConfiguration : BaseUpdateClientService, IUpdate
 		LogHelper.Instance.Log("UpdateClientServiceConfiguration.GetConfigurationChanges");
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(base.UpdateClientServiceBaseUrl, string.Format("{0}/settingvalues/changes", "api/configuration"), null, HttpMethod.Get);
-		APIResponse<HttpResponseMessage> aPIResponse = await service.SendRequestAsync<HttpResponseMessage>(request, 20000, "GetConfigurationChanges", "D:\\work\\47\\SC\\Redbox.Rental.Services\\UpdateClientService\\Configuration\\UpdateClientServiceConfiguration.cs");
+		APIResponse<HttpResponseMessage> aPIResponse = await service.SendRequestAsync<HttpResponseMessage>(request, 20000, "GetConfigurationChanges", "D:\\work\\48\\SC\\Redbox.Rental.Services\\UpdateClientService\\Configuration\\UpdateClientServiceConfiguration.cs");
 		return new GetConfigurationChangesResponse
 		{
 			StatusCode = aPIResponse.StatusCode,

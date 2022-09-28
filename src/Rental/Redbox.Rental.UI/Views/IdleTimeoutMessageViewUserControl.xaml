@@ -11,11 +11,11 @@
         <TextBlock Name="MessageText" Margin="76,71,76,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_bold_28}" Text="{Binding Path=MessageText, FallbackValue=Need more time?}" />
       </Border>
       <Separator Style="{StaticResource modal_separator_style}" Margin="76,76,76,0" />
-      <Redbox:RoundedButton Name="NoButton" Margin="84,0,0,24" Style="{StaticResource modal_two_buttons_button1_style}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Command="{x:Static local:Commands.No}">
-        <TextBlock Name="ButtonNo_Text" Style="{StaticResource button_text_style}" Text="{Binding Path=ButtonNoText, FallbackValue=NO THANKS}" />
+      <Redbox:RoundedButton Name="NoButton" Margin="72,0,0,24" Style="{StaticResource modal_two_buttons_button1_style}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Command="{x:Static local:Commands.No}">
+        <TextBlock Name="ButtonNo_Text" Style="{StaticResource button_text_large_style}" Text="{Binding Path=ButtonNoText, FallbackValue=NO THANKS}" />
       </Redbox:RoundedButton>
-      <Redbox:RoundedButton Name="YesButton" Margin="0,0,84,24" Style="{StaticResource modal_two_buttons_button2_style}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Command="{x:Static local:Commands.Yes}">
-        <TextBlock Name="ButtonYes_Text" Style="{StaticResource button_text_style}" Text="{Binding Path=ButtonYesText, FallbackValue=YES}" />
+      <Redbox:RoundedButton Name="YesButton" Margin="0,0,72,24" Style="{StaticResource modal_two_buttons_button2_style}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Command="{x:Static local:Commands.Yes}">
+        <TextBlock Name="ButtonYes_Text" Style="{StaticResource button_text_large_style}" Text="{Binding Path=ButtonYesText, FallbackValue=YES}" />
       </Redbox:RoundedButton>
     </Grid>
   </Grid>

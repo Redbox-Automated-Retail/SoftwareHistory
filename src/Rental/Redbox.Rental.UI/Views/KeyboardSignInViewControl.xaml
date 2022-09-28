@@ -32,26 +32,31 @@
           </Grid>
         </Redbox:BorderButton>
       </Grid>
-      <TextBlock Name="ErrorTextElem" Grid.Row="4" Margin="0,0,0,0" Height="auto" Width="800" FontSize="20" HorizontalAlignment="Center" TextAlignment="Center" Style="{StaticResource keyboard_error_message_style}" Text="{Binding Path=KeyboardError, FallbackValue=...}" />
+      <TextBlock Name="ErrorTextElem" Grid.Row="4" Height="auto" Width="800" HorizontalAlignment="Center" TextAlignment="Center" Style="{StaticResource keyboard_error_message_style}" Text="{Binding Path=KeyboardError, FallbackValue=...}" />
       <Grid Name="ContainerElem" Row="5" Margin="25,0,0,0">
         <UIElement.Clip>
           <RectangleGeometry Rect="0,0,860,390" />
         </UIElement.Clip>
         <localControls:KeyboardUserControl x:Name="KeyboardElem" Width="858" Height="385" HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Visible" />
       </Grid>
-      <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Center">
-        <Redbox:RoundedButton Name="EmailButtonElem" Grid.Column="1" Margin="5,10,10,20" Height="56" CornerRadius="28" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Click="EmailSelected">
-          <TextBlock Name="EmailButtonTextElem" Margin="30,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding EmailButtonText, FallbackValue=Email}" />
+      <StackPanel Grid.Row="6" Width="858" Orientation="Horizontal" HorizontalAlignment="Center">
+        <Redbox:RoundedButton Name="ForgotPasswordButtonElem" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource button_link_style}" IsEnabled="True" Click="ForgotPasswordClicked">
+          <TextBlock Name="ForgotPasswordButtonTextElem" Style="{StaticResource button_text_link_style}" Text="{Binding ForgotPasswordButtonText, FallbackValue=FORGOT PASSWORD}" />
         </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="CodeButtonElem" Grid.Column="1" Margin="5,10,10,20" Height="56" CornerRadius="28" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Click="CodeSelected">
-          <TextBlock Name="CodeButtonTextElem" Margin="30,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding PasswordButtonText, FallbackValue=Password}" />
-        </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="CancelButtonElem" Grid.Column="1" Margin="5,10,10,20" Style="{StaticResource style_white_rubine_border_button}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
-          <TextBlock Name="CancelButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding CancelButtonText, FallbackValue=Cancel}" />
-        </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="ContinueButtonElem" Grid.Column="2" Margin="10,10,5,20" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="{Binding ContinueButtonEnabled, FallbackValue=False}" Click="ContinueTouched">
-          <TextBlock Name="ContinueButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding ContinueButtonText, FallbackValue=Sign In}" />
-        </Redbox:RoundedButton>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="56,0,0,0">
+          <Redbox:RoundedButton Name="EmailButtonElem" Grid.Column="1" Margin="-36,0,8,0" Style="{StaticResource button_light_medium_secondary_style}" IsEnabled="True" Click="EmailSelected">
+            <TextBlock Name="EmailButtonTextElem" Style="{StaticResource button_text_medium_style}" Text="{Binding EmailButtonText, FallbackValue=EMAIL}" />
+          </Redbox:RoundedButton>
+          <Redbox:RoundedButton Name="CodeButtonElem" Grid.Column="1" Margin="8,0,8,0" Style="{StaticResource button_light_medium_secondary_style}" IsEnabled="True" Click="CodeSelected">
+            <TextBlock Name="CodeButtonTextElem" Style="{StaticResource button_text_medium_style}" Text="{Binding PasswordButtonText, FallbackValue=PASSWORD}" />
+          </Redbox:RoundedButton>
+          <Redbox:RoundedButton Name="CancelButtonElem" Grid.Column="1" Margin="8,0,8,0" Style="{StaticResource button_light_large_secondary_style}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
+            <TextBlock Name="CancelButtonTextElem" Style="{StaticResource button_text_large_style}" Text="{Binding CancelButtonText, FallbackValue=CANCEL}" />
+          </Redbox:RoundedButton>
+          <Redbox:RoundedButton Name="ContinueButtonElem" Grid.Column="2" Margin="8,0,8,0" Style="{StaticResource button_light_large_primary_style}" IsEnabled="{Binding ContinueButtonEnabled, FallbackValue=False}" Click="ContinueTouched">
+            <TextBlock Name="ContinueButtonTextElem" Style="{StaticResource button_text_large_style}" Text="{Binding ContinueButtonText, FallbackValue=SIGN IN}" />
+          </Redbox:RoundedButton>
+        </StackPanel>
       </StackPanel>
     </Redbox:GridExt>
   </Border>

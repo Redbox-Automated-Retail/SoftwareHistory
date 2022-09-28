@@ -33,7 +33,7 @@
               <DataTemplate>
                 <Redbox:RoundedButton Width="250" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,24,12,0" Style="{StaticResource button_light_large_primary_style}" Visibility="Visible" Command="{Binding Command}" CommandParameter="{Binding Tag}" Tag="{Binding Tag}" IsEnabled="{Binding IsEnabled}">
                   <StackPanel Orientation="Vertical">
-                    <TextBlock Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_extrabold_16}" HorizontalAlignment="Center" Text="{Binding Text}" />
+                    <TextBlock Style="{StaticResource button_text_large_style}" Text="{Binding Text}" />
                   </StackPanel>
                 </Redbox:RoundedButton>
               </DataTemplate>
@@ -41,7 +41,7 @@
           </ItemsControl>
           <Separator Style="{StaticResource modal_separator_style}" />
           <Redbox:RoundedButton Name="CancelButton" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,24" Style="{StaticResource modal_one_button_button1_style}" Command="{Binding CancelCommand}">
-            <TextBlock Name="CancelButtonText" Style="{StaticResource button_text_style}" Text="{Binding Path=CancelButtonText, FallbackValue=CANCEL}" />
+            <TextBlock Name="CancelButtonText" Style="{StaticResource button_text_large_style}" Text="{Binding Path=CancelButtonText, FallbackValue=CANCEL}" />
           </Redbox:RoundedButton>
         </StackPanel>
       </Border>

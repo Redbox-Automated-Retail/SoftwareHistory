@@ -177,7 +177,7 @@ public class CheckoutFunctions
 		{
 			OrchestrationService.ViewGoBackSafe("no_barcodes_to_vend", popOnly: false);
 		};
-		MessagePopupViewController.ShowSimpleOkMessage(null, Resources.inventory_error, action, action);
+		MessagePopupViewController.ShowInventoryError(action, action);
 	}
 
 	public static void RegularCheckoutPrepositionVendComplete(List<VendResult> vendResultList)

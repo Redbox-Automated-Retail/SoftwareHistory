@@ -48,7 +48,7 @@
         </ItemsControl>
         <Separator Style="{StaticResource modal_separator_style}" />
         <Redbox:RoundedButton Name="CancelButton" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,24" Style="{StaticResource modal_one_button_button1_style}" Command="{x:Static views:FormatSelectionPopupViewUserControlCommands.CancelCommand}">
-          <TextBlock Name="CancelButtonText" Style="{StaticResource button_text_style}" Text="{Binding Path=CancelButtonText, FallbackValue=CANCEL}" />
+          <TextBlock Name="CancelButtonText" Style="{StaticResource button_text_large_style}" Text="{Binding Path=CancelButtonText, FallbackValue=CANCEL}" />
         </Redbox:RoundedButton>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24" Visibility="{Binding Path=DigitalCodeInfoVisibility, FallbackValue=Visible}">
           <TextBlock Style="{StaticResource font_montserrat_regular_12}" Foreground="{StaticResource CarlosPurple1Brush}" VerticalAlignment="Center" Text="{Binding Path=DigitalCodeInfoText, FallbackValue=*What is a Digital Code?}" />

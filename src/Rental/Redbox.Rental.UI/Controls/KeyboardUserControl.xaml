@@ -84,8 +84,8 @@
         <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="8" />
         <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="9" />
         <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="0" />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="domain" Grid.ColumnSpan="3">
-          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@yahoo.com" />
+        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_domain_button}" Tag="domain" Grid.ColumnSpan="3">
+          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@gmail.com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>
       <Redbox:GridExt Name="QEmailElements" Row="1" NumberOfColumns="13" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
@@ -99,8 +99,8 @@
         <Redbox:RoundedButton Grid.Column="7" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="i" />
         <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="o" />
         <Redbox:RoundedButton Grid.Column="9" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="p" />
-        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_button}" Tag="domain" Grid.ColumnSpan="3">
-          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@gmail.com" />
+        <Redbox:RoundedButton Grid.Column="10" Style="{StaticResource style_keyboard_rounded_domain_button}" Tag="domain" Grid.ColumnSpan="3">
+          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@yahoo.com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>
       <Redbox:GridExt Name="AEmailElements" Row="2" NumberOfColumns="9" Margin="33,0,230,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
@@ -115,7 +115,7 @@
         <Redbox:RoundedButton Grid.Column="8" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="l" />
       </Redbox:GridExt>
       <Redbox:GridExt Name="AEmailElements2" Row="2" NumberOfColumns="1" Margin="660,0,0,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="domain">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_domain_button}" Tag="domain">
           <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@hotmail.com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>
@@ -129,7 +129,7 @@
         <Redbox:RoundedButton Grid.Column="6" Style="{StaticResource style_keyboard_round_button}" Tag="key" Content="m" />
       </Redbox:GridExt>
       <Redbox:GridExt Name="ZEmailElements2" Row="3" NumberOfColumns="1" Margin="660,0,0,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="domain">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_domain_button}" Tag="domain">
           <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="@aol.com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>
@@ -147,7 +147,7 @@
         </Redbox:RoundedButton>
       </Redbox:GridExt>
       <Redbox:GridExt Row="4" NumberOfColumns="1" Margin="660,0,0,0" Visibility="{Binding ElementName=EmailKeysElem, Path=Visibility}">
-        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_button}" Tag="dotcom">
+        <Redbox:RoundedButton Grid.Column="0" Style="{StaticResource style_keyboard_rounded_domain_button}" Tag="dotcom">
           <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text=".com" />
         </Redbox:RoundedButton>
       </Redbox:GridExt>

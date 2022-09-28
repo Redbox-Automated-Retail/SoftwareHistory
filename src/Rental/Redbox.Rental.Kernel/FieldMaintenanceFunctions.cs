@@ -9,10 +9,10 @@ namespace Redbox.Rental.Kernel;
 
 public static class FieldMaintenanceFunctions
 {
-	[KernelFunction(Name = "kernel.fieldmaintenancegetcurrentsafetytipmessage")]
-	internal static string GetCurrentSafetyTipMessage()
+	[KernelFunction(Name = "kernel.fieldmaintenancegetcurrentsafetytip")]
+	internal static string GetCurrentSafetyTip()
 	{
-		return (ServiceLocator.Instance.GetService<IFieldMaintenanceService>()?.GetCurrentSafetyTip())?.Message;
+		return ServiceLocator.Instance.GetService<IFieldMaintenanceService>()?.GetCurrentSafetyTip();
 	}
 
 	[KernelFunction(Name = "kernel.planogramsexist")]

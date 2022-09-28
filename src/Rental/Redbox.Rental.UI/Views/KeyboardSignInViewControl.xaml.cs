@@ -130,6 +130,11 @@ public partial class KeyboardSignInViewControl : KeyboardControl, IComponentConn
 		KeyTouched();
 	}
 
+	private void ForgotPasswordClicked(object sender, RoutedEventArgs e)
+	{
+		base.Model?.ForgotPasswordButtonCommand?.Execute(null);
+	}
+
 	private void EmailSelected(object sender, RoutedEventArgs e)
 	{
 		SetControlTextMode(mode: true);

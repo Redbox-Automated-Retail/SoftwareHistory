@@ -14,17 +14,17 @@
         </Redbox:BorderButton>
       </Grid>
       <Grid Row="2">
-        <TextBlock Name="KeyboardErrorElem" Grid.Row="1" Margin="110,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="32" Width="auto" Style="{StaticResource keyboard_error_message_style}" Text="{Binding Path=KeyboardError, FallbackValue=Error message...}" />
+        <TextBlock Name="KeyboardErrorElem" Grid.Row="1" Margin="110,0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="32" Width="auto" Style="{StaticResource keyboard_error_message_style}" Text="{Binding Path=KeyboardError, FallbackValue=Error message...}" />
       </Grid>
       <localControls:KeyboardUserControl x:Name="KeyboardElem" Grid.Row="3" Margin="0,10,0,20" />
       <TextBlock Name="MarketingTextElem" Grid.Row="4" Margin="104,0" Style="{StaticResource keyboard_marketing_message_style}" Text="{Binding MarketingText, FallbackValue=Marketing}" />
-      <Grid Row="5" Background="{StaticResource LightGrayBackgroundBrush}">
+      <Grid Row="5">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-          <Redbox:RoundedButton Name="CancelButtonElem" Grid.Column="1" Margin="5,10,10,20" MinWidth="160" Style="{StaticResource style_white_rubine_border_button}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
-            <TextBlock Name="CancelButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_28}" Text="{Binding CancelButtonText, FallbackValue=Skip}" />
+          <Redbox:RoundedButton Name="CancelButtonElem" Grid.Column="1" Width="261" Margin="8,0,8,0" Style="{StaticResource button_light_large_secondary_style}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
+            <TextBlock Name="CancelButtonTextElem" Style="{StaticResource button_text_large_style}" Text="{Binding CancelButtonText, FallbackValue=SKIP}" />
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="ContinueButtonElem" Grid.Column="2" Margin="10,10,5,20" MinWidth="160" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Click="ContinueTouched">
-            <TextBlock Name="ContinueButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_28}" Text="{Binding ContinueButtonText, FallbackValue=Yes}" />
+          <Redbox:RoundedButton Name="ContinueButtonElem" Grid.Column="2" Width="261" Margin="8,0,8,0" Style="{StaticResource button_light_large_primary_style}" IsEnabled="True" Click="ContinueTouched">
+            <TextBlock Name="ContinueButtonTextElem" Style="{StaticResource button_text_large_style}" Text="{Binding ContinueButtonText, FallbackValue=YES}" />
           </Redbox:RoundedButton>
         </StackPanel>
       </Grid>

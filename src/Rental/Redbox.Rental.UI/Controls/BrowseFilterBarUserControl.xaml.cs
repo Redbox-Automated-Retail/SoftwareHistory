@@ -96,7 +96,7 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 			TextBlock textBlock = new TextBlock
 			{
 				Text = filter.Text.ToUpper(),
-				Style = GetStyle(this, "font_montserrat_extrabold_14"),
+				Style = GetStyle(this, "font_montserrat_extrabold_14_correct"),
 				Margin = new Thickness(10.0, 0.0, 10.0, 0.0),
 				VerticalAlignment = VerticalAlignment.Center
 			};

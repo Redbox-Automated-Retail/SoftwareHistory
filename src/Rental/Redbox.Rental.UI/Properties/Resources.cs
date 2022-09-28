@@ -534,6 +534,14 @@ public class Resources
 
 	public static string for_sale_new_violator_text => ResourceManager.GetString("for_sale_new_violator_text", resourceCulture);
 
+	public static string forgot_password_modal_message => ResourceManager.GetString("forgot_password_modal_message", resourceCulture);
+
+	public static string forgot_password_modal_qr_message => ResourceManager.GetString("forgot_password_modal_qr_message", resourceCulture);
+
+	public static string forgot_password_modal_title => ResourceManager.GetString("forgot_password_modal_title", resourceCulture);
+
+	public static string forgot_password_modal_url => ResourceManager.GetString("forgot_password_modal_url", resourceCulture);
+
 	public static string format_button => ResourceManager.GetString("format_button", resourceCulture);
 
 	public static string format_button_new_text => ResourceManager.GetString("format_button_new_text", resourceCulture);
@@ -707,6 +715,8 @@ public class Resources
 	public static string keyboard_continue_button_text => ResourceManager.GetString("keyboard_continue_button_text", resourceCulture);
 
 	public static string keyboard_email_button_text => ResourceManager.GetString("keyboard_email_button_text", resourceCulture);
+
+	public static string keyboard_forgot_password_button_text => ResourceManager.GetString("keyboard_forgot_password_button_text", resourceCulture);
 
 	public static string keyboard_input_email_prompt => ResourceManager.GetString("keyboard_input_email_prompt", resourceCulture);
 

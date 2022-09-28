@@ -8,7 +8,7 @@ public class BrowseMenuButton : DependencyObject
 
 	public static readonly DependencyProperty TextProperty = DependencyProperty.Register("Text", typeof(string), typeof(BrowseMenuButton), new FrameworkPropertyMetadata(null));
 
-	private string _textStyleName = "font_montserrat_bold_14";
+	private string _textStyleName = "font_montserrat_extrabold_14_correct";
 
 	private int _y;
 

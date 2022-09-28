@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Redbox.Rental.Model;
 
@@ -7,155 +8,19 @@ namespace Redbox.Rental.Services;
 
 public class FieldMaintenanceService : IFieldMaintenanceService
 {
-	private readonly IList<SafetyTip> _safetyTips = new List<SafetyTip>
+	private readonly IList<string> _safetyTips = new List<string>
 	{
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2019, 12, 23),
-			Message = "Speeding results in accidents and citations! And violates Redbox policy."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2019, 12, 30),
-			Message = "Don't take the risk! Don't drive distracted!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 1, 6),
-			Message = "Don't rely on cameras and warning devices when backing - PHYSICALLY LOOK AROUND!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 1, 13),
-			Message = "Don't look at your phone when walking through the parking lot!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 1, 20),
-			Message = "Watch for potholes and slippery surfaces when walking through the parking lot!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 1, 27),
-			Message = "Follow the Rules of the Road and the 5 Keys when driving in Parking Lots!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 2, 3),
-			Message = "Park Smart!  When possible, park away from other vehicles and use pull through spaces to avoid backing."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 2, 10),
-			Message = "Stay dry in cold weather! It prevents hypothermia."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 2, 17),
-			Message = "Use your doorstop at all times to prevent the kiosk door from flying open or closed!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 2, 24),
-			Message = "Lift with your legs, not your back!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 3, 2),
-			Message = "Don't twist your body when putting a load to the side. Move your feet instead!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 3, 9),
-			Message = "Don't lift more than you can handle! Get someone to help you if the load is too heavy."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 3, 16),
-			Message = "Push your cart if it's a full, heavy load! Pulling it will cause back and shoulder injuries."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 3, 23),
-			Message = "Wear work gloves if edges are rough or sharp!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 3, 30),
-			Message = "Be mindful of your surroundings at all times."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 4, 6),
-			Message = "Speeding results in accidents and citations! And violates Redbox policy."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 4, 13),
-			Message = "Don't take the risk! Don't drive distracted!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 4, 20),
-			Message = "Follow the Rules of the Road and the 5 Keys when driving in Parking Lots!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 4, 27),
-			Message = "Material Safety Data Sheets (MSDS) are available on The Screen if you need them."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 5, 4),
-			Message = "Remember Redbox Best Practices regarding uncommon things found at the kiosk."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 5, 11),
-			Message = "Be mindful of your surroundings at all times."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 5, 18),
-			Message = "Use your doorstop at all times to prevent the kiosk door from flying open or closed!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 5, 25),
-			Message = "If you encounter rodents, insects, or animals at the kiosk, contact your Supervisor immediately."
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 6, 1),
-			Message = "Use your doorstop at all times to prevent the kiosk door from flying open or closed!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 6, 8),
-			Message = "Don't twist your body when putting a load to the side. Move your feet instead!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 6, 15),
-			Message = "Wear work gloves if edges are rough or sharp!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 6, 22),
-			Message = "Lift with your legs, not your back!"
-		},
-		new SafetyTip
-		{
-			ReleaseDate = new DateTime(2020, 6, 29),
-			Message = "Don't take the risk! Don't drive distracted!"
-		}
+		"Stay dry in cold weather. It prevents hypothermia.", "Be mindful of your surroundings at all times.  It keeps you safe and prevents trips and falls.", "Don't lift more than you can handle. Get someone to help you if the load is too heavy.", "Distracted Driving kills!  Just concentrate on driving and arrive safe.", "If you encounter rodents, insects, or animals at the kiosk, contact your Supervisor immediately.", "Don't rely on cameras and warning devices when backing - PHYSICALLY LOOK AROUND.", "Lift with your legs, not your back.", "All your cleaning product safety info is available on The Screen in the Safety section (MSDSs).", "Don't twist your body when putting a load to the side. Move your feet instead.", "Speeding doesn't save time and increases injuries in accidents!  Slow down and drive safely.",
+		"Watch for potholes and slippery surfaces when walking through the parking lot.", "Wear work gloves if edges are rough or sharp.", "Push your cart if it's a full, heavy load. Pulling it will cause back and shoulder injuries.", "Sleepy driving leads to accidents.  Sleepy working leads to injuries.  Make sure you are well rested.", "Use your doorstop at all times to prevent the kiosk door from flying open or closed.", "Follow the Rules of the Road and the 5 Keys when driving in parking lots.", "Weather Rules the Day!  Check the weather to help you wear the right clothes and adjust your driving accordingly.", "Start your day with stretches to help prepare your body for work and avoid injuries.", "Seat Belts save lives and are REQUIRED by the Driver Safety Policy.", "The Key to Quality Work and Safety – Stay Focused on the Task At Hand.",
+		"Lifting?  Bend your knees.  Keep your back straight.  Keep the object close to your body.", "Park Smart.  When possible, park away from other vehicles and use pull through spaces to avoid backing.", "Slips, Trips and Falls are Preventable.  Pay attention when walking.", "Keep valuables out of sight in vehicles. If they can't see anything worth stealing, they won't risk breaking in.", "Driving Key 1 - Aim High in Steering - Look ahead 15 seconds or more.", "Drinking and Driving doesn't mix.  Stay safe and use a designated driver.", "Avoid Heat Illnessed - Stay Cool.  Stay Hydrated. Wear light and loose Clothing.  Use sunscreen.", "Take time to care for yourself.  It will have a positive impact on all you do.", "Don’t TWIST like a pretzel when doing tasks.  Move your feet and avoid injuries.", "Driving Key 2 - Get the Big Picture - 4 second minimum following distance and scan your mirrors.",
+		"PTO is meant to be taken.  When was your last extra day off?", "Are you eating healthy?  It boosts your immune system and keeps your bones and muscles strong.", "Hot weather care means taking breaks, finding shade and hydrating with lots of water.  Stay Safe!", "When your Drive- Just Drive.  When you Walk - Just Walk.  Stay Focused on the task at hand.", "Driving Key 3 - Keep Your Eyes Moving - Scan your area continuously to recognize and react to traffic.", "Make sure you take time for breaks and meals.  It will help you focus on your work.", "Seatbelt Positioning is Important - Lap belt under your stomach, snug against your hips.  Shoulder belt on your mid shoulder.", "Is your car clean?  Inside and out?  Messy cars and dirty windows can make it hard to drive and work.", "Wet leaves, Fog, Animals running amuck - all equal the same thing - SLOW DOWN and Use the 5 Keys.", "Driving Key 4 - Leave Yourself An Out - Make sure you have a space cushion all around you.",
+		"It's Deer Time!  Slow down and use your brights at dawn and dusk.", "Stretching is a great way to get you ready for your day.  Did you stretch this morning?", "Pay attention to your surroundings.  Head Up, Eyes Moving and Ears Open.  It helps keeps you safe.", "Did you know Multi Tasking is a Myth?  Your brain can only work on one thing at a time.  Stay focused for quality and safety.", "Driving Key 5 - Make Sure They See You - Use your Signals and make eye contact with other drivers and pedestrians.", "Stay Healthy!  Frequent handwashing and using hand sanitizer can help keep the flu and colds away.", "A Complete Stop is required at Stop Signs and before turning Right on Red.  Your wheels must stop rolling.", "Is your car ready for winter?  Make sure you take care of maintenance to avoid problems when traveling.", "Are you dressed for winter success?  Wearing layers allows you to adjust for conditions.  Don't forget the hat and gloves!", "Holidays make parking lots crazy!  Take extra care when driving and walking.",
+		"Pay attention to walking surfaces in wet, rainy and snowy weather to avoid a fall.", "Healthy eating helps you work better.  Pack some healthy snacks for your breaks."
 	};
 
-	public SafetyTip GetCurrentSafetyTip()
+	public string GetCurrentSafetyTip()
 	{
-		return (from st in _safetyTips
-			where DateTime.Now >= st.ReleaseDate
-			orderby st.ReleaseDate
-			select st).LastOrDefault() ?? _safetyTips.OrderBy((SafetyTip st) => st.ReleaseDate).Last();
+		int weekOfYear = new CultureInfo("en-US").Calendar.GetWeekOfYear(DateTime.Now, CalendarWeekRule.FirstFullWeek, DayOfWeek.Monday);
+		return _safetyTips.ElementAtOrDefault(weekOfYear - 1) ?? _safetyTips.Last();
 	}
 }

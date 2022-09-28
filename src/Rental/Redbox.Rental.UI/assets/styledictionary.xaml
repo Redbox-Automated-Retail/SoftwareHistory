@@ -622,7 +622,7 @@
     <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#EDE3EF" />
     <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#EDE3EF" />
     <Setter Property="Foreground" Value="#481B54" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="3" />
     <Style.Triggers>
       <Trigger Property="IsEnabled" Value="False">
         <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
@@ -640,7 +640,7 @@
     <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="White" />
     <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="White" />
     <Setter Property="Foreground" Value="#481B54" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="3" />
     <Style.Triggers>
       <Trigger Property="IsEnabled" Value="False">
         <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
@@ -1208,6 +1208,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
+  <Style x:Key="font_montserrat_extrabold_14_correct" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="ExtraBold" />
+  </Style>
   <Style x:Key="font_montserrat_extrabold_16" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
     <Setter Property="FontSize" Value="16" />
@@ -1232,6 +1238,12 @@
     <Setter Property="FontSize" Value="20" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_extrabold_20_correct" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="ExtraBold" />
   </Style>
   <Style x:Key="font_montserrat_extrabold_24" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
@@ -1280,6 +1292,12 @@
     <Setter Property="FontSize" Value="14" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_semibold_14_correct" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
   <Style x:Key="font_montserrat_semibold_16" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
@@ -1933,10 +1951,6 @@
     <Setter Property="Foreground" Value="#E42045" />
     <Setter Property="Redbox:RoundedButton.UsedDefaultCornerRadius" Value="True" />
     <Setter Property="BorderThickness" Value="2" />
-  </Style>
-  <Style x:Key="message_popup_dialog_button_style7" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource thin_border_button_style}">
-    <Setter Property="Width" Value="154" />
-    <Setter Property="Height" Value="56" />
   </Style>
   <Style x:Key="english_start_over_glass_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource gray_glass_rounded_radio_button_style}">
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="18" />
@@ -3069,7 +3083,7 @@
     <Setter Property="FontSize" Value="24" />
     <Setter Property="FontWeight" Value="Regular" />
   </Style>
-  <Style x:Key="keyboard_error_message_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_akzidenz_regular_small}">
+  <Style x:Key="keyboard_error_message_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_14_correct}">
     <Setter Property="Foreground" Value="{StaticResource RubineRedBrush}" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="VerticalAlignment" Value="Center" />
@@ -3133,6 +3147,17 @@
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="30" />
     <Setter Property="Height" Value="60" />
     <Setter Property="FontSize" Value="20" />
+  </Style>
+  <Style x:Key="style_keyboard_rounded_domain_button" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warm_purple_no_background_button_style}">
+    <Setter Property="Height" Value="60" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="30" />
+    <Setter Property="Margin" Value="4,0,0,0" />
+    <Setter Property="BorderThickness" Value="3" />
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Padding" Value="32,0,32,0" />
   </Style>
   <Style x:Key="style_rb_purple_white_border_button" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
     <Setter Property="Redbox:RoundedButton.BorderColor" Value="White" />
@@ -3433,23 +3458,6 @@
     <Setter Property="Foreground" Value="#E42045" />
     <Setter Property="Margin" Value="55,46,55,10" />
   </Style>
-  <Style x:Key="message_popup_dialog_title_rbpurple_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_30}">
-    <Setter Property="Foreground" Value="{StaticResource RbPurpleBrush}" />
-    <Setter Property="Margin" Value="55,46,55,10" />
-  </Style>
-  <Style x:Key="message_popup_dialog_title_rbpurple_style2" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_28}">
-    <Setter Property="Foreground" Value="{StaticResource RbPurpleBrush}" />
-    <Setter Property="Margin" Value="39,29,39,15" />
-  </Style>
-  <Style x:Key="message_popup_dialog_title_black_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_36}">
-    <Setter Property="Foreground" Value="#FF000000" />
-    <Setter Property="Margin" Value="55,46,55,10" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
-  </Style>
-  <Style x:Key="message_popup_dialog_title_generic_dialog_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_28}">
-    <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
-    <Setter Property="Margin" Value="0,0,0,12" />
-  </Style>
   <Style x:Key="message_popup_dialog_mesg_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_small_overlays}">
     <Setter Property="Foreground" Value="#676565" />
   </Style>
@@ -3464,116 +3472,18 @@
   <Style x:Key="message_popup_dialog_floating_button_grid_style" TargetType="{x:Type Grid}">
     <Setter Property="Visibility" Value="Collapsed" />
   </Style>
-  <Style x:Key="message_popup_dialog_title_style2" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_not_as_large_overlays}">
-    <Setter Property="Foreground" Value="#E42045" />
-    <Setter Property="Margin" Value="55,46,55,10" />
-  </Style>
-  <Style x:Key="message_popup_dialog_mesg_style2" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_smaller_overlays}">
-    <Setter Property="Foreground" Value="#676565" />
-  </Style>
-  <Style x:Key="message_popup_dialog_title_style3" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_30}">
-    <Setter Property="Foreground" Value="#792D8D" />
-    <Setter Property="Margin" Value="55,46,55,10" />
-  </Style>
-  <Style x:Key="message_popup_dialog_mesg_style3" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_regular_24}">
-    <Setter Property="Foreground" Value="#792D8D" />
-  </Style>
   <Style x:Key="message_popup_dialog_title_style4" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_28}">
     <Setter Property="Foreground" Value="#E42045" />
     <Setter Property="TextBlock.TextAlignment" Value="Left" />
     <Setter Property="Margin" Value="0,0,0,30" />
   </Style>
-  <Style x:Key="message_popup_dialog_title_style5" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_28}">
-    <Setter Property="Foreground" Value="#481B54" />
-    <Setter Property="TextBlock.TextAlignment" Value="Left" />
-    <Setter Property="Margin" Value="0,0,0,30" />
-  </Style>
-  <Style x:Key="message_popup_dialog_title_style6" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_28}">
-    <Setter Property="Foreground" Value="#481B54" />
-    <Setter Property="Margin" Value="76,76,76,0" />
-  </Style>
-  <Style x:Key="message_popup_button_text_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_museoslab_900_28_white}">
-    <Setter Property="Margin" Value="15,0" />
-  </Style>
-  <Style x:Key="message_popup_dialog_message_dock_panel_style4" TargetType="{x:Type DockPanel}">
-    <Setter Property="Margin" Value="0,0,0,0" />
-  </Style>
-  <Style x:Key="message_popup_dialog_message_dock_panel_style5" TargetType="{x:Type DockPanel}">
-    <Setter Property="Margin" Value="0,0,0,0" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
-  </Style>
   <Style x:Key="message_popup_dialog_mesg_style4" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_20}">
     <Setter Property="Foreground" Value="#E42045" />
     <Setter Property="TextBlock.TextAlignment" Value="Left" />
   </Style>
-  <Style x:Key="message_popup_dialog_mesg_style5" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_20}">
-    <Setter Property="Foreground" Value="#481B54" />
-    <Setter Property="TextBlock.TextAlignment" Value="Left" />
-  </Style>
-  <Style x:Key="message_popup_dialog_button_style4" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}">
-    <Setter Property="Width" Value="241" />
-    <Setter Property="Height" Value="50" />
-  </Style>
-  <Style x:Key="message_popup_dialog_button_style5" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource thin_border_button_style}">
-    <Setter Property="Width" Value="241" />
-    <Setter Property="Height" Value="50" />
-  </Style>
-  <Style x:Key="message_popup_dialog_button_grid_style4" TargetType="{x:Type Grid}">
-    <Setter Property="Visibility" Value="Collapsed" />
-  </Style>
-  <Style x:Key="message_popup_dialog_inner_grid_style4" TargetType="{x:Type Grid}">
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Margin" Value="140,0,140,0" />
-  </Style>
-  <Style x:Key="message_popup_dialog_floating_button_grid_style4" TargetType="{x:Type Grid}">
-    <Setter Property="Height" Value="50" />
-    <Setter Property="Margin" Value="0,60,0,0" />
-  </Style>
-  <Style x:Key="message_popup_dialog_inner_grid_style5" TargetType="{x:Type Grid}">
-    <Setter Property="Margin" Value="0,180,0,0" />
-  </Style>
-  <Style x:Key="message_popup_warmpurple_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_with_dropshadow_style}">
-    <Setter Property="MinWidth" Value="211" />
-    <Setter Property="Height" Value="66" />
-  </Style>
-  <Style x:Key="message_popup_warmpurple_button_style2" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_style}">
-    <Setter Property="Width" Value="309" />
-    <Setter Property="Height" Value="66" />
-  </Style>
-  <Style x:Key="message_popup_warmpurple_button_style3" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_style}">
-    <Setter Property="Width" Value="191" />
-    <Setter Property="Height" Value="66" />
-  </Style>
-  <Style x:Key="message_popup_warmpurple_auto_size_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_with_dropshadow_style}">
-    <Setter Property="Width" Value="auto" />
-    <Setter Property="Height" Value="66" />
-  </Style>
-  <Style x:Key="message_popup_warmpurple_button_signout_dialog_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warmpurple_white_border_button_with_dropshadow_style}">
-    <Setter Property="MinWidth" Value="211" />
-    <Setter Property="Height" Value="66" />
-    <Setter Property="HorizontalAlignment" Value="Right" />
-    <Setter Property="Margin" Value="0,0,64,0" />
-  </Style>
   <Style x:Key="button_text_auto_size_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_target_small_button_overlays}">
     <Setter Property="Margin" Value="25,0" />
     <Setter Property="Foreground" Value="#FFFFFFFF" />
-  </Style>
-  <Style x:Key="message_popup_white_rubine_to_warm_purple_border_button_with_dropshadow_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_rubine_to_warm_purple_border_button_with_dropshadow_style}">
-    <Setter Property="Width" Value="191" />
-    <Setter Property="Height" Value="56" />
-  </Style>
-  <Style x:Key="message_popup_white_rubine_to_warm_purple_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_rubine_to_warm_purple_border_button_style}">
-    <Setter Property="Width" Value="191" />
-    <Setter Property="Height" Value="66" />
-  </Style>
-  <Style x:Key="message_popup_qr_code_message_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_14}">
-    <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
-    <Setter Property="Margin" Value="0,24,0,0" />
-  </Style>
-  <Style x:Key="message_popup_qr_code_message_style2" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_14}">
-    <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
-    <Setter Property="Margin" Value="0,0,0,0" />
   </Style>
   <Style x:Key="dev_tdetail_title_label_style" TargetType="{x:Type Label}">
     <Setter Property="Foreground" Value="#FFFFFFFF" />
@@ -3938,10 +3848,14 @@
   <Style x:Key="button_light_large_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warm_purple_no_border_button_style}">
     <Setter Property="Height" Value="56" />
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="28" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
   </Style>
   <Style x:Key="button_light_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warm_purple_no_background_button_style}">
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BorderThickness" Value="3" />
+  </Style>
+  <Style x:Key="button_light_medium_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_secondary_style}">
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="24" />
   </Style>
   <Style x:Key="button_light_large_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_secondary_style}">
     <Setter Property="Height" Value="56" />
@@ -3950,10 +3864,22 @@
   <Style x:Key="button_large_purchase_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource rubine_no_border_button_style}">
     <Setter Property="Height" Value="56" />
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="28" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
   </Style>
-  <Style x:Key="button_text_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_20}">
+  <Style x:Key="button_link_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource transparent_button_style}">
+    <Setter Property="Height" Value="44" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="0" />
+  </Style>
+  <Style x:Key="button_text_medium_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_16}">
     <Setter Property="TextBlock.Padding" Value="24,0,24,0" />
+  </Style>
+  <Style x:Key="button_text_large_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_20_correct}">
+    <Setter Property="TextBlock.Padding" Value="32,0,32,0" />
+  </Style>
+  <Style x:Key="button_text_link_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_16}">
+    <Setter Property="TextBlock.Padding" Value="16,0,16,0" />
+    <Setter Property="Foreground" Value="{StaticResource RubineRedBrush}" />
+    <Setter Property="TextDecorations" Value="Underline" />
   </Style>
   <Style x:Key="modal_title_title_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_28}">
     <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
@@ -3975,10 +3901,12 @@
     <Setter Property="MaxWidth" Value="576" />
   </Style>
   <Style x:Key="modal_two_buttons_button1_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_large_secondary_style}">
-    <Setter Property="Width" Value="276" />
+    <Setter Property="Width" Value="288" />
+    <Setter Property="Margin" Value="-12,0,0,0" />
   </Style>
   <Style x:Key="modal_two_buttons_button2_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_large_primary_style}">
-    <Setter Property="Width" Value="276" />
+    <Setter Property="Width" Value="288" />
+    <Setter Property="Margin" Value="0,0,-12,0" />
   </Style>
   <Style x:Key="modal_button_grid_style" TargetType="{x:Type Grid}">
     <Setter Property="Height" Value="104" />
@@ -3992,6 +3920,13 @@
   </Style>
   <Style x:Key="modal_no_content_user_control_message_dock_panel_style" TargetType="{x:Type DockPanel}">
     <Setter Property="Margin" Value="0,0,0,52" />
+  </Style>
+  <Style x:Key="modal_qr_code_display_user_control_message_message_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_14}">
+    <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
+    <Setter Property="Margin" Value="0,24,0,0" />
+  </Style>
+  <Style x:Key="modal_qr_code_display_user_control_no_message_message_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_medium_14}">
+    <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
   </Style>
   <Style x:Key="modal_separator_style" TargetType="{x:Type Separator}">
     <Setter Property="Margin" Value="76,76,76,24" />

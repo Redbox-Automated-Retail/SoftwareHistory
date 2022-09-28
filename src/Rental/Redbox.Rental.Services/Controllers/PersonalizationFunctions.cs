@@ -321,6 +321,17 @@ public class PersonalizationFunctions
 		{
 			MaxLength = 64,
 			KeyboardText = "",
+			KeepKeyboardTextOnInitialErrorMessage = true,
+			ForgotPasswordAction = delegate
+			{
+				MessagePopupViewController.ShowForgotPasswordModal(delegate
+				{
+					OrchestrationService.ViewGoBackSafe("Forgot Password modal time out", popOnly: false);
+				}, delegate
+				{
+					OrchestrationService.ViewGoBackSafe("Forgot Password modal continue", popOnly: false);
+				});
+			},
 			CancelAction = delegate
 			{
 				OrchestrationService.ViewGoBackSafe("Email login cancel", popOnly: false);
@@ -548,7 +559,7 @@ public class PersonalizationFunctions
 
 	public static void ShowMyPointsError()
 	{
-		MessagePopupViewController.ShowSimpleMessage(Resources.my_points_error_title, Resources.my_points_error_message, Resources.my_points_error_btn_text, delegate
+		MessagePopupViewController.ShowMyPointsError(delegate
 		{
 			AnalyticsService?.AddButtonPressEvent("PersonalizationFunctionsNotEnoughPointsGotit");
 			OrchestrationService.ViewGoBackSafe("Message button GotIt pressed", popOnly: false);
@@ -560,7 +571,7 @@ public class PersonalizationFunctions
 
 	public static void ShowNotEnoughPointsError()
 	{
-		MessagePopupViewController.ShowSimpleMessage(Resources.sorry, Resources.not_enough_points, Resources.okay, delegate
+		MessagePopupViewController.ShowNotEnoughPointsError(delegate
 		{
 			OrchestrationService.ViewGoBackSafe("Message button Okay pressed", popOnly: false);
 		}, delegate

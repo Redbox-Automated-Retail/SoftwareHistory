@@ -158,6 +158,8 @@ public class Commands
 
 	public static readonly DynamicRoutedCommand SpaceButtonCommand = new DynamicRoutedCommand();
 
+	public static readonly DynamicRoutedCommand ForgotPasswordButtonCommand = new DynamicRoutedCommand();
+
 	public static readonly DynamicRoutedCommand CancelButtonCommand = new DynamicRoutedCommand();
 
 	public static readonly DynamicRoutedCommand ContinueButtonCommand = new DynamicRoutedCommand();

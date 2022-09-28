@@ -12,6 +12,10 @@ public class KeyboardInfo
 
 	public Predicate<string> IsValidEntry { get; set; } = (string e) => false;
 
+	public Action ForgotPasswordAction { get; set; } = delegate
+	{
+	};
+
 	public Action CancelAction { get; set; } = delegate
 	{
 	};

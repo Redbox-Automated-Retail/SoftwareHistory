@@ -60,31 +60,6 @@ public class ShowMessagePopupViewParameter : IViewAnalyticsName
 
 	public bool IsAutoSized { get; }
 
-	public ShowMessagePopupViewParameter(string titleText, string messageText, string button1Text, string button2Text, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, string analyticsContext = null)
-		: this(titleText, null, messageText, null, button1Text, button2Text, timeout, button1Action, button2Action, timeOutAction, actorTag, analyticsContext)
-	{
-	}
-
-	public ShowMessagePopupViewParameter(string titleText, string messageText, string button1Text, string button2Text, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, List<string> analyticsContextList = null)
-		: this(titleText, null, messageText, null, button1Text, button2Text, timeout, button1Action, button2Action, timeOutAction, actorTag, analyticsContextList)
-	{
-	}
-
-	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button2Text, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, string analyticsContext = null)
-		: this(titleText, titleStyle, messageText, messageStyle, button1Text, null, null, button2Text, null, null, null, null, null, null, timeout, button1Action, button2Action, timeOutAction, actorTag, null, null, default(Thickness), analyticsContext)
-	{
-	}
-
-	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button2Text, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, List<string> analyticsContextList = null)
-		: this(titleText, titleStyle, messageText, messageStyle, button1Text, null, null, button2Text, null, null, null, null, null, null, timeout, button1Action, button2Action, timeOutAction, actorTag, null, null, default(Thickness), analyticsContextList)
-	{
-	}
-
-	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button1TextStyle, string button1Style, string button2Text, string button2TextStyle, string button2Style, string buttonGridStyle, string innerGridStyle, string floatingButtonGridStyle, string messageDockPanelStyle, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, UserControl contentUserControl, string borderBrushColor, Thickness mainGridMargin, string analyticsContext = null, string viewName = null, Visibility buttonGridSeparatorLineVisibility = Visibility.Collapsed)
-		: this(titleText, titleStyle, messageText, messageStyle, button1Text, button1TextStyle, button1Style, button2Text, button2TextStyle, button2Style, buttonGridStyle, innerGridStyle, floatingButtonGridStyle, messageDockPanelStyle, timeout, button1Action, button2Action, timeOutAction, actorTag, contentUserControl, borderBrushColor, mainGridMargin, (analyticsContext == null) ? null : new List<string> { analyticsContext }, viewName, buttonGridSeparatorLineVisibility)
-	{
-	}
-
 	public ShowMessagePopupViewParameter(string titleText, string titleStyle, string messageText, string messageStyle, string button1Text, string button1TextStyle, string button1Style, string button2Text, string button2TextStyle, string button2Style, string buttonGridStyle, string innerGridStyle, string floatingButtonGridStyle, string messageDockPanelStyle, int timeout, Action button1Action, Action button2Action, Action timeOutAction, string actorTag, UserControl contentUserControl, string borderBrushColor, Thickness mainGridMargin, List<string> analyticsContextList = null, string viewName = null, Visibility buttonGridSeparatorLineVisibility = Visibility.Collapsed, bool isAutoSized = false)
 	{
 		TitleText = titleText;

@@ -19,11 +19,11 @@
       <localControls:KeyboardUserControl x:Name="KeyboardElem" Grid.Row="3" Margin="0,10,0,20" HorizontalAlignment="Left" VerticalAlignment="Top" />
       <TextBlock Name="MarketingTextElem" Grid.Row="4" Margin="0" Style="{StaticResource keyboard_marketing_message_style}" Text="{Binding Path=MarketingText, FallbackValue=Marketing}" />
       <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
-        <Redbox:RoundedButton Name="CancelButtonElem" Grid.Column="1" Margin="5,24,10,24" CornerRadius="33" Style="{StaticResource style_white_rubine_border_button}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
-          <TextBlock Name="CancelButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=CancelButtonText, FallbackValue=Cancel}" />
+        <Redbox:RoundedButton Name="CancelButtonElem" Grid.Column="1" Width="261" Margin="8,0,8,0" Style="{StaticResource button_light_large_secondary_style}" IsEnabled="True" Command="{Binding CancelButtonCommand}">
+          <TextBlock Name="CancelButtonTextElem" Style="{StaticResource button_text_large_style}" Text="{Binding Path=CancelButtonText, FallbackValue=CANCEL}" />
         </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="ContinueButtonElem" Grid.Column="2" Margin="10,24,5,24" CornerRadius="33" Style="{StaticResource style_rb_purple_white_border_button}" IsEnabled="True" Click="ContinueTouched">
-          <TextBlock Name="ContinueButtonTextElem" Margin="50,0" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_museo_slab_900_20}" Text="{Binding Path=ContinueButtonText, FallbackValue=Create Account}" />
+        <Redbox:RoundedButton Name="ContinueButtonElem" Grid.Column="2" Width="261" Margin="8,0,8,0" Style="{StaticResource button_light_large_primary_style}" IsEnabled="True" Click="ContinueTouched">
+          <TextBlock Name="ContinueButtonTextElem" Style="{StaticResource button_text_large_style}" Text="{Binding Path=ContinueButtonText, FallbackValue=CREATE ACCOUNT}" />
         </Redbox:RoundedButton>
       </StackPanel>
     </Redbox:GridExt>

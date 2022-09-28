@@ -36,6 +36,8 @@ public class KeyboardModel : BaseModel<KeyboardModel>
 
 	public static readonly DependencyProperty ContinueButtonEnabledProperty = BaseModel<KeyboardModel>.CreateDependencyProperty("ContinueButtonEnabled", TYPES.BOOL, false);
 
+	public static readonly DependencyProperty ForgotPasswordButtonTextProperty = BaseModel<KeyboardModel>.CreateDependencyProperty("ForgotPasswordButtonText", TYPES.STRING);
+
 	public static readonly DependencyProperty EmailButtonTextProperty = BaseModel<KeyboardModel>.CreateDependencyProperty("EmailButtonText", TYPES.STRING);
 
 	public static readonly DependencyProperty PasswordButtonTextProperty = BaseModel<KeyboardModel>.CreateDependencyProperty("PasswordButtonText", TYPES.STRING);
@@ -67,6 +69,8 @@ public class KeyboardModel : BaseModel<KeyboardModel>
 	public DynamicRoutedCommand DotComButtonCommand { get; set; }
 
 	public DynamicRoutedCommand SpaceButtonCommand { get; set; }
+
+	public DynamicRoutedCommand ForgotPasswordButtonCommand { get; set; }
 
 	public DynamicRoutedCommand CancelButtonCommand { get; set; }
 
@@ -309,6 +313,21 @@ public class KeyboardModel : BaseModel<KeyboardModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ClearButtonTextProperty, value);
+			});
+		}
+	}
+
+	public string ForgotPasswordButtonText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(ForgotPasswordButtonTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ForgotPasswordButtonTextProperty, value);
 			});
 		}
 	}
