@@ -1,17 +1,17 @@
-# Quattro (2022-07-13)
+# Ranchero (2022-09-27)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-07-13
-- Store labels: kop-rental-bundles-Quattro
+- Date (first download in the snapshots): 2022-09-27
+- Store labels: kop-rental-bundles-Ranchero
 - Package revisions:
-  - `kop-rental-bundles` revision 163 (`406B7C8F21BE5CC2421D3B495BE60CABE515455E`)
+  - `kop-rental-bundles` revision 164 (`5275783B456ACE1CF92441BCAC464A628639606D`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `B1017F83A9A5F95FD33B66B0D4C961F224231BA3` | exact |
-| `fm.bundle` |  |  | `53D9EB8AF9B89CEF2D9D7BFEC51E8EB3DDD755BF` | exact |
-| `library-rental-common.bundle` |  |  | `129BEE4904A8D955553DE54DEAA83E7FCE1BA4EA` | exact |
-| `ra-2.x.bundle` |  |  | `EE899249AC78B99C7EB61FD76214547A774F6A4E` | exact |
+| `cp.bundle` |  |  | `D1C071E5DD8086A6128E7FD60C407A42D81658DC` | exact |
+| `fm.bundle` |  |  | `F84AEBFC774EB15D49A7AFC557B431C274452992` | exact |
+| `library-rental-common.bundle` |  |  | `E71B100A3126BBBA1DF0A766A177AE1C2E838A3F` | exact |
+| `ra-2.x.bundle` |  |  | `4A3AD0527F12B6EB0482CF4021199D4E3F9B481F` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
