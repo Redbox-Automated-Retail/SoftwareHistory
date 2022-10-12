@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using KioskClientService.API.Ads;
 using KioskClientService.API.App;
-using KioskClientService.API.Services.Ads.AdServer;
 using KioskClientService.API.Services.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -14,10 +12,10 @@ public class ApplicationService : IApplicationService
 
 	private IAdService _adService;
 
-	public ApplicationService(ILogger<ApplicationService> logger, IEnumerable<IAdService> adServices, IApplicationConfiguration config)
+	public ApplicationService(ILogger<ApplicationService> logger, IAdService adService, IApplicationConfiguration config)
 	{
 		_logger = logger;
-		_adService = (config.UseAdServer ? adServices.GetImplementation<AdServerService>() : adServices.GetImplementation<AdService>());
+		_adService = adService;
 	}
 
 	public async Task<ApplicationResponse> Start()

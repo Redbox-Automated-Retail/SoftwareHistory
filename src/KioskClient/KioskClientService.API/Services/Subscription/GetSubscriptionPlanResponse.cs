@@ -24,7 +24,7 @@ public class GetSubscriptionPlanResponse : BaseResponse, IMessageScrub
 
 	public override object Scrub()
 	{
-		return this.ToJsonIndented();
+		return $"Active: {Active}, SubscriptionCount: {SubscriptionPlans?.Count}";
 	}
 
 	public void CopyFrom(SubscriptionPlansData p)

@@ -19,8 +19,6 @@ public interface IApplicationConfiguration
 
 	Dictionary<string, List<AdLocation>> AdsToPreloadByView { get; }
 
-	bool UseAdServer { get; }
-
 	string VistarUrl { get; }
 
 	int VistarTimeout { get; }

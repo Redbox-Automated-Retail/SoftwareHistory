@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using KioskClientService.API.Ads;
 using KioskClientService.API.App;
-using KioskClientService.API.Services.Ads.AdServer;
 using KioskClientService.API.Services.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -13,10 +11,10 @@ public class SessionService : ISessionService
 
 	private IAdService _adService;
 
-	public SessionService(ILogger<SessionService> logger, IEnumerable<IAdService> adServices, IApplicationConfiguration config)
+	public SessionService(ILogger<SessionService> logger, IAdService adService, IApplicationConfiguration config)
 	{
 		_logger = logger;
-		_adService = (config.UseAdServer ? adServices.GetImplementation<AdServerService>() : adServices.GetImplementation<AdService>());
+		_adService = adService;
 	}
 
 	public ApplicationResponse Start(SessionType sessionType)

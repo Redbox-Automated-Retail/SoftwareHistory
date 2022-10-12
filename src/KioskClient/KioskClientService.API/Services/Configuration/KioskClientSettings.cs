@@ -46,8 +46,6 @@ public static class KioskClientSettings
 
 	public const string AdServerAuthHeader = "AdServerAuthHeader";
 
-	public const string UseAdServer = "UseAdServer";
-
 	public const string KioskDataServiceEnabled = "KioskDataServiceEnabled";
 
 	public const string KioskDataServiceUrl = "KioskDataServiceUrl";

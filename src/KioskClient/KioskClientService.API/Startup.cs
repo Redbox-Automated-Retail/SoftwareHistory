@@ -123,7 +123,6 @@ public class Startup
 		services.AddScoped<IAnalyticsService, AnalyticsService>();
 		services.AddScoped<IApplicationService, ApplicationService>();
 		services.AddScoped<ISessionService, SessionService>();
-		services.AddScoped<IAdService, AdService>();
 		services.AddScoped<IAdService, AdServerService>();
 		services.AddScoped<IAdServerClient, AdServerClient>();
 		services.AddScoped<IAssetService, AssetService>();
@@ -249,7 +248,6 @@ public class Startup
 		logger.LogInformation("AppSettings - UpdateManagerAddress: " + appSettings.UpdateManagerAddress);
 		logger.LogInformation($"AppSettings - UpdateManagerPort: {appSettings.UpdateManagerPort}");
 		logger.LogInformation($"AppConfig - AdsActive: {applicationConfiguration.AdsActive}");
-		logger.LogInformation($"AppConfig - UseAdServer: {applicationConfiguration.UseAdServer}");
 		VistarConfigs configs = VistarConfigs.GetConfigs(applicationConfiguration);
 		logger.LogInformation("AppConfig.VistarSettings - Url: " + configs.Url);
 		logger.LogInformation($"AppConfig.VistarSettings - Timeout: {configs.Timeout}");

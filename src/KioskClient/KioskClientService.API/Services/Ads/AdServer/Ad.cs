@@ -9,9 +9,9 @@ public class Ad
 
 	public string AssetId { get; set; }
 
-	public virtual AdProviderName Provider { get; }
+	public AdProviderName Provider { get; set; }
 
-	public virtual bool Expirable { get; }
+	public bool Expirable { get; set; }
 
 	public string AssetUrl { get; set; }
 

@@ -23,20 +23,20 @@ public class AdServerClient : IAdServerClient
 		_requestHeaders = _config.GetKioskCloudHeaders(null, store?.KioskId);
 	}
 
-	public async Task<APIResponse<AdResponse>> GetAd(AdLocation location, AdProviderName providerName)
+	public async Task<APIResponse<AdResponse>> GetAd(AdLocation location)
 	{
-		return await _httpService.SendRequest<AdResponse>(_config.Url, $"api/ads/{location}?providerName={providerName}", null, HttpMethod.Get, _requestHeaders);
+		return await _httpService.SendRequest<AdResponse>(_config.Url, $"api/ads/{location}", null, HttpMethod.Get, _requestHeaders);
 	}
 
-	public async Task<APIResponse<AdsResponse>> GetAds(List<AdLocation> locations, AdProviderName providerName)
+	public async Task<APIResponse<AdsResponse>> GetAds(List<AdLocation> locations)
 	{
-		string text = locations.ToQueryString("locations", $"?providerName={providerName}");
+		string text = locations.ToQueryString("locations");
 		return await _httpService.SendRequest<AdsResponse>(_config.Url, "api/ads" + text, null, HttpMethod.Get, _requestHeaders);
 	}
 
-	public async Task<APIResponse<AdsResponse>> CacheAds(List<AdLocation> locations, AdProviderName providerName)
+	public async Task<APIResponse<AdsResponse>> CacheAds(List<AdLocation> locations)
 	{
-		string text = locations.ToQueryString("locations", $"?providerName={providerName}");
+		string text = locations.ToQueryString("locations");
 		return await _httpService.SendRequest<AdsResponse>(_config.Url, "api/ads/cache" + text, null, HttpMethod.Get, _requestHeaders);
 	}
 

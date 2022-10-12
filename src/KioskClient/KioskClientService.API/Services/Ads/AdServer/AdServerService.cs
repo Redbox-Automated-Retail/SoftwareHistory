@@ -42,8 +42,8 @@ public class AdServerService : IAdService
 		if (_timer == null)
 		{
 			_logger?.LogInfoWithSource("Creating and starting ad expire timer", "StartApplication");
-			int dueTime = (int)TimeSpan.FromMinutes(30.0).TotalMilliseconds;
-			int period = (int)TimeSpan.FromMinutes(60.0).TotalMilliseconds;
+			int dueTime = (int)TimeSpan.FromMinutes(3.0).TotalMilliseconds;
+			int period = (int)TimeSpan.FromMinutes(3.0).TotalMilliseconds;
 			_timer = new Timer(delegate
 			{
 				ExpireTimer();
@@ -88,11 +88,19 @@ public class AdServerService : IAdService
 				result.StatusCode = HttpStatusCode.ServiceUnavailable;
 				return result;
 			}
-			if (!(await GetAdAndCache(request.AdLocation)))
+			AdServerCachedAdvertisement advertisement = GetAdvertisement(request.AdLocation);
+			if (advertisement != null)
 			{
+				advertisement.Requested = true;
+				result.CopyFrom(advertisement);
 				return result;
 			}
-			AdServerCachedAdvertisement advertisement = GetAdvertisement(request.AdLocation);
+			if (!(await GetAdAndCache(request.AdLocation)))
+			{
+				result.StatusCode = HttpStatusCode.NotFound;
+				return result;
+			}
+			advertisement = GetAdvertisement(request.AdLocation);
 			if (advertisement != null)
 			{
 				advertisement.Requested = true;
@@ -215,7 +223,7 @@ public class AdServerService : IAdService
 				StatusCode = HttpStatusCode.ServiceUnavailable
 			};
 		}
-		APIResponse<AdsResponse> aPIResponse = await _adServerClient.CacheAds(DisplayArea.AdLocations, AdProviderName.Vistar);
+		APIResponse<AdsResponse> aPIResponse = await _adServerClient.CacheAds(DisplayArea.AdLocations);
 		CacheResponse cacheResponse = new CacheResponse();
 		aPIResponse.CopyTo(cacheResponse);
 		cacheResponse.ResponseTime = aPIResponse.ResponseTime;
@@ -265,7 +273,7 @@ public class AdServerService : IAdService
 	private async Task<bool> GetAdsAndCache(List<AdLocation> adLocations)
 	{
 		_logger?.LogInfoWithSource(adLocations.ToJson(), "GetAdsAndCache");
-		APIResponse<AdsResponse> aPIResponse = await _adServerClient.GetAds(adLocations, AdProviderName.Vistar);
+		APIResponse<AdsResponse> aPIResponse = await _adServerClient.GetAds(adLocations);
 		if (!aPIResponse.IsSuccessStatusCode)
 		{
 			return false;
@@ -390,7 +398,7 @@ public class AdServerService : IAdService
 
 	private async Task<bool> GetAdAndCache(AdLocation adLocation)
 	{
-		APIResponse<AdResponse> aPIResponse = await _adServerClient.GetAd(adLocation, AdProviderName.Vistar);
+		APIResponse<AdResponse> aPIResponse = await _adServerClient.GetAd(adLocation);
 		if (!aPIResponse.IsSuccessStatusCode)
 		{
 			return false;
@@ -434,7 +442,7 @@ public class AdServerService : IAdService
 
 	private async Task ExpireCachedAds()
 	{
-		DateTime age = DateTime.Now.AddMinutes(-30.0);
+		DateTime age = DateTime.Now.AddMinutes(-120.0);
 		List<AdServerCachedAdvertisement> list = (from x in Cached.Values
 			where x.RequestedTime < age
 			orderby x.RequestedTime

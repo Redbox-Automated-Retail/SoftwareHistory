@@ -10,7 +10,6 @@ using KioskClientService.API.Services.Products.ProductReelsApi;
 using KioskClientService.API.Services.ProxyApi;
 using KioskClientService.API.Services.Subscription;
 using KioskClientService.API.Services.Transaction.API;
-using Newtonsoft.Json;
 
 namespace KioskClientService.API.Services.Configuration;
 
@@ -22,56 +21,23 @@ public class ApplicationConfiguration : IApplicationConfiguration
 
 	public bool AdsActive => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdsActive", defaultValue: false);
 
-	public List<AdLocation> AdsToPreload
+	public List<AdLocation> AdsToPreload => new List<AdLocation>
 	{
-		get
-		{
-			List<AdLocation> defaultValue = new List<AdLocation>
-			{
-				AdLocation.TitleDetail,
-				AdLocation.Welcome
-			};
-			string settingValue = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdsToPreload", null);
-			if (string.IsNullOrWhiteSpace(settingValue))
-			{
-				return new List<AdLocation>();
-			}
-			return GetEnumList(settingValue, defaultValue);
-		}
-	}
+		AdLocation.TitleDetail,
+		AdLocation.Welcome
+	};
 
-	public Dictionary<string, List<AdLocation>> AdsToPreloadByView
+	public Dictionary<string, List<AdLocation>> AdsToPreloadByView => new Dictionary<string, List<AdLocation>>
 	{
-		get
 		{
-			Dictionary<string, List<AdLocation>> result = new Dictionary<string, List<AdLocation>>
-			{
-				{
-					"zip_code_view",
-					new List<AdLocation> { AdLocation.VSM }
-				},
-				{
-					"vsm_view",
-					new List<AdLocation> { AdLocation.Vending }
-				}
-			};
-			string settingValue = _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "AdsToPreloadByView", null);
-			if (string.IsNullOrWhiteSpace(settingValue))
-			{
-				return result;
-			}
-			try
-			{
-				return JsonConvert.DeserializeObject<Dictionary<string, List<AdLocation>>>(settingValue);
-			}
-			catch
-			{
-				return result;
-			}
+			"zip_code_view",
+			new List<AdLocation> { AdLocation.VSM }
+		},
+		{
+			"vsm_view",
+			new List<AdLocation> { AdLocation.Vending }
 		}
-	}
-
-	public bool UseAdServer => _configurationService.GetSettingValue(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "UseAdServer", defaultValue: false);
+	};
 
 	public string VistarUrl => _configurationService.GetSettingValue<string>(ConfigFiles.KioskClient, KioskClientCategories.KioskClientAds, "VistarUrl", null);
 
