@@ -569,7 +569,7 @@ public class PromotionService : IPromotionService
 		{
 			return;
 		}
-		List<IRentalShoppingCartTitleItem> list = (from x in rentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
+		List<IRentalShoppingCartTitleItem> list = (from x in rentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: true, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
 			orderby x.PricingRecord.InitialNight, x.ProductId
 			select x).ToList();
 		decimal num = result2;
@@ -612,7 +612,7 @@ public class PromotionService : IPromotionService
 				num = productTypePricingRecord.InitialNight;
 			}
 		}
-		List<IRentalShoppingCartTitleItem> list = (from x in rentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
+		List<IRentalShoppingCartTitleItem> list = (from x in rentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, promotionRule.TitleType, promotionRule.TitleFamily, promotionRule.IncludeProducts, promotionRule.ExcludeProducts, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: true, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
 			orderby x.PricingRecord.InitialNight, x.ProductId
 			select x).ToList();
 		decimal num2 = num;
@@ -888,7 +888,7 @@ public class PromotionService : IPromotionService
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		if (service.CurrentRentalShoppingCart != null)
 		{
-			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = (from x in service.CurrentRentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, titleTypeFromInCartPromo, titleFamilyFromInCartPromo, null, excludeProducts, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false, null, includeDiscountRestrictionItems: false)
+			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = (from x in service.CurrentRentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, titleTypeFromInCartPromo, titleFamilyFromInCartPromo, null, excludeProducts, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: true, includeLoyaltyRedeemedItems: false, null, includeDiscountRestrictionItems: false)
 				orderby x?.PricingRecord?.InitialNight ?? 0m, x.ProductId
 				select x).FirstOrDefault();
 			promoCodeValidationInfo.IsCartValid = rentalShoppingCartTitleItem != null;
@@ -912,7 +912,7 @@ public class PromotionService : IPromotionService
 		List<long> inCartExcludeTitleList = GetInCartExcludeTitleList();
 		if (RentalShoppingCart != null)
 		{
-			List<IRentalShoppingCartTitleItem> list = (from x in RentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, TitleType.All, TitleFamily.All, null, inCartExcludeTitleList, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
+			List<IRentalShoppingCartTitleItem> list = (from x in RentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, TitleType.All, TitleFamily.All, null, inCartExcludeTitleList, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: true, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
 				orderby x?.PricingRecord?.InitialNight ?? 0m, x.ProductId
 				select x).ToList();
 			promoCodeValidationInfo.IsCartValid = list.Count() > 1;

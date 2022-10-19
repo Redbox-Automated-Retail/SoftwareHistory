@@ -1534,6 +1534,10 @@ public class Resources
 
 	public static string promo_code_error_invalid_cart_items_flash_deal_title => ResourceManager.GetString("promo_code_error_invalid_cart_items_flash_deal_title", resourceCulture);
 
+	public static string promo_code_error_invalid_cart_items_message => ResourceManager.GetString("promo_code_error_invalid_cart_items_message", resourceCulture);
+
+	public static string promo_code_error_invalid_cart_items_title => ResourceManager.GetString("promo_code_error_invalid_cart_items_title", resourceCulture);
+
 	public static string promo_code_error_message => ResourceManager.GetString("promo_code_error_message", resourceCulture);
 
 	public static string promo_code_error_title => ResourceManager.GetString("promo_code_error_title", resourceCulture);

@@ -48,6 +48,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 				action = 0;
 			}
 			Action = (RentalShoppingCartItemAction)action;
+			IncludeFlashDeals = true;
 			IncludeDiscountRestrictionItems = promotion?.AllowFullDiscount ?? true;
 		}
 	}
@@ -906,7 +907,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 		obj.FormatIds = Promotion?.FormatIds;
 		obj.IncludeLoyaltyRedeemedItems = false;
 		obj.IncludeMultiNightPricedItems = promotionFunctionFilters?.IncludeMultiNightPricingItems ?? false;
-		obj.IncludeFlashDeals = promotionFunctionFilters?.IncludeFlashDeals ?? false;
+		obj.IncludeFlashDeals = promotionFunctionFilters?.IncludeFlashDeals ?? true;
 		obj.IncludeDiscountRestrictionItems = promotionFunctionFilters?.IncludeDiscountRestrictionItems ?? false;
 		return obj;
 	}
@@ -1256,7 +1257,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 		IPromoCodeValidationInfo result = new PromoCodeValidationInfo();
 		if (promotion.RentQuantity != 0 && promotion.RentFormat.HasValue && promotion.GetQuantity != 0 && promotion.GetFormat.HasValue)
 		{
-			List<IRentalShoppingCartTitleItem> rentItems = GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, GetTitleTypeFromPromotionFormat(promotion.RentFormat.Value), GetTitleFamilyFromPromotionFormat(promotion.RentFormat.Value), null, null, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false).OrderBy(delegate(IRentalShoppingCartTitleItem x)
+			List<IRentalShoppingCartTitleItem> rentItems = GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, GetTitleTypeFromPromotionFormat(promotion.RentFormat.Value), GetTitleFamilyFromPromotionFormat(promotion.RentFormat.Value), null, null, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: true, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false).OrderBy(delegate(IRentalShoppingCartTitleItem x)
 			{
 				PromotionRentFormat? rentFormat = promotion.RentFormat;
 				PromotionRentFormat promotionRentFormat = PromotionRentFormat.Any;
@@ -1264,7 +1265,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 			}).ThenByDescending((IRentalShoppingCartTitleItem x) => x.PricingRecord.InitialNight).ThenByDescending((IRentalShoppingCartTitleItem x) => x.ProductId)
 				.Take(promotion.RentQuantity)
 				.ToList();
-			List<IRentalShoppingCartTitleItem> list = (from x in GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, GetTitleTypeFromPromotionFormat(promotion.GetFormat.Value), GetTitleFamilyFromPromotionFormat(promotion.GetFormat.Value), null, null, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: false, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
+			List<IRentalShoppingCartTitleItem> list = (from x in GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, GetTitleTypeFromPromotionFormat(promotion.GetFormat.Value), GetTitleFamilyFromPromotionFormat(promotion.GetFormat.Value), null, null, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: true, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
 				where !rentItems.Contains(x)
 				orderby x.PricingRecord.InitialNight descending, x.ProductId
 				select x).Take(promotion.GetQuantity).ToList();

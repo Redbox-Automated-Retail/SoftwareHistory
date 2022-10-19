@@ -453,6 +453,7 @@ In the meantime, your movie is on its way!</value></data>
   <data name="redbox_plus_offer_selection_tier2_bullet2" xml:space="preserve"><value>Extended return time</value></data>
   <data name="redbox_plus_offer_selection_tier2_bullet3" xml:space="preserve"><value>Extra night coverage</value></data>
   <data name="starz_offer_4_browse_button" xml:space="preserve"><value>VIEW OFFER</value></data>
+  <data name="promo_code_error_invalid_cart_items_title" xml:space="preserve"><value>That promo code doesn’t work for your movies</value></data>
   <data name="submit_button" xml:space="preserve"><value>Submit</value></data>
   <data name="flag_price_test" xml:space="preserve"><value>{0} Firsts</value></data>
   <data name="perks_thanks_standard_message" xml:space="preserve"><value>Use your FREE 1-night DVD rental on your next visit</value></data>
@@ -1486,6 +1487,7 @@ Do you still want to remove it?</value></data>
   <data name="starz_offer_2_signup_confirmation_new_customer_message_2" xml:space="preserve"><value> &amp; your Redbox 1-night disc rentals,
 you'll need to complete your enrollment</value></data>
   <data name="starz_offer_2_signup_confirmation_new_customer_message_1" xml:space="preserve"><value>To enjoy STARZ</value></data>
+  <data name="promo_code_error_invalid_cart_items_message" xml:space="preserve"><value>Add another item to your bag, then try again.</value></data>
   <data name="shopping_cart_points_balance_text" xml:space="preserve"><value>My Points Balance: {0:n0}</value></data>
   <data name="starz_sign_up_title" xml:space="preserve"><value>Sign up for a Redbox Account</value></data>
   <data name="reservation_emv_swipe_title" xml:space="preserve"><value>Swipe your card
