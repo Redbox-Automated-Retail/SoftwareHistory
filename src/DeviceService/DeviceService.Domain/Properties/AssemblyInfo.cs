@@ -5,8 +5,8 @@ using System.Runtime.Versioning;
 
 [assembly: AssemblyCompany("DeviceService.Domain")]
 [assembly: AssemblyConfiguration("Release")]
-[assembly: AssemblyFileVersion("1.10.6")]
+[assembly: AssemblyFileVersion("1.10.8")]
 [assembly: AssemblyInformationalVersion("1.0.0")]
 [assembly: AssemblyProduct("DeviceService.Domain")]
 [assembly: AssemblyTitle("DeviceService.Domain")]
-[assembly: AssemblyVersion("1.10.6.0")]
+[assembly: AssemblyVersion("1.10.8.0")]

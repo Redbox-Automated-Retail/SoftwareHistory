@@ -3259,7 +3259,7 @@ public class ParseTags
 					{
 						string text259 = ConvertHexToString(TagDataStr.Substring(8, 4), errors);
 						IUC285Proxy.Log("DeviceType: " + text259);
-						if (int.TryParse(text259, out var result) && result > 0)
+						if (int.TryParse(text259, out var result) && result > 0 && result != 20)
 						{
 							IsMobileWallet = true;
 							IUC285Proxy.Log("MobileWallet Transaction");

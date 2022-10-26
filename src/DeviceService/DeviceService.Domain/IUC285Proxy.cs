@@ -1644,7 +1644,7 @@ public class IUC285Proxy : IIUC285Proxy, ITestIUC285Proxy, IFileUpdater
 			eMVCardReadModel.LastFour = parseTags.Last4;
 			eMVCardReadModel.AID = parseTags.AID;
 			eMVCardReadModel.MfgSerialNumber = UnitData.ManufacturingSerialNumber;
-			if (parseTags.IsMobileWallet)
+			if (ReadCardContextData.CardSource == CardSourceType.EMVContactless && parseTags.IsMobileWallet)
 			{
 				ReadCardContext readCardContextData = ReadCardContextData;
 				CardSourceType cardSource = (eMVCardReadModel.CardSource = CardSourceType.Mobile);
