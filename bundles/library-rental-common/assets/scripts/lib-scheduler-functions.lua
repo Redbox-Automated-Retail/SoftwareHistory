@@ -188,7 +188,4 @@ stats_run_daily_timer = function()
 			end
 		end
 	)
-
-    --Update Mcafee
-    kernel.update_mcafee()
 end

@@ -1,17 +1,17 @@
-# Ranchero (2022-09-27)
+# Studebaker (2022-11-15)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-09-27
-- Store labels: kop-rental-bundles-Ranchero
+- Date (first download in the snapshots): 2022-11-15
+- Store labels: kop-rental-bundles-Studebaker
 - Package revisions:
-  - `kop-rental-bundles` revision 164 (`5275783B456ACE1CF92441BCAC464A628639606D`)
+  - `kop-rental-bundles` revision 166 (`4D86F6421115C7F2C3BEB5D5C6D137B18FB1F0BD`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `D1C071E5DD8086A6128E7FD60C407A42D81658DC` | exact |
-| `fm.bundle` |  |  | `F84AEBFC774EB15D49A7AFC557B431C274452992` | exact |
-| `library-rental-common.bundle` |  |  | `E71B100A3126BBBA1DF0A766A177AE1C2E838A3F` | exact |
-| `ra-2.x.bundle` |  |  | `4A3AD0527F12B6EB0482CF4021199D4E3F9B481F` | exact |
+| `cp.bundle` |  |  | `713B1DCDEF6309426EE5FC0D200669FAF8169167` | exact |
+| `fm.bundle` |  |  | `6BBED0AA77674F7C4AC7B2673B129A1F01EE9A20` | exact |
+| `library-rental-common.bundle` |  |  | `5526EAFDA37B7166CD2D733693EE990EEDBF4A2A` | exact |
+| `ra-2.x.bundle` |  |  | `230AAE304384F91E188DFE0D2DE7A828EE815177` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
