@@ -5,7 +5,7 @@
     <StackPanel Name="MainStackPanel" Orientation="Vertical" Margin="{Binding MainStackPanelMargin, FallbackValue='0,64,0,0'}">
       <Image Name="redbox_plus_logo" Width="90" Height="20" VerticalAlignment="Top" HorizontalAlignment="Center" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/redboxplus-white-red.png" />
       <TextBlock Name="TitleText" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_bold_40}" Margin="0,8,0,0" Foreground="#FFFFFFFF" Text="{Binding Path=TitleText, FallbackValue=$9.99/Year}" />
-      <TextBlock Name="SubtitleText" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_medium_16}" Margin="0,8,0,0" Foreground="#fdba4d" Text="{Binding Path=SubtitleText, FallbackValue=Thats over $47 in value!*}" />
+      <TextBlock Name="SubtitleText" HorizontalAlignment="Center" Style="{StaticResource font_montserrat_medium_16}" Margin="0,8,0,0" Foreground="#fdba4d" Text="{Binding Path=SubtitleText, FallbackValue=Thats over $50 in value!*}" />
       <Grid Name="BenefitGrid" Margin="141,0,141,0">
         <Grid.ColumnDefinitions>
           <ColumnDefinition />

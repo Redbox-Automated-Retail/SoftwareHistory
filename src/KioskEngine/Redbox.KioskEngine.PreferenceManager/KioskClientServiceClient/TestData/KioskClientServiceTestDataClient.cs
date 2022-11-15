@@ -13,13 +13,13 @@ public class KioskClientServiceTestDataClient : KioskClientServiceBaseClient
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskClientServiceBaseClient.KioskClientServiceBaseUrl, $"{_controllerPrefix}/readpropertyvalue?category={category}&propertyName={propertyName}", null, HttpMethod.Get);
-		return await service.SendRequestAsync<ReadTestDataResponse>(request, null, "ReadPropertyValue", "D:\\work\\48\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskClientServiceClient\\TestData\\KioskClientServiceTestDataClient.cs");
+		return await service.SendRequestAsync<ReadTestDataResponse>(request, null, "ReadPropertyValue", "D:\\work\\49\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskClientServiceClient\\TestData\\KioskClientServiceTestDataClient.cs");
 	}
 
 	public static async Task<APIResponse<WriteTestDataResponse>> WritePropertyValue(string category, string propertyName, string propertyValue)
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskClientServiceBaseClient.KioskClientServiceBaseUrl, $"{_controllerPrefix}/writepropertyvalue?category={category}&propertyName={propertyName}&propertyValue={propertyValue}", null, HttpMethod.Post);
-		return await service.SendRequestAsync<WriteTestDataResponse>(request, null, "WritePropertyValue", "D:\\work\\48\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskClientServiceClient\\TestData\\KioskClientServiceTestDataClient.cs");
+		return await service.SendRequestAsync<WriteTestDataResponse>(request, null, "WritePropertyValue", "D:\\work\\49\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskClientServiceClient\\TestData\\KioskClientServiceTestDataClient.cs");
 	}
 }

@@ -33,8 +33,6 @@ public class Configuration : IConfiguration
 
 	private string _welcomeScreenABTestVersion;
 
-	private string _welcomeScreenTimingABTestVersion;
-
 	private string _startViewAdABTestVersion;
 
 	private string _startViewRentAndBuyABTestVersion;
@@ -295,7 +293,7 @@ public class Configuration : IConfiguration
 
 	public string WelcomeScreenABTestVersion => GetCultureBasedValue(_welcomeScreenABTestVersion, "A");
 
-	public string WelcomeScreenTimingABTestVersion => GetCultureBasedValue(_welcomeScreenTimingABTestVersion, "A");
+	public string WelcomeScreenTimingABTestVersion { get; private set; }
 
 	public string StartViewAdABTestVersion => GetCultureBasedValue(_startViewAdABTestVersion, "A");
 
@@ -614,7 +612,7 @@ public class Configuration : IConfiguration
 		AwsFraudServicesUrl = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesUrl", null);
 		AwsFraudServicesKey = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesKey", null);
 		_welcomeScreenABTestVersion = GetABTestValue(service, "WelcomeScreen", "AB Testing");
-		_welcomeScreenTimingABTestVersion = GetABTestValue(service, "WelcomeScreenTiming", "AB Testing");
+		WelcomeScreenTimingABTestVersion = ConfigGetValue(service, "marketing", "AB Testing", "WelcomeScreenTiming", "A");
 		_startViewAdABTestVersion = GetABTestValue(service, "StartViewAd", "AB Testing");
 		_startViewRentAndBuyABTestVersion = GetABTestValue(service, "StartViewRentAndBuy", "AB Testing");
 		_priceFiltersOnBrowseABTestVersion = GetABTestValue(service, "PriceFiltersOnBrowse", "MarketingGeneral");

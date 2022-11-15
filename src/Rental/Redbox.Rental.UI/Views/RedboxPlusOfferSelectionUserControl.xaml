@@ -52,7 +52,7 @@
       </StackPanel>
       <StackPanel Name="tier2_offer_stack_panel" Grid.Column="1" Margin="50,0,0,0">
         <TextBlock Name="Tier2TitleText" Style="{StaticResource font_montserrat_bold_36}" Foreground="#FFFFFFFF" HorizontalAlignment="Center" Margin="0,0,0,0" Text="{Binding Tier2TitleText, FallbackValue=$19.99/Year}" />
-        <TextBlock Name="Tier2SubtitleText" Style="{StaticResource font_montserrat_medium_16}" Foreground="#fdba4d" HorizontalAlignment="Center" Margin="0,4,0,0" Text="{Binding Tier2SubtitleText, FallbackValue=Thats over $47 in value}" />
+        <TextBlock Name="Tier2SubtitleText" Style="{StaticResource font_montserrat_medium_16}" Foreground="#fdba4d" HorizontalAlignment="Center" Margin="0,4,0,0" Text="{Binding Tier2SubtitleText, FallbackValue=Thats over $50 in value}" />
         <Redbox:RoundedButton Name="Tier2AcceptButton" Style="{StaticResource white_button_style}" Width="292" Height="56" UsedDefaultCornerRadius="True" Margin="0,24,0,0" Command="{Binding Tier2AcceptButtonCommand}">
           <TextBlock Name="Tier2AcceptButtonText" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=Tier2AcceptButtonText, FallbackValue=VIEW DETAILS.}" />
         </Redbox:RoundedButton>

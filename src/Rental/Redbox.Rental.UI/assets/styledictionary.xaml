@@ -2937,6 +2937,20 @@
     <Setter Property="Redbox:RoundedButton.BackgroundGradientStartPoint" Value="0,1" />
     <Setter Property="Redbox:RoundedButton.BackgroundGradientEndPoint" Value="1,0" />
   </Style>
+  <Style x:Key="white_no_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource inactive_button_style}">
+    <Setter Property="Redbox:RoundedButton.BorderColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="White" />
+    <Setter Property="Foreground" Value="#792D8D" />
+  </Style>
+  <Style x:Key="white_no_background_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource inactive_button_style}">
+    <Setter Property="Redbox:RoundedButton.BorderColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="Black" />
+    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="Black" />
+    <Setter Property="Foreground" Value="#FFFFFFFF" />
+  </Style>
   <Style x:Key="no_browse_results" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_bryant_bold_30}">
     <Setter Property="Foreground" Value="#FFFFFFFF" />
     <Setter Property="Background" Value="#E42045" />
@@ -3845,10 +3859,20 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
-  <Style x:Key="button_light_large_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warm_purple_no_border_button_style}">
+  <Style x:Key="button_light_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warm_purple_no_border_button_style}">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style x:Key="button_light_medium_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_primary_style}">
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="24" />
+  </Style>
+  <Style x:Key="button_light_large_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_primary_style}">
     <Setter Property="Height" Value="56" />
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="28" />
-    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style x:Key="button_light_extra_large_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_primary_style}">
+    <Setter Property="Height" Value="72" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="36" />
   </Style>
   <Style x:Key="button_light_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warm_purple_no_background_button_style}">
     <Setter Property="BorderThickness" Value="3" />
@@ -3860,6 +3884,32 @@
   <Style x:Key="button_light_large_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_secondary_style}">
     <Setter Property="Height" Value="56" />
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="28" />
+  </Style>
+  <Style x:Key="button_light_extra_large_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_secondary_style}">
+    <Setter Property="Height" Value="72" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="36" />
+  </Style>
+  <Style x:Key="button_dark_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_no_border_button_style}">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style x:Key="button_dark_medium_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_dark_primary_style}">
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="24" />
+  </Style>
+  <Style x:Key="button_dark_extra_large_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_dark_primary_style}">
+    <Setter Property="Height" Value="72" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="36" />
+  </Style>
+  <Style x:Key="button_dark_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_no_background_button_style}">
+    <Setter Property="BorderThickness" Value="3" />
+  </Style>
+  <Style x:Key="button_dark_medium_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_dark_secondary_style}">
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="24" />
+  </Style>
+  <Style x:Key="button_dark_extra_large_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_dark_secondary_style}">
+    <Setter Property="Height" Value="72" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="36" />
   </Style>
   <Style x:Key="button_large_purchase_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource rubine_no_border_button_style}">
     <Setter Property="Height" Value="56" />

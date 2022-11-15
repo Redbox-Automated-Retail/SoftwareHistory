@@ -31,30 +31,12 @@ public partial class DisplayProductCarouselUserControl : UserControl, IComponent
 		AffectsRender = true
 	});
 
-	public static readonly DependencyProperty OpacityMaskStartXProperty = DependencyProperty.Register("OpacityMaskStartX", typeof(double), typeof(DisplayProductCarouselUserControl), new FrameworkPropertyMetadata(1.0, OpacityMaskStartXChanged)
+	public static readonly DependencyProperty ImageBorderThicknessProperty = DependencyProperty.Register("ImageBorderThickness", typeof(Thickness), typeof(DisplayProductCarouselUserControl), new FrameworkPropertyMetadata(new Thickness(0.0))
 	{
 		AffectsRender = true
 	});
 
-	public static readonly DependencyProperty OpacityMaskStartPointProperty = DependencyProperty.Register("OpacityMaskStartPoint", typeof(Point), typeof(DisplayProductCarouselUserControl), new FrameworkPropertyMetadata(new Point(1.0, 0.0))
-	{
-		AffectsRender = true
-	});
-
-	public static readonly DependencyProperty OpacityMaskEndPointProperty = DependencyProperty.Register("OpacityMaskEndPoint", typeof(Point), typeof(DisplayProductCarouselUserControl), new FrameworkPropertyMetadata(new Point(1.0, 0.0))
-	{
-		AffectsRender = true
-	});
-
-	public static readonly DependencyProperty OpacityMaskGradientOpaqueStopProperty = DependencyProperty.Register("OpacityMaskGradientOpaqueStop", typeof(double), typeof(DisplayProductCarouselUserControl), new FrameworkPropertyMetadata(0.0)
-	{
-		AffectsRender = true
-	});
-
-	public static readonly DependencyProperty OpacityMaskGradientTransparentStopProperty = DependencyProperty.Register("OpacityMaskGradientTransparentStop", typeof(double), typeof(DisplayProductCarouselUserControl), new FrameworkPropertyMetadata(0.0)
-	{
-		AffectsRender = true
-	});
+	public static readonly DependencyProperty ImageBorderColorProperty = DependencyProperty.Register("ImageBorderColor", typeof(Color), typeof(DisplayProductCarouselUserControl), new FrameworkPropertyMetadata(Colors.Gray));
 
 	private DisplayProductModel _displayProductModel;
 
@@ -106,94 +88,33 @@ public partial class DisplayProductCarouselUserControl : UserControl, IComponent
 		}
 	}
 
-	public double OpacityMaskStartX
+	public Thickness ImageBorderThickness
 	{
 		get
 		{
-			return (double)GetValue(OpacityMaskStartXProperty);
+			return (Thickness)GetValue(ImageBorderThicknessProperty);
 		}
 		set
 		{
-			SetValue(OpacityMaskStartXProperty, value);
+			SetValue(ImageBorderThicknessProperty, value);
 		}
 	}
 
-	public Point OpacityMaskStartPoint
+	public Color ImageBorderColor
 	{
 		get
 		{
-			return (Point)GetValue(OpacityMaskStartPointProperty);
+			return (Color)GetValue(ImageBorderColorProperty);
 		}
 		set
 		{
-			SetValue(OpacityMaskStartPointProperty, value);
-		}
-	}
-
-	public Point OpacityMaskEndPoint
-	{
-		get
-		{
-			return (Point)GetValue(OpacityMaskEndPointProperty);
-		}
-		set
-		{
-			SetValue(OpacityMaskEndPointProperty, value);
-		}
-	}
-
-	public double OpacityMaskGradientOpaqueStop
-	{
-		get
-		{
-			return (double)GetValue(OpacityMaskGradientOpaqueStopProperty);
-		}
-		set
-		{
-			SetValue(OpacityMaskGradientOpaqueStopProperty, value);
-		}
-	}
-
-	public double OpacityMaskGradientTransparentStop
-	{
-		get
-		{
-			return (double)GetValue(OpacityMaskGradientTransparentStopProperty);
-		}
-		set
-		{
-			SetValue(OpacityMaskGradientTransparentStopProperty, value);
+			SetValue(ImageBorderColorProperty, value);
 		}
 	}
 
 	public DisplayProductCarouselUserControl()
 	{
 		InitializeComponent();
-		ConfigureForLeftMove();
-	}
-
-	public void ConfigureForLeftMove()
-	{
-		OpacityMaskStartX = 1.0;
-		OpacityMaskGradientOpaqueStop = 0.0;
-		OpacityMaskGradientTransparentStop = 0.5;
-		OpacityMaskEndPoint = new Point(1.01, 0.0);
-	}
-
-	public void ConfigureForRightMove()
-	{
-		OpacityMaskStartX = 0.0;
-		OpacityMaskGradientOpaqueStop = 0.0;
-		OpacityMaskGradientTransparentStop = 0.5;
-		OpacityMaskEndPoint = new Point(-0.01, 0.0);
-	}
-
-	private static void OpacityMaskStartXChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-	{
-		if (d is DisplayProductCarouselUserControl displayProductCarouselUserControl)
-		{
-			displayProductCarouselUserControl.OpacityMaskStartPoint = new Point((double)e.NewValue, 0.0);
-		}
 	}
 
 	private void UserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -204,14 +125,5 @@ public partial class DisplayProductCarouselUserControl : UserControl, IComponent
 		{
 			MainGrid.Background = new SolidColorBrush(Colors.White);
 		}
-		else if (_displayProductModel != null && _displayProductModel.ADAMiniCartAddButtonVisibility == Visibility.Visible)
-		{
-			MainGrid.Background = new SolidColorBrush(Colors.Transparent);
-		}
-		UserControl_SizeChanged(null, null);
-	}
-
-	private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
-	{
 	}
 }

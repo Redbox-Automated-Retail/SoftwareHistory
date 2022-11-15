@@ -1,10 +1,8 @@
 using System;
-using System.IO;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
-using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Services;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Views;
@@ -50,35 +48,6 @@ public class ControlPanelFunctions
 		void remoteServiceCallback(IRemoteServiceResult result)
 		{
 			userData.AuthenticationResultCallback(result);
-		}
-	}
-
-	public static void UpdateMcafee()
-	{
-		string arg = (ServiceLocator.Instance.GetService<IDataService>()?.GetStore())?.Market?.MarketName.RemoveString(" ").Replace(",", "_").ToLower() ?? "unknownmarket";
-		string text = "c:\\Program Files\\McAfee\\Agent\\maconfig.exe";
-		string text2 = "c:\\Program Files\\McAfee\\Agent\\cmdagent.exe";
-		if (!File.Exists(text) || !File.Exists(text2))
-		{
-			LogHelper.Instance.Log($"UpdateMcafee - Forcing Reinstall. MarketName: {arg}");
-			string text3 = "C:\\Program Files\\Redbox\\Reds\\Installers\\FramePkg.exe";
-			if (File.Exists(text3))
-			{
-				string args = $"/install=agent /silent /forceinstall /CustomProps1={arg}";
-				ProcessFunctions.LaunchProcess(text3, args, hiddenProcess: true);
-			}
-			else
-			{
-				LogHelper.Instance.Log("UpdateMcafee - Unable to update Mcafee. Mcafee is not installed and there is no installer available.");
-			}
-		}
-		else
-		{
-			string arguments = $"-custom -prop1 {arg}";
-			string args2 = "–p";
-			LogHelper.Instance.Log($"UpdateMcafee - MarketName: {arg}");
-			ProcessFunctions.StartProcessWaitForExit(text, arguments, 20000);
-			ProcessFunctions.LaunchProcess(text2, args2, hiddenProcess: true);
 		}
 	}
 

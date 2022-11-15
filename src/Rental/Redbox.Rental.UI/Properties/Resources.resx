@@ -230,7 +230,7 @@ Your Redbox 1-night disc rentals will be available after trial.</value></data>
   <data name="faq_button" xml:space="preserve"><value>Rental FAQs</value></data>
   <data name="discount_label_points_and_redbox_plus_benefit_text" xml:space="preserve"><value>Points &amp; Redbox+ Benefit</value></data>
   <data name="four_k_uhd" xml:space="preserve"><value>4K UHD</value></data>
-  <data name="rbplus_offer_2_subtitle" xml:space="preserve"><value>That's over $47 in value!*</value></data>
+  <data name="rbplus_offer_2_subtitle" xml:space="preserve"><value>That's over $50 in value!*</value></data>
   <data name="pickup_uppercase" xml:space="preserve"><value>PICK UP</value></data>
   <data name="starz_offer_4_left_subtitle_2" xml:space="preserve"><value>Cancel anytime</value></data>
   <data name="perks_how_points_work_button_text" xml:space="preserve"><value>HOW POINTS WORK</value></data>
@@ -825,7 +825,7 @@ reading your card</value></data>
   <data name="starz_offer_2_bullet2" xml:space="preserve"><value>After first 3 months, $8.99/month + 2 FREE Redbox 1-night 
 disc rentals/month for the next 9 months = 18 in total*</value></data>
   <data name="starz_offer_2_bullet3" xml:space="preserve"><value>Cancel anytime</value></data>
-  <data name="redbox_plus_offer_selection_tier2_subtitle" xml:space="preserve"><value>That's over $47 in value!**</value></data>
+  <data name="redbox_plus_offer_selection_tier2_subtitle" xml:space="preserve"><value>That's over $50 in value!**</value></data>
   <data name="perks_level3_message" xml:space="preserve"><value>Woohoo – you're at the top!</value></data>
   <data name="keyboard_change_message" xml:space="preserve"><value>If your email has changed, let us know</value></data>
   <data name="redbox_plus_lead_generation_qr_code_image_url" xml:space="preserve"><value>https://www.redbox.com/redbox-plus?icamp=qrleadgen</value></data>
@@ -868,6 +868,7 @@ your card</value></data>
   <data name="apply_now_button_text" xml:space="preserve"><value>Apply Now</value></data>
   <data name="redbox_plus_already_used_tier2_message" xml:space="preserve"><value>Go to “BACK TO ALL MOVIES” to keep browsing</value></data>
   <data name="perks_popup_title" xml:space="preserve"><value>Your {0} Perks:</value></data>
+  <data name="start_view_pickup_button_text" xml:space="preserve"><value>Pickup</value></data>
   <data name="sign_in_thanks_text" xml:space="preserve"><value>Thanks for signing in</value></data>
   <data name="vending_disc_rentals_on_their_way_charged_once_message" xml:space="preserve"><value>Your card will only be charged once.</value></data>
   <data name="offer_info_free_rental_for_sign_up" xml:space="preserve"><value>Get a FREE 1-night DVD rental* for

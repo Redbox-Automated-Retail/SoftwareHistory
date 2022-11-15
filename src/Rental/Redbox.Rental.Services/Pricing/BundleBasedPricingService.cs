@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
-using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
@@ -15,9 +14,119 @@ public class BundleBasedPricingService : IBundleBasedPricingService
 {
 	private Store _store;
 
-	private string _pricingConfigName;
-
 	private IPricingSet _currentPricingSet;
+
+	private IPricingSet _bundleDefaultPricingSet = new PricingSet
+	{
+		PriceSetId = "1",
+		PriceRecords = new List<IPricingRecord>
+		{
+			new PricingRecord
+			{
+				TitleFamily = TitleFamily.Movies,
+				TitleType = TitleType.DVD,
+				InitialNight = 2.25m,
+				ExtraNight = 2.25m,
+				ExpirationPrice = 2.25m,
+				NonReturn = 36.00m,
+				NonReturnDays = 16m,
+				PromoValue = 2.25m,
+				PriceSetId = 1
+			},
+			new PricingRecord
+			{
+				TitleFamily = TitleFamily.Movies,
+				TitleType = TitleType.Bluray,
+				InitialNight = 2.25m,
+				ExtraNight = 2.25m,
+				ExpirationPrice = 2.25m,
+				NonReturn = 36.00m,
+				NonReturnDays = 16m,
+				PromoValue = 2.25m,
+				PriceSetId = 1
+			},
+			new PricingRecord
+			{
+				TitleFamily = TitleFamily.Games,
+				TitleType = TitleType.All,
+				InitialNight = 3.00m,
+				ExtraNight = 3.00m,
+				ExpirationPrice = 3.00m,
+				NonReturn = 66.00m,
+				NonReturnDays = 22m,
+				PromoValue = 3.00m,
+				PriceSetId = 1
+			},
+			new PricingRecord
+			{
+				TitleFamily = TitleFamily.Movies,
+				TitleType = TitleType._4KUHD,
+				InitialNight = 2.50m,
+				ExtraNight = 2.50m,
+				ExpirationPrice = 2.50m,
+				NonReturn = 40.00m,
+				NonReturnDays = 16m,
+				PromoValue = 2.50m,
+				PriceSetId = 1
+			}
+		}
+	};
+
+	private IPricingSet _bundleDefaultSCPricingSet = new PricingSet
+	{
+		PriceSetId = "410",
+		PriceRecords = new List<IPricingRecord>
+		{
+			new PricingRecord
+			{
+				TitleFamily = TitleFamily.Movies,
+				TitleType = TitleType.DVD,
+				InitialNight = 2.36m,
+				ExtraNight = 2.36m,
+				ExpirationPrice = 2.36m,
+				NonReturn = 37.76m,
+				NonReturnDays = 16m,
+				PromoValue = 2.36m,
+				PriceSetId = 410
+			},
+			new PricingRecord
+			{
+				TitleFamily = TitleFamily.Movies,
+				TitleType = TitleType.Bluray,
+				InitialNight = 2.36m,
+				ExtraNight = 2.36m,
+				ExpirationPrice = 2.36m,
+				NonReturn = 37.76m,
+				NonReturnDays = 16m,
+				PromoValue = 2.36m,
+				PriceSetId = 410
+			},
+			new PricingRecord
+			{
+				TitleFamily = TitleFamily.Games,
+				TitleType = TitleType.All,
+				InitialNight = 3.20m,
+				ExtraNight = 3.20m,
+				ExpirationPrice = 3.20m,
+				NonReturn = 70.40m,
+				NonReturnDays = 22m,
+				PromoValue = 3.20m,
+				PriceSetId = 410
+			},
+			new PricingRecord
+			{
+				TitleFamily = TitleFamily.Movies,
+				TitleType = TitleType._4KUHD,
+				InitialNight = 2.70m,
+				ExtraNight = 2.70m,
+				ExpirationPrice = 2.70m,
+				NonReturn = 43.20m,
+				NonReturnDays = 16m,
+				PromoValue = 2.70m,
+				PriceSetId = 410
+			}
+		}
+	};
 
 	public IPricingSet CurrentPriceSet => _currentPricingSet;
 
@@ -35,16 +144,15 @@ public class BundleBasedPricingService : IBundleBasedPricingService
 
 	public bool Reload()
 	{
-		GetPricingConfigName();
 		LogHelper.Instance.Log(">  Pricing Service Load...");
-		IPricingSet pricingSet = GetPricingSet(_pricingConfigName);
+		IPricingSet bundleDefaultPricingSet = GetBundleDefaultPricingSet();
 		bool result = false;
 		if (_currentPricingSet != null)
 		{
 			LogHelper.Instance.Log(">  Checking for price changes...");
-			result = !pricingSet.IsEqual(_currentPricingSet);
+			result = !bundleDefaultPricingSet.IsEqual(_currentPricingSet);
 		}
-		_currentPricingSet = pricingSet;
+		_currentPricingSet = bundleDefaultPricingSet;
 		return result;
 	}
 
@@ -110,63 +218,14 @@ public class BundleBasedPricingService : IBundleBasedPricingService
 		return result;
 	}
 
-	private IPricingSet GetPricingSet(string pricingConfigName)
+	private IPricingSet GetBundleDefaultPricingSet()
 	{
-		IPricingSet pricingSet = null;
-		List<Dictionary<string, object>> resourceTable = OrchestrationService.GetResourceTable(pricingConfigName);
-		if (resourceTable != null)
+		IPricingSet obj = ((Store?.State == "SC") ? _bundleDefaultSCPricingSet : _bundleDefaultPricingSet);
+		obj.PriceRecords.ForEach(delegate(IPricingRecord pricingRecord)
 		{
-			pricingSet = new PricingSet();
-			foreach (Dictionary<string, object> item in resourceTable)
-			{
-				IPricingRecord pricingRecord = new PricingRecord();
-				string stringValue = GetStringValue(item, "family");
-				if (Enum.TryParse<TitleFamily>(stringValue, ignoreCase: true, out var result))
-				{
-					pricingRecord.TitleFamily = result;
-					string text = GetStringValue(item, "type");
-					if (text == "*")
-					{
-						text = "All";
-					}
-					text = text?.Replace("-", string.Empty);
-					if (Enum.TryParse<TitleType>(text, ignoreCase: true, out var result2))
-					{
-						pricingRecord.TitleType = result2;
-						pricingRecord.InitialNight = GetDecimalValue(item, "initial_night");
-						pricingRecord.ExtraNight = GetDecimalValue(item, "extra_night");
-						pricingRecord.ExpirationPrice = GetDecimalValue(item, "expiration_price");
-						pricingRecord.NonReturnDays = GetDecimalValue(item, "non_return_days");
-						pricingRecord.PromoValue = GetDecimalValue(item, "promo_value");
-						if (Store?.State == "MD")
-						{
-							pricingRecord.NonReturn = Math.Round(pricingRecord.InitialNight * (Store.RentalTaxRate / 100m + 1m), 2) * pricingRecord.NonReturnDays;
-						}
-						else
-						{
-							pricingRecord.NonReturn = pricingRecord.InitialNight * pricingRecord.NonReturnDays;
-						}
-					}
-					else
-					{
-						LogHelper.Instance.Log("Error in BundleBasedPricingService.GetPricingSet.  Unable to parse TitleType {0} in pricingConfigName {1}", text, pricingConfigName);
-					}
-				}
-				else
-				{
-					LogHelper.Instance.Log("Error in BundleBasedPricingService.GetPricingSet.  Unable to parse TitleFamily {0} in pricingConfigName {1}", stringValue, pricingConfigName);
-				}
-				pricingSet.PriceRecords.Add(pricingRecord);
-			}
-			object priceSetId = OrchestrationService.GetResourceProperty(pricingConfigName, "price_set_id");
-			pricingSet.PriceRecords.ForEach(delegate(IPricingRecord x)
-			{
-				int result3 = 0;
-				x.PriceSetId = (int.TryParse(priceSetId?.ToString() ?? string.Empty, out result3) ? new int?(result3) : ((int?)null));
-			});
-			pricingSet.PriceSetId = priceSetId?.ToString();
-		}
-		return pricingSet;
+			pricingRecord.NonReturn = ((Store?.State == "MD") ? (Math.Round(pricingRecord.InitialNight * (Store.RentalTaxRate / 100m + 1m), 2) * pricingRecord.NonReturnDays) : (pricingRecord.InitialNight * pricingRecord.NonReturnDays));
+		});
+		return obj;
 	}
 
 	private string GetStringValue(Dictionary<string, object> values, string key)
@@ -187,26 +246,5 @@ public class BundleBasedPricingService : IBundleBasedPricingService
 			decimal.TryParse(value.ToString(), out result);
 		}
 		return result;
-	}
-
-	private void GetPricingConfigName()
-	{
-		LogHelper.Instance.Log(">  Looking for pricing configuration...");
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		_pricingConfigName = null;
-		service?.TryGetValue<string>("system", "General", "PricingTableName", out _pricingConfigName);
-		if (string.IsNullOrEmpty(_pricingConfigName))
-		{
-			_pricingConfigName = "pricing";
-			LogHelper.Instance.Log(">  Default to 'pricing' and standard pricing process...");
-			return;
-		}
-		LogHelper.Instance.Log(">  Found pricing configuration '{0}'", _pricingConfigName);
-		if (OrchestrationService.GetResourceTable(_pricingConfigName) == null)
-		{
-			LogHelper.Instance.Log(">  Pricing configuration file not found...");
-			_pricingConfigName = "pricing";
-			LogHelper.Instance.Log(">  Default to 'pricing' and standard pricing process...");
-		}
 	}
 }

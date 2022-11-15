@@ -18,6 +18,8 @@ public class StartViewModel : DependencyObject
 
 	public static readonly DependencyProperty BannerImageProperty = DependencyProperty.Register("BannerImage", typeof(BitmapImage), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty ExtraLargeButtonTextStyleProperty = DependencyProperty.Register("ExtraLargeButtonTextStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
 	public static readonly DependencyProperty AllMoviesButtonTextLine1Property = DependencyProperty.Register("AllMoviesButtonTextLine1", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty AllMoviesButtonTextLine2Property = DependencyProperty.Register("AllMoviesButtonTextLine2", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
@@ -51,6 +53,12 @@ public class StartViewModel : DependencyObject
 	public static readonly DependencyProperty AdaTurnedOnLabelTextProperty = DependencyProperty.Register("AdaTurnedOnLabelText", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty AdaTurnedOnLabelVisibilityProperty = DependencyProperty.Register("AdaTurnedOnLabelVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty AdaButtonStyleProperty = DependencyProperty.Register("AdaButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty AdaButtonImageSourceProperty = DependencyProperty.Register("AdaButtonImageSource", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty AdaButtonCheckmarkVisibilityProperty = DependencyProperty.Register("AdaButtonCheckmarkVisibility", typeof(Visibility), typeof(StartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
 	public static readonly DependencyProperty CarouselGridRowHeightProperty = DependencyProperty.Register("CarouselGridRowHeight", typeof(int), typeof(StartViewModel), new FrameworkPropertyMetadata(438));
 
@@ -93,6 +101,8 @@ public class StartViewModel : DependencyObject
 	public static readonly DependencyProperty UseTestStartViewProperty = DependencyProperty.Register("UseTestStartView", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
 
 	public static readonly DependencyProperty UseRentAndBuyTestStartViewProperty = DependencyProperty.Register("UseRentAndBuyTestStartView", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
+
+	public static readonly DependencyProperty UseScreenSaverStartViewProperty = DependencyProperty.Register("UseScreenSaverStartView", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
 
 	public static readonly DependencyProperty UseTestScreenSaverProperty = DependencyProperty.Register("UseTestScreenSaver", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
 
@@ -139,6 +149,20 @@ public class StartViewModel : DependencyObject
 	public static readonly DependencyProperty EspanolButtonStyleProperty = DependencyProperty.Register("EspanolButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty HelpButtonStyleProperty = DependencyProperty.Register("HelpButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MainGridBackgroundProperty = DependencyProperty.Register("MainGridBackground", typeof(Brush), typeof(StartViewModel), new FrameworkPropertyMetadata(Brushes.White));
+
+	public static readonly DependencyProperty ExtraLargePrimaryButtonStyleProperty = DependencyProperty.Register("ExtraLargePrimaryButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty AllMoviesButtonImageSourceProperty = DependencyProperty.Register("AllMoviesButtonImageSource", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty ExtraLargeSecondaryButtonStyleProperty = DependencyProperty.Register("ExtraLargeSecondaryButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty MediumSecondaryButtonStyleProperty = DependencyProperty.Register("MediumSecondaryButtonStyle", typeof(Style), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
+
+	public static readonly DependencyProperty IsBurnInViewProperty = DependencyProperty.Register("IsBurnInView", typeof(bool), typeof(StartViewModel), new FrameworkPropertyMetadata(false));
+
+	public static readonly DependencyProperty PressToStartButtonImageSourceProperty = DependencyProperty.Register("PressToStartButtonImageSource", typeof(string), typeof(StartViewModel), new FrameworkPropertyMetadata(null));
 
 	public bool BurnInModeEnabled { get; set; }
 
@@ -187,6 +211,21 @@ public class StartViewModel : DependencyObject
 		}
 	}
 
+	public bool UseScreenSaverStartView
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(UseScreenSaverStartViewProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(UseScreenSaverStartViewProperty, value);
+			});
+		}
+	}
+
 	public bool UseTestScreenSaver
 	{
 		get
@@ -213,6 +252,21 @@ public class StartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(IsReturnOnlyModeProperty, value);
+			});
+		}
+	}
+
+	public Style ExtraLargeButtonTextStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(ExtraLargeButtonTextStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ExtraLargeButtonTextStyleProperty, value);
 			});
 		}
 	}
@@ -742,6 +796,51 @@ public class StartViewModel : DependencyObject
 		}
 	}
 
+	public Style AdaButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(AdaButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AdaButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public string AdaButtonImageSource
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(AdaButtonImageSourceProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AdaButtonImageSourceProperty, value);
+			});
+		}
+	}
+
+	public Visibility AdaButtonCheckmarkVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AdaButtonCheckmarkVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AdaButtonCheckmarkVisibilityProperty, value);
+			});
+		}
+	}
+
 	public int CarouselGridRowHeight
 	{
 		get
@@ -1098,6 +1197,111 @@ public class StartViewModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(HelpButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public Brush MainGridBackground
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Brush)GetValue(MainGridBackgroundProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MainGridBackgroundProperty, value);
+			});
+		}
+	}
+
+	public Style ExtraLargePrimaryButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(ExtraLargePrimaryButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ExtraLargePrimaryButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public string AllMoviesButtonImageSource
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(AllMoviesButtonImageSourceProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(AllMoviesButtonImageSourceProperty, value);
+			});
+		}
+	}
+
+	public Style ExtraLargeSecondaryButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(ExtraLargeSecondaryButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(ExtraLargeSecondaryButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public Style MediumSecondaryButtonStyle
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Style)GetValue(MediumSecondaryButtonStyleProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(MediumSecondaryButtonStyleProperty, value);
+			});
+		}
+	}
+
+	public bool IsBurnInView
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(IsBurnInViewProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(IsBurnInViewProperty, value);
+			});
+		}
+	}
+
+	public string PressToStartButtonImageSource
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(PressToStartButtonImageSourceProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(PressToStartButtonImageSourceProperty, value);
 			});
 		}
 	}

@@ -24,10 +24,4 @@ public static class ControlPanelFunctions
 		OrchestrationService.RegisterViewDefinitions();
 		Redbox.ControlPanel.UI.ControlPanelFunctions.ShowLogin();
 	}
-
-	[KernelFunction(Name = "kernel.update_mcafee")]
-	internal static void UpdateMcaffee()
-	{
-		Redbox.ControlPanel.UI.ControlPanelFunctions.UpdateMcafee();
-	}
 }

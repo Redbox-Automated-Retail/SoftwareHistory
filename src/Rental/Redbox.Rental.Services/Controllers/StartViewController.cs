@@ -132,25 +132,27 @@ public class StartViewController : BaseViewController
 
 	private static IAdService AdService => ServiceLocator.Instance.GetService<IAdService>();
 
-	private static string ABTestVersion => Redbox.Rental.Services.Configuration.Configuration.Instance.WelcomeScreenABTestVersion;
-
 	private static string WelcomeScreenTimingABTestVersion => Redbox.Rental.Services.Configuration.Configuration.Instance.WelcomeScreenTimingABTestVersion;
 
-	private static string StartViewAdABTestVersion => Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewAdABTestVersion;
-
-	private static string StartViewRentAndBuyABTestVersion => Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion;
+	private static bool IsScreenSaverStartView
+	{
+		get
+		{
+			if (!(WelcomeScreenTimingABTestVersion == "C"))
+			{
+				return WelcomeScreenTimingABTestVersion == "D";
+			}
+			return true;
+		}
+	}
 
 	private static bool IsTestCarouselSelected
 	{
 		get
 		{
-			if (!(ABTestVersion == "C") && !(ABTestVersion == "D") && !(StartViewAdABTestVersion != "A"))
+			if (!(WelcomeScreenTimingABTestVersion == "C"))
 			{
-				if (StartViewRentAndBuyABTestVersion != "A" && StartViewRentAndBuyABTestVersion != "F" && StartViewRentAndBuyABTestVersion != "G")
-				{
-					return StartViewRentAndBuyABTestVersion != "H";
-				}
-				return false;
+				return WelcomeScreenTimingABTestVersion == "D";
 			}
 			return true;
 		}
@@ -162,15 +164,13 @@ public class StartViewController : BaseViewController
 	{
 		get
 		{
-			if (!(ABTestVersion == "B") && !(ABTestVersion == "D"))
+			if (!(WelcomeScreenTimingABTestVersion == "B"))
 			{
-				return WelcomeScreenTimingABTestVersion == "B";
+				return WelcomeScreenTimingABTestVersion == "D";
 			}
 			return true;
 		}
 	}
-
-	private static bool IsClassicScreenSaverSelected => !IsTestScreenSaverSelected;
 
 	private static bool UseContactless
 	{
@@ -224,30 +224,29 @@ public class StartViewController : BaseViewController
 				TurnAdaOff();
 			}
 			ConfigureCarousel(startViewModel);
-			startViewModel.UseTestScreenSaver = false;
-			startViewModel.ScreenSaverModel.IsAnimationOn = false;
-			if (IsTestCarouselSelected && !startViewModel.IsReturnOnlyMode)
+			if (IsScreenSaverStartView)
 			{
-				if (StartViewRentAndBuyABTestVersion == "D" || StartViewRentAndBuyABTestVersion == "E")
-				{
-					startViewModel.UseRentAndBuyTestStartView = true;
-					startViewModel.UseTestStartView = false;
-				}
-				else
-				{
-					startViewModel.UseRentAndBuyTestStartView = false;
-					startViewModel.UseTestStartView = true;
-				}
 				startViewModel.UseClassicStartView = false;
+				startViewModel.UseScreenSaverStartView = true;
 				startViewModel.CarouselModel.IsAnimationOn = false;
+				startViewModel.CarouselTestModel.IsAnimationOn = true;
 			}
 			else
 			{
-				startViewModel.UseRentAndBuyTestStartView = false;
-				startViewModel.UseTestStartView = false;
 				startViewModel.UseClassicStartView = true;
+				startViewModel.UseScreenSaverStartView = false;
 				startViewModel.CarouselModel.IsAnimationOn = true;
+				startViewModel.CarouselTestModel.IsAnimationOn = false;
 			}
+			startViewModel.UseTestStartView = false;
+			startViewModel.UseRentAndBuyTestStartView = false;
+			if (startViewModel.IsReturnOnlyMode)
+			{
+				startViewModel.CarouselModel.IsAnimationOn = false;
+				startViewModel.CarouselTestModel.IsAnimationOn = false;
+			}
+			startViewModel.UseTestScreenSaver = false;
+			startViewModel.ScreenSaverModel.IsAnimationOn = false;
 			startViewUserControl.DataContext = startViewModel;
 			CommandManager.InvalidateRequerySuggested();
 			startViewModel?.AdImpression?.Start();
@@ -615,7 +614,7 @@ public class StartViewController : BaseViewController
 			SetCultureSpecificText(startViewModel, startViewUserControl, flag);
 			IStoreManager service2 = ServiceLocator.Instance.GetService<IStoreManager>();
 			bool flag4 = service2.CanSellUsedMovies && service2.PurchasePrice > 0m;
-			bool flag5 = StartViewRentAndBuyABTestVersion == "G" || StartViewRentAndBuyABTestVersion == "H";
+			bool flag5 = false;
 			startViewModel.RentMoviesGamesTextVisibility = (flag5 ? Visibility.Collapsed : Visibility.Visible);
 			startViewModel.RentAndBuyMoviesGamesTextVisibility = ((!flag5) ? Visibility.Collapsed : Visibility.Visible);
 			startViewModel.BuyMoviesOrGamesButtonVisibility = ((!flag4 || flag2 || flag5) ? Visibility.Collapsed : Visibility.Visible);
@@ -634,6 +633,7 @@ public class StartViewController : BaseViewController
 			startViewModel.BuyGamesEnabled = buyGamesEnabled;
 			startViewModel.BuyMoviesEnabled = buyMoviesEnabled;
 			ServiceLocator.Instance.GetService<IMacroService>()["Start:BuyMoviesOrGames"] = "Movies" + (service2.CanSellUsedGames ? " and Games" : string.Empty);
+			startViewModel.AdaButtonCheckmarkVisibility = ((!BaseViewController.ApplicationState.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
 			SetSignInButtonVisibility(startViewModel);
 			if (IsDarkMode)
 			{
@@ -650,7 +650,7 @@ public class StartViewController : BaseViewController
 	{
 		IPersonalizationService service = ServiceLocator.Instance.GetService<IPersonalizationService>();
 		bool flag = !startViewModel.IsReturnOnlyMode && (service?.IsEarlyIdEnabled ?? false);
-		bool flag2 = IsTestCarouselSelected && !(StartViewRentAndBuyABTestVersion == "D") && !(StartViewRentAndBuyABTestVersion == "E");
+		bool flag2 = false;
 		bool flag3 = flag && (!BaseViewController.ApplicationState.IsADAAccessible || !flag2);
 		startViewModel.SignInVisibility = ((!flag3) ? Visibility.Collapsed : Visibility.Visible);
 		startViewModel.SignInButtonTooltipVisibility = ((!flag3 || PersonalizationFunctions.IsSignedIn) ? Visibility.Collapsed : Visibility.Visible);
@@ -671,6 +671,14 @@ public class StartViewController : BaseViewController
 		startViewModel.EspanolButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "white_warmpurple_border_button_style");
 		startViewModel.HelpButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "white_warmpurple_border_button_style");
 		startViewModel.KioskClosingMessageForeground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(72, 27, 84));
+		startViewModel.MainGridBackground = System.Windows.Media.Brushes.White;
+		startViewModel.ExtraLargePrimaryButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_light_extra_large_primary_style");
+		startViewModel.AllMoviesButtonImageSource = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Movie Icon white.png";
+		startViewModel.ExtraLargeSecondaryButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_light_extra_large_secondary_style");
+		startViewModel.AdaButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_light_medium_secondary_style");
+		startViewModel.AdaButtonImageSource = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Handicapped Icon purple.png";
+		startViewModel.MediumSecondaryButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_light_medium_secondary_style");
+		startViewModel.PressToStartButtonImageSource = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Hand white.png";
 	}
 
 	private static void SetDarkMode(StartViewModel startViewModel, FrameworkElement startViewUserControl)
@@ -686,6 +694,14 @@ public class StartViewController : BaseViewController
 		startViewModel.EspanolButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "black_with_white_border_button_style");
 		startViewModel.HelpButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "black_with_white_border_button_style");
 		startViewModel.KioskClosingMessageForeground = System.Windows.Media.Brushes.White;
+		startViewModel.MainGridBackground = System.Windows.Media.Brushes.Black;
+		startViewModel.ExtraLargePrimaryButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_dark_extra_large_primary_style");
+		startViewModel.AllMoviesButtonImageSource = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Movie Icon purple.png";
+		startViewModel.ExtraLargeSecondaryButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_dark_extra_large_secondary_style");
+		startViewModel.AdaButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_dark_medium_secondary_style");
+		startViewModel.AdaButtonImageSource = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Handicapped Icon white.png";
+		startViewModel.MediumSecondaryButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_dark_medium_secondary_style");
+		startViewModel.PressToStartButtonImageSource = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Hand purple.png";
 	}
 
 	private static void ConfigureScreenSaver(StartViewModel startViewModel)
@@ -698,7 +714,6 @@ public class StartViewController : BaseViewController
 			GoToStartViewFromScreenSaver();
 		});
 		marketingScreenSaverModel.ImageModels = ConfigureScreenSaverImages(welcomeScreenAssets);
-		marketingScreenSaverModel.WelcomeScreenTimingABTestVersion = WelcomeScreenTimingABTestVersion;
 		marketingScreenSaverModel.OnLeaveLastImage = delegate
 		{
 			GoToStartViewFromScreenSaverLastImage(startViewModel);
@@ -723,7 +738,7 @@ public class StartViewController : BaseViewController
 				});
 			});
 		}
-		else if (WelcomeScreenTimingABTestVersion == "B")
+		else if (IsTestScreenSaverSelected)
 		{
 			imageList.Add(new ClickableImageModel
 			{
@@ -852,7 +867,6 @@ public class StartViewController : BaseViewController
 		{
 			startViewModel.CarouselModel.TitleRollupOverlayModel.Visibility = Visibility.Collapsed;
 			startViewModel.CarouselModel.IsAnimationOn = IsClassicCarouselSelected;
-			startViewModel.CarouselTestModel.IsAnimationOn = IsTestCarouselSelected;
 		}
 	}
 
@@ -924,13 +938,13 @@ public class StartViewController : BaseViewController
 		string text = null;
 		StartViewBannerType startViewBannerType = StartViewBannerType.none;
 		BitmapImage bitmapImage = null;
-		bool flag3 = ABTestVersion != "C" && ABTestVersion != "D" && StartViewAdABTestVersion != "B";
-		bool flag4 = StartViewAdABTestVersion == "C";
-		bool flag5 = StartViewRentAndBuyABTestVersion != "A" && StartViewRentAndBuyABTestVersion != "F" && StartViewRentAndBuyABTestVersion != "G" && StartViewRentAndBuyABTestVersion != "H";
+		bool flag3 = true;
+		bool flag4 = false;
+		bool flag5 = true;
 		bool flag6 = flag3 | flag4 | flag5;
 		if ((!BaseViewController.ApplicationState.IsADAAccessible && AdService != null) & flag6)
 		{
-			AdLocation adLocation = ((!(StartViewAdABTestVersion == "C")) ? AdLocation.Welcome : AdLocation.TitleDetail);
+			AdLocation adLocation = AdLocation.Welcome;
 			IAd ad = AdService?.GetScreenAd(adLocation);
 			if (ad != null)
 			{
@@ -1034,33 +1048,69 @@ public class StartViewController : BaseViewController
 	{
 		ITimerService timerService = ServiceLocator.Instance.GetService<ITimerService>();
 		IIdleTimer burnInIdleTimer = IdleTimerService?.CreateIdleTimer(Constants.BurnInIdleTimerName);
-		int timeout = ((!IsTestScreenSaverSelected || startViewModel.IsReturnOnlyMode) ? Redbox.Rental.Services.Configuration.Configuration.Instance.BurnInTimeout : Redbox.Rental.Services.Configuration.Configuration.Instance.ScreenSaverTimeout);
+		int timeout = (IsTestScreenSaverSelected ? Redbox.Rental.Services.Configuration.Configuration.Instance.ScreenSaverTimeout : Redbox.Rental.Services.Configuration.Configuration.Instance.BurnInTimeout);
+		if (startViewModel.IsReturnOnlyMode)
+		{
+			timeout = Redbox.Rental.Services.Configuration.Configuration.Instance.BurnInTimeout;
+		}
 		burnInIdleTimer.Initialize(timeout, delegate
 		{
 			burnInIdleTimer.Stop();
-			startViewModel.BurnInVisibility = Visibility.Collapsed;
-			startViewModel.UseTestStartView = false;
-			startViewModel.UseRentAndBuyTestStartView = false;
 			if (IsTestScreenSaverSelected)
 			{
 				MarketingScreenSaverModel screenSaverModel = startViewModel.ScreenSaverModel;
-				if (screenSaverModel != null)
+				if (screenSaverModel != null && screenSaverModel.ImageModels?.Count > 0)
 				{
-					int? num = screenSaverModel.ImageModels?.Count;
-					int num2 = 0;
-					if (num.GetValueOrDefault() > num2 && num.HasValue && !startViewModel.IsReturnOnlyMode)
-					{
-						startViewModel.UseTestScreenSaver = true;
-						startViewModel.ScreenSaverModel.IsAnimationOn = true;
-						startViewModel.UseClassicStartView = false;
-						return;
-					}
+					startViewModel.UseClassicStartView = false;
+					startViewModel.UseScreenSaverStartView = false;
+					startViewModel.CarouselModel.IsAnimationOn = false;
+					startViewModel.CarouselTestModel.IsAnimationOn = false;
+					startViewModel.UseTestScreenSaver = true;
+					startViewModel.ScreenSaverModel.IsAnimationOn = true;
+					goto IL_016f;
 				}
 			}
+			if (IsScreenSaverStartView)
+			{
+				startViewModel.UseClassicStartView = false;
+				startViewModel.UseScreenSaverStartView = true;
+				startViewModel.CarouselModel.IsAnimationOn = false;
+				startViewModel.CarouselTestModel.IsAnimationOn = true;
+			}
+			else
+			{
+				startViewModel.UseClassicStartView = true;
+				startViewModel.UseScreenSaverStartView = false;
+				startViewModel.CarouselModel.IsAnimationOn = true;
+				startViewModel.CarouselTestModel.IsAnimationOn = false;
+			}
 			startViewModel.UseTestScreenSaver = false;
-			startViewModel.UseClassicStartView = true;
-			startViewModel.CarouselModel.IsAnimationOn = true;
+			startViewModel.ScreenSaverModel.IsAnimationOn = false;
 			timerService.GetTimer(Constants.BurnInViewDurationTimerName)?.Start();
+			goto IL_016f;
+			IL_016f:
+			startViewModel.UseTestStartView = false;
+			startViewModel.UseRentAndBuyTestStartView = false;
+			startViewModel.IsBurnInView = true;
+			startViewModel.BurnInVisibility = Visibility.Collapsed;
+			if (startViewModel.IsReturnOnlyMode)
+			{
+				if (IsScreenSaverStartView)
+				{
+					startViewModel.UseClassicStartView = false;
+					startViewModel.UseScreenSaverStartView = true;
+				}
+				else
+				{
+					startViewModel.UseClassicStartView = true;
+					startViewModel.UseScreenSaverStartView = false;
+				}
+				startViewModel.CarouselModel.IsAnimationOn = false;
+				startViewModel.CarouselTestModel.IsAnimationOn = false;
+				startViewModel.UseTestScreenSaver = false;
+				startViewModel.ScreenSaverModel.IsAnimationOn = false;
+				timerService.GetTimer(Constants.BurnInViewDurationTimerName)?.Start();
+			}
 		});
 		burnInIdleTimer.Start();
 		Action turnOffBurnInView = delegate
@@ -1077,30 +1127,31 @@ public class StartViewController : BaseViewController
 					SetLightMode(startViewModel, startViewUserControl);
 				}
 			}
-			startViewModel.BurnInVisibility = Visibility.Visible;
-			startViewModel.UseTestScreenSaver = false;
-			if (IsTestCarouselSelected && !startViewModel.IsReturnOnlyMode)
+			if (IsScreenSaverStartView)
 			{
 				startViewModel.UseClassicStartView = false;
-				if (StartViewRentAndBuyABTestVersion == "D" || StartViewRentAndBuyABTestVersion == "E")
-				{
-					startViewModel.UseRentAndBuyTestStartView = true;
-					startViewModel.UseTestStartView = false;
-				}
-				else
-				{
-					startViewModel.UseRentAndBuyTestStartView = false;
-					startViewModel.UseTestStartView = true;
-				}
+				startViewModel.UseScreenSaverStartView = true;
 				startViewModel.CarouselModel.IsAnimationOn = false;
+				startViewModel.CarouselTestModel.IsAnimationOn = true;
 			}
 			else
 			{
 				startViewModel.UseClassicStartView = true;
-				startViewModel.UseTestStartView = false;
-				startViewModel.UseRentAndBuyTestStartView = false;
+				startViewModel.UseScreenSaverStartView = false;
 				startViewModel.CarouselModel.IsAnimationOn = true;
+				startViewModel.CarouselTestModel.IsAnimationOn = false;
 			}
+			startViewModel.UseTestStartView = false;
+			startViewModel.UseRentAndBuyTestStartView = false;
+			startViewModel.IsBurnInView = false;
+			startViewModel.BurnInVisibility = Visibility.Visible;
+			if (startViewModel.IsReturnOnlyMode)
+			{
+				startViewModel.CarouselModel.IsAnimationOn = false;
+				startViewModel.CarouselTestModel.IsAnimationOn = false;
+			}
+			startViewModel.UseTestScreenSaver = false;
+			startViewModel.ScreenSaverModel.IsAnimationOn = false;
 			timerService.GetTimer(Constants.BurnInViewDurationTimerName)?.Stop();
 			burnInIdleTimer.Start();
 		};
@@ -1156,11 +1207,27 @@ public class StartViewController : BaseViewController
 		BaseViewController.ApplicationState.IsADAAccessible = adaEnabled;
 		LogHelper.Instance.Log("ADA mode turned {0}.", BaseViewController.ApplicationState.IsADAAccessible ? "On" : "Off");
 		StartViewModel startViewModelFromView = GetStartViewModelFromView();
-		if (startViewModelFromView != null)
+		if (startViewModelFromView == null)
 		{
-			startViewModelFromView.AdaTurnedOnLabelVisibility = ((!adaEnabled) ? Visibility.Collapsed : Visibility.Visible);
-			SetSignInButtonVisibility(startViewModelFromView);
+			return;
 		}
+		startViewModelFromView.AdaTurnedOnLabelVisibility = ((!adaEnabled) ? Visibility.Collapsed : Visibility.Visible);
+		FrameworkElement startViewUserControl = GetStartViewUserControl();
+		if (startViewUserControl != null)
+		{
+			if (IsDarkMode)
+			{
+				startViewModelFromView.AdaButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_dark_medium_secondary_style");
+				startViewModelFromView.AdaButtonImageSource = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Handicapped Icon white.png";
+			}
+			else
+			{
+				startViewModelFromView.AdaButtonStyle = WPFFunctions.GetStyle(startViewUserControl, "button_light_medium_secondary_style");
+				startViewModelFromView.AdaButtonImageSource = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Handicapped Icon purple.png";
+			}
+		}
+		startViewModelFromView.AdaButtonCheckmarkVisibility = ((!adaEnabled) ? Visibility.Collapsed : Visibility.Visible);
+		SetSignInButtonVisibility(startViewModelFromView);
 	}
 
 	private static StartViewModel GetStartViewModelFromView()
@@ -1212,16 +1279,17 @@ public class StartViewController : BaseViewController
 		carouselModel.CarouselDisplayProductModels = list2;
 		CarouselTestModel carouselTestModel = new CarouselTestModel();
 		carouselTestModel.OnDisplayProductModelSelected += CarouselModel_OnDisplayProductModelSelected;
-		carouselTestModel.OnAddDisplayProductModel += CarouselModel_OnAddDisplayProductModel;
 		carouselTestModel.CarouselDisplayProductModels = list2;
 		carouselModel.IsAnimationOn = IsClassicCarouselSelected && !startViewModel.IsReturnOnlyMode;
 		carouselTestModel.IsAnimationOn = IsTestCarouselSelected && !startViewModel.IsReturnOnlyMode;
-		carouselTestModel.IsStartViewAdABTest = StartViewAdABTestVersion == "C" || (StartViewRentAndBuyABTestVersion != "A" && StartViewRentAndBuyABTestVersion != "F" && StartViewRentAndBuyABTestVersion != "G" && StartViewRentAndBuyABTestVersion != "H");
+		carouselTestModel.IsStartViewAdABTest = false;
+		carouselTestModel.IsScreenSaverStartView = IsScreenSaverStartView;
+		carouselTestModel.IsDarkMode = IsDarkMode;
 		if (startViewModel != null)
 		{
 			startViewModel.CarouselModel = carouselModel;
 			startViewModel.CarouselTestModel = carouselTestModel;
-			startViewModel.CarouselGridRowHeight = ((StartViewAdABTestVersion == "C" || (StartViewRentAndBuyABTestVersion != "A" && StartViewRentAndBuyABTestVersion != "F" && StartViewRentAndBuyABTestVersion != "G" && StartViewRentAndBuyABTestVersion != "H")) ? 340 : 438);
+			startViewModel.CarouselGridRowHeight = 438;
 			bool flag = (startViewModel?.CarouselModel?.CarouselDisplayProductModels?.Count ?? 0) >= Constants.MinimumCarouselItems;
 			startViewModel.LoadingTitlesImageVisibility = ((startViewModel.IsReturnOnlyMode | flag) ? Visibility.Collapsed : Visibility.Visible);
 		}
@@ -1443,14 +1511,15 @@ public class StartViewController : BaseViewController
 		ServiceLocator.Instance.GetService<IStoreManager>();
 		if (IsTestCarouselSelected)
 		{
-			bool flag = StartViewRentAndBuyABTestVersion == "D" || StartViewRentAndBuyABTestVersion == "E";
-			startViewModel.AllMoviesButtonTextLine1 = (flag ? Resources.start_view_rent_and_buy_movies_button : Resources.movie_button_rent_label);
+			bool flag = false;
+			startViewModel.ExtraLargeButtonTextStyle = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "button_text_medium_style" : "button_text_large_style");
+			startViewModel.AllMoviesButtonTextLine1 = (IsScreenSaverStartView ? string.Format($"{Resources.movie_button_rent_label} {Resources.Alt_StartView_Movies}") : (flag ? Resources.start_view_rent_and_buy_movies_button : Resources.movie_button_rent_label));
 			startViewModel.AllMoviesButtonTextLine2 = (flag ? Resources.start_view_rent_and_buy_button : Resources.Alt_StartView_Movies);
-			startViewModel.PickUpButtonText = Resources.pickup;
+			startViewModel.PickUpButtonText = (IsScreenSaverStartView ? Resources.start_view_pickup_button_text.ToUpper() : Resources.pickup);
 			startViewModel.ReturnButtonText = Resources.return_button_label;
 			startViewModel.ToggleLanguageButtonText = (flag ? Resources.start_view_rent_and_buy_toggle_language_button : Resources.toggle_language_button_label);
 			startViewModel.BurnInViewLabelText = Resources.burn_in_view_label;
-			startViewModel.BuyMoviesOrGamesButtonTextLine1 = Resources.buy_movies_or_games_line1;
+			startViewModel.BuyMoviesOrGamesButtonTextLine1 = (IsScreenSaverStartView ? Resources.buy_movies_button_text : Resources.buy_movies_or_games_line1);
 			startViewModel.BuyMoviesOrGamesButtonTextLine2 = Resources.buy_movies_or_games_line2;
 			startViewModel.BuyGamesButtonTextLine1 = Resources.buy_games_line1;
 			startViewModel.BuyGamesButtonTextLine2 = Resources.buy_games_line2;

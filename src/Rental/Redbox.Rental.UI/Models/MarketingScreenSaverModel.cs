@@ -14,8 +14,6 @@ public class MarketingScreenSaverModel : BaseModel<MarketingScreenSaverModel>
 
 	public DynamicRoutedCommand BrowseCommand { get; set; }
 
-	public string WelcomeScreenTimingABTestVersion { get; set; }
-
 	public string StartButtonText { get; set; }
 
 	public bool IsAnimationOn

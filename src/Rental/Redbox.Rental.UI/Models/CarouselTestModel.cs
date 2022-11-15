@@ -8,11 +8,13 @@ public class CarouselTestModel : DependencyObject
 {
 	public static readonly DependencyProperty CarouselProductsProperty = DependencyProperty.Register("CarouselProducts", typeof(List<DisplayProductModel>), typeof(CarouselTestModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty TitleRollupOverlayModelProperty = DependencyProperty.Register("TitleRollupOverlayModel", typeof(TitleRollupOverlayModel), typeof(CarouselTestModel), new FrameworkPropertyMetadata(null));
-
 	public static readonly DependencyProperty IsAnimationOnProperty = DependencyProperty.Register("IsAnimationOn", typeof(bool), typeof(CarouselTestModel), new FrameworkPropertyMetadata(true, OnIsAnimationOnPropertyChanged));
 
 	public static readonly DependencyProperty IsStartViewAdABTestProperty = DependencyProperty.Register("IsStartViewAdABTest", typeof(bool), typeof(CarouselTestModel), new FrameworkPropertyMetadata(false));
+
+	public static readonly DependencyProperty IsScreenSaverStartViewProperty = DependencyProperty.Register("IsScreenSaverStartView", typeof(bool), typeof(CarouselTestModel), new FrameworkPropertyMetadata(false));
+
+	public static readonly DependencyProperty IsDarkModeProperty = DependencyProperty.Register("IsDarkMode", typeof(bool), typeof(CarouselTestModel), new FrameworkPropertyMetadata(false));
 
 	public List<DisplayProductModel> CarouselDisplayProductModels
 	{
@@ -25,21 +27,6 @@ public class CarouselTestModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(CarouselProductsProperty, value);
-			});
-		}
-	}
-
-	public TitleRollupOverlayModel TitleRollupOverlayModel
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (TitleRollupOverlayModel)GetValue(TitleRollupOverlayModelProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(TitleRollupOverlayModelProperty, value);
 			});
 		}
 	}
@@ -74,21 +61,41 @@ public class CarouselTestModel : DependencyObject
 		}
 	}
 
+	public bool IsScreenSaverStartView
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(IsScreenSaverStartViewProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(IsScreenSaverStartViewProperty, value);
+			});
+		}
+	}
+
+	public bool IsDarkMode
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (bool)GetValue(IsDarkModeProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(IsDarkModeProperty, value);
+			});
+		}
+	}
+
 	public event BrowseItemModelEvent OnCarouselRotation;
 
 	public event BrowseItemModelEvent OnDisplayProductModelSelected;
 
-	public event BrowseItemModelEvent OnAddDisplayProductModel;
-
 	public event Action<CarouselTestModel> OnIsAnimationOnChanged;
-
-	public void ProcessAddDisplayProductModel(DisplayProductModel displayProductModel, object parameter)
-	{
-		if (OnAddDisplayProductModel != null)
-		{
-			OnAddDisplayProductModel(displayProductModel, parameter);
-		}
-	}
 
 	public void ProcessCarouselRotation(DisplayProductModel displayProductModel, object parameter)
 	{
