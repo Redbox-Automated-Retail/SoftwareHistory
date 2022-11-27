@@ -8,7 +8,7 @@ namespace Redbox.NetCore.Logging.Extensions;
 
 public static class IServiceCollectionExtensions
 {
-	private class TestableLogger<T> : ITestableLogger<T>, ILogger<T>, ILogger, ITestableLogger
+	private class TestableLogger<T> : ITestableLogger<T>
 	{
 		private readonly ILogger<T> _logger;
 
@@ -139,7 +139,7 @@ public static class IServiceCollectionExtensions
 
 		public void LogDebugWithSource(string message, [CallerMemberName] string memberName = "", [CallerFilePath] string callerLocation = "")
 		{
-			_logger.LogDebugWithSource(message, memberName, callerLocation);
+			_logger.LogDebug(message, memberName, callerLocation);
 		}
 
 		public void LogErrorWithSource(Exception ex, string message, [CallerMemberName] string memberName = "", [CallerFilePath] string callerLocation = "")
@@ -170,21 +170,6 @@ public static class IServiceCollectionExtensions
 		public void LogWarningWithSource(string message, [CallerMemberName] string memberName = "", [CallerFilePath] string callerLocation = "")
 		{
 			_logger.LogWarningWithSource(message, memberName, callerLocation);
-		}
-
-		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-		{
-			_logger.Log(logLevel, eventId, state, exception, formatter);
-		}
-
-		public bool IsEnabled(LogLevel logLevel)
-		{
-			return _logger.IsEnabled(logLevel);
-		}
-
-		public IDisposable BeginScope<TState>(TState state)
-		{
-			return _logger.BeginScope(state);
 		}
 	}
 

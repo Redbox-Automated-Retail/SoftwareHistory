@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Redbox.NetCore.Logging.Extensions;
-using Redbox.NetCore.Middleware.Http;
 
 namespace UpdateClientService.API.Services;
 
@@ -17,6 +17,10 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	private readonly ILogger<PersistentDataCacheService> _logger;
 
 	private readonly IStoreService _storeService;
+
+	private static SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+
+	private const int _lockWait = 2000;
 
 	private readonly ConcurrentDictionary<string, object> _cache = new ConcurrentDictionary<string, object>();
 
@@ -47,9 +51,38 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		PersistentDataWrapper<T> result = new PersistentDataWrapper<T>();
 		try
 		{
+			if (await _lock.WaitAsync(2000))
+			{
+				try
+				{
+					result = await InnerRead<T>(fileName, useCache, baseDirectory, log);
+				}
+				finally
+				{
+					_lock.Release();
+				}
+			}
+			else
+			{
+				_logger.LogErrorWithSource("Unable to get lock for reading filename " + fileName + " with baseDirectory " + baseDirectory + ".", "Read", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
+			}
+			return result;
+		}
+		catch (Exception ex)
+		{
+			_logger?.LogErrorWithSource(ex, "Exception while reading filename: " + fileName + " with baseDirectory: " + baseDirectory, "Read", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
+			return result;
+		}
+	}
+
+	private async Task<PersistentDataWrapper<T>> InnerRead<T>(string fileName, bool useCache = false, string baseDirectory = null, bool log = true) where T : IPersistentData
+	{
+		PersistentDataWrapper<T> result = new PersistentDataWrapper<T>();
+		try
+		{
 			if (log)
 			{
-				_logger?.LogInfoWithSource($"Read({fileName},useCache={useCache})", "Read", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
+				_logger?.LogInfoWithSource($"Read({fileName},useCache={useCache})", "InnerRead", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			}
 			if (useCache && _cache.TryGetValue(fileName, out var value) && value != null)
 			{
@@ -75,12 +108,12 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		}
 		catch (Exception ex)
 		{
-			_logger?.LogErrorWithSource(ex, "unhandled exception occurred");
+			_logger?.LogErrorWithSource(ex, "Exception while reading filename: " + fileName + " with baseDirectory: " + baseDirectory, "InnerRead", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			return result;
 		}
 	}
 
-	public async Task<List<PersistentDataWrapper<T>>> ReadLike<T>(string pattern, string directory = null) where T : IPersistentData
+	public async Task<List<PersistentDataWrapper<T>>> ReadLike<T>(string pattern, string directory = null, bool useCache = true) where T : IPersistentData
 	{
 		List<PersistentDataWrapper<T>> result = new List<PersistentDataWrapper<T>>();
 		try
@@ -88,24 +121,38 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 			directory = directory ?? DataCachePath;
 			if (Directory.Exists(directory))
 			{
-				string[] files = Directory.GetFiles(directory, "*" + pattern + "*");
-				string[] array = files;
-				foreach (string path in array)
+				if (await _lock.WaitAsync(2000))
 				{
-					List<PersistentDataWrapper<T>> list = result;
-					list.Add(await Read<T>(Path.GetFileName(path), useCache: true, Path.GetDirectoryName(path), log: false));
+					try
+					{
+						string[] files = Directory.GetFiles(directory, "*" + pattern + "*");
+						string[] array = files;
+						foreach (string path in array)
+						{
+							List<PersistentDataWrapper<T>> list = result;
+							list.Add(await InnerRead<T>(Path.GetFileName(path), useCache, Path.GetDirectoryName(path), log: false));
+						}
+					}
+					finally
+					{
+						_lock.Release();
+					}
+				}
+				else
+				{
+					_logger.LogErrorWithSource("Unable to get lock for reading with pattern " + pattern + " in directory " + directory + ".", "ReadLike", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 				}
 			}
 			return result;
 		}
 		catch (Exception ex)
 		{
-			_logger?.LogErrorWithSource(ex, "unhandled exception occurred calling ReadLike(" + pattern + ")");
+			_logger?.LogErrorWithSource(ex, "unhandled exception occurred calling ReadLike(" + pattern + " in directory: " + directory + ")", "ReadLike", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			return result;
 		}
 	}
 
-	public async Task<List<PersistentDataWrapper<T>>> ReadLike<T>(Regex pattern, string directory = null) where T : IPersistentData
+	public async Task<List<PersistentDataWrapper<T>>> ReadLike<T>(Regex pattern, string directory = null, bool useCache = true) where T : IPersistentData
 	{
 		List<PersistentDataWrapper<T>> result = new List<PersistentDataWrapper<T>>();
 		try
@@ -113,26 +160,41 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 			directory = directory ?? DataCachePath;
 			if (Directory.Exists(directory))
 			{
-				string[] files = Directory.GetFiles(directory, "*.*");
-				files = files.Where((string f) => pattern.IsMatch(Path.GetFileName(f))).ToArray();
-				string[] array = files;
-				foreach (string path in array)
+				if (await _lock.WaitAsync(2000))
 				{
-					List<PersistentDataWrapper<T>> list = result;
-					list.Add(await Read<T>(Path.GetFileName(path), useCache: true, Path.GetDirectoryName(path), log: false));
+					try
+					{
+						string[] files = Directory.GetFiles(directory, "*.*");
+						files = files.Where((string f) => pattern.IsMatch(Path.GetFileName(f))).ToArray();
+						string[] array = files;
+						foreach (string path in array)
+						{
+							List<PersistentDataWrapper<T>> list = result;
+							list.Add(await InnerRead<T>(Path.GetFileName(path), useCache, Path.GetDirectoryName(path), log: false));
+						}
+					}
+					finally
+					{
+						_lock.Release();
+					}
+				}
+				else
+				{
+					_logger.LogErrorWithSource($"Unable to get lock for reading with regex pattern {pattern} in directory {directory}.", "ReadLike", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 				}
 			}
 			return result;
 		}
 		catch (Exception ex)
 		{
-			_logger?.LogErrorWithSource(ex, $"unhandled exception occurred calling ReadLike({pattern})");
+			_logger?.LogErrorWithSource(ex, $"unhandled exception occurred calling ReadLike({pattern} in directory {directory})", "ReadLike", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			return result;
 		}
 	}
 
 	public async Task<bool> Write<T>(T data, string fileName, string baseDirectory = null) where T : IPersistentData
 	{
+		_ = 1;
 		try
 		{
 			_logger?.LogInfoWithSource("Write(" + fileName + ")", "Write", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
@@ -141,50 +203,36 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 			persistentDataWrapper.Modified = DateTime.Now;
 			persistentDataWrapper.DataType = typeof(T).FullName;
 			PersistentDataWrapper<T> value = persistentDataWrapper;
-			string contents = JsonConvert.SerializeObject(value, Formatting.Indented, new JsonSerializerSettings
+			string json = JsonConvert.SerializeObject(value, Formatting.Indented, new JsonSerializerSettings
 			{
 				NullValueHandling = NullValueHandling.Ignore
 			});
-			string path = ((baseDirectory == null) ? GetDataFilePath(fileName) : Path.Combine(baseDirectory, fileName));
+			string filePath = ((baseDirectory == null) ? GetDataFilePath(fileName) : Path.Combine(baseDirectory, fileName));
 			if (baseDirectory != null)
 			{
 				Directory.CreateDirectory(baseDirectory);
 			}
-			await File.WriteAllTextAsync(path, contents);
-			ClearCache(fileName);
-			return true;
+			if (await _lock.WaitAsync(2000))
+			{
+				try
+				{
+					await File.WriteAllTextAsync(filePath, json);
+					ClearCache(fileName);
+				}
+				finally
+				{
+					_lock.Release();
+				}
+				return true;
+			}
+			_logger.LogErrorWithSource("Unable to get lock for writing to fileName " + fileName + " with baseDiretory " + baseDirectory + ".", "Write", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
+			return false;
 		}
 		catch (Exception ex)
 		{
-			_logger?.LogErrorWithSource(ex, "unhandled exception occurred");
+			_logger?.LogErrorWithSource(ex, "Exception while writing to filename: " + fileName + " with baseDirectory " + baseDirectory, "Write", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			return false;
 		}
-	}
-
-	public async Task<List<Error>> TryWrite<T>(T data, string fileName, string baseDirectory = null) where T : IPersistentData
-	{
-		List<Error> errors = new List<Error>();
-		bool flag = false;
-		string filePath = ((baseDirectory == null) ? GetDataFilePath(fileName) : Path.Combine(baseDirectory, fileName));
-		if (File.Exists(filePath))
-		{
-			errors.Add(new Error
-			{
-				Message = "PersistentDataCacheService.TryWrite -> File at " + filePath + " already exists"
-			});
-		}
-		else
-		{
-			flag = await Write(data, fileName, baseDirectory);
-		}
-		if (!flag)
-		{
-			errors.Add(new Error
-			{
-				Message = "PersistentDataCacheService.TryWrite -> Unhandled exception while writing to " + filePath + ". Check logs for more details."
-			});
-		}
-		return errors;
 	}
 
 	public async Task<bool> Delete(string fileName, string baseDirectory = null)
@@ -192,17 +240,29 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		try
 		{
 			_logger?.LogInfoWithSource("Delete(" + fileName + ")", "Delete", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
-			string path = ((baseDirectory == null) ? GetDataFilePath(fileName) : Path.Combine(baseDirectory, fileName));
-			if (File.Exists(path))
+			string filePath = ((baseDirectory == null) ? GetDataFilePath(fileName) : Path.Combine(baseDirectory, fileName));
+			if (await _lock.WaitAsync(2000))
 			{
-				File.Delete(path);
+				try
+				{
+					if (File.Exists(filePath))
+					{
+						File.Delete(filePath);
+					}
+					ClearCache(fileName);
+					return true;
+				}
+				finally
+				{
+					_lock.Release();
+				}
 			}
-			ClearCache(fileName);
-			return true;
+			_logger.LogErrorWithSource("Unable to get lock for deleting to fileName " + fileName + " with baseDiretory " + baseDirectory + ".", "Delete", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
+			return false;
 		}
 		catch (Exception ex)
 		{
-			_logger?.LogErrorWithSource(ex, "unhandled exception occurred");
+			_logger?.LogErrorWithSource(ex, "Exception while deleting filename " + fileName + " with baseDirectory " + baseDirectory, "Delete", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			return false;
 		}
 	}
@@ -213,20 +273,32 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		{
 			_logger?.LogInfoWithSource("DeleteLike(" + pattern + ")", "DeleteLike", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			directory = directory ?? DataCachePath;
-			if (Directory.Exists(directory))
+			if (await _lock.WaitAsync(2000))
 			{
-				string[] files = Directory.GetFiles(directory, "*" + pattern + "*");
-				string[] array = files;
-				foreach (string path in array)
+				try
 				{
-					File.Delete(path);
+					if (Directory.Exists(directory))
+					{
+						string[] files = Directory.GetFiles(directory, "*" + pattern + "*");
+						string[] array = files;
+						foreach (string path in array)
+						{
+							File.Delete(path);
+						}
+					}
+					return true;
+				}
+				finally
+				{
+					_lock.Release();
 				}
 			}
-			return true;
+			_logger.LogErrorWithSource("Unable to get lock for deleting files with pattern " + pattern + " in diretory " + directory + ".", "DeleteLike", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
+			return false;
 		}
 		catch (Exception ex)
 		{
-			_logger?.LogErrorWithSource(ex, "unhandled exception occurred");
+			_logger?.LogErrorWithSource(ex, "Exception while deleting with pattern: " + pattern + " and directory: " + directory, "DeleteLike", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			return false;
 		}
 	}
@@ -235,7 +307,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		if (_cache.ContainsKey(fileName))
 		{
-			_logger?.LogInformation("Clearing cached value " + fileName);
+			_logger?.LogInfoWithSource("Clearing cached value " + fileName, "ClearCache", "/sln/src/UpdateClientService.API/Services/PersistentDataCacheService.cs");
 			_cache.TryRemove(fileName, out var _);
 		}
 	}

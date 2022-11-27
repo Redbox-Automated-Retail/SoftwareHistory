@@ -7,6 +7,8 @@ public class BaseKioskConfiguration : BaseConfiguration, IKioskConfiguration
 {
 	public Operations Operations { get; set; }
 
+	public FileSets FileSets { get; set; }
+
 	public BaseKioskConfiguration(ILogger<BaseKioskConfiguration> logger, IOptionsMonitor<KioskConfigurationSettings> optionsMonitorKioskConfigurationSettings)
 		: base(logger, optionsMonitorKioskConfigurationSettings)
 	{

@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Redbox.NetCore.Logging.Extensions;
@@ -25,7 +24,7 @@ public class StatusService : IStatusService
 		_settings = settings;
 	}
 
-	public async Task<FileVersionDataResponse> GetFileVersions()
+	public FileVersionDataResponse GetFileVersions()
 	{
 		FileVersionDataResponse fileVersionDataResponse = new FileVersionDataResponse();
 		IEnumerable<string> enumerable = _settings?.CurrentValue?.FileVersionPaths;
@@ -35,10 +34,10 @@ public class StatusService : IStatusService
 			fileVersionDataResponse.StatusCode = HttpStatusCode.BadRequest;
 			return fileVersionDataResponse;
 		}
-		return await GetFileVersions(enumerable);
+		return GetFileVersions(enumerable);
 	}
 
-	public async Task<FileVersionDataResponse> GetFileVersions(IEnumerable<string> filepaths)
+	public FileVersionDataResponse GetFileVersions(IEnumerable<string> filepaths)
 	{
 		FileVersionDataResponse fileVersionDataResponse = new FileVersionDataResponse();
 		try
@@ -68,7 +67,7 @@ public class StatusService : IStatusService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Unhandled exception occurred in StatusService.GetFileVersions");
+			_logger.LogErrorWithSource(ex, "Unhandled exception occurred in StatusService.GetFileVersions", "GetFileVersions", "/sln/src/UpdateClientService.API/Services/Status/StatusService.cs");
 			fileVersionDataResponse.StatusCode = HttpStatusCode.InternalServerError;
 		}
 		return fileVersionDataResponse;

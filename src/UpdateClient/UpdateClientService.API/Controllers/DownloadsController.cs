@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.DownloadService.Responses;
 using UpdateClientService.API.Services.IoT.DownloadFiles;
@@ -69,28 +66,14 @@ public class DownloadsController : ControllerBase
 	[ProducesResponseType(typeof(GetFileResponse), 500)]
 	public async Task<ActionResult<GetFileResponse>> StartDownload(Uri url, string hash = null)
 	{
-		string key = Guid.NewGuid().ToString();
-		List<Error> list = await _downloadService.AddDownload(key, hash, url.ToString(), DownloadPriority.Normal);
-		GetFileResponse getFileResponse = (list.Any() ? new GetFileResponse(list)
-		{
-			Key = key
-		} : new GetFileResponse
-		{
-			Key = key
-		});
-		return getFileResponse.ToObjectResult();
+		return (await _downloadService.AddDownload(hash, url.ToString(), DownloadPriority.Normal)).ToObjectResult();
 	}
 
 	[HttpGet]
 	[ProducesResponseType(typeof(GetDownloadStatusesResponse), 200)]
 	public async Task<ActionResult> GetDownloadStatuses()
 	{
-		List<DownloadData> statuses = await _downloadService.GetDownloads();
-		GetDownloadStatusesResponse getDownloadStatusesResponse = new GetDownloadStatusesResponse
-		{
-			Statuses = statuses
-		};
-		return getDownloadStatusesResponse.ToObjectResult();
+		return (await _downloadService.GetDownloadsResponse()).ToObjectResult();
 	}
 
 	[HttpGet("{key}")]
@@ -98,18 +81,15 @@ public class DownloadsController : ControllerBase
 	[ProducesResponseType(typeof(GetDownloadStatusResponse), 404)]
 	public async Task<ActionResult> GetDownloadStatus(string key)
 	{
-		GetDownloadStatusResponse getDownloadStatusResponse = new GetDownloadStatusResponse(await _downloadService.GetDownloads(), key);
-		return getDownloadStatusResponse.ToObjectResult();
+		return (await _downloadService.GetDownloadResponse(key)).ToObjectResult();
 	}
 
 	[HttpDelete("{key}")]
-	[ProducesResponseType(typeof(GetDownloadStatusResponse), 200)]
-	[ProducesResponseType(typeof(GetDownloadStatusResponse), 500)]
+	[ProducesResponseType(typeof(DeleteDownloadResponse), 200)]
+	[ProducesResponseType(typeof(DeleteDownloadResponse), 500)]
 	public async Task<ActionResult> CancelDownload(string key)
 	{
-		List<Error> list = await _downloadService.CancelDownload(key);
-		DeleteDownloadResponse deleteDownloadResponse = (list.Any() ? new DeleteDownloadResponse(list) : new DeleteDownloadResponse());
-		return deleteDownloadResponse.ToObjectResult();
+		return (await _downloadService.CancelDownload(key)).ToObjectResult();
 	}
 
 	[HttpPost("{key}")]
@@ -117,8 +97,6 @@ public class DownloadsController : ControllerBase
 	[ProducesResponseType(typeof(CompleteDownloadResponse), 500)]
 	public async Task<ActionResult<CompleteDownloadResponse>> CompleteDownload(string key)
 	{
-		List<Error> list = await _downloadService.CompleteDownload(key);
-		CompleteDownloadResponse completeDownloadResponse = (list.Any() ? new CompleteDownloadResponse(list) : new CompleteDownloadResponse());
-		return completeDownloadResponse.ToObjectResult();
+		return (await _downloadService.CompleteDownload(key)).ToObjectResult();
 	}
 }

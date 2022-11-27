@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Redbox.NetCore.Logging.Extensions;
-using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.FileCache;
 
@@ -13,6 +12,15 @@ namespace UpdateClientService.API.Services.FileSets;
 
 public class FileSetDownloader : IFileSetDownloader
 {
+	private class DownloadMethodSize
+	{
+		public DownloadMethod DownloadMethod { get; set; }
+
+		public long Size { get; set; }
+
+		public int NumberOfDownloads { get; set; }
+	}
+
 	private readonly IFileCacheService _fileCacheService;
 
 	private readonly IDownloadService _downloadService;
@@ -35,321 +43,296 @@ public class FileSetDownloader : IFileSetDownloader
 		_logger = logger;
 	}
 
-	public bool IsDownloading(List<DownloadData> downloads)
+	public bool IsDownloaded(ClientFileSetRevision clientFileSetRevision)
 	{
-		bool result = false;
-		downloads.ForEach(delegate(DownloadData _downloader)
-		{
-			if (_downloader.DownloadState == DownloadState.Downloading || _downloader.DownloadState == DownloadState.Error)
-			{
-				result = true;
-			}
-		});
-		return result;
+		List<FileSetFileInfo> fileSetInfoList = GetFileSetInfoList(clientFileSetRevision);
+		return GetDownloadMethod(clientFileSetRevision, fileSetInfoList) == DownloadMethod.None;
 	}
 
-	public bool IsDownloaded(ClientFileSetRevision revision)
+	public async Task<bool> DownloadFileSet(ClientFileSetRevision revision, DownloadDataList downloadDataList, DownloadPriority priority)
 	{
-		List<FileSetFileInfo> fileSetInfoList = GetFileSetInfoList(revision);
-		return GetDownloadMethod(revision, fileSetInfoList) == DownloadMethod.None;
-	}
-
-	public async Task<List<Error>> DownloadFileSet(ClientFileSetRevision revision, List<DownloadData> downloads, DownloadPriority priority)
-	{
-		List<Error> errors = new List<Error>();
+		bool result = true;
 		try
 		{
 			List<FileSetFileInfo> fileSetInfoList = GetFileSetInfoList(revision);
 			DownloadMethod downloadMethod = GetDownloadMethod(revision, fileSetInfoList);
-			_logger.LogInfoWithSource($"Download method is {downloadMethod} for FileSet {revision.FileSetId}, RevisionId {revision.RevisionId}, PatchRevisionId {revision.PatchRevisionId}", "DownloadFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
+			_logger.LogInfoWithSource($"Download method is {downloadMethod} for {revision.IdentifyingText()}", "DownloadFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
 			switch (downloadMethod)
 			{
-			case DownloadMethod.None:
-				return errors;
 			case DownloadMethod.FileSet:
-			{
-				List<Error> list = errors;
-				list.AddRange(await DownloadByFileSet(revision, downloads, priority));
+				result = await DownloadByFileSet(revision, downloadDataList, priority);
 				break;
-			}
 			case DownloadMethod.PatchSet:
-			{
-				List<Error> list = errors;
-				list.AddRange(await DownloadByPatchSet(revision, fileSetInfoList, downloads, priority));
+				result = await DownloadByPatchSet(revision, fileSetInfoList, downloadDataList, priority);
 				break;
-			}
 			case DownloadMethod.Files:
-			{
-				List<Error> list = errors;
-				list.AddRange(await DownloadByFiles(fileSetInfoList, downloads, priority));
+				result = await DownloadByFiles(fileSetInfoList, downloadDataList, priority);
 				break;
-			}
 			case DownloadMethod.Patches:
-			{
-				List<Error> list = errors;
-				list.AddRange(await DownloadByPatches(fileSetInfoList, downloads, priority));
+				result = await DownloadByPatches(fileSetInfoList, downloadDataList, priority);
 				break;
 			}
-			}
-			return errors;
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "DownloadFileSet");
-			errors.Add(new Error
-			{
-				Message = $"FileSetDownloader An unhandled exception occurred in DownloadFileSet . Exception: {ex}"
-			});
+			_logger.LogErrorWithSource(ex, "Exception while downloading file set " + revision?.IdentifyingText(), "DownloadFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
+			result = false;
 		}
-		return errors;
+		return result;
 	}
 
-	public List<Error> CompleteDownloads(ClientFileSetRevision revision, List<DownloadData> downloads)
+	public bool CompleteDownloads(ClientFileSetRevision clientFileSetRevision, DownloadDataList downloadDataList)
 	{
-		List<Error> errors = new List<Error>();
-		downloads.ForEach(delegate(DownloadData _downloader)
+		bool result = true;
+		foreach (DownloadData item in downloadDataList.Where((DownloadData x) => x.DownloadState == DownloadState.PostDownload))
 		{
-			if (_downloader.DownloadState == DownloadState.PostDownload)
+			if (_zipHelper.Extract(item.Path, clientFileSetRevision))
 			{
-				string path = _downloader.Path;
-				List<Error> list = _zipHelper.Extract(path, revision.FileSetId, revision.RevisionId, revision.PatchRevisionId);
-				if (!list.Any())
-				{
-					this._downloader.Complete(_downloader);
-				}
-				errors.AddRange(list);
+				_downloader.Complete(item);
 			}
-		});
-		return errors;
+			else
+			{
+				result = false;
+			}
+		}
+		return result;
 	}
 
-	private List<FileSetFileInfo> GetFileSetInfoList(ClientFileSetRevision revision)
+	private List<FileSetFileInfo> GetFileSetInfoList(ClientFileSetRevision clientFileSetRevision)
 	{
-		List<FileSetFileInfo> fileSetInfoList = new List<FileSetFileInfo>();
-		revision.Files.ToList().ForEach(delegate(ClientFileSetFile f)
+		List<FileSetFileInfo> list = new List<FileSetFileInfo>();
+		foreach (ClientFileSetFile eachClientFileSetFile in clientFileSetRevision.Files)
 		{
 			FileSetFileInfo fileSetFileInfo = new FileSetFileInfo
 			{
-				FileId = f.FileId,
-				FileRevisionId = f.FileRevisionId,
-				Key = GetFileKey(revision.FileSetId, f.FileId, f.FileRevisionId),
-				FileSize = f.FileSize,
+				FileId = eachClientFileSetFile.FileId,
+				FileRevisionId = eachClientFileSetFile.FileRevisionId,
+				Key = GetFileKey(clientFileSetRevision.FileSetId, eachClientFileSetFile.FileId, eachClientFileSetFile.FileRevisionId),
+				FileSize = eachClientFileSetFile.FileSize,
 				PatchSize = 0L,
-				FileHash = f.FileHash
+				FileHash = eachClientFileSetFile.FileHash
 			};
-			fileSetFileInfo.Exists = _fileCacheService.FileExists(revision.FileSetId, f.FileId, f.FileRevisionId);
-			fileSetFileInfo.Url = GetFileUrl(f, revision.FileSetId, f.FileRevisionId, 0L);
+			fileSetFileInfo.Exists = _fileCacheService.DoesFileExist(clientFileSetRevision.FileSetId, eachClientFileSetFile.FileId, eachClientFileSetFile.FileRevisionId);
+			if (fileSetFileInfo.Exists && !_fileCacheService.IsFileHashValid(clientFileSetRevision.FileSetId, eachClientFileSetFile.FileId, eachClientFileSetFile.FileRevisionId, eachClientFileSetFile.ContentHash))
+			{
+				_logger.LogWarning($"Invalid Hash for file with FileSetId {clientFileSetRevision.FileSetId}, FileId {eachClientFileSetFile.FileId}, FileRevisionId {eachClientFileSetFile.FileRevisionId}");
+				fileSetFileInfo.Exists = false;
+				_fileCacheService.DeleteFile(clientFileSetRevision.FileSetId, eachClientFileSetFile.FileId, eachClientFileSetFile.FileRevisionId, force: true);
+			}
+			fileSetFileInfo.Url = GetFileUrl(eachClientFileSetFile, clientFileSetRevision.FileSetId, eachClientFileSetFile.FileRevisionId, 0L);
 			if (!fileSetFileInfo.Exists)
 			{
-				ClientPatchFileSetFile clientPatchFileSetFile = revision.PatchFiles.FirstOrDefault((ClientPatchFileSetFile pf) => pf.FileId == f.FileId);
+				ClientPatchFileSetFile clientPatchFileSetFile = clientFileSetRevision.PatchFiles.FirstOrDefault((ClientPatchFileSetFile pf) => pf.FileId == eachClientFileSetFile.FileId);
 				if (clientPatchFileSetFile != null)
 				{
-					string fileKey = GetFileKey(revision.FileSetId, f.FileId, clientPatchFileSetFile.PatchFileRevisionId);
-					if (_fileCacheService.FileExists(revision.FileSetId, f.FileId, clientPatchFileSetFile.PatchFileRevisionId))
+					string fileKey = GetFileKey(clientFileSetRevision.FileSetId, eachClientFileSetFile.FileId, clientPatchFileSetFile.PatchFileRevisionId);
+					bool flag = _fileCacheService.DoesFileExist(clientFileSetRevision.FileSetId, eachClientFileSetFile.FileId, clientPatchFileSetFile.PatchFileRevisionId);
+					if (flag && !_fileCacheService.IsFileHashValid(clientFileSetRevision.FileSetId, eachClientFileSetFile.FileId, clientPatchFileSetFile.PatchFileRevisionId, clientPatchFileSetFile.ContentHash))
+					{
+						_logger.LogWarning($"Invalid Hash for file with FileSetId {clientFileSetRevision.FileSetId}, FileId {eachClientFileSetFile.FileId}, FileRevisionId {clientPatchFileSetFile.PatchFileRevisionId}");
+						flag = false;
+						_fileCacheService.DeleteFile(clientFileSetRevision.FileSetId, eachClientFileSetFile.FileId, clientPatchFileSetFile.PatchFileRevisionId, force: true);
+					}
+					if (flag)
 					{
 						fileSetFileInfo.PatchSize = clientPatchFileSetFile.FileSize;
-						fileSetFileInfo.PatchUrl = GetFileUrl(f, revision.FileSetId, f.FileRevisionId, clientPatchFileSetFile.PatchFileRevisionId);
+						fileSetFileInfo.PatchUrl = GetFileUrl(eachClientFileSetFile, clientFileSetRevision.FileSetId, eachClientFileSetFile.FileRevisionId, clientPatchFileSetFile.PatchFileRevisionId);
 						fileSetFileInfo.PatchKey = fileKey;
 						fileSetFileInfo.PatchHash = clientPatchFileSetFile.FileHash;
 					}
 				}
 			}
-			fileSetInfoList.Add(fileSetFileInfo);
-		});
-		return fileSetInfoList;
+			list.Add(fileSetFileInfo);
+		}
+		return list;
 	}
 
-	private DownloadMethod GetDownloadMethod(ClientFileSetRevision revision, List<FileSetFileInfo> fileSetInfoList)
+	private DownloadMethod GetDownloadMethod(ClientFileSetRevision clientFileSetRevision, List<FileSetFileInfo> fileSetInfoList)
 	{
-		long num = fileSetInfoList.Sum((FileSetFileInfo item) => item.Exists ? 0 : item.FileSize);
-		long num2 = 0L;
-		if (revision.PatchSetFileSize > 0)
-		{
-			num2 = fileSetInfoList.Sum(delegate(FileSetFileInfo item)
-			{
-				if (item.Exists)
-				{
-					return 0L;
-				}
-				return (item.PatchSize > 0) ? item.PatchSize : item.FileSize;
-			});
-		}
-		long num3 = 0L;
-		if (revision.PatchSetFileSize > 0)
-		{
-			num3 = fileSetInfoList.Sum(delegate(FileSetFileInfo item)
-			{
-				if (item.Exists)
-				{
-					return 0L;
-				}
-				return (item.PatchSize == 0L) ? item.FileSize : 0;
-			});
-			num3 += revision.PatchSetFileSize;
-		}
+		long num = fileSetInfoList.Sum((FileSetFileInfo x) => (!x.Exists) ? x.FileSize : 0);
 		if (num == 0L)
 		{
 			return DownloadMethod.None;
 		}
-		if (num3 > 0 && (num2 == 0L || num3 <= num2) && num3 < num && num3 < revision.SetFileSize)
+		int numberOfDownloads = fileSetInfoList.Count((FileSetFileInfo x) => !x.Exists);
+		List<DownloadMethodSize> list = new List<DownloadMethodSize>();
+		list.Add(new DownloadMethodSize
 		{
-			return DownloadMethod.PatchSet;
-		}
-		if (num2 > 0 && num2 < num && num2 < revision.SetFileSize)
+			DownloadMethod = DownloadMethod.Files,
+			Size = num,
+			NumberOfDownloads = numberOfDownloads
+		});
+		list.Add(new DownloadMethodSize
 		{
-			return DownloadMethod.Patches;
-		}
-		if (num < revision.SetFileSize)
+			DownloadMethod = DownloadMethod.FileSet,
+			Size = clientFileSetRevision.SetFileSize,
+			NumberOfDownloads = 1
+		});
+		if (clientFileSetRevision.PatchSetFileSize > 0)
 		{
-			return DownloadMethod.Files;
+			long size = fileSetInfoList.Sum((FileSetFileInfo x) => (!x.Exists) ? ((x.PatchSize <= 0) ? x.FileSize : x.PatchSize) : 0);
+			list.Add(new DownloadMethodSize
+			{
+				DownloadMethod = DownloadMethod.Patches,
+				Size = size,
+				NumberOfDownloads = numberOfDownloads
+			});
+			int num2 = fileSetInfoList.Count((FileSetFileInfo x) => !x.Exists || x.PatchSize == 0);
+			long num3 = fileSetInfoList.Sum((FileSetFileInfo x) => (!x.Exists && x.PatchSize <= 0) ? x.FileSize : 0);
+			num3 += clientFileSetRevision.PatchSetFileSize;
+			list.Add(new DownloadMethodSize
+			{
+				DownloadMethod = DownloadMethod.PatchSet,
+				Size = num3,
+				NumberOfDownloads = num2 + 1
+			});
 		}
-		return DownloadMethod.FileSet;
+		DownloadMethodSize downloadMethodSize = (from x in list
+			orderby x.Size, x.NumberOfDownloads
+			select x).FirstOrDefault();
+		return downloadMethodSize.DownloadMethod;
 	}
 
-	private async Task<List<Error>> DownloadByFileSet(ClientFileSetRevision revision, List<DownloadData> downloads, DownloadPriority priority)
+	private async Task<bool> DownloadByFileSet(ClientFileSetRevision clientFileSetRevision, DownloadDataList downloadDataList, DownloadPriority priority)
 	{
-		List<Error> errors = new List<Error>();
+		bool result = false;
 		try
 		{
-			string key = GetRevisionSetKey(revision);
-			string fileSetUrl = GetFileSetUrl(revision);
-			if (!downloads.Any((DownloadData d) => d.Key == key))
+			string key = GetRevisionSetKey(clientFileSetRevision);
+			string fileSetUrl = GetFileSetUrl(clientFileSetRevision);
+			if (!downloadDataList.ExistsByKey(key))
 			{
-				var (collection, item) = await AddDownload(key, revision.SetFileHash, fileSetUrl, priority);
-				errors.AddRange(collection);
-				if (!errors.Any())
+				var (flag, item) = await AddDownload(key, clientFileSetRevision.SetFileHash, fileSetUrl, priority);
+				if (flag)
 				{
-					downloads.Add(item);
+					downloadDataList.Add(item);
+					result = true;
+				}
+				else
+				{
+					_logger.LogErrorWithSource("Unable to add DownloadData for " + key, "DownloadByFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
+				}
+			}
+			else
+			{
+				result = true;
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Excepton while adding DownloadData by FileSet for " + clientFileSetRevision?.IdentifyingText(), "DownloadByFileSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
+		}
+		return result;
+	}
+
+	private async Task<bool> DownloadByPatchSet(ClientFileSetRevision clientFileSetRevision, List<FileSetFileInfo> fileSetInfoList, DownloadDataList downloadDataList, DownloadPriority priority)
+	{
+		bool result = false;
+		try
+		{
+			string revisionPatchSetKey = GetRevisionPatchSetKey(clientFileSetRevision);
+			string patchSetFileUrl = GetPatchSetFileUrl(clientFileSetRevision);
+			if (!downloadDataList.ExistsByKey(revisionPatchSetKey))
+			{
+				var (flag, item) = await AddDownload(revisionPatchSetKey, clientFileSetRevision.PatchSetFileHash, patchSetFileUrl, priority);
+				if (flag)
+				{
+					downloadDataList.Add(item);
+					result = await AddDownloadsForNewFilesInPatchSet(fileSetInfoList, downloadDataList, priority);
 				}
 			}
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "DownloadByFileSet");
-			errors.Add(new Error
-			{
-				Message = $"ChangeSetFile An unhandled exception occurred in DownloadByFileSet. Exception: {ex}"
-			});
+			_logger.LogErrorWithSource(ex, "Exception while adding DownloadData for Patch Set with " + clientFileSetRevision?.IdentifyingText(), "DownloadByPatchSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
 		}
-		return errors;
+		return result;
 	}
 
-	private async Task<List<Error>> DownloadByPatchSet(ClientFileSetRevision revision, List<FileSetFileInfo> fileSetInfoList, List<DownloadData> downloads, DownloadPriority priority)
+	private async Task<bool> AddDownloadsForNewFilesInPatchSet(List<FileSetFileInfo> fileSetInfoList, DownloadDataList downloadDataList, DownloadPriority priority)
 	{
-		List<Error> errors = new List<Error>();
-		try
+		bool result = true;
+		foreach (FileSetFileInfo item2 in fileSetInfoList.Where((FileSetFileInfo x) => !x.Exists && x.PatchSize == 0))
 		{
-			string key = GetRevisionPatchSetKey(revision);
-			string patchSetFileUrl = GetPatchSetFileUrl(revision);
-			if (!downloads.Any((DownloadData d) => d.Key == key))
+			if (!downloadDataList.ExistsByKey(item2.Key))
 			{
-				var (collection, item) = await AddDownload(key, revision.PatchSetFileHash, patchSetFileUrl, priority);
-				errors.AddRange(collection);
-				if (errors.Any())
+				var (flag, item) = await AddDownload(item2.Key, item2.FileHash, item2.Url, priority);
+				if (flag)
 				{
-					return errors;
+					downloadDataList.Add(item);
 				}
-				downloads.Add(item);
+				else
+				{
+					result = false;
+				}
 			}
-			fileSetInfoList.ForEach(async delegate(FileSetFileInfo fileSetFileInfo)
-			{
-				if (!fileSetFileInfo.Exists && fileSetFileInfo.PatchSize == 0L && !downloads.Any((DownloadData d) => d.Key == fileSetFileInfo.Key))
-				{
-					var (collection2, item2) = await AddDownload(fileSetFileInfo.Key, fileSetFileInfo.FileHash, fileSetFileInfo.Url, priority);
-					errors.AddRange(collection2);
-					if (!errors.Any())
-					{
-						downloads.Add(item2);
-					}
-				}
-			});
 		}
-		catch (Exception ex)
-		{
-			_logger.LogErrorWithSource(ex, "DownloadByPatchSet");
-			errors.Add(new Error
-			{
-				Message = $"ChangeSetFile An unhandled exception occurred in DownloadByPatchSet. Exception: {ex}"
-			});
-		}
-		return errors;
+		return result;
 	}
 
-	private async Task<List<Error>> DownloadByPatches(List<FileSetFileInfo> fileSetInfoList, List<DownloadData> downloads, DownloadPriority priority)
+	private async Task<bool> DownloadByPatches(List<FileSetFileInfo> fileSetInfoList, DownloadDataList downloadDataList, DownloadPriority priority)
 	{
-		List<Error> errors = new List<Error>();
+		bool result = true;
 		try
 		{
-			foreach (FileSetFileInfo item in fileSetInfoList)
+			foreach (FileSetFileInfo item2 in fileSetInfoList.Where((FileSetFileInfo x) => !x.Exists))
 			{
-				if (item.Exists)
+				bool flag = item2.PatchSize > 0;
+				string key = (flag ? item2.PatchKey : item2.Key);
+				if (!downloadDataList.ExistsByKey(key))
 				{
-					continue;
-				}
-				if (item.PatchSize == 0L)
-				{
-					if (!downloads.Any((DownloadData d) => d.Key == item.Key))
+					string hash = (flag ? item2.PatchHash : item2.FileHash);
+					string url = (flag ? item2.PatchUrl : item2.Url);
+					var (flag2, item) = await AddDownload(key, hash, url, priority);
+					if (flag2)
 					{
-						var (collection, item2) = await AddDownload(item.Key, item.FileHash, item.Url, priority);
-						errors.AddRange(collection);
-						if (!errors.Any())
-						{
-							downloads.Add(item2);
-						}
+						downloadDataList.Add(item);
 					}
-				}
-				else if (!downloads.Any((DownloadData d) => d.Key == item.PatchKey))
-				{
-					var (collection2, item3) = await AddDownload(item.PatchKey, item.PatchHash, item.PatchUrl, priority);
-					errors.AddRange(collection2);
-					if (!errors.Any())
+					else
 					{
-						downloads.Add(item3);
+						result = false;
 					}
 				}
 			}
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "DownloadByPatches");
-			errors.Add(new Error
-			{
-				Message = $"ChangeSetFile An unhandled exception occurred in DownloadByPatches . Exception: {ex}"
-			});
+			_logger.LogErrorWithSource(ex, "Exception while adding DownloadData for Patch files", "DownloadByPatches", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
+			result = false;
 		}
-		return errors;
+		return result;
 	}
 
-	private async Task<List<Error>> DownloadByFiles(List<FileSetFileInfo> fileSetInfoList, List<DownloadData> downloads, DownloadPriority downloadPriority)
+	private async Task<bool> DownloadByFiles(List<FileSetFileInfo> fileSetInfoList, DownloadDataList downloadDataList, DownloadPriority downloadPriority)
 	{
-		List<Error> errors = new List<Error>();
+		bool result = true;
 		try
 		{
-			fileSetInfoList.ForEach(async delegate(FileSetFileInfo item)
+			foreach (FileSetFileInfo item2 in fileSetInfoList.Where((FileSetFileInfo x) => !x.Exists))
 			{
-				if (!item.Exists && !downloads.Any((DownloadData d) => d.Key == item.Key))
+				if (!downloadDataList.ExistsByKey(item2.Key))
 				{
-					var (collection, item2) = await AddDownload(item.Key, item.FileHash, item.Url, downloadPriority);
-					errors.AddRange(collection);
-					if (!errors.Any())
+					var (flag, item) = await AddDownload(item2.Key, item2.FileHash, item2.Url, downloadPriority);
+					if (flag)
 					{
-						downloads.Add(item2);
+						downloadDataList.Add(item);
+					}
+					else
+					{
+						result = false;
 					}
 				}
-			});
+			}
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "DownloadByFiles");
-			errors.Add(new Error
-			{
-				Message = $"ChangeSetFile An unhandled exception occurred in DownloadByFiles. Exception: {ex}"
-			});
+			_logger.LogErrorWithSource(ex, "Exception while adding DownloadData for files", "DownloadByFiles", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetDownloader.cs");
+			result = false;
 		}
-		return errors;
+		return result;
 	}
 
-	private async Task<(List<Error> errors, DownloadData downloadData)> AddDownload(string key, string hash, string url, DownloadPriority downloadPriority)
+	private async Task<(bool success, DownloadData downloadData)> AddDownload(string key, string hash, string url, DownloadPriority downloadPriority)
 	{
 		return await _downloadService.AddRetrieveDownload(key, hash, url, downloadPriority, completeOnFinish: false);
 	}

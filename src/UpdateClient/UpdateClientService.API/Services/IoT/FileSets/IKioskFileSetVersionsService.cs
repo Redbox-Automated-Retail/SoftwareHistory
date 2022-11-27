@@ -5,7 +5,7 @@ namespace UpdateClientService.API.Services.IoT.FileSets;
 
 public interface IKioskFileSetVersionsService
 {
-	Task<bool> ReportFileVersion(FileSetPollRequest version);
+	Task<ReportFileSetVersionsResponse> ReportFileSetVersion(FileSetPollRequest version);
 
-	Task ReportFileVersions();
+	Task<ReportFileSetVersionsResponse> ReportFileSetVersions();
 }

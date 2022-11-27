@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Redbox.NetCore.Logging.Extensions;
-using Redbox.NetCore.Middleware.Http;
-using UpdateClientService.API.App;
 using UpdateClientService.API.Services.FileSets;
 using UpdateClientService.API.Services.IoT.Commands;
 using UpdateClientService.API.Services.IoT.IoTCommand;
@@ -19,87 +19,124 @@ public class KioskFileSetVersionsService : IKioskFileSetVersionsService
 
 	private readonly IStoreService _store;
 
+	private readonly IStateFileService _stateFileService;
+
 	private readonly ILogger<KioskFileSetVersionsService> _logger;
 
-	public KioskFileSetVersionsService(IIoTCommandClient iotCommandClient, IStoreService store, ILogger<KioskFileSetVersionsService> logger)
+	public KioskFileSetVersionsService(IIoTCommandClient iotCommandClient, IStoreService store, IStateFileService stateFileService, ILogger<KioskFileSetVersionsService> logger)
 	{
 		_iotCommandClient = iotCommandClient;
 		_store = store;
+		_stateFileService = stateFileService;
 		_logger = logger;
 	}
 
-	public async Task<bool> ReportFileVersion(FileSetPollRequest version)
+	public async Task<ReportFileSetVersionsResponse> ReportFileSetVersion(FileSetPollRequest fileSetPollRequest)
 	{
-		bool flag = (await _iotCommandClient.PerformIoTCommand<ObjectResult>(new IoTCommandModel
+		if (fileSetPollRequest == null)
 		{
-			RequestId = Guid.NewGuid().ToString(),
-			Version = 2,
-			SourceId = _store.KioskId.ToString(),
-			Payload = new FileSetPollRequestList
+			_logger.LogErrorWithSource("FileSetPollRequest is null.", "ReportFileSetVersion", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
+			return new ReportFileSetVersionsResponse
 			{
-				FileSetPollRequests = new List<FileSetPollRequest> { version }
-			},
-			Command = CommandEnum.ReportFileSetVersions
-		}, new PerformIoTCommandParameters
-		{
-			RequestTimeout = TimeSpan.FromSeconds(15.0),
-			IoTTopic = "$aws/rules/kioskrestcall",
-			WaitForResponse = true
-		})).StatusCode == 200;
+				StatusCode = HttpStatusCode.InternalServerError
+			};
+		}
+		return await InnerReportFileSetVersions(fileSetPollRequest);
+	}
+
+	public async Task<ReportFileSetVersionsResponse> ReportFileSetVersions()
+	{
+		return await InnerReportFileSetVersions();
+	}
+
+	private async Task<ReportFileSetVersionsResponse> InnerReportFileSetVersions(FileSetPollRequest fileSetPollRequest = null)
+	{
+		ReportFileSetVersionsResponse response = new ReportFileSetVersionsResponse();
+		var (flag, fileSetPollRequestList) = await GetPollRequest();
 		if (!flag)
 		{
-			_logger.LogErrorWithSource("Something went wrong while reporting FileSet version: " + version.ToJson(), "ReportFileVersion", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
+			_logger.LogErrorWithSource("Couldn't report file set versions", "InnerReportFileSetVersions", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
 		}
-		return flag;
-	}
-
-	public async Task ReportFileVersions()
-	{
-		var (payload, list) = GetPollRequest();
-		if (list.Any())
+		else
 		{
-			_logger.LogErrorWithSource("Couldn't report file set versions! Errors: " + list.ToJson(), "ReportFileVersions", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
-			return;
-		}
-		IoTCommandResponse<ObjectResult> ioTCommandResponse = await _iotCommandClient.PerformIoTCommand<ObjectResult>(new IoTCommandModel
-		{
-			RequestId = Guid.NewGuid().ToString(),
-			Version = 2,
-			SourceId = _store.KioskId.ToString(),
-			Payload = payload,
-			Command = CommandEnum.ReportFileSetVersions
-		}, new PerformIoTCommandParameters
-		{
-			RequestTimeout = TimeSpan.FromSeconds(15.0),
-			IoTTopic = "$aws/rules/kioskrestcall",
-			WaitForResponse = true
-		});
-		if (ioTCommandResponse != null && ioTCommandResponse.StatusCode == 200 && ioTCommandResponse != null)
-		{
-			_ = ioTCommandResponse.Payload?.StatusCode == 200;
-		}
-	}
-
-	private (FileSetPollRequestList requestList, List<Error> errors) GetPollRequest()
-	{
-		List<Error> list = new List<Error>();
-		FileSetPollRequestList fileSetPollRequestList = new FileSetPollRequestList();
-		try
-		{
-			list = StateFile.GetCurrentState(out fileSetPollRequestList);
-			if (list.Count() > 0)
+			if (fileSetPollRequest != null)
 			{
-				return (requestList: null, errors: list);
+				FileSetPollRequest fileSetPollRequest2 = fileSetPollRequestList.FileSetPollRequests.FirstOrDefault((FileSetPollRequest x) => x.FileSetId == fileSetPollRequest.FileSetId && x.FileSetRevisionId == fileSetPollRequest.FileSetRevisionId);
+				if (fileSetPollRequest2 != null)
+				{
+					fileSetPollRequestList.FileSetPollRequests.Remove(fileSetPollRequest2);
+				}
+				fileSetPollRequestList.FileSetPollRequests.Add(fileSetPollRequest);
 			}
-			_logger.LogInfoWithSource("Store file poll request: " + fileSetPollRequestList.ToJson(), "GetPollRequest", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
+			response = await ReportFileSetVersions(fileSetPollRequestList);
 		}
-		catch (Exception e)
+		return response;
+	}
+
+	private async Task<ReportFileSetVersionsResponse> ReportFileSetVersions(FileSetPollRequestList fileSetPollRequestList)
+	{
+		ReportFileSetVersionsResponse response = new ReportFileSetVersionsResponse();
+		if (fileSetPollRequestList == null)
 		{
-			list.Add(new Error
-			{
-				Message = "Unhandled exception occurred. Exception: " + e.GetFullMessage()
-			});
+			response.StatusCode = HttpStatusCode.InternalServerError;
+			_logger.LogErrorWithSource("FileSetPollRequestList is null", "ReportFileSetVersions", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
 		}
-		return (requestList: fileSetPollRequestList, errors: list);
+		else
+		{
+			IoTCommandResponse<ObjectResult> ioTCommandResponse = await _iotCommandClient.PerformIoTCommand<ObjectResult>(new IoTCommandModel
+			{
+				RequestId = Guid.NewGuid().ToString(),
+				Version = 3,
+				SourceId = _store.KioskId.ToString(),
+				Payload = fileSetPollRequestList,
+				Command = CommandEnum.ReportFileSetVersions
+			}, new PerformIoTCommandParameters
+			{
+				RequestTimeout = TimeSpan.FromSeconds(15.0),
+				IoTTopic = "$aws/rules/kioskrestcall",
+				WaitForResponse = true
+			});
+			if (ioTCommandResponse != null && ioTCommandResponse.StatusCode == 200 && ioTCommandResponse != null && ioTCommandResponse.Payload?.StatusCode == 200)
+			{
+				try
+				{
+					response.ClientFileSetRevisionChangeSets = JsonConvert.DeserializeObject<List<ClientFileSetRevisionChangeSet>>(ioTCommandResponse.Payload.Value.ToString());
+				}
+				catch (Exception ex)
+				{
+					_logger.LogErrorWithSource(ex, "Exception deserializing response", "ReportFileSetVersions", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
+				}
+			}
+			else
+			{
+				response.StatusCode = HttpStatusCode.InternalServerError;
+				_logger.LogErrorWithSource("Unable to report FileSet revision deployment states.", "ReportFileSetVersions", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
+			}
+		}
+		return response;
+	}
+
+	private async Task<(bool success, FileSetPollRequestList)> GetPollRequest()
+	{
+		StateFilesResponse stateFilesResponse = await _stateFileService.GetAll();
+		if (stateFilesResponse.StatusCode != HttpStatusCode.OK && stateFilesResponse.StatusCode != HttpStatusCode.NotFound)
+		{
+			_logger?.LogErrorWithSource("Unable to get StateFiles.", "GetPollRequest", "/sln/src/UpdateClientService.API/Services/IoT/FileSets/KioskFileSetVersionsService.cs");
+			return (success: false, null);
+		}
+		FileSetPollRequestList fileSetPollRequestList = new FileSetPollRequestList();
+		if (stateFilesResponse.StateFiles != null)
+		{
+			foreach (StateFile stateFile in stateFilesResponse.StateFiles)
+			{
+				fileSetPollRequestList.FileSetPollRequests.Add(new FileSetPollRequest
+				{
+					FileSetId = stateFile.FileSetId,
+					FileSetRevisionId = stateFile.CurrentRevisionId,
+					FileSetState = stateFile.CurrentFileSetState
+				});
+			}
+		}
+		return (success: true, fileSetPollRequestList);
 	}
 }

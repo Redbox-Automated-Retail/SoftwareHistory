@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.FileSets;
 using UpdateClientService.API.Services.IoT.FileSets;
 
@@ -28,39 +26,37 @@ public class FileSetsController : ControllerBase
 	[ProducesResponseType(typeof(OkResult), 200)]
 	public async Task<ActionResult> Invoke()
 	{
-		await _fileSetService.Invoke();
+		await _fileSetService.ProcessInProgressRevisionChangeSets();
 		return Ok();
 	}
 
 	[HttpPost("versions")]
-	[ProducesResponseType(typeof(OkResult), 200)]
-	public async Task<ActionResult> ReportVersions()
+	[ProducesResponseType(typeof(ReportFileSetVersionsResponse), 200)]
+	[ProducesResponseType(500)]
+	public async Task<ActionResult> ReportVersions([FromQuery] long? executionTimeFrameMs)
 	{
-		await _versionsService.ReportFileVersions();
-		return Ok();
+		return (await _fileSetService.TriggerProcessPendingFileSetVersions(new TriggerReportFileSetVersionsRequest
+		{
+			ExecutionTimeFrameMs = executionTimeFrameMs
+		})).ToObjectResult();
 	}
 
 	[HttpPost("changesets")]
 	[ProducesResponseType(typeof(OkResult), 200)]
 	[ProducesResponseType(500)]
+	[ProducesResponseType(typeof(ProcessChangeSetResponse), 200)]
+	[ProducesResponseType(typeof(ProcessChangeSetResponse), 503)]
+	[ProducesResponseType(typeof(ProcessChangeSetResponse), 500)]
 	public async Task<ActionResult> ProcessChangeSet(ClientFileSetRevisionChangeSet changeSet)
 	{
-		List<Error> list = await _fileSetService.ProcessChangeSet(changeSet);
-		if (list != null && list.Count > 0)
-		{
-			return new ObjectResult(list)
-			{
-				StatusCode = 500
-			};
-		}
-		return Ok();
+		return (await _fileSetService.ProcessChangeSet(changeSet)).ToObjectResult();
 	}
 
 	[HttpPost("cleanup")]
 	[ProducesResponseType(typeof(OkResult), 200)]
-	public ActionResult Cleanup()
+	public async Task<ActionResult> Cleanup()
 	{
-		_cleanup.Run();
+		await _cleanup.Run();
 		return Ok();
 	}
 }

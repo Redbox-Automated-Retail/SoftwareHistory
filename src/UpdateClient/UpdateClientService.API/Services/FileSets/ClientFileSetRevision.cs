@@ -3,23 +3,17 @@ using System.Linq;
 
 namespace UpdateClientService.API.Services.FileSets;
 
-public class ClientFileSetRevision
+public class ClientFileSetRevision : RevisionChangeSetKey
 {
-	public long FileSetId { get; set; }
-
 	public string FileSetName { get; set; }
 
 	public int RetentionDays { get; set; }
 
 	public int RetentionRevisions { get; set; }
 
-	public long RevisionId { get; set; }
-
 	public string RevisionName { get; set; }
 
 	public string RevisionVersion { get; set; }
-
-	public long PatchRevisionId { get; set; }
 
 	public string SetPath { get; set; }
 
@@ -47,14 +41,14 @@ public class ClientFileSetRevision
 	{
 		ClientFileSetRevision clientFileSetRevision = new ClientFileSetRevision
 		{
-			FileSetId = FileSetId,
+			FileSetId = base.FileSetId,
 			FileSetName = FileSetName,
 			RetentionDays = RetentionDays,
 			RetentionRevisions = RetentionRevisions,
-			RevisionId = RevisionId,
+			RevisionId = base.RevisionId,
 			RevisionName = RevisionName,
 			RevisionVersion = RevisionVersion,
-			PatchRevisionId = PatchRevisionId,
+			PatchRevisionId = base.PatchRevisionId,
 			SetPath = SetPath,
 			SetCompressionType = SetCompressionType,
 			SetFileHash = SetFileHash,

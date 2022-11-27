@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.IoT.Commands.DownloadFiles;
@@ -11,7 +10,7 @@ public interface IDownloadFilesService
 
 	Task HandleScheduledJobs();
 
-	Task<List<DownloadData>> GetDownloadFileJobStatus(string bitsJobId);
+	Task<DownloadDataList> GetDownloadFileJobStatus(string bitsJobId);
 
 	Task CancelDownloadFileJob(DownloadFileJob job);
 }

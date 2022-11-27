@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Redbox.NetCore.Logging.Extensions;
 using UpdateClientService.API.Services.Configuration;
 
 namespace UpdateClientService.API.Services.IoT.Commands.Controller;
@@ -31,7 +32,7 @@ public class TriggerUpdateConfigStatus : ICommandIoTController
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception trying to trigger UpdateConfigurationStatus");
+			_logger.LogErrorWithSource(ex, "Exception trying to trigger UpdateConfigurationStatus", "Execute", "/sln/src/UpdateClientService.API/Services/IoT/Commands/Controller/TriggerUpdateConfigStatus.cs");
 		}
 	}
 }

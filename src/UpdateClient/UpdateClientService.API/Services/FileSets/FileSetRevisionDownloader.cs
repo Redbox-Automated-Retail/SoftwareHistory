@@ -1,10 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.FileCache;
 
@@ -31,14 +27,9 @@ public class FileSetRevisionDownloader : IFileSetRevisionDownloader
 		_settings = settings.CurrentValue;
 	}
 
-	public bool Exists(long fileSetId, long revisionId, long patchRevisionId)
+	public bool DoesRevisionExist(RevisionChangeSetKey revisionChangeSetKey)
 	{
-		return _fileCacheService.RevisionExists(fileSetId, revisionId, patchRevisionId);
-	}
-
-	public bool DownloadExists(DownloadData downloadData)
-	{
-		return downloadData != null;
+		return _fileCacheService.DoesRevisionExist(revisionChangeSetKey);
 	}
 
 	public bool IsDownloadError(DownloadData downloadData)
@@ -50,71 +41,41 @@ public class FileSetRevisionDownloader : IFileSetRevisionDownloader
 		return downloadData.DownloadState == DownloadState.Error;
 	}
 
-	public bool IsDownloadComplete(long fileSetId, long revisionId, long patchRevisionId, DownloadData downloadData)
+	public bool IsDownloadComplete(RevisionChangeSetKey revisionChangeSetKey, DownloadData downloadData)
 	{
-		if (Exists(fileSetId, revisionId, patchRevisionId))
+		if (!DoesRevisionExist(revisionChangeSetKey))
 		{
-			return true;
+			if (downloadData == null)
+			{
+				return false;
+			}
+			return downloadData.DownloadState == DownloadState.PostDownload;
 		}
-		if (downloadData == null)
-		{
-			return false;
-		}
-		return downloadData.DownloadState == DownloadState.PostDownload;
+		return true;
 	}
 
-	public async Task<DownloadData> AddDownload(long fileSetId, long revisionId, long patchRevisionId, string hash, string path, DownloadPriority downloadPriority)
+	public async Task<DownloadData> AddDownload(RevisionChangeSetKey revisionChangeSetKey, string hash, string path, DownloadPriority downloadPriority)
 	{
-		var (source, result) = await AddDownload(GetRevisionKey(fileSetId, revisionId, patchRevisionId), hash, GetRevisionUrl(path), downloadPriority);
-		if (source.Any())
-		{
-			return null;
-		}
-		return result;
+		var (flag, downloadData) = await AddDownload(DownloadData.GetRevisionKey(revisionChangeSetKey), hash, GetRevisionUrl(path), downloadPriority);
+		return flag ? downloadData : null;
 	}
 
-	private async Task<(List<Error> errors, DownloadData downloadData)> AddDownload(string key, string hash, string url, DownloadPriority downloadPriority)
+	private async Task<(bool success, DownloadData downloadData)> AddDownload(string key, string hash, string url, DownloadPriority downloadPriority)
 	{
 		return await _downloadService.AddRetrieveDownload(key, hash, url, downloadPriority, completeOnFinish: false);
 	}
 
-	public bool CompleteDownload(long fileSetId, long revisionId, long patchRevisionId, DownloadData downloadData)
+	public bool CompleteDownload(RevisionChangeSetKey revisionChangeSetKey, DownloadData downloadData)
 	{
-		string path = downloadData.Path;
-		List<Error> source = _zipHelper.Extract(path, fileSetId, revisionId, patchRevisionId);
-		if (!source.Any())
+		bool flag = _zipHelper.Extract(downloadData.Path, revisionChangeSetKey);
+		if (flag)
 		{
 			_downloader.Complete(downloadData);
 		}
-		return !source.Any();
-	}
-
-	public ClientFileSetRevision GetRevision(long fileSetId, long revisionId, long patchRevisionId)
-	{
-		if (!_fileCacheService.GetRevision(fileSetId, revisionId, patchRevisionId, out var data))
-		{
-			return null;
-		}
-		return Encoding.ASCII.GetString(data).ToObject<ClientFileSetRevision>();
-	}
-
-	public DownloadData GetCurrentDownloadData(long fileSetId, long revisionId, long patchRevisionId, List<DownloadData> downloads)
-	{
-		string key = GetRevisionKey(fileSetId, revisionId, patchRevisionId);
-		return downloads.Where((DownloadData d) => d.Key == key).FirstOrDefault();
-	}
-
-	private string GetRevisionKey(long fileSetId, long revisionId, long patchRevisionId)
-	{
-		return $"{1},{fileSetId},{revisionId}-{patchRevisionId}";
+		return flag;
 	}
 
 	private string GetRevisionUrl(string path)
-	{
-		return GetProxiedS3Url(path);
-	}
-
-	private string GetProxiedS3Url(string path)
 	{
 		if (!string.IsNullOrWhiteSpace(path))
 		{

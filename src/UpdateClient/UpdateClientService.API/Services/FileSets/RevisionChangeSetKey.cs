@@ -1,6 +1,6 @@
 namespace UpdateClientService.API.Services.FileSets;
 
-public abstract class RevisionMetadata
+public class RevisionChangeSetKey
 {
 	public long FileSetId { get; set; }
 

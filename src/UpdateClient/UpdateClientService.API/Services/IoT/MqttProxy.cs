@@ -99,7 +99,7 @@ public class MqttProxy : IMqttProxy
 		}
 		else
 		{
-			_logger.LogErrorWithSource(e.Exception, $"Received DisconnectedHandler Event Reason: {e.Reason}");
+			_logger.LogErrorWithSource(e.Exception, $"Received DisconnectedHandler Event Reason: {e.Reason}", "DisconnectedHandler", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 	}
 
@@ -163,7 +163,7 @@ public class MqttProxy : IMqttProxy
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception while publishing message to topic " + topicName);
+			_logger.LogErrorWithSource(ex, "Exception while publishing message to topic " + topicName, "PublishMessageAsync", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 			result = false;
 		}
 		return result;
@@ -195,7 +195,7 @@ public class MqttProxy : IMqttProxy
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception occurred");
+			_logger.LogErrorWithSource(ex, "Exception occurred", "SubscribeTopics", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		if (_isSubscribed)
 		{
@@ -246,7 +246,7 @@ public class MqttProxy : IMqttProxy
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception occured while attempting to connect MqttClient.");
+			_logger.LogErrorWithSource(ex, "Exception occured while attempting to connect MqttClient.", "Connect", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 			return false;
 		}
 	}
@@ -259,7 +259,7 @@ public class MqttProxy : IMqttProxy
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception occured while attempting to disconnect from MqttClient, this can happen if the connection lost already.");
+			_logger.LogErrorWithSource(ex, "Exception occured while attempting to disconnect from MqttClient, this can happen if the connection lost already.", "Disconnect", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
 		Clear();
 	}
@@ -299,7 +299,7 @@ public class MqttProxy : IMqttProxy
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception during Initialization");
+			_logger.LogErrorWithSource(ex, "Exception during Initialization", "Initialize", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 			return false;
 		}
 	}
@@ -321,7 +321,7 @@ public class MqttProxy : IMqttProxy
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception occurred in ConnectToMqtt");
+			_logger.LogErrorWithSource(ex, "Exception occurred in ConnectToMqtt", "ConnectToMqtt", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 			await _certService.Validate();
 			_clientOptions = null;
 		}

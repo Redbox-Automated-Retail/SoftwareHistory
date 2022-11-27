@@ -3,7 +3,7 @@ using UpdateClientService.API.Services.DownloadService;
 
 namespace UpdateClientService.API.Services.FileSets;
 
-public class ClientFileSetRevisionChangeSet : RevisionMetadata
+public class ClientFileSetRevisionChangeSet : RevisionChangeSetKey
 {
 	public string Path { get; set; }
 

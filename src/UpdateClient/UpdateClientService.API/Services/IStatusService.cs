@@ -1,11 +1,10 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace UpdateClientService.API.Services;
 
 public interface IStatusService
 {
-	Task<FileVersionDataResponse> GetFileVersions();
+	FileVersionDataResponse GetFileVersions();
 
-	Task<FileVersionDataResponse> GetFileVersions(IEnumerable<string> filepaths);
+	FileVersionDataResponse GetFileVersions(IEnumerable<string> filepaths);
 }

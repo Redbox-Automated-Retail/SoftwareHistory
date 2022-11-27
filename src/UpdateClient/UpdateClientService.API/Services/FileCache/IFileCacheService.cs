@@ -1,47 +1,55 @@
+using System;
 using System.Collections.Generic;
-using Redbox.NetCore.Middleware.Http;
+using System.Threading.Tasks;
+using UpdateClientService.API.Services.FileSets;
 
 namespace UpdateClientService.API.Services.FileCache;
 
 public interface IFileCacheService
 {
-	bool FileExists(long fileSetId, long fileId, long fileRevisionId);
+	bool DoesFileExist(long fileSetId, long fileId, long fileRevisionId);
 
-	bool RevisionExists(long fileSetId, long revisionId);
+	bool IsFileHashValid(long fileSetId, long fileId, long fileRevisionId, string fileHash);
 
-	bool RevisionExists(long fileSetId, long revisionId, long patchRevisionId);
+	bool IsFileHashValid(string filePath, string hash);
 
-	List<Error> AddFile(long fileSetId, long fileId, long fileRevisionId, byte[] data, string info);
+	bool DoesRevisionExist(RevisionChangeSetKey revisionChangeSetKey);
 
-	List<Error> AddFilePatch(long fileSetId, long fileId, long fileRevisionId, long filePatchRevisionId, byte[] data, string info);
+	bool AddFile(long fileSetId, long fileId, long fileRevisionId, byte[] data, string info);
 
-	List<Error> AddRevision(long fileSetId, long revisionId, long patchRevisionId, byte[] data, string info);
+	bool AddFilePatch(long fileSetId, long fileId, long fileRevisionId, long filePatchRevisionId, byte[] data, string info);
 
-	List<Error> AddFile(long fileSetId, long fileId, long fileRevisionId, string pathToMoveFrom);
+	bool AddRevision(RevisionChangeSetKey revisionChangeSetKey, byte[] data, string info);
 
-	List<Error> AddRevision(long fileSetId, long revisionId, long patchRevisionId, string pathToMoveFrom);
+	void DeleteFile(long fileSetId, long fileId, long fileRevisionId, bool force = false);
 
-	void DeleteFile(long fileSetId, long fileId, long fileRevisionId);
+	void DeleteRevision(RevisionChangeSetKey revisionChangeSetKey);
 
-	void DeleteRevision(long fileSetId, long revisionId, long patchRevisionId);
+	Task<FileSetFileInfo> GetFileInfo(string filePath);
 
-	bool GetFileInfo(string path, out byte[] data);
+	Task<List<FileSetFileInfo>> GetFileInfos(long fileSetId);
 
 	bool GetFile(long fileSetId, long fileId, long fileRevisionId, out byte[] data);
 
 	bool CopyFileToPath(long fileSetId, long fileId, long fileRevisionId, string copyToPath);
 
-	bool GetRevision(long fileSetId, long revisionId, out byte[] data);
+	Task<ClientFileSetRevision> GetClientFileSetRevision(string filePath);
 
-	bool GetRevision(long fileSetId, long revisionId, long patchRevisionId, out byte[] data);
+	Task<ClientFileSetRevision> GetAnyClientFileSetRevision(long fileSetId, long revisionId);
 
-	string GetFileName(long fileId, long fileRevisionId);
+	Task<ClientFileSetRevision> GetClientFileSetRevision(RevisionChangeSetKey revisionChangeSetKey);
 
-	bool GetRevision(string path, out byte[] data);
+	string GetRevisionFileName(long fileId, long fileRevisionId);
 
-	List<string> GetAllRevisionFiles(long fileSetId);
+	List<string> GetClientFileSetRevisionFilePaths(long fileSetId);
 
-	List<long> GetAllFileSets();
+	List<string> GetClientFileSetRevisionFilePaths(long fileSetId, long revisionId);
 
-	List<string> GetAllFileInfos(long fileSetId);
+	DateTime GetRevisionCreationDate(long fileSetId, long revisionId);
+
+	List<long> GetFileSetIds();
+
+	List<long> GetFileSetRevisionIds(long fileSetId);
+
+	List<string> GetFileInfoPaths(long fileSetId);
 }

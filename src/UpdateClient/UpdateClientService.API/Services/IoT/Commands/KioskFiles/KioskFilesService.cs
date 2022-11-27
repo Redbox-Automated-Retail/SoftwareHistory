@@ -69,7 +69,7 @@ public class KioskFilesService : IKioskFilesService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "PeekRequestedFilesAsync");
+			_logger.LogErrorWithSource(ex, "Exception while gettings FileInfos", "PeekRequestedFilesAsync", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 			mqttResponse.Error = ex.Message + ". Logged full exception in UpdateClientService logs, take a look at it if you want to see the full exception details.";
 			return mqttResponse;
 		}
@@ -132,7 +132,7 @@ public class KioskFilesService : IKioskFilesService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An error occurred while trying to upload requested file to S3. Request Model -> " + kioskFileRequest.ToJson());
+			_logger.LogErrorWithSource(ex, "An error occurred while trying to upload requested file to S3. Request Model -> " + kioskFileRequest.ToJson(), "UploadFilesAsync", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 			mqttResponse.Error = "An error occurred while trying to upload requested file to S3. Take a look at UCS logs for full exception details. Error -> " + ex.Message;
 			_ioTProcessStatusService.UploadFilesStatus = IoTProcessStatusEnum.Errored;
 		}
@@ -159,7 +159,7 @@ public class KioskFilesService : IKioskFilesService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "GetFilesByFileType");
+			_logger.LogErrorWithSource(ex, "Exception while getting FileInfos", "GetFilesByFileType", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 			error = ex.Message;
 		}
 		return (files: item, error: error);
@@ -180,7 +180,7 @@ public class KioskFilesService : IKioskFilesService
 			}
 			catch (Exception ex)
 			{
-				_logger.LogErrorWithSource(ex, "GetFilesByQuery");
+				_logger.LogErrorWithSource(ex, "Exception while getting FileInfos", "GetFilesByQuery", "/sln/src/UpdateClientService.API/Services/IoT/Commands/KioskFiles/KioskFilesService.cs");
 				item2 = ex.Message;
 			}
 			return (files: item, error: item2);

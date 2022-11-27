@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Redbox.NetCore.Logging.Extensions;
-using Redbox.NetCore.Middleware.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.FileSets;
 
@@ -19,241 +20,202 @@ public class FileCacheService : IFileCacheService
 		_logger = logger;
 	}
 
-	public bool FileExists(long fileSetId, long fileId, long fileRevisionId)
+	public bool DoesFileExist(long fileSetId, long fileId, long fileRevisionId)
 	{
-		List<Error> list = new List<Error>();
 		try
 		{
-			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
-			return File.Exists(filePath);
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.FileExists Unhandled exception occurred. Exception: {arg}"
-			});
-		}
-		return false;
-	}
-
-	public bool RevisionExists(long fileSetId, long revisionId)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			List<string> allRevisionFiles = GetAllRevisionFiles(fileSetId, revisionId);
-			return allRevisionFiles.Count() > 0;
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.RevisionExists. Unhandled exception occurred. Exception: {arg}"
-			});
-		}
-		return false;
-	}
-
-	public bool RevisionExists(long fileSetId, long revisionId, long patchRevisionId)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			string revisionPath = GetRevisionPath(fileSetId, revisionId, patchRevisionId);
-			return File.Exists(revisionPath);
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.RevisionExists. Unhandled exception occurred. Exception {arg}"
-			});
-		}
-		return false;
-	}
-
-	public List<Error> AddFile(long fileSetId, long fileId, long fileRevisionId, byte[] data, string info)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			CheckFilePath(fileSetId, fileId);
-			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
-			File.WriteAllBytes(filePath, data);
-			string fileInfoPath = GetFileInfoPath(fileSetId, fileId, fileRevisionId);
-			File.WriteAllText(fileInfoPath, info);
-			_logger.LogInformation("FileCacheService.AddFile - Info: " + info);
+			string revisionFilePath = GetRevisionFilePath(fileSetId, fileId, fileRevisionId);
+			return File.Exists(revisionFilePath);
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Unhandled exception occurred");
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.AddFile. Unhandled exception occurred. Exception: {ex}"
-			});
+			_logger.LogErrorWithSource(ex, $"Exception while checking the existance of File with FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DoesFileExist", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 		}
-		return list;
+		return false;
 	}
 
-	public List<Error> AddFilePatch(long fileSetId, long fileId, long fileRevisionId, long filePatchRevisionId, byte[] data, string info)
+	public bool IsFileHashValid(long fileSetId, long fileId, long fileRevisionId, string fileHash)
 	{
-		List<Error> list = new List<Error>();
+		try
+		{
+			string revisionFilePath = GetRevisionFilePath(fileSetId, fileId, fileRevisionId);
+			return IsFileHashValid(revisionFilePath, fileHash);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, $"Exception while checking the hash for File with FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "IsFileHashValid", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return false;
+	}
+
+	public bool IsFileHashValid(string filePath, string hash)
+	{
+		try
+		{
+			using FileStream stream = File.OpenRead(filePath);
+			string sHA1Hash = stream.GetSHA1Hash();
+			return sHA1Hash == hash;
+		}
+		catch (Exception exception)
+		{
+			_logger.LogError(exception, "Exception while checking hash for file " + filePath + ".");
+		}
+		return false;
+	}
+
+	public bool DoesRevisionExist(RevisionChangeSetKey revisionChangeSetKey)
+	{
+		try
+		{
+			string revisionPath = GetRevisionPath(revisionChangeSetKey);
+			return File.Exists(revisionPath);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while checking the existence of a revsion for " + revisionChangeSetKey?.IdentifyingText(), "DoesRevisionExist", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return false;
+	}
+
+	public bool AddFile(long fileSetId, long fileId, long fileRevisionId, byte[] data, string info)
+	{
+		bool result = false;
+		try
+		{
+			CheckFilePath(fileSetId, fileId);
+			string revisionFilePath = GetRevisionFilePath(fileSetId, fileId, fileRevisionId);
+			File.WriteAllBytes(revisionFilePath, data);
+			string fileInfoPath = GetFileInfoPath(fileSetId, fileId, fileRevisionId);
+			File.WriteAllText(fileInfoPath, info);
+			_logger.LogInformation("FileCacheService.AddFile - Info: " + info);
+			result = true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, $"Exception while adding file FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "AddFile", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return result;
+	}
+
+	public bool AddFilePatch(long fileSetId, long fileId, long fileRevisionId, long filePatchRevisionId, byte[] data, string info)
+	{
+		bool result = false;
 		try
 		{
 			CheckFilePath(fileSetId, fileId);
 			if (!GetFile(fileSetId, fileId, filePatchRevisionId, out var _))
 			{
-				list.Add(new Error
-				{
-					Message = $"FileCacheService.AddFilePatch. Patch source file is missing FileId: {fileId} FileRevisionId {filePatchRevisionId}"
-				});
-				return list;
+				_logger.LogError($"Patch source file is missing FileId: {fileId} FileRevisionId {filePatchRevisionId}");
+				return result;
 			}
-			string filePath = GetFilePath(fileSetId, fileId, filePatchRevisionId);
-			using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+			string revisionFilePath = GetRevisionFilePath(fileSetId, fileId, filePatchRevisionId);
+			List<Error> list = new List<Error>();
+			using (FileStream fileStream = new FileStream(revisionFilePath, FileMode.Open, FileAccess.Read))
 			{
 				fileStream.Position = 0L;
 				using MemoryStream memoryStream = new MemoryStream(data);
 				memoryStream.Position = 0L;
-				string filePath2 = GetFilePath(fileSetId, fileId, fileRevisionId);
-				using FileStream target = new FileStream(filePath2, FileMode.OpenOrCreate, FileAccess.Write);
+				string revisionFilePath2 = GetRevisionFilePath(fileSetId, fileId, fileRevisionId);
+				using FileStream target = new FileStream(revisionFilePath2, FileMode.OpenOrCreate, FileAccess.Write);
 				list.AddRange(XDeltaHelper.Apply(fileStream, memoryStream, target));
 			}
 			string fileInfoPath = GetFileInfoPath(fileSetId, fileId, fileRevisionId);
 			File.WriteAllText(fileInfoPath, info);
 			_logger.LogInfoWithSource("FileCacheService.AddFilePatch - Info: " + info, "AddFilePatch", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
+			if (list.Count > 0)
 			{
-				Message = $"FileCacheService.AddFilePatch. Unhandled exception occurred. Exception: {arg}"
-			});
-		}
-		return list;
-	}
-
-	public List<Error> AddRevision(long fileSetId, long revisionId, long patchRevisionId, byte[] data, string info)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			CheckFileSetPath(fileSetId);
-			string revisionPath = GetRevisionPath(fileSetId, revisionId, patchRevisionId);
-			File.WriteAllBytes(revisionPath, data);
-			string revisionInfoPath = GetRevisionInfoPath(fileSetId, revisionId, patchRevisionId);
-			File.WriteAllText(revisionInfoPath, info);
-			_logger.LogInfoWithSource("FileCacheService.AddRevision - Info: " + info, "AddRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.AddRevision Unhandled exception occurred. {arg}"
-			});
-		}
-		return list;
-	}
-
-	public List<Error> AddFile(long fileSetId, long fileId, long fileRevisionId, string pathToMoveFrom)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			CheckFilePath(fileSetId, fileId);
-			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
-			File.Move(pathToMoveFrom, filePath);
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.AddFile Unhandled exception occurred{arg}"
-			});
-		}
-		return list;
-	}
-
-	public List<Error> AddRevision(long fileSetId, long revisionId, long patchRevisionId, string pathToMoveFrom)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			CheckFileSetPath(fileSetId);
-			string revisionPath = GetRevisionPath(fileSetId, revisionId, patchRevisionId);
-			File.Move(pathToMoveFrom, revisionPath);
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.AddRevision Unhandled exception occurred {arg}"
-			});
-		}
-		return list;
-	}
-
-	public void DeleteFile(long fileSetId, long fileId, long fileRevisionId)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
-			double totalDays = (DateTime.Now - File.GetCreationTime(filePath)).TotalDays;
-			if (totalDays <= 1.0)
-			{
-				_logger.LogInfoWithSource($"Cannot delete files less than a day old - FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
-				return;
+				_logger.LogErrorWithSource(list[0].Message, "AddFilePatch", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 			}
-			_logger.LogInfoWithSource($"FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+			else
+			{
+				result = true;
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, $"Exception while adding File Patch with FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}, FilePatchRevisionId {filePatchRevisionId}", "AddFilePatch", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return result;
+	}
+
+	public bool AddRevision(RevisionChangeSetKey revisionChangeSetKey, byte[] data, string info)
+	{
+		bool result = false;
+		try
+		{
+			CheckFileSetPath(revisionChangeSetKey.FileSetId);
+			string revisionPath = GetRevisionPath(revisionChangeSetKey);
+			File.WriteAllBytes(revisionPath, data);
+			string revisionInfoPath = GetRevisionInfoPath(revisionChangeSetKey);
+			File.WriteAllText(revisionInfoPath, info);
+			_logger.LogInfoWithSource("Adding Revision: " + info, "AddRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+			result = true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while adding revision for " + revisionChangeSetKey?.IdentifyingText(), "AddRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return result;
+	}
+
+	public void DeleteFile(long fileSetId, long fileId, long fileRevisionId, bool force = false)
+	{
+		try
+		{
+			string revisionFilePath = GetRevisionFilePath(fileSetId, fileId, fileRevisionId);
+			if (!force)
+			{
+				double totalDays = (DateTime.Now - File.GetCreationTime(revisionFilePath)).TotalDays;
+				if (totalDays <= 1.0)
+				{
+					_logger.LogInfoWithSource($"Cannot delete files less than a day old - FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+					return;
+				}
+			}
+			_logger.LogInfoWithSource($"Deleting file for FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+			DeleteFileIfExists(revisionFilePath);
+			string fileInfoPath = GetFileInfoPath(fileSetId, fileId, fileRevisionId);
+			DeleteFileIfExists(fileInfoPath);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, $"Exception while deleting File for FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}", "DeleteFile", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+	}
+
+	private void DeleteFileIfExists(string filePath)
+	{
+		try
+		{
 			if (File.Exists(filePath))
 			{
 				File.Delete(filePath);
 			}
-			string fileInfoPath = GetFileInfoPath(fileSetId, fileId, fileRevisionId);
-			if (File.Exists(fileInfoPath))
-			{
-				File.Delete(fileInfoPath);
-			}
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			list.Add(new Error
-			{
-				Message = "Unhandled exception occurred. Exception -> " + e.GetFullMessage()
-			});
+			_logger.LogErrorWithSource(ex, "Exception while deleting file " + filePath, "DeleteFileIfExists", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 		}
 	}
 
-	public void DeleteRevision(long fileSetId, long revisionId, long patchRevisionId)
+	public void DeleteRevision(RevisionChangeSetKey revisionChangeSetKey)
 	{
-		List<Error> list = new List<Error>();
 		try
 		{
-			_logger.LogInfoWithSource($"FileSetId {fileSetId}, RevisionId {revisionId}, PatchRevisionId {patchRevisionId}", "DeleteRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
-			string revisionPath = GetRevisionPath(fileSetId, revisionId, patchRevisionId);
-			if (File.Exists(revisionPath))
+			_logger.LogInfoWithSource("Deleting revision with " + revisionChangeSetKey?.IdentifyingText(), "DeleteRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+			string revisionPath = GetRevisionPath(revisionChangeSetKey);
+			DeleteFileIfExists(revisionPath);
+			string revisionInfoPath = GetRevisionInfoPath(revisionChangeSetKey);
+			DeleteFileIfExists(revisionInfoPath);
+			string stagingDirectory = GetStagingDirectory(revisionChangeSetKey.FileSetId, revisionChangeSetKey.RevisionId);
+			if (Directory.Exists(stagingDirectory))
 			{
-				File.Delete(revisionPath);
-			}
-			string revisionInfoPath = GetRevisionInfoPath(fileSetId, revisionId, patchRevisionId);
-			if (File.Exists(revisionInfoPath))
-			{
-				File.Delete(revisionInfoPath);
-			}
-			string stagingPath = GetStagingPath(fileSetId, revisionId);
-			if (Directory.Exists(stagingPath))
-			{
-				Directory.Delete(stagingPath, recursive: true);
+				Directory.Delete(stagingDirectory, recursive: true);
 			}
 		}
-		catch (Exception arg)
+		catch (Exception ex)
 		{
-			list.Add(new Error
-			{
-				Message = $"Unhandled exception occurred. {arg}"
-			});
+			_logger.LogErrorWithSource(ex, "Exception while deleting revision with " + revisionChangeSetKey?.IdentifyingText(), "DeleteRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 		}
 	}
 
@@ -263,10 +225,10 @@ public class FileCacheService : IFileCacheService
 		List<Error> list = new List<Error>();
 		try
 		{
-			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
-			if (File.Exists(filePath))
+			string revisionFilePath = GetRevisionFilePath(fileSetId, fileId, fileRevisionId);
+			if (File.Exists(revisionFilePath))
 			{
-				data = File.ReadAllBytes(filePath);
+				data = File.ReadAllBytes(revisionFilePath);
 				return true;
 			}
 		}
@@ -280,133 +242,137 @@ public class FileCacheService : IFileCacheService
 		return false;
 	}
 
-	public bool GetFileInfo(string path, out byte[] data)
+	public async Task<List<FileSetFileInfo>> GetFileInfos(long fileSetId)
 	{
-		data = null;
-		List<Error> list = new List<Error>();
-		try
+		List<FileSetFileInfo> result = new List<FileSetFileInfo>();
+		List<string> fileInfoPaths = GetFileInfoPaths(fileSetId);
+		foreach (string item in fileInfoPaths)
 		{
-			if (File.Exists(path))
+			FileSetFileInfo fileSetFileInfo = await GetFileInfo(item);
+			if (fileSetFileInfo != null)
 			{
-				data = File.ReadAllBytes(path);
-				return true;
+				result.Add(fileSetFileInfo);
 			}
 		}
-		catch (Exception arg)
+		return result;
+	}
+
+	public async Task<FileSetFileInfo> GetFileInfo(string filePath)
+	{
+		FileSetFileInfo result = null;
+		try
 		{
-			list.Add(new Error
+			var (flag, bytes) = await ReadFileBytes(filePath);
+			if (flag)
 			{
-				Message = $"FileCacheService.GetFileInfo Unhandled exception occurred. {arg}"
-			});
+				result = Encoding.ASCII.GetString(bytes).ToObject<FileSetFileInfo>();
+			}
 		}
-		return false;
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while getting FileSetFileInfo from file " + filePath, "GetFileInfo", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return result;
 	}
 
 	public bool CopyFileToPath(long fileSetId, long fileId, long fileRevisionId, string copyToPath)
 	{
-		List<Error> list = new List<Error>();
 		try
 		{
-			string filePath = GetFilePath(fileSetId, fileId, fileRevisionId);
+			string revisionFilePath = GetRevisionFilePath(fileSetId, fileId, fileRevisionId);
+			if (File.Exists(revisionFilePath))
+			{
+				File.Copy(revisionFilePath, copyToPath, overwrite: true);
+				return true;
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, $"Exception while copying file FileSetId {fileSetId}, FileId {fileId}, FileRevisionId {fileRevisionId}, CopyToPath {copyToPath}", "CopyFileToPath", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return false;
+	}
+
+	public async Task<ClientFileSetRevision> GetAnyClientFileSetRevision(long fileSetId, long fileSetRevisionId)
+	{
+		ClientFileSetRevision result = null;
+		try
+		{
+			List<string> clientFileSetRevisionFilePaths = GetClientFileSetRevisionFilePaths(fileSetId, fileSetRevisionId);
+			string filePath = clientFileSetRevisionFilePaths.FirstOrDefault();
+			result = await GetClientFileSetRevision(filePath);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, $"Exception while getting ClientFileSetRevision for FileSetId {fileSetId} and FileSetRevisionId {fileSetRevisionId}", "GetAnyClientFileSetRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return result;
+	}
+
+	public async Task<ClientFileSetRevision> GetClientFileSetRevision(RevisionChangeSetKey revisionChangeSetKey)
+	{
+		ClientFileSetRevision result = null;
+		try
+		{
+			string revisionPath = GetRevisionPath(revisionChangeSetKey);
+			result = await GetClientFileSetRevision(revisionPath);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while reading ClienfFileSetRevision for " + revisionChangeSetKey?.IdentifyingText(), "GetClientFileSetRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return result;
+	}
+
+	public async Task<ClientFileSetRevision> GetClientFileSetRevision(string filePath)
+	{
+		ClientFileSetRevision result = null;
+		try
+		{
+			var (flag, bytes) = await ReadFileBytes(filePath);
+			if (flag)
+			{
+				result = Encoding.ASCII.GetString(bytes).ToObject<ClientFileSetRevision>();
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while reading ClienfFileSetRevision from file " + filePath, "GetClientFileSetRevision", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
+		}
+		return result;
+	}
+
+	private async Task<(bool, byte[])> ReadFileBytes(string filePath)
+	{
+		bool result = false;
+		byte[] fileBytes = null;
+		try
+		{
 			if (File.Exists(filePath))
 			{
-				File.Copy(filePath, copyToPath, overwrite: true);
-				return true;
+				fileBytes = await File.ReadAllBytesAsync(filePath);
+				result = true;
 			}
 		}
-		catch (Exception arg)
+		catch (Exception ex)
 		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.CopyFileToPath Unhandled exception occurred. {arg}"
-			});
+			_logger.LogErrorWithSource(ex, "Exception while reading file " + filePath, "ReadFileBytes", "/sln/src/UpdateClientService.API/Services/FileCache/FileCacheService.cs");
 		}
-		return false;
+		return (result, fileBytes);
 	}
 
-	public bool GetRevision(long fileSetId, long revisionId, out byte[] data)
+	public List<string> GetClientFileSetRevisionFilePaths(long fileSetId)
 	{
-		data = null;
-		List<Error> list = new List<Error>();
-		try
+		List<string> result = new List<string>();
+		string fileSetDirectory = GetFileSetDirectory(fileSetId);
+		if (Directory.Exists(fileSetDirectory))
 		{
-			List<string> allRevisionFiles = GetAllRevisionFiles(fileSetId, revisionId);
-			if (allRevisionFiles.Count() == 0)
-			{
-				return false;
-			}
-			string text = allRevisionFiles.OrderByDescending((string f) => f).FirstOrDefault((string f) => Path.GetExtension(f).Equals(".revision", StringComparison.CurrentCultureIgnoreCase));
-			if (string.IsNullOrEmpty(text))
-			{
-				return false;
-			}
-			if (File.Exists(text))
-			{
-				data = File.ReadAllBytes(text);
-				return true;
-			}
+			result = Directory.GetFiles(fileSetDirectory, "*.revision", SearchOption.TopDirectoryOnly).ToList();
 		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.GetRevision Unhandled exception occurred. {arg}"
-			});
-		}
-		return false;
+		return result;
 	}
 
-	public bool GetRevision(long fileSetId, long revisionId, long patchRevisionId, out byte[] data)
-	{
-		data = null;
-		List<Error> list = new List<Error>();
-		try
-		{
-			string revisionPath = GetRevisionPath(fileSetId, revisionId, patchRevisionId);
-			if (File.Exists(revisionPath))
-			{
-				data = File.ReadAllBytes(revisionPath);
-				return true;
-			}
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.GetRevision Unhandled exception occurred. {arg}"
-			});
-		}
-		return false;
-	}
-
-	public bool GetRevision(string path, out byte[] data)
-	{
-		data = null;
-		List<Error> list = new List<Error>();
-		try
-		{
-			if (File.Exists(path))
-			{
-				data = File.ReadAllBytes(path);
-				return true;
-			}
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileCacheService.GetRevision Unhandled exception occurred. {arg}"
-			});
-		}
-		return false;
-	}
-
-	public List<string> GetAllRevisionFiles(long fileSetId)
-	{
-		return Directory.GetFiles(GetRevisionPath(fileSetId), "*.revision", SearchOption.TopDirectoryOnly).ToList();
-	}
-
-	public List<long> GetAllFileSets()
+	public List<long> GetFileSetIds()
 	{
 		List<long> list = new List<long>();
 		if (!Directory.Exists(Constants.FileCacheRootPath))
@@ -429,39 +395,107 @@ public class FileCacheService : IFileCacheService
 		return list;
 	}
 
-	private List<string> GetAllRevisionFiles(long fileSetId, long revisionId)
+	public List<long> GetFileSetRevisionIds(long fileSetId)
 	{
-		return Directory.GetFiles(GetRevisionPath(fileSetId), $"{revisionId}-*.revision", SearchOption.TopDirectoryOnly).ToList();
+		List<long> list = new List<long>();
+		List<string> clientFileSetRevisionFilePaths = GetClientFileSetRevisionFilePaths(fileSetId);
+		foreach (string item2 in clientFileSetRevisionFilePaths)
+		{
+			string fileName = Path.GetFileName(item2);
+			var (flag, item) = ParseRevisionIdFromRevisionFileName(fileName);
+			if (flag)
+			{
+				list.Add(item);
+			}
+		}
+		return list.Distinct().ToList();
 	}
 
-	public List<string> GetAllFiles(long fileSetId)
+	private (bool success, long revisionId) ParseRevisionIdFromRevisionFileName(string revisionFileName)
 	{
-		return Directory.GetFiles(GetFilePath(fileSetId), "*.file", SearchOption.TopDirectoryOnly).ToList();
+		bool item = false;
+		long result = 0L;
+		if (!string.IsNullOrEmpty(revisionFileName) && revisionFileName.Contains("-"))
+		{
+			string[] array = revisionFileName.Split('-');
+			if (array != null && array.Count() > 0 && long.TryParse(array[0], out result))
+			{
+				item = true;
+			}
+		}
+		return (success: item, revisionId: result);
 	}
 
-	public List<string> GetAllFileInfos(long fileSetId)
+	public List<string> GetClientFileSetRevisionFilePaths(long fileSetId, long revisionId)
 	{
-		return Directory.GetFiles(GetFilePath(fileSetId), "*.fileinfo", SearchOption.TopDirectoryOnly).ToList();
+		List<string> result = new List<string>();
+		string fileSetDirectory = GetFileSetDirectory(fileSetId);
+		if (Directory.Exists(fileSetDirectory))
+		{
+			result = Directory.GetFiles(fileSetDirectory, $"{revisionId}-*.revision", SearchOption.TopDirectoryOnly).ToList();
+		}
+		return result;
 	}
 
-	private string GetRevisionPath(long fileSetId)
+	public DateTime GetRevisionCreationDate(long fileSetId, long revisionId)
 	{
-		return Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}\\");
+		List<string> clientFileSetRevisionFilePaths = GetClientFileSetRevisionFilePaths(fileSetId, revisionId);
+		return GetMaxCreationdDate(clientFileSetRevisionFilePaths);
+	}
+
+	private DateTime GetMaxCreationdDate(List<string> filePaths)
+	{
+		DateTime dateTime = DateTime.MinValue;
+		foreach (string filePath in filePaths)
+		{
+			DateTime creationTime = File.GetCreationTime(filePath);
+			if (creationTime > dateTime)
+			{
+				dateTime = creationTime;
+			}
+		}
+		return dateTime;
+	}
+
+	public List<string> GetFileInfoPaths(long fileSetId)
+	{
+		List<string> result = new List<string>();
+		string revisionFileDirectory = GetRevisionFileDirectory(fileSetId);
+		if (Directory.Exists(revisionFileDirectory))
+		{
+			result = Directory.GetFiles(revisionFileDirectory, "*.fileinfo", SearchOption.TopDirectoryOnly).ToList();
+		}
+		return result;
+	}
+
+	private string GetFileSetDirectory(long fileSetId)
+	{
+		return Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}");
+	}
+
+	private string GetRevisionPath(RevisionChangeSetKey revisionChangeSetKey)
+	{
+		return GetRevisionPath(revisionChangeSetKey?.FileSetId ?? 0, revisionChangeSetKey?.RevisionId ?? 0, revisionChangeSetKey?.PatchRevisionId ?? 0);
 	}
 
 	private string GetRevisionPath(long fileSetId, long revisionId, long patchRevisionId)
 	{
-		return Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}\\{GetRevisionName(revisionId, patchRevisionId)}");
+		return Path.Combine(GetFileSetDirectory(fileSetId), GetRevisionName(revisionId, patchRevisionId));
+	}
+
+	private string GetRevisionInfoPath(RevisionChangeSetKey revisionChangeSetKey)
+	{
+		return GetRevisionInfoPath(revisionChangeSetKey?.FileSetId ?? 0, revisionChangeSetKey?.RevisionId ?? 0, revisionChangeSetKey?.PatchRevisionId ?? 0);
 	}
 
 	private string GetRevisionInfoPath(long fileSetId, long revisionId, long patchRevisionId)
 	{
-		return Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}\\{GetRevisionInfoName(revisionId, patchRevisionId)}");
+		return Path.Combine(GetFileSetDirectory(fileSetId), GetRevisionInfoName(revisionId, patchRevisionId));
 	}
 
-	private string GetStagingPath(long fileSetId, long revisionId)
+	private string GetStagingDirectory(long fileSetId, long revisionId)
 	{
-		return Path.Combine(Constants.FileSetsRoot, $"staging\\{fileSetId}\\{revisionId}");
+		return Path.Combine(Constants.FileSetsRoot, "staging", $"{fileSetId}", $"{revisionId}");
 	}
 
 	private string GetRevisionName(long revisionId, long patchRevisionId)
@@ -474,22 +508,22 @@ public class FileCacheService : IFileCacheService
 		return $"{revisionId}-{patchRevisionId}.revisioninfo";
 	}
 
-	private string GetFilePath(long fileSetId)
+	private string GetRevisionFileDirectory(long fileSetId)
 	{
-		return Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}\\File\\");
+		return Path.Combine(GetFileSetDirectory(fileSetId), "File");
 	}
 
-	private string GetFilePath(long fileSetId, long fileId, long fileRevisionId)
+	private string GetRevisionFilePath(long fileSetId, long fileId, long fileRevisionId)
 	{
-		return Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}\\File\\{GetFileName(fileId, fileRevisionId)}");
+		return Path.Combine(GetRevisionFileDirectory(fileSetId), GetRevisionFileName(fileId, fileRevisionId));
 	}
 
 	private string GetFileInfoPath(long fileSetId, long fileId, long fileRevisionId)
 	{
-		return Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}\\File\\{GetFileInfoName(fileId, fileRevisionId)}");
+		return Path.Combine(GetRevisionFileDirectory(fileSetId), GetFileInfoName(fileId, fileRevisionId));
 	}
 
-	public string GetFileName(long fileId, long fileRevisionId)
+	public string GetRevisionFileName(long fileId, long fileRevisionId)
 	{
 		return $"{fileId}-{fileRevisionId}.file";
 	}
@@ -501,19 +535,21 @@ public class FileCacheService : IFileCacheService
 
 	private void CheckFilePath(long fileSetId, long fileId)
 	{
-		string path = Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}\\File");
-		if (!Directory.Exists(path))
-		{
-			Directory.CreateDirectory(path);
-		}
+		string directoryPath = Path.Combine(GetRevisionFileDirectory(fileSetId));
+		CreateDirectoryIfNeeded(directoryPath);
 	}
 
 	private void CheckFileSetPath(long fileSetId)
 	{
-		string path = Path.Combine(Constants.FileCacheRootPath, $"{fileSetId}");
-		if (!Directory.Exists(path))
+		string directoryPath = Path.Combine(GetFileSetDirectory(fileSetId));
+		CreateDirectoryIfNeeded(directoryPath);
+	}
+
+	private void CreateDirectoryIfNeeded(string directoryPath)
+	{
+		if (!Directory.Exists(directoryPath))
 		{
-			Directory.CreateDirectory(path);
+			Directory.CreateDirectory(directoryPath);
 		}
 	}
 }

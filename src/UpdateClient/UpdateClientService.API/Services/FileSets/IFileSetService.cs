@@ -1,25 +1,15 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Coravel.Invocable;
-using Redbox.NetCore.Middleware.Http;
+using UpdateClientService.API.Services.IoT.FileSets;
 
 namespace UpdateClientService.API.Services.FileSets;
 
-public interface IFileSetService : IInvocable
+public interface IFileSetService
 {
-	bool RebootRequired { get; }
+	Task<ProcessChangeSetResponse> ProcessChangeSet(ClientFileSetRevisionChangeSet clientFileSetRevisionChangeSet);
 
-	List<Error> Initialize();
+	Task<ReportFileSetVersionsResponse> ProcessPendingFileSetVersions();
 
-	Task<List<Error>> ProcessPollReply(List<PollReply> pollReplyList);
+	Task<ReportFileSetVersionsResponse> TriggerProcessPendingFileSetVersions(TriggerReportFileSetVersionsRequest triggerReportFileSetVersionsRequest);
 
-	Task<List<Error>> ProcessChangeSet(ClientFileSetRevisionChangeSet changeSet);
-
-	FileSetFileInfo GetFileInfo(string path);
-
-	ClientFileSetRevision GetRevision(long fileSetId, long revisionId);
-
-	ClientFileSetRevision GetRevision(string path);
-
-	void MarkRebootRequired();
+	Task ProcessInProgressRevisionChangeSets();
 }

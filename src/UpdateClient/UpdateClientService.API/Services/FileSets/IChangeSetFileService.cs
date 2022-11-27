@@ -1,43 +1,28 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.DownloadService;
 
 namespace UpdateClientService.API.Services.FileSets;
 
 public interface IChangeSetFileService
 {
-	bool IsStaged(RevisionChangeSet revisionChangeSet);
+	Task ProcessChangeSet(DownloadDataList downloads, RevisionChangeSet revisionChangeSet);
 
-	bool IsActivated(RevisionChangeSet revisionChangeSet);
+	Task ProcessActivationDependencyCheck(Dictionary<long, FileSetDependencyState> dependencyStates, RevisionChangeSet revisionChangeSet);
 
-	bool IsInNeedsDependency(RevisionChangeSet revisionChangeSet);
+	Task ProcessActivationPending(RevisionChangeSet revisionChangeSet);
 
-	bool IsInError(RevisionChangeSet revisionChangeSet);
+	Task ProcessActivationBeforeActions(RevisionChangeSet revisionChangeSet);
 
-	Task<List<Error>> ProcessChangeSet(List<DownloadData> downloads, RevisionChangeSet revisionChangeSet);
+	Task ProcessActivating(RevisionChangeSet revisionChangeSet);
 
-	List<Error> ProcessActivationDependencyCheck(Dictionary<long, FileSetDependencyState> dependencyStates, RevisionChangeSet revisionChangeSet);
+	Task ProcessActivationAfterActions(RevisionChangeSet revisionChangeSet);
 
-	List<Error> ProcessActivationPending(RevisionChangeSet revisionChangeSet);
+	Task<bool> CreateRevisionChangeSet(ClientFileSetRevisionChangeSet set);
 
-	List<Error> ProcessActivationBeforeActions(RevisionChangeSet revisionChangeSet);
-
-	List<Error> ProcessActivating(RevisionChangeSet revisionChangeSet);
-
-	List<Error> ProcessActivationAfterActions(RevisionChangeSet revisionChangeSet);
-
-	List<Error> ProcessActivated(RevisionChangeSet revisionChangeSet);
-
-	List<Error> CreateFromChangeSet(ClientFileSetRevisionChangeSet set);
-
-	void Delete(RevisionChangeSet changeset);
-
-	List<Error> Delete(long fileSetId, long revisionId);
+	Task<bool> Delete(RevisionChangeSet changeset);
 
 	void CleanUp();
 
-	void CreateChangeSetDirectory();
-
-	List<Error> GetAllFiles(out List<RevisionChangeSet> chageSetFiles);
+	Task<List<RevisionChangeSet>> GetAllRevisionChangeSets();
 }

@@ -20,39 +20,30 @@ public class FileSetDependencyState
 
 	public bool IsDependencyMet(DependencyType dependencyType, string minVersion, string maxVersion)
 	{
-		try
+		string sourceVersion;
+		if (InProgressRevisionId > 0)
 		{
-			string sourceVersion;
-			if (InProgressRevisionId > 0)
+			if (!IsInProgressStaged)
 			{
-				if (!IsInProgressStaged)
-				{
-					return false;
-				}
-				sourceVersion = InProgressVersion;
+				return false;
 			}
-			else
-			{
-				if (ActiveRevisionId <= 0)
-				{
-					return false;
-				}
-				sourceVersion = ActiveVersion;
-			}
-			switch (dependencyType)
-			{
-			case DependencyType.Version:
-				return IsVersionDependencyMet(sourceVersion, minVersion, maxVersion);
-			case DependencyType.String:
-				return IsStringDependencyMet(sourceVersion, minVersion, maxVersion);
-			case DependencyType.Long:
-				return IsLongDependencyMet(sourceVersion, minVersion, maxVersion);
-			}
+			sourceVersion = InProgressVersion;
 		}
-		catch (Exception)
+		else
 		{
+			if (ActiveRevisionId <= 0)
+			{
+				return false;
+			}
+			sourceVersion = ActiveVersion;
 		}
-		return false;
+		return dependencyType switch
+		{
+			DependencyType.Version => IsVersionDependencyMet(sourceVersion, minVersion, maxVersion), 
+			DependencyType.String => IsStringDependencyMet(sourceVersion, minVersion, maxVersion), 
+			DependencyType.Long => IsLongDependencyMet(sourceVersion, minVersion, maxVersion), 
+			_ => false, 
+		};
 	}
 
 	private bool IsVersionDependencyMet(string sourceVersion, string minVersion, string maxVersion)

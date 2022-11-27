@@ -55,7 +55,7 @@ public class IoTCommandService : IIoTCommandService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Error occured in callback from topic " + mqttTopic + ", message was: " + Encoding.UTF8.GetString(mqttMessage));
+			_logger.LogErrorWithSource(ex, "Error occured in callback from topic " + mqttTopic + ", message was: " + Encoding.UTF8.GetString(mqttMessage), "IoTCommandCallbackMethodAsync", "/sln/src/UpdateClientService.API/Services/IoT/Commands/IoTCommandService.cs");
 		}
 	}
 

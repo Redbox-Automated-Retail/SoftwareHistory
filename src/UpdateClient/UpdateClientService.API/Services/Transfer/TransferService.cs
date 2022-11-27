@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.App;
 
@@ -291,7 +292,7 @@ public class TransferService : ITransferService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.");
+			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.", "SetMaxBandwidthWhileOutsideOfSchedule", "/sln/src/UpdateClientService.API/Services/TransferService/TransferService.cs");
 		}
 		MaxBandwidthWhileOutsideOfSchedule = max;
 		return result;
@@ -306,7 +307,7 @@ public class TransferService : ITransferService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.");
+			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.", "SetStartOfScheduleInHoursFromMidnight", "/sln/src/UpdateClientService.API/Services/TransferService/TransferService.cs");
 		}
 		StartOfScheduleInHoursFromMidnight = b;
 		return result;
@@ -321,7 +322,7 @@ public class TransferService : ITransferService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.");
+			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.", "SetEndOfScheduleInHoursFromMidnight", "/sln/src/UpdateClientService.API/Services/TransferService/TransferService.cs");
 		}
 		EndOfScheduleInHoursFromMidnight = b;
 		return result;
@@ -336,7 +337,7 @@ public class TransferService : ITransferService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.");
+			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.", "SetUseSystemMaxOutsideOfSchedule", "/sln/src/UpdateClientService.API/Services/TransferService/TransferService.cs");
 		}
 		UseSystemMaxOutsideOfSchedule = flag;
 		return result;
@@ -351,7 +352,7 @@ public class TransferService : ITransferService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.");
+			_logger.LogErrorWithSource(ex, "Error Accessing BITS settings.", "SetEnableMaximumBandwitdthThrottle", "/sln/src/UpdateClientService.API/Services/TransferService/TransferService.cs");
 		}
 		EnableMaximumBandwitdthThrottle = flag;
 		return result;

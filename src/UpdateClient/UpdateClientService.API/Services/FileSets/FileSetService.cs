@@ -2,16 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Coravel.Invocable;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Redbox.NetCore.Logging.Extensions;
-using Redbox.NetCore.Middleware.Http;
-using UpdateClientService.API.App;
+using UpdateClientService.API.Services.Configuration;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.FileCache;
 using UpdateClientService.API.Services.IoT.FileSets;
@@ -20,11 +18,35 @@ using UpdateClientService.API.Services.KioskEngine;
 
 namespace UpdateClientService.API.Services.FileSets;
 
-public class FileSetService : IFileSetService, IInvocable
+public class FileSetService : IFileSetService
 {
+	private class RevisionChangeSetsProcessingData
+	{
+		public bool IsComplete { get; set; }
+
+		public List<StateFile> InProgressStateFiles { get; set; }
+
+		public List<RevisionChangeSet> RevisionChangeSets { get; set; }
+
+		public DownloadDataList AllDownloadData { get; set; }
+
+		public StateFile GetStateFileForRevisionChangeSet(RevisionChangeSet revisionChangeSet)
+		{
+			return InProgressStateFiles.FirstOrDefault((StateFile stateFile) => revisionChangeSet.FileSetId == stateFile.FileSetId && revisionChangeSet.RevisionId == stateFile.InProgressRevisionId);
+		}
+	}
+
 	private static readonly string _root = Constants.FileSetsRoot;
 
-	private static readonly TimeSpan _processLockTimeout = TimeSpan.FromSeconds(3.0);
+	private static SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+
+	private static readonly TimeSpan _processLockTimeout = TimeSpan.FromSeconds(20.0);
+
+	private static DateTime _lastCallToProcessPendingFileSetVersions = DateTime.MinValue;
+
+	private static SemaphoreSlim _lockPendingFileSetVersions = new SemaphoreSlim(1, 1);
+
+	private readonly int _pendingFileSetVersionsLockTimeout = 5000;
 
 	private readonly IFileCacheService _fileCacheService;
 
@@ -42,25 +64,15 @@ public class FileSetService : IFileSetService, IInvocable
 
 	private readonly IKioskEngineService _kioskEngineService;
 
+	private readonly IStateFileService _stateFileService;
+
+	private readonly IFileSetTransition _fileSetTransition;
+
+	private readonly IOptionsMonitorKioskConfiguration _optionsMonitorKioskConfiguration;
+
 	private readonly FileSetSettings _settings;
 
-	private bool _rebootRequired;
-
-	private SemaphoreSlim Lock => FileSetServiceLock.Lock;
-
-	public bool RebootRequired
-	{
-		get
-		{
-			return _rebootRequired;
-		}
-		internal set
-		{
-			_rebootRequired = value;
-		}
-	}
-
-	public FileSetService(IFileCacheService fileCacheService, IDownloadService downloadService, IDownloader downloader, IChangeSetFileService changeSetFileService, ILogger<FileSetService> logger, IKioskFileSetVersionsService versionsService, IKernelService kernelService, IKioskEngineService kioskEngineService, IOptionsMonitor<AppSettings> settings)
+	public FileSetService(IFileCacheService fileCacheService, IDownloadService downloadService, IDownloader downloader, IChangeSetFileService changeSetFileService, ILogger<FileSetService> logger, IKioskFileSetVersionsService versionsService, IKernelService kernelService, IKioskEngineService kioskEngineService, IStateFileService stateFileService, IOptionsMonitor<AppSettings> settings, IFileSetTransition fileSetTransition, IOptionsMonitorKioskConfiguration optionsKioskConfiguration)
 	{
 		_fileCacheService = fileCacheService;
 		_downloadService = downloadService;
@@ -70,504 +82,623 @@ public class FileSetService : IFileSetService, IInvocable
 		_versionsService = versionsService;
 		_kernelService = kernelService;
 		_kioskEngineService = kioskEngineService;
+		_stateFileService = stateFileService;
 		_settings = settings.CurrentValue.FileSet;
+		_fileSetTransition = fileSetTransition;
+		_optionsMonitorKioskConfiguration = optionsKioskConfiguration;
 		Initialize();
 	}
 
-	public List<Error> Initialize()
+	public bool Initialize()
 	{
-		List<Error> list = new List<Error>();
 		try
 		{
 			Directory.CreateDirectory(_root);
-			_changeSetFileService.CreateChangeSetDirectory();
-		}
-		catch (Exception e)
-		{
-			list.Add(new Error
-			{
-				Message = "Unhandled exception occurred in FileSetService.Initialize. Exception: " + e.GetFullMessage()
-			});
-		}
-		return list;
-	}
-
-	public async Task<List<Error>> ProcessPollReply(List<PollReply> pollReplyList)
-	{
-		List<Error> errors = new List<Error>();
-		if (errors.Any() || pollReplyList == null || !pollReplyList.Any())
-		{
-			return errors;
-		}
-		try
-		{
-			IEnumerable<ClientFileSetRevisionChangeSet> fileSets = pollReplyList.Select((PollReply pollReply) => pollReply.Data.ToObject<ClientFileSetRevisionChangeSet>());
-			if (fileSets == null || fileSets.Count() == 0)
-			{
-				return errors;
-			}
-			try
-			{
-				if (!(await Lock.WaitAsync(_processLockTimeout)))
-				{
-					errors.Add(new Error
-					{
-						Message = "FileSetService.ProcessPollReply Timeout expired prior to acquiring the lock."
-					});
-					return errors;
-				}
-			}
-			catch (Exception ex)
-			{
-				errors.Add(new Error
-				{
-					Message = "FileSetService.ProcessPollReply Could not acquire lock. Exception -> " + ex.Message
-				});
-				return errors;
-			}
-			try
-			{
-				errors.AddRange(ProcessChangeSets(fileSets));
-			}
-			finally
-			{
-				SemaphoreSlim semaphoreSlim = Lock;
-				if (semaphoreSlim != null && semaphoreSlim.CurrentCount == 0)
-				{
-					Lock.Release();
-				}
-			}
-		}
-		catch (Exception arg)
-		{
-			errors.Add(new Error
-			{
-				Message = $"FS0010 An unhandled exception occurred in FileSetService.ProcessPollReply. Exception: {arg}"
-			});
-		}
-		errors.ForEach(delegate(Error x)
-		{
-			_logger.LogErrorWithSource(x.Message, "ProcessPollReply", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
-		});
-		return errors;
-	}
-
-	public async Task<List<Error>> ProcessChangeSet(ClientFileSetRevisionChangeSet changeSet)
-	{
-		List<Error> errors = new List<Error>();
-		try
-		{
-			if (changeSet == null)
-			{
-				_logger.LogWarningWithSource("Changeset was null. Skipping...", "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
-				return errors;
-			}
-			try
-			{
-				if (!(await Lock.WaitAsync(_processLockTimeout)))
-				{
-					errors.Add(new Error
-					{
-						Message = "FileSetService.ProcessChangeSet Timeout expired prior to acquiring the lock."
-					});
-					return errors;
-				}
-			}
-			catch (Exception ex)
-			{
-				errors.Add(new Error
-				{
-					Message = "FileSetService.ProcessChangeSet Could not acquire lock. Exception -> " + ex.Message
-				});
-				return errors;
-			}
-			try
-			{
-				errors.AddRange(ProcessChangeSets(new List<ClientFileSetRevisionChangeSet> { changeSet }));
-				if (TryGetVersion(changeSet, (errors == null || errors.Count <= 0) ? FileSetState.InProgress : FileSetState.Error, out var version))
-				{
-					await _versionsService.ReportFileVersion(version);
-				}
-			}
-			finally
-			{
-				SemaphoreSlim semaphoreSlim = Lock;
-				if (semaphoreSlim != null && semaphoreSlim.CurrentCount == 0)
-				{
-					Lock.Release();
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			errors.Add(new Error
-			{
-				Message = "An unhandled exception occurred in FileSetService.ProcessChangeSet. Exception: " + e.GetFullMessage()
-			});
-		}
-		if (errors.Count > 0)
-		{
-			_logger.LogErrorWithSource("Something went wrong while processing ChangeSet " + changeSet.ToJson() + ", " + errors.ToJson(), "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
-		}
-		return errors;
-	}
-
-	public async Task Invoke()
-	{
-		try
-		{
-			if (!(await Lock.WaitAsync(_processLockTimeout)))
-			{
-				_logger.LogErrorWithSource("Timeout expired prior to acquiring the lock.", "Invoke", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
-				return;
-			}
+			return true;
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Could not acquire lock");
+			_logger.LogErrorWithSource(ex, "Exception while initializing FileSetService", "Initialize", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+			return false;
 		}
+	}
+
+	public async Task<ProcessChangeSetResponse> ProcessChangeSet(ClientFileSetRevisionChangeSet clientFileSetRevisionChangeSet)
+	{
+		_ = 2;
 		try
 		{
-			List<Error> list = await ProcessChangeSetWork();
-			if (list != null && list.Count > 0)
+			if (clientFileSetRevisionChangeSet == null)
 			{
-				_logger.LogWarningWithSource("Finished Invoke with errors. " + list.ToJson(), "Invoke", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+				_logger.LogErrorWithSource("Changeset is null.", "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+				return new ProcessChangeSetResponse
+				{
+					StatusCode = HttpStatusCode.InternalServerError
+				};
+			}
+			_logger.LogInfoWithSource("Starting processing for " + clientFileSetRevisionChangeSet?.IdentifyingText(), "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+			if (!_optionsMonitorKioskConfiguration.FileSets.FileSetDownloadEnabled)
+			{
+				_logger.LogWarningWithSource("FileSet downloads are disabled by config setting FileSets.FileSetDownloadEnabled.  Aborting FileSet download for " + clientFileSetRevisionChangeSet?.IdentifyingText() + " ", "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+				return new ProcessChangeSetResponse
+				{
+					StatusCode = HttpStatusCode.ServiceUnavailable
+				};
+			}
+			try
+			{
+				if (!(await _lock.WaitAsync(_processLockTimeout)))
+				{
+					_logger.LogWarningWithSource("Unable to aquire lock for processing " + clientFileSetRevisionChangeSet?.IdentifyingText() + ".", "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+					return new ProcessChangeSetResponse
+					{
+						StatusCode = HttpStatusCode.ServiceUnavailable
+					};
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogErrorWithSource(ex, "Exception while trying to aquire lock for processing " + clientFileSetRevisionChangeSet?.IdentifyingText() + ".", "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+				return new ProcessChangeSetResponse
+				{
+					StatusCode = HttpStatusCode.InternalServerError
+				};
+			}
+			try
+			{
+				if (CreateFileSetPollRequest(clientFileSetRevisionChangeSet, (await StartRevisionChangeSetProcessing(new List<ClientFileSetRevisionChangeSet> { clientFileSetRevisionChangeSet })) ? FileSetState.InProgress : FileSetState.Error, out var fileSetPollRequest))
+				{
+					await _versionsService.ReportFileSetVersion(fileSetPollRequest);
+				}
+			}
+			finally
+			{
+				SemaphoreSlim semaphoreSlim = _lock;
+				if (semaphoreSlim != null && semaphoreSlim.CurrentCount == 0)
+				{
+					_lock.Release();
+				}
 			}
 		}
 		catch (Exception ex2)
 		{
-			_logger.LogErrorWithSource(ex2, "Invoke");
-		}
-		finally
-		{
-			SemaphoreSlim semaphoreSlim = Lock;
-			if (semaphoreSlim != null && semaphoreSlim.CurrentCount == 0)
+			_logger?.LogErrorWithSource(ex2, "Exception while processing changeset " + clientFileSetRevisionChangeSet?.IdentifyingText(), "ProcessChangeSet", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+			return new ProcessChangeSetResponse
 			{
-				Lock.Release();
-			}
+				StatusCode = HttpStatusCode.InternalServerError
+			};
 		}
+		return new ProcessChangeSetResponse
+		{
+			StatusCode = HttpStatusCode.OK
+		};
 	}
 
-	private List<Error> ProcessChangeSets(IEnumerable<ClientFileSetRevisionChangeSet> changeSets)
+	private async Task<bool> StartRevisionChangeSetProcessing(IEnumerable<ClientFileSetRevisionChangeSet> clientFileSetRevisionChangeSets)
 	{
-		List<Error> list = new List<Error>();
-		_logger.LogInfoWithSource("Executing FileSetService.ProcessChangeSets", "ProcessChangeSets", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+		bool result = true;
 		try
 		{
-			foreach (ClientFileSetRevisionChangeSet changeSet in changeSets)
+			foreach (ClientFileSetRevisionChangeSet eachClientFileSetRevisionChangeSet in clientFileSetRevisionChangeSets)
 			{
-				if (changeSet.Action == FileSetAction.Delete)
+				if (eachClientFileSetRevisionChangeSet.Action == FileSetAction.Delete)
 				{
-					list.AddRange(_changeSetFileService.Delete(changeSet.FileSetId, changeSet.RevisionId));
-					StateFile stateFile = new StateFile(changeSet.FileSetId);
-					list.AddRange(stateFile.Delete());
-				}
-				else if (changeSet.Action == FileSetAction.Update)
-				{
-					list.AddRange(FileSetUpdate(changeSet));
-				}
-			}
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileSetService.ProcessChangeSets An unhandled exception occurred. Exception: {arg}"
-			});
-		}
-		return list;
-	}
-
-	private List<Error> FileSetUpdate(ClientFileSetRevisionChangeSet set)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			list.AddRange(_changeSetFileService.CreateFromChangeSet(set));
-			list.AddRange(StateFile.CreateFromChangeSet(set));
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileSetService.FileSetUpdate An unhandled exception occurred. Exception: {arg}"
-			});
-		}
-		return list;
-	}
-
-	private async Task<List<Error>> ProcessChangeSetWork()
-	{
-		List<Error> errors = new List<Error>();
-		try
-		{
-			errors = StateFile.GetAllInProgress(out var list);
-			if (errors.Count() > 0)
-			{
-				return errors;
-			}
-			errors = _changeSetFileService.GetAllFiles(out var chageSetFiles);
-			if (errors.Count() > 0)
-			{
-				return errors;
-			}
-			var bothGood = (from state in list
-				join set in chageSetFiles on new
-				{
-					FileSetId = state.FileSetId,
-					RevisionId = state.InProgressRevisionId
-				} equals new { set.FileSetId, set.RevisionId }
-				select new
-				{
-					State = state,
-					Set = set
-				}).ToList();
-			List<StateFile> second = bothGood.Select(anon => anon.State).ToList();
-			List<RevisionChangeSet> second2 = bothGood.Select(anon => anon.Set).ToList();
-			list.Except(second).ToList().ForEach(delegate(StateFile stateFile)
-			{
-				stateFile.DeleteInProgress();
-			});
-			chageSetFiles.Except(second2).ToList().ForEach(delegate(RevisionChangeSet revisionChangeSet)
-			{
-				_changeSetFileService.Delete(revisionChangeSet.FileSetId, revisionChangeSet.RevisionId);
-			});
-			List<DownloadData> allDownloads = await _downloadService.GetDownloads(new Regex("^(?!(FILE|SCRIPT|downloadFileList.json)).*"));
-			if (bothGood.Count() == 0 && allDownloads.Count() == 0)
-			{
-				return errors;
-			}
-			bothGood.ForEach(async anon =>
-			{
-				List<Error> list3 = errors;
-				list3.AddRange(await _changeSetFileService.ProcessChangeSet(allDownloads, anon.Set));
-			});
-			Dictionary<long, FileSetDependencyState> dependencyStates = GetDependencyStates();
-			bothGood.ForEach(anon =>
-			{
-				errors.AddRange(_changeSetFileService.ProcessActivationDependencyCheck(dependencyStates, anon.Set));
-			});
-			bothGood.ForEach(anon =>
-			{
-				if (_changeSetFileService.IsInNeedsDependency(anon.Set))
-				{
-					anon.State.SetInProgressState(FileSetState.NeedsDependency);
-				}
-			});
-			bothGood.ForEach(anon =>
-			{
-				errors.AddRange(_changeSetFileService.ProcessActivationPending(anon.Set));
-			});
-			bothGood.ForEach(anon =>
-			{
-				errors.AddRange(_changeSetFileService.ProcessActivationBeforeActions(anon.Set));
-			});
-			bothGood.ForEach(anon =>
-			{
-				errors.AddRange(_changeSetFileService.ProcessActivating(anon.Set));
-			});
-			bothGood.ForEach(anon =>
-			{
-				errors.AddRange(_changeSetFileService.ProcessActivationAfterActions(anon.Set));
-			});
-			bothGood.ForEach(anon =>
-			{
-				errors.AddRange(_changeSetFileService.ProcessActivated(anon.Set));
-			});
-			foreach (var item2 in bothGood)
-			{
-				if (_changeSetFileService.IsActivated(item2.Set))
-				{
-					item2.State.Activate();
-					_changeSetFileService.Delete(item2.Set.FileSetId, item2.Set.RevisionId);
-					if (TryGetVersion(item2?.Set, FileSetState.Active, out var version))
+					_logger.LogInfoWithSource("Deleting " + eachClientFileSetRevisionChangeSet?.IdentifyingText(), "StartRevisionChangeSetProcessing", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+					bool flag = result;
+					if (flag)
 					{
-						await _versionsService.ReportFileVersion(version);
+						flag = await _changeSetFileService.Delete(RevisionChangeSet.Create(eachClientFileSetRevisionChangeSet));
+					}
+					result = flag;
+					if (!(await _stateFileService.Delete(eachClientFileSetRevisionChangeSet.FileSetId)))
+					{
+						result = false;
+						_logger.LogErrorWithSource($"Unable to delete StateFile for FileSetId {eachClientFileSetRevisionChangeSet.FileSetId}", "StartRevisionChangeSetProcessing", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 					}
 				}
-			}
-			foreach (var item in bothGood)
-			{
-				if (_changeSetFileService.IsInError(item.Set))
+				else if (eachClientFileSetRevisionChangeSet.Action == FileSetAction.Update)
 				{
-					item.State.SetInProgressState(FileSetState.Error);
-					bool flag = TryGetVersion(item?.Set, FileSetState.Error, out var version2);
-					bool flag2 = flag;
+					bool flag2 = result;
 					if (flag2)
 					{
-						flag2 = await _versionsService.ReportFileVersion(version2);
+						flag2 = await StartRevisionChangeSetProcessing(eachClientFileSetRevisionChangeSet);
 					}
-					if (flag2)
-					{
-						_changeSetFileService.Delete(item.Set);
-						item.State.Delete();
-					}
+					result = flag2;
 				}
 			}
-			if (RebootRequired)
-			{
-				List<Error> list2 = errors;
-				list2.AddRange(await Reboot());
-			}
-			allDownloads?.ForEach(delegate(DownloadData d)
-			{
-				if (d != null && d.DownloadState == DownloadState.PostDownload)
-				{
-					_downloader.Complete(d);
-				}
-			});
 		}
-		catch (Exception arg)
+		catch (Exception ex)
 		{
-			errors.Add(new Error
-			{
-				Message = $"FileSetService.ProcessChangeSetWork An unhandled exception occurred. Exception: {arg}"
-			});
+			result = false;
+			_logger.LogErrorWithSource(ex, "Exception while starting RevisionChangeSet processing", "StartRevisionChangeSetProcessing", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 		}
-		return errors;
+		return result;
 	}
 
-	private bool TryGetVersion(RevisionMetadata changeSetMetadata, FileSetState state, out FileSetPollRequest version)
+	private async Task<bool> StartRevisionChangeSetProcessing(ClientFileSetRevisionChangeSet clientFileSetRevisionChangeSet)
 	{
-		version = null;
+		bool result = false;
 		try
 		{
-			if (changeSetMetadata != null && changeSetMetadata.FileSetId > 0 && (changeSetMetadata.RevisionId > 0 || changeSetMetadata.PatchRevisionId > 0))
+			_logger.LogInfoWithSource("Starting processing for " + clientFileSetRevisionChangeSet?.IdentifyingText(), "StartRevisionChangeSetProcessing", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+			if (await _changeSetFileService.CreateRevisionChangeSet(clientFileSetRevisionChangeSet))
 			{
-				version = new FileSetPollRequest
+				if (await CreateStateFileFromChangeSet(clientFileSetRevisionChangeSet))
 				{
-					FileSetId = changeSetMetadata.FileSetId,
-					FileSetRevisionId = ((changeSetMetadata.PatchRevisionId > 0) ? changeSetMetadata.PatchRevisionId : changeSetMetadata.RevisionId),
+					result = true;
+				}
+				else
+				{
+					_logger.LogErrorWithSource($"Unable to create StateFile for FileSetId {clientFileSetRevisionChangeSet?.FileSetId}", "StartRevisionChangeSetProcessing", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while starting processing of ClientFileSetRevisionChangeSet", "StartRevisionChangeSetProcessing", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+		}
+		return result;
+	}
+
+	private async Task<bool> CreateStateFileFromChangeSet(ClientFileSetRevisionChangeSet clientFileSetRevisionChangeSet)
+	{
+		StateFile stateFile = (await _stateFileService.Get(clientFileSetRevisionChangeSet.FileSetId))?.StateFile;
+		if (stateFile == null)
+		{
+			stateFile = new StateFile(clientFileSetRevisionChangeSet.FileSetId, 0L, clientFileSetRevisionChangeSet.RevisionId, FileSetState.InProgress);
+		}
+		stateFile.InProgressRevisionId = clientFileSetRevisionChangeSet.RevisionId;
+		stateFile.InProgressFileSetState = FileSetState.InProgress;
+		StateFileResponse stateFileResponse = await _stateFileService.Save(stateFile);
+		return stateFileResponse != null && stateFileResponse.StatusCode == HttpStatusCode.OK;
+	}
+
+	public async Task ProcessInProgressRevisionChangeSets()
+	{
+		_ = 12;
+		try
+		{
+			if (!(await _lock.WaitAsync(_processLockTimeout)))
+			{
+				_logger.LogWarningWithSource("Unable to aquire lock.", "ProcessInProgressRevisionChangeSets", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+				return;
+			}
+			RevisionChangeSetsProcessingData revisionChangeSetsProcessingData = new RevisionChangeSetsProcessingData();
+			try
+			{
+				await GetInProgressStateFiles(revisionChangeSetsProcessingData);
+				await GetRevisionChangeSets(revisionChangeSetsProcessingData);
+				await DeleteBadRevisionChangeSets(revisionChangeSetsProcessingData);
+				await ProcessChangeSets(revisionChangeSetsProcessingData);
+				await ProcessNeedsDependencyStates(revisionChangeSetsProcessingData);
+				await ProcessActivationPendingStates(revisionChangeSetsProcessingData);
+				await ProcessBeforeActivationActions(revisionChangeSetsProcessingData);
+				await ProcessActivating(revisionChangeSetsProcessingData);
+				await ProcessAfterActivationActions(revisionChangeSetsProcessingData);
+				await ProcessActivatedStates(revisionChangeSetsProcessingData);
+				await ProcessErrorStates(revisionChangeSetsProcessingData);
+				await RebootIfNeeded(revisionChangeSetsProcessingData);
+				ProcessPostDownloadStates(revisionChangeSetsProcessingData);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogErrorWithSource(ex, "Exception while processing in progress RevisionChangeSets", "ProcessInProgressRevisionChangeSets", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+			}
+			finally
+			{
+				_lock.Release();
+			}
+		}
+		catch (Exception ex2)
+		{
+			_logger.LogErrorWithSource(ex2, "Exception while processing in progress RevisionChangeSets.", "ProcessInProgressRevisionChangeSets", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+		}
+	}
+
+	private void ProcessPostDownloadStates(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		foreach (DownloadData allDownloadDatum in revisionChangeSetsProcessingData.AllDownloadData)
+		{
+			if (allDownloadDatum.DownloadState == DownloadState.PostDownload)
+			{
+				_logger.LogInfoWithSource("Completing leftover DownloadData " + allDownloadDatum.FileName, "ProcessPostDownloadStates", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+				_downloader.Complete(allDownloadDatum);
+			}
+		}
+	}
+
+	private async Task RebootIfNeeded(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (!revisionChangeSetsProcessingData.IsComplete && _fileSetTransition.RebootRequired)
+		{
+			await Reboot();
+		}
+	}
+
+	private async Task ProcessErrorStates(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		foreach (RevisionChangeSet eachRevisionChangeSet in revisionChangeSetsProcessingData.RevisionChangeSets.Where((RevisionChangeSet x) => x.State == ChangesetState.Error))
+		{
+			StateFile stateFile = revisionChangeSetsProcessingData.GetStateFileForRevisionChangeSet(eachRevisionChangeSet);
+			if (stateFile != null)
+			{
+				stateFile.InProgressFileSetState = FileSetState.Error;
+				await _stateFileService.Save(stateFile);
+				bool flag = CreateFileSetPollRequest(eachRevisionChangeSet, FileSetState.Error, out var fileSetPollRequest);
+				bool flag2 = flag;
+				if (flag2)
+				{
+					flag2 = (await _versionsService.ReportFileSetVersion(fileSetPollRequest)).StatusCode == HttpStatusCode.OK;
+				}
+				if (flag2)
+				{
+					await _changeSetFileService.Delete(eachRevisionChangeSet);
+					await _stateFileService.Delete(stateFile.FileSetId);
+				}
+			}
+		}
+	}
+
+	private async Task ProcessActivatedStates(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		foreach (RevisionChangeSet eachRevisionChangeSet in revisionChangeSetsProcessingData.RevisionChangeSets.Where((RevisionChangeSet x) => x.State == ChangesetState.Activated))
+		{
+			StateFile stateFileForRevisionChangeSet = revisionChangeSetsProcessingData.GetStateFileForRevisionChangeSet(eachRevisionChangeSet);
+			if (stateFileForRevisionChangeSet != null)
+			{
+				stateFileForRevisionChangeSet.InProgressFileSetState = FileSetState.Active;
+				await _stateFileService.Save(stateFileForRevisionChangeSet);
+			}
+			await _changeSetFileService.Delete(eachRevisionChangeSet);
+			if (CreateFileSetPollRequest(eachRevisionChangeSet, FileSetState.Active, out var fileSetPollRequest))
+			{
+				await _versionsService.ReportFileSetVersion(fileSetPollRequest);
+			}
+		}
+	}
+
+	private async Task ProcessAfterActivationActions(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		foreach (RevisionChangeSet revisionChangeSet in revisionChangeSetsProcessingData.RevisionChangeSets)
+		{
+			await _changeSetFileService.ProcessActivationAfterActions(revisionChangeSet);
+		}
+	}
+
+	private async Task ProcessActivating(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		foreach (RevisionChangeSet revisionChangeSet in revisionChangeSetsProcessingData.RevisionChangeSets)
+		{
+			await _changeSetFileService.ProcessActivating(revisionChangeSet);
+		}
+	}
+
+	private async Task ProcessBeforeActivationActions(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		foreach (RevisionChangeSet revisionChangeSet in revisionChangeSetsProcessingData.RevisionChangeSets)
+		{
+			await _changeSetFileService.ProcessActivationBeforeActions(revisionChangeSet);
+		}
+	}
+
+	private async Task ProcessActivationPendingStates(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		foreach (RevisionChangeSet revisionChangeSet in revisionChangeSetsProcessingData.RevisionChangeSets)
+		{
+			await _changeSetFileService.ProcessActivationPending(revisionChangeSet);
+		}
+	}
+
+	private async Task ProcessNeedsDependencyStates(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		Dictionary<long, FileSetDependencyState> dependencyStates = await GetDependencyStates();
+		if (dependencyStates != null)
+		{
+			foreach (RevisionChangeSet revisionChangeSet in revisionChangeSetsProcessingData.RevisionChangeSets)
+			{
+				await _changeSetFileService.ProcessActivationDependencyCheck(dependencyStates, revisionChangeSet);
+			}
+		}
+		foreach (RevisionChangeSet revisionChangeSet2 in revisionChangeSetsProcessingData.RevisionChangeSets)
+		{
+			if (revisionChangeSet2.State == ChangesetState.ActivationDependencyCheck)
+			{
+				StateFile stateFileForRevisionChangeSet = revisionChangeSetsProcessingData.GetStateFileForRevisionChangeSet(revisionChangeSet2);
+				if (stateFileForRevisionChangeSet != null)
+				{
+					stateFileForRevisionChangeSet.InProgressFileSetState = FileSetState.NeedsDependency;
+					await _stateFileService.Save(stateFileForRevisionChangeSet);
+				}
+			}
+		}
+	}
+
+	private async Task ProcessChangeSets(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		revisionChangeSetsProcessingData.AllDownloadData = await _downloadService.GetDownloads(new Regex("^(?!(FILE|SCRIPT|downloadFileList.json)).*"));
+		if (revisionChangeSetsProcessingData.RevisionChangeSets.Count() == 0 && revisionChangeSetsProcessingData.AllDownloadData.Count() == 0)
+		{
+			revisionChangeSetsProcessingData.IsComplete = true;
+			return;
+		}
+		foreach (RevisionChangeSet revisionChangeSet in revisionChangeSetsProcessingData.RevisionChangeSets)
+		{
+			await _changeSetFileService.ProcessChangeSet(revisionChangeSetsProcessingData.AllDownloadData, revisionChangeSet);
+		}
+	}
+
+	private async Task DeleteBadRevisionChangeSets(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (revisionChangeSetsProcessingData.IsComplete)
+		{
+			return;
+		}
+		List<RevisionChangeSet> list = revisionChangeSetsProcessingData.RevisionChangeSets.Where((RevisionChangeSet revisionChangeSet) => !revisionChangeSetsProcessingData.InProgressStateFiles.Any((StateFile stateFile) => stateFile.FileSetId == revisionChangeSet.FileSetId && stateFile.InProgressRevisionId == revisionChangeSet.RevisionId)).ToList();
+		List<StateFile> badStateFiles = revisionChangeSetsProcessingData.InProgressStateFiles.Where((StateFile stateFile) => !revisionChangeSetsProcessingData.RevisionChangeSets.Any((RevisionChangeSet revisionChangeSet) => stateFile.FileSetId == revisionChangeSet.FileSetId && stateFile.InProgressRevisionId == revisionChangeSet.RevisionId)).ToList();
+		foreach (RevisionChangeSet item in list)
+		{
+			revisionChangeSetsProcessingData.RevisionChangeSets.Remove(item);
+			await _changeSetFileService.Delete(item);
+		}
+		foreach (StateFile item2 in badStateFiles)
+		{
+			await _stateFileService.DeleteInProgress(item2.FileSetId);
+		}
+	}
+
+	private async Task GetRevisionChangeSets(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		if (!revisionChangeSetsProcessingData.IsComplete)
+		{
+			revisionChangeSetsProcessingData.RevisionChangeSets = await _changeSetFileService.GetAllRevisionChangeSets();
+		}
+	}
+
+	private async Task GetInProgressStateFiles(RevisionChangeSetsProcessingData revisionChangeSetsProcessingData)
+	{
+		revisionChangeSetsProcessingData.InProgressStateFiles = (await _stateFileService.GetAllInProgress())?.StateFiles;
+		if (revisionChangeSetsProcessingData.InProgressStateFiles == null)
+		{
+			revisionChangeSetsProcessingData.IsComplete = true;
+		}
+		if (revisionChangeSetsProcessingData.InProgressStateFiles.Any())
+		{
+			_logger.LogInfoWithSource($"Processing {revisionChangeSetsProcessingData.InProgressStateFiles.Count} in progress RevisionChangeSet", "GetInProgressStateFiles", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+		}
+	}
+
+	private bool CreateFileSetPollRequest(RevisionChangeSetKey revisionChangeSetKey, FileSetState state, out FileSetPollRequest fileSetPollRequest)
+	{
+		fileSetPollRequest = null;
+		try
+		{
+			if (revisionChangeSetKey != null && revisionChangeSetKey.FileSetId > 0 && revisionChangeSetKey.RevisionId > 0)
+			{
+				fileSetPollRequest = new FileSetPollRequest
+				{
+					FileSetId = revisionChangeSetKey.FileSetId,
+					FileSetRevisionId = revisionChangeSetKey.RevisionId,
 					FileSetState = state
 				};
 			}
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An unhandled exception occurred.");
+			_logger.LogErrorWithSource(ex, "An unhandled exception occurred.", "CreateFileSetPollRequest", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 		}
-		return version != null;
+		return fileSetPollRequest != null;
 	}
 
-	private Dictionary<long, FileSetDependencyState> GetDependencyStates()
+	private async Task<Dictionary<long, FileSetDependencyState>> GetDependencyStates()
 	{
-		List<Error> list = new List<Error>();
 		Dictionary<long, FileSetDependencyState> dependencies = new Dictionary<long, FileSetDependencyState>();
 		try
 		{
-			list = StateFile.GetAll(out var list2);
-			if (list.Count() > 0)
+			List<StateFile> stateFiles = (await _stateFileService.GetAll())?.StateFiles;
+			if (stateFiles == null)
 			{
 				return null;
 			}
-			list = _changeSetFileService.GetAllFiles(out var changeSets);
-			if (list.Count() > 0)
-			{
-				return null;
-			}
-			list2.ForEach(delegate(StateFile item)
+			List<RevisionChangeSet> revisionChangeSets = await _changeSetFileService.GetAllRevisionChangeSets();
+			foreach (StateFile eachStateFile in stateFiles)
 			{
 				FileSetDependencyState fileSetDependencyState = new FileSetDependencyState
 				{
-					FileSetId = item.FileSetId,
+					FileSetId = eachStateFile.FileSetId,
 					IsInProgressStaged = false
 				};
-				if (item.HasInProgress())
+				if (eachStateFile.IsRevisionDownloadInProgress)
 				{
-					RevisionChangeSet revisionChangeSet = changeSets.Where((RevisionChangeSet cs) => cs.FileSetId == item.FileSetId).FirstOrDefault();
+					RevisionChangeSet revisionChangeSet = revisionChangeSets.Where((RevisionChangeSet cs) => cs.FileSetId == eachStateFile.FileSetId).FirstOrDefault();
 					if (revisionChangeSet != null)
 					{
-						ClientFileSetRevision revision = GetRevision(item.FileSetId, revisionChangeSet.RevisionId, revisionChangeSet.PatchRevisionId);
-						if (revision != null)
+						ClientFileSetRevision clientFileSetRevision = await _fileCacheService.GetClientFileSetRevision(revisionChangeSet);
+						if (clientFileSetRevision != null)
 						{
 							fileSetDependencyState.InProgressRevisionId = revisionChangeSet.RevisionId;
-							fileSetDependencyState.InProgressVersion = revision.RevisionVersion;
-							fileSetDependencyState.IsInProgressStaged = _changeSetFileService.IsStaged(revisionChangeSet);
+							fileSetDependencyState.InProgressVersion = clientFileSetRevision.RevisionVersion;
+							fileSetDependencyState.IsInProgressStaged = revisionChangeSet.IsStaged;
 						}
 					}
 				}
-				if (item.HasActive())
+				if (eachStateFile.HasActiveRevision)
 				{
-					fileSetDependencyState.ActiveRevisionId = item.RevisionId;
-					ClientFileSetRevision revision2 = GetRevision(item.FileSetId, item.RevisionId);
-					if (revision2 != null)
+					fileSetDependencyState.ActiveRevisionId = eachStateFile.ActiveRevisionId;
+					ClientFileSetRevision clientFileSetRevision2 = await _fileCacheService.GetAnyClientFileSetRevision(eachStateFile.FileSetId, eachStateFile.ActiveRevisionId);
+					if (clientFileSetRevision2 != null)
 					{
-						fileSetDependencyState.ActiveVersion = revision2.RevisionVersion;
+						fileSetDependencyState.ActiveVersion = clientFileSetRevision2.RevisionVersion;
 					}
 				}
-				dependencies[item.FileSetId] = fileSetDependencyState;
-			});
+				dependencies[eachStateFile.FileSetId] = fileSetDependencyState;
+			}
 			return dependencies;
 		}
-		catch (Exception arg)
+		catch (Exception ex)
 		{
-			list.Add(new Error
-			{
-				Message = $"FileSetService.GetDependencyState An unhandled exception occurred . Exception: {arg}"
-			});
+			_logger.LogErrorWithSource(ex, "Exception while getting FileSetDependencyStates", "GetDependencyStates", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+			return null;
 		}
-		return null;
 	}
 
-	private ClientFileSetRevision GetRevision(long fileSetId, long revisionId, long patchRevisionId)
+	private async Task<bool> Reboot()
 	{
-		if (_fileCacheService.RevisionExists(fileSetId, revisionId, patchRevisionId) && _fileCacheService.GetRevision(fileSetId, revisionId, patchRevisionId, out var data))
-		{
-			return Encoding.ASCII.GetString(data).ToObject<ClientFileSetRevision>();
-		}
-		return null;
-	}
-
-	public ClientFileSetRevision GetRevision(long fileSetId, long revisionId)
-	{
-		if (_fileCacheService.GetRevision(fileSetId, revisionId, out var data))
-		{
-			return Encoding.ASCII.GetString(data).ToObject<ClientFileSetRevision>();
-		}
-		return null;
-	}
-
-	public ClientFileSetRevision GetRevision(string path)
-	{
-		if (_fileCacheService.GetRevision(path, out var data))
-		{
-			return Encoding.ASCII.GetString(data).ToObject<ClientFileSetRevision>();
-		}
-		return null;
-	}
-
-	public FileSetFileInfo GetFileInfo(string path)
-	{
-		if (_fileCacheService.GetFileInfo(path, out var data))
-		{
-			return Encoding.ASCII.GetString(data).ToObject<FileSetFileInfo>();
-		}
-		return null;
-	}
-
-	public void MarkRebootRequired()
-	{
-		_rebootRequired = true;
-	}
-
-	private async Task<List<Error>> Reboot()
-	{
-		List<Error> errors = new List<Error>();
+		_fileSetTransition.ClearRebootRequired();
+		bool result = false;
 		PerformShutdownResponse performShutdownResponse = await _kioskEngineService.PerformShutdown(_settings.KioskEngineShutdownTimeoutMs, _settings.KioskEngineShutdownTimeoutMs);
-		if (!string.IsNullOrWhiteSpace(performShutdownResponse.Error))
+		if (!string.IsNullOrWhiteSpace(performShutdownResponse?.Error))
 		{
-			errors.Add(new Error
-			{
-				Message = performShutdownResponse.Error
-			});
+			_logger.LogErrorWithSource("Unable to shutdown KioskEngine.  Error Message: " + performShutdownResponse?.Error, "Reboot", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 		}
 		else if (!_kernelService.PerformShutdown(ShutdownType.Reboot))
 		{
-			errors.Add(new Error
-			{
-				Message = "Encountered an error while trying to reboot."
-			});
+			_logger.LogErrorWithSource("Error while trying to perform reboot.", "Reboot", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
 		}
-		return errors;
+		else
+		{
+			result = true;
+		}
+		return result;
+	}
+
+	public async Task<ReportFileSetVersionsResponse> ProcessPendingFileSetVersions()
+	{
+		_ = 2;
+		try
+		{
+			await SetLastCallToProcessPendingFileSetVersions();
+			ReportFileSetVersionsResponse result = await _versionsService.ReportFileSetVersions();
+			if (result.StatusCode == HttpStatusCode.OK && (result.ClientFileSetRevisionChangeSets?.Any() ?? false))
+			{
+				foreach (ClientFileSetRevisionChangeSet clientFileSetRevisionChangeSet in result.ClientFileSetRevisionChangeSets)
+				{
+					await ProcessChangeSet(clientFileSetRevisionChangeSet);
+				}
+			}
+			return result;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while processing pending FileSet versions", "ProcessPendingFileSetVersions", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+			return new ReportFileSetVersionsResponse
+			{
+				StatusCode = HttpStatusCode.InternalServerError
+			};
+		}
+	}
+
+	private async Task<DateTime> GetLastCallToProcessPendingFileSetVersion()
+	{
+		DateTime result = DateTime.MinValue;
+		if (await _lockPendingFileSetVersions.WaitAsync(_pendingFileSetVersionsLockTimeout))
+		{
+			try
+			{
+				result = _lastCallToProcessPendingFileSetVersions;
+			}
+			finally
+			{
+				_lockPendingFileSetVersions.Release();
+			}
+		}
+		else
+		{
+			_logger.LogErrorWithSource("Lock failed. Unable to get last call date for ProcessPendingFileSetVersion", "GetLastCallToProcessPendingFileSetVersion", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+		}
+		return result;
+	}
+
+	private async Task SetLastCallToProcessPendingFileSetVersions()
+	{
+		if (await _lockPendingFileSetVersions.WaitAsync(_pendingFileSetVersionsLockTimeout))
+		{
+			try
+			{
+				_lastCallToProcessPendingFileSetVersions = DateTime.Now;
+				return;
+			}
+			finally
+			{
+				_lockPendingFileSetVersions.Release();
+			}
+		}
+		_logger.LogErrorWithSource("Lock failed. Unable to set last call for ProcessPendingFileSetVersion", "SetLastCallToProcessPendingFileSetVersions", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+	}
+
+	public async Task<ReportFileSetVersionsResponse> TriggerProcessPendingFileSetVersions(TriggerReportFileSetVersionsRequest triggerReportFileSetVersionsRequest)
+	{
+		ReportFileSetVersionsResponse response = new ReportFileSetVersionsResponse();
+		try
+		{
+			if (triggerReportFileSetVersionsRequest != null)
+			{
+				if (!triggerReportFileSetVersionsRequest.ExecutionTimeFrameMs.HasValue || triggerReportFileSetVersionsRequest.ExecutionTimeFrameMs == 0)
+				{
+					response = await ProcessPendingFileSetVersions();
+				}
+				else
+				{
+					Task.Run(async delegate
+					{
+						int randomMs = new Random().Next((int)triggerReportFileSetVersionsRequest.ExecutionTimeFrameMs.Value);
+						_logger.LogInfoWithSource($"waiting {randomMs} ms before calling ReportFileSetVersions", "TriggerProcessPendingFileSetVersions", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+						DateTime lastCall = await GetLastCallToProcessPendingFileSetVersion();
+						await Task.Delay(randomMs);
+						DateTime dateTime = lastCall;
+						if (!(dateTime != await GetLastCallToProcessPendingFileSetVersion()))
+						{
+							await ProcessPendingFileSetVersions();
+						}
+					});
+				}
+			}
+			else
+			{
+				_logger.LogErrorWithSource("parameter TriggerReportFileSetVersionsRequest must not be null.", "TriggerProcessPendingFileSetVersions", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+				response.StatusCode = HttpStatusCode.InternalServerError;
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception triggering ProcessPendingFileSetVersions.", "TriggerProcessPendingFileSetVersions", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetService.cs");
+			response.StatusCode = HttpStatusCode.InternalServerError;
+		}
+		return response;
 	}
 }

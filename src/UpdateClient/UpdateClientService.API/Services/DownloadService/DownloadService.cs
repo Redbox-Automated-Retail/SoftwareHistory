@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Coravel.Invocable;
 using Microsoft.Extensions.Logging;
 using Redbox.NetCore.Logging.Extensions;
-using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.App;
+using UpdateClientService.API.Services.DownloadService.Responses;
 using UpdateClientService.API.Services.IoT.Commands;
 using UpdateClientService.API.Services.IoT.IoTCommand;
 
@@ -29,7 +30,7 @@ public class DownloadService : IDownloadService, IInvocable
 
 	public const string DownloadExtension = ".dldat";
 
-	private static SemaphoreSlim Lock => DownloadServiceLock.Lock;
+	private static SemaphoreSlim _lock => new SemaphoreSlim(1, 1);
 
 	public DownloadService(ILogger<DownloadService> logger, IPersistentDataCacheService cache, IDownloader downloader, IIoTCommandClient iotCommandClient)
 	{
@@ -43,7 +44,7 @@ public class DownloadService : IDownloadService, IInvocable
 	{
 		try
 		{
-			if (!(await Lock.WaitAsync(0)))
+			if (!(await _lock.WaitAsync(0)))
 			{
 				_logger.LogWarningWithSource("DownloadService is already being invoked. Skipping...", "Invoke", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 				return;
@@ -51,16 +52,12 @@ public class DownloadService : IDownloadService, IInvocable
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Could not acquire lock");
+			_logger.LogErrorWithSource(ex, "Could not acquire lock", "Invoke", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 			return;
 		}
 		try
 		{
-			List<Error> source = await ProcessDownloads();
-			if (source.Any())
-			{
-				_logger.LogErrorWithSource(string.Join(",", source.Select((Error e) => e.Message)), "Invoke", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
-			}
+			await ProcessDownloads();
 		}
 		catch (Exception ex2)
 		{
@@ -68,38 +65,73 @@ public class DownloadService : IDownloadService, IInvocable
 		}
 		finally
 		{
-			SemaphoreSlim semaphoreSlim = Lock;
+			SemaphoreSlim semaphoreSlim = _lock;
 			if (semaphoreSlim != null && semaphoreSlim.CurrentCount == 0)
 			{
-				Lock.Release();
+				_lock.Release();
 			}
 		}
 	}
 
-	public async Task<List<DownloadData>> GetDownloads(string pattern = null)
+	public async Task<GetDownloadStatusesResponse> GetDownloadsResponse(string pattern = null)
 	{
-		List<DownloadData> result = new List<DownloadData>();
 		try
 		{
-			result = (from d in await _cache.ReadLike<DownloadData>(string.IsNullOrWhiteSpace(pattern) ? DownloadDataConstants.DownloadExtension : pattern, UpdateClientServiceConstants.DownloadDataFolder)
-				where d?.Data != null
-				select d.Data).ToList();
+			GetDownloadStatusesResponse getDownloadStatusesResponse = new GetDownloadStatusesResponse();
+			GetDownloadStatusesResponse getDownloadStatusesResponse2 = getDownloadStatusesResponse;
+			getDownloadStatusesResponse2.Statuses = await GetDownloads(null, pattern);
+			return getDownloadStatusesResponse;
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An unhandled exception occurred");
+			_logger.LogErrorWithSource(ex, "Exception while getting DownloadDatas for pattern " + pattern + ")", "GetDownloadsResponse", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+			return new GetDownloadStatusesResponse
+			{
+				StatusCode = HttpStatusCode.InternalServerError
+			};
 		}
-		return result;
 	}
 
-	public async Task<List<DownloadData>> GetDownloads(Regex pattern)
+	public async Task<GetDownloadStatusResponse> GetDownloadResponse(string key)
 	{
-		List<DownloadData> result = new List<DownloadData>();
 		try
 		{
-			result = (from d in await _cache.ReadLike<DownloadData>(pattern, UpdateClientServiceConstants.DownloadDataFolder)
+			DownloadData downloadData = (await GetDownloads())?.FirstOrDefault((DownloadData x) => x.Key == key);
+			return new GetDownloadStatusResponse
+			{
+				Status = downloadData,
+				StatusCode = ((downloadData != null) ? HttpStatusCode.OK : HttpStatusCode.NotFound)
+			};
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while getting DownloadData for key " + key + ")", "GetDownloadResponse", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+			return new GetDownloadStatusResponse
+			{
+				StatusCode = HttpStatusCode.InternalServerError
+			};
+		}
+	}
+
+	public async Task<DownloadDataList> GetDownloads(string pattern = null)
+	{
+		return await GetDownloads(null, pattern);
+	}
+
+	public async Task<DownloadDataList> GetDownloads(Regex pattern)
+	{
+		return await GetDownloads(pattern, null);
+	}
+
+	private async Task<DownloadDataList> GetDownloads(Regex regexPattern, string stringPattern)
+	{
+		DownloadDataList result = new DownloadDataList();
+		try
+		{
+			List<PersistentDataWrapper<DownloadData>> source = ((regexPattern == null) ? (await _cache.ReadLike<DownloadData>(string.IsNullOrWhiteSpace(stringPattern) ? DownloadDataConstants.DownloadExtension : stringPattern, UpdateClientServiceConstants.DownloadDataFolder, useCache: false)) : (await _cache.ReadLike<DownloadData>(regexPattern, UpdateClientServiceConstants.DownloadDataFolder, useCache: false)));
+			result.AddRange((from d in source
 				where d?.Data != null
-				select d.Data).ToList();
+				select d.Data).ToList());
 		}
 		catch (Exception ex)
 		{
@@ -108,107 +140,102 @@ public class DownloadService : IDownloadService, IInvocable
 		return result;
 	}
 
-	public async Task<List<Error>> AddDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish)
+	public async Task<GetFileResponse> AddDownload(string hash, string url, DownloadPriority priority, bool completeOnFinish = false)
 	{
-		List<Error> errors = new List<Error>();
-		_logger.LogInfoWithSource($"Adding download key: {key} hash: {hash} url: {url} priority: {priority}", "AddDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+		GetFileResponse response = new GetFileResponse();
 		try
 		{
-			DownloadData data = InitializeDownloadData(key, hash, url, priority, completeOnFinish);
-			List<Error> list = errors;
-			list.AddRange(await _downloader.SaveDownload(data));
-			if (errors.Any())
+			string key = Guid.NewGuid().ToString();
+			if (!(await AddDownload(key, hash, url, priority, completeOnFinish)))
 			{
-				return errors;
+				response.StatusCode = HttpStatusCode.InternalServerError;
 			}
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			errors.Add(new Error
-			{
-				Message = "DownloadService -> An unhandled exception occurred in AddDownload. Exception -> " + e.GetFullMessage()
-			});
+			_logger.LogErrorWithSource(ex, "Exception while adding download for hash " + hash + ", url " + url, "AddDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 		}
-		return errors;
+		return response;
 	}
 
-	public async Task<(List<Error> errors, DownloadData downloadData)> AddRetrieveDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish)
+	public async Task<bool> AddDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish = false)
 	{
-		List<Error> errors = new List<Error>();
-		DownloadData data = null;
+		(bool, DownloadData) tuple = await AddRetrieveDownload(key, hash, url, priority, completeOnFinish);
+		var (result, _) = tuple;
+		_ = tuple.Item2;
+		return result;
+	}
+
+	public async Task<(bool success, DownloadData downloadData)> AddRetrieveDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish)
+	{
+		DownloadData downloadData = null;
 		_logger.LogInfoWithSource($"Adding download key: {key} hash: {hash} url: {url} priority: {priority}", "AddRetrieveDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+		bool item;
 		try
 		{
-			data = InitializeDownloadData(key, hash, url, priority, completeOnFinish);
-			List<Error> list = errors;
-			list.AddRange(await _downloader.SaveDownload(data));
-			if (errors.Any())
-			{
-				return (errors: errors, downloadData: data);
-			}
+			downloadData = DownloadData.Initialize(key, hash, url, priority, completeOnFinish);
+			item = await _downloader.SaveDownload(downloadData);
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			errors.Add(new Error
-			{
-				Message = "DownloadService -> An unhandled exception occurred in AddDownload. Exception -> " + e.GetFullMessage()
-			});
+			_logger.LogErrorWithSource(ex, $"Exception while adding download for {key} hash: {hash} url: {url} priority: {priority}", "AddRetrieveDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+			item = false;
 		}
-		return (errors: errors, downloadData: data);
+		return (success: item, downloadData: downloadData);
 	}
 
-	public async Task<List<Error>> CancelDownload(string key)
+	public async Task<DeleteDownloadResponse> CancelDownload(string key)
 	{
-		List<Error> errors = new List<Error>();
-		_logger.LogInfoWithSource("Deleting download matching key: " + key, "CancelDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+		DeleteDownloadResponse response = new DeleteDownloadResponse();
+		_logger.LogInfoWithSource("Deleting DownloadData with key: " + key, "CancelDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 		try
 		{
 			DownloadData downloadData = await GetDownloadData(key);
-			if (downloadData != null)
+			bool flag = downloadData != null;
+			bool flag2 = flag;
+			if (flag2)
 			{
-				List<Error> list = errors;
-				list.AddRange(await _downloader.DeleteDownload(downloadData));
+				flag2 = !(await _downloader.DeleteDownload(downloadData));
+			}
+			if (flag2)
+			{
+				response.StatusCode = HttpStatusCode.InternalServerError;
 			}
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			errors.Add(new Error
-			{
-				Message = "DownloadService -> An unhandled exception occurred in AddDownload. Exception -> " + e.GetFullMessage()
-			});
+			_logger.LogErrorWithSource(ex, "Exception while canceling download with key " + key, "CancelDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+			response.StatusCode = HttpStatusCode.InternalServerError;
 		}
-		return errors;
+		return response;
 	}
 
-	public async Task<List<Error>> CompleteDownload(string key)
+	public async Task<CompleteDownloadResponse> CompleteDownload(string key)
 	{
-		List<Error> errors = new List<Error>();
+		CompleteDownloadResponse response = new CompleteDownloadResponse();
 		_logger.LogInfoWithSource("Completing download matching key: " + key, "CompleteDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 		try
 		{
 			DownloadData downloadData = await GetDownloadData(key);
 			if (downloadData != null)
 			{
-				List<Error> list = errors;
-				list.AddRange(await _downloader.Complete(downloadData));
+				if (!(await _downloader.Complete(downloadData)))
+				{
+					response.StatusCode = HttpStatusCode.InternalServerError;
+				}
 			}
 			else
 			{
-				errors.Add(new Error
-				{
-					Code = 404.ToString(),
-					Message = "No download found matching key: " + key
-				});
+				_logger.LogErrorWithSource("No download found matching key: " + key, "CompleteDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+				response.StatusCode = HttpStatusCode.InternalServerError;
 			}
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			errors.Add(new Error
-			{
-				Message = "DownloadService -> An unhandled exception occurred in AddDownload. Exception -> " + e.GetFullMessage()
-			});
+			_logger.LogErrorWithSource(ex, "Exception while completing Download with key " + key, "CompleteDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+			response.StatusCode = HttpStatusCode.InternalServerError;
 		}
-		return errors;
+		return response;
 	}
 
 	public async Task<string> GetProxiedS3Url(string key, DownloadPathType type, bool isHead = false)
@@ -246,50 +273,32 @@ public class DownloadService : IDownloadService, IInvocable
 		return (await GetDownloads()).Where((DownloadData d) => d.Key == key).FirstOrDefault();
 	}
 
-	private async Task<List<Error>> ProcessDownloads()
+	private async Task<bool> ProcessDownloads()
 	{
-		List<Error> errors = new List<Error>();
+		bool result = true;
 		try
 		{
-			List<DownloadData> downloads = await GetDownloads();
-			if (downloads != null && downloads.Count > 0)
+			DownloadDataList downloadDataList = await GetDownloads();
+			if (downloadDataList != null && downloadDataList.Count > 0)
 			{
-				_logger.LogInfoWithSource($"Start processing {downloads.Count} downloads", "ProcessDownloads", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+				_logger.LogInfoWithSource($"Start processing {downloadDataList.Count} downloads", "ProcessDownloads", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 			}
-			foreach (DownloadData item in downloads)
+			foreach (DownloadData item in downloadDataList)
 			{
-				List<Error> list = errors;
-				list.AddRange(await _downloader.ProcessDownload(item));
+				bool flag = result;
+				result = flag & await _downloader.ProcessDownload(item);
 			}
-			errors.AddRange(_downloader.Cleanup(downloads));
-			if (downloads != null && downloads.Count > 0)
+			result &= _downloader.Cleanup(downloadDataList);
+			if (downloadDataList != null && downloadDataList.Count > 0)
 			{
 				_logger.LogInfoWithSource("Finished executing", "ProcessDownloads", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
 			}
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			errors.Add(new Error
-			{
-				Message = "DownloadService -> An unhandled exception occurred in ProcessDownloads. Exception -> " + e.GetFullMessage()
-			});
+			_logger.LogErrorWithSource(ex, "Exception while processing downloads", "ProcessDownloads", "/sln/src/UpdateClientService.API/Services/DownloadService/DownloadService.cs");
+			result = false;
 		}
-		return errors;
-	}
-
-	private DownloadData InitializeDownloadData(string key, string hash, string url, DownloadPriority downloadPriority, bool completeOnFinish)
-	{
-		return new DownloadData
-		{
-			Key = key,
-			Url = url,
-			DownloadState = DownloadState.None,
-			RetryCount = 0,
-			FileGuid = Guid.NewGuid(),
-			Hash = hash,
-			DownloadType = DownloadType.Bits,
-			DownloadPriority = downloadPriority,
-			CompleteOnFinish = completeOnFinish
-		};
+		return result;
 	}
 }

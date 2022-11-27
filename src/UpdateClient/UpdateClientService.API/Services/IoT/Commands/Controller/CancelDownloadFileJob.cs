@@ -39,7 +39,7 @@ public class CancelDownloadFileJob : ICommandIoTController
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Execute");
+			_logger.LogErrorWithSource(ex, "Exception while executing command " + ioTCommand?.ToJson(), "Execute", "/sln/src/UpdateClientService.API/Services/IoT/Commands/Controller/CancelDownloadFileJob.cs");
 		}
 	}
 

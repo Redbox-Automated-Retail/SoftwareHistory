@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -26,11 +25,11 @@ public class FileSetTransition : IFileSetTransition
 		MOVEFILE_WRITE_THROUGH = 8
 	}
 
-	private const string ResultTableName = "Results";
+	private static bool _rebootRequired;
+
+	private const string FileSetChangeSetPath = "staging";
 
 	private const string FileSetJsonFileName = "fileset.json";
-
-	private ClientFileSetRevision _revision;
 
 	private IFileCacheService _fileCacheService;
 
@@ -38,267 +37,238 @@ public class FileSetTransition : IFileSetTransition
 
 	private IWindowsServiceFunctions _winServiceFunctions;
 
-	private readonly ICommandLineService _cmd;
+	private readonly ICommandLineService _commandLineService;
 
 	private AppSettings _appSettings;
 
 	private ILogger<FileSetTransition> _logger;
 
-	private const string FileSetChangeSetPath = "staging";
+	public bool RebootRequired => _rebootRequired;
 
 	public FileSetTransition(IFileCacheService fileCacheService, IHttpService httpService, IWindowsServiceFunctions winServiceFunctions, ICommandLineService cmd, IOptions<AppSettings> appSettings, ILogger<FileSetTransition> logger)
 	{
 		_fileCacheService = fileCacheService;
 		_httpService = httpService;
 		_winServiceFunctions = winServiceFunctions;
-		_cmd = cmd;
+		_commandLineService = cmd;
 		_appSettings = appSettings.Value;
 		_logger = logger;
 	}
 
-	public FileSetTransition Initialize(ClientFileSetRevision revision)
+	public void MarkRebootRequired()
 	{
-		_revision = revision;
-		return this;
+		_rebootRequired = true;
 	}
 
-	internal List<Error> Stage()
+	public void ClearRebootRequired()
 	{
-		List<Error> errors = new List<Error>();
+		_rebootRequired = false;
+	}
+
+	public bool Stage(ClientFileSetRevision clientFileSetRevision)
+	{
+		bool result = true;
 		try
 		{
-			string stagingFileSetRevisionPath = GetStagingFileSetRevisionPath();
+			string stagingFileSetRevisionPath = GetStagingFileSetRevisionPath(clientFileSetRevision);
 			if (!Directory.Exists(stagingFileSetRevisionPath))
 			{
 				Directory.CreateDirectory(stagingFileSetRevisionPath);
 			}
-			List<FileData> fileData = GetFileData();
-			fileData.ForEach(delegate(FileData f)
+			List<FileData> fileData = GetFileData(clientFileSetRevision);
+			fileData.ForEach(delegate(FileData eachFileData)
 			{
-				if (!_fileCacheService.FileExists(_revision.FileSetId, f.FileId, f.FileRevisionId))
+				if (!_fileCacheService.DoesFileExist(clientFileSetRevision.FileSetId, eachFileData.FileId, eachFileData.FileRevisionId))
 				{
-					errors.Add(new Error
-					{
-						Message = $"FileSetTransition.Stage FileId {f.FileId} Revision {f.FileRevisionId} doesn't exist"
-					});
+					_logger.LogError($"Missing file for FileId {eachFileData.FileId} Revision {eachFileData.FileRevisionId}");
+					result = false;
 				}
 			});
-			if (errors.Any())
+			if (!result)
 			{
-				return errors;
+				return result;
 			}
-			fileData.ForEach(delegate(FileData f)
+			fileData.ForEach(delegate(FileData eachFileData)
 			{
-				if (!_fileCacheService.CopyFileToPath(_revision.FileSetId, f.FileId, f.FileRevisionId, f.StagePath))
+				if (!_fileCacheService.CopyFileToPath(clientFileSetRevision.FileSetId, eachFileData.FileId, eachFileData.FileRevisionId, eachFileData.StagePath))
 				{
-					errors.Add(new Error
-					{
-						Message = $"FileSetTransition.Stage FileId {f.FileId} Revision {f.FileRevisionId} couldn't be copied to it's staging directory"
-					});
+					_logger.LogError($"File for FileId {eachFileData.FileId} Revision {eachFileData.FileRevisionId} couldn't be copied to it's staging directory");
+					result = false;
 				}
 			});
-			if (errors.Any())
+			if (!result)
 			{
-				return errors;
+				return result;
 			}
-			fileData.ForEach(delegate(FileData f)
+			fileData.ForEach(delegate(FileData eachFileData)
 			{
-				if (!CheckHash(f.StagePath, f.Hash))
+				if (!_fileCacheService.IsFileHashValid(eachFileData.StagePath, eachFileData.Hash))
 				{
-					errors.Add(new Error
-					{
-						Message = $"FileSetTransition.Stage FileId {f.FileId} Revision {f.FileRevisionId} hash check failed"
-					});
+					_logger.LogError($"Hash check failed for FileId {eachFileData.FileId} Revision {eachFileData.FileRevisionId}");
+					result = false;
 				}
 			});
-			return errors;
 		}
-		catch (Exception arg)
+		catch (Exception exception)
 		{
-			errors.Add(new Error
-			{
-				Message = $"FileSetTransition.Stage An unhandled exception occurred . Exception: {arg}"
-			});
+			_logger.LogError(exception, "Exception while staging files for revision with " + clientFileSetRevision?.IdentifyingText());
 		}
-		return errors;
+		return result;
 	}
 
-	internal List<Error> CheckMeetsDependency(Dictionary<long, FileSetDependencyState> dependencyStates, out bool meetsDependencies)
+	public bool CheckMeetsDependency(ClientFileSetRevision clientFileSetRevision, Dictionary<long, FileSetDependencyState> dependencyStates)
 	{
-		List<Error> list = new List<Error>();
-		meetsDependencies = false;
+		bool result = false;
 		try
 		{
-			IEnumerable<ClientFileSetRevisionDependency> dependencies = _revision.Dependencies;
-			if (dependencies.Count() == 0)
+			if (clientFileSetRevision?.Dependencies?.Any() != true)
 			{
-				meetsDependencies = true;
-				return list;
+				return true;
 			}
-			bool meetsAll = true;
-			dependencies.ToList().ForEach(delegate(ClientFileSetRevisionDependency dep)
+			result = true;
+			foreach (ClientFileSetRevisionDependency dependency in clientFileSetRevision.Dependencies)
 			{
-				if (!dependencyStates.ContainsKey(dep.DependsOnFileSetId))
+				if (!dependencyStates.ContainsKey(dependency.DependsOnFileSetId))
 				{
-					_logger.LogWarningWithSource($"FileSet {_revision.FileSetId} Revision {_revision.RevisionId} Message: Depends on FileSet {dep.DependsOnFileSetId} not found.", "CheckMeetsDependency", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
-					meetsAll = false;
+					_logger.LogWarningWithSource($"Missing dependency FileSet with FileSetId {dependency.DependsOnFileSetId} for revision {clientFileSetRevision.IdentifyingText()} Revision {clientFileSetRevision.RevisionId}", "CheckMeetsDependency", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+					result = false;
+					continue;
 				}
-				else
+				FileSetDependencyState fileSetDependencyState = dependencyStates[dependency.DependsOnFileSetId];
+				if (!fileSetDependencyState.IsDependencyMet(dependency.DependencyType, dependency.MinimumVersion, dependency.MaximumVersion))
 				{
-					FileSetDependencyState fileSetDependencyState = dependencyStates[dep.DependsOnFileSetId];
-					if (!fileSetDependencyState.IsDependencyMet(dep.DependencyType, dep.MinimumVersion, dep.MaximumVersion))
-					{
-						_logger.LogWarningWithSource($"FileSet {_revision.FileSetId} Revision {_revision.RevisionId} Message: Dependency not met. Expected version {ExpectedDependencyVersionInfo(dep, fileSetDependencyState)}. Current version: '{((fileSetDependencyState.InProgressRevisionId > 0) ? fileSetDependencyState.InProgressVersion : fileSetDependencyState.ActiveVersion)}'", "CheckMeetsDependency", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
-						meetsAll = false;
-					}
+					_logger.LogWarningWithSource("Missing dependency version for " + clientFileSetRevision.IdentifyingText() + ". Expected version " + ExpectedDependencyVersionInfo(dependency, fileSetDependencyState) + ". Current version: '" + ((fileSetDependencyState.InProgressRevisionId > 0) ? fileSetDependencyState.InProgressVersion : fileSetDependencyState.ActiveVersion) + "'", "CheckMeetsDependency", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+					result = false;
 				}
-			});
-			meetsDependencies = meetsAll;
+			}
 		}
-		catch (Exception arg)
+		catch (Exception exception)
 		{
-			list.Add(new Error
-			{
-				Message = $"FileSetTransition.CheckMeetsDependency An unhandled exception occurred . Exception: {arg}"
-			});
+			_logger.LogError(exception, "Exception while checking dependencies for revision " + clientFileSetRevision?.IdentifyingText());
 		}
-		return list;
+		return result;
 	}
 
-	private static string ExpectedDependencyVersionInfo(ClientFileSetRevisionDependency dep, FileSetDependencyState ds)
+	private static string ExpectedDependencyVersionInfo(ClientFileSetRevisionDependency clientFileSetRevisionDependency, FileSetDependencyState fileSetDependencyState)
 	{
 		return new
 		{
-			FileSetId = ds.FileSetId,
-			DependencyType = dep.DependencyType.ToString(),
-			MinimumVersion = dep.MinimumVersion,
-			MaximumVersion = dep.MaximumVersion
+			FileSetId = fileSetDependencyState.FileSetId,
+			DependencyType = clientFileSetRevisionDependency.DependencyType.ToString(),
+			MinimumVersion = clientFileSetRevisionDependency.MinimumVersion,
+			MaximumVersion = clientFileSetRevisionDependency.MaximumVersion
 		}.ToJson();
 	}
 
-	private async Task CallUpdateClientInstaller(Action<string> setError)
+	private async Task CallUpdateClientInstaller(ClientFileSetRevision clientFileSetRevision)
 	{
-		APIResponse<object> aPIResponse = await _httpService.SendRequestAsync<object>(_appSettings.UpdateClientInstallerUrl, "api/activation?waitForResponse=false", _revision, HttpMethod.Post, null, isForm: false, null, "CallUpdateClientInstaller", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs", null, logRequest: false);
+		_logger.LogInfoWithSource("Calling UpdateClientInstaller for revision with " + clientFileSetRevision.ToJsonIndented(), "CallUpdateClientInstaller", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+		APIResponse<object> aPIResponse = await _httpService.SendRequestAsync<object>(_appSettings.UpdateClientInstallerUrl, "api/activation?waitForResponse=false", clientFileSetRevision, HttpMethod.Post, null, isForm: false, null, "CallUpdateClientInstaller", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs", null, logRequest: false);
 		if (!aPIResponse.IsSuccessStatusCode)
 		{
-			setError("Something went wrong while calling UpdateClientInstaller. Error -> " + aPIResponse.Errors.ToJson());
+			_logger.LogErrorWithSource("Error while calling UpdateClientInstaller.Error-> " + aPIResponse.Errors.ToJson(), "CallUpdateClientInstaller", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 		}
 	}
 
-	internal List<Error> BeforeActivate(out bool success, Action<string> setError)
+	public bool BeforeActivate(ClientFileSetRevision clientFileSetRevision)
 	{
-		success = true;
-		List<Error> list = new List<Error>();
+		bool flag = true;
 		try
 		{
-			FileSetJsonModel fileSetJsonModel = GetFileSetJsonModel(beforeActivations: true);
+			FileSetJsonModel fileSetJsonModel = GetFileSetJsonModel(clientFileSetRevision, beforeActivations: true);
 			if (fileSetJsonModel == null)
 			{
 				_logger.LogWarningWithSource("FileSetJson was null skipping BeforeActivate.", "BeforeActivate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
-				return list;
+				return flag;
 			}
 			if (fileSetJsonModel?.WindowsServiceName == "updateclient$service")
 			{
 				Task.Run(async delegate
 				{
-					await CallUpdateClientInstaller(setError);
+					await CallUpdateClientInstaller(clientFileSetRevision);
 				});
-				success = false;
-				return list;
+				return false;
 			}
 			if (!string.IsNullOrWhiteSpace(fileSetJsonModel?.WindowsServiceName) && _winServiceFunctions.ServiceExists(fileSetJsonModel.WindowsServiceName))
 			{
 				_winServiceFunctions.StopService(fileSetJsonModel.WindowsServiceName);
 			}
-			List<FileData> fileData = GetFileData();
+			List<FileData> fileData = GetFileData(clientFileSetRevision);
 			FileData fileData2 = fileData.Where((FileData f) => string.Equals(Path.GetFileName(f.FileDestination), "beforeactivate.ps1", StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 			if (fileData2 != null)
 			{
-				success = RunScript(fileData2.StagePath);
-				if (!success)
+				flag = RunScript(clientFileSetRevision, fileData2.StagePath);
+				if (!flag)
 				{
-					list.Add(new Error
-					{
-						Message = $"There was an error running beforeactivate script for FileSet {_revision.FileSetId} Revision {_revision.RevisionId}"
-					});
+					_logger.LogErrorWithSource("Error running BeforeActivate script for " + clientFileSetRevision?.IdentifyingText(), "BeforeActivate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 				}
-				return list;
 			}
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileSetTransition.BeforeActivate An unhandled exception occurred . Exception: {arg}"
-			});
-		}
-		return list;
-	}
-
-	private FileSetJsonModel GetFileSetJsonModel(bool beforeActivations)
-	{
-		FileSetJsonModel result = null;
-		List<FileData> fileData = GetFileData();
-		FileData fileData2 = fileData.Where((FileData item) => Path.GetFileName(item.FileDestination).ToLower() == "fileset.json").FirstOrDefault();
-		if (fileData2 == null)
-		{
-			_logger.LogWarningWithSource("fileset.json is not exist for revision: " + _revision.ToJson(), "GetFileSetJsonModel", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
-			return null;
-		}
-		string text = (beforeActivations ? File.ReadAllText(fileData2?.StagePath) : File.ReadAllText(fileData2?.FileDestination));
-		try
-		{
-			result = text.ToObject<FileSetJsonModel>();
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Couldn't deserialize fileset.json file. FileContent was: " + text + " . Path: was: " + fileData2.StagePath);
+			_logger.LogErrorWithSource(ex, "Exception while processing BeforeActivate for " + clientFileSetRevision?.IdentifyingText(), "BeforeActivate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+			flag = false;
+		}
+		return flag;
+	}
+
+	private FileSetJsonModel GetFileSetJsonModel(ClientFileSetRevision clientFileSetRevision, bool beforeActivations)
+	{
+		FileSetJsonModel result = null;
+		List<FileData> fileData = GetFileData(clientFileSetRevision);
+		FileData fileData2 = fileData.FirstOrDefault((FileData x) => Path.GetFileName(x.FileDestination).ToLower() == "fileset.json");
+		if (fileData2 == null)
+		{
+			_logger.LogWarningWithSource("fileset.json does not exist for revision: " + clientFileSetRevision.IdentifyingText(), "GetFileSetJsonModel", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+			return null;
+		}
+		string text = (beforeActivations ? fileData2.StagePath : fileData2.FileDestination);
+		try
+		{
+			string obj = File.ReadAllText(text);
+			result = obj.ToObject<FileSetJsonModel>();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while getting fileset.json from " + text + ".", "GetFileSetJsonModel", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 		}
 		return result;
 	}
 
-	internal List<Error> AfterActivate()
+	public bool AfterActivate(ClientFileSetRevision clientFileSetRevision)
 	{
-		List<Error> list = new List<Error>();
+		bool result = true;
 		try
 		{
-			FileSetJsonModel fileSetJsonModel = GetFileSetJsonModel(beforeActivations: false);
+			FileSetJsonModel fileSetJsonModel = GetFileSetJsonModel(clientFileSetRevision, beforeActivations: false);
 			if (fileSetJsonModel == null)
 			{
 				_logger.LogWarningWithSource("FileSetJson was null skipping AfterActivate.", "AfterActivate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
-				return list;
+				return result;
 			}
 			if (!string.IsNullOrWhiteSpace(fileSetJsonModel?.WindowsServiceName))
 			{
-				list.AddRange(AfterActivateHandleWindowsServices(fileSetJsonModel));
+				result = InstallAndStartWindowsService(fileSetJsonModel);
 			}
-			List<FileData> fileData = GetFileData();
+			List<FileData> fileData = GetFileData(clientFileSetRevision);
 			FileData fileData2 = fileData.Where((FileData f) => string.Equals(Path.GetFileName(f.FileDestination), "afteractivate.ps1", StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
-			if (fileData2 != null)
+			if (fileData2 != null && !RunScript(clientFileSetRevision, fileData2.FileDestination))
 			{
-				if (!RunScript(fileData2.FileDestination))
-				{
-					list.Add(new Error
-					{
-						Message = $"There was an error running afteractivate script for FileSet {_revision.FileSetId} Revision {_revision.RevisionId}"
-					});
-				}
-				return list;
+				_logger.LogErrorWithSource("Error while running afteractivate script for " + clientFileSetRevision?.IdentifyingText(), "AfterActivate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+				result = false;
 			}
 		}
-		catch (Exception arg)
+		catch (Exception ex)
 		{
-			list.Add(new Error
-			{
-				Message = $"FileSetTransition.AfterActivate An unhandled exception occurred. Exception: {arg}"
-			});
+			_logger.LogErrorWithSource(ex, "Exception while running afteractivate script for " + clientFileSetRevision?.IdentifyingText(), "AfterActivate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+			result = false;
 		}
-		return list;
+		return result;
 	}
 
-	private List<Error> AfterActivateHandleWindowsServices(FileSetJsonModel fileSetJson)
+	private bool InstallAndStartWindowsService(FileSetJsonModel fileSetJson)
 	{
-		List<Error> list = new List<Error>();
+		bool result = true;
 		if (!_winServiceFunctions.ServiceExists(fileSetJson.WindowsServiceName))
 		{
 			if (!string.IsNullOrWhiteSpace(fileSetJson.WindowsServiceStartFile))
@@ -309,93 +279,104 @@ public class FileSetTransition : IFileSetTransition
 			}
 			else
 			{
-				string message = "There's a windowsServiceName: " + fileSetJson.WindowsServiceName + " in fileSetJson but windowsServiceStartPath was null!";
-				_logger.LogErrorWithSource(message, "AfterActivateHandleWindowsServices", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
-				list.Add(new Error
-				{
-					Message = message
-				});
+				_logger.LogErrorWithSource("windowsServiceStartPath in fileSetJson is null for windowsServiceName " + fileSetJson.WindowsServiceName, "InstallAndStartWindowsService", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+				result = false;
 			}
 		}
 		_winServiceFunctions.StartService(fileSetJson.WindowsServiceName);
-		return list;
+		return result;
 	}
 
-	internal List<Error> Activate()
+	public bool Activate(ClientFileSetRevision clientFileSetRevision)
 	{
-		List<Error> errors = new List<Error>();
+		bool flag = true;
 		try
 		{
-			List<FileData> fileData = GetFileData();
-			fileData.ForEach(delegate(FileData f)
+			List<FileData> fileData = GetFileData(clientFileSetRevision);
+			flag = StagedFilesExist(clientFileSetRevision, fileData);
+			if (!flag)
 			{
-				if (!File.Exists(f.StagePath))
-				{
-					errors.Add(new Error
-					{
-						Message = $"FileSetTransition.Activate Staged FileId {f.FileId} Revision {f.FileRevisionId} doesn't exist"
-					});
-				}
-			});
-			if (errors.Any())
-			{
-				return errors;
+				return flag;
 			}
-			fileData.ForEach(delegate(FileData f)
+			Action<string, string> action = delegate(string sourceFilePath, string destinationfilePath)
 			{
-				string directoryName = Path.GetDirectoryName(f.FileDestination);
-				if (!Directory.Exists(directoryName))
+				if (File.Exists(destinationfilePath))
 				{
-					Directory.CreateDirectory(directoryName);
+					File.Delete(destinationfilePath);
+				}
+				File.Move(sourceFilePath, destinationfilePath);
+			};
+			foreach (FileData item in fileData)
+			{
+				flag = CreateFileDestinationDirectory(item);
+				if (!flag)
+				{
+					return flag;
 				}
 				try
 				{
-					if (File.Exists(f.FileDestination))
-					{
-						File.Delete(f.FileDestination);
-					}
-					File.Move(f.StagePath, f.FileDestination);
+					action(item.StagePath, item.FileDestination);
 				}
 				catch (Exception ex)
 				{
 					try
 					{
-						_logger.LogInfoWithSource(f.FileDestination + " is locked by anther process attempting to retry.", "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
-						_logger.LogErrorWithSource(ex, "Error from activate copy - retrying.");
-						ManualResetEvent manualResetEvent = new ManualResetEvent(initialState: false);
-						manualResetEvent.WaitOne(TimeSpan.FromMilliseconds(100.0));
-						manualResetEvent.Close();
-						if (File.Exists(f.FileDestination))
-						{
-							File.Delete(f.FileDestination);
-						}
-						File.Move(f.StagePath, f.FileDestination);
+						_logger.LogInfoWithSource(item.FileDestination + " is locked by anther process attempting to retry.", "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+						_logger.LogErrorWithSource(ex, "Error from activate copy - retrying.", "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+						Task.Delay(100).Wait();
+						action(item.StagePath, item.FileDestination);
 					}
 					catch (Exception ex2)
 					{
-						_logger.LogInfoWithSource(f.FileDestination + " is locked by anther process doing a deferred move.", "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
-						_logger.LogErrorWithSource(ex2, "Error from activate copy.");
+						_logger.LogInfoWithSource(item.FileDestination + " is locked by anther process doing a deferred move.", "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+						_logger.LogErrorWithSource(ex2, "Error from activate copy.", "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 						string tempFileName = Path.GetTempFileName();
-						if (File.Exists(tempFileName))
-						{
-							File.Delete(tempFileName);
-						}
-						File.Move(f.StagePath, tempFileName);
-						MoveLockedFileSystemEntry(tempFileName, f.FileDestination);
+						action(item.StagePath, tempFileName);
+						MoveLockedFileSystemEntry(tempFileName, item.FileDestination);
+						MarkRebootRequired();
 					}
 				}
-			});
-			errors.Any();
-			return errors;
+			}
 		}
-		catch (Exception arg)
+		catch (Exception ex3)
 		{
-			errors.Add(new Error
-			{
-				Message = $"FileSetTransition.Activate An unhandled exception occurred . Exception: {arg}"
-			});
+			_logger.LogErrorWithSource(ex3, "Exception while activing revision with " + clientFileSetRevision?.IdentifyingText(), "Activate", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+			flag = false;
 		}
-		return errors;
+		return flag;
+	}
+
+	private bool StagedFilesExist(ClientFileSetRevision clientFileSetRevision, List<FileData> fileDataList)
+	{
+		bool result = true;
+		fileDataList?.ForEach(delegate(FileData eachFileData)
+		{
+			if (!File.Exists(eachFileData.StagePath))
+			{
+				_logger.LogErrorWithSource($"Missing file {eachFileData.StagePath} for FileId {eachFileData.FileId} and revision with {clientFileSetRevision?.IdentifyingText()}", "StagedFilesExist", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+				result = false;
+			}
+		});
+		return result;
+	}
+
+	private bool CreateFileDestinationDirectory(FileData fileData)
+	{
+		bool result = true;
+		try
+		{
+			string directoryName = Path.GetDirectoryName(fileData.FileDestination);
+			if (!Directory.Exists(directoryName))
+			{
+				Directory.CreateDirectory(directoryName);
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception while creating directory " + fileData?.FileDestination, "CreateFileDestinationDirectory", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+			result = false;
+		}
+		return result;
 	}
 
 	private static void MoveLockedFileSystemEntry(string source, string destination)
@@ -411,48 +392,48 @@ public class FileSetTransition : IFileSetTransition
 	[DllImport("kernel32.dll")]
 	private static extern bool MoveFileEx(string lpExistingFileName, string lpNewFileName, MoveFileFlags dwFlags);
 
-	private List<FileData> GetFileData()
+	private List<FileData> GetFileData(ClientFileSetRevision clientFileSetRevision)
 	{
-		List<FileData> result = new List<FileData>();
-		string path = GetStagingFileSetRevisionPath();
-		_revision.Files.ToList().ForEach(delegate(ClientFileSetFile f)
+		List<FileData> list = new List<FileData>();
+		string stagingFileSetRevisionPath = GetStagingFileSetRevisionPath(clientFileSetRevision);
+		foreach (ClientFileSetFile file in clientFileSetRevision.Files)
 		{
 			FileData item = new FileData
 			{
-				FileId = f.FileId,
-				FileRevisionId = f.FileRevisionId,
-				Size = f.ContentSize,
-				Hash = f.ContentHash,
-				StagePath = Path.Combine(path, _fileCacheService.GetFileName(f.FileId, f.FileRevisionId)),
-				FileDestination = f.FileDestination
+				FileId = file.FileId,
+				FileRevisionId = file.FileRevisionId,
+				Size = file.ContentSize,
+				Hash = file.ContentHash,
+				StagePath = Path.Combine(stagingFileSetRevisionPath, _fileCacheService.GetRevisionFileName(file.FileId, file.FileRevisionId)),
+				FileDestination = file.FileDestination
 			};
-			result.Add(item);
-		});
-		return result;
+			list.Add(item);
+		}
+		return list;
 	}
 
-	private bool RunScript(string script)
+	private bool RunScript(ClientFileSetRevision clientFileSetRevision, string scriptPath)
 	{
 		try
 		{
-			if (string.IsNullOrEmpty(script))
+			if (string.IsNullOrEmpty(scriptPath))
 			{
-				_logger.LogWarningWithSource($"Script for FileSet {_revision.FileSetId} Revision {_revision.RevisionId} was empty. Skipping...", "RunScript", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
+				_logger.LogWarningWithSource("Script was empty for " + clientFileSetRevision.IdentifyingText() + ". Skipping...", "RunScript", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 				return true;
 			}
-			if (Path.GetExtension(script) == ".file")
+			if (Path.GetExtension(scriptPath) == ".file")
 			{
 				string text = Path.GetTempFileName().Replace(".tmp", ".ps1");
-				File.Copy(script, text);
-				bool result = _cmd.TryExecutePowerShellScriptFromFile(text);
+				File.Copy(scriptPath, text);
+				bool result = _commandLineService.TryExecutePowerShellScriptFromFile(text);
 				File.Delete(text);
 				return result;
 			}
-			return _cmd.TryExecutePowerShellScriptFromFile(script);
+			return _commandLineService.TryExecutePowerShellScriptFromFile(scriptPath);
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An unhandled exception occurred while running script");
+			_logger.LogErrorWithSource(ex, "Exception while running script " + scriptPath, "RunScript", "/sln/src/UpdateClientService.API/Services/FileSets/FileSetTransition.cs");
 			return false;
 		}
 	}
@@ -462,32 +443,13 @@ public class FileSetTransition : IFileSetTransition
 		return Path.Combine(Constants.FileSetsRoot, "staging");
 	}
 
-	private string GetStagingFileSetPath()
+	private string GetStagingFileSetPath(ClientFileSetRevision clientFileSetRevision)
 	{
-		return Path.Combine(GetStagingDirectory(), _revision.FileSetId.ToString());
+		return Path.Combine(GetStagingDirectory(), clientFileSetRevision.FileSetId.ToString());
 	}
 
-	private string GetStagingFileSetRevisionPath()
+	private string GetStagingFileSetRevisionPath(ClientFileSetRevision clientFileSetRevision)
 	{
-		return Path.Combine(GetStagingFileSetPath(), _revision.RevisionId.ToString());
-	}
-
-	private bool CheckHash(string filePath, string hash)
-	{
-		List<Error> list = new List<Error>();
-		try
-		{
-			using FileStream stream = File.OpenRead(filePath);
-			string sHA1Hash = stream.GetSHA1Hash();
-			return sHA1Hash == hash;
-		}
-		catch (Exception arg)
-		{
-			list.Add(new Error
-			{
-				Message = $"FileSetTransition An unhandled exception occurred in CheckHash.. Exception: {arg}"
-			});
-		}
-		return false;
+		return Path.Combine(GetStagingFileSetPath(clientFileSetRevision), clientFileSetRevision.RevisionId.ToString());
 	}
 }

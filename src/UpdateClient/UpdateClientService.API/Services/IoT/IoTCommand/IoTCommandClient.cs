@@ -54,7 +54,7 @@ public class IoTCommandClient : IIoTCommandClient
 			}
 			catch (Exception ex)
 			{
-				_logger.LogErrorWithSource(ex, "Couldn't deserialize the response from UpdateService for request id " + request?.RequestId);
+				_logger.LogErrorWithSource(ex, "Couldn't deserialize the response from UpdateService for request id " + request?.RequestId, "PerformIoTCommand", "/sln/src/UpdateClientService.API/Services/IoT/IoTCommand/IoTCommandClient.cs");
 			}
 			return new IoTCommandResponse<T>
 			{

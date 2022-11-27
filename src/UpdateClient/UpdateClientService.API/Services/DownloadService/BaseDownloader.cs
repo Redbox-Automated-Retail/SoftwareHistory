@@ -1,93 +1,85 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Redbox.NetCore.Middleware.Http;
+using Microsoft.Extensions.Logging;
+using Redbox.NetCore.Logging.Extensions;
 using UpdateClientService.API.App;
 
 namespace UpdateClientService.API.Services.DownloadService;
 
 public class BaseDownloader : IDownloader, IPersistentData
 {
-	private readonly IPersistentDataCacheService _cache;
+	private readonly IPersistentDataCacheService _persistentDataCacheService;
 
-	DownloadData IDownloader.DownloadData
+	private readonly ILogger<BaseDownloader> _logger;
+
+	public BaseDownloader(IPersistentDataCacheService cache, ILogger<BaseDownloader> logger)
 	{
-		get
-		{
-			throw new NotImplementedException();
-		}
+		_logger = logger;
+		_persistentDataCacheService = cache;
 	}
 
-	public BaseDownloader(IPersistentDataCacheService cache)
+	public virtual async Task<bool> ProcessDownload(DownloadData downloadData)
 	{
-		_cache = cache;
+		return true;
 	}
 
-	public virtual async Task<List<Error>> ProcessDownload(DownloadData data)
+	public virtual async Task<bool> SaveDownload(DownloadData downloadData)
 	{
-		return await Task.Run(() => new List<Error>());
-	}
-
-	public virtual async Task<List<Error>> SaveDownload(DownloadData data)
-	{
-		List<Error> errors = new List<Error>();
+		bool flag;
 		try
 		{
-			if (!(await _cache.Write(data, data.FileName, UpdateClientServiceConstants.DownloadDataFolder)))
+			flag = await _persistentDataCacheService.Write(downloadData, downloadData.FileName, UpdateClientServiceConstants.DownloadDataFolder);
+			if (!flag)
 			{
-				errors.Add(new Error
-				{
-					Message = "BaseDownloader -> " + data.FileName + " did not write successfully. Check logs for more details."
-				});
+				_logger.LogErrorWithSource("Unable to save DownloadData " + downloadData?.ToJson(), "SaveDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/BaseDownloader.cs");
 			}
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			errors.Add(new Error
-			{
-				Message = "BaseDownloader -> Unhandled exception occurred DeleteDownload. Exception -> " + e.GetFullMessage()
-			});
+			_logger.LogErrorWithSource(ex, "Exception while saving DownloadData " + downloadData?.ToJson(), "SaveDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/BaseDownloader.cs");
+			flag = false;
 		}
-		return errors;
+		return flag;
 	}
 
-	public virtual async Task<List<Error>> DeleteDownload(DownloadData data)
+	public virtual async Task<bool> DeleteDownload(DownloadData downloadData)
 	{
-		List<Error> errors = new List<Error>();
+		bool flag;
 		try
 		{
-			await _cache.Delete(data.FileName, UpdateClientServiceConstants.DownloadDataFolder);
-		}
-		catch (Exception e)
-		{
-			errors.Add(new Error
+			flag = await _persistentDataCacheService.Delete(downloadData.FileName, UpdateClientServiceConstants.DownloadDataFolder);
+			if (!flag)
 			{
-				Message = "BaseDownloader -> Unhandled exception occurred DeleteDownload. Exception -> " + e.GetFullMessage()
-			});
+				_logger.LogErrorWithSource("Unable to delete DownloadData with key: " + downloadData?.Key, "DeleteDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/BaseDownloader.cs");
+			}
 		}
-		return errors;
+		catch (Exception ex)
+		{
+			flag = false;
+			_logger.LogErrorWithSource(ex, "Exception while deleting DownloadData with key " + downloadData?.Key, "DeleteDownload", "/sln/src/UpdateClientService.API/Services/DownloadService/BaseDownloader.cs");
+		}
+		return flag;
 	}
 
-	public virtual async Task<List<Error>> Complete(DownloadData data)
+	public virtual async Task<bool> Complete(DownloadData downloadData)
 	{
-		List<Error> errors = new List<Error>();
+		bool success = true;
 		try
 		{
-			data.DownloadState = DownloadState.Complete;
-			await SaveDownload(data);
+			downloadData.DownloadState = DownloadState.Complete;
+			_logger.LogInfoWithSource($"Setting DownloadState = {downloadData.DownloadState} for DownloadData {downloadData.FileName}", "Complete", "/sln/src/UpdateClientService.API/Services/DownloadService/BaseDownloader.cs");
+			await SaveDownload(downloadData);
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			errors.Add(new Error
-			{
-				Message = "BaseDownloader -> An unhandled exception occurred in Cleanup. Exception " + e.GetFullMessage()
-			});
+			success = false;
+			_logger.LogErrorWithSource(ex, "Exception while completing DownloadData with key: " + downloadData.Key, "Complete", "/sln/src/UpdateClientService.API/Services/DownloadService/BaseDownloader.cs");
 		}
-		return errors;
+		return success;
 	}
 
-	public virtual List<Error> Cleanup(List<DownloadData> data)
+	public virtual bool Cleanup(DownloadDataList downloadDataList)
 	{
-		return new List<Error>();
+		return true;
 	}
 }

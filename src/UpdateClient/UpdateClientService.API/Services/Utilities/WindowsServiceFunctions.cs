@@ -48,7 +48,7 @@ public class WindowsServiceFunctions : IWindowsServiceFunctions
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An unhandled exception was raised while starting service: " + name + ".");
+			_logger.LogErrorWithSource(ex, "An unhandled exception was raised while starting service: " + name + ".", "StartService", "/sln/src/UpdateClientService.API/Services/Utilities/WindowsServiceFunctions.cs");
 		}
 	}
 
@@ -70,7 +70,7 @@ public class WindowsServiceFunctions : IWindowsServiceFunctions
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An unhandled exception was raised while stopping service: " + name + ".");
+			_logger.LogErrorWithSource(ex, "An unhandled exception was raised while stopping service: " + name + ".", "StopService", "/sln/src/UpdateClientService.API/Services/Utilities/WindowsServiceFunctions.cs");
 		}
 	}
 
@@ -87,7 +87,7 @@ public class WindowsServiceFunctions : IWindowsServiceFunctions
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An unhandled exception was raised while installing service " + name);
+			_logger.LogErrorWithSource(ex, "An unhandled exception was raised while installing service " + name, "InstallService", "/sln/src/UpdateClientService.API/Services/Utilities/WindowsServiceFunctions.cs");
 		}
 	}
 }

@@ -1,15 +1,9 @@
 using System.Collections.Generic;
-using UpdateClientService.API.App;
+using Redbox.NetCore.Middleware.Http;
 
 namespace UpdateClientService.API.Services.DownloadService.Responses;
 
-public class GetDownloadStatusesResponse : BaseResponse
+public class GetDownloadStatusesResponse : ApiBaseResponse
 {
 	public List<DownloadData> Statuses { get; set; }
-
-	public GetDownloadStatusesResponse()
-		: base(200)
-	{
-		base.Success = true;
-	}
 }

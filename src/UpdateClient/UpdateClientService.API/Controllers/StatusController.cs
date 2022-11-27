@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using UpdateClientService.API.Services;
@@ -24,17 +23,19 @@ public class StatusController : ControllerBase
 	[ProducesResponseType(200, Type = typeof(FileVersionDataResponse))]
 	[ProducesResponseType(400)]
 	[ProducesResponseType(500)]
-	public async Task<IActionResult> FileVersions()
+	public IActionResult FileVersions()
 	{
-		return (await _status.GetFileVersions()).ToObjectResult();
+		FileVersionDataResponse fileVersions = _status.GetFileVersions();
+		return fileVersions.ToObjectResult();
 	}
 
 	[HttpPost("versions")]
 	[ProducesResponseType(200, Type = typeof(FileVersionDataResponse))]
 	[ProducesResponseType(400)]
 	[ProducesResponseType(500)]
-	public async Task<IActionResult> FileVersions(IEnumerable<string> filePaths)
+	public IActionResult FileVersions(IEnumerable<string> filePaths)
 	{
-		return (await _status.GetFileVersions(filePaths)).ToObjectResult();
+		FileVersionDataResponse fileVersions = _status.GetFileVersions(filePaths);
+		return fileVersions.ToObjectResult();
 	}
 }

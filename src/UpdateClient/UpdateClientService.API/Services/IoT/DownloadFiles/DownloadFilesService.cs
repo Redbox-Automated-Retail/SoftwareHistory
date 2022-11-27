@@ -91,12 +91,12 @@ public class DownloadFilesService : IDownloadFilesService
 
 	public async Task ExecuteDownloadFileJob(DownloadFileJob job)
 	{
-		List<DownloadData> list = await _downloadService.GetDownloads(job.BitsJobId.ToString());
-		if (list.Count == 0)
+		DownloadDataList downloadDataList = await _downloadService.GetDownloads(job.BitsJobId.ToString());
+		if (downloadDataList.Count == 0)
 		{
 			await AddDownloads(job);
 		}
-		else if (await HandleExistingDownloads(job, list))
+		else if (await HandleExistingDownloads(job, downloadDataList))
 		{
 			await CleanupCache(job);
 		}
@@ -135,7 +135,7 @@ public class DownloadFilesService : IDownloadFilesService
 		await SendDownloadFileJobExecutionStatusUpdate(execution);
 	}
 
-	public async Task<List<DownloadData>> GetDownloadFileJobStatus(string bitsJobId)
+	public async Task<DownloadDataList> GetDownloadFileJobStatus(string bitsJobId)
 	{
 		return await _downloadService.GetDownloads(bitsJobId);
 	}
@@ -181,14 +181,14 @@ public class DownloadFilesService : IDownloadFilesService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An error occurred while executing the download file job.");
+			_logger.LogErrorWithSource(ex, "An error occurred while executing the download file job.", "AddDownloads", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 			execution.CompletedOn = DateTime.Now;
 			execution.Status = JobStatus.Error;
 			await SendDownloadFileJobExecutionStatusUpdate(execution);
 		}
 	}
 
-	private async Task<bool> HandleExistingDownloads(DownloadFileJob job, List<DownloadData> downloads)
+	private async Task<bool> HandleExistingDownloads(DownloadFileJob job, DownloadDataList downloads)
 	{
 		DownloadFileJobExecution downloadFileJobExecution = new DownloadFileJobExecution
 		{
@@ -260,7 +260,7 @@ public class DownloadFilesService : IDownloadFilesService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "An error occurred while executing the download file job.");
+			_logger.LogErrorWithSource(ex, "An error occurred while executing the download file job.", "HandleExistingDownloads", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 			downloadFileJobExecution.CompletedOn = DateTime.Now;
 			downloadFileJobExecution.Status = JobStatus.Error;
 		}
@@ -294,7 +294,7 @@ public class DownloadFilesService : IDownloadFilesService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "HandleScheduledJobs");
+			_logger.LogErrorWithSource(ex, "Exception while handling schedule jobs", "HandleScheduledJobs", "/sln/src/UpdateClientService.API/Services/IoT/DownloadFiles/DownloadFilesService.cs");
 		}
 	}
 

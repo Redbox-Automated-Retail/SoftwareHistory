@@ -99,7 +99,7 @@ public class ConfigurationService : IConfigurationService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "UpdateConfigurationStatusIfNeeded");
+			_logger.LogErrorWithSource(ex, "Exception while getting config status", "UpdateConfigurationStatusIfNeeded", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		return response;
 	}
@@ -152,7 +152,7 @@ public class ConfigurationService : IConfigurationService
 		catch (Exception ex)
 		{
 			response.StatusCode = HttpStatusCode.InternalServerError;
-			_logger.LogErrorWithSource(ex, "Exception updating configuration status.");
+			_logger.LogErrorWithSource(ex, "Exception updating configuration status.", "UpdateConfigurationStatus", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		return response;
 	}
@@ -174,7 +174,7 @@ public class ConfigurationService : IConfigurationService
 		catch (Exception ex)
 		{
 			response.StatusCode = HttpStatusCode.InternalServerError;
-			_logger.LogErrorWithSource(ex, "Exception retrieving configuration status.");
+			_logger.LogErrorWithSource(ex, "Exception retrieving configuration status.", "GetConfigurationStatus", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		return response;
 	}
@@ -192,7 +192,7 @@ public class ConfigurationService : IConfigurationService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception getting configuration status");
+			_logger.LogErrorWithSource(ex, "Exception getting configuration status", "GetConfigurationStatusFromPersistentDataCacheService", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		return result;
 	}
@@ -206,7 +206,7 @@ public class ConfigurationService : IConfigurationService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception setting configuration status");
+			_logger.LogErrorWithSource(ex, "Exception setting configuration status", "SetConfigurationStatus", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		return result;
 	}
@@ -241,7 +241,7 @@ public class ConfigurationService : IConfigurationService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception triggering UpdateConfigurationStatus.");
+			_logger.LogErrorWithSource(ex, "Exception triggering UpdateConfigurationStatus.", "TriggerUpdateConfigurationStatus", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			apiResponse.StatusCode = HttpStatusCode.InternalServerError;
 		}
 		return apiResponse;
@@ -287,7 +287,7 @@ public class ConfigurationService : IConfigurationService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception triggering GetKioskConfigurationChanges.");
+			_logger.LogErrorWithSource(ex, "Exception triggering GetKioskConfigurationChanges.", "TriggerGetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			apiResponse.StatusCode = HttpStatusCode.InternalServerError;
 		}
 		return apiResponse;
@@ -374,7 +374,7 @@ public class ConfigurationService : IConfigurationService
 		catch (Exception ex)
 		{
 			response.StatusCode = HttpStatusCode.InternalServerError;
-			_logger.LogErrorWithSource(ex, "Error in GetKioskConfigurationSettingChanges");
+			_logger.LogErrorWithSource(ex, "Error in GetKioskConfigurationSettingChanges", "GetKioskConfigurationSettingChanges", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 		}
 		return response;
 	}
@@ -612,7 +612,7 @@ public class ConfigurationService : IConfigurationService
 			}
 			catch (Exception ex)
 			{
-				_logger.LogErrorWithSource(ex, "Unable to rename file " + originalFileName + " to " + newFileName);
+				_logger.LogErrorWithSource(ex, "Unable to rename file " + originalFileName + " to " + newFileName, "RenameFile", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			}
 		});
 		return result;
@@ -644,7 +644,7 @@ public class ConfigurationService : IConfigurationService
 			}
 			catch (Exception ex)
 			{
-				_logger.LogErrorWithSource(ex, $"Error saving configiration file {configurationFileName}.  json length: {json.Length}");
+				_logger.LogErrorWithSource(ex, $"Error saving configiration file {configurationFileName}.  json length: {json.Length}", "SaveConfigurationFile", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			}
 		});
 		return result;
@@ -817,7 +817,7 @@ public class ConfigurationService : IConfigurationService
 			}
 			catch (Exception ex)
 			{
-				_logger.LogErrorWithSource(ex, "Exception reading configuration file " + configurationFileName);
+				_logger.LogErrorWithSource(ex, "Exception reading configuration file " + configurationFileName, "ReadConfigurationFile", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			}
 		});
 		return (result, getKioskConfigurationSettingValues);
@@ -892,7 +892,7 @@ public class ConfigurationService : IConfigurationService
 			}
 			catch (Exception ex)
 			{
-				_logger.LogErrorWithSource(ex, "Unable to delete file " + fileName);
+				_logger.LogErrorWithSource(ex, "Unable to delete file " + fileName, "DeleteFile", "/sln/src/UpdateClientService.API/Services/Configuration/ConfigurationService.cs");
 			}
 		});
 		return result;

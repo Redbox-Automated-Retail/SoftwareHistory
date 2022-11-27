@@ -72,7 +72,7 @@ public class CleanupService : ICleanupService, IInvocable
 					}
 					catch (Exception ex)
 					{
-						_logger.LogErrorWithSource(ex, $"Unhandled Exception when deleting files in folder {item.Path} with maxage {item.MaxAge}");
+						_logger.LogErrorWithSource(ex, $"Unhandled Exception when deleting files in folder {item.Path} with maxage {item.MaxAge}", "DoWork", "/sln/src/UpdateClientService.API/Services/Utilities/CleanupService.cs");
 					}
 				}
 				num += num2;
@@ -81,7 +81,7 @@ public class CleanupService : ICleanupService, IInvocable
 			}
 			catch (Exception ex2)
 			{
-				_logger.LogErrorWithSource(ex2, $"Unhandled Exception when deleting files in folder {item.Path} with maxage {item.MaxAge}");
+				_logger.LogErrorWithSource(ex2, $"Unhandled Exception when deleting files in folder {item.Path} with maxage {item.MaxAge}", "DoWork", "/sln/src/UpdateClientService.API/Services/Utilities/CleanupService.cs");
 			}
 		}
 		_logger.LogInfoWithSource($"End Cleanup of Old Files. {num} files were deleted.", "DoWork", "/sln/src/UpdateClientService.API/Services/Utilities/CleanupService.cs");

@@ -1,24 +1,29 @@
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Coravel.Invocable;
-using Redbox.NetCore.Middleware.Http;
+using UpdateClientService.API.Services.DownloadService.Responses;
 
 namespace UpdateClientService.API.Services.DownloadService;
 
 public interface IDownloadService : IInvocable
 {
-	Task<List<DownloadData>> GetDownloads(string pattern = null);
+	Task<DownloadDataList> GetDownloads(string pattern = null);
 
-	Task<List<DownloadData>> GetDownloads(Regex pattern);
+	Task<GetDownloadStatusesResponse> GetDownloadsResponse(string pattern = null);
 
-	Task<List<Error>> AddDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish = false);
+	Task<GetDownloadStatusResponse> GetDownloadResponse(string key);
 
-	Task<(List<Error> errors, DownloadData downloadData)> AddRetrieveDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish);
+	Task<DownloadDataList> GetDownloads(Regex pattern);
 
-	Task<List<Error>> CancelDownload(string key);
+	Task<GetFileResponse> AddDownload(string hash, string url, DownloadPriority priority, bool completeOnFinish = false);
 
-	Task<List<Error>> CompleteDownload(string key);
+	Task<bool> AddDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish = false);
+
+	Task<(bool success, DownloadData downloadData)> AddRetrieveDownload(string key, string hash, string url, DownloadPriority priority, bool completeOnFinish);
+
+	Task<DeleteDownloadResponse> CancelDownload(string key);
+
+	Task<CompleteDownloadResponse> CompleteDownload(string key);
 
 	Task<string> GetProxiedS3Url(string key, DownloadPathType type, bool isHead = false);
 }

@@ -46,7 +46,7 @@ public class FileService : IFileService
 		catch (Exception ex)
 		{
 			exception = ex;
-			_logger.LogErrorWithSource(ex, "ZipAndUploadToS3");
+			_logger.LogErrorWithSource(ex, "Exception while creating zip file", "ZipAndUploadToS3", "/sln/src/UpdateClientService.API/Services/Files/FileService.cs");
 		}
 		finally
 		{

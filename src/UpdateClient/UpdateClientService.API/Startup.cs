@@ -76,7 +76,7 @@ public class Startup
 		services.AddScoped<ICleanupService, CleanupService>();
 		services.AddScoped<IIoTProcessStatusService, IoTProcessStatusService>();
 		services.AddSingleton<IActiveResponseService, ActiveResponsesService>();
-		services.AddScoped<IFileSetService, FileSetService>();
+		services.AddFileSetService();
 		services.AddScoped<IKioskEngineService, KioskEngineService>();
 		services.AddScoped<IFileService, FileService>();
 		services.AddScoped<IStatusService, StatusService>();
@@ -90,9 +90,9 @@ public class Startup
 		services.AddSingleton<IEncryptionService, EncryptionService>();
 		services.AddSingleton<IHashService, HashService>();
 		services.AddScoped<IKioskFileSetVersionsService, KioskFileSetVersionsService>();
-		services.AddScoped<KioskFileSetVersionsServiceJob>();
+		services.AddScoped<IFileSetVersionsJob, FileSetVersionsJob>();
 		services.AddScoped<IFileCacheService, FileCacheService>();
-		services.AddScoped<IChangeSetFileService, ChangeSetFileService>();
+		services.AddChangeSetFileService();
 		services.AddScoped<IFileSetCleanup, FileSetCleanup>();
 		services.AddScoped<IFileSetCleanupJob, FileSetCleanupJob>();
 		services.AddScoped<IFileSetDownloader, FileSetDownloader>();
@@ -172,11 +172,11 @@ public class Startup
 			scheduler.Schedule<MqttProxyJob>().EveryMinute().PreventOverlapping("MqttProxyJob");
 			if (env.IsDevelopment())
 			{
-				scheduler.Schedule<KioskFileSetVersionsServiceJob>().EveryFiveMinutes().PreventOverlapping("KioskFileSetVersionsServiceJob");
+				scheduler.Schedule<IFileSetVersionsJob>().EveryFiveMinutes().PreventOverlapping("IFileSetVersionsJob");
 			}
 			else
 			{
-				scheduler.Schedule<KioskFileSetVersionsServiceJob>().Cron(CronConstants.AtRandomMinuteEvery12thHour).PreventOverlapping("KioskFileSetVersionsServiceJob");
+				scheduler.Schedule<IFileSetVersionsJob>().Cron(CronConstants.AtRandomMinuteEvery12thHour).PreventOverlapping("IFileSetVersionsJob");
 			}
 			if (env.IsDevelopment())
 			{
@@ -192,13 +192,13 @@ public class Startup
 				.PreventOverlapping("IDownloadService");
 			if (env.IsDevelopment())
 			{
-				scheduler.OnWorker("IFileSetService").Schedule<IFileSetService>().EverySeconds(20)
-					.PreventOverlapping("IFileSetService");
+				scheduler.OnWorker("IFileSetProcessingJob").Schedule<IFileSetProcessingJob>().EverySeconds(20)
+					.PreventOverlapping("IFileSetProcessingJob");
 			}
 			else
 			{
-				scheduler.OnWorker("IFileSetService").Schedule<IFileSetService>().EveryMinute()
-					.PreventOverlapping("IFileSetService");
+				scheduler.OnWorker("IFileSetProcessingJob").Schedule<IFileSetProcessingJob>().EveryMinute()
+					.PreventOverlapping("IFileSetProcessingJob");
 			}
 			scheduler.OnWorker("ICleanupService").Schedule<ICleanupService>().DailyAtHour(6)
 				.Zoned(TimeZoneInfo.Local)

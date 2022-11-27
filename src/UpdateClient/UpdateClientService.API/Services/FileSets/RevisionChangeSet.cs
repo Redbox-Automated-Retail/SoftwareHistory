@@ -1,9 +1,10 @@
 using System;
+using Newtonsoft.Json;
 using UpdateClientService.API.Services.DownloadService;
 
 namespace UpdateClientService.API.Services.FileSets;
 
-public class RevisionChangeSet : RevisionMetadata
+public class RevisionChangeSet : RevisionChangeSetKey
 {
 	public DateTime? Received { get; set; }
 
@@ -40,4 +41,44 @@ public class RevisionChangeSet : RevisionMetadata
 	public string DownloadUrl { get; set; }
 
 	public string StateText => Enum.GetName(typeof(ChangesetState), State);
+
+	[JsonIgnore]
+	public bool IsStaged
+	{
+		get
+		{
+			if (State != ChangesetState.Error)
+			{
+				return State >= ChangesetState.Staged;
+			}
+			return false;
+		}
+	}
+
+	public static RevisionChangeSet Create(ClientFileSetRevisionChangeSet clientFileSetRevisionChangeSet)
+	{
+		return new RevisionChangeSet
+		{
+			FileSetId = clientFileSetRevisionChangeSet.FileSetId,
+			RevisionId = clientFileSetRevisionChangeSet.RevisionId,
+			Received = DateTime.Now,
+			Downloaded = null,
+			Staged = null,
+			Activated = null,
+			State = ChangesetState.Received,
+			Message = string.Empty,
+			RetryCount = 0,
+			Path = clientFileSetRevisionChangeSet.Path,
+			CompressionType = clientFileSetRevisionChangeSet.CompressionType,
+			ContentHash = clientFileSetRevisionChangeSet.ContentHash,
+			FileHash = clientFileSetRevisionChangeSet.FileHash,
+			PatchRevisionId = clientFileSetRevisionChangeSet.PatchRevisionId,
+			DownloadOn = clientFileSetRevisionChangeSet.DownloadOn.ToLocalTime(),
+			DownloadPriority = clientFileSetRevisionChangeSet.DownloadPriority,
+			ActiveOn = clientFileSetRevisionChangeSet.ActiveOn.ToLocalTime(),
+			ActivateStartTime = clientFileSetRevisionChangeSet.ActivateStartTime,
+			ActivateEndTime = clientFileSetRevisionChangeSet.ActivateEndTime,
+			DownloadUrl = clientFileSetRevisionChangeSet.DownloadUrl
+		};
+	}
 }

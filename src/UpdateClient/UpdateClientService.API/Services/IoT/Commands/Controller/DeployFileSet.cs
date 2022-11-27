@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Http;
 using UpdateClientService.API.Services.FileSets;
 
@@ -29,12 +30,12 @@ public class DeployFileSet : ICommandIoTController
 		try
 		{
 			new List<Error>();
-			ClientFileSetRevisionChangeSet changeSet = JsonConvert.DeserializeObject<ClientFileSetRevisionChangeSet>(ioTCommand.Payload.ToJson());
-			await _service.ProcessChangeSet(changeSet);
+			ClientFileSetRevisionChangeSet clientFileSetRevisionChangeSet = JsonConvert.DeserializeObject<ClientFileSetRevisionChangeSet>(ioTCommand.Payload.ToJson());
+			await _service.ProcessChangeSet(clientFileSetRevisionChangeSet);
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Execute");
+			_logger.LogErrorWithSource(ex, "Exception while executing command " + ioTCommand?.ToJson(), "Execute", "/sln/src/UpdateClientService.API/Services/IoT/Commands/Controller/DeployFileSet.cs");
 		}
 	}
 }

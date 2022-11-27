@@ -71,7 +71,7 @@ public abstract class BaseConfiguration
 				}
 				catch (Exception ex)
 				{
-					_logger.LogErrorWithSource(ex, "Exception while populating configuration setting values.");
+					_logger.LogErrorWithSource(ex, "Exception while populating configuration setting values.", "PopulateConfigurationSettingValues", "/sln/src/UpdateClientService.API/Services/Configuration/BaseConfiguration.cs");
 				}
 			}).Wait(TimeSpan.FromSeconds(10.0)))
 			{
@@ -111,7 +111,7 @@ public abstract class BaseConfiguration
 				catch (Exception ex)
 				{
 					flag = true;
-					_logger.LogErrorWithSource(ex, "Unable to set " + categoryName + " property " + settingName);
+					_logger.LogErrorWithSource(ex, "Unable to set " + categoryName + " property " + settingName, "PopulateCategorySettingValues", "/sln/src/UpdateClientService.API/Services/Configuration/BaseConfiguration.cs");
 				}
 			}
 			else
@@ -131,7 +131,7 @@ public abstract class BaseConfiguration
 			}
 			catch (Exception ex2)
 			{
-				_logger.LogErrorWithSource(ex2, "Unable to set " + categoryName + " property " + settingName + " with default value.");
+				_logger.LogErrorWithSource(ex2, "Unable to set " + categoryName + " property " + settingName + " with default value.", "PopulateCategorySettingValues", "/sln/src/UpdateClientService.API/Services/Configuration/BaseConfiguration.cs");
 			}
 		}
 	}
@@ -178,7 +178,7 @@ public abstract class BaseConfiguration
 			}
 			catch (Exception ex)
 			{
-				_logger.LogErrorWithSource(ex, "Unable to instantiate configuration category class " + categoryClassPropertyInfo?.PropertyType?.Name);
+				_logger.LogErrorWithSource(ex, "Unable to instantiate configuration category class " + categoryClassPropertyInfo?.PropertyType?.Name, "GetCategoryClassInstance", "/sln/src/UpdateClientService.API/Services/Configuration/BaseConfiguration.cs");
 			}
 		}
 		return obj;

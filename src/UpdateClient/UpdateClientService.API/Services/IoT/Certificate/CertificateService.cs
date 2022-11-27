@@ -105,7 +105,7 @@ internal class CertificateService : ICertificateService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception running GetCertificateAsync");
+			_logger.LogErrorWithSource(ex, "Exception running GetCertificateAsync", "GetCertificateAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return null;
 		}
 	}
@@ -128,7 +128,7 @@ internal class CertificateService : ICertificateService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception running validate");
+			_logger.LogErrorWithSource(ex, "Exception running validate", "Validate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		}
 		return false;
 	}
@@ -153,7 +153,7 @@ internal class CertificateService : ICertificateService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception while comparing certificate date with assembly date.");
+			_logger.LogErrorWithSource(ex, "Exception while comparing certificate date with assembly date.", "IsExecutingAssemblyNewerThanCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		}
 		return flag;
 	}
@@ -183,7 +183,7 @@ internal class CertificateService : ICertificateService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception occured loading IotData");
+			_logger.LogErrorWithSource(ex, "Exception occured loading IotData", "UpdateIotData", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return false;
 		}
 	}
@@ -223,7 +223,7 @@ internal class CertificateService : ICertificateService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception occured checking to see if the certificate is valid");
+			_logger.LogErrorWithSource(ex, "Exception occured checking to see if the certificate is valid", "IsCertificateValid", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return null;
 		}
 	}
@@ -243,7 +243,7 @@ internal class CertificateService : ICertificateService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception occured deleting certificate file");
+			_logger.LogErrorWithSource(ex, "Exception occured deleting certificate file", "DeleteLocalCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 		}
 		finally
 		{
@@ -273,7 +273,7 @@ internal class CertificateService : ICertificateService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception loading certificate");
+			_logger.LogErrorWithSource(ex, "Exception loading certificate", "LoadCertificate", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return null;
 		}
 		finally
@@ -303,7 +303,7 @@ internal class CertificateService : ICertificateService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Response: " + response.ToJson());
+			_logger.LogErrorWithSource(ex, "Response: " + response.ToJson(), "WriteIoTCertificateDataFileAsync", "/sln/src/UpdateClientService.API/Services/IoT/Certificate/CertificateService.cs");
 			return false;
 		}
 		finally

@@ -5,9 +5,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Redbox.NetCore.Logging.Enrichers;
 using Serilog;
-using Serilog.Configuration;
 
 namespace Redbox.NetCore.Logging.Extensions;
 
@@ -31,24 +29,6 @@ public static class SerilogExtensions
 			logger.ReadFrom.Configuration(ctx.Configuration);
 		});
 		return builder;
-	}
-
-	public static LoggerConfiguration WithSingleLineExceptions(this LoggerEnrichmentConfiguration enrich)
-	{
-		if (enrich == null)
-		{
-			throw new ArgumentNullException("enrich");
-		}
-		return enrich.With<SingleLineExceptionEnricher>();
-	}
-
-	public static LoggerConfiguration WithSingleLineMessages(this LoggerEnrichmentConfiguration enrich)
-	{
-		if (enrich == null)
-		{
-			throw new ArgumentNullException("enrich");
-		}
-		return enrich.With<SingleLineMessageEnricher>();
 	}
 
 	private static void CheckForMinimumRequiredSerilogConfiguration(this IConfiguration configuration)

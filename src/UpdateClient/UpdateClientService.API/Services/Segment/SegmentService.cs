@@ -59,7 +59,7 @@ public class SegmentService : ISegmentService
 		catch (Exception ex)
 		{
 			response.StatusCode = HttpStatusCode.InternalServerError;
-			_logger.LogErrorWithSource(ex, "Exception while getting kiosk segments");
+			_logger.LogErrorWithSource(ex, "Exception while getting kiosk segments", "GetKioskSegments", "/sln/src/UpdateClientService.API/Services/Segment/SegmentService.cs");
 		}
 		return response;
 	}
@@ -77,7 +77,7 @@ public class SegmentService : ISegmentService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception getting kiosk segments");
+			_logger.LogErrorWithSource(ex, "Exception getting kiosk segments", "GetKioskSegmentsFromPersistentDataCache", "/sln/src/UpdateClientService.API/Services/Segment/SegmentService.cs");
 		}
 		return result;
 	}
@@ -134,7 +134,7 @@ public class SegmentService : ISegmentService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "Exception while getting kiosk segments.");
+			_logger.LogErrorWithSource(ex, "Exception while getting kiosk segments.", "UpdateKioskSegmentsFromUpdateService", "/sln/src/UpdateClientService.API/Services/Segment/SegmentService.cs");
 			response.StatusCode = HttpStatusCode.InternalServerError;
 		}
 		return response;
@@ -176,7 +176,7 @@ public class SegmentService : ISegmentService
 		}
 		catch (Exception ex)
 		{
-			_logger.LogErrorWithSource(ex, "UpdateKioskSegmentsIfNeeded");
+			_logger.LogErrorWithSource(ex, "Exception updating kiosk segments", "UpdateKioskSegmentsIfNeeded", "/sln/src/UpdateClientService.API/Services/Segment/SegmentService.cs");
 		}
 		return response;
 	}
