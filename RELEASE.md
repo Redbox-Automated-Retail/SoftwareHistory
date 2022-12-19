@@ -1,17 +1,17 @@
-# Studebaker (2022-11-15)
+# Studebaker SR (2022-12-18)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-11-15
-- Store labels: kop-rental-bundles-Studebaker
+- Date (first download in the snapshots): 2022-12-18
+- Store labels: kop-rental-bundles-StudebakerSR
 - Package revisions:
-  - `kop-rental-bundles` revision 166 (`4D86F6421115C7F2C3BEB5D5C6D137B18FB1F0BD`)
+  - `kop-rental-bundles` revision 167 (`D272B660A9020450DEFD9C87B7AB24F31CF41B3B`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `713B1DCDEF6309426EE5FC0D200669FAF8169167` | exact |
-| `fm.bundle` |  |  | `6BBED0AA77674F7C4AC7B2673B129A1F01EE9A20` | exact |
-| `library-rental-common.bundle` |  |  | `5526EAFDA37B7166CD2D733693EE990EEDBF4A2A` | exact |
-| `ra-2.x.bundle` |  |  | `230AAE304384F91E188DFE0D2DE7A828EE815177` | exact |
+| `cp.bundle` |  |  | `9CB8B477637C495E1C0B92A1C62CC0A7B2A4C683` | exact |
+| `fm.bundle` |  |  | `C8BDEBC2616AA7222C57C182BA266010546D96CF` | exact |
+| `library-rental-common.bundle` |  |  | `B73837E5741332737AD89ED58C95D25383908936` | exact |
+| `ra-2.x.bundle` |  |  | `2759E83910D7A1D6C1E6C99185791ECFC15DD555` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
