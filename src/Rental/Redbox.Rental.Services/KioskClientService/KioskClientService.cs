@@ -3,6 +3,7 @@ using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.Ads;
 using Redbox.Rental.Model.KioskClientService.Application;
 using Redbox.Rental.Model.KioskClientService.Authentication;
+using Redbox.Rental.Model.KioskClientService.Campaign;
 using Redbox.Rental.Model.KioskClientService.CustomerProfile;
 using Redbox.Rental.Model.KioskClientService.Data;
 using Redbox.Rental.Model.KioskClientService.Installer;
@@ -22,6 +23,7 @@ using Redbox.Rental.Model.KioskClientService.WelcomeScreenAssets;
 using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.KioskClientService.Application;
 using Redbox.Rental.Services.KioskClientService.Authentication;
+using Redbox.Rental.Services.KioskClientService.Campaign;
 using Redbox.Rental.Services.KioskClientService.CustomerProfile;
 using Redbox.Rental.Services.KioskClientService.Data;
 using Redbox.Rental.Services.KioskClientService.Installer;
@@ -51,6 +53,8 @@ public class KioskClientService : IKioskClientService
 
 	public IKioskClientServiceAuthentication Authentication { get; private set; }
 
+	public IKioskClientServiceCampaign Campaign { get; private set; }
+
 	public IKioskClientServiceCustomerProfile CustomerProfile { get; private set; }
 
 	public IKioskClientServiceData Data { get; private set; }
@@ -64,6 +68,8 @@ public class KioskClientService : IKioskClientService
 	public IKioskClientServiceMarketing Marketing { get; private set; }
 
 	public IKioskClientServicePersonalization Personalization { get; private set; }
+
+	public IKioskClientServicePlanogram Planogram { get; private set; }
 
 	public IKioskClientServiceProductGroups ProductGroups { get; private set; }
 
@@ -79,8 +85,6 @@ public class KioskClientService : IKioskClientService
 
 	public IKioskClientServiceTransaction Transaction { get; private set; }
 
-	public IKioskClientServicePlanogram Planogram { get; private set; }
-
 	public IKioskClientServiceWelcomeScreenAssets WelcomeScreenAssets { get; private set; }
 
 	private KioskClientService()
@@ -88,6 +92,7 @@ public class KioskClientService : IKioskClientService
 		Ads = new KioskClientServiceAds();
 		Application = new KioskClientServiceApplication();
 		Authentication = new KioskClientServicesAuthentication();
+		Campaign = new KioskClientServiceCampaign();
 		CustomerProfile = new KioskClientServiceCustomerProfile();
 		Data = new KioskClientServiceData();
 		Installer = new KioskClientServiceInstaller();

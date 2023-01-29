@@ -49,7 +49,7 @@
             <TextBlock Margin="40,0" TextWrapping="Wrap" TextAlignment="Center" Style="{Binding ButtonTextStyle, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=SignUpButtonText, FallbackValue=SIGN UP}" />
           </Redbox:RoundedButton>
           <Redbox:RoundedButton Name="InfoButton" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,10,0,0" Height="Auto" UsedDefaultCornerRadius="True" Style="{StaticResource transparent_button_style}" IsEnabled="True" Command="{Binding InfoButtonCommand}">
-            <TextBlock Style="{StaticResource font_montserrat_bold_underline_18}" Margin="0,20" Foreground="#FFFFFFFF" TextWrapping="Wrap" TextAlignment="Center" Text="{Binding Path=InfoButtonText, FallbackValue=How it works}" Visibility="{Binding InfoButtonVisibility, FallbackValue=Visible}" />
+            <TextBlock Style="{StaticResource font_montserrat_bold_underline_18}" Margin="0,20" Padding="20,0,20,0" Foreground="#FFFFFFFF" TextWrapping="Wrap" TextAlignment="Center" Text="{Binding Path=InfoButtonText, FallbackValue=How it works}" Visibility="{Binding InfoButtonVisibility, FallbackValue=Visible}" />
           </Redbox:RoundedButton>
         </StackPanel>
       </DockPanel>

@@ -14,6 +14,6 @@ public class KioskClientServiceSubscriptions : KioskClientServiceBaseClient
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskClientServiceBaseClient.KioskClientServiceBaseUrl, $"{_controllerPrefix}/plans", null, HttpMethod.Get);
-		return await service.SendRequestAsync<GetSubscriptionPlanResponse>(request, null, "GetSubscriptionPlans", "D:\\work\\49\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskClientServiceClient\\Subscriptions\\KioskClientServiceSubscriptions.cs");
+		return await service.SendRequestAsync<GetSubscriptionPlanResponse>(request, null, "GetSubscriptionPlans", "D:\\work\\50\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskClientServiceClient\\Subscriptions\\KioskClientServiceSubscriptions.cs");
 	}
 }

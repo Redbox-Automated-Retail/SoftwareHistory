@@ -7,11 +7,14 @@ using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.Campaign;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Promotion;
 
@@ -21,9 +24,15 @@ public class PromotionService : IPromotionService
 {
 	public class Constants
 	{
-		public static string IncludedTitles = "INCLUDED_TITLES";
+		public const string TemplateName = "template_name";
 
-		public static string ExcludedTitles = "EXCLUDED_TITLES";
+		public const string IncludedTitles = "INCLUDED_TITLES";
+
+		public const string ExcludedTitles = "EXCLUDED_TITLES";
+
+		public const string DiscountAmount = "DISCOUNT_AMOUNT";
+
+		public const string PromoCode = "PROMO_CODE";
 
 		public const string Store = "store";
 
@@ -62,6 +71,14 @@ public class PromotionService : IPromotionService
 		public const string DefaultPromo = "default_promo";
 
 		public const string GameRequired = "GameRequired";
+
+		public const string Default = "in_cart_promotion_v2";
+
+		public const string DefaultNoOffer = "DEFAULT NO OFFER";
+
+		public const string RentOneGetFixedOff = "ROGO MOVIE A";
+
+		public const string FirstNightFree = "FREE NIGHT M";
 	}
 
 	private static IPromotionService _instance;
@@ -71,6 +88,181 @@ public class PromotionService : IPromotionService
 	private IPromotion _promotion;
 
 	private List<Dictionary<string, object>> _inCartPromoRules;
+
+	private InCartOfferTemplate _inCartOfferTemplateDefault = new InCartOfferTemplate
+	{
+		Name = "in_cart_promotion_v2",
+		ProgramName = "Default-No-Offer",
+		VariablesUsed = null,
+		Content = new List<Dictionary<string, object>>
+		{
+			new Dictionary<string, object>
+			{
+				{ "offer_condition", "cart" },
+				{ "min_qty", "1001" },
+				{ "max_qty", "1000" },
+				{ "ask_only_once", "True" }
+			}
+		}
+	};
+
+	private InCartOfferTemplate _inCartOfferTemplateA = new InCartOfferTemplate
+	{
+		Name = "ROGO MOVIE A",
+		ProgramName = "In-Cart Template A",
+		VariablesUsed = "EXCLUDED_TITLES,DISCOUNT_AMOUNT,PROMO_CODE",
+		Content = new List<Dictionary<string, object>>
+		{
+			new Dictionary<string, object>
+			{
+				{ "offer_condition", "cart" },
+				{ "item_action", "rental" },
+				{ "add_sequence", "pre_offer" },
+				{ "min_qty", "1" },
+				{ "ask_only_once", "True" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "offer_condition", "cart" },
+				{ "add_sequence", "pre_offer" },
+				{ "max_qty", "4" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "offer_action", "browse_filter" },
+				{ "product_family", "Movies" },
+				{ "exclude_id_list", "{{EXCLUDED_TITLES}}" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "satisfy_condition", "product" },
+				{ "item_action", "rental" },
+				{ "add_sequence", "pre_offer" },
+				{ "min_qty", "1" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "satisfy_condition", "product" },
+				{ "item_action", "rental" },
+				{ "add_sequence", "post_offer" },
+				{ "product_family", "Movies" },
+				{ "exclude_id_list", "{{EXCLUDED_TITLES}}" },
+				{ "min_qty", "1" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "satisfy_condition", "cart" },
+				{ "min_qty", "2" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "redemption_rule", "fixed_amount" },
+				{ "redemption_amount", "{{DISCOUNT_AMOUNT}}" },
+				{ "max_qty", "1" },
+				{ "add_sequence", "post_offer" },
+				{ "item_action", "rental" },
+				{ "exclude_id_list", "{{EXCLUDED_TITLES}}" },
+				{ "redemption_code", "{{PROMO_CODE}}" },
+				{ "display_code", "False" },
+				{ "allow_user_entry", "False" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "offer_language", "en-US" },
+				{ "InCartPromoHeaderMessage", "Add a Movie for ${{DISCOUNT_AMOUNT}} Off Today!" },
+				{ "InCartPromoBodyMessage", "Lucky you! Add a select DVD or Blu-ray Disc™ to your cart, and you’ll get it for ${{DISCOUNT_AMOUNT}} off for the first day.\n\n(Additional daily rental charges apply, plus tax where applicable. Questions? Check out the Redbox terms and conditions.)\n\nReady to pick out another movie?" },
+				{ "InCartPromoNoButton", "NO THANKS" },
+				{ "InCartPromoYesButton", "YES" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "offer_language", "es-MX" },
+				{ "InCartPromoHeaderMessage", "¡Añade otro con Descuento de ${{DISCOUNT_AMOUNT}}!" },
+				{ "InCartPromoBodyMessage", "Añade un DVD o un disco Blu-ray al carrito de la selección ofrecida, y aquilelo con descuento de ${{DISCOUNT_AMOUNT}} al primer día.\n\n(Se cargaría su tarjeta para cada día adicional, más los impuestos donde se aplican. ¿Preguntas? Vea a los Términos y Condiciones de Uso.)\n\n¿Listo seleccionar otra película?" },
+				{ "InCartPromoNoButton", "NO GRACIAS" },
+				{ "InCartPromoYesButton", "CONTINUAR" }
+			}
+		}
+	};
+
+	private InCartOfferTemplate _inCartOfferTemplateM = new InCartOfferTemplate
+	{
+		Name = "FREE NIGHT M",
+		ProgramName = "In-Cart Template M",
+		VariablesUsed = "EXCLUDED_TITLES,PROMO_CODE",
+		Content = new List<Dictionary<string, object>>
+		{
+			new Dictionary<string, object>
+			{
+				{ "offer_condition", "cart" },
+				{ "item_action", "rental" },
+				{ "add_sequence", "pre_offer" },
+				{ "min_qty", "1" },
+				{ "ask_only_once", "True" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "offer_condition", "cart" },
+				{ "add_sequence", "pre_offer" },
+				{ "max_qty", "4" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "offer_action", "browse_filter" },
+				{ "product_family", "Movies" },
+				{ "exclude_id_list", "{{EXCLUDED_TITLES}}" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "satisfy_condition", "product" },
+				{ "item_action", "rental" },
+				{ "add_sequence", "pre_offer" },
+				{ "min_qty", "1" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "satisfy_condition", "product" },
+				{ "item_action", "rental" },
+				{ "add_sequence", "post_offer" },
+				{ "product_family", "Movies" },
+				{ "exclude_id_list", "{{EXCLUDED_TITLES}}" },
+				{ "min_qty", "1" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "satisfy_condition", "cart" },
+				{ "min_qty", "2" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "redemption_rule", "post_offer_first_night" },
+				{ "redemption_amount", "initial_night" },
+				{ "max_qty", "1" },
+				{ "add_sequence", "post_offer" },
+				{ "item_action", "rental" },
+				{ "exclude_id_list", "{{EXCLUDED_TITLES}}" },
+				{ "redemption_code", "{{PROMO_CODE}}" },
+				{ "display_code", "False" },
+				{ "allow_user_entry", "False" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "offer_language", "en-US" },
+				{ "InCartPromoHeaderMessage", "Add a Movie for FREE!" },
+				{ "InCartPromoBodyMessage", "Lucky you! Add a select DVD or Blu-ray to your bag for a FREE 1-night rental.\n\n(Additional daily rental charges apply, plus tax where applicable. Questions? Check out the Redbox terms and conditions.)\n\nReady to pick out another movie?" },
+				{ "InCartPromoNoButton", "NO THANKS" },
+				{ "InCartPromoYesButton", "YES" }
+			},
+			new Dictionary<string, object>
+			{
+				{ "offer_language", "es-MX" },
+				{ "InCartPromoHeaderMessage", "¡Añade Película Gratis Hoy!" },
+				{ "InCartPromoBodyMessage", "Añade selecto película al carrito, y aquilelo gratis el primer día.\n\n(Se cargaría su tarjeta para cada día adicional, más los impuestos donde se aplican. ¿Preguntas? Vea a los Términos y Condiciones de Uso de Redbox.)\n\n¿Listo seleccionar otra película?" },
+				{ "InCartPromoNoButton", "NO GRACIAS" },
+				{ "InCartPromoYesButton", "CONTINUAR" }
+			}
+		}
+	};
 
 	public static IPromotionService Instance
 	{
@@ -133,6 +325,34 @@ public class PromotionService : IPromotionService
 			return false;
 		}
 	}
+
+	public bool IsExcludeEmptyCaseInCartOfferRunning
+	{
+		get
+		{
+			if (!(ApplicationState.Instance.InCartTemplateName == "ROGO MOVIE A"))
+			{
+				return ApplicationState.Instance.InCartTemplateName == "FREE NIGHT M";
+			}
+			return true;
+		}
+	}
+
+	public bool IsExclude4KInCartOfferRunning
+	{
+		get
+		{
+			if (!(ApplicationState.Instance.InCartTemplateName == "ROGO MOVIE A"))
+			{
+				return ApplicationState.Instance.InCartTemplateName == "FREE NIGHT M";
+			}
+			return true;
+		}
+	}
+
+	public bool IsExcludeDiscountRestrictionInCartOfferRunning => ApplicationState.Instance.InCartTemplateName == "FREE NIGHT M";
+
+	public bool IsFirstNightFreeItemInCartOfferRunning => ApplicationState.Instance.InCartTemplateName == "FREE NIGHT M";
 
 	private IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 
@@ -301,7 +521,7 @@ public class PromotionService : IPromotionService
 		bool flag = false;
 		if (rentalShoppingCart != null)
 		{
-			LogHelper.Instance.Log("CartSatisfiesInCartOffer BEGIN");
+			LogHelper.Instance.Log("CartQualifiesForInCartOffer BEGIN");
 			if (_inCartPromoRules != null)
 			{
 				if (!IsFreeInCartOfferRunning && !IsRentTwoInCartOfferRunning)
@@ -773,6 +993,34 @@ public class PromotionService : IPromotionService
 		}
 	}
 
+	public void SetPromoToFirstNightFreeItemInCart(IRentalShoppingCart rentalShoppingCart)
+	{
+		string inCartPromoCode = GetInCartPromoCode();
+		if (inCartPromoCode != null && rentalShoppingCart != null)
+		{
+			IPromotion promotion = new Redbox.Rental.Services.Promotion.Promotion
+			{
+				Name = inCartPromoCode,
+				DiscountType = DiscountType.PromotionCode,
+				OriginalPrice = 0m,
+				Price = 0m,
+				Quantity = 1,
+				Intent = PromotionIntentCode.FirstNightFreeItem,
+				OriginalPercent = 0m,
+				Percent = 0m,
+				RentQuantity = 0,
+				RentFormat = null,
+				GetQuantity = 0,
+				GetFormat = null,
+				CampaignTitles = null,
+				ProductTypeId = null,
+				FormatIds = null,
+				ActionCode = PromotionActionCode.Rental
+			};
+			SetPromotion(promotion);
+		}
+	}
+
 	public void SetPromoFromCustomerOffer(IRentalShoppingCart rentalShoppingCart, CustomerOffer offer, IRentalShoppingCartTitleItem applyToLineItem)
 	{
 		if (rentalShoppingCart != null && offer != null)
@@ -938,19 +1186,23 @@ public class PromotionService : IPromotionService
 
 	public List<long> GetInCartIncludeTitleList()
 	{
-		return GetInCartTitleList(Include: true);
+		return GetInCartTitleList(include: true);
 	}
 
 	public List<long> GetInCartExcludeTitleList()
 	{
-		return GetInCartTitleList(Include: false);
+		return GetInCartTitleList(include: false);
 	}
 
-	private List<long> GetInCartTitleList(bool Include)
+	private List<long> GetInCartTitleList(bool include)
 	{
 		List<long> list = new List<long>();
 		if (_inCartPromoRules != null && !IsFreeInCartOfferRunning)
 		{
+			if (IsExcludeEmptyCaseInCartOfferRunning && !include)
+			{
+				list.Add(1139L);
+			}
 			foreach (Dictionary<string, object> inCartPromoRule in _inCartPromoRules)
 			{
 				if (inCartPromoRule == null)
@@ -964,7 +1216,7 @@ public class PromotionService : IPromotionService
 					continue;
 				}
 				object value2 = null;
-				string key = (Include ? "product_id_list" : "exclude_id_list");
+				string key = (include ? "product_id_list" : "exclude_id_list");
 				if (!inCartPromoRule.TryGetValue(key, out value2) || value2 == null)
 				{
 					continue;
@@ -977,7 +1229,7 @@ public class PromotionService : IPromotionService
 				string[] array2 = array;
 				for (int i = 0; i < array2.Length; i++)
 				{
-					if (long.TryParse(array2[i].Trim(), out var result))
+					if (long.TryParse(array2[i].Trim(), out var result) && !list.Contains(result))
 					{
 						list.Add(result);
 					}
@@ -987,10 +1239,30 @@ public class PromotionService : IPromotionService
 		return list;
 	}
 
+	public List<TitleType> GetInCartExcludeTitleTypeList()
+	{
+		List<TitleType> list = new List<TitleType>();
+		if (_inCartPromoRules != null && !IsFreeInCartOfferRunning && IsExclude4KInCartOfferRunning)
+		{
+			list.Add(TitleType._4KUHD);
+		}
+		return list;
+	}
+
+	public bool GetInCartExcludeDiscountRestriction()
+	{
+		bool result = false;
+		if (_inCartPromoRules != null && !IsFreeInCartOfferRunning && IsExcludeDiscountRestrictionInCartOfferRunning)
+		{
+			result = true;
+		}
+		return result;
+	}
+
 	public void LoadInCartData()
 	{
-		List<Dictionary<string, object>> resourceTable = OrchestrationService.GetResourceTable("in_cart_config_settings");
-		Dictionary<string, object> dictionary = ((resourceTable != null && resourceTable.Count > 0) ? resourceTable[0] : null);
+		List<Dictionary<string, object>> list = (Redbox.Rental.Services.Configuration.Configuration.Instance.UseKCSInCart ? GetKCSInCartConfigSettings() : OrchestrationService.GetResourceTable("in_cart_config_settings"));
+		Dictionary<string, object> dictionary = ((list != null && list.Count > 0) ? list[0] : null);
 		bool flag = false;
 		if (dictionary != null)
 		{
@@ -1001,13 +1273,22 @@ public class PromotionService : IPromotionService
 			{
 				flag = true;
 				LogHelper.Instance.Log("> InCart template loaded: {0}", text);
-				List<Dictionary<string, object>> resourceTable2 = OrchestrationService.GetResourceTable(text);
-				if (resourceTable2 != null)
+				List<Dictionary<string, object>> inCartWorkingRuleSet = GetInCartWorkingRuleSet(text);
+				List<Dictionary<string, object>> workingRuleSetCopy = null;
+				if (inCartWorkingRuleSet != null)
 				{
-					object resourceProperty = OrchestrationService.GetResourceProperty(text, "variables_used");
-					if (resourceProperty != null)
+					workingRuleSetCopy = new List<Dictionary<string, object>>();
+					inCartWorkingRuleSet.ForEach(delegate(Dictionary<string, object> ruleSet)
 					{
-						string[] array = resourceProperty.ToString().Split(',');
+						workingRuleSetCopy.Add(new Dictionary<string, object>(ruleSet));
+					});
+				}
+				if (workingRuleSetCopy != null)
+				{
+					object inCartVariablesUsed = GetInCartVariablesUsed(text);
+					if (inCartVariablesUsed != null)
+					{
+						string[] array = inCartVariablesUsed.ToString().Split(',');
 						Dictionary<string, string> dictionary2 = new Dictionary<string, string>();
 						string[] array2 = array;
 						foreach (string text2 in array2)
@@ -1026,11 +1307,11 @@ public class PromotionService : IPromotionService
 							{
 								LogHelper.Instance.Log("> making replacements for: {0}", item.Key);
 								string newValue = item.Value;
-								if (item.Key == Constants.IncludedTitles || item.Key == Constants.ExcludedTitles)
+								if (item.Key == "INCLUDED_TITLES" || item.Key == "EXCLUDED_TITLES")
 								{
 									newValue = AddMultiDiscs(dictionary2[item.Key]);
 								}
-								foreach (Dictionary<string, object> item2 in resourceTable2)
+								foreach (Dictionary<string, object> item2 in workingRuleSetCopy)
 								{
 									Dictionary<string, string> dictionary3 = new Dictionary<string, string>();
 									foreach (KeyValuePair<string, object> item3 in item2)
@@ -1050,7 +1331,7 @@ public class PromotionService : IPromotionService
 									}
 								}
 							}
-							_inCartPromoRules = resourceTable2;
+							_inCartPromoRules = workingRuleSetCopy;
 							ApplicationState.Instance.InCartTemplateName = text;
 							LogHelper.Instance.Log("> InCart template loaded successfully");
 						}
@@ -1072,11 +1353,89 @@ public class PromotionService : IPromotionService
 		}
 		if (!flag)
 		{
-			_inCartPromoRules = OrchestrationService.GetResourceTable("in_cart_promotion_v2");
-			object resourceProperty2 = OrchestrationService.GetResourceProperty("in_cart_promotion_v2", "program_name");
-			ApplicationState.Instance.InCartTemplateName = resourceProperty2?.ToString();
-			LogHelper.Instance.Log("InCart loaded: {0}", resourceProperty2?.ToString());
+			_inCartPromoRules = GetInCartWorkingRuleSet("in_cart_promotion_v2");
+			object inCartProgramName = GetInCartProgramName("in_cart_promotion_v2");
+			ApplicationState.Instance.InCartTemplateName = inCartProgramName?.ToString();
+			LogHelper.Instance.Log("InCart loaded: {0}", inCartProgramName?.ToString());
 		}
+	}
+
+	private List<Dictionary<string, object>> GetKCSInCartConfigSettings()
+	{
+		KioskInCartDetails kioskInCartDetails = ServiceLocator.Instance.GetService<IKioskClientService>()?.Campaign?.GetInCart();
+		if (kioskInCartDetails != null)
+		{
+			if (kioskInCartDetails.InCartType == InCartType.RentOneGetFixedOff)
+			{
+				return new List<Dictionary<string, object>>
+				{
+					new Dictionary<string, object>
+					{
+						{ "template_name", "ROGO MOVIE A" },
+						{
+							"EXCLUDED_TITLES",
+							string.Join(",", kioskInCartDetails.ExcludeTitles)
+						},
+						{
+							"DISCOUNT_AMOUNT",
+							(kioskInCartDetails.Amount ?? 0m).ToString("N2")
+						},
+						{ "PROMO_CODE", kioskInCartDetails.PromoCode }
+					}
+				};
+			}
+			if (kioskInCartDetails.InCartType == InCartType.FirstNightFree)
+			{
+				return new List<Dictionary<string, object>>
+				{
+					new Dictionary<string, object>
+					{
+						{ "template_name", "FREE NIGHT M" },
+						{
+							"EXCLUDED_TITLES",
+							string.Join(",", kioskInCartDetails.ExcludeTitles)
+						},
+						{ "PROMO_CODE", kioskInCartDetails.PromoCode }
+					}
+				};
+			}
+		}
+		return null;
+	}
+
+	private List<Dictionary<string, object>> GetInCartWorkingRuleSet(string templateName)
+	{
+		return templateName switch
+		{
+			"in_cart_promotion_v2" => _inCartOfferTemplateDefault.Content, 
+			"ROGO MOVIE A" => _inCartOfferTemplateA.Content, 
+			"FREE NIGHT M" => _inCartOfferTemplateM.Content, 
+			_ => null, 
+		};
+	}
+
+	private object GetInCartVariablesUsed(string templateName)
+	{
+		if (templateName == "ROGO MOVIE A")
+		{
+			return _inCartOfferTemplateA.VariablesUsed;
+		}
+		if (templateName == "FREE NIGHT M")
+		{
+			return _inCartOfferTemplateM.VariablesUsed;
+		}
+		return null;
+	}
+
+	private object GetInCartProgramName(string templateName)
+	{
+		return templateName switch
+		{
+			"in_cart_promotion_v2" => _inCartOfferTemplateDefault.ProgramName, 
+			"ROGO MOVIE A" => _inCartOfferTemplateA.ProgramName, 
+			"FREE NIGHT M" => _inCartOfferTemplateM.ProgramName, 
+			_ => null, 
+		};
 	}
 
 	private string GetValue(string key)

@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.Rental.UI.Properties;
 
-[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+[GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
 [DebuggerNonUserCode]
 [CompilerGenerated]
 public class Resources
@@ -139,6 +139,10 @@ public class Resources
 	public static string authorization_failure_message => ResourceManager.GetString("authorization_failure_message", resourceCulture);
 
 	public static string authorization_message => ResourceManager.GetString("authorization_message", resourceCulture);
+
+	public static string authorize_at_pickup_offline_header => ResourceManager.GetString("authorize_at_pickup_offline_header", resourceCulture);
+
+	public static string authorize_at_pickup_offline_message => ResourceManager.GetString("authorize_at_pickup_offline_message", resourceCulture);
 
 	public static string avod_lead_generation_has_email_text => ResourceManager.GetString("avod_lead_generation_has_email_text", resourceCulture);
 
@@ -1978,8 +1982,6 @@ public class Resources
 
 	public static string reservation_mobile_device_error_title => ResourceManager.GetString("reservation_mobile_device_error_title", resourceCulture);
 
-	public static string reservation_not_found_view_image => ResourceManager.GetString("reservation_not_found_view_image", resourceCulture);
-
 	public static string reservation_not_found_view_message_text => ResourceManager.GetString("reservation_not_found_view_message_text", resourceCulture);
 
 	public static string reservation_not_found_view_title_text => ResourceManager.GetString("reservation_not_found_view_title_text", resourceCulture);
@@ -2053,6 +2055,8 @@ public class Resources
 	public static string Saturday => ResourceManager.GetString("Saturday", resourceCulture);
 
 	public static string screen_saver_start_button_text => ResourceManager.GetString("screen_saver_start_button_text", resourceCulture);
+
+	public static string see_all_movies_button => ResourceManager.GetString("see_all_movies_button", resourceCulture);
 
 	public static string see_new_movies_button_text => ResourceManager.GetString("see_new_movies_button_text", resourceCulture);
 

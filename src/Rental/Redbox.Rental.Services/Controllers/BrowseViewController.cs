@@ -2266,13 +2266,17 @@ public class BrowseViewController : BaseViewController
 			BrowseSort browseSort = browseState.BrowseSelectedSort.ConvertToBrowseSort(browseState.BrowseMode);
 			List<long> include = new List<long>();
 			List<long> exclude = new List<long>();
+			List<TitleType> excludeTitleTypes = new List<TitleType>();
+			bool excludeDiscountRestriction = false;
 			IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 			if (rentalShoppingCart != null && rentalShoppingCart.InCartPromoOfferMade && !rentalShoppingCart.InCartPromoOfferCancel)
 			{
 				include = PromotionService.Instance.GetInCartIncludeTitleList();
 				exclude = PromotionService.Instance.GetInCartExcludeTitleList();
+				excludeTitleTypes = PromotionService.Instance.GetInCartExcludeTitleTypeList();
+				excludeDiscountRestriction = PromotionService.Instance.GetInCartExcludeDiscountRestriction();
 			}
-			ErrorList products = service.GetProducts(browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseSort, (long?)browseState.Genre, include, exclude, BaseViewController.IsADAMode, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, out var products2, browseState.BrowseStudio);
+			ErrorList products = service.GetProducts(browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseSort, (long?)browseState.Genre, include, exclude, BaseViewController.IsADAMode, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, out var products2, browseState.BrowseStudio, excludeTitleTypes, excludeDiscountRestriction);
 			if (products.Count > 0)
 			{
 				products.ToLogHelper();

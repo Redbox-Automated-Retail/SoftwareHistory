@@ -495,6 +495,8 @@ public class Configuration : IConfiguration
 
 	public bool UseKCSPricing { get; private set; }
 
+	public bool UseKCSInCart { get; private set; }
+
 	private string GetCultureBasedValue(string defaultCultureValue, string alternateCultureValue)
 	{
 		if (!_cachedIsDefaultCulture.HasValue)
@@ -706,6 +708,7 @@ public class Configuration : IConfiguration
 		SendEstimateRedemptionToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendEstimateRedemptionToKioskClientService", defaultValue: true);
 		KioskClientServiceEstimateRedemptionTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceEstimateRedemptionTimeout", 5000);
 		UseKCSPricing = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSPricing", defaultValue: true);
+		UseKCSInCart = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSInCart", defaultValue: false);
 		SendPromoCodeValidationToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendPromoCodeValidationToKioskClientService", defaultValue: true);
 		KioskClientServicePromoCodeValidationTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServicePromoCodeValidationTimeout", 5000);
 		SendUpdateAccountToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendUpdateAccountToKioskClientService", defaultValue: true);

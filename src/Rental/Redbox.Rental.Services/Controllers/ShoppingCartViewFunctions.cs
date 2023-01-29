@@ -27,7 +27,7 @@ public class ShoppingCartViewFunctions
 	{
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.IsShoppingCartFullMessagesOpen = false;
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
+		if ((Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers || Redbox.Rental.Services.Configuration.Configuration.Instance.UseKCSInCart) && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
 		{
 			BrowseState.ItemAddedFromView = null;
 			ShowInCartOfferMessage();
@@ -135,7 +135,14 @@ public class ShoppingCartViewFunctions
 						rentalShoppingCart.InCartTitleMarketing = true;
 					}
 				}
-				PromotionService.Instance.SetPromoToFixedPriceInCart(rentalShoppingCart, 0m);
+				if (PromotionService.Instance.IsFirstNightFreeItemInCartOfferRunning)
+				{
+					PromotionService.Instance.SetPromoToFirstNightFreeItemInCart(rentalShoppingCart);
+				}
+				else
+				{
+					PromotionService.Instance.SetPromoToFixedPriceInCart(rentalShoppingCart, 0m);
+				}
 				GetViewService()?.UnwindTo("browse_view", discard: true, "in-cart-offer-message-view:yes_button");
 			}
 		});

@@ -14,20 +14,20 @@ public class KioskEngineApiEngineCoreClient : KioskEngineApiBaseClient
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, $"{_apiPath}/getkioskengineversions", null, HttpMethod.Get);
-		return await service.SendRequestAsync<EngineCoreKioskEngineVersionResponse>(request, null, "GetKioskEngineVersions", "D:\\work\\49\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\KioskEngineApiEngineCoreClient.cs");
+		return await service.SendRequestAsync<EngineCoreKioskEngineVersionResponse>(request, null, "GetKioskEngineVersions", "D:\\work\\50\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\KioskEngineApiEngineCoreClient.cs");
 	}
 
 	public static async Task<APIResponse<GetStoreInfoResponse>> GetStoreInfo()
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, $"{_apiPath}/getstoreinfo", null, HttpMethod.Get);
-		return await service.SendRequestAsync<GetStoreInfoResponse>(request, null, "GetStoreInfo", "D:\\work\\49\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\KioskEngineApiEngineCoreClient.cs");
+		return await service.SendRequestAsync<GetStoreInfoResponse>(request, null, "GetStoreInfo", "D:\\work\\50\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\KioskEngineApiEngineCoreClient.cs");
 	}
 
 	public static async Task<APIResponse<GetPreferenceValueResponse>> GetPreferenceValue(string pageName, string settingName)
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, $"{_apiPath}/getpreferencevalue?pageName={pageName}&settingName={settingName}", null, HttpMethod.Get);
-		return await service.SendRequestAsync<GetPreferenceValueResponse>(request, null, "GetPreferenceValue", "D:\\work\\49\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\KioskEngineApiEngineCoreClient.cs");
+		return await service.SendRequestAsync<GetPreferenceValueResponse>(request, null, "GetPreferenceValue", "D:\\work\\50\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\KioskEngineApiEngineCoreClient.cs");
 	}
 }

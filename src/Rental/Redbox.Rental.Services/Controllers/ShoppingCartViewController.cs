@@ -640,7 +640,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 
 	private static void ShowInCartOfferOrProceedCheckout(IRentalShoppingCart rentalShoppingCart)
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers && !PromotionService.Instance.IsFreeInCartOfferRunning && !PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance.CartQualifiesForInCartOffer(rentalShoppingCart) && !rentalShoppingCart.InCartPromoOfferMade)
+		if (rentalShoppingCart != null && !rentalShoppingCart.IsFull && (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers || Redbox.Rental.Services.Configuration.Configuration.Instance.UseKCSInCart) && !PromotionService.Instance.IsFreeInCartOfferRunning && !PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance.CartQualifiesForInCartOffer(rentalShoppingCart) && !rentalShoppingCart.InCartPromoOfferMade)
 		{
 			ShoppingCartViewFunctions.ShowInCartOfferMessage();
 		}
@@ -893,10 +893,10 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		shoppingCartViewModel.PointsBalanceTextVisibility = Visibility.Collapsed;
 		shoppingCartViewModel.PointsBalanceInfoButtonVisibility = Visibility.Collapsed;
 		shoppingCartViewModel.PointsBalanceStackPanelVisibility = Visibility.Collapsed;
-		shoppingCartViewModel.PointsBalanceInsufficientMessageText = Resources.shopping_cart_points_balance_insufficient_message_text;
+		shoppingCartViewModel.PointsBalanceInsufficientMessageText = string.Format(Resources.shopping_cart_points_balance_insufficient_message_text, 1);
 		shoppingCartViewModel.PointsBalanceInsufficientMessageTextAlignment = TextAlignment.Left;
 		shoppingCartViewModel.PointsBalanceInsufficientMessageTextVisibility = Visibility.Collapsed;
-		shoppingCartViewModel.PointsBalanceSufficientMessageText = Resources.shopping_cart_points_balance_sufficient_message_text;
+		shoppingCartViewModel.PointsBalanceSufficientMessageText = string.Format(Resources.shopping_cart_points_balance_sufficient_message_text, 1);
 		shoppingCartViewModel.PointsBalanceSufficientMessageStackPanelVisibility = Visibility.Collapsed;
 		shoppingCartViewModel.UsePointsButtonText = Resources.use_points.ToUpper();
 		shoppingCartViewModel.UsePointsButtonEnabled = false;
@@ -960,6 +960,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 				shoppingCartViewModel.PointsBalanceTextVisibility = Visibility.Visible;
 				shoppingCartViewModel.PointsBalanceStackPanelVisibility = Visibility.Visible;
 				IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = redeemableItems.OrderBy((IRentalShoppingCartTitleItem titleItem) => titleItem.LoyaltyPointsRecord.PointsToRedeem.Value).First();
+				int num4 = rentalShoppingCartTitleItem.PricingRecord?.InitialDays ?? 1;
 				int value = rentalShoppingCartTitleItem.LoyaltyPointsRecord.PointsToRedeem.Value;
 				string displayDescription = rentalShoppingCartTitleItem.TitleType.GetDisplayDescription();
 				if (num < value)
@@ -970,8 +971,12 @@ public class ShoppingCartViewController : BaseLoyaltyController
 						shoppingCartViewModel.PointsBalanceInsufficientMessageTextVisibility = Visibility.Visible;
 						if (num > 999)
 						{
-							int num4 = value - num;
-							shoppingCartViewModel.PointsBalanceInsufficientMessageText = string.Format(Resources.shopping_cart_points_balance_insufficient_message_title_type_text, num4, displayDescription);
+							int num5 = value - num;
+							shoppingCartViewModel.PointsBalanceInsufficientMessageText = string.Format(Resources.shopping_cart_points_balance_insufficient_message_title_type_text, num5, num4, displayDescription);
+						}
+						else
+						{
+							shoppingCartViewModel.PointsBalanceInsufficientMessageText = string.Format(Resources.shopping_cart_points_balance_insufficient_message_text, num4);
 						}
 					}
 				}
@@ -981,7 +986,11 @@ public class ShoppingCartViewController : BaseLoyaltyController
 					shoppingCartViewModel.UsePointsButtonEnabled = true;
 					if (redeemableItems.Count == 1)
 					{
-						shoppingCartViewModel.PointsBalanceSufficientMessageText = string.Format(Resources.shopping_cart_points_balance_sufficient_message_title_type_text, displayDescription);
+						shoppingCartViewModel.PointsBalanceSufficientMessageText = string.Format(Resources.shopping_cart_points_balance_sufficient_message_title_type_text, num4, displayDescription);
+					}
+					else
+					{
+						shoppingCartViewModel.PointsBalanceSufficientMessageText = string.Format(Resources.shopping_cart_points_balance_sufficient_message_text, num4);
 					}
 				}
 			}

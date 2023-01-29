@@ -6,8 +6,11 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Reservation;
+using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services;
 using Redbox.Rental.Services.Controllers;
+using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Kernel;
 
@@ -251,5 +254,25 @@ public class ReservationFunctions
 	internal static void RegisterZeroTouchPickupCallbacks(Action continueReservation)
 	{
 		Redbox.Rental.Services.Controllers.ReservationFunctions.RegisterZeroTouchPickupCallbacks(continueReservation);
+	}
+
+	[KernelFunction(Name = "kernel.show_reservation_not_found_view")]
+	internal static void ShowReservationNotFoundView(Action timeOutAction, Action continueAction)
+	{
+		MessagePopupViewController.ShowReservationNotFoundView(timeOutAction, continueAction);
+	}
+
+	[KernelFunction(Name = "kernel.show_authorize_at_pickup_offline_message")]
+	internal static void ShowAuthorizeAtPickupOfflineMessage(Action completeAction)
+	{
+		Action continueAction = delegate
+		{
+			completeAction?.Invoke();
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowBrowseView));
+			Session.Instance?.BrowseState?.SetDefaultBrowseStateSet();
+			OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
+		};
+		OrchestrationService.SetCurrentUICulture();
+		MessagePopupViewController.ShowAuthorizeAtPickupOfflineMessage(completeAction, completeAction, continueAction);
 	}
 }

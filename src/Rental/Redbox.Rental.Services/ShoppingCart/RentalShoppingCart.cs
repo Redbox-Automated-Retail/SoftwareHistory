@@ -582,7 +582,14 @@ public class RentalShoppingCart : IRentalShoppingCart
 				promoCodeValidationInfo = PromotionService.Instance.ValidateRegularInCartPromo(this);
 				if (promoCodeValidationInfo.IsCartValid && Promotion == null)
 				{
-					PromotionService.Instance.SetPromoToFixedPriceInCart(this, promoCodeValidationInfo.Price);
+					if (PromotionService.Instance.IsFirstNightFreeItemInCartOfferRunning)
+					{
+						PromotionService.Instance.SetPromoToFirstNightFreeItemInCart(this);
+					}
+					else
+					{
+						PromotionService.Instance.SetPromoToFixedPriceInCart(this, promoCodeValidationInfo.Price);
+					}
 				}
 			}
 			IPromotion promotion = Promotion;
@@ -639,7 +646,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 							if (campaignTitles != null && campaignTitles.Titles?.Count > 0)
 							{
 								promoCodeValidationInfo = ValidatePromoConsideringConditions(ValidateTitleSpecificPromo, Promotion);
-								goto IL_0385;
+								goto IL_039e;
 							}
 						}
 						if (Promotion.Intent == PromotionIntentCode.FixedValue)
@@ -652,10 +659,10 @@ public class RentalShoppingCart : IRentalShoppingCart
 						}
 					}
 				}
-				goto IL_0385;
+				goto IL_039e;
 			}
 			goto end_IL_0006;
-			IL_0385:
+			IL_039e:
 			if (!Promotion.IsExternallyValidated)
 			{
 				Promotion.QualifyingItems.Clear();

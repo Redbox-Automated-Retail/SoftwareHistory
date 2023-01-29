@@ -23,7 +23,7 @@
             <StackPanel Orientation="Vertical" VerticalAlignment="Center">
               <TextBlock Style="{StaticResource font_montserrat_bold_28}" LineHeight="40" Foreground="#FFFFFFFF" Text="{Binding Path=PerksHeadingText, FallbackValue=My Available Perks}" />
               <TextBlock Style="{StaticResource font_montserrat_semibold_20}" LineHeight="28" Foreground="#FFFFFFFF" Text="{Binding Path=PerksMessageText, FallbackValue=Keep renting for a FREE 1-night rental (You have 0 points)}" />
-              <Redbox:RoundedButton Name="HowPointsWorkButton" Width="181" Height="24" HorizontalAlignment="Left" Margin="0,26,0,0" Style="{StaticResource transparent_button_style}" Command="{x:Static views:RecommendedTitlesPopupViewUserControlCommands.HowPointsWorkCommand}" Visibility="{Binding Path=HowPointsWorkButtonVisibility, FallbackValue=Visible}">
+              <Redbox:RoundedButton Name="HowPointsWorkButton" Width="221" Height="64" HorizontalAlignment="Left" Margin="-20,6,-20,-20" Style="{StaticResource transparent_button_style}" Command="{x:Static views:RecommendedTitlesPopupViewUserControlCommands.HowPointsWorkCommand}" Visibility="{Binding Path=HowPointsWorkButtonVisibility, FallbackValue=Visible}">
                 <TextBlock Name="HowPointsWorkButtonText" Style="{StaticResource font_montserrat_extrabold_16}" TextDecorations="Underline" Foreground="#FFFFFFFF" Text="{Binding Path=HowPointsWorkButtonText, FallbackValue=HOW POINTS WORK}" />
               </Redbox:RoundedButton>
             </StackPanel>
@@ -34,7 +34,7 @@
         <Grid>
           <TextBlock Name="HeaderText" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="69,32,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_bold_24}" LineHeight="36" Text="{Binding Path=HeaderText, FallbackValue=My Recommendations}" />
           <controls:BrowseUserControl x:Name="BrowseProductControl" Width="895" Height="242" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,78,0,0" ShowPaddles="True" DataContext="{Binding Path=BrowseProductControlModel}" />
-          <Redbox:RoundedButton Name="PickupButton" Width="204" Height="24" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="69,0,0,123" Style="{StaticResource transparent_button_style}" Command="{x:Static views:RecommendedTitlesPopupViewUserControlCommands.PickupCommand}" Visibility="{Binding Path=PickupButtonVisibility, FallbackValue=Visible}">
+          <Redbox:RoundedButton Name="PickupButton" Width="244" Height="64" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="49,-20,-20,103" Style="{StaticResource transparent_button_style}" Command="{x:Static views:RecommendedTitlesPopupViewUserControlCommands.PickupCommand}" Visibility="{Binding Path=PickupButtonVisibility, FallbackValue=Visible}">
             <TextBlock Name="PickupButtonText" Style="{StaticResource font_montserrat_extrabold_16}" TextDecorations="Underline" Foreground="{StaticResource CarlosPurple1Brush}" Text="{Binding Path=PickupButtonText, FallbackValue=PICK UP RESERVATION}" />
           </Redbox:RoundedButton>
           <Border VerticalAlignment="Bottom" Height="1" Margin="69,0,69,96" Background="{StaticResource CarlosPurple1Brush}" />

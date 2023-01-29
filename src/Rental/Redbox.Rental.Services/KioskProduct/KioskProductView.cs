@@ -365,7 +365,7 @@ public class KioskProductView
 		}
 	}
 
-	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, string studio = null)
+	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, string studio = null, List<TitleType> excludeTitleTypes = null, bool excludeDiscountRestriction = false)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
 		list = FilterByTitleFamily(browseFilter, titleFamily, new List<TitleType> { titleType }, list);
@@ -373,9 +373,9 @@ public class KioskProductView
 		{
 			list = list.Where((ITitleProduct item) => ApplyGenreFilter(item, genreFilter.Value)).ToList();
 		}
-		if ((include != null && include.Count > 0) || (exclude != null && exclude.Count > 0))
+		if (((include != null && include.Count > 0) || (exclude != null && exclude.Count > 0) || (excludeTitleTypes != null && excludeTitleTypes.Count > 0)) | excludeDiscountRestriction)
 		{
-			list = FilterInCarts(list, include, exclude);
+			list = FilterInCarts(list, include, exclude, excludeTitleTypes, excludeDiscountRestriction);
 		}
 		if (isADAView)
 		{
@@ -599,9 +599,9 @@ public class KioskProductView
 		return kioskProduct;
 	}
 
-	private List<ITitleProduct> FilterInCarts(List<ITitleProduct> list, List<long> include, List<long> exclude)
+	private List<ITitleProduct> FilterInCarts(List<ITitleProduct> list, List<long> include, List<long> exclude, List<TitleType> excludeTitleTypes, bool excludeDiscountRestriction)
 	{
-		if (include != null || exclude != null)
+		if (include != null || exclude != null || excludeTitleTypes != null)
 		{
 			list = FilterToTitles(list);
 			if (include != null && include.Count() > 0)
@@ -611,6 +611,14 @@ public class KioskProductView
 			else if (exclude != null && exclude.Count() > 0)
 			{
 				list = list.Where((ITitleProduct item) => !item.HasTitle(exclude)).ToList();
+			}
+			if (excludeTitleTypes != null && excludeTitleTypes.Count() > 0)
+			{
+				list = list.Where((ITitleProduct item) => !excludeTitleTypes.Contains(item.TitleType)).ToList();
+			}
+			if (excludeDiscountRestriction)
+			{
+				list = list.Where((ITitleProduct item) => item.DiscountRestriction == DiscountRestriction.None).ToList();
 			}
 		}
 		return list;

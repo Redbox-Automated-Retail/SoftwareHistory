@@ -33,6 +33,7 @@ public class CheckoutFunctions
 	[KernelFunction(Name = "kernel.show_authorizing_message")]
 	internal static void ShowAuthorizingMessage()
 	{
+		OrchestrationService.SetCurrentUICulture();
 		OrchestrationService.ViewShow("general_message_view", new GeneralMessageViewModel
 		{
 			DisableIdleTimerOnEnter = false,

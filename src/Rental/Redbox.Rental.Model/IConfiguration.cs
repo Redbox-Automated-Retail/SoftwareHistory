@@ -356,6 +356,8 @@ public interface IConfiguration
 
 	bool UseKCSPricing { get; }
 
+	bool UseKCSInCart { get; }
+
 	bool ButtonAnimationEnabled { get; }
 
 	int StartViewAdTimeout { get; }

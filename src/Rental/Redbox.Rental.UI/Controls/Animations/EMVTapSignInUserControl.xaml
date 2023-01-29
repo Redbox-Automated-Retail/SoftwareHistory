@@ -14,7 +14,7 @@
       </Border>
       <TextBlock Name="TitleTextBlock" Margin="0,0,0,76" Style="{StaticResource font_montserrat_bold_40}" LineHeight="56" TextAlignment="Center" TextWrapping="Wrap" Text="{Binding TitleText, FallbackValue=Hold phone on card reader to sign in}" Visibility="{Binding Path=TitleTextVisibility, FallbackValue=Visible}" />
       <TextBlock Name="MessageTextBlock" Width="193" Style="{StaticResource font_montserrat_semibold_20}" LineHeight="28" TextAlignment="Center" TextWrapping="Wrap" Text="{Binding MessageText, FallbackValue=Pay &amp; earn in a tap}" />
-      <Redbox:RoundedButton Name="MessageButton" Style="{StaticResource transparent_button_style}" Height="40" Width="126" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{x:Static local:EMVTapSignInUserControlCommands.MessageCommand}">
+      <Redbox:RoundedButton Name="MessageButton" Style="{StaticResource transparent_button_style}" Height="40" Width="166" VerticalAlignment="Center" HorizontalAlignment="Center" Command="{x:Static local:EMVTapSignInUserControlCommands.MessageCommand}">
         <TextBlock Name="MessageButtonText" Style="{StaticResource font_montserrat_extrabold_16}" TextDecorations="Underline" Foreground="#FFFFFF" Text="{Binding MessageButtonText, FallbackValue=GET THE PASS}" />
       </Redbox:RoundedButton>
     </StackPanel>

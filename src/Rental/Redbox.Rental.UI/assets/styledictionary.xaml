@@ -1251,6 +1251,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
+  <Style x:Key="font_montserrat_extrabold_28" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat Extrabold" />
+    <Setter Property="FontSize" Value="28" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="ExtraBold" />
+  </Style>
   <Style x:Key="font_montserrat_bold_40" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="40" />
@@ -3874,6 +3880,10 @@
     <Setter Property="Height" Value="72" />
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="36" />
   </Style>
+  <Style x:Key="button_light_extra_extra_large_primary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_light_primary_style}">
+    <Setter Property="Height" Value="80" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="40" />
+  </Style>
   <Style x:Key="button_light_secondary_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource warm_purple_no_background_button_style}">
     <Setter Property="BorderThickness" Value="3" />
   </Style>
@@ -3925,6 +3935,9 @@
   </Style>
   <Style x:Key="button_text_large_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_20_correct}">
     <Setter Property="TextBlock.Padding" Value="32,0,32,0" />
+  </Style>
+  <Style x:Key="button_text_extra_extra_large_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_28}">
+    <Setter Property="TextBlock.Padding" Value="52,0,52,0" />
   </Style>
   <Style x:Key="button_text_link_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_16}">
     <Setter Property="TextBlock.Padding" Value="16,0,16,0" />

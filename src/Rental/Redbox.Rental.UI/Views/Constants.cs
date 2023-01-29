@@ -115,8 +115,6 @@ public class Constants
 
 		public const string EmailOptInView = "EmailOptInView";
 
-		public const string ReservationNotFoundView = "ReservationNotFoundView";
-
 		public const string NewCartConfirmADAActionUpdateView = "NewCartConfirmADAActionUpdateView";
 
 		public const string KeyboardPerksSignupView = "KeyboardPerksSignupView";
@@ -291,8 +289,6 @@ public class Constants
 		public const string PresentOffersView = "PresentOffersView";
 
 		public const string EmailOptInView = "email_optin_view";
-
-		public const string ReservationNotFoundView = "reservation_not_found_view";
 
 		public const string NewCartConfirmADAActionUpdateView = "new_cart_confirm_ada_action_update_view";
 

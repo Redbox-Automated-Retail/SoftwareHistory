@@ -320,6 +320,7 @@ disc rentals, you'll need to complete your enrollment</value></data>
 Sorry for the inconvenience.</value></data>
   <data name="sign_in_point_three_text" xml:space="preserve"><value>B-day gift</value></data>
   <data name="title_detail_format_rent_text" xml:space="preserve"><value>RENT {0}</value></data>
+  <data name="see_all_movies_button" xml:space="preserve"><value>See All Movies</value></data>
   <data name="starz_offer_4_my_bag_header" xml:space="preserve"><value>7-day FREE trial of STARZ®</value></data>
   <data name="continue_with_current_cart_message" xml:space="preserve"><value>Your original order total has not
 changed and is vending now</value></data>
@@ -352,7 +353,7 @@ on the STARZ app or starz.com</value></data>
   <data name="maintenance_view_kiosk_string" xml:space="preserve"><value>Kiosk ID: {0}</value></data>
   <data name="offline_game_purchase_limit_exceeded_message_header" xml:space="preserve"><value>You're at the limit!</value></data>
   <data name="blu_ray_upsell_unselected_message" xml:space="preserve"><value>Please choose at least 1 Movie to upgrade.</value></data>
-  <data name="screen_saver_start_button_text" xml:space="preserve"><value>Press To Start</value></data>
+  <data name="screen_saver_start_button_text" xml:space="preserve"><value>PRESS TO START</value></data>
   <data name="redbox_plus_signup_generic_error_title" xml:space="preserve"><value>We couldn’t sign you up for Redbox+</value></data>
   <data name="redbox_plus_offer_selection_legal_text" xml:space="preserve"><value>*Free 1-night rental codes expire at the end of your 1-year membership term (or at the end of each month for $9.99/year members). 1 code per transaction. Payment card required. Charges apply for add’l days. Can’t be combined with other offers. Subject to add’l terms. Void where prohibited. Applies only to select titles. Subject to availability. **Based on using all 24 FREE 1-night rentals.</value></data>
   <data name="play_pass_title_abe" xml:space="preserve"><value>Perks</value></data>
@@ -436,7 +437,7 @@ Redbox+ benefit.</value></data>
   <data name="redbox_plus_offer_selection_tier1_subtitle" xml:space="preserve"><value>That’s only 84¢ a month!</value></data>
   <data name="perks_promo_empty_list_text" xml:space="preserve"><value>Nothing here, but don't fret.
 We see some exciting offers in your future.</value></data>
-  <data name="shopping_cart_points_balance_sufficient_message_title_type_text" xml:space="preserve"><value>FREE 1-night {0} rental available</value></data>
+  <data name="shopping_cart_points_balance_sufficient_message_title_type_text" xml:space="preserve"><value>FREE {0}-night {1} rental available</value></data>
   <data name="multi_disc_vend_footnote" xml:space="preserve"><value>**Your card will be charged the full nightly fee plus applicable taxes until both discs are returned.</value></data>
   <data name="offline_items_limit_exceeded_message_header" xml:space="preserve"><value>You're at the limit!</value></data>
   <data name="maintenance_view_footnote" xml:space="preserve"><value>*Message and data rates may apply. Text STOP to quit. HELP for help.</value></data>
@@ -722,7 +723,6 @@ By the way, we'd love to have you as a customer, so stick around and browse what
   <data name="perks_signup_info_use_points_2" xml:space="preserve"><value>FREE 1-night Blu-ray rental</value></data>
   <data name="bad_contactless_read_message" xml:space="preserve"><value>Please try a different payment option or tap your card or device again.</value></data>
   <data name="perks_level1_message" xml:space="preserve"><value>Your perks are powering up!</value></data>
-  <data name="reservation_not_found_view_image" xml:space="preserve"><value>pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/phone_graphic.png</value></data>
   <data name="title_type_name_bluray" xml:space="preserve"><value>Blu-ray</value></data>
   <data name="view_my_perks" xml:space="preserve"><value>VIEW MY PERKS</value></data>
   <data name="subscription_removal_message" xml:space="preserve"><value>Are you sure you want to remove the subscription or plan from your bag?</value></data>
@@ -852,6 +852,7 @@ for no extra charge (that’s 3 hours longer!)</value></data>
   <data name="starz_offer_4_signup_confirmation_title_1" xml:space="preserve"><value>Enjoy your FREE STARZ</value></data>
   <data name="button_sign_in_sign_up_separator" xml:space="preserve"><value>  |  </value></data>
   <data name="ca_privacy_notice_title" xml:space="preserve"><value>California Privacy Notice</value></data>
+  <data name="authorize_at_pickup_offline_header" xml:space="preserve"><value>We’re unable to fulfill your reservation due to a technical issue</value></data>
   <data name="regular_checkout_emv_swipe_title" xml:space="preserve"><value>Please swipe
 your card</value></data>
   <data name="price_filter_title" xml:space="preserve"><value>Filter by Price</value></data>
@@ -903,8 +904,8 @@ If you have any questions, please contact the Redbox Customer Care team at 1.866
   <data name="Games" xml:space="preserve"><value>Games</value></data>
   <data name="hot_deal_text" xml:space="preserve"><value>Extra nights for Hot Deals are {0}. Our Hot Deal can change at any time. It only shows up for specific titles, locations, and dates - so you're in luck.</value></data>
   <data name="Movie" xml:space="preserve"><value>movie</value></data>
-  <data name="shopping_cart_points_balance_insufficient_message_title_type_text" xml:space="preserve"><value>You're {0} points away from a FREE 1-night
-{1} rental</value></data>
+  <data name="shopping_cart_points_balance_insufficient_message_title_type_text" xml:space="preserve"><value>You're {0} points away from a FREE {1}-night
+{2} rental</value></data>
   <data name="offer_info_disc_rental_caps" xml:space="preserve"><value>{0} RENTAL</value></data>
   <data name="have_text" xml:space="preserve"><value>have</value></data>
   <data name="recommended_titles_perks_message_text_points_1500_yes_promo" xml:space="preserve"><value>You have a promo &amp; enough points for a FREE 1-night rental
@@ -966,7 +967,7 @@ for signing up</value></data>
   <data name="starz_offer_2_acceptance_terms" xml:space="preserve"><value>I understand that I am enrolling in a monthly subscription that will auto-renew until I cancel at redbox.com/account. I will be charged $5.00 now and each month for the next 2 months (plus applicable taxes) and the then-current subscription price for each month thereafter (prices are subject to change) until I cancel. Cancellation is effective at the end of the current billing period. I authorize Redbox to charge any payment method they have on file for me, should my primary payment method fail. I understand I will receive 3 Redbox 1-night disc rental codes during each of the first 3 months and 2 codes in each of the next 9 months, if I remain a STARZ subscriber through Redbox. Codes expire 1 month from issue. See FAQs below for more info.
 
 I also agree to the STARZ Terms of Use and the Redbox Partner Subscription Terms.</value></data>
-  <data name="shopping_cart_points_balance_insufficient_message_text" xml:space="preserve"><value>Keep renting for a FREE 1-night rental</value></data>
+  <data name="shopping_cart_points_balance_insufficient_message_text" xml:space="preserve"><value>Keep renting for a FREE {0}-night rental</value></data>
   <data name="price_range_mid_button" xml:space="preserve"><value>${0} - ${1}</value></data>
   <data name="perks_perks_rentals" xml:space="preserve"><value>rentals per year</value></data>
   <data name="add_to_cart_ada_label" xml:space="preserve"><value>To rent a disc, touch its picture or its number above.</value></data>
@@ -989,7 +990,7 @@ I also agree to the STARZ Terms of Use and the Redbox Partner Subscription Terms
   <data name="title_rollup_format_add_text" xml:space="preserve"><value>{0}</value></data>
   <data name="zip_code_header_text" xml:space="preserve"><value>Enter ZIP code</value></data>
   <data name="starz_offer_2_my_bag_title_line_2" xml:space="preserve"><value>$5/mo for 3 months | $8.99/mo after promotion</value></data>
-  <data name="shopping_cart_points_balance_sufficient_message_text" xml:space="preserve"><value>FREE 1-night rental available</value></data>
+  <data name="shopping_cart_points_balance_sufficient_message_text" xml:space="preserve"><value>FREE {0}-night rental available</value></data>
   <data name="starz_offer_2_bullet1_2" xml:space="preserve"><value> Originals
 on the STARZ app or starz.com</value></data>
   <data name="starz_offer_2_bullet1_1" xml:space="preserve"><value>Watch thousands of movies and Obsessable</value></data>
@@ -1286,8 +1287,8 @@ rentals, you'll need to complete your enrollment</value></data>
   <data name="reservation_pickup_return_warning_single_mdv" xml:space="preserve"><value>Your card will be charged the full nightly fee plus applicable taxes for each pick, until both discs are returned. Please return them together.</value></data>
   <data name="redbox_plus_offer_selection_terms_button" xml:space="preserve"><value>FAQs and
 Terms &amp; Conditions</value></data>
-  <data name="reservation_not_found_view_title_text" xml:space="preserve"><value>Your reservation is waiting.
-Let us find it for you!</value></data>
+  <data name="reservation_not_found_view_title_text" xml:space="preserve"><value>Sorry, this Kiosk can’t find a
+reservation for you</value></data>
   <data name="zip_code_header_text2" xml:space="preserve"><value>ZIP Code</value></data>
   <data name="bad_contactless_read_title" xml:space="preserve"><value>Sorry, we’re having trouble reading your card</value></data>
   <data name="redbox_plus_offer_selection_not_ready_yet_text" xml:space="preserve"><value>Not ready yet?
@@ -1356,14 +1357,13 @@ but don’t miss your b-day gift, special offers and much more.</value></data>
   <data name="browse_view_control_page_mask" xml:space="preserve"><value>Page {0} of {1}</value></data>
   <data name="starz_signup_existing_subscription_error_message" xml:space="preserve"><value>You have previously subscribed to  Starz through Redbox. Go to the “How to Watch” page to find out how to login or see your benefits.</value></data>
   <data name="starz_product_description_generic" xml:space="preserve"><value>${0}/mo for {1} | ${2}/mo after promotion</value></data>
-  <data name="reservation_not_found_view_message_text" xml:space="preserve"><value>This Kiosk doesn't have a reservation for you. That might be because:
+  <data name="reservation_not_found_view_message_text" xml:space="preserve"><value>Please make sure to:
 
--    You may have reserved at a different
-      location nearby.
+     -  Use the same credit card used to make your 
+         reservation
+     -  Confirm you’re at the correct Kiosk location
 
--    You may have used a different card
-      to reserve than you're using now.
-</value></data>
+Check your email confirmation and try again</value></data>
   <data name="esrb_mature_name" xml:space="preserve"><value>{0}-rated movie in cart</value></data>
   <data name="shopping_cart_accept_and_pay_text" xml:space="preserve"><value>By pressing "Accept &amp; Pay" you agree to the Redbox Terms of Use and Transaction Terms &amp; Conditions.</value></data>
   <data name="starz_offer_4_my_bag_title_line_2" xml:space="preserve"><value>7-day FREE trial | $8.99/mo after trial</value></data>
@@ -1452,6 +1452,9 @@ need </value></data>
   <data name="perks_snapshot_next_level_string3" xml:space="preserve"><value> more to become a {0}</value></data>
   <data name="perks_snapshot_next_level_string1" xml:space="preserve"><value>You have </value></data>
   <data name="abe_mode_text" xml:space="preserve"><value>ADA mode</value></data>
+  <data name="authorize_at_pickup_offline_message" xml:space="preserve"><value>Don’t worry – your card won’t be charged.
+
+The good news is, the movies you wanted might still be available at this Kiosk.</value></data>
   <data name="perks_pass_login_data_mismatch_message" xml:space="preserve"><value>Go “BACK” to sign in another way – and call Redbox Customer Care to fix it for next time.</value></data>
   <data name="personalization_service_error_KLI0003_phone" xml:space="preserve"><value>Something’s up with your mobile number or PIN – try again.</value></data>
   <data name="maintenance_view_title" xml:space="preserve"><value>Redbox is sorry</value></data>

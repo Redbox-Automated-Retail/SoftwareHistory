@@ -1384,6 +1384,42 @@ public class MessagePopupViewController : BaseViewController
 		});
 	}
 
+	public static void ShowReservationNotFoundView(Action timeOutAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing ShowReservationNotFoundView");
+		ShowModal(new ModalParameters(ModalType.Error)
+		{
+			TitleText = Resources.reservation_not_found_view_title_text,
+			MessageText = Resources.reservation_not_found_view_message_text,
+			Button1Text = Resources.got_it_button.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "ShowReservationNotFoundView",
+			AnalyticsContextList = new List<string> { "ShowReservationNotFoundView" },
+			ViewName = "ShowReservationNotFoundView"
+		});
+	}
+
+	public static void ShowAuthorizeAtPickupOfflineMessage(Action timeOutAction, Action backAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing ShowAuthorizeAtPickupOfflineMessage");
+		ShowModal(new ModalParameters(ModalType.Error)
+		{
+			TitleText = Resources.authorize_at_pickup_offline_header,
+			MessageText = Resources.authorize_at_pickup_offline_message,
+			Button1Text = Resources.close_button.ToUpper(),
+			Button2Text = Resources.see_all_movies_button.ToUpper(),
+			TimeOut = GetDefaultMessageTimeOut(),
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			TimeOutAction = timeOutAction,
+			ActorTag = "ShowAuthorizeAtPickupOfflineMessage",
+			AnalyticsContextList = new List<string> { "ShowAuthorizeAtPickupOfflineMessage" },
+			ViewName = "ShowAuthorizeAtPickupOfflineMessage"
+		});
+	}
+
 	public static void HideMessagePopupView(bool popOnly)
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();

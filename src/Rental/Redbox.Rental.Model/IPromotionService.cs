@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.ShoppingCart;
 
@@ -14,6 +15,14 @@ public interface IPromotionService
 	bool IsRentTwoInCartOfferRunning { get; }
 
 	bool NeedToShowRentTwoInCartMessage { get; }
+
+	bool IsExcludeEmptyCaseInCartOfferRunning { get; }
+
+	bool IsExclude4KInCartOfferRunning { get; }
+
+	bool IsExcludeDiscountRestrictionInCartOfferRunning { get; }
+
+	bool IsFirstNightFreeItemInCartOfferRunning { get; }
 
 	IPromotion GetPromotion();
 
@@ -33,6 +42,10 @@ public interface IPromotionService
 
 	List<long> GetInCartExcludeTitleList();
 
+	List<TitleType> GetInCartExcludeTitleTypeList();
+
+	bool GetInCartExcludeDiscountRestriction();
+
 	bool CartQualifiesForInCartOffer(IRentalShoppingCart rentalShoppingCart);
 
 	InCartOfferMessageText GetInCartOfferMessageText();
@@ -42,6 +55,8 @@ public interface IPromotionService
 	void SetRentTwoInCartPromo(IRentalShoppingCart rentalShoppingCart);
 
 	void SetPromoToFixedPriceInCart(IRentalShoppingCart rentalShoppingCart, decimal promoValue);
+
+	void SetPromoToFirstNightFreeItemInCart(IRentalShoppingCart rentalShoppingCart);
 
 	IPromotionRule GetInCartPromoActionRule();
 
