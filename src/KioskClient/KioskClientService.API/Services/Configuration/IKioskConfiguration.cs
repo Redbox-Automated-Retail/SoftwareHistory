@@ -7,4 +7,6 @@ public interface IKioskConfiguration
 	MarketingGeneral MarketingGeneral { get; }
 
 	MarketingWelcomeScreen MarketingWelcomeScreen { get; }
+
+	CampaignConfiguration Campaigns { get; set; }
 }

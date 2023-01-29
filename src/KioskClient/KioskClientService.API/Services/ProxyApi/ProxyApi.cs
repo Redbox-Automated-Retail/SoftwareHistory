@@ -38,6 +38,8 @@ internal class ProxyApi : IProxyApi
 
 	private const string _welcomeScreenAssets = "api/welcomescreenassets";
 
+	private const string _cms = "api/cms";
+
 	public ProxyApi(IStoreService store, IApplicationConfiguration applicationConfiguration, IHttpService httpService, ILogger<IProxyApi> logger)
 	{
 		_applicationConfiguration = applicationConfiguration;
@@ -173,5 +175,11 @@ internal class ProxyApi : IProxyApi
 			text = text + "?lastReportedTime=" + lastChange.Value.ToString("yyyy-MM-ddTHH:mm:ss");
 		}
 		return await _httpService.SendRequest<GetWelcomeScreenAssetsResponse>(_applicationConfiguration.ProxyApi.Url, text, null, HttpMethod.Get, GetHeaders(kioskId));
+	}
+
+	public async Task<APIResponse<PostKioskCampaignsResponse>> PostKioskCampaigns(long kioskId, PostKioskCampaignsRequest request)
+	{
+		string endpoint = "api/cms" + $"/campaign/kiosk/{kioskId}";
+		return await _httpService.SendRequest<PostKioskCampaignsResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, request, HttpMethod.Post, GetHeaders(kioskId));
 	}
 }

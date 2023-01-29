@@ -14,6 +14,8 @@ using KioskClientService.API.Services.Analytics;
 using KioskClientService.API.Services.Analytics.KioskDataService;
 using KioskClientService.API.Services.Analytics.Vistar;
 using KioskClientService.API.Services.App;
+using KioskClientService.API.Services.Campaign;
+using KioskClientService.API.Services.Campaigns;
 using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.CustomerProfile;
 using KioskClientService.API.Services.Data;
@@ -69,6 +71,7 @@ public class Startup
 		}).SetCompatibilityVersion(CompatibilityVersion.Version_2_2), (Action<MvcJsonOptions>)delegate(MvcJsonOptions options)
 		{
 			options.SerializerSettings.Converters.Add(new StringEnumConverter());
+			options.SerializerSettings.Converters.Add(new ViewControlListConverter());
 			options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
 		});
 		services.PostConfigure(delegate(ApiBehaviorOptions options)
@@ -151,6 +154,7 @@ public class Startup
 		services.AddPlanogramService();
 		services.AddSyncPlanogramsJob();
 		services.AddWelcomeScreenAssets();
+		services.AddCampaignService();
 		services.AddLoyaltyService();
 		services.AddDataService();
 		services.AddMemoryCache();
@@ -185,12 +189,14 @@ public class Startup
 			scheduler.Schedule<PricingJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<SyncPlanogramsJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<WelcomeScreenAssetsJob>().Cron("*/10 * * * *").PreventOverlapping("kiosk");
+			scheduler.Schedule<CampaignJob>().EveryFifteenSeconds();
 			logger.LogInformation("Scheduling ConfigurationJob at */3");
 			logger.LogInformation("Scheduling ProductGroupSortOrderJob at */10");
 			logger.LogInformation("Scheduling SubscriptionJob at */5");
 			logger.LogInformation("Scheduling PricingJob at */5");
 			logger.LogInformation("Scheduling SyncPlanogramsJob at */5");
 			logger.LogInformation("Scheduling WelcomeScreeAssetsJob at */10");
+			logger.LogInformation("Scheduling CampaignJob every 15 seconds");
 		});
 		app.UseMvc();
 		LogAppSettings(logger, applicationSettings, applicationConfiguration);
