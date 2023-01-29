@@ -456,10 +456,7 @@
       
       <column name="service_fee_disclaimer">All checkouts may be subject to a service fee of {0}&#162;</column>
       
-      <column name="authorize_at_pickup_offline_header">Well, this is a downer</column>
-      <column name="authorize_at_pickup_offline_message">We weren't able to process your reservation. No worries, we've canceled it - and you won't be charged. While you're here, you can still look around and pick something up.</column>
-      
-      <column name="authorize_at_pickup_declined_header">Well, this is a downer</column>
+	  <column name="authorize_at_pickup_declined_header">Well, this is a downer</column>
       <column name="authorize_at_pickup_declined_message">You credit card was declined. No worries, we've canceled any reservations tied to this card - and you won't be charged. While you're here, you can always use a different card to pick up something.</column>
     </row>
   </aspect>

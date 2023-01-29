@@ -455,11 +455,8 @@
       <column name="out_of_stock_line3">*Textea “Locate” a 727272 y recibiría al máximo 2 mensajes. Reciba al máximo 2 mensajes por semana. Cargos de mensajes y de data se aplican. Textea STOP a quitarse de recibir mensajes, o HELP para recibir ayuda.</column>
 	  
 	  <column name="service_fee_disclaimer">Cada transacci&#243;n podr&#237;a estar sujeta a un Cargo por Servicio de {0}&#162;</column>
-
-      <column name="authorize_at_pickup_offline_header">Bueno, este es un desafortunado</column>
-      <column name="authorize_at_pickup_offline_message">No pudimos procesar su reservación. No te preocupes, lo hemos cancelado - y no te cobrarán. Mientras estés aquí, todavía puedes mirar alrededor y recoger algo.</column>
-
-      <column name="authorize_at_pickup_declined_header">Bueno, esto es desafortunado</column>
+      
+	  <column name="authorize_at_pickup_declined_header">Bueno, esto es desafortunado</column>
       <column name="authorize_at_pickup_declined_message">Su tarjeta de crédito fue rechazada. No te preocupes, hemos cancelado cualquier reservación atada a esta tarjeta - y no se te cobrará. Mientras estés aquí, siempre puedes usar una tarjeta diferente para recoger algo.</column>
     </row>
   </aspect>

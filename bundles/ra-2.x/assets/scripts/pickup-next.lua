@@ -23,9 +23,10 @@ end
 
 local function reservation_error_handler()
 	local function continue_func()
-		kernel.close_open_session_and_start_new_rental_session( "reservation_error_handler" )
+		kernel.close_open_session_and_start_new_rental_session("reservation_error_handler")
 	end
-	view_show_safe( "reservation_not_found_view" )
+
+	kernel.show_reservation_not_found_view(continue_func, continue_func)
 end
 
 swipe_view_next_func = function()
@@ -140,20 +141,10 @@ swipe_view_next_func = function()
 			)
 
 			local on_complete = function()
-				message_view_manager:hide( true )
 				kernel.close_open_session_and_start_new_rental_session()
 			end
-						
-			message_view_manager:show()
-			if kernel.getculture() == "en-US" then
-				message_view_manager:set_title( strings.authorize_at_pickup_offline_header )
-			else
-				message_view_manager:set_message_header( strings.authorize_at_pickup_offline_header )
-			end
-			message_view_manager:set_message( strings.authorize_at_pickup_offline_message )
-			message_view_manager:hide_first_button()
-			message_view_manager:show_second_button( strings.continue_button, on_complete )
-			message_view_manager:start_timer( on_complete )
+
+			kernel.show_authorize_at_pickup_offline_message( on_complete )
 		end
 
 		local cancel_reservation_for_declined = function(reference_number)
@@ -185,11 +176,10 @@ swipe_view_next_func = function()
 		local rap_rop_on_complete = function( reference_number, result )
 			kernel.log("rap_rop_on_complete called for reference number " .. reference_number)
 			if result.success == true then
-				kernel.shopping_cart_commit(ShoppingCart.session_id, "Pickup Authorize Successful." )
+				kernel.shopping_cart_commit( ShoppingCart.session_id, "Pickup Authorize Successful." )
 				vend_all_titles(email_address, reference_number)
 			elseif result.properties.is_online == false or result.properties.stand_alone == true then
 				cancel_reservation_for_offline(reference_number)
-
 			elseif result.properties.response =="RopRentalLimitExceeded" then
 				kernel.log( "recommendation_on_pickup_view:pickup_authorize - added items exceed rental limit" )
 				local message_view_manager = newtwolinemessageviewmanager()
@@ -201,7 +191,7 @@ swipe_view_next_func = function()
                         
 				message_view_manager:start_timer( 
                     function() 
-						kernel.shopping_cart_commit(ShoppingCart.session_id, "Pickup Authorize Successful for original reservation only." )
+						kernel.shopping_cart_commit( ShoppingCart.session_id, "Pickup Authorize Successful for original reservation only." )
                         vend_only_reserved_titles(email_address, reference_number)
                     end
                 ) 
@@ -284,7 +274,6 @@ swipe_view_next_func = function()
 				end
 
 				local on_complete = function()
-					message_view_manager:hide( true )
 					if #non_rap_reference_numbers > 0 then
 						if continue_func ~= nil then
 							continue_func()
@@ -293,16 +282,7 @@ swipe_view_next_func = function()
 					kernel.close_open_session_and_start_new_rental_session()
 				end
 
-				message_view_manager:show()
-				if kernel.getculture() == "en-US" then
-					message_view_manager:set_title( strings.authorize_at_pickup_offline_header )
-				else
-					message_view_manager:set_message_header( strings.authorize_at_pickup_offline_header )
-				end
-				message_view_manager:set_message( strings.authorize_at_pickup_offline_message )
-				message_view_manager:hide_first_button()
-				message_view_manager:show_second_button( strings.continue_button, on_complete )
-				message_view_manager:start_timer( on_complete )
+				kernel.show_authorize_at_pickup_offline_message( on_complete )
 			elseif result.properties.response == "ReservationCancelled" then
 				kernel.cancel_reservation( reference_number )
 					

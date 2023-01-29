@@ -1,17 +1,17 @@
-# Studebaker SR (2022-12-18)
+# Tesla (2023-01-29)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2022-12-18
-- Store labels: kop-rental-bundles-StudebakerSR
+- Date (first download in the snapshots): 2023-01-29
+- Store labels: kop-rental-bundles-Tesla
 - Package revisions:
-  - `kop-rental-bundles` revision 167 (`D272B660A9020450DEFD9C87B7AB24F31CF41B3B`)
+  - `kop-rental-bundles` revision 170 (`14B794C6CFE0E0CB75A41F53D09E0B7DAE8BC676`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `9CB8B477637C495E1C0B92A1C62CC0A7B2A4C683` | exact |
-| `fm.bundle` |  |  | `C8BDEBC2616AA7222C57C182BA266010546D96CF` | exact |
-| `library-rental-common.bundle` |  |  | `B73837E5741332737AD89ED58C95D25383908936` | exact |
-| `ra-2.x.bundle` |  |  | `2759E83910D7A1D6C1E6C99185791ECFC15DD555` | exact |
+| `cp.bundle` |  |  | `BBE886CA37E427F62684A58C3E8A7780EA264B04` | exact |
+| `fm.bundle` |  |  | `86125B9610EBC7484BA28A03849EEB6A19E867D9` | exact |
+| `library-rental-common.bundle` |  |  | `D78BCAE01DCEAE3FE11C56F9E94AFC096FE077BD` | exact |
+| `ra-2.x.bundle` |  |  | `304544F6B81CF2928391E82CD551FC8B52934815` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
