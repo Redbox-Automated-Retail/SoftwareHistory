@@ -108,7 +108,7 @@ public class ChangeSetFileService : IChangeSetFileService
 			bool flag = _fileSetTransition.CheckMeetsDependency(clientFileSetRevision, dependencyStates);
 			if (!flag)
 			{
-				await AttemptRetryAfterError("Activating revision failed", revisionChangeSet);
+				await AttemptRetryAfterError(FileSetState.NeedsDependency.ToString(), revisionChangeSet);
 				return;
 			}
 			if (flag)

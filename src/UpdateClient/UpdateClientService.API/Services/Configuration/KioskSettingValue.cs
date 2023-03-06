@@ -6,6 +6,8 @@ public class KioskSettingValue
 {
 	public long ConfigurationSettingValueId { get; set; }
 
+	public ConfigurationEncryptionType? EncryptionType { get; set; }
+
 	public string Value { get; set; }
 
 	public long SegmentId { get; set; }

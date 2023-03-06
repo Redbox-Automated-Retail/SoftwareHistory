@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using UpdateClientService.API.Services.Configuration;
 
 namespace UpdateClientService.API.Services.IoT.Certificate.Security;
 
@@ -11,6 +12,15 @@ public class EncryptionService : IEncryptionService
 	private readonly int _saltSize = 32;
 
 	private readonly string _key = ",$=Aqy*)eChz+62ySJUTRX\\j5.hjeCO;8p*R+(90LQvCg?-K(}+at7'ns^IvL,CM+4;Dk3}Pt7@~ai(6u}Ub6Eg^tsl:KEB@&yX+,SK?:$6h[V4hwXEY#*|Oe5G9J6tmvNRDu*Gs4]lRzN4\\mzJkZ&?IOipWJZ6,DpXFh?t\"%LEb+At&V'Iwx|[w}R!.M`L6`{|q#u@o.@]16,v\\tmxe2\\\\[3o-UzFlEYV:We>5qq>eT7`]@c8$mVq;SELkHU3q\"R)x?XtFU\\B@<$qX;IE_'bSCsbf3ezF<'0<w}uQ(L0P*/x\"#:2<V![z0n'I;alt#8`<V)J];7__lNhD@?kD\\gzFI+GrmYsqT)\"`U[T(5/b$KKumUb+G+|>fe)IGQFaf^`X<`0ap-+cd_t{q8/weN6n/Jdqmu8*6EC7U{$[+3quaAiADOMz4k@d2yJ,Nv<pE=X`R^3.%WwZ|%)ge5[E@YBF1Eul9$w\"fm0Lu-7Jds{O?XDJ>'pUW[A";
+
+	public async Task<string> Encrypt(ConfigurationEncryptionType encryptionType, string plainText)
+	{
+		if (encryptionType == ConfigurationEncryptionType.EncryptType1)
+		{
+			return await Encrypt(plainText);
+		}
+		throw new ArgumentException($"Invalid encryptionType value: {encryptionType}");
+	}
 
 	public async Task<string> Encrypt(string plainText)
 	{
@@ -38,6 +48,15 @@ public class EncryptionService : IEncryptionService
 		Array.Resize(ref array, array.Length + array2.Length);
 		Array.Copy(array2, 0, array, _saltSize, array2.Length);
 		return Convert.ToBase64String(array);
+	}
+
+	public async Task<string> Decrypt(ConfigurationEncryptionType encryptionType, string cipherText)
+	{
+		if (encryptionType == ConfigurationEncryptionType.EncryptType1)
+		{
+			return await Decrypt(cipherText);
+		}
+		throw new ArgumentException($"Invalid encryptionType value: {encryptionType}");
 	}
 
 	public async Task<string> Decrypt(string ciphertext)

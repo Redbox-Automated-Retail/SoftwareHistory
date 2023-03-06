@@ -476,7 +476,8 @@ public class ConfigurationService : IConfigurationService
 					setting.SettingValues.Sort(sortSettingValues);
 					foreach (KioskSettingValue settingValue in setting.SettingValues)
 					{
-						stringBuilder.Append(string.Format(",{0},{1},{2},{3},{4}", settingValue.ConfigurationSettingValueId, settingValue.Value, settingValue.Rank, settingValue.EffectiveDateTime.ToString("u"), settingValue.ExpireDateTime?.ToString("u")));
+						string text = (settingValue.EncryptionType.HasValue ? $"{settingValue.EncryptionType}," : null);
+						stringBuilder.Append(string.Format(",{0},{1}{2},{3},{4},{5}", settingValue.ConfigurationSettingValueId, text, settingValue.Value, settingValue.Rank, settingValue.EffectiveDateTime.ToString("u"), settingValue.ExpireDateTime?.ToString("u")));
 					}
 				}
 			}
@@ -716,6 +717,7 @@ public class ConfigurationService : IConfigurationService
 				SegmentationName = kioskSettingValue.SegmentationName,
 				SegmentId = kioskSettingValue.SegmentId,
 				SegmentName = kioskSettingValue.SegmentName,
+				EncryptionType = kioskSettingValue.EncryptionType,
 				Value = kioskSettingValue.Value
 			};
 			kioskSetting.SettingValues.Add(kioskSettingValue2);

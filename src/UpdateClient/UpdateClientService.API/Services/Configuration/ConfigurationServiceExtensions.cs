@@ -13,6 +13,7 @@ public static class ConfigurationServiceExtensions
 		serviceCollection.AddSingleton<IOptionsMonitorKioskConfiguration, OptionsMonitorKioskConfiguration>();
 		serviceCollection.AddScoped<IConfigurationService, ConfigurationService>();
 		serviceCollection.AddScoped<IConfigurationServiceJob, ConfigurationServiceJob>();
+		serviceCollection.AddScoped<IConfigurationFileMissingJob, ConfigurationFileMissingJob>();
 		serviceCollection.AddScoped<IConfigurationServiceUpdateStatusJob, ConfigurationServiceUpdateStatusJob>();
 		return serviceCollection;
 	}

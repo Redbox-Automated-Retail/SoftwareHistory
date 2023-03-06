@@ -330,9 +330,12 @@ public class FileSetService : IFileSetService
 			StateFile stateFile = revisionChangeSetsProcessingData.GetStateFileForRevisionChangeSet(eachRevisionChangeSet);
 			if (stateFile != null)
 			{
-				stateFile.InProgressFileSetState = FileSetState.Error;
-				await _stateFileService.Save(stateFile);
-				bool flag = CreateFileSetPollRequest(eachRevisionChangeSet, FileSetState.Error, out var fileSetPollRequest);
+				if (stateFile.InProgressFileSetState != FileSetState.NeedsDependency)
+				{
+					stateFile.InProgressFileSetState = FileSetState.Error;
+					await _stateFileService.Save(stateFile);
+				}
+				bool flag = CreateFileSetPollRequest(eachRevisionChangeSet, stateFile.InProgressFileSetState, out var fileSetPollRequest);
 				bool flag2 = flag;
 				if (flag2)
 				{
@@ -341,7 +344,7 @@ public class FileSetService : IFileSetService
 				if (flag2)
 				{
 					await _changeSetFileService.Delete(eachRevisionChangeSet);
-					await _stateFileService.Delete(stateFile.FileSetId);
+					await _stateFileService.DeleteInProgress(stateFile.FileSetId);
 				}
 			}
 		}
@@ -433,7 +436,7 @@ public class FileSetService : IFileSetService
 		}
 		foreach (RevisionChangeSet revisionChangeSet2 in revisionChangeSetsProcessingData.RevisionChangeSets)
 		{
-			if (revisionChangeSet2.State == ChangesetState.ActivationDependencyCheck)
+			if (revisionChangeSet2.State == ChangesetState.Error && revisionChangeSet2.Message == FileSetState.NeedsDependency.ToString())
 			{
 				StateFile stateFileForRevisionChangeSet = revisionChangeSetsProcessingData.GetStateFileForRevisionChangeSet(revisionChangeSet2);
 				if (stateFileForRevisionChangeSet != null)

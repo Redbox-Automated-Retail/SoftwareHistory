@@ -129,7 +129,7 @@ public class Startup
 		RegisterICommand(services);
 	}
 
-	public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger, IOptionsSnapshot<AppSettings> settings)
+	public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger, IOptionsSnapshot<AppSettings> settings, IOptionsSnapshotKioskConfiguration kioskConfiguration)
 	{
 		if (env.IsDevelopment())
 		{
@@ -148,6 +148,7 @@ public class Startup
 		app.UseMvc();
 		InitializeSharedLogger(app);
 		ScheduleServices(app, env, logger, settings);
+		kioskConfiguration.Log();
 	}
 
 	private void RegisterICommand(IServiceCollection services)
@@ -208,6 +209,8 @@ public class Startup
 				.PreventOverlapping("ICleanupService");
 			scheduler.OnWorker("IFileSetCleanupJob").Schedule<IFileSetCleanupJob>().Cron(CronConstants.EveryXHours(12))
 				.PreventOverlapping("IFileSetCleanupJob");
+			scheduler.OnWorker("IConfigurationFileMissingJob").Schedule<IConfigurationFileMissingJob>().EveryMinute()
+				.PreventOverlapping("IConfigurationFileMissingJob");
 			if (env.IsDevelopment())
 			{
 				scheduler.OnWorker("IConfigurationServiceJob").Schedule<IConfigurationServiceJob>().EveryFiveMinutes()
