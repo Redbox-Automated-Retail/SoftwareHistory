@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.CustomerProfile;
 using KioskClientService.API.Services.ProxyApi;
 using Microsoft.AspNetCore.Mvc;
@@ -11,17 +10,14 @@ namespace KioskClientService.API.Controllers;
 [ApiController]
 public class CustomerProfileController : ControllerBase
 {
-	private readonly IApplicationConfiguration _applicationConfiguration;
-
 	private readonly ILogger _logger;
 
 	private readonly ICustomerProfileService _customerProfileService;
 
-	public CustomerProfileController(IApplicationConfiguration applicationConfiguration, ILogger<CustomerProfileController> logger, ICustomerProfileService customerProfileService)
+	public CustomerProfileController(ILogger<CustomerProfileController> logger, ICustomerProfileService customerProfileService)
 	{
 		_logger = logger;
 		_customerProfileService = customerProfileService;
-		_applicationConfiguration = applicationConfiguration;
 	}
 
 	[HttpPost("login")]

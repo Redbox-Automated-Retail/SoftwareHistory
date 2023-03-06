@@ -12,22 +12,18 @@ public class VistarAPIClient : IVistarAPIClient
 {
 	private readonly IHttpService _httpService;
 
-	private ILogger<VistarAPIClient> _logger;
+	private readonly ILogger<VistarAPIClient> _logger;
 
-	private IApplicationConfiguration _applicationConfiguration;
+	private readonly IOptionsSnapshotKioskConfiguration _kioskConfiguration;
 
-	private VistarConfigs _vistarConfigs;
-
-	public VistarAPIClient(IHttpService httpService, ILogger<VistarAPIClient> logger, IApplicationConfiguration applicationConfiguration)
+	public VistarAPIClient(IHttpService httpService, ILogger<VistarAPIClient> logger, IOptionsSnapshotKioskConfiguration kioskConfiguration)
 	{
 		_httpService = httpService;
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = kioskConfiguration;
 		_logger = logger;
-		_vistarConfigs = VistarConfigs.GetConfigs(_applicationConfiguration);
-		VistarConfigs vistarConfigs = _vistarConfigs;
-		if (vistarConfigs != null && vistarConfigs.Timeout.HasValue)
+		if (_kioskConfiguration.KioskClientAds.VistarTimeout != 0)
 		{
-			_httpService.Timeout = _vistarConfigs.Timeout.Value;
+			_httpService.Timeout = _kioskConfiguration.KioskClientAds.VistarTimeout;
 		}
 	}
 
@@ -41,10 +37,10 @@ public class VistarAPIClient : IVistarAPIClient
 			display_area = displayArea,
 			venue_id = kioskId.ToString(),
 			display_time = new DateTimeOffset(DateTime.Now).AddHours(24.0).ToUnixTimeSeconds(),
-			api_key = _vistarConfigs.APIKey,
-			network_id = _vistarConfigs.NetworkId
+			api_key = _kioskConfiguration.KioskClientAds.VistarAPIKey,
+			network_id = _kioskConfiguration.KioskClientAds.VistarNetworkId
 		};
-		return await _httpService.SendRequest<VistarGetAssetsResponse>(_vistarConfigs.Url, "api/v1/get_asset/json", requestObject, HttpMethod.Get);
+		return await _httpService.SendRequest<VistarGetAssetsResponse>(_kioskConfiguration.KioskClientAds.VistarUrl, "api/v1/get_asset/json", requestObject, HttpMethod.Get);
 	}
 
 	public async Task<APIResponse<VistarGetAdResponse>> GetAd(long kioskId, List<VistarDisplayArea> displayArea)
@@ -57,10 +53,10 @@ public class VistarAPIClient : IVistarAPIClient
 			display_area = displayArea,
 			venue_id = kioskId.ToString(),
 			display_time = new DateTimeOffset(DateTime.Now).AddMilliseconds(10.0).ToUnixTimeSeconds(),
-			api_key = _vistarConfigs.APIKey,
-			network_id = _vistarConfigs.NetworkId
+			api_key = _kioskConfiguration.KioskClientAds.VistarAPIKey,
+			network_id = _kioskConfiguration.KioskClientAds.VistarNetworkId
 		};
-		APIResponse<VistarGetAdResponse> aPIResponse = await _httpService.SendRequest<VistarGetAdResponse>(_vistarConfigs.Url, "api/v1/get_ad/json", requestObject, HttpMethod.Post);
+		APIResponse<VistarGetAdResponse> aPIResponse = await _httpService.SendRequest<VistarGetAdResponse>(_kioskConfiguration.KioskClientAds.VistarUrl, "api/v1/get_ad/json", requestObject, HttpMethod.Post);
 		if (aPIResponse.IsSuccessStatusCode && aPIResponse.Response.advertisement == null)
 		{
 			aPIResponse.Response.advertisement = new List<VistarAdvertisement>();

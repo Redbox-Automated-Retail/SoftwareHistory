@@ -57,7 +57,7 @@ public class TestDataService : ITestDataService
 
 	private readonly ILogger _logger;
 
-	private IApplicationConfiguration _applicationConfiguration;
+	private IKioskConfiguration _kioskConfiguration;
 
 	private IStoreService _storeService;
 
@@ -77,10 +77,10 @@ public class TestDataService : ITestDataService
 		}
 	}
 
-	public TestDataService(ILogger<TestDataService> logger, IApplicationConfiguration applicationConfiguration, IStoreService storeService)
+	public TestDataService(ILogger<TestDataService> logger, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, IStoreService storeService)
 	{
 		_logger = logger;
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_storeService = storeService;
 	}
 
@@ -91,7 +91,7 @@ public class TestDataService : ITestDataService
 		IsTestDataEnabledResponse result = new IsTestDataEnabledResponse();
 		await Task.Run(delegate
 		{
-			result.IsTestDataEnabled = _applicationConfiguration?.TestDataEnabled ?? false;
+			result.IsTestDataEnabled = _kioskConfiguration?.TestData?.TestDataEnabled == true;
 		});
 		result.ResponseTime = GetStopwatchMilliseconds(stopwatch);
 		return result;
@@ -214,7 +214,7 @@ public class TestDataService : ITestDataService
 
 	private async Task VerifyTestDataConfigIsEnabledAsync(BaseResponse response, Func<Task> isEnabledAction)
 	{
-		if (_applicationConfiguration?.TestDataEnabled ?? false)
+		if (_kioskConfiguration?.TestData?.TestDataEnabled == true)
 		{
 			if (isEnabledAction != null)
 			{

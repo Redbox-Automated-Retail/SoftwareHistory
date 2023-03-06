@@ -11,18 +11,18 @@ public class SyncPlanogramsJob : IInvocable
 
 	private readonly IPlanogramService _planogramService;
 
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
-	public SyncPlanogramsJob(ILogger<SyncPlanogramsJob> logger, IPlanogramService planogramService, IApplicationConfiguration applicationConfiguration)
+	public SyncPlanogramsJob(ILogger<SyncPlanogramsJob> logger, IPlanogramService planogramService, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration)
 	{
 		_logger = logger;
 		_planogramService = planogramService;
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 	}
 
 	public async Task Invoke()
 	{
-		if (!_applicationConfiguration.PlanogramSyncEnabled)
+		if (!_kioskConfiguration.KioskClientDefault.PlanogramSyncEnabled)
 		{
 			_logger.LogInfoWithSource("Planogram sync is not enabled", "Invoke");
 			return;

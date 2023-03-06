@@ -5,7 +5,6 @@ using System.Net;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.App;
-using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.ProxyApi;
 using Microsoft.Extensions.Logging;
 
@@ -21,8 +20,6 @@ public class PricingService : IPricingService
 
 	private readonly IStoreService _storeService;
 
-	private IApplicationConfiguration _applicationConfiguration;
-
 	private static int updatePeriod = 7200;
 
 	private static int updateSeconds = new Random().Next(0, updatePeriod - 300);
@@ -33,12 +30,11 @@ public class PricingService : IPricingService
 
 	private string _cachePricingPurchaseByPriceFileName => "PricingPurchaseByPrice";
 
-	public PricingService(IProxyApi proxyApi, ILogger<PricingService> logger, IPersistentDataCacheService persistentDataCacheService, IApplicationConfiguration applicationConfiguration, IStoreService storeService)
+	public PricingService(IProxyApi proxyApi, ILogger<PricingService> logger, IPersistentDataCacheService persistentDataCacheService, IStoreService storeService)
 	{
 		_proxyApi = proxyApi;
 		_logger = logger;
 		_persistentDataCacheService = persistentDataCacheService;
-		_applicationConfiguration = applicationConfiguration;
 		_storeService = storeService;
 	}
 

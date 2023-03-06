@@ -1,12 +1,13 @@
 using System;
 using System.Linq;
+using KioskClientService.API.Services.Encryption;
 using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.Configuration;
 
 public static class KioskConfigurationSettingExtensions
 {
-	public static T GetConfigValue<T>(this KioskConfigurationSettings kioskConfigurationSettings, string categoryName, string settingName, T defaultValue, ILogger logger)
+	public static T GetConfigValue<T>(this KioskConfigurationSettings kioskConfigurationSettings, string categoryName, string settingName, T defaultValue, ILogger logger, IEncryptionService encryptionService)
 	{
 		T result = defaultValue;
 		try
@@ -14,7 +15,12 @@ public static class KioskConfigurationSettingExtensions
 			KioskSettingValue kioskSettingValue = InnerGetKioskSettingValue(kioskConfigurationSettings, categoryName, settingName);
 			if (kioskSettingValue != null)
 			{
-				result = (T)Convert.ChangeType(kioskSettingValue.Value, typeof(T));
+				string text = kioskSettingValue.Value;
+				if (kioskSettingValue.EncryptionType.HasValue)
+				{
+					text = encryptionService.Decrypt(kioskSettingValue.EncryptionType.Value, text).Result;
+				}
+				result = (T)Convert.ChangeType(text, typeof(T));
 			}
 		}
 		catch (Exception exception)

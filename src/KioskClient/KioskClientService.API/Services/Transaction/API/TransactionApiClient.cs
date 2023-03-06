@@ -11,7 +11,7 @@ namespace KioskClientService.API.Services.Transaction.API;
 
 public class TransactionApiClient : ITransactionApiClient
 {
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly IHttpService _httpService;
 
@@ -45,60 +45,70 @@ public class TransactionApiClient : ITransactionApiClient
 
 	private const string _pickupValidationEndpoint = "api/reservation/validatepickup";
 
-	public TransactionApiClient(IStoreService store, IApplicationConfiguration applicationConfiguration, IHttpService httpService, ILogger<ITransactionApiClient> logger, IHttpQueueService httpQueueService)
+	private const string _transactionAuthHeader = "x-api-key";
+
+	public TransactionApiClient(IStoreService store, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, IHttpService httpService, ILogger<ITransactionApiClient> logger, IHttpQueueService httpQueueService)
 	{
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_httpService = httpService;
 		_logger = logger;
-		_httpService.Timeout = _applicationConfiguration.TransactionApi.Timeout ?? 30000;
+		if (_kioskConfiguration.KioskClientDefault.TransactionApiTimeout != 0)
+		{
+			_httpService.Timeout = _kioskConfiguration.KioskClientDefault.TransactionApiTimeout;
+		}
 		_kioskId = store?.KioskId ?? 0;
-		_requestHeaders = _applicationConfiguration.TransactionApi.GetKioskCloudHeaders(null, _kioskId);
+		KioskCloudClientConfiguration kioskCloudClientConfiguration = new KioskCloudClientConfiguration
+		{
+			APIKey = _kioskConfiguration.KioskClientDefault.TransactionApiKey,
+			AuthHeader = "x-api-key"
+		};
+		_requestHeaders = kioskCloudClientConfiguration.GetKioskCloudHeaders(null, _kioskId);
 		_httpQueueService = httpQueueService;
 	}
 
 	public async Task<APIResponse<AuthorizeResponse>> Authorize(AuthorizeRequest request)
 	{
-		return await _httpService.SendRequest<AuthorizeResponse>(_applicationConfiguration.TransactionApi.Url, "api/transaction/authorize", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<AuthorizeResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/transaction/authorize", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<GCAuthResponse>> GiftCardAuthorize(GCAuthRequest request)
 	{
-		return await _httpService.SendRequest<GCAuthResponse>(_applicationConfiguration.TransactionApi.Url, "api/transaction/giftcardauthorize", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<GCAuthResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/transaction/giftcardauthorize", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<AuthorizeResponse>> PickupAuthorize(PickupAuthorizeRequest request)
 	{
-		return await _httpService.SendRequest<AuthorizeResponse>(_applicationConfiguration.TransactionApi.Url, "api/transaction/pickupauthorize", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<AuthorizeResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/transaction/pickupauthorize", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<AuthorizeResponse>> ReservationAuthorize(AuthorizeRequest request)
 	{
-		return await _httpService.SendRequest<AuthorizeResponse>(_applicationConfiguration.TransactionApi.Url, "api/transaction/reservationauthorize", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<AuthorizeResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/transaction/reservationauthorize", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<ReturnResponse>> Return(ReturnRequest request)
 	{
-		return await _httpService.SendRequest<ReturnResponse>(_applicationConfiguration.TransactionApi.Url, "api/transaction/return", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<ReturnResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/transaction/return", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<CancelReservationResponse>> CancelReservation(CancelReservationRequest request)
 	{
-		return await _httpService.SendRequest<CancelReservationResponse>(_applicationConfiguration.TransactionApi.Url, "api/reservation/cancel", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<CancelReservationResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/reservation/cancel", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<ExpireReservationResponse>> ExpireReservation(ExpireReservationRequest request)
 	{
-		return await _httpService.SendRequest<ExpireReservationResponse>(_applicationConfiguration.TransactionApi.Url, "api/reservation/expire", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<ExpireReservationResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/reservation/expire", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<ReconcileResponse>> Reconcile(ReconcileRequest request)
 	{
-		return await _httpService.SendRequest<ReconcileResponse>(_applicationConfiguration.TransactionApi.Url, "api/transaction/reconcile", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<ReconcileResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/transaction/reconcile", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<ReconcileResponse>> ReservationPickup(ReservationPickupRequest request)
 	{
-		return await _httpService.SendRequest<ReconcileResponse>(_applicationConfiguration.TransactionApi.Url, "api/transaction/reservationPickup", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<ReconcileResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/transaction/reservationPickup", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<GetCustomerOffersResponse>> GetCustomerOffers(GetCustomerOffersRequest request)
@@ -106,18 +116,21 @@ public class TransactionApiClient : ITransactionApiClient
 		List<Header> list = new List<Header>(_requestHeaders);
 		list.Remove(list.SingleOrDefault((Header h) => h.Key == "x-redbox-activityid"));
 		list.Add(new Header("x-redbox-activityid", request.MessageId.ToString()));
-		return await _httpService.SendRequest<GetCustomerOffersResponse>(_applicationConfiguration.TransactionApi.Url, "api/customeroffers", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<GetCustomerOffersResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/customeroffers", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<PickupValidationResponse>> PickupValidation(PickupValidationRequest request)
 	{
-		return await _httpService.SendRequest<PickupValidationResponse>(_applicationConfiguration.TransactionApi.Url, "api/reservation/validatepickup", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<PickupValidationResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, "api/reservation/validatepickup", request, HttpMethod.Post, _requestHeaders);
 	}
 
 	public async Task<APIResponse<ReturnPromoCheckApiResponse>> ReturnPromoCheck(string barcode)
 	{
 		string endpoint = "api/transaction/return/" + barcode + "/promocheck";
-		_httpService.Timeout = _applicationConfiguration.TransactionApi.ReturnPromoCheckTimeout ?? 6000;
-		return await _httpService.SendRequest<ReturnPromoCheckApiResponse>(_applicationConfiguration.TransactionApi.Url, endpoint, null, HttpMethod.Get, _requestHeaders);
+		if (_kioskConfiguration.KioskClientDefault.ReturnPromoCheckTimeout != 0)
+		{
+			_httpService.Timeout = _kioskConfiguration.KioskClientDefault.ReturnPromoCheckTimeout;
+		}
+		return await _httpService.SendRequest<ReturnPromoCheckApiResponse>(_kioskConfiguration.KioskClientDefault.TransactionApiUrl, endpoint, null, HttpMethod.Get, _requestHeaders);
 	}
 }

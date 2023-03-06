@@ -10,6 +10,6 @@ public class GetPurchasePricingByPriceResponse : ApiBaseResponse, IMessageScrub
 
 	public new object Scrub()
 	{
-		return $"PurchasePricing count: {PurchasePricing.Count}";
+		return $"PurchasePricing count: {PurchasePricing?.Count}";
 	}
 }

@@ -16,18 +16,18 @@ public class MoreLikeThisService : IMoreLikeThisService
 
 	private readonly IProductReelsApiClient _productReelsApiClient;
 
-	private readonly IApplicationConfiguration _appConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly ILogger<MoreLikeThisService> _logger;
 
 	private IMoreLikeThisCache _moreLikeThisCache;
 
-	public MoreLikeThisService(IMoreLikeThisData moreLikeThisData, IMoreLikeThisCache moreLikeThisCache, IProductReelsApiClient productReelsApiClient, IApplicationConfiguration appConfiguration, ILogger<MoreLikeThisService> logger)
+	public MoreLikeThisService(IMoreLikeThisData moreLikeThisData, IMoreLikeThisCache moreLikeThisCache, IProductReelsApiClient productReelsApiClient, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, ILogger<MoreLikeThisService> logger)
 	{
 		_moreLikeThisData = moreLikeThisData;
 		_moreLikeThisCache = moreLikeThisCache;
 		_productReelsApiClient = productReelsApiClient;
-		_appConfiguration = appConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_logger = logger;
 	}
 
@@ -61,7 +61,7 @@ public class MoreLikeThisService : IMoreLikeThisService
 			{
 				_logger.LogInfoWithSource("Doing full refresh to morelikethis data.", "RefreshMoreLikeThisAsync");
 				_moreLikeThisCache.RefreshCache(concurrentDictionary);
-				DateTime nextFullRefreshDate = DateTime.Today.AddDays(_appConfiguration.MoreLikeThisDataRefreshFrequency);
+				DateTime nextFullRefreshDate = DateTime.Today.AddDays(_kioskConfiguration.KioskClientDefault.MoreLikeThisDataRefreshFrequency);
 				_moreLikeThisData.RefreshAll(concurrentDictionary, nextFullRefreshDate);
 				_logger.LogInfoWithSource($"Next full refresh morelikethis data will be at: {nextFullRefreshDate.Date}", "RefreshMoreLikeThisAsync");
 			}

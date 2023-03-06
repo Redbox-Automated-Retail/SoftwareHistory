@@ -16,18 +16,18 @@ public class ProductGroupSortOrderService : IProductGroupSortOrderService
 
 	private IPersistentDataCacheService _persistentDataCacheService;
 
-	private IApplicationConfiguration _applicationConfiguration;
+	private IKioskConfiguration _kioskConfiguration;
 
 	private string _cacheFileName => "ProductGroupSortOrder";
 
-	private int _productGroupSortOrderType => _applicationConfiguration.ProductGroupSortOrderType;
+	private int _productGroupSortOrderType => _kioskConfiguration.KioskClientDefault.ProductGroupSortOrderType;
 
-	public ProductGroupSortOrderService(IInventoryApiClient inventoryApiClient, ILogger<ProductGroupSortOrderService> logger, IPersistentDataCacheService persistentDataCacheService, IApplicationConfiguration applicationConfiguration)
+	public ProductGroupSortOrderService(IInventoryApiClient inventoryApiClient, ILogger<ProductGroupSortOrderService> logger, IPersistentDataCacheService persistentDataCacheService, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration)
 	{
 		_inventoryClient = inventoryApiClient;
 		_logger = logger;
 		_persistentDataCacheService = persistentDataCacheService;
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 	}
 
 	public async Task<ProductGroupSortOrder> GetSortOrder()

@@ -22,18 +22,21 @@ public class AdServerService : IAdService
 
 	private IApplicationConfiguration _config;
 
+	private IOptionsSnapshotKioskConfiguration _kioskConfigiuration;
+
 	private static Timer _timer;
 
 	private static bool _inSession = false;
 
 	private static ConcurrentDictionary<string, AdServerCachedAdvertisement> Cached { get; } = new ConcurrentDictionary<string, AdServerCachedAdvertisement>();
 
-	public AdServerService(IAdServerClient adServerClient, ILogger<AdServerService> logger, IAssetService assetService, IApplicationConfiguration config)
+	public AdServerService(IAdServerClient adServerClient, ILogger<AdServerService> logger, IAssetService assetService, IApplicationConfiguration config, IOptionsSnapshotKioskConfiguration kioskConfigiuration)
 	{
 		_adServerClient = adServerClient;
 		_logger = logger;
 		_assetService = assetService;
 		_config = config;
+		_kioskConfigiuration = kioskConfigiuration;
 	}
 
 	public async Task<ApplicationResponse> StartApplication()
@@ -83,7 +86,7 @@ public class AdServerService : IAdService
 			{
 				AdLocation = request.AdLocation
 			};
-			if (!_config.AdsActive)
+			if (!_kioskConfigiuration.KioskClientAds.AdsActive)
 			{
 				result.StatusCode = HttpStatusCode.ServiceUnavailable;
 				return result;
@@ -121,7 +124,7 @@ public class AdServerService : IAdService
 		{
 			_logger?.LogInfoWithSource(locations.ToJson(), "GetAds");
 			GetAdsResponse result = new GetAdsResponse();
-			if (!_config.AdsActive)
+			if (!_kioskConfigiuration.KioskClientAds.AdsActive)
 			{
 				return result;
 			}
@@ -216,7 +219,7 @@ public class AdServerService : IAdService
 	public async Task<CacheResponse> Cache()
 	{
 		_logger?.LogInfoWithSource("Caching ads", "Cache");
-		if (!_config.AdsActive)
+		if (!_kioskConfigiuration.KioskClientAds.AdsActive)
 		{
 			return new CacheResponse
 			{
@@ -250,7 +253,7 @@ public class AdServerService : IAdService
 
 	private void PreLoadAds()
 	{
-		if (!_config.AdsActive && _inSession)
+		if (!_kioskConfigiuration.KioskClientAds.AdsActive && _inSession)
 		{
 			return;
 		}

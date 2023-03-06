@@ -12,14 +12,14 @@ internal class DataClient : IDataClient
 {
 	private readonly ILogger<IDataClient> _logger;
 
-	private readonly IApplicationConfiguration _configuration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly IHttpService _httpService;
 
-	public DataClient(ILogger<IDataClient> logger, IApplicationConfiguration configuration, IHttpService httpService)
+	public DataClient(ILogger<IDataClient> logger, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, IHttpService httpService)
 	{
 		_logger = logger;
-		_configuration = configuration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_httpService = httpService;
 	}
 
@@ -60,6 +60,11 @@ internal class DataClient : IDataClient
 
 	private async Task<APIResponse<DataModels.KioskDataResponse>> Send(Guid messageId, long kioskId, DataModels.KioskBaseRequest payload, string api)
 	{
-		return await _httpService.SendRequest<DataModels.KioskDataResponse>(_configuration.KioskDataService.Url, api, payload, HttpMethod.Post, _configuration.KioskDataService.GetKioskCloudHeaders(messageId, kioskId), logResponseContent: false);
+		KioskCloudClientConfiguration kioskCloudClientConfiguration = new KioskCloudClientConfiguration
+		{
+			APIKey = _kioskConfiguration.KioskClientDefault.KioskDataServiceAPIKey,
+			AuthHeader = _kioskConfiguration.KioskClientDefault.KioskDataServiceAuthHeader
+		};
+		return await _httpService.SendRequest<DataModels.KioskDataResponse>(_kioskConfiguration.KioskClientDefault.KioskDataServiceUrl, api, payload, HttpMethod.Post, kioskCloudClientConfiguration.GetKioskCloudHeaders(messageId, kioskId), logResponseContent: false);
 	}
 }

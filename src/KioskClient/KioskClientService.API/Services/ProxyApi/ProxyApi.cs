@@ -12,11 +12,15 @@ namespace KioskClientService.API.Services.ProxyApi;
 
 internal class ProxyApi : IProxyApi
 {
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IApplicationSettings _applicationSettings;
+
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly IHttpService _httpService;
 
 	private readonly ILogger<IProxyApi> _logger;
+
+	private KioskCloudClientConfiguration _kioskCloudClientConfiguration;
 
 	private long _kioskId;
 
@@ -40,92 +44,115 @@ internal class ProxyApi : IProxyApi
 
 	private const string _cms = "api/cms";
 
-	public ProxyApi(IStoreService store, IApplicationConfiguration applicationConfiguration, IHttpService httpService, ILogger<IProxyApi> logger)
+	private const string _proxyAuthHeader = "x-api-key";
+
+	private string ProxyApiUrl
 	{
-		_applicationConfiguration = applicationConfiguration;
+		get
+		{
+			if (!string.IsNullOrEmpty(_kioskConfiguration.KioskClientProxyApi.ProxyApiUrl))
+			{
+				return _kioskConfiguration.KioskClientProxyApi.ProxyApiUrl;
+			}
+			return _applicationSettings.AppSettings.DefaultProxyServiceUrl;
+		}
+	}
+
+	public ProxyApi(IStoreService store, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, IApplicationSettings applicationSettings, IHttpService httpService, ILogger<IProxyApi> logger)
+	{
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
+		_applicationSettings = applicationSettings;
 		_httpService = httpService;
 		_logger = logger;
-		_httpService.Timeout = _applicationConfiguration.ProxyApi.Timeout ?? 60000;
+		if (_kioskConfiguration.KioskClientProxyApi.ProxyApiTimeout != 0)
+		{
+			_httpService.Timeout = _kioskConfiguration.KioskClientProxyApi.ProxyApiTimeout;
+		}
+		_kioskCloudClientConfiguration = new KioskCloudClientConfiguration
+		{
+			APIKey = _kioskConfiguration.KioskClientProxyApi.ProxyApiKey,
+			AuthHeader = "x-api-key"
+		};
 		_kioskId = store?.KioskId ?? 0;
 	}
 
 	public async Task<APIResponse<GetProxySubscriptionPlanResponse>> GetSubscriptionPlans()
 	{
 		string endpoint = "api/subscription/subscriptionplans";
-		return await _httpService.SendRequest<GetProxySubscriptionPlanResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, GetHeaders(_kioskId));
+		return await _httpService.SendRequest<GetProxySubscriptionPlanResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, GetHeaders(_kioskId));
 	}
 
 	public async Task<APIResponse<CustomerProfileKioskLoginResponse>> Login(CustomerProfileLoginRequest request)
 	{
 		string endpoint = "api/customerprofile/login";
-		return await _httpService.SendRequest<CustomerProfileKioskLoginResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, request, HttpMethod.Post, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(request.MessageId, request.KioskId));
+		return await _httpService.SendRequest<CustomerProfileKioskLoginResponse>(ProxyApiUrl, endpoint, request, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(request.MessageId, request.KioskId));
 	}
 
 	public async Task<APIResponse<InstallerModels.PendingStatesResponse>> GetPendingStates()
 	{
 		string endpoint = "api/installer/getpendingstates";
-		return await _httpService.SendRequest<InstallerModels.PendingStatesResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
+		return await _httpService.SendRequest<InstallerModels.PendingStatesResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, _kioskCloudClientConfiguration.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<InstallerModels.PendingBannersResponse>> GetPendingBanners(int stateid)
 	{
 		string endpoint = "api/installer" + $"/getpendingbanners?stateid={stateid}";
-		return await _httpService.SendRequest<InstallerModels.PendingBannersResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
+		return await _httpService.SendRequest<InstallerModels.PendingBannersResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, _kioskCloudClientConfiguration.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<InstallerModels.PendingKiosksResponse>> GetPendingKiosks(short stateid, int bannerid)
 	{
 		string endpoint = "api/installer" + $"/getpendingkiosks?stateid={stateid}&bannerid={bannerid}";
-		return await _httpService.SendRequest<InstallerModels.PendingKiosksResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
+		return await _httpService.SendRequest<InstallerModels.PendingKiosksResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, _kioskCloudClientConfiguration.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<InstallerModels.OpsMarketResponse>> GetOpsMarket(long kioskid)
 	{
 		string endpoint = "api/installer" + $"/getopsmarket?kioskid={kioskid}";
-		return await _httpService.SendRequest<InstallerModels.OpsMarketResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, kioskid), logResponseContent: false);
+		return await _httpService.SendRequest<InstallerModels.OpsMarketResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, _kioskCloudClientConfiguration.GetKioskCloudHeaders(null, kioskid), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<KioskModels.KioskAuthenticateResponse>> Authenticate(KioskModels.KioskAuthenticateRequest request)
 	{
-		return await _httpService.SendRequest<KioskModels.KioskAuthenticateResponse>(_applicationConfiguration.ProxyApi.Url, "api/kiosk/authenticate", request, HttpMethod.Post, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(null, request.KioskId));
+		return await _httpService.SendRequest<KioskModels.KioskAuthenticateResponse>(ProxyApiUrl, "api/kiosk/authenticate", request, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(null, request.KioskId));
 	}
 
 	public async Task<APIResponse<EmailConfirmationResponse>> EmailConfirmation(EmailConfirmationPayload payload)
 	{
 		string endpoint = "api/marketing/emailconfirmation";
-		return await _httpService.SendRequest<EmailConfirmationResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, payload, HttpMethod.Post, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
+		return await _httpService.SendRequest<EmailConfirmationResponse>(ProxyApiUrl, endpoint, payload, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
 	}
 
 	public async Task<APIResponse<KioskOptInResponse>> KioskOptIn(KioskOptInPayload payload)
 	{
 		string endpoint = "api/marketing/kioskoptin";
-		return await _httpService.SendRequest<KioskOptInResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, payload, HttpMethod.Post, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
+		return await _httpService.SendRequest<KioskOptInResponse>(ProxyApiUrl, endpoint, payload, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
 	}
 
 	public async Task<APIResponse<GetProxyRedboxPlusPromoCampaignsResponse>> GetRedboxPlusPromoCampaigns()
 	{
 		string endpoint = "api/subscription/redboxpluspromocampaigns";
-		return await _httpService.SendRequest<GetProxyRedboxPlusPromoCampaignsResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, GetHeaders(_kioskId));
+		return await _httpService.SendRequest<GetProxyRedboxPlusPromoCampaignsResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, GetHeaders(_kioskId));
 	}
 
 	public async Task<APIResponse<ServerLoyaltyResponse>> EstimateAccrualAsync(CartPayload payload)
 	{
 		string endpoint = "api/loyalty/estimateaccrual";
-		return await _httpService.SendRequest<ServerLoyaltyResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, payload, HttpMethod.Post, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
+		return await _httpService.SendRequest<ServerLoyaltyResponse>(ProxyApiUrl, endpoint, payload, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
 	}
 
 	public async Task<APIResponse<ServerLoyaltyResponse>> EstimateRedemptionAsync(CartPayload payload)
 	{
 		string endpoint = "api/loyalty/estimateredemption";
-		return await _httpService.SendRequest<ServerLoyaltyResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, payload, HttpMethod.Post, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
+		return await _httpService.SendRequest<ServerLoyaltyResponse>(ProxyApiUrl, endpoint, payload, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
 	}
 
 	public async Task<APIResponse<UpdateAccountResponse>> UpdateAccountAsync(UpdateAccountPayload payload)
 	{
 		string endpoint = "api/loyalty/updateaccount";
 		int hold = _httpService.Timeout;
-		_httpService.Timeout = _applicationConfiguration.ProxyApi.UpdateAccountTimeout ?? 60000;
-		APIResponse<UpdateAccountResponse> result = await _httpService.SendRequest<UpdateAccountResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, payload, HttpMethod.Post, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
+		_httpService.Timeout = 60000;
+		APIResponse<UpdateAccountResponse> result = await _httpService.SendRequest<UpdateAccountResponse>(ProxyApiUrl, endpoint, payload, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
 		_httpService.Timeout = hold;
 		return result;
 	}
@@ -133,37 +160,37 @@ internal class ProxyApi : IProxyApi
 	public async Task<APIResponse<PromotionCodeValidationResponse>> PromoCodeValidationAsync(PromotionCodeValidationPayload payload)
 	{
 		string endpoint = "api/promotion/promocodevalidation";
-		return await _httpService.SendRequest<PromotionCodeValidationResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, payload, HttpMethod.Post, _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
+		return await _httpService.SendRequest<PromotionCodeValidationResponse>(ProxyApiUrl, endpoint, payload, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(payload.MessageId, payload.KioskId));
 	}
 
 	public async Task<APIResponse<KioskRentalDefaultPricingResponse>> GetRentalDefaultPricing(long kioskId)
 	{
 		string endpoint = "api/pricing" + $"/kiosk/{kioskId}/rental/default";
-		return await _httpService.SendRequest<KioskRentalDefaultPricingResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
+		return await _httpService.SendRequest<KioskRentalDefaultPricingResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
 	}
 
 	public async Task<APIResponse<KioskRentalPricingByPriceResponse>> GetRentalPricingByPrice(long kioskId)
 	{
 		string endpoint = "api/pricing" + $"/kiosk/{kioskId}/rentalbyprice";
-		return await _httpService.SendRequest<KioskRentalPricingByPriceResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
+		return await _httpService.SendRequest<KioskRentalPricingByPriceResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
 	}
 
 	public async Task<APIResponse<KioskPurchasePricingByPriceResponse>> GetPurchasePricingByPrice(long kioskId)
 	{
 		string endpoint = "api/pricing" + $"/kiosk/{kioskId}/purchasebyprice";
-		return await _httpService.SendRequest<KioskPurchasePricingByPriceResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
+		return await _httpService.SendRequest<KioskPurchasePricingByPriceResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
 	}
 
 	public async Task<APIResponse<GetPlanogramsResponse>> GetPlanograms(long kioskId, DateTime? lastChange = null)
 	{
 		string text = (lastChange.HasValue ? lastChange.Value.ToString("yyyy-MM-ddTHH:mm:ss") : "null");
 		string endpoint = "api/planogram/allcurrent?lastReportedTime=" + text;
-		return await _httpService.SendRequest<GetPlanogramsResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
+		return await _httpService.SendRequest<GetPlanogramsResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
 	}
 
 	private List<Header> GetHeaders(long kioskId)
 	{
-		List<Header> kioskCloudHeaders = _applicationConfiguration.ProxyApi.GetKioskCloudHeaders(Guid.NewGuid(), kioskId);
+		List<Header> kioskCloudHeaders = _kioskCloudClientConfiguration.GetKioskCloudHeaders(Guid.NewGuid(), kioskId);
 		return kioskCloudHeaders.AddCompression();
 	}
 
@@ -174,12 +201,12 @@ internal class ProxyApi : IProxyApi
 		{
 			text = text + "?lastReportedTime=" + lastChange.Value.ToString("yyyy-MM-ddTHH:mm:ss");
 		}
-		return await _httpService.SendRequest<GetWelcomeScreenAssetsResponse>(_applicationConfiguration.ProxyApi.Url, text, null, HttpMethod.Get, GetHeaders(kioskId));
+		return await _httpService.SendRequest<GetWelcomeScreenAssetsResponse>(ProxyApiUrl, text, null, HttpMethod.Get, GetHeaders(kioskId));
 	}
 
 	public async Task<APIResponse<PostKioskCampaignsResponse>> PostKioskCampaigns(long kioskId, PostKioskCampaignsRequest request)
 	{
 		string endpoint = "api/cms" + $"/campaign/kiosk/{kioskId}";
-		return await _httpService.SendRequest<PostKioskCampaignsResponse>(_applicationConfiguration.ProxyApi.Url, endpoint, request, HttpMethod.Post, GetHeaders(kioskId));
+		return await _httpService.SendRequest<PostKioskCampaignsResponse>(ProxyApiUrl, endpoint, request, HttpMethod.Post, GetHeaders(kioskId));
 	}
 }

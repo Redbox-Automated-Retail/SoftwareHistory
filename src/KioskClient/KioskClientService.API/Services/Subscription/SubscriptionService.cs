@@ -16,7 +16,7 @@ public class SubscriptionService : ISubscriptionService
 
 	private IPersistentDataCacheService _persistentDataCacheService;
 
-	private IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private static int updatePeriod = 7200;
 
@@ -24,13 +24,12 @@ public class SubscriptionService : ISubscriptionService
 
 	private string _cacheFileName => "SubscriptionPlans";
 
-	public SubscriptionService(IProxyApi proxyApi, ILogger<SubscriptionService> logger, IPersistentDataCacheService persistentDataCacheService, IApplicationConfiguration applicationConfiguration)
+	public SubscriptionService(IProxyApi proxyApi, ILogger<SubscriptionService> logger, IPersistentDataCacheService persistentDataCacheService, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration)
 	{
 		_proxyApi = proxyApi;
 		_logger = logger;
 		_persistentDataCacheService = persistentDataCacheService;
-		_applicationConfiguration = applicationConfiguration;
-		SubscriptionConfigs subscriptionConfigs = applicationConfiguration.SubscriptionConfigs;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 	}
 
 	public async Task<SubscriptionPlansData> GetSubscriptionPlanData()
@@ -48,8 +47,7 @@ public class SubscriptionService : ISubscriptionService
 	public async Task RefreshIfNeeded()
 	{
 		_logger?.LogInfoWithSource($"Started with random refresh time of {DateTime.Today.AddHours(4.0).AddSeconds(updateSeconds)}", "RefreshIfNeeded");
-		SubscriptionConfigs configs = _applicationConfiguration.SubscriptionConfigs;
-		if (!configs.SubscriptionPlansActive)
+		if (!_kioskConfiguration.KioskClientSubscriptions.SubscriptionPlansActive)
 		{
 			_logger?.LogInfoWithSource("SubscriptionPlanActive is false, deleting cache", "RefreshIfNeeded");
 			_persistentDataCacheService.Delete(_cacheFileName);
@@ -61,12 +59,12 @@ public class SubscriptionService : ISubscriptionService
 			_logger?.LogInfoWithSource("Cache is not set - refreshing", "RefreshIfNeeded");
 			await ForceRefreshSubscriptionPlan();
 		}
-		else if (persistentDataWrapper.Data.BrowseStarzSubscriptionPlan != configs.BrowseStarzSubscriptionPlan)
+		else if (persistentDataWrapper.Data.BrowseStarzSubscriptionPlan != _kioskConfiguration.KioskClientSubscriptions.BrowseStarzSubscriptionPlan)
 		{
 			_logger?.LogInfoWithSource("BrowseStarzSubscriptionPlan is different from current cache " + persistentDataWrapper.Data.BrowseStarzSubscriptionPlan + " - refreshing", "RefreshIfNeeded");
 			await ForceRefreshSubscriptionPlan();
 		}
-		else if (persistentDataWrapper.Data.MyBagStarzSubscriptionPlan != configs.MyBagStarzSubscriptionPlan)
+		else if (persistentDataWrapper.Data.MyBagStarzSubscriptionPlan != _kioskConfiguration.KioskClientSubscriptions.MyBagStarzSubscriptionPlan)
 		{
 			_logger?.LogInfoWithSource("MyBagStarzSubscriptionPlan is different from current cache " + persistentDataWrapper.Data.MyBagStarzSubscriptionPlan + " - refreshing", "RefreshIfNeeded");
 			await ForceRefreshSubscriptionPlan();
@@ -112,8 +110,7 @@ public class SubscriptionService : ISubscriptionService
 	private async Task ForceRefreshSubscriptionPlan()
 	{
 		_logger?.LogInfoWithSource("Started", "ForceRefreshSubscriptionPlan");
-		SubscriptionConfigs subscriptionConfigs = _applicationConfiguration.SubscriptionConfigs;
-		if (!subscriptionConfigs.SubscriptionPlansActive)
+		if (!_kioskConfiguration.KioskClientSubscriptions.SubscriptionPlansActive)
 		{
 			_logger?.LogInfoWithSource("ProducutGroupSortOrderType is 0, deleting cache", "ForceRefreshSubscriptionPlan");
 			_persistentDataCacheService.Delete(_cacheFileName);
@@ -133,14 +130,13 @@ public class SubscriptionService : ISubscriptionService
 	private async Task<SubscriptionPlansData> GetProxySubscriptionPlans()
 	{
 		SubscriptionPlansData result = new SubscriptionPlansData();
-		SubscriptionConfigs configs = _applicationConfiguration.SubscriptionConfigs;
 		APIResponse<GetProxySubscriptionPlanResponse> response = await _proxyApi.GetSubscriptionPlans();
 		if (response != null && response.IsSuccessStatusCode)
 		{
 			result.CopyFrom(response.Response);
-			result.Active = configs.SubscriptionPlansActive;
-			result.BrowseStarzSubscriptionPlan = configs.BrowseStarzSubscriptionPlan;
-			result.MyBagStarzSubscriptionPlan = configs.MyBagStarzSubscriptionPlan;
+			result.Active = _kioskConfiguration.KioskClientSubscriptions.SubscriptionPlansActive;
+			result.BrowseStarzSubscriptionPlan = _kioskConfiguration.KioskClientSubscriptions.BrowseStarzSubscriptionPlan;
+			result.MyBagStarzSubscriptionPlan = _kioskConfiguration.KioskClientSubscriptions.MyBagStarzSubscriptionPlan;
 			APIResponse<GetProxyRedboxPlusPromoCampaignsResponse> aPIResponse = await _proxyApi.GetRedboxPlusPromoCampaigns();
 			if (aPIResponse != null && response.IsSuccessStatusCode)
 			{

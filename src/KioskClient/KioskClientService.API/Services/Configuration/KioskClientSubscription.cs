@@ -1,6 +1,6 @@
-namespace KioskClientService.API.Services.Subscription;
+namespace KioskClientService.API.Services.Configuration;
 
-public class SubscriptionConfigs
+public class KioskClientSubscription : BaseCategorySetting
 {
 	public bool SubscriptionPlansActive { get; set; }
 

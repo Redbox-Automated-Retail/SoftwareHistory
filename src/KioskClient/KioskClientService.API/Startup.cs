@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Coravel;
@@ -19,6 +19,7 @@ using KioskClientService.API.Services.Campaigns;
 using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.CustomerProfile;
 using KioskClientService.API.Services.Data;
+using KioskClientService.API.Services.Encryption;
 using KioskClientService.API.Services.HttpQueue;
 using KioskClientService.API.Services.Inventory;
 using KioskClientService.API.Services.Inventory.API;
@@ -111,8 +112,7 @@ public class Startup
 		services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
 		services.AddSingleton<IApplicationSettings, ApplicationSettings>();
 		services.AddKioskConfiguration(Configuration);
-		services.AddSingleton<IConfigurationService, ConfigurationService>();
-		services.AddScoped<ConfigurationJob>();
+		services.AddScoped<IConfigurationJob, ConfigurationJob>();
 		services.AddScoped<IApplicationConfiguration, ApplicationConfiguration>();
 		services.AddHttpService();
 		services.AddHttpQueueService();
@@ -147,6 +147,7 @@ public class Startup
 		services.AddScoped<IProxyApi, ProxyApi>();
 		services.AddScoped<ISubscriptionService, SubscriptionService>();
 		services.AddScoped<SubscriptionJob>();
+		services.AddScoped<IEncryptionService, EncryptionService>();
 		services.AddPromotionService();
 		services.AddScoped<ICustomerProfileService, CustomerProfileService>();
 		services.AddPricingService();
@@ -160,7 +161,7 @@ public class Startup
 		services.AddMemoryCache();
 	}
 
-	public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime, ILogger<Startup> logger, IApplicationSettings applicationSettings, IApplicationConfiguration applicationConfiguration, IConfigurationService configuration, IStoreService store, IProductGroupSortOrderService productGroupSortOrderService, ISubscriptionService subscriptionService)
+	public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger, IApplicationSettings applicationSettings, IOptionsSnapshotKioskConfiguration kioskConfigiuration)
 	{
 		if (env.IsDevelopment())
 		{
@@ -179,11 +180,10 @@ public class Startup
 		{
 			c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
 		});
-		InitializeConfiguration(logger, configuration, store, productGroupSortOrderService, subscriptionService);
 		app.ApplicationServices.UseScheduler(delegate(IScheduler scheduler)
 		{
 			Random random = new Random();
-			scheduler.Schedule<ConfigurationJob>().Cron("*/3 * * * *").PreventOverlapping("kiosk");
+			scheduler.Schedule<IConfigurationJob>().Cron("*/3 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<ProductGroupSortOrderJob>().Cron("*/10 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<SubscriptionJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<PricingJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
@@ -199,53 +199,10 @@ public class Startup
 			logger.LogInformation("Scheduling CampaignJob every 15 seconds");
 		});
 		app.UseMvc();
-		LogAppSettings(logger, applicationSettings, applicationConfiguration);
+		LogAppSettings(logger, applicationSettings, kioskConfigiuration);
 	}
 
-	private ServiceResult InitializeConfiguration(ILogger<Startup> logger, IConfigurationService configuration, IStoreService store, IProductGroupSortOrderService productGroupSortOrderService, ISubscriptionService subscriptionService)
-	{
-		if (configuration == null)
-		{
-			logger.LogError("Startup.InitializeConfiguration - configuration parameter is null.");
-			return new ServiceResult(success: false);
-		}
-		logger.LogInformation("Starting Update Manager Configuration Service.");
-		ServiceResult serviceResult = configuration.Initialize();
-		if (!serviceResult.Success)
-		{
-			return serviceResult;
-		}
-		serviceResult = configuration.Start();
-		if (!serviceResult.Success)
-		{
-			return serviceResult;
-		}
-		string fullPath = Path.GetFullPath(Path.Combine(store.DataPath, "Configuration"));
-		if (!Directory.Exists(fullPath))
-		{
-			Directory.CreateDirectory(fullPath);
-		}
-		DirectoryInfo directoryInfo = new DirectoryInfo(fullPath);
-		try
-		{
-			string text = Path.Combine(fullPath, "kioskclient.config");
-			logger.LogInformation("Startup.InitializeConfiguration manually adding " + text);
-			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(text);
-			serviceResult = configuration.Add(fileNameWithoutExtension, text, "default");
-			if (!serviceResult.Success)
-			{
-				return serviceResult;
-			}
-		}
-		catch (Exception exception)
-		{
-			logger.LogError(exception, "Startup.InitializeConfiguration - 'data' folder issue.");
-			Environment.Exit(0);
-		}
-		return new ServiceResult(success: true);
-	}
-
-	private void LogAppSettings(ILogger<Startup> logger, IApplicationSettings applicationSettings, IApplicationConfiguration applicationConfiguration)
+	private void LogAppSettings(ILogger<Startup> logger, IApplicationSettings applicationSettings, IOptionsSnapshotKioskConfiguration kioskConfigiuration)
 	{
 		AppSettings appSettings = applicationSettings.AppSettings;
 		logger.LogInformation($"Assembly Version: {GetType().Assembly.GetName().Version}");
@@ -253,31 +210,15 @@ public class Startup
 		logger.LogInformation("AppSettings - ServiceUrl: " + appSettings.ServiceUrl);
 		logger.LogInformation("AppSettings - UpdateManagerAddress: " + appSettings.UpdateManagerAddress);
 		logger.LogInformation($"AppSettings - UpdateManagerPort: {appSettings.UpdateManagerPort}");
-		logger.LogInformation($"AppConfig - AdsActive: {applicationConfiguration.AdsActive}");
-		VistarConfigs configs = VistarConfigs.GetConfigs(applicationConfiguration);
-		logger.LogInformation("AppConfig.VistarSettings - Url: " + configs.Url);
-		logger.LogInformation($"AppConfig.VistarSettings - Timeout: {configs.Timeout}");
-		logger.LogInformation("AppConfig.VistarSettings - NetworkId: " + configs.NetworkId.MaskLogValue(4));
-		logger.LogInformation("AppConfig.VistarSettings - APIKey: " + configs.APIKey.MaskLogValue(4));
-		AdServerConfigs adServer = applicationConfiguration.AdServer;
-		logger.LogInformation("AppConfig.AdServerSettings - Url: " + adServer.Url);
-		logger.LogInformation($"AppConfig.AdServerSettings - Timeout: {adServer.Timeout}");
-		logger.LogInformation("AppConfig.AdServerSettings - APIKey: " + adServer.APIKey.MaskLogValue(4));
-		KioskDataServiceConfigs kioskDataService = applicationConfiguration.KioskDataService;
-		logger.LogInformation("AppConfig.KioskDataServiceSettings - Url: " + kioskDataService.Url);
-		logger.LogInformation($"AppConfig.KioskDataServiceSettings - Timeout: {kioskDataService.Timeout}");
-		logger.LogInformation("AppConfig.KioskDataServiceSettings - APIKey: " + kioskDataService.APIKey.MaskLogValue(4));
-		InventoryApiConfigs inventoryApi = applicationConfiguration.InventoryApi;
-		logger.LogInformation("AppConfig.InventoryApi - Url: " + inventoryApi.Url);
-		logger.LogInformation($"AppConfig.InventoryApi - Timeout: {inventoryApi.Timeout}");
-		logger.LogInformation("AppConfig.InventoryApi - APIKey: " + inventoryApi.APIKey.MaskLogValue(4));
-		logger.LogInformation($"AppConfig.ProductGroupSortOrderType: {applicationConfiguration.ProductGroupSortOrderType}");
-		ProxyApiConfigs proxyApi = applicationConfiguration.ProxyApi;
-		logger.LogInformation("AppConfig.ProxyApi - Url: " + proxyApi.Url);
-		logger.LogInformation($"AppConfig.ProxyApi - Timeout: {proxyApi.Timeout}");
-		logger.LogInformation("AppConfig.ProxyApi - APIKey: " + proxyApi.APIKey.MaskLogValue(4));
-		logger.LogInformation("Subscription Configs:");
-		logger.LogInformation(JsonConvert.SerializeObject(applicationConfiguration.SubscriptionConfigs, Formatting.Indented));
-		logger.LogInformation($"AppConfig.PricingActive: {applicationConfiguration.PricingActive}");
+		ConfigLogParameters loggingParameters = null;
+		if (string.IsNullOrEmpty(kioskConfigiuration.KioskClientProxyApi.ProxyApiUrl))
+		{
+			loggingParameters = new ConfigLogParameters
+			{
+				ExcludeSettings = new List<(string, string)> { ("KioskClientProxyApi", "ProxyApiUrl") }
+			};
+			logger.LogInformation("AppSettings - DefaultProxyServiceUrl: " + appSettings.DefaultProxyServiceUrl);
+		}
+		kioskConfigiuration.Log(loggingParameters);
 	}
 }

@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using KioskClientService.API.App;
-using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.Pricing;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,12 +11,9 @@ public class PricingController : ControllerBase
 {
 	private readonly IPricingService _pricingService;
 
-	private readonly IApplicationConfiguration _applicationConfiguration;
-
-	public PricingController(IApplicationConfiguration applicationConfiguration, IPricingService pricingService)
+	public PricingController(IPricingService pricingService)
 	{
 		_pricingService = pricingService;
-		_applicationConfiguration = applicationConfiguration;
 	}
 
 	[HttpPost("all/refresh")]

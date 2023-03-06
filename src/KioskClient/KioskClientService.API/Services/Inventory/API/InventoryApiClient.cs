@@ -12,7 +12,7 @@ namespace KioskClientService.API.Services.Inventory.API;
 
 public class InventoryApiClient : IInventoryApiClient
 {
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly IHttpService _httpService;
 
@@ -32,12 +32,27 @@ public class InventoryApiClient : IInventoryApiClient
 
 	private const string _syncEndpoint = "api/kiosk/sync";
 
-	public InventoryApiClient(IStoreService store, IApplicationConfiguration applicationConfiguration, IHttpService httpService)
+	private const string _inventoryAuthHeader = "x-api-key";
+
+	public InventoryApiClient(IStoreService store, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, IHttpService httpService)
 	{
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_httpService = httpService;
-		_httpService.Timeout = _applicationConfiguration.InventoryApi.Timeout ?? 60000;
+		if (_kioskConfiguration.KioskClientDefault.InventoryApiTimeout != 0)
+		{
+			_httpService.Timeout = _kioskConfiguration.KioskClientDefault.InventoryApiTimeout;
+		}
 		_kioskId = store?.KioskId ?? 0;
+	}
+
+	private List<Header> GetHeaders(long? kioskId = null)
+	{
+		KioskCloudClientConfiguration kioskCloudClientConfiguration = new KioskCloudClientConfiguration
+		{
+			APIKey = _kioskConfiguration?.KioskClientDefault?.InventoryApiKey,
+			AuthHeader = "x-api-key"
+		};
+		return kioskCloudClientConfiguration.GetKioskCloudHeaders(null, kioskId);
 	}
 
 	public async Task<APIResponse<MerchandizingOrdersResponse>> GetMerchandizingOrders(DateTime orderDate, MerchandizingOrderType? orderType)
@@ -47,23 +62,23 @@ public class InventoryApiClient : IInventoryApiClient
 		{
 			text = text + "?orderType=" + (int)orderType.Value;
 		}
-		return await _httpService.SendRequest<MerchandizingOrdersResponse>(_applicationConfiguration.InventoryApi.Url, text, null, HttpMethod.Get, _applicationConfiguration.InventoryApi.GetKioskCloudHeaders(null, _kioskId), logResponseContent: false);
+		return await _httpService.SendRequest<MerchandizingOrdersResponse>(_kioskConfiguration.KioskClientDefault.InventoryApiUrl, text, null, HttpMethod.Get, GetHeaders(_kioskId), logResponseContent: false);
 	}
 
 	public async Task<APIResponse<MerchandStatusUpdateResponse>> UpdateMerchandizingStatuses(List<MerchandStatusUpdate> updates)
 	{
-		return await _httpService.SendRequest<MerchandStatusUpdateResponse>(_applicationConfiguration.InventoryApi.Url, "api/disc/updatemerchandizingstatus", updates, HttpMethod.Post, _applicationConfiguration.InventoryApi.GetKioskCloudHeaders(null, _kioskId));
+		return await _httpService.SendRequest<MerchandStatusUpdateResponse>(_kioskConfiguration.KioskClientDefault.InventoryApiUrl, "api/disc/updatemerchandizingstatus", updates, HttpMethod.Post, GetHeaders(_kioskId));
 	}
 
 	public async Task<APIResponse<GetProductGroupSortOrder>> GetProductGroupOrder(int productGroupSortOrderType)
 	{
 		string endpoint = "api/productgroupsortorder/{productGroupSortOrderType}".Replace("{productGroupSortOrderType}", productGroupSortOrderType.ToString());
-		return await _httpService.SendRequest<GetProductGroupSortOrder>(_applicationConfiguration.InventoryApi.Url, endpoint, null, HttpMethod.Get, _applicationConfiguration.InventoryApi.GetKioskCloudHeaders(null, _kioskId));
+		return await _httpService.SendRequest<GetProductGroupSortOrder>(_kioskConfiguration.KioskClientDefault.InventoryApiUrl, endpoint, null, HttpMethod.Get, GetHeaders(_kioskId));
 	}
 
 	public async Task<InventoryResponse> Sync(InventorySnapshotRequest request)
 	{
-		APIResponse<InventoryResponse> response = await _httpService.SendGZipRequest<InventoryResponse>(_applicationConfiguration.InventoryApi.Url, "api/kiosk/sync", request, HttpMethod.Post, HeadersFromRequest(request));
+		APIResponse<InventoryResponse> response = await _httpService.SendGZipRequest<InventoryResponse>(_kioskConfiguration.KioskClientDefault.InventoryApiUrl, "api/kiosk/sync", request, HttpMethod.Post, HeadersFromRequest(request));
 		InventoryResponse inventoryResponse;
 		if (response.HttpResponse == null)
 		{
@@ -104,7 +119,7 @@ public class InventoryApiClient : IInventoryApiClient
 
 	public async Task<InventoryResponse> DiscAction(DiscActionRequest request)
 	{
-		APIResponse<InventoryResponse> response = await _httpService.SendRequest<InventoryResponse>(_applicationConfiguration.InventoryApi.Url, "api/disc/discaction", request, HttpMethod.Post, HeadersFromRequest(request));
+		APIResponse<InventoryResponse> response = await _httpService.SendRequest<InventoryResponse>(_kioskConfiguration.KioskClientDefault.InventoryApiUrl, "api/disc/discaction", request, HttpMethod.Post, HeadersFromRequest(request));
 		InventoryResponse inventoryResponse;
 		if (response.HttpResponse == null)
 		{
@@ -145,7 +160,7 @@ public class InventoryApiClient : IInventoryApiClient
 
 	public async Task<InventoryResponse> DiscFraud(DiscFraudRequest request)
 	{
-		APIResponse<InventoryResponse> response = await _httpService.SendRequest<InventoryResponse>(_applicationConfiguration.InventoryApi.Url, "api/disc/discfraud", request, HttpMethod.Post, HeadersFromRequest(request));
+		APIResponse<InventoryResponse> response = await _httpService.SendRequest<InventoryResponse>(_kioskConfiguration.KioskClientDefault.InventoryApiUrl, "api/disc/discfraud", request, HttpMethod.Post, HeadersFromRequest(request));
 		InventoryResponse inventoryResponse;
 		if (response.HttpResponse == null)
 		{
@@ -186,11 +201,11 @@ public class InventoryApiClient : IInventoryApiClient
 
 	private List<Header> HeadersFromRequest(InventoryBaseRequest request)
 	{
-		List<Header> kioskCloudHeaders = _applicationConfiguration.InventoryApi.GetKioskCloudHeaders();
-		kioskCloudHeaders.Remove(kioskCloudHeaders.SingleOrDefault((Header h) => h.Key == "x-redbox-activityid"));
-		kioskCloudHeaders.Add(new Header("x-redbox-activityid", request.MessageId.ToString()));
-		kioskCloudHeaders.Remove(kioskCloudHeaders.SingleOrDefault((Header h) => h.Key == "x-redbox-kioskid"));
-		kioskCloudHeaders.Add(new Header("x-redbox-kioskid", request.KioskId.ToString()));
-		return kioskCloudHeaders;
+		List<Header> headers = GetHeaders();
+		headers.Remove(headers.SingleOrDefault((Header h) => h.Key == "x-redbox-activityid"));
+		headers.Add(new Header("x-redbox-activityid", request.MessageId.ToString()));
+		headers.Remove(headers.SingleOrDefault((Header h) => h.Key == "x-redbox-kioskid"));
+		headers.Add(new Header("x-redbox-kioskid", request.KioskId.ToString()));
+		return headers;
 	}
 }

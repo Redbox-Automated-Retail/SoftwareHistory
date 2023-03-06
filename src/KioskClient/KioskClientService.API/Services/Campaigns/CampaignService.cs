@@ -19,7 +19,7 @@ internal class CampaignService : ICampaignService
 
 	private readonly IStoreService _storeService;
 
-	private readonly IOptionsSnapshotKioskConfiguration _configuration;
+	private readonly IOptionsSnapshotKioskConfiguration _kioskConfiguration;
 
 	private readonly IProxyApi _proxyApi;
 
@@ -33,16 +33,16 @@ internal class CampaignService : ICampaignService
 
 	private const string CampaignDataFileName = "Campaigns";
 
-	public CampaignService(ILogger<CampaignService> logger, IStoreService storeService, IOptionsSnapshotKioskConfiguration configuration, IProxyApi proxyApi, IPersistentDataCacheService persistentDataCacheService)
+	public CampaignService(ILogger<CampaignService> logger, IStoreService storeService, IOptionsSnapshotKioskConfiguration kioskConfiguration, IProxyApi proxyApi, IPersistentDataCacheService persistentDataCacheService)
 	{
 		_logger = logger;
 		_storeService = storeService;
-		_configuration = configuration;
+		_kioskConfiguration = kioskConfiguration;
 		_proxyApi = proxyApi;
 		_persistentDataCacheService = persistentDataCacheService;
 		if (!_nextRefresh.HasValue)
 		{
-			int num = new Random().Next(60, Math.Max(2, _configuration.Campaigns.RefreshInterval) * 60);
+			int num = new Random().Next(60, Math.Max(2, _kioskConfiguration.Campaigns.RefreshInterval) * 60);
 			_nextRefresh = DateTime.Now.AddSeconds(num);
 			_logger.LogInfoWithSource($"Next refresh at: {_nextRefresh}", ".ctor");
 		}
@@ -120,7 +120,7 @@ internal class CampaignService : ICampaignService
 	{
 		if (_nextRefresh < DateTime.Now)
 		{
-			_nextRefresh = DateTime.Now.AddMinutes(_configuration.Campaigns.RefreshInterval);
+			_nextRefresh = DateTime.Now.AddMinutes(_kioskConfiguration.Campaigns.RefreshInterval);
 			_logger.LogInfoWithSource($"Running campaign refresh if needed. Next refresh at: {_nextRefresh}", "RefreshIfNeeded");
 			return await Refresh();
 		}
@@ -226,7 +226,7 @@ internal class CampaignService : ICampaignService
 	{
 		try
 		{
-			if (!_configuration.Campaigns.InCartsActive)
+			if (!_kioskConfiguration.Campaigns.InCartsActive)
 			{
 				return new GetInCartsResponse
 				{

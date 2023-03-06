@@ -18,7 +18,7 @@ public class AssetService : IAssetService
 {
 	private ILogger<AssetService> _logger;
 
-	private IApplicationConfiguration _applicationConfiguration;
+	private IOptionsSnapshotKioskConfiguration _kioskConfigiuration;
 
 	private IVistarAPIClient _vistarAPI;
 
@@ -48,15 +48,15 @@ public class AssetService : IAssetService
 		}
 	}
 
-	public AssetService(IApplicationConfiguration applicationConfiguration, ILogger<AssetService> logger, IVistarAPIClient vistarAPI, IStoreService storeService, IHttpService httpService, IAnalyticsService analytics)
+	public AssetService(IOptionsSnapshotKioskConfiguration kioskConfigiuration, ILogger<AssetService> logger, IVistarAPIClient vistarAPI, IStoreService storeService, IHttpService httpService, IAnalyticsService analytics)
 	{
 		_logger = logger;
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfigiuration = kioskConfigiuration;
 		_vistarAPI = vistarAPI;
 		_storeService = storeService;
 		_httpService = httpService;
 		_analytics = analytics;
-		_adsActive = _applicationConfiguration.AdsActive;
+		_adsActive = _kioskConfigiuration.KioskClientAds.AdsActive;
 	}
 
 	public async Task<CacheResponse> Cache()

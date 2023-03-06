@@ -32,7 +32,7 @@ public class PlanogramService : IPlanogramService
 
 	private readonly IPersistentDataCacheService _persistentDataCacheService;
 
-	private readonly IApplicationConfiguration _configuration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly string _planogramPath;
 
@@ -50,14 +50,14 @@ public class PlanogramService : IPlanogramService
 
 	private static object _syncObject = new object();
 
-	public PlanogramService(IApplicationSettings settings, IProxyApi proxyApi, IStoreService storeService, IHttpService httpService, IPersistentDataCacheService cache, IApplicationConfiguration applicationConfiguration, ILogger<IPlanogramService> logger)
+	public PlanogramService(IApplicationSettings settings, IProxyApi proxyApi, IStoreService storeService, IHttpService httpService, IPersistentDataCacheService cache, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, ILogger<IPlanogramService> logger)
 	{
 		_settings = settings;
 		_proxyApi = proxyApi;
 		_storeService = storeService;
 		_httpService = httpService;
 		_persistentDataCacheService = cache;
-		_configuration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_logger = logger;
 		_planogramPath = Path.Combine(_storeService.DataPath, _settings.AppSettings.PlanogramFolder);
 	}
@@ -81,7 +81,7 @@ public class PlanogramService : IPlanogramService
 	public List<Planogram> GetActivePlanograms(string filenameSearch = "*")
 	{
 		List<Planogram> list = new List<Planogram>();
-		if (_configuration.PlanogramSyncEnabled)
+		if (_kioskConfiguration.KioskClientDefault.PlanogramSyncEnabled)
 		{
 			List<Planogram> validPlanograms = GetValidPlanograms(filenameSearch);
 			IEnumerable<IGrouping<string, Planogram>> enumerable = from p in validPlanograms

@@ -11,18 +11,18 @@ public class PricingJob : IInvocable
 
 	private readonly IPricingService _pricingService;
 
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
-	public PricingJob(ILogger<PricingJob> logger, IPricingService pricingService, IApplicationConfiguration applicationConfiguration)
+	public PricingJob(ILogger<PricingJob> logger, IPricingService pricingService, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration)
 	{
 		_logger = logger;
 		_pricingService = pricingService;
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 	}
 
 	public async Task Invoke()
 	{
-		if (!_applicationConfiguration.PricingActive)
+		if (!_kioskConfiguration.KioskClientDefault.PricingActive)
 		{
 			_logger.LogInfoWithSource("Pricing is not active", "Invoke");
 			return;

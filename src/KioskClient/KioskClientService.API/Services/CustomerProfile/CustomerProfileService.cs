@@ -96,7 +96,7 @@ public class CustomerProfileService : ICustomerProfileService
 		}
 	}
 
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly ITestDataService _testDataService;
 
@@ -104,9 +104,9 @@ public class CustomerProfileService : ICustomerProfileService
 
 	private IProxyApi _proxyApi;
 
-	public CustomerProfileService(IApplicationConfiguration applicationConfiguration, ITestDataService testDataService, ILogger<CustomerProfileService> logger, IProxyApi proxyApi)
+	public CustomerProfileService(IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, ITestDataService testDataService, ILogger<CustomerProfileService> logger, IProxyApi proxyApi)
 	{
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_testDataService = testDataService;
 		_logger = logger;
 		_proxyApi = proxyApi;
@@ -379,7 +379,7 @@ public class CustomerProfileService : ICustomerProfileService
 	private async Task<bool> GetUseTestData(string liveCallPropertyName)
 	{
 		bool result = false;
-		if (_applicationConfiguration?.TestDataEnabled ?? false)
+		if (_kioskConfiguration?.TestData?.TestDataEnabled == true)
 		{
 			ReadTestDataResponse readTestDataResponse = await (_testDataService?.ReadTestDataValueAsync("ProxyServiceCustomerProfile", liveCallPropertyName));
 			if (readTestDataResponse != null && readTestDataResponse.Success && readTestDataResponse.GetPropertyValue<bool?>() == false)

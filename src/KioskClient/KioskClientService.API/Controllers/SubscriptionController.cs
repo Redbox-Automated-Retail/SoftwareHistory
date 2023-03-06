@@ -30,14 +30,14 @@ public class SubscriptionController : ControllerBase
 
 	private readonly ISubscriptionService _subscriptionService;
 
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly ITestDataService _testDataService;
 
-	public SubscriptionController(IApplicationConfiguration applicationConfiguration, ITestDataService testDataService, ISubscriptionService subscriptionService)
+	public SubscriptionController(IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, ITestDataService testDataService, ISubscriptionService subscriptionService)
 	{
 		_subscriptionService = subscriptionService;
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_testDataService = testDataService;
 	}
 
@@ -73,7 +73,7 @@ public class SubscriptionController : ControllerBase
 	private async Task<bool> GetUseTestData(string liveCallPropertyName)
 	{
 		bool result = false;
-		if (_applicationConfiguration?.TestDataEnabled ?? false)
+		if (_kioskConfiguration?.TestData?.TestDataEnabled == true)
 		{
 			ReadTestDataResponse readTestDataResponse = await (_testDataService?.ReadTestDataValueAsync("ProxyServiceSubscriptions", liveCallPropertyName));
 			if (readTestDataResponse != null && readTestDataResponse.Success && readTestDataResponse.GetPropertyValue<bool?>() == false)

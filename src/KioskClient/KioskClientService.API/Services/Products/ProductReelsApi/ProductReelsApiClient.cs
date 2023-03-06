@@ -12,18 +12,21 @@ namespace KioskClientService.API.Services.Products.ProductReelsApi;
 
 public class ProductReelsApiClient : IProductReelsApiClient
 {
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly IHttpService _httpService;
 
 	private readonly ILogger<ProductReelsApiClient> _logger;
 
-	public ProductReelsApiClient(IApplicationConfiguration applicationConfiguration, IHttpService httpService, ILogger<ProductReelsApiClient> logger)
+	public ProductReelsApiClient(IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, IHttpService httpService, ILogger<ProductReelsApiClient> logger)
 	{
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_httpService = httpService;
 		_logger = logger;
-		_httpService.Timeout = _applicationConfiguration.ProductReelsApi.Timeout ?? 60000;
+		if (_kioskConfiguration.KioskClientDefault.ProductReelsApiTimeout != 0)
+		{
+			_httpService.Timeout = _kioskConfiguration.KioskClientDefault.ProductReelsApiTimeout;
+		}
 	}
 
 	public async Task<ConcurrentDictionary<long, List<long>>> MoreLikeThisBulkAsync(List<long> productGroupIds)
@@ -38,7 +41,7 @@ public class ProductReelsApiClient : IProductReelsApiClient
 		{
 			productIds = list
 		};
-		HttpResponseMessage response = await _httpService.SendRequest(_applicationConfiguration.ProductReelsApi.Url, "products/reels/bulkmorelikethis", requestObject, HttpMethod.Post, null, logResponseContent: false);
+		HttpResponseMessage response = await _httpService.SendRequest(_kioskConfiguration.KioskClientDefault.ProductReelsApiUrl, "products/reels/bulkmorelikethis", requestObject, HttpMethod.Post, null, logResponseContent: false);
 		if (response == null)
 		{
 			_logger.LogErrorWithSource("Call to bulkmorelikethis returned no response!", "MoreLikeThisBulkAsync");

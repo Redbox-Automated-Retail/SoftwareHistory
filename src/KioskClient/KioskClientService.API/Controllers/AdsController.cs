@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using KioskClientService.API.Ads;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.Ads;
-using KioskClientService.API.Services.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -19,7 +18,7 @@ public class AdsController : ControllerBase
 
 	private readonly IAdService _adService;
 
-	public AdsController(ILogger<AdsController> logger, IAdService adService, IApplicationConfiguration config)
+	public AdsController(ILogger<AdsController> logger, IAdService adService)
 	{
 		_logger = logger;
 		_adService = adService;

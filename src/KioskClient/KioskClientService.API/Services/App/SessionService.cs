@@ -1,6 +1,5 @@
 using KioskClientService.API.Ads;
 using KioskClientService.API.App;
-using KioskClientService.API.Services.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.App;
@@ -11,7 +10,7 @@ public class SessionService : ISessionService
 
 	private IAdService _adService;
 
-	public SessionService(ILogger<SessionService> logger, IAdService adService, IApplicationConfiguration config)
+	public SessionService(ILogger<SessionService> logger, IAdService adService)
 	{
 		_logger = logger;
 		_adService = adService;

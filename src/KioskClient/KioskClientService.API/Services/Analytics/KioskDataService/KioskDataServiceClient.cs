@@ -11,26 +11,31 @@ public class KioskDataServiceClient : IKioskDataServiceClient
 {
 	private readonly IHttpService _httpService;
 
-	private ILogger<KioskDataServiceClient> _logger;
+	private readonly ILogger<KioskDataServiceClient> _logger;
 
-	private readonly KioskDataServiceConfigs _kdsConfigs;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly List<Header> _requestHeaders;
 
-	public KioskDataServiceClient(IStoreService store, IHttpService httpService, ILogger<KioskDataServiceClient> logger, IApplicationConfiguration applicationConfiguration)
+	public KioskDataServiceClient(IStoreService store, IHttpService httpService, ILogger<KioskDataServiceClient> logger, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration)
 	{
 		_httpService = httpService;
 		_logger = logger;
-		_kdsConfigs = applicationConfiguration.KioskDataService;
-		if (_kdsConfigs.Timeout.HasValue)
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
+		if (_kioskConfiguration.KioskClientDefault.KioskDataServiceTimeout != 0)
 		{
-			_httpService.Timeout = _kdsConfigs.Timeout.Value;
+			_httpService.Timeout = _kioskConfiguration.KioskClientDefault.KioskDataServiceTimeout;
 		}
-		_requestHeaders = _kdsConfigs.GetKioskCloudHeaders(null, store?.KioskId);
+		KioskCloudClientConfiguration kioskCloudClientConfiguration = new KioskCloudClientConfiguration
+		{
+			APIKey = _kioskConfiguration.KioskClientDefault.KioskDataServiceAPIKey,
+			AuthHeader = _kioskConfiguration.KioskClientDefault.KioskDataServiceAuthHeader
+		};
+		_requestHeaders = kioskCloudClientConfiguration.GetKioskCloudHeaders(null, store?.KioskId);
 	}
 
 	public async Task<APIResponse<AnalyticsResponse>> PostKioskClientEvent(KioskClientEventRequest request)
 	{
-		return await _httpService.SendRequest<AnalyticsResponse>(_kdsConfigs.Url, "api/KioskData/KioskClientServiceEvent", request, HttpMethod.Post, _requestHeaders);
+		return await _httpService.SendRequest<AnalyticsResponse>(_kioskConfiguration.KioskClientDefault.KioskDataServiceUrl, "api/KioskData/KioskClientServiceEvent", request, HttpMethod.Post, _requestHeaders);
 	}
 }

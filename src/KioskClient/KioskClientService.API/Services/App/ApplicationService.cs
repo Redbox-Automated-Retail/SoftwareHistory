@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using KioskClientService.API.Ads;
 using KioskClientService.API.App;
-using KioskClientService.API.Services.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.App;
@@ -12,7 +11,7 @@ public class ApplicationService : IApplicationService
 
 	private IAdService _adService;
 
-	public ApplicationService(ILogger<ApplicationService> logger, IAdService adService, IApplicationConfiguration config)
+	public ApplicationService(ILogger<ApplicationService> logger, IAdService adService)
 	{
 		_logger = logger;
 		_adService = adService;

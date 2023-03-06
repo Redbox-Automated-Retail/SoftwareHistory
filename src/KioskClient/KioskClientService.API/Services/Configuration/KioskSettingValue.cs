@@ -1,10 +1,13 @@
 using System;
+using KioskClientService.API.Services.Encryption;
 
 namespace KioskClientService.API.Services.Configuration;
 
 public class KioskSettingValue
 {
 	public long ConfigurationSettingValueId { get; set; }
+
+	public ConfigurationEncryptionType? EncryptionType { get; set; }
 
 	public string Value { get; set; }
 

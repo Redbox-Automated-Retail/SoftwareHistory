@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Coravel.Invocable;
 using KioskClientService.API.Services.ProductGroup;
@@ -9,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.Configuration;
 
-public class ConfigurationJob : IInvocable
+public class ConfigurationJob : IConfigurationJob, IInvocable
 {
 	private ILogger<ConfigurationJob> _logger;
 
@@ -17,11 +14,13 @@ public class ConfigurationJob : IInvocable
 
 	private IProductGroupSortOrderService _productGroupSortOrderService;
 
-	private IConfigurationService _configurationService;
+	private IKioskConfiguration _kioskConfiguration;
 
-	public ConfigurationJob(ILogger<ConfigurationJob> logger, IConfigurationService configurationService, ISubscriptionService subscriptionService, IProductGroupSortOrderService productGroupSortOrderService)
+	private static long _lastConfigurationVersion;
+
+	public ConfigurationJob(ILogger<ConfigurationJob> logger, IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, ISubscriptionService subscriptionService, IProductGroupSortOrderService productGroupSortOrderService)
 	{
-		_configurationService = configurationService;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_logger = logger;
 		_subscriptionService = subscriptionService;
 		_productGroupSortOrderService = productGroupSortOrderService;
@@ -29,20 +28,22 @@ public class ConfigurationJob : IInvocable
 
 	public async Task Invoke()
 	{
-		_logger.LogInfoWithSource("Invoking Configuration Job to check for new files", "Invoke");
-		_configurationService.CheckForUpdates(out var dict);
-		if (dict != null)
+		if (_lastConfigurationVersion == 0L)
 		{
-			foreach (KeyValuePair<string, string> item in dict)
-			{
-				if (item.Key.Equals("kioskclient", StringComparison.OrdinalIgnoreCase))
-				{
-					_logger.LogInformation("New Configuration file activated " + item.Key + " - " + Path.GetFileName(item.Value) + " file was loaded.");
-					await (_productGroupSortOrderService?.RefreshIfNeeded());
-					await (_subscriptionService?.RefreshIfNeeded());
-				}
-			}
+			_lastConfigurationVersion = _kioskConfiguration.ConfigurationVersion;
+			_logger.LogInfoWithSource($"Initializing {GetType().Name} configuration version to {_lastConfigurationVersion}", "Invoke");
+			return;
 		}
+		if (_lastConfigurationVersion == _kioskConfiguration.ConfigurationVersion)
+		{
+			_logger.LogInfoWithSource($"Configuration version has not changed.  verion: {_lastConfigurationVersion}", "Invoke");
+			return;
+		}
+		_logger.LogInformation($"Configuration version changed from {_lastConfigurationVersion} to {_kioskConfiguration.ConfigurationVersion}");
+		_lastConfigurationVersion = _kioskConfiguration.ConfigurationVersion;
+		_kioskConfiguration.Log();
+		await (_productGroupSortOrderService?.RefreshIfNeeded());
+		await (_subscriptionService?.RefreshIfNeeded());
 		_logger.LogInfoWithSource("Finished", "Invoke");
 	}
 }

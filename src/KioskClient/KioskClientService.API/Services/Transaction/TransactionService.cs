@@ -113,7 +113,7 @@ public class TransactionService : ITransactionService
 
 	private readonly ILogger<ITransactionService> _logger;
 
-	private readonly IApplicationConfiguration _applicationConfiguration;
+	private readonly IKioskConfiguration _kioskConfiguration;
 
 	private readonly ITestDataService _testDataService;
 
@@ -123,9 +123,9 @@ public class TransactionService : ITransactionService
 
 	private static readonly List<string> _subscriptionErrorCodes = new List<string> { "(A030)", "(A031)", "(A033)", "(A034)" };
 
-	public TransactionService(IApplicationConfiguration applicationConfiguration, ITestDataService testDataService, IMemoryCache cache, ITransactionApiClient client, ILogger<ITransactionService> logger)
+	public TransactionService(IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, ITestDataService testDataService, IMemoryCache cache, ITransactionApiClient client, ILogger<ITransactionService> logger)
 	{
-		_applicationConfiguration = applicationConfiguration;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 		_testDataService = testDataService;
 		_transactionClient = client;
 		_cache = cache;
@@ -504,7 +504,7 @@ public class TransactionService : ITransactionService
 	private async Task<bool> GetUseTestData(string liveCallPropertyName)
 	{
 		bool result = false;
-		if (_applicationConfiguration?.TestDataEnabled ?? false)
+		if (_kioskConfiguration?.TestData?.TestDataEnabled == true)
 		{
 			ReadTestDataResponse readTestDataResponse = await (_testDataService?.ReadTestDataValueAsync("TransactionService", liveCallPropertyName));
 			if (readTestDataResponse != null && readTestDataResponse.Success && readTestDataResponse.GetPropertyValue<bool?>() == false)
