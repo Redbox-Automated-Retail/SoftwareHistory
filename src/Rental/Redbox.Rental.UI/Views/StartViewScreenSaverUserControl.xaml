@@ -21,9 +21,9 @@
   <Grid Background="{Binding Path=MainGridBackground, FallbackValue=White}">
     <Grid.RowDefinitions>
       <RowDefinition Height="110" />
-      <RowDefinition Height="54" />
+      <RowDefinition Height="64" />
       <RowDefinition Height="426" />
-      <RowDefinition Height="178" />
+      <RowDefinition Height="168" />
     </Grid.RowDefinitions>
     <Grid Row="0" Background="#FF000000">
       <StackPanel Orientation="Horizontal" Visibility="{Binding IsBurnInView, Converter={StaticResource NotBoolToVisibility}, FallbackValue=Visible}">
@@ -39,7 +39,7 @@
       <Controls:RedboxProductCarouselUserControl DataContext="{Binding Path=CarouselTestModel}" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}, FallbackValue=Visible}" />
     </Grid>
     <Grid Row="3">
-      <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Margin="0,0,0,22" Visibility="{Binding IsBurnInView, Converter={StaticResource NotBoolToVisibility}, FallbackValue=Visible}">
+      <StackPanel Orientation="Vertical" VerticalAlignment="Bottom" Margin="0,0,0,12" Visibility="{Binding IsBurnInView, Converter={StaticResource NotBoolToVisibility}, FallbackValue=Visible}">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,12">
           <RedboxControls:RoundedButton Name="all_movies_button" Margin="12,0,12,0" Command="{x:Static UI:Commands.RentOrBuyMoviesCommand}" Style="{Binding Path=ExtraLargePrimaryButtonStyle, FallbackValue={StaticResource button_light_extra_large_primary_style}}" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}, FallbackValue=Visible}">
             <StackPanel Orientation="Horizontal">
@@ -79,7 +79,7 @@
           </RedboxControls:RoundedButton>
         </StackPanel>
       </StackPanel>
-      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,68" Visibility="{Binding IsBurnInView, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,58" Visibility="{Binding IsBurnInView, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}">
         <RedboxControls:RoundedButton Name="press_to_start_button" Command="{x:Static UI:Commands.ExitBurnInViewCommand}" Style="{Binding Path=ExtraLargePrimaryButtonStyle, FallbackValue={StaticResource button_light_extra_large_primary_style}}">
           <StackPanel Orientation="Horizontal">
             <Image Width="38" Height="56" Margin="32,0,8,0" Source="{Binding Path=PressToStartButtonImageSource, FallbackValue='pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/Hand white.png'}" />

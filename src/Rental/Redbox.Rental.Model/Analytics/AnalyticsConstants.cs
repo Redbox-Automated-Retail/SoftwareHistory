@@ -289,6 +289,8 @@ public static class AnalyticsConstants
 
 		public const string PurchaseFormatSelectionPopupReserveOnlineRentGotit = "PurchaseFormatSelectionPopupReserveOnlineRentGotit";
 
+		public const string PurchaseFormatSelectionPopupPurchase = "PurchaseFormatSelectionPopupPurchase";
+
 		public const string PurchaseFormatSelectionPopupCancel = "PurchaseFormatSelectionPopupCancel";
 
 		public const string PurchaseFormatSelectionPopupDigitalCodeInformation = "PurchaseFormatSelectionPopupDigitalCodeInformation";

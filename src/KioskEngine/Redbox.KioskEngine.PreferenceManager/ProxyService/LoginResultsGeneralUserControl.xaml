@@ -6,7 +6,7 @@
       <StackPanel Margin="20,5,0,5">
         <Grid>
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="150" />
+            <ColumnDefinition Width="160" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
           <Grid.RowDefinitions>
@@ -67,6 +67,17 @@
             <TextBlock Text="Text Club Enabled" FontSize="10" Margin="0,1" />
           </CheckBox>
         </StackPanel>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="160" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition />
+          </Grid.RowDefinitions>
+          <TextBlock Text="Number of sample stored Promos" Grid.Row="1" Grid.Column="0" FontSize="10" VerticalAlignment="Center" />
+          <TextBox Name="NumberOfStoredPromosTextbox" Grid.Row="1" Grid.Column="1" Width="40" Height="18" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,3" Text="{Binding Path=NumberOfSampleStoredPromos}" />
+        </Grid>
       </StackPanel>
     </StackPanel>
   </Grid>

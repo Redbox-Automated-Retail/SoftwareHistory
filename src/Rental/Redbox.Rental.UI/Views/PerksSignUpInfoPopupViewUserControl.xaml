@@ -14,35 +14,17 @@
             <TextBlock HorizontalAlignment="Left" Margin="0,16,0,4" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_bold_24}" LineHeight="28" Text="{Binding EarnHeading, FallbackValue=Earn Points}" />
             <DockPanel>
               <Redbox:GridExt RowHeights="*,*,*,*" DockPanel.Dock="Left">
-                <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}">
-                  <TextBlock.Inlines>
-                    <Run Text="{Binding EarnOption1Desc, FallbackValue=Rent DVD}" /> <Run Text="=" /> <Run Text="{Binding EarnOption1Value, FallbackValue=earn 125 points / night}" /></TextBlock.Inlines>
-                </TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}">
-                  <TextBlock.Inlines>
-                    <Run Text="{Binding EarnOption2Desc, FallbackValue=Rent Blu-ray}" /> <Run Text="=" /> <Run Text="{Binding EarnOption2Value, FallbackValue=earn 125 points / night}" /></TextBlock.Inlines>
-                </TextBlock>
-                <TextBlock Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}">
-                  <TextBlock.Inlines>
-                    <Run Text="{Binding EarnOption3Desc, FallbackValue=Buy Used Discs}" /> <Run Text="=" /> <Run Text="{Binding EarnOption3Value, FallbackValue=earn points / $1 spent}" /></TextBlock.Inlines>
-                </TextBlock>
-                <TextBlock Grid.Row="3" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}">
-                  <TextBlock.Inlines>
-                    <Run Text="{Binding EarnOption4Desc, FallbackValue=On Demand}" /> <Run Text="=" /> <Run Text="{Binding EarnOption4Value, FallbackValue=earn 125+ points / transaction}" /></TextBlock.Inlines>
-                </TextBlock>
+                <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}" Text="{Binding EarnOption1Desc, FallbackValue='Rent DVD = earn 125 points / night'}" />
+                <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}" Text="{Binding EarnOption2Desc, FallbackValue='Rent Blu-ray = earn 125 points / night'}" />
+                <TextBlock Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}" Text="{Binding EarnOption3Desc, FallbackValue='Buy Used Discs = earn points / $1 spent'}" />
+                <TextBlock Grid.Row="3" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}" Text="{Binding EarnOption4Desc, FallbackValue='On Demand = earn 125+ points / transaction'}" Visibility="{Binding EarnOption4DescVisibility, FallbackValue=Visible}" />
               </Redbox:GridExt>
             </DockPanel>
             <TextBlock HorizontalAlignment="Left" Margin="0,29,0,4" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_bold_24}" LineHeight="28" Text="{Binding UseHeading, FallbackValue=Use Points}" />
             <DockPanel>
               <Redbox:GridExt RowHeights="*,*" DockPanel.Dock="Left">
-                <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}">
-                  <TextBlock.Inlines>
-                    <Run Text="{Binding UseOption1Desc, FallbackValue='1,500 points'}" /> <Run Text="=" /> <Run Text="{Binding UseOption1Value, FallbackValue=FREE 1-night DVD rental}" /></TextBlock.Inlines>
-                </TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}">
-                  <TextBlock.Inlines>
-                    <Run Text="{Binding UseOption2Desc, FallbackValue='1,750 points'}" /> <Run Text="=" /> <Run Text="{Binding UseOption2Value, FallbackValue=FREE 1-night Blu-ray rental}" /></TextBlock.Inlines>
-                </TextBlock>
+                <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}" Text="{Binding UseOption1Desc, FallbackValue='1,500 points = FREE 1-night DVD rental'}" />
+                <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_medium_20}" Text="{Binding UseOption2Desc, FallbackValue='1,750 points = FREE 1-night Blu-ray rental'}" />
               </Redbox:GridExt>
             </DockPanel>
             <TextBlock HorizontalAlignment="Left" Margin="0,22,0,84" Foreground="{StaticResource CarlosPurple1Brush}" Style="{StaticResource font_montserrat_bold_20}" LineHeight="20" Text="{Binding VisitHeading, FallbackValue=Visit redbox.com/perks for more ways to earn}" />

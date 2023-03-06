@@ -68,6 +68,8 @@ public interface IConfiguration
 
 	bool EnableRedboxPlusLeadGenerationOffer { get; }
 
+	bool DisplayUpdatedPerksPoints { get; }
+
 	int OfflineItemsLimit { get; }
 
 	int OfflineGameRentalLimit { get; }
@@ -214,8 +216,6 @@ public interface IConfiguration
 
 	bool SendJsonKioskAnalyticsToKioskDataService { get; }
 
-	bool SendKioskAlertsToKioskServices { get; }
-
 	bool SendKioskAlertsToKioskDataService { get; }
 
 	bool SendKioskVersionsToKioskDataService { get; }
@@ -236,11 +236,7 @@ public interface IConfiguration
 
 	bool ForcedAirExchangerConfigured { get; }
 
-	bool SendKioskFunctionChecksToKioskServices { get; }
-
 	bool SendKioskFunctionChecksToKioskDataService { get; }
-
-	bool SendKioskEventsToKioskServices { get; }
 
 	bool SendKioskEventsToKioskDataService { get; }
 
@@ -277,8 +273,6 @@ public interface IConfiguration
 	bool ZeroTouchVasEnabled { get; }
 
 	bool ZeroTouchGoogleTwoTap { get; }
-
-	bool SendAuditEventsToKioskServices { get; }
 
 	bool SendAuditEventsToKioskDataService { get; }
 

@@ -5,6 +5,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI;
 using Redbox.Rental.UI.Models;
@@ -38,20 +39,29 @@ public class PerksSignUpInfoPopupViewController : BaseViewController
 	{
 		viewModel.TitleText = Resources.perks_signup_info_title;
 		viewModel.EarnHeading = Resources.perks_signup_info_earn_header;
-		viewModel.EarnOption1Desc = Resources.perks_signup_info_earn_desc_1;
-		viewModel.EarnOption2Desc = Resources.perks_signup_info_earn_desc_2;
-		viewModel.EarnOption3Desc = Resources.perks_signup_info_earn_desc_3;
-		viewModel.EarnOption4Desc = Resources.perks_signup_info_earn_desc_4;
-		viewModel.EarnOption1Value = Resources.perks_signup_info_earn_points_1;
-		viewModel.EarnOption2Value = Resources.perks_signup_info_earn_points_2;
-		viewModel.EarnOption3Value = Resources.perks_signup_info_earn_points_3;
-		viewModel.EarnOption4Value = Resources.perks_signup_info_earn_points_4;
 		viewModel.UseHeading = Resources.perks_signup_info_use_header;
-		viewModel.UseOption1Desc = Resources.perks_signup_info_use_desc_1;
-		viewModel.UseOption2Desc = Resources.perks_signup_info_use_desc_2;
-		viewModel.UseOption1Value = Resources.perks_signup_info_use_points_1;
-		viewModel.UseOption2Value = Resources.perks_signup_info_use_points_2;
-		viewModel.VisitHeading = Resources.perks_signup_info_visit_header;
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints)
+		{
+			viewModel.EarnOption1Desc = Resources.perks_signup_info_earn_desc_1_updated;
+			viewModel.EarnOption2Desc = Resources.perks_signup_info_earn_desc_2_updated;
+			viewModel.EarnOption3Desc = string.Empty;
+			viewModel.EarnOption4Desc = string.Empty;
+			viewModel.EarnOption4DescVisibility = Visibility.Collapsed;
+			viewModel.UseOption1Desc = Resources.perks_signup_info_use_desc_1_updated;
+			viewModel.UseOption2Desc = string.Empty;
+			viewModel.VisitHeading = Resources.perks_signup_info_visit_header_updated;
+		}
+		else
+		{
+			viewModel.EarnOption1Desc = string.Format($"{Resources.perks_signup_info_earn_desc_1} = {Resources.perks_signup_info_earn_points_1}");
+			viewModel.EarnOption2Desc = string.Format($"{Resources.perks_signup_info_earn_desc_2} = {Resources.perks_signup_info_earn_points_2}");
+			viewModel.EarnOption3Desc = string.Format($"{Resources.perks_signup_info_earn_desc_3} = {Resources.perks_signup_info_earn_points_3}");
+			viewModel.EarnOption4Desc = string.Format($"{Resources.perks_signup_info_earn_desc_4} = {Resources.perks_signup_info_earn_points_4}");
+			viewModel.EarnOption4DescVisibility = Visibility.Visible;
+			viewModel.UseOption1Desc = string.Format($"{Resources.perks_signup_info_use_desc_1} = {Resources.perks_signup_info_use_points_1}");
+			viewModel.UseOption2Desc = string.Format($"{Resources.perks_signup_info_use_desc_2} = {Resources.perks_signup_info_use_points_2}");
+			viewModel.VisitHeading = Resources.perks_signup_info_visit_header;
+		}
 		int? num = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.PointsBalance;
 		viewModel.BalanceHeading = (num.HasValue ? string.Format(Resources.perks_signup_info_balance_header, num) : string.Empty);
 		bool flag = ServiceLocator.Instance.GetService<IViewService>()?.Stack?.Any((IViewFrameInstance vfi) => vfi?.ViewFrame?.ViewName == "recommended_titles_popup_view") ?? false;

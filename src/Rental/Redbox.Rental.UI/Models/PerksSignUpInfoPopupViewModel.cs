@@ -23,25 +23,15 @@ public class PerksSignUpInfoPopupViewModel : BaseModel<PerksSignUpInfoPopupViewM
 
 	public string EarnOption1Desc { get; set; }
 
-	public string EarnOption1Value { get; set; }
-
 	public string EarnOption2Desc { get; set; }
-
-	public string EarnOption2Value { get; set; }
 
 	public string EarnOption3Desc { get; set; }
 
-	public string EarnOption3Value { get; set; }
-
 	public string EarnOption4Desc { get; set; }
-
-	public string EarnOption4Value { get; set; }
 
 	public string UseOption1Desc { get; set; }
 
-	public string UseOption1Value { get; set; }
-
 	public string UseOption2Desc { get; set; }
 
-	public string UseOption2Value { get; set; }
+	public Visibility EarnOption4DescVisibility { get; set; }
 }

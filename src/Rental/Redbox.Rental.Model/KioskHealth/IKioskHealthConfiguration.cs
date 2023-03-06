@@ -77,6 +77,4 @@ public interface IKioskHealthConfiguration
 	int PingInterval { get; }
 
 	bool PingServiceEnabled { get; }
-
-	bool KioskServicesPingEnabled { get; }
 }

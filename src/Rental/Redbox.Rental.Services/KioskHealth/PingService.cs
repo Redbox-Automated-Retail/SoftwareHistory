@@ -16,15 +16,6 @@ public class PingService : IPingService
 {
 	private Timer _pingTimer;
 
-	private bool? SendPingToTable
-	{
-		get
-		{
-			IKioskHealthConfiguration service = ServiceLocator.Instance.GetService<IKioskHealthConfiguration>();
-			return (service != null && !service.KioskServicesPingEnabled) ? true : false;
-		}
-	}
-
 	public bool Enabled => ServiceLocator.Instance.GetService<IKioskHealthConfiguration>()?.PingServiceEnabled ?? false;
 
 	public int PingInterval => ServiceLocator.Instance.GetService<IKioskHealthConfiguration>()?.PingInterval ?? 900000;
@@ -54,8 +45,7 @@ public class PingService : IPingService
 					MessageId = Guid.NewGuid(),
 					KioskId = num,
 					UTCDate = DateTime.UtcNow.ToString("s"),
-					LocalDate = DateTime.Now.ToString("s"),
-					SendToTable = SendPingToTable
+					LocalDate = DateTime.Now.ToString("s")
 				});
 			}
 		}

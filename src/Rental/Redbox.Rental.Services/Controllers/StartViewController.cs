@@ -138,9 +138,9 @@ public class StartViewController : BaseViewController
 	{
 		get
 		{
-			if (!(WelcomeScreenTimingABTestVersion == "C"))
+			if (!(WelcomeScreenTimingABTestVersion == "C") && !(WelcomeScreenTimingABTestVersion == "D"))
 			{
-				return WelcomeScreenTimingABTestVersion == "D";
+				return WelcomeScreenTimingABTestVersion == "E";
 			}
 			return true;
 		}
@@ -150,9 +150,9 @@ public class StartViewController : BaseViewController
 	{
 		get
 		{
-			if (!(WelcomeScreenTimingABTestVersion == "C"))
+			if (!(WelcomeScreenTimingABTestVersion == "C") && !(WelcomeScreenTimingABTestVersion == "D"))
 			{
-				return WelcomeScreenTimingABTestVersion == "D";
+				return WelcomeScreenTimingABTestVersion == "E";
 			}
 			return true;
 		}
@@ -164,13 +164,15 @@ public class StartViewController : BaseViewController
 	{
 		get
 		{
-			if (!(WelcomeScreenTimingABTestVersion == "B"))
+			if (!(WelcomeScreenTimingABTestVersion == "B") && !(WelcomeScreenTimingABTestVersion == "D"))
 			{
-				return WelcomeScreenTimingABTestVersion == "D";
+				return WelcomeScreenTimingABTestVersion == "E";
 			}
 			return true;
 		}
 	}
+
+	private static bool IsScreenSaverStartViewAndTestScreenSaverSelected => WelcomeScreenTimingABTestVersion == "E";
 
 	private static bool UseContactless
 	{
@@ -718,6 +720,7 @@ public class StartViewController : BaseViewController
 		{
 			GoToStartViewFromScreenSaverLastImage(startViewModel);
 		};
+		marketingScreenSaverModel.GridHeight = (IsScreenSaverStartViewAndTestScreenSaverSelected ? 576 : 768);
 		startViewModel.ScreenSaverModel = marketingScreenSaverModel;
 	}
 
@@ -1062,12 +1065,12 @@ public class StartViewController : BaseViewController
 				if (screenSaverModel != null && screenSaverModel.ImageModels?.Count > 0)
 				{
 					startViewModel.UseClassicStartView = false;
-					startViewModel.UseScreenSaverStartView = false;
+					startViewModel.UseScreenSaverStartView = IsScreenSaverStartViewAndTestScreenSaverSelected;
 					startViewModel.CarouselModel.IsAnimationOn = false;
 					startViewModel.CarouselTestModel.IsAnimationOn = false;
 					startViewModel.UseTestScreenSaver = true;
 					startViewModel.ScreenSaverModel.IsAnimationOn = true;
-					goto IL_016f;
+					goto IL_0177;
 				}
 			}
 			if (IsScreenSaverStartView)
@@ -1080,18 +1083,18 @@ public class StartViewController : BaseViewController
 			else
 			{
 				startViewModel.UseClassicStartView = true;
-				startViewModel.UseScreenSaverStartView = false;
+				startViewModel.UseScreenSaverStartView = IsScreenSaverStartViewAndTestScreenSaverSelected;
 				startViewModel.CarouselModel.IsAnimationOn = true;
 				startViewModel.CarouselTestModel.IsAnimationOn = false;
 			}
 			startViewModel.UseTestScreenSaver = false;
 			startViewModel.ScreenSaverModel.IsAnimationOn = false;
 			timerService.GetTimer(Constants.BurnInViewDurationTimerName)?.Start();
-			goto IL_016f;
-			IL_016f:
+			goto IL_0177;
+			IL_0177:
 			startViewModel.UseTestStartView = false;
 			startViewModel.UseRentAndBuyTestStartView = false;
-			startViewModel.IsBurnInView = true;
+			startViewModel.IsBurnInView = !IsScreenSaverStartViewAndTestScreenSaverSelected;
 			startViewModel.BurnInVisibility = Visibility.Collapsed;
 			if (startViewModel.IsReturnOnlyMode)
 			{
@@ -1103,7 +1106,7 @@ public class StartViewController : BaseViewController
 				else
 				{
 					startViewModel.UseClassicStartView = true;
-					startViewModel.UseScreenSaverStartView = false;
+					startViewModel.UseScreenSaverStartView = IsScreenSaverStartViewAndTestScreenSaverSelected;
 				}
 				startViewModel.CarouselModel.IsAnimationOn = false;
 				startViewModel.CarouselTestModel.IsAnimationOn = false;
@@ -1137,7 +1140,7 @@ public class StartViewController : BaseViewController
 			else
 			{
 				startViewModel.UseClassicStartView = true;
-				startViewModel.UseScreenSaverStartView = false;
+				startViewModel.UseScreenSaverStartView = IsScreenSaverStartViewAndTestScreenSaverSelected;
 				startViewModel.CarouselModel.IsAnimationOn = true;
 				startViewModel.CarouselTestModel.IsAnimationOn = false;
 			}

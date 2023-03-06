@@ -217,6 +217,8 @@ public class Configuration : IConfiguration
 
 	public bool EnableRedboxPlusLeadGenerationOffer { get; private set; }
 
+	public bool DisplayUpdatedPerksPoints { get; private set; }
+
 	public bool LoyaltySignUpAfterSwipeEnabled
 	{
 		get
@@ -365,15 +367,9 @@ public class Configuration : IConfiguration
 
 	public bool SendJsonKioskAnalyticsToKioskDataService { get; private set; }
 
-	public bool SendKioskAlertsToKioskServices { get; private set; }
-
 	public bool SendKioskAlertsToKioskDataService { get; private set; }
 
-	public bool SendAuditEventsToKioskServices { get; private set; }
-
 	public bool SendAuditEventsToKioskDataService { get; private set; }
-
-	public bool SendKioskFunctionChecksToKioskServices { get; private set; }
 
 	public bool SendKioskFunctionChecksToKioskDataService { get; private set; }
 
@@ -382,8 +378,6 @@ public class Configuration : IConfiguration
 	public bool SendKioskStatisticsToKioskDataService { get; private set; }
 
 	public bool SendKioskPropertiesToKioskDataService { get; private set; }
-
-	public bool SendKioskEventsToKioskServices { get; private set; }
 
 	public bool SendKioskEventsToKioskDataService { get; private set; }
 
@@ -582,6 +576,7 @@ public class Configuration : IConfiguration
 		EnableRedboxPlusOffer = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusOffer", defaultValue: false);
 		EnableRedboxPlusRedemption = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusRedemption", defaultValue: false);
 		ShowKioskClosingVSM = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowKioskClosingVSM", defaultValue: false);
+		DisplayUpdatedPerksPoints = ConfigGetValue(service, "marketing", "MarketingGeneral", "DisplayUpdatedPerksPoints", defaultValue: false);
 		ReturnVisitPromoOfferEnabled = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferEnabled", defaultValue: false);
 		ReturnVisitPromoOfferPromotionName = ConfigGetValue<string>(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionName", null);
 		ReturnVisitPromoOfferPromotionPrice = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionPrice", 0m);
@@ -614,7 +609,7 @@ public class Configuration : IConfiguration
 		AwsFraudServicesUrl = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesUrl", null);
 		AwsFraudServicesKey = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesKey", null);
 		_welcomeScreenABTestVersion = GetABTestValue(service, "WelcomeScreen", "AB Testing");
-		WelcomeScreenTimingABTestVersion = ConfigGetValue(service, "marketing", "AB Testing", "WelcomeScreenTiming", "A");
+		WelcomeScreenTimingABTestVersion = ConfigGetValue(service, "marketing", "AB Testing", "WelcomeScreenTiming", "D");
 		_startViewAdABTestVersion = GetABTestValue(service, "StartViewAd", "AB Testing");
 		_startViewRentAndBuyABTestVersion = GetABTestValue(service, "StartViewRentAndBuy", "AB Testing");
 		_priceFiltersOnBrowseABTestVersion = GetABTestValue(service, "PriceFiltersOnBrowse", "MarketingGeneral");
@@ -647,16 +642,12 @@ public class Configuration : IConfiguration
 		KioskDataServicesUrl = ConfigGetValue<string>(service, "system", "General", "KioskDataServicesUrl", null);
 		KioskDataServicesKey = ConfigGetValue<string>(service, "system", "General", "KioskDataServicesKey", null);
 		SendJsonKioskAnalyticsToKioskDataService = ConfigGetValue(service, "system", "General", "SendJsonKioskAnalyticsToKioskDataService", defaultValue: true);
-		SendKioskAlertsToKioskServices = ConfigGetValue(service, "system", "General", "SendKioskAlertsToKioskServices", defaultValue: false);
 		SendKioskAlertsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskAlertsToKioskDataService", defaultValue: true);
-		SendAuditEventsToKioskServices = ConfigGetValue(service, "system", "General", "SendAuditEventsToKioskServices", defaultValue: false);
 		SendAuditEventsToKioskDataService = ConfigGetValue(service, "system", "General", "SendAuditEventsToKioskDataService", defaultValue: true);
-		SendKioskFunctionChecksToKioskServices = ConfigGetValue(service, "system", "General", "SendKioskFunctionChecksToKioskServices", defaultValue: false);
 		SendKioskFunctionChecksToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskFunctionChecksToKioskDataService", defaultValue: true);
 		SendKioskVersionsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskVersionsToKioskDataService", defaultValue: true);
 		SendKioskStatisticsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskStatisticsToKioskDataService", defaultValue: true);
 		SendKioskPropertiesToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskPropertiesToKioskDataService", defaultValue: true);
-		SendKioskEventsToKioskServices = ConfigGetValue(service, "system", "General", "SendKioskEventsToKioskServices", defaultValue: false);
 		SendKioskEventsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskEventsToKioskDataService", defaultValue: true);
 		ForcedAirExchangerConfigured = ConfigGetValue(service, "system", "General", "ForcedAirExchangerConfigured", defaultValue: true);
 		FAQDocument = ConfigGetValue(service, "system", "Documents", "FAQDocument", "document-faqs");

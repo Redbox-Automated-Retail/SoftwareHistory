@@ -68,6 +68,7 @@ Your Redbox 1-night disc rentals will be available after trial.</value></data>
   <data name="title_details_genres_text" xml:space="preserve"><value>Genres</value></data>
   <data name="promo_code_error_invalid_cart_items" xml:space="preserve"><value>Uh oh, that code doesn’t work with what’s in your cart.</value></data>
   <data name="out_of_stock_violator_text" xml:space="preserve"><value>OUT OF STOCK</value></data>
+  <data name="shopping_cart_points_balance_sufficient_message_title_type_text_updated" xml:space="preserve"><value>FREE {0}-night rental available</value></data>
   <data name="multi_disc_vend_grab_discs_text_multiple_mdv" xml:space="preserve"><value> include separate discs. Be sure to grab them all before leaving!</value></data>
   <data name="keypad_back_button_text" xml:space="preserve"><value>DELETE</value></data>
   <data name="shopping_cart_redbox_plus_text" xml:space="preserve"><value>Redbox+</value></data>
@@ -96,7 +97,7 @@ In the meantime, your movie is on its way!</value></data>
   <data name="esrb_mature_game_name" xml:space="preserve"><value>{0}-rated game in cart</value></data>
   <data name="subscriptions_title" xml:space="preserve"><value>Subscriptions</value></data>
   <data name="starz_offer_3_legal" xml:space="preserve"><value>*Subscription renews automatically after completion of 7-day trial and each month thereafter - unless canceled before end of current trial/billing period. $5/month for first 3 months following trial. After 3rd month, subscription renews each month at then-current price. Prices do not include tax, if applicable, and are subject to change. 3 Redbox 1-night disc rental codes/month in the first 3 months following free trial; 2 codes/month in next 9 months, if you remain a subscriber. Codes are available in your Redbox Account and expire 1 month from issue. 1 code/transaction. Payment card required. Charges apply for add'l days. Can't combine other offers. Subject to add'l terms. Void where prohibited. Service only in U.S. &amp; requires high-speed broadband connection. Subscription is non-refundable.</value></data>
-  <data name="purchase_format_dialog_description" xml:space="preserve"><value>How do you want to purchase it?</value></data>
+  <data name="purchase_format_dialog_description" xml:space="preserve"><value>Pick your format to buy</value></data>
   <data name="promo_code_validating_message" xml:space="preserve"><value>Please wait while we validate
 your promo code</value></data>
   <data name="browse_message_popup_learn_more_popup_title" xml:space="preserve"><value>Don’t miss the other Kiosk</value></data>
@@ -372,7 +373,7 @@ on the STARZ app or starz.com</value></data>
   <data name="recommended_titles_perks_message_text_points_1500_no_promo" xml:space="preserve"><value>You have enough points for a FREE 1-night rental
 (Apply at checkout)</value></data>
   <data name="maintenance_view_error_string" xml:space="preserve"><value>Machine code: {0}</value></data>
-  <data name="products_used" xml:space="preserve"><value>Used Disc in Your Cart</value></data>
+  <data name="products_used" xml:space="preserve"><value>About the used disc in your bag</value></data>
   <data name="perks_tier_title0" xml:space="preserve"><value>Member</value></data>
   <data name="perks_tier_title1" xml:space="preserve"><value>Star</value></data>
   <data name="perks_tier_title2" xml:space="preserve"><value>Superstar</value></data>
@@ -390,6 +391,7 @@ Sorry for the inconvenience.</value></data>
   <data name="perks_info_bullet_3" xml:space="preserve"><value>Save big with members-only promo codes</value></data>
   <data name="perks_info_bullet_2" xml:space="preserve"><value>Score bonus points for doing a bunch of things</value></data>
   <data name="offer_mnp_message" xml:space="preserve"><value>Keep your qualifying disc rental(s) for {0} nights for {1:C} more per disc. You’ll be charged the full nightly rental fee + tax for additional nights you keep each disc. See bag for details.</value></data>
+  <data name="format_selection_buy_button_text" xml:space="preserve"><value>BUY IT</value></data>
   <data name="reservation_pickup_note_body_multiple_mdv" xml:space="preserve"><value>{0} of your picks have {1} discs! Be sure to grab them all before leaving.</value></data>
   <data name="out_of_stock_violator_small_moniker" xml:space="preserve"><value>out_of_stock_violator_small_en_US</value></data>
   <data name="mobile_pass_login_get_pass_message" xml:space="preserve"><value>1- Make sure you have the Redbox app
@@ -442,6 +444,7 @@ We see some exciting offers in your future.</value></data>
   <data name="offline_items_limit_exceeded_message_header" xml:space="preserve"><value>You're at the limit!</value></data>
   <data name="maintenance_view_footnote" xml:space="preserve"><value>*Message and data rates may apply. Text STOP to quit. HELP for help.</value></data>
   <data name="sign_in_already_member_text" xml:space="preserve"><value>Already a member?</value></data>
+  <data name="perks_signup_info_earn_desc_2_updated" xml:space="preserve"><value>Buy Used Discs: Points per every $1.00 spent</value></data>
   <data name="redbox_plus_signup_existing_account_error_title" xml:space="preserve"><value>You already have a Redbox Account</value></data>
   <data name="totals_added_discs" xml:space="preserve"><value>Added discs:</value></data>
   <data name="auth_error_redbox_plus_auth_declined_message" xml:space="preserve"><value>No worries – you can try again at the Kiosk, at redbox.com or on the Redbox app.
@@ -460,12 +463,15 @@ In the meantime, your movie is on its way!</value></data>
   <data name="perks_thanks_standard_message" xml:space="preserve"><value>Use your FREE 1-night DVD rental on your next visit</value></data>
   <data name="redbox_plus_up_to_text" xml:space="preserve"><value>Up to ${0} OFF a used disc purchase</value></data>
   <data name="update_your_bag" xml:space="preserve"><value>Update your bag</value></data>
+  <data name="title_rollup_overlay_buy_text" xml:space="preserve"><value>BUY {0}</value></data>
   <data name="offer_info_earn_free" xml:space="preserve"><value>Earn FREE
 rentals</value></data>
   <data name="price_range_mid_button_short" xml:space="preserve"><value>${0}...</value></data>
   <data name="redbox_plus_tier2_plan_ends_text" xml:space="preserve"><value>$19.99 Plan will end on {0}</value></data>
   <data name="redbox_plus_cart_full_message_title" xml:space="preserve"><value>Your bag is full</value></data>
-  <data name="purchase_warning" xml:space="preserve"><value>Heads up! You're about to buy a used product, which will come in a durable Redbox rental case, not the original packaging.</value></data>
+  <data name="purchase_warning" xml:space="preserve"><value>The movie you’re about to buy has been previously rented by others, and will come in a Redbox case (not the original packaging).
+
+If for some reason you experience any issues with playback, call our Customer Care team at 866.733.2693 – and we’ll make it right.</value></data>
   <data name="promo_code_new_customer_only_message" xml:space="preserve"><value>Sorry this promo code is only valid for new customers, and it looks like you've used Redbox before.</value></data>
   <data name="promo_code_discount_restriction_warning_message" xml:space="preserve"><value>You’ll still be able to use your promo code on an eligible movie.</value></data>
   <data name="inventory_full_message" xml:space="preserve"><value>The Redbox kiosk is unable to accept your return at this time.
@@ -507,6 +513,7 @@ To confirm that you would like to make this purchase, press "Buy Used DVD(s)". I
   <data name="title_type_name_xboxone" xml:space="preserve"><value>Xbox One</value></data>
   <data name="title_type_name_xbox360" xml:space="preserve"><value>Xbox 360</value></data>
   <data name="rbplus_offer_1_benefit_1_header_text" xml:space="preserve"><value>Up to 12 FREE 1-night rentals*</value></data>
+  <data name="title_detail_format_buy_text" xml:space="preserve"><value>BUY {0}</value></data>
   <data name="cart_purchase" xml:space="preserve"><value>Purchase</value></data>
   <data name="reserved_title" xml:space="preserve"><value>Reserved</value></data>
   <data name="mini_cart_plan_text" xml:space="preserve"><value>PLAN</value></data>
@@ -636,6 +643,7 @@ And then stick around to see what's new to rent!</value></data>
   <data name="perks_popup_level0_title" xml:space="preserve"><value>Your Perks:</value></data>
   <data name="vending_signing_out" xml:space="preserve"><value>You’ve been signed out</value></data>
   <data name="perks_thanks_comment_all_details_text" xml:space="preserve"><value>Look for an email with all the details</value></data>
+  <data name="sign_in_point_one_text_updated" xml:space="preserve"><value>Free 1-night disc rental</value></data>
   <data name="discount_label_redbox_plus_benefit_text" xml:space="preserve"><value>Redbox+ Benefit</value></data>
   <data name="multi_disc_vend_note_header" xml:space="preserve"><value>Important Note: </value></data>
   <data name="technical_fallback_message" xml:space="preserve"><value>Please swipe your card.</value></data>
@@ -655,6 +663,8 @@ And then stick around to see what's new to rent!</value></data>
   <data name="offer_next_visit_header" xml:space="preserve"><value>Come back
 for this deal!</value></data>
   <data name="offer_legal_text" xml:space="preserve"><value>Valid for stated discount off the fee for a 1 day rental of a disc. 1 use, 1 code/per transaction. Your payment card, necessary for a rental, is charged the balance of the daily rental fee for a disc and the full daily rental fee for add’l discs + tax (except where tax isn’t charged) for the 1st rental day. You’re charged the full daily rental fee + tax for add’l days you keep each disc. Can’t be combined with other offers, prior rentals or redeemed for cash. May be cancelled/changed at any time. Void where prohibited.</value></data>
+  <data name="perks_signup_info_visit_header_updated" xml:space="preserve"><value>Plus earn &amp; use points wherever you watch
+– and get up to $3.00 OFF On Demand.</value></data>
   <data name="starz_offer_3_my_bag_qr_code" xml:space="preserve"><value>https://www.redbox.com/starz/special-offer?icamp=qrmybag:ba:starzspecialoffer:8:31:2020</value></data>
   <data name="transaction_blocking_service_error_message" xml:space="preserve"><value>Please insert or swipe your card instead, or use a different form of payment</value></data>
   <data name="disc_return_error_title" xml:space="preserve"><value>Disc Return Error</value></data>
@@ -1120,6 +1130,7 @@ Update your bag to continue.</value></data>
 a FREE 1-night DVD rental*</value></data>
   <data name="starz_offer_3_title_clause3" xml:space="preserve"><value> – $5/Month for 3 Months</value></data>
   <data name="starz_offer_3_title_clause2" xml:space="preserve"><value>®</value></data>
+  <data name="perks_signup_info_use_desc_1_updated" xml:space="preserve"><value>2,000 points = FREE 1-night disc rental</value></data>
   <data name="offer_info_mnp_continue_button_text" xml:space="preserve"><value>Add To Bag</value></data>
   <data name="price_for" xml:space="preserve"><value>for</value></data>
   <data name="redbox_plus_lead_generation_no_email_text" xml:space="preserve"><value>Get more info sent to your inbox</value></data>
@@ -1132,7 +1143,7 @@ a FREE 1-night DVD rental*</value></data>
   <data name="perks_thanks_amount_off_message" xml:space="preserve"><value>We've taken {0:C}  off your total</value></data>
   <data name="redbox_plus_info_button_text" xml:space="preserve"><value>This is a Redbox+ movie!</value></data>
   <data name="multi_disc_warning_button_text" xml:space="preserve"><value>Okay</value></data>
-  <data name="earn_free_rentals" xml:space="preserve"><value>Earn FREE rentals!</value></data>
+  <data name="earn_free_rentals" xml:space="preserve"><value>Earn FREE 1-night rentals</value></data>
   <data name="gc_insufficient_balance" xml:space="preserve"><value>Sorry, your card balance is ${0}, which is less than your cart total.
 
 Please swipe another card or take a disc out of your cart.</value></data>
@@ -1332,6 +1343,7 @@ or tap your card</value></data>
   <data name="sign_in_phone_and_pin_button_text" xml:space="preserve"><value>PHONE NUMBER &amp; PIN</value></data>
   <data name="perks_pass_login_generic_error_message" xml:space="preserve"><value>If your points aren’t added to your account within 3 business days, please call Redbox Customer Care.</value></data>
   <data name="rbplus_offer_2_benefit_1_header_text" xml:space="preserve"><value>Up to 24 FREE 1-night disc rentals**</value></data>
+  <data name="sign_in_legal_text_updated" xml:space="preserve"><value>*Free 1-night disc rental will show up as 2,500 points in your account within 48 hours of creating account. Payment card required to use Redbox Perks Points at the Kiosk. Charges apply for additional days. Can't be combined with other offers. Subject to terms at redbox.com/perks/terms.</value></data>
   <data name="regular_checkout_emv_insert_tap_title" xml:space="preserve"><value>Use reader to
 insert or tap
 payment</value></data>
@@ -1341,7 +1353,7 @@ payment</value></data>
 but don’t miss your b-day gift, special offers and much more.</value></data>
   <data name="gc_offline_declined_title" xml:space="preserve"><value>Sorry, we're having some trouble.</value></data>
   <data name="promo_code_game_required_title" xml:space="preserve"><value>Add a Game!</value></data>
-  <data name="sign_up_info_button_text" xml:space="preserve"><value>How it works</value></data>
+  <data name="sign_up_info_button_text" xml:space="preserve"><value>HOW POINTS WORK</value></data>
   <data name="starz_offer_2_signup_confirmation_title_1" xml:space="preserve"><value>Enjoy STARZ</value></data>
   <data name="starz_offer_2_signup_confirmation_title_2" xml:space="preserve"><value> &amp; your Redbox
 1-night disc rentals!</value></data>
@@ -1435,6 +1447,8 @@ Swipe!</value></data>
   <data name="promo_browse_page_number_template" xml:space="preserve"><value>Page {0} of {1}</value></data>
   <data name="add_to_cart_as_buy_new_button_text" xml:space="preserve"><value>Buy New for</value></data>
   <data name="redbox_plus_tooltip_text" xml:space="preserve"><value>Tap button below to access your FREE 1-night rental</value></data>
+  <data name="shopping_cart_points_balance_insufficient_message_title_type_text_updated" xml:space="preserve"><value>You're {0} points away from a FREE {1}-night
+rental</value></data>
   <data name="do_not_use_promo_button" xml:space="preserve"><value>DO NOT USE PROMO</value></data>
   <data name="redbox_plus_already_used_close_button_text" xml:space="preserve"><value>OKAY</value></data>
   <data name="sign_in_starz_message_text" xml:space="preserve"><value>Then you’ll continue with STARZ</value></data>
@@ -1563,6 +1577,7 @@ Plus, you'll get emails about great Redbox deals and freebies.</value></data>
   <data name="redbox_plus_already_used_tier1_header" xml:space="preserve"><value>Redbox+ FREE 1-night rental already used</value></data>
   <data name="keyboard_sign_in_message" xml:space="preserve"><value>Sign in to something awesome</value></data>
   <data name="title_rollup_format_selection_unavailable_text" xml:space="preserve"><value>Unavailable</value></data>
+  <data name="perks_signup_info_earn_desc_1_updated" xml:space="preserve"><value>Rent Discs: 150 points per night</value></data>
   <data name="_4k_button" xml:space="preserve"><value>4K UHD</value></data>
   <data name="perks_snapshot_expire" xml:space="preserve"><value>Use your points
 ({0:n0} expire on {1:d})</value></data>

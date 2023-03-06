@@ -552,6 +552,8 @@ public class Resources
 
 	public static string format_filter_popup_text => ResourceManager.GetString("format_filter_popup_text", resourceCulture);
 
+	public static string format_selection_buy_button_text => ResourceManager.GetString("format_selection_buy_button_text", resourceCulture);
+
 	public static string four_k_alert => ResourceManager.GetString("four_k_alert", resourceCulture);
 
 	public static string four_k_alert_title => ResourceManager.GetString("four_k_alert_title", resourceCulture);
@@ -1282,7 +1284,11 @@ public class Resources
 
 	public static string perks_signup_info_earn_desc_1 => ResourceManager.GetString("perks_signup_info_earn_desc_1", resourceCulture);
 
+	public static string perks_signup_info_earn_desc_1_updated => ResourceManager.GetString("perks_signup_info_earn_desc_1_updated", resourceCulture);
+
 	public static string perks_signup_info_earn_desc_2 => ResourceManager.GetString("perks_signup_info_earn_desc_2", resourceCulture);
+
+	public static string perks_signup_info_earn_desc_2_updated => ResourceManager.GetString("perks_signup_info_earn_desc_2_updated", resourceCulture);
 
 	public static string perks_signup_info_earn_desc_3 => ResourceManager.GetString("perks_signup_info_earn_desc_3", resourceCulture);
 
@@ -1302,6 +1308,8 @@ public class Resources
 
 	public static string perks_signup_info_use_desc_1 => ResourceManager.GetString("perks_signup_info_use_desc_1", resourceCulture);
 
+	public static string perks_signup_info_use_desc_1_updated => ResourceManager.GetString("perks_signup_info_use_desc_1_updated", resourceCulture);
+
 	public static string perks_signup_info_use_desc_2 => ResourceManager.GetString("perks_signup_info_use_desc_2", resourceCulture);
 
 	public static string perks_signup_info_use_header => ResourceManager.GetString("perks_signup_info_use_header", resourceCulture);
@@ -1311,6 +1319,8 @@ public class Resources
 	public static string perks_signup_info_use_points_2 => ResourceManager.GetString("perks_signup_info_use_points_2", resourceCulture);
 
 	public static string perks_signup_info_visit_header => ResourceManager.GetString("perks_signup_info_visit_header", resourceCulture);
+
+	public static string perks_signup_info_visit_header_updated => ResourceManager.GetString("perks_signup_info_visit_header_updated", resourceCulture);
 
 	public static string perks_snapshot_expire => ResourceManager.GetString("perks_snapshot_expire", resourceCulture);
 
@@ -2080,6 +2090,8 @@ public class Resources
 
 	public static string shopping_cart_points_balance_insufficient_message_title_type_text => ResourceManager.GetString("shopping_cart_points_balance_insufficient_message_title_type_text", resourceCulture);
 
+	public static string shopping_cart_points_balance_insufficient_message_title_type_text_updated => ResourceManager.GetString("shopping_cart_points_balance_insufficient_message_title_type_text_updated", resourceCulture);
+
 	public static string shopping_cart_points_balance_insufficient_promo_message_text => ResourceManager.GetString("shopping_cart_points_balance_insufficient_promo_message_text", resourceCulture);
 
 	public static string shopping_cart_points_balance_insufficient_redbox_plus_message_text => ResourceManager.GetString("shopping_cart_points_balance_insufficient_redbox_plus_message_text", resourceCulture);
@@ -2087,6 +2099,8 @@ public class Resources
 	public static string shopping_cart_points_balance_sufficient_message_text => ResourceManager.GetString("shopping_cart_points_balance_sufficient_message_text", resourceCulture);
 
 	public static string shopping_cart_points_balance_sufficient_message_title_type_text => ResourceManager.GetString("shopping_cart_points_balance_sufficient_message_title_type_text", resourceCulture);
+
+	public static string shopping_cart_points_balance_sufficient_message_title_type_text_updated => ResourceManager.GetString("shopping_cart_points_balance_sufficient_message_title_type_text_updated", resourceCulture);
 
 	public static string shopping_cart_points_balance_text => ResourceManager.GetString("shopping_cart_points_balance_text", resourceCulture);
 
@@ -2130,6 +2144,8 @@ public class Resources
 
 	public static string sign_in_legal_text => ResourceManager.GetString("sign_in_legal_text", resourceCulture);
 
+	public static string sign_in_legal_text_updated => ResourceManager.GetString("sign_in_legal_text_updated", resourceCulture);
+
 	public static string sign_in_message => ResourceManager.GetString("sign_in_message", resourceCulture);
 
 	public static string sign_in_mobile_button_text => ResourceManager.GetString("sign_in_mobile_button_text", resourceCulture);
@@ -2141,6 +2157,8 @@ public class Resources
 	public static string sign_in_phone_button_text => ResourceManager.GetString("sign_in_phone_button_text", resourceCulture);
 
 	public static string sign_in_point_one_text => ResourceManager.GetString("sign_in_point_one_text", resourceCulture);
+
+	public static string sign_in_point_one_text_updated => ResourceManager.GetString("sign_in_point_one_text_updated", resourceCulture);
 
 	public static string sign_in_point_three_text => ResourceManager.GetString("sign_in_point_three_text", resourceCulture);
 
@@ -2566,6 +2584,8 @@ public class Resources
 
 	public static string title_detail_coming_soon_button_text => ResourceManager.GetString("title_detail_coming_soon_button_text", resourceCulture);
 
+	public static string title_detail_format_buy_text => ResourceManager.GetString("title_detail_format_buy_text", resourceCulture);
+
 	public static string title_detail_format_rent_text => ResourceManager.GetString("title_detail_format_rent_text", resourceCulture);
 
 	public static string title_details_cc_text => ResourceManager.GetString("title_details_cc_text", resourceCulture);
@@ -2591,6 +2611,8 @@ public class Resources
 	public static string title_rollup_format_selection_unavailable_text => ResourceManager.GetString("title_rollup_format_selection_unavailable_text", resourceCulture);
 
 	public static string title_rollup_overlay_add_text => ResourceManager.GetString("title_rollup_overlay_add_text", resourceCulture);
+
+	public static string title_rollup_overlay_buy_text => ResourceManager.GetString("title_rollup_overlay_buy_text", resourceCulture);
 
 	public static string title_rollup_overlay_cart_text => ResourceManager.GetString("title_rollup_overlay_cart_text", resourceCulture);
 

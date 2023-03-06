@@ -963,16 +963,19 @@ public class ShoppingCartViewController : BaseLoyaltyController
 				int num4 = rentalShoppingCartTitleItem.PricingRecord?.InitialDays ?? 1;
 				int value = rentalShoppingCartTitleItem.LoyaltyPointsRecord.PointsToRedeem.Value;
 				string displayDescription = rentalShoppingCartTitleItem.TitleType.GetDisplayDescription();
+				bool displayUpdatedPerksPoints = Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints;
+				int num5 = ((!displayUpdatedPerksPoints) ? 1 : 0);
+				int num6 = (displayUpdatedPerksPoints ? 1550 : 1000);
 				if (num < value)
 				{
-					if (num > 0)
+					if (num >= num5)
 					{
 						shoppingCartViewModel.PointsBalanceInfoButtonVisibility = Visibility.Visible;
 						shoppingCartViewModel.PointsBalanceInsufficientMessageTextVisibility = Visibility.Visible;
-						if (num > 999)
+						if (num >= num6)
 						{
-							int num5 = value - num;
-							shoppingCartViewModel.PointsBalanceInsufficientMessageText = string.Format(Resources.shopping_cart_points_balance_insufficient_message_title_type_text, num5, num4, displayDescription);
+							int num7 = value - num;
+							shoppingCartViewModel.PointsBalanceInsufficientMessageText = (displayUpdatedPerksPoints ? string.Format(Resources.shopping_cart_points_balance_insufficient_message_title_type_text_updated, num7, num4) : string.Format(Resources.shopping_cart_points_balance_insufficient_message_title_type_text, num7, num4, displayDescription));
 						}
 						else
 						{
@@ -986,7 +989,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 					shoppingCartViewModel.UsePointsButtonEnabled = true;
 					if (redeemableItems.Count == 1)
 					{
-						shoppingCartViewModel.PointsBalanceSufficientMessageText = string.Format(Resources.shopping_cart_points_balance_sufficient_message_title_type_text, num4, displayDescription);
+						shoppingCartViewModel.PointsBalanceSufficientMessageText = (displayUpdatedPerksPoints ? string.Format(Resources.shopping_cart_points_balance_sufficient_message_title_type_text_updated, num4) : string.Format(Resources.shopping_cart_points_balance_sufficient_message_title_type_text, num4, displayDescription));
 					}
 					else
 					{

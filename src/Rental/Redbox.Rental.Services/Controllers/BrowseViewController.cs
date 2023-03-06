@@ -1576,7 +1576,7 @@ public class BrowseViewController : BaseViewController
 				}
 				else
 				{
-					BrowseFunctions.ShowRentalPopupView(titleRollupProduct, BrowseFunctions.IsPurchase, null, !BrowseFunctions.IsRedboxPlusBrowseMode);
+					BrowseFunctions.ShowRentalPopupView(titleRollupProduct, BrowseFunctions.IsPurchase, null, !BrowseFunctions.IsRedboxPlusBrowseMode, null, showPurchaseButton: true);
 				}
 				break;
 			}

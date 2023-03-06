@@ -38,6 +38,7 @@ public partial class FormatSelectionPopupUserControl : TextToSpeechUserControl, 
 				theme?.SetStyle(frameworkElement);
 			}
 		}
+		theme?.SetStyle(PurchaseButton);
 		theme?.SetStyle(CancelButton);
 		theme?.SetStyle(DigitalCodeInfoButton);
 	}
@@ -45,6 +46,11 @@ public partial class FormatSelectionPopupUserControl : TextToSpeechUserControl, 
 	private void FormatCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		FormatSelectionPopupViewModel?.ProcessFormatButtonClicked((TitleType)((Control)e.OriginalSource).Tag);
+	}
+
+	private void PurchaseCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		FormatSelectionPopupViewModel?.ProcessPurchaseButtonClicked();
 	}
 
 	private void CancelCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)

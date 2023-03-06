@@ -12,6 +12,8 @@ public class TitleRollupOverlayButtonTextValues : ITitleRollupFormatButtonTextVa
 
 	private string _titleRollupOverlayAddText;
 
+	private string _titleRollupOverlayBuyText;
+
 	private string _currencySymbol;
 
 	public string Unavailable
@@ -59,6 +61,18 @@ public class TitleRollupOverlayButtonTextValues : ITitleRollupFormatButtonTextVa
 				_titleRollupOverlayAddText = Resources.title_rollup_overlay_add_text;
 			}
 			return _titleRollupOverlayAddText;
+		}
+	}
+
+	public string Buy
+	{
+		get
+		{
+			if (_titleRollupOverlayBuyText == null)
+			{
+				_titleRollupOverlayBuyText = Resources.title_rollup_overlay_buy_text;
+			}
+			return _titleRollupOverlayBuyText;
 		}
 	}
 

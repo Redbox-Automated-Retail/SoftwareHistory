@@ -39,7 +39,11 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			int num = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.PointsBalance ?? 0;
 			ISession instance = Redbox.Rental.Services.Session.Session.Instance;
 			bool flag = instance != null && instance.PersonalizationSession?.StoredPromoCodes?.Count > 0;
-			bool flag2 = (num > 0) | flag;
+			bool displayUpdatedPerksPoints = Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints;
+			int num2 = ((!displayUpdatedPerksPoints) ? 1 : 0);
+			int num3 = (displayUpdatedPerksPoints ? 1550 : 1000);
+			int num4 = (displayUpdatedPerksPoints ? 2000 : 1500);
+			bool flag2 = (num >= num2) | flag;
 			recommendedTitlesPopupViewModel.PerksInfoBorderVisibility = ((!flag2) ? Visibility.Collapsed : Visibility.Visible);
 			recommendedTitlesPopupViewModel.RecommendationsBorderCornerRadius = (flag2 ? new CornerRadius(0.0, 0.0, 16.0, 16.0) : new CornerRadius(16.0, 16.0, 16.0, 16.0));
 			recommendedTitlesPopupViewModel.PerksHeadingText = Resources.recommended_titles_perks_heading_text;
@@ -47,20 +51,20 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			recommendedTitlesPopupViewModel.HowPointsWorkButtonText = Resources.recommended_titles_how_points_work_button_text;
 			recommendedTitlesPopupViewModel.OnHowPointsWorkButtonClicked = (Action)Delegate.Combine(recommendedTitlesPopupViewModel.OnHowPointsWorkButtonClicked, new Action(RecommendedTitlesPopupViewModel_OnHowPointsWorkButtonClicked));
 			recommendedTitlesPopupViewModel.HowPointsWorkButtonVisibility = Visibility.Visible;
-			if (flag2 && num >= 1000 && num <= 1499 && !flag)
+			if (flag2 && num >= num3 && num <= num4 - 1 && !flag)
 			{
-				recommendedTitlesPopupViewModel.PerksMessageText = string.Format(Resources.recommended_titles_perks_message_text_points_1000_to_1499_no_promo, 1500 - num);
+				recommendedTitlesPopupViewModel.PerksMessageText = string.Format(Resources.recommended_titles_perks_message_text_points_1000_to_1499_no_promo, num4 - num);
 			}
-			if (flag2 && num >= 1500 && !flag)
+			if (flag2 && num >= num4 && !flag)
 			{
 				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_1500_no_promo;
 			}
-			if ((flag2 && num < 1500) & flag)
+			if ((flag2 && num < num4) & flag)
 			{
 				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_0_to_1499_yes_promo;
 				recommendedTitlesPopupViewModel.HowPointsWorkButtonVisibility = Visibility.Collapsed;
 			}
-			if ((flag2 && num >= 1500) & flag)
+			if ((flag2 && num >= num4) & flag)
 			{
 				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_1500_yes_promo;
 			}

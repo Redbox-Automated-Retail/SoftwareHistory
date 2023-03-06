@@ -10,8 +10,8 @@
     <Grid Name="BackgroundGrid" Background="#FF000000" Opacity="0.6" />
     <Border VerticalAlignment="Center" Width="800" Background="#FFFFFFFF" CornerRadius="28">
       <StackPanel Margin="76,76,76,24">
-        <TextBlock Name="HeaderText" Margin="0,0,0,24" Foreground="{StaticResource CarlosPurple1Brush}" TextWrapping="Wrap" Style="{StaticResource font_montserrat_bold_28}" LineHeight="40" Text="{Binding Path=HeaderText, FallbackValue=Power Rangers}" />
-        <TextBlock Name="DescriptionText" Margin="0,0,0,24" Foreground="{StaticResource CarlosPurple1Brush}" TextWrapping="Wrap" Style="{StaticResource font_montserrat_medium_20}" LineHeight="32" Text="{Binding Path=DescriptionText, FallbackValue=How long do you want to keep it?}" />
+        <TextBlock Name="HeaderText" Margin="0,0,0,24" Foreground="{StaticResource CarlosPurple1Brush}" TextWrapping="Wrap" Style="{StaticResource font_montserrat_bold_28}" LineHeight="40" Text="{Binding Path=DescriptionText, FallbackValue=How long do you want to keep it?}" />
+        <TextBlock Name="DescriptionText" Margin="0,0,0,24" Foreground="{StaticResource CarlosPurple1Brush}" TextWrapping="Wrap" Style="{StaticResource font_montserrat_medium_20}" LineHeight="32" Text="{Binding Path=HeaderText, FallbackValue=Power Rangers}" />
         <Redbox:RoundedButton Name="OneNightButton" Width="336" Margin="0,0,0,24" Style="{StaticResource button_light_large_primary_style}" Command="{x:Static views:MultiNightPricingPopupViewUserControlCommands.OneNightCommand}" Visibility="{Binding Path=OneNightButtonVisibility, FallbackValue=Visible}">
           <StackPanel Orientation="Horizontal">
             <TextBlock Name="OneNightButtonText1" Style="{StaticResource button_text_large_style}" Width="168" TextAlignment="Left" Text="{Binding Path=OneNightButtonText1, FallbackValue=1 NIGHT}" />

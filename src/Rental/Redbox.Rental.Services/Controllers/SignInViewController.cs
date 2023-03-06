@@ -46,6 +46,7 @@ public class SignInViewController : BaseViewController
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
 		if (viewUserControl != null)
 		{
+			OrchestrationService.SetCurrentUICulture();
 			SignInViewModel signInViewModel = new SignInViewModel();
 			string arg = ((signInViewParameters.SignUpType == SignUpType.Perks) ? "perks-white-logo.png" : "logoWhite2_icon.png");
 			signInViewModel.HeaderImage = new BitmapImage(new Uri($"pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{arg}"));
@@ -60,12 +61,13 @@ public class SignInViewController : BaseViewController
 			signInViewModel.MessageText = ((signInViewParameters.SignUpType == SignUpType.RedboxPlus) ? Resources.sign_in_redbox_plus_message_text : Resources.sign_in_starz_message_text);
 			signInViewModel.RegisteredTrademarkSymbol = ((signInViewParameters.SignUpType == SignUpType.RedboxPlus) ? string.Empty : Resources.registered_trademark_symbol);
 			signInViewModel.BulletVisibility = ((signInViewParameters.SignUpType != SignUpType.Perks) ? Visibility.Collapsed : Visibility.Visible);
-			signInViewModel.Bullet1Text = Resources.sign_in_point_one_text;
+			bool displayUpdatedPerksPoints = Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints;
+			signInViewModel.Bullet1Text = (displayUpdatedPerksPoints ? Resources.sign_in_point_one_text_updated : Resources.sign_in_point_one_text);
 			signInViewModel.Bullet2Text = Resources.sign_in_point_two_text;
 			signInViewModel.Bullet3Text = Resources.sign_in_point_three_text;
 			signInViewModel.CancelButtonText = Resources.sign_in_cancel_button_text;
 			signInViewModel.BottomMessageText = Resources.sign_in_bottom_message_text;
-			signInViewModel.LegalText = ((signInViewParameters.SignUpType == SignUpType.Perks) ? Resources.sign_in_legal_text : null);
+			signInViewModel.LegalText = ((signInViewParameters.SignUpType != SignUpType.Perks) ? null : (displayUpdatedPerksPoints ? Resources.sign_in_legal_text_updated : Resources.sign_in_legal_text));
 			signInViewModel.SignUpButtonText = Resources.button_sign_up;
 			signInViewModel.InfoButtonText = Resources.sign_up_info_button_text;
 			signInViewModel.InfoButtonVisibility = ((signInViewParameters.SignUpType != SignUpType.Perks) ? Visibility.Collapsed : Visibility.Visible);

@@ -110,7 +110,7 @@
         <Grid Name="Buttons" ColumnSpan="2" Row="3" Margin="0,0,0,-34" Height="104" Background="#EBEBEB">
           <DockPanel>
             <StackPanel Name="leftButtons" Orientation="Horizontal" DockPanel.Dock="Left" Margin="24,0,0,0">
-              <Redbox:RoundedButton Name="go_back_button" Style="{StaticResource button_light_large_secondary_style}" Width="118" Command="{x:Static localbase:Commands.GoBackCommand}" Focusable="False">
+              <Redbox:RoundedButton Name="go_back_button" Style="{StaticResource button_light_large_secondary_style}" Command="{x:Static localbase:Commands.GoBackCommand}" Focusable="False">
                 <TextBlock Style="{StaticResource button_text_large_style}" Text="{Binding Path=DataContext.BackText, FallbackValue=BACK, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:TitleDetailsUserControl}}}" />
               </Redbox:RoundedButton>
             </StackPanel>

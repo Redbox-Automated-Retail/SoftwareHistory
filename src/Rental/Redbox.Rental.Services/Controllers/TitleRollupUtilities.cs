@@ -27,6 +27,8 @@ public class TitleRollupUtilities
 
 		private string _titleRollupOverlayAddText;
 
+		private string _titleRollupOverlayBuyText;
+
 		private string _currencySymbol;
 
 		private string _outOfStockText;
@@ -78,6 +80,18 @@ public class TitleRollupUtilities
 					_titleRollupOverlayAddText = Resources.title_detail_format_rent_text;
 				}
 				return _titleRollupOverlayAddText;
+			}
+		}
+
+		public string Buy
+		{
+			get
+			{
+				if (_titleRollupOverlayBuyText == null)
+				{
+					_titleRollupOverlayBuyText = Resources.title_detail_format_buy_text;
+				}
+				return _titleRollupOverlayBuyText;
 			}
 		}
 
@@ -188,6 +202,7 @@ public class TitleRollupUtilities
 		titleRollupFormatButtonProperties.IsEnabled = false;
 		titleRollupFormatButtonProperties.TitleType = titleProduct.TitleType;
 		titleRollupFormatButtonProperties.ButtonText = buttonTextValues.Unavailable;
+		titleRollupFormatButtonProperties.StyleName = "button_light_large_primary_style";
 		string titleTypeText = GetTitleTypeText(titleProduct.TitleType);
 		decimal purchasePrice = titleProduct.PurchasePrice;
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
@@ -221,7 +236,7 @@ public class TitleRollupUtilities
 		}
 		else if (isPurchase)
 		{
-			titleRollupFormatButtonProperties.ButtonText = titleTypeText;
+			titleRollupFormatButtonProperties.ButtonText = string.Format(buttonTextValues.Buy, titleTypeText);
 			if (showPricing)
 			{
 				if (discountedPriceCalc == null)
@@ -243,6 +258,7 @@ public class TitleRollupUtilities
 			}
 			titleRollupFormatButtonProperties.Visibility = Visibility.Visible;
 			titleRollupFormatButtonProperties.IsEnabled = true;
+			titleRollupFormatButtonProperties.StyleName = "button_large_purchase_style";
 		}
 		else if (titleProduct.IsAvailable && (titleProduct.InStock || !showOutOfStock))
 		{

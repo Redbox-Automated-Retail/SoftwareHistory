@@ -57,6 +57,8 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 
 		public static readonly DependencyProperty TextClubEnabledProperty = DependencyProperty.Register("TextClubEnabled", typeof(bool), typeof(ProxyServiceLoginResultsModel), new FrameworkPropertyMetadata(false));
 
+		public static readonly DependencyProperty NumberOfSampleStoredPromosProperty = DependencyProperty.Register("NumberOfSampleStoredPromos", typeof(int), typeof(ProxyServiceLoginResultsModel), new FrameworkPropertyMetadata(0));
+
 		public static readonly DependencyProperty ActiveStarzSubscriptionPlanIdProperty = DependencyProperty.Register("ActiveStarzSubscriptionPlanId", typeof(string), typeof(ProxyServiceLoginResultsModel), new FrameworkPropertyMetadata(null));
 
 		public static readonly DependencyProperty RedboxPlusSubscriptionTierProperty = DependencyProperty.Register("RedboxPlusSubscriptionTier", typeof(string), typeof(ProxyServiceLoginResultsModel), new FrameworkPropertyMetadata(null));
@@ -156,6 +158,21 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 				base.Dispatcher.Invoke(delegate
 				{
 					SetValue(TextClubEnabledProperty, value);
+				});
+			}
+		}
+
+		public int NumberOfSampleStoredPromos
+		{
+			get
+			{
+				return base.Dispatcher.Invoke(() => (int)GetValue(NumberOfSampleStoredPromosProperty));
+			}
+			set
+			{
+				base.Dispatcher.Invoke(delegate
+				{
+					SetValue(NumberOfSampleStoredPromosProperty, value);
 				});
 			}
 		}
@@ -708,6 +725,15 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 		{
 			_model.TextClubEnabled = false;
 		}));
+		_testDataReadPropertyItems.Add(new TestDataReadPropertyItem("Login.NumberOfSampleStoredPromos", delegate(ReadTestDataValueResult result)
+		{
+			int result2 = 0;
+			int.TryParse(result.GetPropertyValue<string>(), out result2);
+			_model.NumberOfSampleStoredPromos = result2;
+		}, delegate
+		{
+			_model.NumberOfSampleStoredPromos = 0;
+		}));
 	}
 
 	private bool PopulateComboBoxes()
@@ -801,6 +827,7 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 			await _testDataUtility.WriteKCSTestDataProperty("Login.PromptForPerks", _model.PromptForPerks.ToString());
 			await _testDataUtility.WriteKCSTestDataProperty("Login.PromptForEarlyId", _model.PromptForEarlyId.ToString());
 			await _testDataUtility.WriteKCSTestDataProperty("Login.TextClubEnabled", _model.TextClubEnabled.ToString());
+			await _testDataUtility.WriteKCSTestDataProperty("Login.NumberOfSampleStoredPromos", _model.NumberOfSampleStoredPromos.ToString());
 			return true;
 		}
 		finally

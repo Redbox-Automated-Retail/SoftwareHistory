@@ -6,6 +6,7 @@ using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Personalization;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI;
 using Redbox.Rental.UI.Models;
@@ -70,7 +71,7 @@ public class PerksConfirmViewController : BaseViewController
 		viewModel.AcceptButtonText = Resources.perks_confirm_accept_button_text;
 		viewModel.BackButtonText = ((signUpFlowContext == SignUpFlowContext.AfterSwipe || signUpFlowContext == SignUpFlowContext.AfterSignIn) ? Resources.no_thanks_button : Resources.back_button);
 		viewModel.TermsButtonText = Resources.terms_link_text;
-		viewModel.LegalText = ((signUpFlowContext == SignUpFlowContext.AfterSwipe || signUpFlowContext == SignUpFlowContext.AfterSignIn) ? Resources.sign_in_legal_text : null);
+		viewModel.LegalText = ((signUpFlowContext != SignUpFlowContext.AfterSwipe && signUpFlowContext != SignUpFlowContext.AfterSignIn) ? null : (Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints ? Resources.sign_in_legal_text_updated : Resources.sign_in_legal_text));
 	}
 
 	private static void BackButtonClickedAction(Action cancelAction)

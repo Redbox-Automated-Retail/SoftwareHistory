@@ -60,8 +60,6 @@ public static class ConfigSetting
 
 	public const string SendJsonKioskAnalyticsToKioskDataService = "SendJsonKioskAnalyticsToKioskDataService";
 
-	public const string SendKioskAlertsToKioskServices = "SendKioskAlertsToKioskServices";
-
 	public const string SendKioskAlertsToKioskDataService = "SendKioskAlertsToKioskDataService";
 
 	public const string SendKioskStatisticsToKioskDataService = "SendKioskStatisticsToKioskDataService";
@@ -92,15 +90,9 @@ public static class ConfigSetting
 
 	public const string ForcedAirExchangerConfigured = "ForcedAirExchangerConfigured";
 
-	public const string SendAuditEventsToKioskServices = "SendAuditEventsToKioskServices";
-
 	public const string SendAuditEventsToKioskDataService = "SendAuditEventsToKioskDataService";
 
-	public const string SendKioskFunctionChecksToKioskServices = "SendKioskFunctionChecksToKioskServices";
-
 	public const string SendKioskFunctionChecksToKioskDataService = "SendKioskFunctionChecksToKioskDataService";
-
-	public const string SendKioskEventsToKioskServices = "SendKioskEventsToKioskServices";
 
 	public const string SendKioskEventsToKioskDataService = "SendKioskEventsToKioskDataService";
 
@@ -187,6 +179,8 @@ public static class ConfigSetting
 	public const string EnableRedboxPlusRedemption = "EnableRedboxPlusRedemption";
 
 	public const string ShowKioskClosingVSM = "ShowKioskClosingVSM";
+
+	public const string DisplayUpdatedPerksPoints = "DisplayUpdatedPerksPoints";
 
 	public const string ReturnVisitPromoOfferEnabled = "ReturnVisitPromoOfferEnabled";
 

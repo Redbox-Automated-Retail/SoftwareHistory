@@ -6,7 +6,6 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService.Data;
-using Redbox.Rental.Model.KioskHealth;
 
 namespace Redbox.Rental.Services.KioskClientService.Data;
 
@@ -24,51 +23,6 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 
 	private const string _apiPath = "api/data";
 
-	private bool? SendPingToTable
-	{
-		get
-		{
-			IKioskHealthConfiguration service = ServiceLocator.Instance.GetService<IKioskHealthConfiguration>();
-			return (service != null && !service.KioskServicesPingEnabled) ? true : false;
-		}
-	}
-
-	private bool? SendKioskAlertToTable
-	{
-		get
-		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			return (service != null && !service.SendKioskAlertsToKioskServices) ? true : false;
-		}
-	}
-
-	private bool? SendAuditToTable
-	{
-		get
-		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			return (service != null && !service.SendAuditEventsToKioskServices) ? true : false;
-		}
-	}
-
-	private bool? SendKioskEventsToTable
-	{
-		get
-		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			return (service != null && !service.SendKioskEventsToKioskServices) ? true : false;
-		}
-	}
-
-	private bool? SendKioskFunctionChecksToTable
-	{
-		get
-		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			return (service != null && !service.SendKioskFunctionChecksToKioskServices) ? true : false;
-		}
-	}
-
 	public async Task KioskVersions(int kioskId, IDictionary<string, string> versions)
 	{
 		try
@@ -80,8 +34,7 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				KioskId = kioskId,
 				CreatedOn = now.ToUniversalTime(),
 				CreatedOnLocal = now.ToString(),
-				Versions = versions,
-				SendToTable = SendPingToTable
+				Versions = versions
 			};
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskVersions - sending request: {ToPrettyJson(anon)}");
 			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(string.Format("{0}/{1}/kioskversions", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
@@ -113,8 +66,7 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				KioskId = kioskId,
 				CreatedOn = now.ToUniversalTime(),
 				CreatedOnLocal = now.ToString(),
-				Statistics = dictionary,
-				SendToTable = SendPingToTable
+				Statistics = dictionary
 			};
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskStatistics - sending request: {ToPrettyJson(anon)}");
 			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(string.Format("{0}/{1}/kioskstatistics", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
@@ -138,8 +90,7 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				KioskId = kioskId,
 				CreatedOn = now.ToUniversalTime(),
 				CreatedOnLocal = now.ToString(),
-				Properties = properties,
-				SendToTable = SendPingToTable
+				Properties = properties
 			};
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskProperties - sending request: {ToPrettyJson(anon)}");
 			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(string.Format("{0}/{1}/kioskproperties", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
@@ -168,8 +119,7 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				CreatedOnLocal = dateTime.ToString(),
 				AlertType = alertType,
 				SubAlertType = subAlertType,
-				AlertMessage = message,
-				SendToTable = SendKioskAlertToTable
+				AlertMessage = message
 			};
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskAlert - sending request: {ToPrettyJson(anon)}");
 			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/kioskalert", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
@@ -212,7 +162,7 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				UserName = userName.CheckNotAvailable(),
 				Message = message,
 				Source = source,
-				SendToTable = SendAuditToTable
+				SendToTable = true
 			};
 			LogHelper.Instance.Log($"KioskClientServiceData.AuditEvent - sending request: {ToPrettyJson(anon)}");
 			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/auditevent", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
@@ -266,8 +216,7 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				KioskId = kioskId,
 				CreatedOn = createdOn.ToUniversalTime(),
 				CreatedOnLocal = createdOn.ToString(),
-				KioskEventsData = JsonConvert.SerializeObject(kdsEvents).CompressString(),
-				SendToTable = SendKioskEventsToTable
+				KioskEventsData = JsonConvert.SerializeObject(kdsEvents).CompressString()
 			};
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskEvents - sending request: {ToPrettyJson(anon)}");
 			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/kioskevents", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
@@ -315,8 +264,7 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				VerticalSlot = verticalSlot,
 				CameraDriver = cameraDriver,
 				SnapDecode = snapDecode,
-				TouchScreenDriver = touchScreenDriver,
-				SendToTable = SendKioskFunctionChecksToTable
+				TouchScreenDriver = touchScreenDriver
 			};
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskFunctionCheck - sending request: {ToPrettyJson(anon)}");
 			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/kioskfunctioncheck", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);

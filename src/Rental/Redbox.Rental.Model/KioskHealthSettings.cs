@@ -75,6 +75,4 @@ public static class KioskHealthSettings
 	public const string PingInterval = "PingInterval";
 
 	public const string PingServiceEnabled = "PingServiceEnabled";
-
-	public const string KioskServicesPingEnabled = "KioskServicesPingEnabled";
 }

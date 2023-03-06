@@ -20,10 +20,10 @@
     </ResourceDictionary>
   </FrameworkElement.Resources>
   <Grid>
-    <local:MarketingScreenSaverUserControl DataContext="{Binding ScreenSaverModel}" Visibility="{Binding Path=DataContext.UseTestScreenSaver, ElementName=StartViewBase, Converter={StaticResource BoolToVisibility}}" IsAnimationOn="{Binding IsAnimationOn}" />
     <local:StartViewUserControl DataContext="{Binding DataContext, ElementName=StartViewBase}" Visibility="{Binding UseClassicStartView, Converter={StaticResource BoolToVisibility}}" />
     <local:StartViewTestUserControl DataContext="{Binding DataContext, ElementName=StartViewBase}" Visibility="{Binding UseTestStartView, Converter={StaticResource BoolToVisibility}}" />
     <local:StartViewRentAndBuyTestUserControl DataContext="{Binding DataContext, ElementName=StartViewBase}" Visibility="{Binding UseRentAndBuyTestStartView, Converter={StaticResource BoolToVisibility}}" />
     <local:StartViewScreenSaverUserControl DataContext="{Binding DataContext, ElementName=StartViewBase}" Visibility="{Binding UseScreenSaverStartView, Converter={StaticResource BoolToVisibility}}" />
+    <local:MarketingScreenSaverUserControl DataContext="{Binding ScreenSaverModel}" Visibility="{Binding Path=DataContext.UseTestScreenSaver, ElementName=StartViewBase, Converter={StaticResource BoolToVisibility}}" IsAnimationOn="{Binding IsAnimationOn}" />
   </Grid>
 </controls:TextToSpeechUserControl>

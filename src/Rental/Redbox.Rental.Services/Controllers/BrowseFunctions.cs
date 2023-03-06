@@ -1001,22 +1001,24 @@ public class BrowseFunctions
 		});
 	}
 
-	public static void ShowRentalPopupView(TitleRollupProduct titleRollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null)
+	public static void ShowRentalPopupView(TitleRollupProduct titleRollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null, bool showPurchaseButton = false)
 	{
 		if (Redbox.Rental.Services.Session.Session.Instance != null)
 		{
 			Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = true;
 		}
-		OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase, cancelAction, showMnp, discountedPriceCalc, IsRedboxPlusBrowseMode ? new int?(2) : ((int?)null)));
+		OrchestrationService.SetCurrentUICulture();
+		OrchestrationService.ViewShow("rental_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase, cancelAction, showMnp, discountedPriceCalc, IsRedboxPlusBrowseMode ? new int?(2) : ((int?)null), showPurchaseButton));
 	}
 
-	public static void ShowPurchasePopupView(TitleRollupProduct titleRollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null)
+	public static void ShowPurchasePopupView(TitleRollupProduct titleRollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null, bool showPurchaseButton = false)
 	{
 		if (Redbox.Rental.Services.Session.Session.Instance != null)
 		{
 			Redbox.Rental.Services.Session.Session.Instance.IsInAddProductFlow = true;
 		}
-		OrchestrationService.ViewShow("purchase_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase, cancelAction, showMnp, discountedPriceCalc));
+		OrchestrationService.SetCurrentUICulture();
+		OrchestrationService.ViewShow("purchase_popup_view", new RentalFormatSelectionViewParameter(titleRollupProduct, isPurchase, cancelAction, showMnp, discountedPriceCalc, null, showPurchaseButton));
 	}
 
 	public static void ShowRedboxPlusBrowseWarnings()

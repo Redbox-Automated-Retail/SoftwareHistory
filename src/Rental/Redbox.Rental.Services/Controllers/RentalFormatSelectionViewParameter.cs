@@ -17,7 +17,9 @@ public class RentalFormatSelectionViewParameter
 
 	public int? RedboxPlusBenefitId { get; set; }
 
-	public RentalFormatSelectionViewParameter(TitleRollupProduct rollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null, int? redboxPlusBenefitId = null)
+	public bool ShowPurchaseButton { get; set; }
+
+	public RentalFormatSelectionViewParameter(TitleRollupProduct rollupProduct, bool isPurchase, Action cancelAction = null, bool showMnp = true, Func<decimal, decimal> discountedPriceCalc = null, int? redboxPlusBenefitId = null, bool showPurchaseButton = false)
 	{
 		RollupProduct = rollupProduct;
 		IsPurchase = isPurchase;
@@ -25,5 +27,6 @@ public class RentalFormatSelectionViewParameter
 		ShowMnp = showMnp;
 		DiscountedPriceCalc = discountedPriceCalc;
 		RedboxPlusBenefitId = redboxPlusBenefitId;
+		ShowPurchaseButton = showPurchaseButton;
 	}
 }

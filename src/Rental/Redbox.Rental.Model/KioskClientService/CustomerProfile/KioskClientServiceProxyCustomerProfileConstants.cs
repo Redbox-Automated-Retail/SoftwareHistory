@@ -32,6 +32,8 @@ public class KioskClientServiceProxyCustomerProfileConstants
 
 			public const string PointsExpirationDate = "Login.PointsExpirationDate";
 
+			public const string NumberOfSampleStoredPromos = "Login.NumberOfSampleStoredPromos";
+
 			public const string PromptForPerks = "Login.PromptForPerks";
 
 			public const string PromptForEarlyId = "Login.PromptForEarlyId";
