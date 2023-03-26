@@ -143,18 +143,6 @@ public class ReservationFunctions
 		return new Dictionary<string, object> { { "success", true } }.ToLuaTable();
 	}
 
-	[KernelFunction(Name = "kernel.is_reservation_authorize_at_pickup")]
-	internal static bool IsReservationAuthorizeAtPickup(string referenceNumber)
-	{
-		return Redbox.Rental.Services.Controllers.ReservationFunctions.IsAuthorizeAtPickup(referenceNumber);
-	}
-
-	[KernelFunction(Name = "kernel.is_reservation_only_authorize_at_pickup")]
-	internal static bool IsReservationOnlyAuthorizeAtPickup()
-	{
-		return Redbox.Rental.Services.Controllers.ReservationFunctions.IsOnlyAuthorizeAtPickup();
-	}
-
 	[KernelFunction(Name = "kernel.initialize_expire_reservation_timer")]
 	internal static void CreateExpireReservationTimer()
 	{

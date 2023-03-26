@@ -7,12 +7,13 @@
   <Grid Name="MainControl">
     <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/ReturnVisitPromo_bkg.jpg" />
     <StackPanel VerticalAlignment="Top">
-      <TextBlock Width="960" Height="95" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,88,0,0" LineHeight="48" Style="{StaticResource font_montserrat_regular_40}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding TitleText, FallbackValue=Return complete!&#xA;Youve unlocked a special offer}" />
-      <TextBlock Width="960" Height="170" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,13,0,0" LineHeight="170" Style="{StaticResource font_montserrat_bold_170}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding AmountText, FallbackValue=$1.00 OFF}" />
-      <TextBlock Width="960" Height="64" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,7,0,0" LineHeight="36" Style="{StaticResource font_montserrat_bold_52}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding MessageText, FallbackValue=your next 1-night rental}" />
-      <TextBlock Width="960" Height="43" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,31,0,0" LineHeight="43" Style="{StaticResource font_montserrat_bold_38}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding PromoCodeText, FallbackValue=promo code: REDBOX}" />
-      <TextBlock Width="242" Height="40" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,14,0,0" LineHeight="24" Style="{StaticResource font_montserrat_regular_24}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding ExpirationText, FallbackValue=Expires MM/DD}" />
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,21,0,0">
+      <TextBlock TextAlignment="Center" Margin="0,83,0,0" Style="{StaticResource font_montserrat_regular_40}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding TitleText, FallbackValue=Return complete!&#xA;Youve unlocked a special offer}" />
+      <TextBlock TextAlignment="Center" Margin="0,-20,0,-35" Style="{StaticResource font_montserrat_bold_180}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding AmountText, FallbackValue=$1.00 OFF}" />
+      <TextBlock TextAlignment="Center" Margin="0,0,0,0" Style="{StaticResource font_montserrat_bold_52}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding MessageText, FallbackValue=your next 1-night rental}" />
+      <TextBlock TextAlignment="Center" Margin="0,16,0,0" Style="{StaticResource font_montserrat_light_24}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding EligibleText, FallbackValue=Eligible titles only}" />
+      <TextBlock TextAlignment="Center" Margin="0,26,0,0" Style="{StaticResource font_montserrat_bold_24}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding PromoCodeText, FallbackValue=promo code: REDBOX}" />
+      <TextBlock TextAlignment="Center" Margin="0,4,0,0" Style="{StaticResource font_montserrat_bold_24}" Foreground="#FFFFFFFF" TextWrapping="NoWrap" Text="{Binding ExpirationText, FallbackValue=expires MM/DD}" />
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,24,0,0">
         <Redbox:RoundedButton Width="242" Height="56" Style="{StaticResource black_with_white_border_button_style}" BackgroundColor="#1B0323" BackgroundGradientColor="#1B0323" BorderThickness="2" UsedDefaultCornerRadius="True" Margin="20,0,20,0" Command="{x:Static local:ReturnVisitPromoOfferViewUserControlCommands.CloseCommand}">
           <TextBlock Name="CloseButtonText" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=CloseButtonText, FallbackValue=CLOSE}" />
         </Redbox:RoundedButton>
@@ -20,7 +21,7 @@
           <TextBlock Name="UseNowButtonText" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource font_montserrat_extrabold_20}" Text="{Binding Path=UseNowButtonText, FallbackValue=USE NOW}" />
         </Redbox:RoundedButton>
       </StackPanel>
-      <TextBlock Width="945" Height="64" HorizontalAlignment="Center" Margin="0,44,0,0" LineHeight="16" Style="{StaticResource font_montserrat_extralight_11}" Foreground="#FFFFFFFF" TextWrapping="Wrap" Text="{Binding LegalText, FallbackValue='Valid for stated discount off the fee for an eligible 1-night disc or On Demand rental before the expiration date indicated above. 1 use; 1 code per transaction. Your payment card, necessary for rental, is charged the balance of the daily rental fee for a disc and the full daily rental fee for addl discs + tax (except where tax isnt charged) for the 1st rental day. Youre charged the full daily rental fee + tax (if appl.) for addl days you keep each disc. Cant be combined with other offers, applied to prior rentals, or redeemed for cash. May be cancelled/changed at any time. Void where prohibited.'}" />
+      <TextBlock Margin="60,45,60,0" LineHeight="16" Style="{StaticResource font_montserrat_extralight_11}" Foreground="#FFFFFFFF" TextWrapping="Wrap" Text="{Binding LegalText, FallbackValue='Valid for stated discount off the fee for an eligible 1-night disc or On Demand rental before the expiration date indicated above. 1 use; 1 code per transaction. Your payment card, necessary for rental, is charged the balance of the daily rental fee for a disc and the full daily rental fee for addl discs + tax (except where tax isnt charged) for the 1st rental day. Youre charged the full daily rental fee + tax (if appl.) for addl days you keep each disc. Cant be combined with other offers, applied to prior rentals, or redeemed for cash. May be cancelled/changed at any time. Void where prohibited.'}" />
     </StackPanel>
   </Grid>
 </local:ViewUserControl>

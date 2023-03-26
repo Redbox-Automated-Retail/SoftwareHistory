@@ -89,10 +89,6 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 
 	private bool _timerStarted;
 
-	private bool _isStartViewAdABTest;
-
-	private bool _isScreenSaverStartView;
-
 	private bool _isDarkMode;
 
 	private Color _imageBorderColor = Colors.Gray;
@@ -706,36 +702,13 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 
 	private void InitializeCarouselImageSizes()
 	{
-		_isStartViewAdABTest = (base.DataContext as CarouselTestModel)?.IsStartViewAdABTest ?? false;
-		_isScreenSaverStartView = (base.DataContext as CarouselTestModel)?.IsScreenSaverStartView ?? false;
 		_isDarkMode = (base.DataContext as CarouselTestModel)?.IsDarkMode ?? false;
-		if (_isScreenSaverStartView)
-		{
-			_carouselImageSmallSize = new Point(244.0, 366.0);
-			_carouselImageLargeSize = new Point(284.0, 426.0);
-			_carouselPositionCount = 9;
-			_carouselImagePadding = -58;
-			_verticalCenterOfCenterImage = 181.0;
-			_horizontalCenterOfCenterImage = 512.0;
-		}
-		else if (_isStartViewAdABTest)
-		{
-			_carouselImageSmallSize = new Point(232.0, 348.0);
-			_carouselImageLargeSize = new Point(262.0, 393.0);
-			_carouselPositionCount = 9;
-			_carouselImagePadding = -77;
-			_verticalCenterOfCenterImage = 161.0;
-			_horizontalCenterOfCenterImage = 512.0;
-		}
-		else
-		{
-			_carouselImageSmallSize = new Point(303.0, 454.0);
-			_carouselImageLargeSize = new Point(334.0, 501.0);
-			_carouselPositionCount = 7;
-			_carouselImagePadding = -100;
-			_verticalCenterOfCenterImage = 210.0;
-			_horizontalCenterOfCenterImage = 512.0;
-		}
+		_carouselImageSmallSize = new Point(244.0, 366.0);
+		_carouselImageLargeSize = new Point(284.0, 426.0);
+		_carouselPositionCount = 9;
+		_carouselImagePadding = -58;
+		_verticalCenterOfCenterImage = 181.0;
+		_horizontalCenterOfCenterImage = 512.0;
 		_imageBorderColor = (_isDarkMode ? Colors.White : Color.FromRgb(155, 153, 156));
 	}
 

@@ -344,7 +344,7 @@ public static class CardHelper
 			AssignCardType(unencryptedTrackData, ExtractFromSecure(unencryptedTrackData.AccountNumber));
 			if (unencryptedTrackData.CardType == CardType.RedboxGiftCard)
 			{
-				if (unencryptedTrackData.FirstName.ToUpper() != "REDBOX" && unencryptedTrackData.LastName.ToUpper() != "REDBOX")
+				if (unencryptedTrackData.FirstName?.ToUpper() != "REDBOX" && unencryptedTrackData.LastName?.ToUpper() != "REDBOX")
 				{
 					errors.Add(ErrorCodes.NewInvalidInvalidRedboxCardNameError());
 					return unencryptedTrackData;

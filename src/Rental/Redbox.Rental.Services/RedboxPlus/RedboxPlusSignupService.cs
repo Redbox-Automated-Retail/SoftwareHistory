@@ -1,6 +1,5 @@
 using System;
 using Redbox.Core;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Services.Controllers;

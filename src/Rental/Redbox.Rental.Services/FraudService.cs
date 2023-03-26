@@ -16,6 +16,7 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Model.Transaction;
 using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services;
@@ -297,7 +298,7 @@ public class FraudService : IFraudService
 
 	public void SendFraudAlert(string barcode, bool isFraud, string readTime, DateTime? returnDate = null)
 	{
-		ServiceLocator.Instance.GetService<IInventoryServices>()?.UpdateFraudStatus(KioskId.ToString(), barcode, isFraud.ToString(), readTime, null, null, null, returnDate);
+		ServiceLocator.Instance.GetService<IInventoryService>()?.UpdateFraudStatus(KioskId.ToString(), barcode, isFraud.ToString(), readTime, null, null, null, returnDate);
 	}
 
 	public void AddToFraudStatistics(string fraudBarcodes)

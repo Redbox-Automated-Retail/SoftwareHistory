@@ -29,6 +29,25 @@ public class KioskClientServiceTransactionConstants
 			public const string ConfirmationStatus = "Authorize.ConfirmationStatus";
 		}
 
+		public class GCAuth
+		{
+			public const string LiveCall = "GCAuth.LiveCall";
+
+			public const string SimulateCommunicationFailure = "GCAuth.SimulateCommunicationFailure";
+
+			public const string ErrorCode = "GCAuth.ErrorCode";
+
+			public const string GCResponseType = "GCAuth.GCResponseType";
+
+			public const string Exists = "GCAuth.Exists";
+
+			public const string GCStatusType = "GCAuth.GCStatusType";
+
+			public const string Balance = "GCAuth.Balance";
+
+			public const string MaxDiscs = "GCAuth.MaxDiscs";
+		}
+
 		public const string CategoryName = "TransactionService";
 	}
 }

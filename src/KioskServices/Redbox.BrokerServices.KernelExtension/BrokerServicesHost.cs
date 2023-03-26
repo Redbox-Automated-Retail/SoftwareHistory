@@ -56,7 +56,7 @@ public class BrokerServicesHost : IKernelExtensionHost, IDisposable
 		if (service != null)
 		{
 			LogHelper.Instance.Log("...Register Broker Services kernel functions.");
-			service.RegisterKernelFunctions(typeof(IRemoteServiceResultExtensions).Assembly, "Broker Services");
+			service.RegisterKernelFunctions(typeof(KernelRegistrationObject).Assembly, "Broker Services");
 		}
 		LogHelper.Instance.Log("...Reset Reservation Services Proxy.");
 		ReservationServicesProxy.Instance.Reset();

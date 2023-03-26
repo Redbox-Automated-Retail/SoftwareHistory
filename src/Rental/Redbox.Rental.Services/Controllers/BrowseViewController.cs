@@ -1302,7 +1302,7 @@ public class BrowseViewController : BaseViewController
 					Name = $"product_{num + 1}"
 				});
 			}
-			else if (((Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "C" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "E" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "F" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "H") && BrowseState.BrowseMode == BrowseViewFilter.All && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games)) || (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games)))
+			else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
 			{
 				browseProductControl.BrowseControls.Add(new DisplayProductWithPriceBrowseUserControl
 				{
@@ -1989,10 +1989,8 @@ public class BrowseViewController : BaseViewController
 				string arg2 = ((titleProduct is MDVProduct mDVProduct) ? $" ({mDVProduct.TitleProducts.Count} {Resources.multi_disc_vend_discs_text})" : null);
 				string header = $"{productDisplayName}{arg}{arg2}";
 				DisplayProductModel displayProductModel;
-				if ((Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "C" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "E" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "F" || Redbox.Rental.Services.Configuration.Configuration.Instance.StartViewRentAndBuyABTestVersion == "H") && BrowseState.BrowseMode == BrowseViewFilter.All && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
+				if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
 				{
-					string rentalPriceText = GetRentalPriceText(titleProduct);
-					rentalPriceText = (string.IsNullOrEmpty(rentalPriceText) ? "" : $"{Resources.browse_view_rent_and_buy_rent_text}: {rentalPriceText}");
 					string purchasePriceText = BrowseFunctions.GetPurchasePriceText(titleProduct);
 					purchasePriceText = (string.IsNullOrEmpty(purchasePriceText) ? "" : $"{Resources.browse_view_rent_and_buy_purchase_text}: {purchasePriceText}");
 					displayProductModel = new DisplayProductWithPriceModel
@@ -2003,22 +2001,7 @@ public class BrowseViewController : BaseViewController
 						LockAspectRatio = true,
 						Header = header,
 						DisplayProductModelConstants = displayProductModelConstants,
-						PriceText = $"{rentalPriceText}\n{purchasePriceText}"
-					};
-				}
-				else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
-				{
-					string purchasePriceText2 = BrowseFunctions.GetPurchasePriceText(titleProduct);
-					purchasePriceText2 = (string.IsNullOrEmpty(purchasePriceText2) ? "" : $"{Resources.browse_view_rent_and_buy_purchase_text}: {purchasePriceText2}");
-					displayProductModel = new DisplayProductWithPriceModel
-					{
-						Name = kioskProduct.ProductName,
-						Data = kioskProduct,
-						Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
-						LockAspectRatio = true,
-						Header = header,
-						DisplayProductModelConstants = displayProductModelConstants,
-						PriceText = $"{purchasePriceText2}"
+						PriceText = $"{purchasePriceText}"
 					};
 				}
 				else

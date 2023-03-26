@@ -12,12 +12,6 @@ namespace Redbox.Rental.Kernel;
 
 public class CheckoutFunctions
 {
-	[KernelFunction(Name = "kernel.get_customer_has_profile")]
-	internal static bool GetCustomerHasProfile()
-	{
-		return Redbox.Rental.Services.Controllers.CheckoutFunctions.GetMostRecentCardReadAttemptAuthorizeResult()?.HasProfile ?? false;
-	}
-
 	[KernelFunction(Name = "kernel.show_reservation_details_view")]
 	internal static void ShowReservationDetailsView(Action continueReservationPickupCallback)
 	{

@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.KioskServices.KernelExtension;
 

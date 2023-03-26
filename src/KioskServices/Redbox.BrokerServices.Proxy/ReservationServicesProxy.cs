@@ -1,14 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.Request;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Services.KioskBrokerServices.KioskShared.DomainObjects;
 
@@ -79,97 +79,6 @@ public class ReservationServicesProxy : IReservationServices
 	public void Reset()
 	{
 		BrokerServicesProxy.Instance.Reset();
-	}
-
-	public void Pickup(string storeNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted, RemoteServiceCallback callback, string sessionId)
-	{
-		IMacroService service = ServiceLocator.Instance.GetService<IMacroService>();
-		IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
-		if (session == null)
-		{
-			LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
-			return;
-		}
-		var pickupRequest = new
-		{
-			MessageType = "Pickup",
-			MessageId = Guid.NewGuid(),
-			EngineVersion = service["EngineVersion"],
-			BundleVersion = service["ProductVersion"],
-			Email = emailAddress,
-			KioskId = int.Parse(storeNumber),
-			ReferenceNumber = referenceNumber,
-			Blocklisted = isBlocklisted,
-			PickupDateTime = DateTime.Now,
-			Items = new Dictionary<string, object>(),
-			CreditCard = ProxyMessageHelper.GetCreditCardData(session, includeTrack2: true)
-		};
-		foreach (KeyValuePair<string, ReadOnlyCollection<IProductItem>> pickupResult in pickupResults)
-		{
-			var anon = new
-			{
-				Items = new List<object>()
-			};
-			foreach (IProductItem item2 in pickupResult.Value)
-			{
-				var item = new
-				{
-					Barcode = item2.Barcode,
-					MultiDisc = item2.MultiDisc,
-					VendStatus = item2.Status.ToVendStatus()
-				};
-				anon.Items.Add(item);
-			}
-			pickupRequest.Items[pickupResult.Key] = anon;
-		}
-		ThreadPool.QueueUserWorkItem(delegate
-		{
-			ErrorList errorList = null;
-			try
-			{
-				Interlocked.Increment(ref m_working);
-				IObjectCacheService service2 = ServiceLocator.Instance.GetService<IObjectCacheService>();
-				if (service2 != null)
-				{
-					IServiceProxy serviceProxy = service2.GetObject<IServiceProxy>("Kiosk Services Proxy");
-					LogHelper.Instance.Log("Enqueue call to remote IReservationServices.Pickup, URL: {0}", serviceProxy.GetProperty<string>("Url"));
-				}
-				errorList = ServiceLocator.Instance.GetService<IQueueService>().Enqueue(200, "Pickup", pickupRequest);
-			}
-			catch (Exception e)
-			{
-				LogHelper.Instance.Log("An unhandled exception was raised in ReservationServicesProxy.Pickup.", e);
-			}
-			finally
-			{
-				try
-				{
-					ICallbackService service3 = ServiceLocator.Instance.GetService<ICallbackService>();
-					if (callback != null && service3 != null)
-					{
-						RemoteServiceResult remoteServiceResult = new RemoteServiceResult
-						{
-							Success = true
-						};
-						if (errorList != null)
-						{
-							remoteServiceResult.Errors.AddRange(errorList);
-							remoteServiceResult.Success = !remoteServiceResult.Errors.ContainsError();
-						}
-						service3.EnqueueCallback(new RemoteServiceCallbackEntry
-						{
-							Callback = callback,
-							Result = remoteServiceResult,
-							Message = "Invoking callback from ReservationServicesProxy.Pickup."
-						});
-					}
-				}
-				finally
-				{
-					Interlocked.Decrement(ref m_working);
-				}
-			}
-		});
 	}
 
 	public void Expire(string storeNumber, long referenceNumber, RemoteServiceCallback callback)
@@ -514,7 +423,7 @@ public class ReservationServicesProxy : IReservationServices
 		return new LocalReservationResult();
 	}
 
-	public ICancelReservationResult NewCancelReservationResult()
+	public ILocalCancelReservationResult NewCancelReservationResult()
 	{
 		return new LocalCancelReservationResult();
 	}
@@ -528,7 +437,7 @@ public class ReservationServicesProxy : IReservationServices
 		return RequestCallback3(cardId, email, referenceNumber, reserveDate, productsToReserve, appliedCredit, appliedHiveOnlinePromotion, appliedTitleMarketing, customerNumber, discountedSubTotal, grandTotal, historyTitleIDs, hiveOnlinePromotionDiscount, isMultiNightPricing, numberOfCreditsRemaining, promoCode, subTotal, tax, reservationTitles, isGc, gcIds, ccIds, taxRate, zip, isMdv, isLoyaltyRedemption, defaultServiceFee, actualServiceFee, authorizeAtPickup, cardHashData, alternateCardHashes);
 	}
 
-	public ICancelReservationResult CancelReservation(long referenceNumber)
+	public ILocalCancelReservationResult CancelReservation(long referenceNumber)
 	{
 		return CancelRequestCallback(referenceNumber);
 	}

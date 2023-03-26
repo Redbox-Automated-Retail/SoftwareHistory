@@ -32,22 +32,10 @@ public static class ApplicationStartupFunctions
 		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName))?.Resume();
 	}
 
-	[KernelFunction(Name = "kernel.start_idle_timer")]
-	public static void StartIdleTimer(string idleTimerName)
-	{
-		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName))?.Start();
-	}
-
 	[KernelFunction(Name = "kernel.stop_idle_timer")]
 	public static void StopIdleTimer(string idleTimerName)
 	{
 		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName))?.Stop();
-	}
-
-	[KernelFunction(Name = "kernel.is_collections_popup_enabled")]
-	public static bool IsCollectionsPopupEnabled()
-	{
-		return OrchestrationService.IsCollectionsPopupEnabled();
 	}
 
 	[KernelFunction(Name = "kernel.is_collections_popup_timer_enabled")]
@@ -60,12 +48,6 @@ public static class ApplicationStartupFunctions
 	public static int GetIdleTimerTimeout()
 	{
 		return OrchestrationService.GetIdleTimerTimeout();
-	}
-
-	[KernelFunction(Name = "kernel.reset_application_idle_timer_timeout")]
-	public static void ResetApplicationIdleTimerTimeout()
-	{
-		OrchestrationService.ResetApplicationIdleTimerTimeout();
 	}
 
 	[KernelFunction(Name = "kernel.start_the_rental_application")]

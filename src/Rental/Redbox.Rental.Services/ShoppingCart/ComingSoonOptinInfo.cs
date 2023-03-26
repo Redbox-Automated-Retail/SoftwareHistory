@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.Rental.Services.ShoppingCart;

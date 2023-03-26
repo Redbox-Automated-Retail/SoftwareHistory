@@ -5,6 +5,7 @@ using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Kernel;
 using Redbox.KioskServices.Proxy;
 using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.KioskServices.KernelExtension;
 
@@ -28,20 +29,6 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		if (!flag)
 		{
 			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH669", "Bundle Switch Error", "Can not switch while marketing service is performing work."));
-			return false;
-		}
-		flag = ServiceLocator.Instance.GetService<IInventoryServices>().CanSwitch();
-		LogHelper.Instance.Log("KioskService -> InventoryService CanSwitch: {0}", flag);
-		if (!flag)
-		{
-			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH668", "Bundle Switch Error", "Can not switch while inventory service is performing work."));
-			return false;
-		}
-		flag = MerchantServicesProxy.Instance.CanSwitch();
-		LogHelper.Instance.Log("KioskService -> MerchantService CanSwitch: {0}", flag);
-		if (!flag)
-		{
-			errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("KSH667", "Bundle Switch Error", "Can not switch while merchant service is performing work."));
 			return false;
 		}
 		flag = ServiceLocator.Instance.GetService<IStoreServices>().CanSwitch();
@@ -88,8 +75,6 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		ServiceLocator.Instance.GetService<IObjectCacheService>()?.SetObject("Kiosk Services Proxy", new ServiceProxy());
 		ServiceLocator.Instance.AddStoreServices();
 		ServiceLocator.Instance.AddService(typeof(IHealthServices), HealthServicesProxy.Instance);
-		ServiceLocator.Instance.AddService(typeof(IMerchantServices), MerchantServicesProxy.Instance);
-		ServiceLocator.Instance.AddInventoryServices();
 		ServiceLocator.Instance.AddService(typeof(IPromotionServices), PromotionServices.Instance);
 		ServiceLocator.Instance.AddAuthenticationServices();
 		ServiceLocator.Instance.AddMarketingServices();
@@ -109,12 +94,8 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 			service.AddPreferencePage("KioskServices_General", "Store", "Kiosk Services/General", PreferencePageTarget.LocalSystem, new GeneralPreferencePage());
 			service.AddPreferencePage("KioskServices_AuthenticationServices", "Remote Services\\Authentication Services", "Kiosk Services/Authentication Services", PreferencePageTarget.LocalSystem, new AuthSvcsPreferencePage());
 			service.AddPreferencePage("KioskServices_HealthServices", "Remote Services\\Health Services", "Kiosk Services/Health Services", PreferencePageTarget.LocalSystem, new HealthServicesPreferencePage());
-			service.AddPreferencePage("KioskServices_InventoryServices", "Remote Services\\Inventory Services", "Kiosk Services/Inventory Services", PreferencePageTarget.LocalSystem, new InventoryServicesPreferencePage());
-			service.AddPreferencePage("KioskServices_MerchantServices", "Remote Services\\Merchant Services", "Kiosk Services/Merchant Services", PreferencePageTarget.LocalSystem, new MerchantServicesPreferencePage());
 			service.AddPreferencePage("KioskServices_PromotionServices", "Remote Services\\Promotion Services", "Kiosk Services/Promotion Services", PreferencePageTarget.LocalSystem, new PromotionServicesPreferencePage());
 			service.AddPreferencePage("KoiskServices_MarketingOptinServices", "Remote Services\\Marketing Optin Services", "Kiosk Services/Marketing Optin Services", PreferencePageTarget.LocalSystem, new MarketingOptinPreferencesPage());
-			service.AddPreferencePage("KoiskServices_ReservationAuthServices", "Remote Services\\Reservation Auth Services", "Kiosk Services/Reservation Auth Services", PreferencePageTarget.LocalSystem, new ReservationAuthPreferencePage());
-			service.AddPreferencePage("KioskServices_GiftCardAuth", "Remote Services\\Merchant Services", "Kiosk Services/Gift Card Auth", PreferencePageTarget.LocalSystem, new GiftCardAuthPreferencePage());
 			service.AddPreferencePage("KioskServices_LoyaltyServices", "Remote Services\\Loyalty Services", "Kiosk Services/Loyalty Services", PreferencePageTarget.LocalSystem, new LoyaltyServicesPreferencePage());
 			service.AddPreferencePage("KioskServices_PersonalizationGeneral", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/General", PreferencePageTarget.LocalSystem, new PersonalizationGeneralPreferencePage());
 			service.AddPreferencePage("KioskServices_PersonalizationUpdateAccount", "Remote Services\\Personalization Services", "Kiosk Services/Personalization Services/Update Account", PreferencePageTarget.LocalSystem, new PersonalizationUpdateAccountPreferencePage());
@@ -132,13 +113,12 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 		if (service != null)
 		{
 			LogHelper.Instance.Log("...Register Kiosk Services kernel functions.");
-			service.RegisterKernelFunctions(typeof(IRemoteServiceResultExtensions).Assembly, "Kiosk Services");
+			service.RegisterKernelFunctions(typeof(KernelRegistrationObject).Assembly, "Kiosk Services");
 		}
 		LogHelper.Instance.Log("...Reset Kiosk Services Proxy.");
 		ServiceLocator.Instance.GetService<IAuthenticationServices>().Reset();
 		ServiceLocator.Instance.GetService<IPromotionServices>().Reset();
 		ServiceLocator.Instance.GetService<IMarketingServices>().Reset();
-		ServiceLocator.Instance.GetService<IInventoryServices>().Reset();
 		return result;
 	}
 
@@ -176,7 +156,6 @@ public class KioskServicesHost : IKernelExtensionHost, IDisposable
 				_defaultMessageProcessorService = null;
 			}
 		}
-		ServiceLocator.Instance.GetService<IInventoryServices>().Deactivate();
 		ServiceLocator.Instance.GetService<IHealthServices>().StopPingTimer();
 		return result;
 	}

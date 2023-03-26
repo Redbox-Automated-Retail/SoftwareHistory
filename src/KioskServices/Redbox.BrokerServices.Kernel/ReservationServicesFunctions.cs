@@ -1,6 +1,7 @@
 using Redbox.BrokerServices.Proxy.ComponentModel;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService;

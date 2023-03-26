@@ -9,7 +9,6 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
@@ -18,6 +17,7 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Model.Transaction;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Personalization;
 using Redbox.Rental.Services.Session;
@@ -80,8 +80,6 @@ public class CheckoutFunctions
 
 		public const string OfflineSellThruNewRefused = "OfflineSellThruNewRefused";
 
-		public const string OfflineCardBlocklisted = "OfflineCardBlocklisted";
-
 		public const string NewCustomerRentalLimitExceeded = "NewCustomerRentalLimitExceeded";
 
 		public const string Error = "Error";
@@ -95,6 +93,8 @@ public class CheckoutFunctions
 		public const string CardCPDifferentFromSubCP = "CardCPDifferentFromSubCP";
 
 		public const string SubscriptionNotProcessedDueToAuthFailure = "SubscriptionNotProcessedDueToAuthFailure";
+
+		public const string OfflineSwipeDeclined = "OfflineSwipeDeclined";
 	}
 
 	private static bool PerksPassEnabled
@@ -281,14 +281,7 @@ public class CheckoutFunctions
 
 	private static void CallReconcile(string sessionId, string customerProfileNumber, RemoteServiceCallback callback)
 	{
-		if (ServiceLocator.Instance.GetService<IConfiguration>().SendReconcileToKioskClientService)
-		{
-			ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.Reconcile(sessionId, customerProfileNumber, callback);
-		}
-		else
-		{
-			ServiceLocator.Instance.GetService<IMerchantServices>()?.Reconcile(sessionId, customerProfileNumber, callback);
-		}
+		ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.Reconcile(sessionId, customerProfileNumber, callback);
 	}
 
 	private static void EndShoppingCartSession()
@@ -372,10 +365,6 @@ public class CheckoutFunctions
 					};
 					MessagePopupViewController.ShowGiftCardNotEnabledMessage(action, action);
 				}
-				else if (service2 != null && service2.ShowAuthChangeMessage)
-				{
-					Preauthorize();
-				}
 				else
 				{
 					SetPreauthorizeValues(rentalShoppingCart.ShoppingSessionId, authAcceptFlag: false, 0, 0m, skipAuthRule: true);
@@ -412,41 +401,6 @@ public class CheckoutFunctions
 		Authorize(AuthorizeType.Authorize);
 	}
 
-	public static bool IsCurrentCardOnOfflineBadCardList()
-	{
-		bool result = false;
-		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-		ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
-		if (service != null && trackData != null && trackData.HasValidData())
-		{
-			string cardHashId = trackData.CardHashId;
-			result = service.IsAccountOnOfflineBadCardList(cardHashId);
-		}
-		return result;
-	}
-
-	public static void UpdateAccountOnOfflineBadCardList()
-	{
-		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-		ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
-		if (service != null && trackData != null && trackData.HasValidData())
-		{
-			string cardHashId = trackData.CardHashId;
-			service?.UpdateAccountOnOfflineBadCardList(cardHashId);
-		}
-	}
-
-	public static void RemoveAccountFromOfflineBadCardList()
-	{
-		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-		ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
-		if (service != null && trackData != null && trackData.HasValidData())
-		{
-			string cardHashId = trackData.CardHashId;
-			service?.RemoveAccountFromOfflineBadCardList(cardHashId);
-		}
-	}
-
 	public static void ProcessPrimaryAuthorizeError(IAuthorizeResult authorizeResult, IRentalShoppingCart rentalShoppingCart)
 	{
 		if (authorizeResult == null)
@@ -466,20 +420,6 @@ public class CheckoutFunctions
 		string response = authorizeResult.Response;
 		Action action = ShoppingCartViewFunctions.ViewShoppingCart;
 		OrchestrationService.SetCurrentUICulture();
-		if (ServiceLocator.Instance.GetService<IApplicationState>().EnableOfflineBadCardList && authorizeResult.IsOnline && !authorizeResult.StandAlone)
-		{
-			switch (response)
-			{
-			case "GameLimitExceeded":
-			case "RentalLimitExceeded":
-			case "NewCustomerRentalLimitExceeded":
-			case "Declined":
-			case "CustomerDisabled":
-			case "CreditCardError":
-				UpdateAccountOnOfflineBadCardList();
-				break;
-			}
-		}
 		string empty = string.Empty;
 		string empty2 = string.Empty;
 		string cultureSpecificButtonText = Resources.okay.ToUpper();
@@ -573,7 +513,7 @@ public class CheckoutFunctions
 		case "CodeNotValidAtThisLocation":
 			rentalShoppingCart.ClearPromoCode();
 			text = "promoInvalidLocation";
-			empty = Resources.promo_code_error_title;
+			empty = Resources.promo_code_not_valid_location_title;
 			empty2 = Resources.promo_code_not_valid_location_message;
 			break;
 		case "NewCustomerOnly":
@@ -708,12 +648,9 @@ public class CheckoutFunctions
 		rentalShoppingCart.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.Action == RentalShoppingCartItemAction.rental && x.TitleFamily == TitleFamily.Movies);
 		rentalShoppingCart.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.Action == RentalShoppingCartItemAction.purchase && x.TitleFamily == TitleFamily.Movies);
 		int count = rentalShoppingCart.Count;
-		IShoppingSession session2 = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(rentalShoppingCart?.ShoppingSessionId.ToString());
-		bool flag = OrchestrationService.IsCardBlocklisted();
-		session2?.ShoppingCart?.SetBlocklisted(flag);
-		if (flag)
+		if (session != null && session.TrackData?.CardSourceType == CardSourceType.Swipe)
 		{
-			response = "OfflineCardBlocklisted";
+			response = "OfflineSwipeDeclined";
 		}
 		else if (session?.TrackData != null && session.TrackData.IsInTechnicalFallback && session.TrackData.CardSourceType == CardSourceType.Swipe && session.TrackData.CardHasChip)
 		{
@@ -754,10 +691,6 @@ public class CheckoutFunctions
 		else if (num > 0)
 		{
 			response = "OfflineSubscriptionDeclined";
-		}
-		else if (ApplicationState.Instance.EnableOfflineBadCardList && !ApplicationState.Instance.IsStandAlone && IsCurrentCardOnOfflineBadCardList())
-		{
-			response = "Error";
 		}
 		else
 		{
@@ -854,36 +787,6 @@ public class CheckoutFunctions
 		(ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(shoppingSessionId.ToString()))?.ShoppingCart?.SetPostalCode(postalCode);
 	}
 
-	public static void Preauthorize()
-	{
-		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-		IRentalShoppingCart rentalShoppingCart = service?.CurrentRentalShoppingCart;
-		if (rentalShoppingCart == null)
-		{
-			return;
-		}
-		LogHelper.Instance.Log($"PreAuth for Session ID: {rentalShoppingCart.ShoppingSessionId}");
-		ISession instance = Redbox.Rental.Services.Session.Session.Instance;
-		if (instance != null && instance.UserInfo?.PostalCode != null)
-		{
-			SetShoppingSessionPostalCode(rentalShoppingCart.ShoppingSessionId, instance?.UserInfo?.PostalCode);
-		}
-		service?.AssignBarcodesToVend(rentalShoppingCart);
-		foreach (IRentalShoppingCartTitleItem titleItem in rentalShoppingCart.TitleItems)
-		{
-			LogHelper.Instance.Log($"Session add Line Item: {titleItem?.Barcode}  for  {titleItem?.Action} Price: {titleItem.Price} {titleItem?.TitleFamily}-{titleItem?.TitleType} {titleItem?.SourceType} ");
-		}
-		OrchestrationService.SetCurrentUICulture();
-		OrchestrationService.ViewShow("general_message_view", new GeneralMessageViewModel
-		{
-			DisableIdleTimerOnEnter = false,
-			EnableIdleTimerOnLeave = false,
-			MessageText = Resources.authorization_message
-		});
-		string customerProfileNumber = instance?.PersonalizationSession?.CustomerProfileNumber;
-		ServiceLocator.Instance.GetService<IMerchantServices>()?.PreAuth(rentalShoppingCart.ShoppingSessionId, customerProfileNumber, OnPreauthorizeComplete);
-	}
-
 	private static void SetPreauthorizeValues(Guid sessionId, bool authAcceptFlag, int authRuleId, decimal authAmount, bool skipAuthRule)
 	{
 		ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId.ToString())?.ShoppingCart.SetVariableAuthValues(authAcceptFlag, authRuleId, authAmount, skipAuthRule);
@@ -973,17 +876,7 @@ public class CheckoutFunctions
 				rentalShoppingCart.ClearPromoCode();
 			}
 			string customerProfileNumber = instance?.PersonalizationSession?.CustomerProfileNumber;
-			IMerchantServices service2 = ServiceLocator.Instance.GetService<IMerchantServices>();
-			IKioskClientService service3 = ServiceLocator.Instance.GetService<IKioskClientService>();
-			IConfiguration service4 = ServiceLocator.Instance.GetService<IConfiguration>();
-			if ((authorizeType == AuthorizeType.Authorize && (service4.SendAuthorizeToKioskClientService || rentalShoppingCart.SubscriptionItems.Count > 0)) || (authorizeType == AuthorizeType.GiftCardAuthorize && service4.SendGiftCardAuthorizeToKioskClientService))
-			{
-				service3.Transaction.Authorize(rentalShoppingCart.ShoppingSessionId, authorizeType, customerProfileNumber, OnAuthorizeComplete);
-			}
-			else
-			{
-				service2?.Authorize(rentalShoppingCart.ShoppingSessionId, authorizeType, customerProfileNumber, OnAuthorizeComplete);
-			}
+			ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.Authorize(rentalShoppingCart.ShoppingSessionId, authorizeType, customerProfileNumber, OnAuthorizeComplete);
 		}
 		else
 		{
@@ -1092,7 +985,7 @@ public class CheckoutFunctions
 					Redbox.Rental.Services.Session.Session.Instance.IsVendProcessStarted = false;
 					OrchestrationService.InvokePrepositionVendAbortCallback();
 				}
-				if (authorizeResult.Response == "OfflineCardBlocklisted")
+				if (authorizeResult.Response == "OfflineSwipeDeclined")
 				{
 					if (rentalShoppingCart != null)
 					{
@@ -1108,7 +1001,7 @@ public class CheckoutFunctions
 						}
 						Action action = delegate
 						{
-							viewService.UnwindToSafe("shopping_cart_view", discard: false, "blocklisted complete");
+							viewService.UnwindToSafe("shopping_cart_view", discard: false, "offline error complete");
 						};
 						MessagePopupViewController.ShowAuthErrorMessage(null, Resources.authorization_failure_message, Resources.continue_button, action, action);
 					}
@@ -1124,11 +1017,6 @@ public class CheckoutFunctions
 	private static void ProcessAuthorizeSuccessResult(IAuthorizeResult authorizeResult)
 	{
 		LogHelper.Instance.Log("ProcessAuthorizeSuccessResult");
-		ApplicationState instance = ApplicationState.Instance;
-		if (instance != null && instance.EnableOfflineBadCardList && authorizeResult != null && authorizeResult.IsOnline && !authorizeResult.StandAlone)
-		{
-			RemoveAccountFromOfflineBadCardList();
-		}
 		OrchestrationService.StopIdleTimer("idle_timer");
 		ShowNonCriticalAuthorizeErrorIfNeeded(authorizeResult, continueAction);
 		void continueAction()

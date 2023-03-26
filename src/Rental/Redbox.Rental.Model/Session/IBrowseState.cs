@@ -26,6 +26,8 @@ public interface IBrowseState
 
 	bool ShoppingCartFullMessagesShown { get; set; }
 
+	bool ReturnVisitIneligibleCartWarningShown { get; set; }
+
 	ISignupFlowState SignupFlowState { get; }
 
 	int PaddleClickCount { get; set; }

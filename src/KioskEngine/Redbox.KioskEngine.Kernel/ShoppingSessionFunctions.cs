@@ -61,18 +61,6 @@ internal static class ShoppingSessionFunctions
 		ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId)?.AddEvent(Enum<ShoppingSessionEventType>.ParseIgnoringCase(type, ShoppingSessionEventType.Commit), description);
 	}
 
-	[KernelFunction(Name = "kernel.session_get_is_blocklisted")]
-	internal static bool GetIsBlocklisted(string sessionId)
-	{
-		bool result = false;
-		IShoppingSession shoppingSession = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(sessionId);
-		if (shoppingSession != null)
-		{
-			result = shoppingSession.ShoppingCart.Blocklisted;
-		}
-		return result;
-	}
-
 	[KernelFunction(Name = "kernel.sessionsetpostalcode2")]
 	internal static void SetPostalCode(string sessionId, string postalCode)
 	{

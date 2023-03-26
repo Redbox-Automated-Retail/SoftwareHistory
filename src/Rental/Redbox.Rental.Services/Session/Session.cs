@@ -6,7 +6,6 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment.CardDataReader;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Reservation;
 using Redbox.Rental.Model.Session;

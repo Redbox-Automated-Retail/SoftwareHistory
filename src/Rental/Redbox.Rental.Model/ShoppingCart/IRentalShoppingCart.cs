@@ -85,6 +85,8 @@ public interface IRentalShoppingCart
 
 	bool HasSubscriptionItem(SubscriptionType subscriptionType);
 
+	bool HasItemAction(RentalShoppingCartItemAction action);
+
 	bool HasItemWithAction(long productId, RentalShoppingCartItemAction action);
 
 	bool HasMultiDiscItem();

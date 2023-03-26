@@ -62,8 +62,9 @@ public class ReturnFunctions
 		DateTime.TryParse(Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionExpirationDate, out var result);
 		OrchestrationService.ViewShow("return_visit_promo_offer_view", new ReturnVisitPromoOfferViewParameters
 		{
-			Name = Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionName,
-			Price = Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionPrice,
+			PromoCode = Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionName,
+			PromoType = ReturnPromoType.AmountOff,
+			Amount = Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionPrice,
 			ExpirationDate = result,
 			CloseAction = closeAction
 		});
@@ -93,17 +94,22 @@ public class ReturnFunctions
 	{
 		(ServiceLocator.Instance.GetService<IEngineApplication>() as ApplicationContext).MainForm.Invoke((Action)delegate
 		{
-			if (promoInfo != null && promoInfo.Success && promoInfo.IsLastDisc && promoInfo.Promo != null && DateTime.Now <= promoInfo.Promo.ExpirationDate && !string.IsNullOrEmpty(promoInfo.Promo.PromoCode) && promoInfo.Promo.Amount > 0m)
+			if (promoInfo != null && promoInfo.Success && promoInfo.IsLastDisc && promoInfo.Promo != null && DateTime.Now <= promoInfo.Promo.ExpirationDate && !string.IsNullOrEmpty(promoInfo.Promo.PromoCode))
 			{
-				OrchestrationService.ViewShow("return_visit_promo_offer_view", new ReturnVisitPromoOfferViewParameters
+				if (promoInfo.Promo.PromoType == ReturnPromoType.AmountOff)
 				{
-					Name = promoInfo.Promo.PromoCode,
-					Price = promoInfo.Promo.Amount,
-					ExpirationDate = promoInfo.Promo.ExpirationDate,
-					CloseAction = closeAction
-				});
+					decimal? amount = promoInfo.Promo.Amount;
+					if (amount.GetValueOrDefault() > 0m && amount.HasValue)
+					{
+						goto IL_00cd;
+					}
+				}
+				if (promoInfo.Promo.PromoType == ReturnPromoType.FirstNightFree)
+				{
+					goto IL_00cd;
+				}
 			}
-			else if (promoInfo != null && promoInfo.Success && promoInfo.IsLastDisc)
+			if (promoInfo != null && promoInfo.Success && promoInfo.IsLastDisc)
 			{
 				MessagePopupViewController.ShowMessagePopupViewReturnSuccessWithBrowse(delegate
 				{
@@ -125,6 +131,16 @@ public class ReturnFunctions
 			{
 				MessagePopupViewController.ShowMessagePopupViewReturnSuccess(closeAction);
 			}
+			return;
+			IL_00cd:
+			OrchestrationService.ViewShow("return_visit_promo_offer_view", new ReturnVisitPromoOfferViewParameters
+			{
+				PromoCode = promoInfo.Promo.PromoCode,
+				PromoType = promoInfo.Promo.PromoType,
+				Amount = promoInfo.Promo.Amount,
+				ExpirationDate = promoInfo.Promo.ExpirationDate,
+				CloseAction = closeAction
+			});
 		});
 	}
 }

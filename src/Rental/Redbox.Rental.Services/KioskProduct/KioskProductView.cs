@@ -84,6 +84,8 @@ public class KioskProductView
 
 	private List<IRedboxPlusPromoCampaign> _redboxPlusPromoCampaigns = new List<IRedboxPlusPromoCampaign>();
 
+	private DateTime _lastRedboxPlusPromoCampaignLoad = DateTime.MinValue;
+
 	private ISubscriptionProduct _activeBrowseSubscriptionProduct;
 
 	private ISubscriptionProduct _activeMyBagSubscriptionProduct;
@@ -155,8 +157,9 @@ public class KioskProductView
 
 	public IRedboxPlusPromoCampaign GetRedboxPlusPromoCampaign(int promoCampaignId)
 	{
-		if (_redboxPlusPromoCampaigns == null || _redboxPlusPromoCampaigns.Count == 0)
+		if ((_redboxPlusPromoCampaigns == null || _redboxPlusPromoCampaigns.Count == 0) && DateTime.Now > _lastRedboxPlusPromoCampaignLoad.AddMinutes(1.0))
 		{
+			_lastRedboxPlusPromoCampaignLoad = DateTime.Now;
 			LoadSubscriptionProducts();
 		}
 		return _redboxPlusPromoCampaigns?.FirstOrDefault((IRedboxPlusPromoCampaign x) => x.PromoCampaignId == promoCampaignId);
@@ -221,7 +224,7 @@ public class KioskProductView
 		if (searchProducts != null && searchProducts.Count > 0)
 		{
 			LogHelper.Instance.Log(string.Format("GetBarcodesForProducts Begin.  searching for products: {0}", searchProducts.Select((ISearchBarcodeForProduct x) => x.ProductId).ToList().Join(", ")));
-			IInventory service = ServiceLocator.Instance.GetService<IInventory>();
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			foreach (ISearchBarcodeForProduct searchProduct in searchProducts)
 			{
 				IBarcodeForProductResult barcodeForProductResult = new BarcodeForProductResult
@@ -878,7 +881,7 @@ public class KioskProductView
 		IEnumerable<KeyValuePair<long, ProductGroup>> enumerable = ProfileDataInstance.ProductGroups.Where((KeyValuePair<long, ProductGroup> x) => x.Value.ProductGroupTypeId == 3);
 		if (enumerable != null)
 		{
-			IInventory service = ServiceLocator.Instance.GetService<IInventory>();
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			foreach (KeyValuePair<long, ProductGroup> item in enumerable)
 			{
 				if (item.Value?.ProductIds == null)
@@ -907,7 +910,7 @@ public class KioskProductView
 		return list;
 	}
 
-	private List<ProductAndBarcodes> GetProductGroupBarcodes(IInventory inventoryService, List<long> productIds)
+	private List<ProductAndBarcodes> GetProductGroupBarcodes(IInventoryService inventoryService, List<long> productIds)
 	{
 		List<ProductAndBarcodes> list = new List<ProductAndBarcodes>();
 		foreach (long productId in productIds)

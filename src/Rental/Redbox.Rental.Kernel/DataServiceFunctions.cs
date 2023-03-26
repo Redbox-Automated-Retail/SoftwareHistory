@@ -9,7 +9,6 @@ using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.Profile;
-using Redbox.Rental.Services;
 
 namespace Redbox.Rental.Kernel;
 
@@ -275,20 +274,6 @@ public static class DataServiceFunctions
 				}
 			}
 		}
-	}
-
-	[KernelFunction(Name = "kernel.dataserviceregisterimage")]
-	internal static bool DataServiceRegisterImage(string name, string cacheName)
-	{
-		try
-		{
-			return OrchestrationService.DataServiceRegisterImage(name, cacheName);
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log($"An unhandled exception occured - DataServiceFunctions.RegisterImageFromCache({name},{cacheName}).", e);
-		}
-		return false;
 	}
 
 	private static void SendAlert(string dataStore, string tableName, string keyName)

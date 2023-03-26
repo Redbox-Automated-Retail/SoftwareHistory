@@ -92,6 +92,8 @@ public class Promotion : IPromotion
 
 	public IDefaultPromo DefaultPromo { get; set; }
 
+	public bool IsReturnVisit { get; set; }
+
 	public Promotion()
 	{
 		QualifyingItems = new List<IRentalShoppingCartTitleItem>();

@@ -8,8 +8,6 @@ public interface IRedboxRental
 
 	void CloseOpenSessionAndStartNewRentalSession(string newSessionContext, bool clearAudioDeviceConnected = true);
 
-	void RegisterEnvironmentChangeCallback();
-
 	bool IsRentalSessionActive();
 
 	void StartTheRentalApplication();

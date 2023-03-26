@@ -12,6 +12,7 @@ using Redbox.Rental.Services.Promotion;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.Services.ViewDefinitions;
 using Redbox.Rental.UI.Models;
+using Redbox.Rental.UI.Properties;
 
 namespace Redbox.Rental.Services.Controllers;
 
@@ -25,9 +26,26 @@ public class ShoppingCartViewFunctions
 
 	public static void ViewShoppingCart()
 	{
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.IsShoppingCartFullMessagesOpen = false;
+		BrowseState.IsShoppingCartFullMessagesOpen = false;
 		IRentalShoppingCart rentalShoppingCart = RentalShoppingCartService?.CurrentRentalShoppingCart;
-		if ((Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers || Redbox.Rental.Services.Configuration.Configuration.Instance.UseKCSInCart) && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
+		IPromotionService instance = PromotionService.Instance;
+		if (instance != null && instance.NeedToShowReturnVisitIneligibleCartWarning)
+		{
+			BrowseState.ReturnVisitIneligibleCartWarningShown = true;
+			MessagePopupViewController.ShowPromoCodeReturnVisitIneligibleCartWarning(Resources.check_out_button_text, delegate
+			{
+				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning time out", popOnly: false);
+				OrchestrationService.ViewShow("shopping_cart_view");
+			}, delegate
+			{
+				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning back", popOnly: false);
+			}, delegate
+			{
+				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning continue", popOnly: false);
+				OrchestrationService.ViewShow("shopping_cart_view");
+			});
+		}
+		else if ((Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers || Redbox.Rental.Services.Configuration.Configuration.Instance.UseKCSInCart) && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
 		{
 			BrowseState.ItemAddedFromView = null;
 			ShowInCartOfferMessage();

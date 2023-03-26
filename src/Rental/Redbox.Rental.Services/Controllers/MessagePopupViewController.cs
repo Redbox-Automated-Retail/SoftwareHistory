@@ -643,9 +643,9 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowPromoCodeNotValidAtThisLocationWarning(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing promo code not valid at this location warning");
-		ShowModal(new ModalParameters(ModalType.Informational)
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			TitleText = Resources.promo_code_error_title,
+			TitleText = Resources.promo_code_not_valid_location_title,
 			MessageText = Resources.promo_code_not_valid_location_message,
 			Button1Text = Resources.okay_button,
 			TimeOut = GetDefaultMessageTimeOut(),
@@ -659,9 +659,9 @@ public class MessagePopupViewController : BaseViewController
 	public static void ShowPromoCodeForOnDemandWarning(Action timeOutAction, Action continueAction)
 	{
 		LogHelper.Instance.Log("Showing promo code for on demand warning");
-		ShowModal(new ModalParameters(ModalType.Informational)
+		ShowModal(new ModalParameters(ModalType.Error)
 		{
-			TitleText = Resources.promo_code_error_title,
+			TitleText = Resources.promo_code_for_on_demand_title,
 			MessageText = Resources.promo_code_for_on_demand_message,
 			Button1Text = Resources.okay_button,
 			TimeOut = GetDefaultMessageTimeOut(),
@@ -734,6 +734,68 @@ public class MessagePopupViewController : BaseViewController
 			Button2Action = continueAction,
 			ViewName = "PromoCodeDiscountRestrictionWarningPopupView",
 			AnalyticsContextList = new List<string> { "PromoCodeDiscountRestrictionWarningPopupView" }
+		});
+	}
+
+	public static void ShowPromoCodeReturnVisitIneligibleCartWarning(string button2Text, Action timeOutAction, Action backAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing promo code return visit ineligible cart warning message");
+		ShowModal(new ModalParameters(ModalType.Error)
+		{
+			TitleText = Resources.promo_code_return_visit_ineligible_cart_warning_title,
+			MessageText = Resources.promo_code_return_visit_ineligible_cart_warning_message,
+			Button1Text = Resources.add_movie_button_text.ToUpper(),
+			Button2Text = button2Text,
+			TimeOutAction = timeOutAction,
+			Button1Action = backAction,
+			Button2Action = continueAction,
+			ViewName = "PromoCodeReturnVisitIneligibleCartWarningPopupView",
+			AnalyticsContextList = new List<string> { "PromoCodeReturnVisitIneligibleCartWarningPopupView" }
+		});
+	}
+
+	public static void ShowPromoCodeIneligibleCartWarning(Action timeOutAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing promo code ineligible cart warning message");
+		ShowModal(new ModalParameters(ModalType.Error)
+		{
+			TitleText = Resources.promo_code_ineligible_cart_warning_title,
+			MessageText = Resources.promo_code_ineligible_cart_warning_message,
+			Button1Text = Resources.got_it_button.ToUpper(),
+			TimeOutAction = timeOutAction,
+			Button1Action = continueAction,
+			ViewName = "PromoCodeIneligibleCartWarningPopupView",
+			AnalyticsContextList = new List<string> { "PromoCodeIneligibleCartWarningPopupView" }
+		});
+	}
+
+	public static void ShowPromoCodeIneligibleCartPurchaseWarning(Action timeOutAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing promo code ineligible cart purchase warning message");
+		ShowModal(new ModalParameters(ModalType.Error)
+		{
+			TitleText = Resources.promo_code_ineligible_cart_purchase_warning_title,
+			MessageText = Resources.promo_code_ineligible_cart_purchase_warning_message,
+			Button1Text = Resources.continue_button,
+			TimeOutAction = timeOutAction,
+			Button1Action = continueAction,
+			ViewName = "PromoCodeIneligibleCartPurchaseWarningPopupView",
+			AnalyticsContextList = new List<string> { "PromoCodeIneligibleCartPurchaseWarningPopupView" }
+		});
+	}
+
+	public static void ShowPromoCodeIneligibleCartRentalWarning(Action timeOutAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing promo code ineligible cart rental warning message");
+		ShowModal(new ModalParameters(ModalType.Error)
+		{
+			TitleText = Resources.promo_code_ineligible_cart_rental_warning_title,
+			MessageText = Resources.promo_code_ineligible_cart_rental_warning_message,
+			Button1Text = Resources.continue_button,
+			TimeOutAction = timeOutAction,
+			Button1Action = continueAction,
+			ViewName = "PromoCodeIneligibleCartRentalWarningPopupView",
+			AnalyticsContextList = new List<string> { "PromoCodeIneligibleCartRentalWarningPopupView" }
 		});
 	}
 

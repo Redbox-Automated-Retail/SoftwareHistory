@@ -19,13 +19,13 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.TestData;
 using Redbox.Rental.Model.KioskClientService.Transactions;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Model.Transaction;
 using Redbox.Rental.Services.Session;
-using Redbox.Rental.UI.Controls.PreferencePages;
 
 namespace Redbox.Rental.Services.KioskClientService.Transactions;
 
@@ -53,12 +53,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		}
 	}
 
-	public KioskClientServiceTransaction()
-	{
-		InitializePreferencePages();
-	}
-
-	public void Authorize(Guid sessionId, AuthorizeType authorizeType, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
+	public void Authorize(Guid sessionId, AuthorizeType authorizeType, string customerProfileNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -175,7 +170,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		return authorizeResult;
 	}
 
-	public void PickupAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, bool cartWasModified, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
+	public void PickupAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, bool cartWasModified, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -293,7 +288,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		return authorizeResult;
 	}
 
-	public void ReservationAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
+	public void ReservationAuthorize(string sessionId, string customerProfileNumber, long referenceNumber, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -406,7 +401,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		return authorizeResult;
 	}
 
-	public void Return(string storeNumber, ReturnType returnType, string barcode, string returnDate, int deck, int slot, bool failedSecurityRead, string fraudFileName, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback completeCallback)
+	public void Return(string storeNumber, ReturnType returnType, string barcode, string returnDate, int deck, int slot, bool failedSecurityRead, string fraudFileName, RemoteServiceCallback completeCallback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -469,11 +464,11 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		return result;
 	}
 
-	public void CancelReservation(string storeNumber, long referenceNumber, string reasonCode, Redbox.BrokerServices.Proxy.ComponentModel.RemoteServiceCallback callback)
+	public void CancelReservation(string storeNumber, long referenceNumber, string reasonCode, RemoteServiceCallback callback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
-			BrokerRemoteServiceResult result = new BrokerRemoteServiceResult
+			RemoteServiceResult result = new RemoteServiceResult
 			{
 				Success = (CancelReservationAsync(storeNumber, referenceNumber, reasonCode).Result?.Success ?? false)
 			};
@@ -484,7 +479,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		});
 	}
 
-	public async Task<Redbox.KioskEngine.ComponentModel.KioskServices.ICancelReservationResult> CancelReservationAsync(string storeNumber, long referenceNumber, string reasonCode)
+	public async Task<ICancelReservationResult> CancelReservationAsync(string storeNumber, long referenceNumber, string reasonCode)
 	{
 		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 		CancelReservationRequest cancelReservationRequest = new CancelReservationRequest
@@ -500,11 +495,11 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		return webResult?.Response;
 	}
 
-	public void ExpireReservation(string storeNumber, long referenceNumber, Redbox.BrokerServices.Proxy.ComponentModel.RemoteServiceCallback callback)
+	public void ExpireReservation(string storeNumber, long referenceNumber, RemoteServiceCallback callback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
-			BrokerRemoteServiceResult result = new BrokerRemoteServiceResult
+			RemoteServiceResult result = new RemoteServiceResult
 			{
 				Success = (ExpireReservationAsync(storeNumber, referenceNumber).Result?.Success ?? false)
 			};
@@ -530,7 +525,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		return webResult?.Response;
 	}
 
-	public void ValidatePickup(string sessionId, List<long> referenceNumbers, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)
+	public void ValidatePickup(string sessionId, List<long> referenceNumbers, RemoteServiceCallback callback)
 	{
 		ThreadPool.QueueUserWorkItem(delegate
 		{
@@ -662,7 +657,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		}
 	}
 
-	public void Reconcile(string sessionId, string customerProfileNumber, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)
+	public void Reconcile(string sessionId, string customerProfileNumber, RemoteServiceCallback callback)
 	{
 		ReconcileRequest request = BuildReconcileRequest(sessionId, customerProfileNumber);
 		ThreadPool.QueueUserWorkItem(delegate
@@ -711,7 +706,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		{
 			MessageId = Guid.NewGuid(),
 			IsOffline = flag2,
-			Blocklisted = session.ShoppingCart.Blocklisted,
 			Email = session.ShoppingCart.Email,
 			KioskId = int.Parse(session.StoreNumber),
 			ReferenceNumber = session.ShoppingCart.ReferenceNumber,
@@ -756,9 +750,9 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		};
 	}
 
-	public void ReservationPickup(string sessionId, string customerProfileNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted, Redbox.KioskEngine.ComponentModel.KioskServices.RemoteServiceCallback callback)
+	public void ReservationPickup(string sessionId, string customerProfileNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, RemoteServiceCallback callback)
 	{
-		ReservationPickupRequest request = BuildReservationPickupRequest(sessionId, customerProfileNumber, emailAddress, referenceNumber, pickupResults, isBlocklisted);
+		ReservationPickupRequest request = BuildReservationPickupRequest(sessionId, customerProfileNumber, emailAddress, referenceNumber, pickupResults);
 		ThreadPool.QueueUserWorkItem(delegate
 		{
 			RemoteServiceResult result = new RemoteServiceResult
@@ -772,9 +766,9 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		});
 	}
 
-	public async Task<IReconcileResult> ReservationPickupAsync(string sessionId, string customerProfileNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted)
+	public async Task<IReconcileResult> ReservationPickupAsync(string sessionId, string customerProfileNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults)
 	{
-		ReservationPickupRequest request = BuildReservationPickupRequest(sessionId, customerProfileNumber, emailAddress, referenceNumber, pickupResults, isBlocklisted);
+		ReservationPickupRequest request = BuildReservationPickupRequest(sessionId, customerProfileNumber, emailAddress, referenceNumber, pickupResults);
 		return await CallReservationPickupAsync(request);
 	}
 
@@ -787,7 +781,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		return webResult?.Response;
 	}
 
-	private ReservationPickupRequest BuildReservationPickupRequest(string sessionId, string customerProfileNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults, bool isBlocklisted)
+	private ReservationPickupRequest BuildReservationPickupRequest(string sessionId, string customerProfileNumber, string emailAddress, long referenceNumber, IDictionary<string, ReadOnlyCollection<IProductItem>> pickupResults)
 	{
 		IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
 		if (session == null)
@@ -817,7 +811,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		ReservationPickupRequest reservationPickupRequest = new ReservationPickupRequest
 		{
 			MessageId = Guid.NewGuid(),
-			Blocklisted = isBlocklisted,
 			Email = emailAddress,
 			KioskId = int.Parse(session.StoreNumber),
 			ReferenceNumber = referenceNumber,
@@ -1200,16 +1193,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 	{
 		TimeSpan utcOffset = TimeZone.CurrentTimeZone.GetUtcOffset(now);
 		return string.Format("{0}:{1}", utcOffset.TotalHours.ToString("00"), utcOffset.Minutes.ToString("00"));
-	}
-
-	private void InitializePreferencePages()
-	{
-		IPreferenceService service = ServiceLocator.Instance.GetService<IPreferenceService>();
-		if (service != null)
-		{
-			service.AddPreferencePage("TransactionService_Authorize", "Remote Services\\Transaction Service", "Kiosk Client Service/Transaction Service/Authorize", PreferencePageTarget.LocalSystem, null, () => new TransactionServiceAuthorizePreferencePage());
-			service.AddPreferencePage("TransactionService_Return", "Remote Services\\Transaction Service", "Kiosk Client Service/Transaction Service/Return", PreferencePageTarget.LocalSystem, null, () => new TransactionServiceReturnPreferencePage());
-		}
 	}
 
 	private void AddPropertiesToResult(IAuthorizeResult authorizeResult, RemoteServiceResult result)

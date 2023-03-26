@@ -9,19 +9,6 @@ namespace Redbox.Rental.Kernel;
 
 public static class RentalDataFunctions
 {
-	[KernelFunction(Name = "kernel.rental_check_for_new_blocklist")]
-	internal static void CheckForNewBlockList()
-	{
-		IBlockList service = ServiceLocator.Instance.GetService<IBlockList>();
-		if (service == null)
-		{
-			LogHelper.Instance.Log("IBlockList interface has not been added to the service locater.");
-			return;
-		}
-		LogHelper.Instance.Log("BlockList.CheckForNewFile");
-		service.CheckForNewFile();
-	}
-
 	[KernelFunction(Name = "kernel.rental_get_default_culture")]
 	internal static string GetDefaultCulture()
 	{

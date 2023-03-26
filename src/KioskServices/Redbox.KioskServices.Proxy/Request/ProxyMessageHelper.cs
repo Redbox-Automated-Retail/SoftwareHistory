@@ -39,11 +39,6 @@ public class ProxyMessageHelper
 		};
 	}
 
-	public static ShoppingCart CreateShoppingCart(string sessionId)
-	{
-		return CreateShoppingCart(new Guid(sessionId));
-	}
-
 	public static ShoppingCart CreateShoppingCart(Guid id)
 	{
 		IRentalShoppingCart obj = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(id);

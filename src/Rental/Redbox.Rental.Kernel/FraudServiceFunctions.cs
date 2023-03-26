@@ -1,8 +1,6 @@
-using System;
 using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.Lua;
 using Redbox.Rental.Model;
 
 namespace Redbox.Rental.Kernel;
@@ -53,14 +51,6 @@ public class FraudServiceFunctions
 	internal static void CleanFraudImages()
 	{
 		ServiceLocator.Instance.GetService<IFraudService>()?.CleanImageFolder();
-	}
-
-	[KernelFunction(Name = "kernel.schedule_fraud_sync")]
-	internal static void RegisterBarcodeToTitleTypeCallback(LuaTable dateTime, string userName)
-	{
-		IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
-		DateTime startTime = dateTime.ToDateTime() ?? DateTime.Now.AddMinutes(-5.0);
-		service?.ScheduleFraudSync(startTime, userName);
 	}
 
 	[KernelFunction(Name = "kernel.supports_paper_fraud")]

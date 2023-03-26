@@ -1,12 +1,15 @@
 using System;
+using Redbox.Rental.Model.KioskClientService.Transactions;
 
 namespace Redbox.Rental.UI.Views;
 
 public class ReturnVisitPromoOfferViewParameters
 {
-	public string Name { get; set; }
+	public string PromoCode { get; set; }
 
-	public decimal Price { get; set; }
+	public ReturnPromoType PromoType { get; set; }
+
+	public decimal? Amount { get; set; }
 
 	public DateTime ExpirationDate { get; set; }
 

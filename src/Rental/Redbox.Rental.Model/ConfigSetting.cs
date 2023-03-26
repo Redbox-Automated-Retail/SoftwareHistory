@@ -44,8 +44,6 @@ public static class ConfigSetting
 
 	public const string OfflineGamePurchaseLimit = "OfflineGamePurchaseLimit";
 
-	public const string OfflineBlockListEnabled = "OfflineBlockListEnabled";
-
 	public const string UseTimerToInvokeCallbackEntries = "UseTimerToInvokeCallbackEntries";
 
 	public const string AuthorizeAtPickup = "AuthorizeAtPickup";
@@ -85,8 +83,6 @@ public static class ConfigSetting
 	public const string ShowKMTInCartOffers = "ShowKMTInCartOffers";
 
 	public const string UseDiscountsForPmnpOffers = "UseDiscountsForPmnpOffers";
-
-	public const string ShowAuthChangeMessage = "ShowAuthChangeMessage";
 
 	public const string ForcedAirExchangerConfigured = "ForcedAirExchangerConfigured";
 
@@ -219,14 +215,6 @@ public static class ConfigSetting
 	public const string ABTestOffValue = "OFF";
 
 	public const string ABTestDefaultValue = "A";
-
-	public const string WelcomeScreen = "WelcomeScreen";
-
-	public const string WelcomeScreenTiming = "WelcomeScreenTiming";
-
-	public const string StartViewAd = "StartViewAd";
-
-	public const string StartViewRentAndBuy = "StartViewRentAndBuy";
 
 	public const string PriceFiltersOnBrowse = "PriceFiltersOnBrowse";
 
@@ -362,35 +350,13 @@ public static class ConfigSetting
 
 	public const string AuthorizeTimeout = "AuthorizeTimeout";
 
-	public const string SendAuthorizeToKioskClientService = "SendAuthorizeToKioskClientService";
-
-	public const string SendReturnToKioskClientService = "SendReturnToKioskClientService";
-
-	public const string SendGiftCardAuthorizeToKioskClientService = "SendGiftCardAuthorizeToKioskClientService";
-
-	public const string SendPickupAuthorizeToKioskClientService = "SendPickupAuthorizeToKioskClientService";
-
-	public const string SendReservationAuthorizeToKioskClientService = "SendReservationAuthorizeToKioskClientService";
-
 	public const string SendExpireAndCancelReservationToKioskClientService = "SendExpireAndCancelReservationToKioskClientService";
-
-	public const string SendReconcileToKioskClientService = "SendReconcileToKioskClientService";
-
-	public const string SendInventorySnapshotToKioskClientService = "SendInventorySnapshotToKioskClientService";
 
 	public const string KioskClientServiceInventorySnapshotTimeout = "KioskClientServiceInventorySnapshotTimeout";
 
-	public const string SendReservationPickupToKioskClientService = "SendReservationPickupToKioskClientService";
-
 	public const string SendCustomerOffersToKioskClientService = "SendCustomerOffersToKioskClientService";
 
-	public const string SendDiscActionToKioskClientService = "SendDiscActionToKioskClientService";
-
 	public const string KioskClientServiceDiscActionTimeout = "KioskClientServiceDiscActionTimeout";
-
-	public const string SendPickupValidationToKioskClientService = "SendPickupValidationToKioskClientService";
-
-	public const string SendDiscFraudToKioskClientService = "SendDiscFraudToKioskClientService";
 
 	public const string KioskClientServiceDiscFraudTimeout = "KioskClientServiceDiscFraudTimeout";
 

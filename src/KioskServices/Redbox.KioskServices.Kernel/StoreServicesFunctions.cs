@@ -1,115 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskServices.Kernel;
 
 internal static class StoreServicesFunctions
 {
-	[KernelFunction(Name = "kernel.storesvcs_getpendingstates")]
-	internal static void GetPendingStates(LuaFunction completeCallback)
-	{
-		ServiceLocator.Instance.GetService<IStoreServices>()?.GetPendingStates(delegate(IRemoteServiceResult r)
-		{
-			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-			LuaTable luaTable = r.AsTable();
-			int num = 1;
-			LuaTable luaTable2 = (LuaTable)service.NewTable();
-			foreach (IState item in (List<IState>)r.Properties["states"])
-			{
-				LuaTable luaTable3 = (LuaTable)service.NewTable();
-				luaTable3["id"] = item.Id;
-				luaTable3["name"] = item.Name;
-				luaTable2[num++] = luaTable3;
-			}
-			((LuaTable)luaTable["properties"])["states"] = luaTable2;
-			ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-			if (service2 != null)
-			{
-				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
-				{
-					Function = completeCallback
-				};
-				object[] parameters = new LuaTable[1] { luaTable };
-				resultCallbackEntry.Parameters = parameters;
-				service2.EnqueueCallback(resultCallbackEntry);
-			}
-		});
-	}
-
-	[KernelFunction(Name = "kernel.storesvcs_getpendingbanners")]
-	internal static void GetPendingBanners(int stateId, LuaFunction completeCallback)
-	{
-		ServiceLocator.Instance.GetService<IStoreServices>()?.GetPendingBanners(stateId, delegate(IRemoteServiceResult r)
-		{
-			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-			LuaTable luaTable = r.AsTable();
-			int num = 1;
-			LuaTable luaTable2 = (LuaTable)service.NewTable();
-			foreach (IBanner item in (List<IBanner>)r.Properties["banners"])
-			{
-				LuaTable luaTable3 = (LuaTable)service.NewTable();
-				luaTable3["id"] = item.Id;
-				luaTable3["name"] = item.Name;
-				luaTable2[num++] = luaTable3;
-			}
-			((LuaTable)luaTable["properties"])["banners"] = luaTable2;
-			ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-			if (service2 != null)
-			{
-				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
-				{
-					Function = completeCallback
-				};
-				object[] parameters = new LuaTable[1] { luaTable };
-				resultCallbackEntry.Parameters = parameters;
-				service2.EnqueueCallback(resultCallbackEntry);
-			}
-		});
-	}
-
-	[KernelFunction(Name = "kernel.storesvcs_getpendingstores")]
-	internal static void GetPendingStores(int bannerId, int stateId, LuaFunction completeCallback)
-	{
-		ServiceLocator.Instance.GetService<IStoreServices>()?.GetPendingStores(bannerId, stateId, delegate(IRemoteServiceResult r)
-		{
-			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
-			LuaTable luaTable = r.AsTable();
-			int num = 1;
-			LuaTable luaTable2 = (LuaTable)service.NewTable();
-			foreach (IStore item in (List<IStore>)r.Properties["stores"])
-			{
-				LuaTable luaTable3 = (LuaTable)service.NewTable();
-				luaTable3["id"] = item.Id;
-				luaTable3["address"] = item.Address;
-				luaTable3["city"] = item.City;
-				luaTable3["postal_code"] = item.ZipCode;
-				luaTable3["market_name"] = item.MarketName;
-				luaTable3["kaseya_market_name"] = item.KaseyaMarketName;
-				luaTable3["state"] = item.State;
-				luaTable3["due_time"] = item.DueTime;
-				luaTable2[num++] = luaTable3;
-			}
-			((LuaTable)luaTable["properties"])["stores"] = luaTable2;
-			ICallbackService service2 = ServiceLocator.Instance.GetService<ICallbackService>();
-			if (service2 != null)
-			{
-				ResultCallbackEntry resultCallbackEntry = new ResultCallbackEntry
-				{
-					Function = completeCallback
-				};
-				object[] parameters = new LuaTable[1] { luaTable };
-				resultCallbackEntry.Parameters = parameters;
-				service2.EnqueueCallback(resultCallbackEntry);
-			}
-		});
-	}
-
 	[KernelFunction(Name = "kernel.storesvcs_getopsmarket")]
 	internal static void GetOpsMarket(string storeNumber, LuaFunction completeCallback)
 	{
@@ -168,12 +69,6 @@ internal static class StoreServicesFunctions
 	internal static void SetRunInitialSync(bool flag)
 	{
 		ServiceLocator.Instance.GetService<IStoreServices>()?.SetRunInitialSync(flag);
-	}
-
-	[KernelFunction(Name = "kernel.storesvcs_getinitialsynctype")]
-	internal static string GetInitialSyncType()
-	{
-		return ServiceLocator.Instance.GetService<IStoreServices>()?.GetInitialSyncType();
 	}
 
 	[KernelFunction(Name = "kernel.storesvcs_registerinitialsyncconfigcallback")]

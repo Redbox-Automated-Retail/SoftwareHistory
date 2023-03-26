@@ -10,7 +10,6 @@ using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 
 namespace Redbox.ControlPanel.UI.Views;
@@ -152,14 +151,14 @@ public partial class CloseKioskViewUserControl : UserControl, IComponentConnecto
 		try
 		{
 			List<IInventoryItem> list = new List<IInventoryItem>();
-			IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			if (service == null)
 			{
-				LogHelper.Instance.Log("Unexpected exception in SnapshotImmidiate, Unable to connect to Inventory Service IInventoryServices");
+				LogHelper.Instance.Log("Unexpected exception in SnapshotImmidiate, Unable to connect to Inventory Service IInventoryService");
 				return;
 			}
 			ProcessFunctions.InnerSnapshot(storeNumber, items, list);
-			service.SnapshotImmediate(storeNumber, list.AsReadOnly(), callBackDelegate);
+			service.Snapshot(storeNumber, list.AsReadOnly(), callBackDelegate);
 		}
 		catch (Exception ex)
 		{

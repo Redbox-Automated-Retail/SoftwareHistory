@@ -13,10 +13,12 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Promotion;
+using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Promotion;
+using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Services;
 
@@ -249,7 +251,7 @@ public class PromotionService : IPromotionService
 			{
 				{ "offer_language", "en-US" },
 				{ "InCartPromoHeaderMessage", "Add a Movie for FREE!" },
-				{ "InCartPromoBodyMessage", "Lucky you! Add a select DVD or Blu-ray to your bag for a FREE 1-night rental.\n\n(Additional daily rental charges apply, plus tax where applicable. Questions? Check out the Redbox terms and conditions.)\n\nReady to pick out another movie?" },
+				{ "InCartPromoBodyMessage", "Lucky you! Add a select DVD or Blu-ray to your bag for a FREE 1-night rental.\n\n(Charges may apply for additional nights plus tax where applicable.)\n\nReady to pick out another movie?" },
 				{ "InCartPromoNoButton", "NO THANKS" },
 				{ "InCartPromoYesButton", "YES" }
 			},
@@ -354,9 +356,28 @@ public class PromotionService : IPromotionService
 
 	public bool IsFirstNightFreeItemInCartOfferRunning => ApplicationState.Instance.InCartTemplateName == "FREE NIGHT M";
 
+	public bool NeedToShowReturnVisitIneligibleCartWarning
+	{
+		get
+		{
+			bool num = RentalShoppingCart?.Promotion?.IsReturnVisit ?? false;
+			IRentalShoppingCart rentalShoppingCart = RentalShoppingCart;
+			bool flag = rentalShoppingCart != null && rentalShoppingCart.Promotion?.Intent == PromotionIntentCode.FirstNightFreeItem;
+			bool flag2 = (RentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m;
+			bool flag3 = BrowseState?.ReturnVisitIneligibleCartWarningShown ?? false;
+			if ((num & flag) && !flag2)
+			{
+				return !flag3;
+			}
+			return false;
+		}
+	}
+
 	private IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 
 	private IRentalShoppingCart RentalShoppingCart => RentalShoppingCartService?.CurrentRentalShoppingCart;
+
+	private IBrowseState BrowseState => Redbox.Rental.Services.Session.Session.Instance?.BrowseState;
 
 	public IPromotion GetPromotion()
 	{

@@ -8,12 +8,6 @@ namespace Redbox.Rental.Kernel.Views;
 
 public class MessagePopupViewFunctions
 {
-	[KernelFunction(Name = "kernel.show_message_popup_view_return_success")]
-	internal static void ShowMessagePopupViewReturnSuccess(Action timeOutAction)
-	{
-		MessagePopupViewController.ShowMessagePopupViewReturnSuccess(timeOutAction);
-	}
-
 	[KernelFunction(Name = "kernel.show_message_popup_view_hardware_error")]
 	internal static void ShowMessagePopupViewHardwareError(Action timeOutAction, Action continueAction)
 	{
@@ -44,12 +38,6 @@ public class MessagePopupViewFunctions
 	internal static void ShowMessagePopupViewVendError(Action timeOutAction, Action continueAction)
 	{
 		MessagePopupViewController.ShowMessagePopupViewVendError(timeOutAction, continueAction);
-	}
-
-	[KernelFunction(Name = "kernel.show_message_popup_view_digital_code")]
-	internal static void ShowMessagePopupViewDigitalCode(string price, Action backAction, Action buyAction, Action timeOutAction)
-	{
-		MessagePopupViewController.ShowMessagePopupViewDigitalCode(price, backAction, buyAction, timeOutAction);
 	}
 
 	[KernelFunction(Name = "kernel.hide_message_popup_view")]

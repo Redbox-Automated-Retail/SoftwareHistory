@@ -58,4 +58,6 @@ public interface IPromotion
 	bool AllowFullDiscount { get; set; }
 
 	IDefaultPromo DefaultPromo { get; set; }
+
+	bool IsReturnVisit { get; set; }
 }

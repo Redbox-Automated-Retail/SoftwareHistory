@@ -17,4 +17,14 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 		}
 		return webResult?.Response?.InCart;
 	}
+
+	public KioskStartScreenDetails GetStartScreen()
+	{
+		WebResult<GetStartScreenResponse> webResult = ExecuteWebRequest<GetStartScreenResponse>(new Uri(string.Format("{0}/{1}/startscreen", base.KioskClientServiceBaseUrl, "api/campaign")), null, "GET", 500);
+		if (webResult == null || webResult.StatusCode != HttpStatusCode.OK)
+		{
+			return null;
+		}
+		return webResult?.Response?.StartScreen;
+	}
 }

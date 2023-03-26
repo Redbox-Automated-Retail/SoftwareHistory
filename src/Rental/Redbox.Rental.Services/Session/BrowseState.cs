@@ -73,6 +73,8 @@ public class BrowseState : IBrowseState
 
 	public bool ShoppingCartFullMessagesShown { get; set; }
 
+	public bool ReturnVisitIneligibleCartWarningShown { get; set; }
+
 	public ISignupFlowState SignupFlowState { get; private set; }
 
 	public int PaddleClickCount { get; set; }

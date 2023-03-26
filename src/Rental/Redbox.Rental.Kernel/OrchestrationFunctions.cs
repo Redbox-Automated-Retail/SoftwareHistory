@@ -66,18 +66,6 @@ public static class OrchestrationFunctions
 		OrchestrationService.RegisterIsVendJobCompletedCallback(isVendJobCompleteCallback);
 	}
 
-	[KernelFunction(Name = "kernel.register_view_definitions")]
-	internal static void RegisterViewDefinitions()
-	{
-		OrchestrationService.RegisterViewDefinitions();
-	}
-
-	[KernelFunction(Name = "kernel.register_environment_change_callback")]
-	internal static void RegisterEnvironmentChangeCallback()
-	{
-		OrchestrationService.RegisterEnvironmentChangeCallback();
-	}
-
 	[KernelFunction(Name = "kernel.reload_pricing_service")]
 	internal static void ReloadPricingService()
 	{

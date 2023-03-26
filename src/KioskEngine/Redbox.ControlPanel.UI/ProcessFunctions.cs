@@ -561,7 +561,7 @@ internal static class ProcessFunctions
 
 	internal static void InnerSnapshot(string storeNumber, List<Item> items, List<IInventoryItem> inventoryItems)
 	{
-		IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		if (service == null || items == null)
 		{
 			return;
@@ -578,7 +578,7 @@ internal static class ProcessFunctions
 			string barcode = item.barcode;
 			if (string.IsNullOrEmpty(barcode))
 			{
-				LogHelper.Instance.Log($"A null or empty barcode was passed into InventoryServicesFunctions.Snapshot where deck = {num2} and slot = {num3}; skipping this item.", LogEntryType.Error);
+				LogHelper.Instance.Log($"A null or empty barcode was passed into InventoryFunctions.Snapshot where deck = {num2} and slot = {num3}; skipping this item.", LogEntryType.Error);
 				num++;
 			}
 			else

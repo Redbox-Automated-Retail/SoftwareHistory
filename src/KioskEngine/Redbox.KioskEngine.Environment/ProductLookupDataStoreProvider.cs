@@ -26,7 +26,7 @@ internal class ProductLookupDataStoreProvider : DataStoreProvider
 		{
 			if (tableName == "BarcodeToProduct")
 			{
-				result = ServiceLocator.Instance.GetService<IInventory>()?.GetInventoryDataCount() ?? (-1);
+				result = ServiceLocator.Instance.GetService<IInventoryService>()?.GetInventoryDataCount() ?? (-1);
 			}
 		}
 		else
@@ -39,7 +39,7 @@ internal class ProductLookupDataStoreProvider : DataStoreProvider
 	protected override object OnGet(string dataStore, string tableName, string keyName)
 	{
 		object result = null;
-		IInventory service = ServiceLocator.Instance.GetService<IInventory>();
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		if (service != null)
 		{
 			if (tableName == "BarcodeToProduct")

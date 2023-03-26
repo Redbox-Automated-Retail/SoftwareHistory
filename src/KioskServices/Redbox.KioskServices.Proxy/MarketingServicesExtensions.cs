@@ -1,5 +1,5 @@
 using Redbox.Core;
-using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.KioskServices.Proxy;
 

@@ -463,7 +463,11 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		};
 		Action<IPromoCodeValidationResult> afterErrorMessageCallback = delegate
 		{
-			BaseViewController.GetViewService().UnwindToSafe("shopping_cart_view", discard: false, "ShoppingCart:get_promo_code (on_error)");
+			IViewService viewService = BaseViewController.GetViewService();
+			if (viewService != null && viewService.Stack.Any((IViewFrameInstance vfi) => vfi.ViewFrame?.ViewName == "keyboard_promo_view"))
+			{
+				viewService?.UnwindToSafe("keyboard_promo_view", discard: false, "ShoppingCart:get_promo_code (on_error)");
+			}
 		};
 		PromotionFunctions.ValidatePromoCode(promoCode, doneCallback, afterErrorMessageCallback);
 	}
@@ -556,7 +560,30 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			return;
 		}
 		IPromotion promotion = rentalShoppingCart.Promotion;
-		if (promotion != null && promotion.Intent == PromotionIntentCode.RxGx)
+		if (promotion != null && promotion.IsReturnVisit)
+		{
+			IPromotionService instance = PromotionService.Instance;
+			if (instance == null || !instance.NeedToShowReturnVisitIneligibleCartWarning)
+			{
+				CheckoutFunctions.BeginCheckout();
+				return;
+			}
+			BrowseState.ReturnVisitIneligibleCartWarningShown = true;
+			MessagePopupViewController.ShowPromoCodeReturnVisitIneligibleCartWarning(Resources.pay, delegate
+			{
+				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning time out", popOnly: false);
+				CheckoutFunctions.BeginCheckout();
+			}, delegate
+			{
+				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning back", popOnly: false);
+				BrowseProducts(BrowseState.TitleFamily, BrowseState.Genre);
+			}, delegate
+			{
+				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning continue", popOnly: false);
+				CheckoutFunctions.BeginCheckout();
+			});
+		}
+		else if (promotion != null && promotion.Intent == PromotionIntentCode.RxGx)
 		{
 			IPromoCodeValidationInfo promoCodeValidationInfo = rentalShoppingCart.ValidateAndUpdatePromoCode();
 			if (promoCodeValidationInfo != null && promoCodeValidationInfo.IsCartValid)
@@ -792,7 +819,13 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		IRentalShoppingCartSubscriptionItem rentalShoppingCartSubscriptionItem2 = rentalShoppingCart.SubscriptionItems.FirstOrDefault((IRentalShoppingCartSubscriptionItem x) => x.SubscriptionProduct.SubscriptionType == SubscriptionType.Starz);
 		IStarzSubscriptionProduct starzSubscriptionProduct = rentalShoppingCartSubscriptionItem2?.SubscriptionProduct as IStarzSubscriptionProduct;
 		bool flag = starzSubscriptionProduct?.IsFreeTrial ?? false;
-		if (rentalShoppingCart != null && rentalShoppingCart.HasItemsToBeRedeemed)
+		bool flag2 = (rentalShoppingCart?.Promotion?.IsReturnVisit ?? false) && rentalShoppingCart != null && rentalShoppingCart.Promotion?.Intent == PromotionIntentCode.FirstNightFreeItem;
+		bool flag3 = (rentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m;
+		if (flag2 && !flag3)
+		{
+			shoppingCartViewModel.PricingModel.DiscountLabelText = Resources.discount_label_return_visit_not_applied_text;
+		}
+		else if (rentalShoppingCart != null && rentalShoppingCart.HasItemsToBeRedeemed)
 		{
 			shoppingCartViewModel.PricingModel.DiscountLabelText = Resources.discount_label_points_text;
 			if (rentalShoppingCart != null && rentalShoppingCart.HasRedboxPlusFreeOneNightRentalSelected)
@@ -829,13 +862,13 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		shoppingCartViewModel.PricingModel.TaxValueText = $"{rentalShoppingCart?.Totals?.TaxAmount:C}";
 		shoppingCartViewModel.PricingModel.TotalValueText = $"{rentalShoppingCart?.Totals?.GrandTotal:f2}";
 		shoppingCartViewModel.PromoCodeButtonEnabled = (rentalShoppingCart == null || !rentalShoppingCart.InCartPromoOfferMade || rentalShoppingCart == null || rentalShoppingCart.InCartPromoOfferCancel) && (rentalShoppingCart == null || rentalShoppingCart.TitleItems.Any((IRentalShoppingCartTitleItem x) => !x.PricingRecord.IsMultiNightPrice) || (rentalShoppingCart?.TitleItems.Count ?? 0) == 0);
-		string text2 = $"{((!((rentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) != 0m)) ? ((decimal?)null) : rentalShoppingCart?.Totals?.DiscountAmountUsed):C}";
+		string text2 = $"{((!(((rentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) != 0m) | flag2)) ? ((decimal?)null) : rentalShoppingCart?.Totals?.DiscountAmountUsed):C}";
 		if (!string.IsNullOrEmpty(text2))
 		{
 			text2 = $"-{text2}";
 		}
 		shoppingCartViewModel.PricingModel.DiscountValueText = text2;
-		shoppingCartViewModel.PricingModel.DiscountLineVisibility = ((!((rentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
+		shoppingCartViewModel.PricingModel.DiscountLineVisibility = ((!(((rentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m) | flag2)) ? Visibility.Collapsed : Visibility.Visible);
 		shoppingCartViewModel.PricingModel.ServiceFeeValueText = $"{rentalShoppingCart?.Totals?.ServiceFee:C}";
 		shoppingCartViewModel.PricingModel.ServiceFeeLineVisibility = ((!((rentalShoppingCart?.Totals?.ServiceFee ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
 		shoppingCartViewModel.PayButtonEnabled = rentalShoppingCart != null && rentalShoppingCart.Count > 0;

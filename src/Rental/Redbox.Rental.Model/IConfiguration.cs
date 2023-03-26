@@ -78,8 +78,6 @@ public interface IConfiguration
 
 	bool LoyaltySignUpAfterSwipeEnabled { get; }
 
-	bool OfflineBlockListEnabled { get; }
-
 	bool EnableIRSecurity { get; }
 
 	bool EnableImageSecurity { get; }
@@ -87,14 +85,6 @@ public interface IConfiguration
 	int UploadDiscImageMessagePriority { get; }
 
 	int KioskAnalyticsMessagePriority { get; }
-
-	string WelcomeScreenABTestVersion { get; }
-
-	string WelcomeScreenTimingABTestVersion { get; }
-
-	string StartViewAdABTestVersion { get; }
-
-	string StartViewRentAndBuyABTestVersion { get; }
 
 	string PriceFiltersOnBrowseABTestVersion { get; }
 
@@ -177,8 +167,6 @@ public interface IConfiguration
 	bool BluefinAutoActivate { get; }
 
 	bool GiftCardsEnabled { get; }
-
-	bool ShowAuthChangeMessage { get; }
 
 	int TextToSpeechVolume { get; }
 
@@ -290,16 +278,6 @@ public interface IConfiguration
 
 	int LoginLockoutMinutes { get; }
 
-	bool SendAuthorizeToKioskClientService { get; }
-
-	bool SendGiftCardAuthorizeToKioskClientService { get; }
-
-	bool SendPickupAuthorizeToKioskClientSerivce { get; }
-
-	bool SendReservationAuthorizeToKioskClientService { get; }
-
-	bool SendReturnToKioskClientService { get; set; }
-
 	bool SendAuthenticationApisToKioskClientService { get; }
 
 	bool SendInstallerApisToKioskClientService { get; }
@@ -308,13 +286,7 @@ public interface IConfiguration
 
 	bool SendExpireAndCancelReservationToKioskClientService { get; }
 
-	bool SendReconcileToKioskClientService { get; }
-
-	bool SendInventorySnapshotToKioskClientService { get; }
-
 	int KioskClientServiceInventorySnapshotTimeout { get; }
-
-	bool SendReservationPickupToKioskClientService { get; }
 
 	bool UseLegacyBrokerService { get; }
 
@@ -322,13 +294,7 @@ public interface IConfiguration
 
 	bool SendCustomerOffersToKioskClientService { get; }
 
-	bool SendDiscActionToKioskClientService { get; }
-
 	int KioskClientServiceDiscActionTimeout { get; }
-
-	bool SendPickupValidationToKioskClientService { get; }
-
-	bool SendDiscFraudToKioskClientService { get; }
 
 	int KioskClientServiceDiscFraudTimeout { get; }
 
@@ -351,6 +317,8 @@ public interface IConfiguration
 	bool UseKCSPricing { get; }
 
 	bool UseKCSInCart { get; }
+
+	bool UseKCSStartScreen { get; }
 
 	bool ButtonAnimationEnabled { get; }
 

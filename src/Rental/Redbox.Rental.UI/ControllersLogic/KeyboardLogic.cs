@@ -318,7 +318,7 @@ public class KeyboardLogic : BaseLogic
 		{
 			UpdateContinue(clearError: false);
 		}
-		else if (KeyboardMode != KeyboardMode.ACCOUNT_SIGN_IN)
+		else if (KeyboardMode != KeyboardMode.ACCOUNT_SIGN_IN && KeyboardMode != KeyboardMode.PROMOTIONS_CODE)
 		{
 			Model.KeyboardText = "";
 		}

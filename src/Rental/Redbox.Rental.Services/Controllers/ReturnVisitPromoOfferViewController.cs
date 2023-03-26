@@ -4,6 +4,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskClientService.Transactions;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Promotion;
@@ -16,9 +17,11 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class ReturnVisitPromoOfferViewController : BaseViewController
 {
-	private static string _name;
+	private static string _promoCode;
 
-	private static decimal _price;
+	private static ReturnPromoType _promoType;
+
+	private static decimal? _amount;
 
 	private static Action _closeAction;
 
@@ -30,13 +33,17 @@ public class ReturnVisitPromoOfferViewController : BaseViewController
 		if (viewUserControl != null)
 		{
 			ReturnVisitPromoOfferViewModel returnVisitPromoOfferViewModel = new ReturnVisitPromoOfferViewModel();
+			_promoType = returnVisitPromoOfferViewParameters.PromoType;
 			returnVisitPromoOfferViewModel.TitleText = Resources.return_visit_promo_offer_title_text;
-			returnVisitPromoOfferViewModel.AmountText = string.Format(Resources.return_visit_promo_offer_amount_text, returnVisitPromoOfferViewParameters.Price);
-			_price = returnVisitPromoOfferViewParameters.Price;
-			returnVisitPromoOfferViewModel.MessageText = Resources.return_visit_promo_offer_message_text;
-			returnVisitPromoOfferViewModel.PromoCodeText = string.Format(Resources.return_visit_promo_offer_promo_code_text, returnVisitPromoOfferViewParameters.Name);
-			_name = returnVisitPromoOfferViewParameters.Name;
-			returnVisitPromoOfferViewModel.ExpirationText = string.Format(Resources.return_visit_promo_offer_expiration_text, returnVisitPromoOfferViewParameters.ExpirationDate);
+			returnVisitPromoOfferViewModel.AmountText = ((returnVisitPromoOfferViewParameters.PromoType == ReturnPromoType.FirstNightFree) ? Resources.return_visit_promo_offer_free_amount_text : string.Format(Resources.return_visit_promo_offer_amount_text, returnVisitPromoOfferViewParameters.Amount));
+			_amount = returnVisitPromoOfferViewParameters.Amount;
+			returnVisitPromoOfferViewModel.MessageText = ((returnVisitPromoOfferViewParameters.PromoType == ReturnPromoType.FirstNightFree) ? Resources.return_visit_promo_offer_free_message_text : Resources.return_visit_promo_offer_message_text);
+			returnVisitPromoOfferViewModel.EligibleText = ((returnVisitPromoOfferViewParameters.PromoType == ReturnPromoType.FirstNightFree) ? Resources.return_visit_promo_offer_free_eligible_text : string.Empty);
+			string arg = string.Format(Resources.return_visit_promo_offer_promo_code_text, returnVisitPromoOfferViewParameters.PromoCode);
+			returnVisitPromoOfferViewModel.PromoCodeText = string.Empty;
+			_promoCode = returnVisitPromoOfferViewParameters.PromoCode;
+			string arg2 = string.Format(Resources.return_visit_promo_offer_expiration_text, returnVisitPromoOfferViewParameters.ExpirationDate);
+			returnVisitPromoOfferViewModel.ExpirationText = string.Format($"{arg} - {arg2}");
 			returnVisitPromoOfferViewModel.LegalText = Resources.return_visit_promo_offer_legal_text;
 			returnVisitPromoOfferViewModel.CloseButtonText = Resources.close_button.ToUpper();
 			returnVisitPromoOfferViewModel.UseNowButtonText = Resources.use_now_button_text.ToUpper();
@@ -81,7 +88,7 @@ public class ReturnVisitPromoOfferViewController : BaseViewController
 	{
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("ReturnVisitPromoOfferUseNow");
 		_closeAction?.Invoke();
-		IPromotion promotion = CreatePromotionFromReturnVisitPromo(_name, _price);
+		IPromotion promotion = CreatePromotionFromReturnVisitPromo(_promoCode, _promoType, _amount);
 		if (promotion != null)
 		{
 			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowBrowseView));
@@ -95,32 +102,46 @@ public class ReturnVisitPromoOfferViewController : BaseViewController
 		}
 	}
 
-	private static IPromotion CreatePromotionFromReturnVisitPromo(string name, decimal price)
+	private static IPromotion CreatePromotionFromReturnVisitPromo(string promoCode, ReturnPromoType promoType, decimal? amount)
 	{
-		if (!string.IsNullOrEmpty(name) && price > 0m)
+		if (!string.IsNullOrEmpty(promoCode))
 		{
-			return new Redbox.Rental.Services.Promotion.Promotion
+			if (promoType == ReturnPromoType.AmountOff)
 			{
-				Name = name,
-				OriginalPrice = price,
-				Price = price,
-				Quantity = 1,
-				Intent = PromotionIntentCode.FixedValue,
-				OriginalPercent = 0m,
-				Percent = 0m,
-				RentQuantity = 0,
-				RentFormat = null,
-				GetQuantity = 0,
-				GetFormat = null,
-				CampaignTitles = null,
-				ProductTypeId = null,
-				FormatIds = null,
-				ActionCode = PromotionActionCode.Rental,
-				AllowFullDiscount = true,
-				DefaultPromo = null,
-				CampaignId = 0
-			};
+				decimal? num = amount;
+				if (num.GetValueOrDefault() > 0m && num.HasValue)
+				{
+					goto IL_003a;
+				}
+			}
+			if (promoType == ReturnPromoType.FirstNightFree)
+			{
+				goto IL_003a;
+			}
 		}
 		return null;
+		IL_003a:
+		return new Redbox.Rental.Services.Promotion.Promotion
+		{
+			Name = promoCode,
+			OriginalPrice = ((promoType == ReturnPromoType.FirstNightFree) ? 0m : (amount ?? 0m)),
+			Price = ((promoType == ReturnPromoType.FirstNightFree) ? 0m : (amount ?? 0m)),
+			Quantity = 1,
+			Intent = ((promoType == ReturnPromoType.FirstNightFree) ? PromotionIntentCode.FirstNightFreeItem : PromotionIntentCode.FixedValue),
+			OriginalPercent = 0m,
+			Percent = 0m,
+			RentQuantity = 0,
+			RentFormat = null,
+			GetQuantity = 0,
+			GetFormat = null,
+			CampaignTitles = null,
+			ProductTypeId = null,
+			FormatIds = null,
+			ActionCode = PromotionActionCode.Rental,
+			AllowFullDiscount = (promoType != ReturnPromoType.FirstNightFree),
+			DefaultPromo = null,
+			CampaignId = 0,
+			IsReturnVisit = true
+		};
 	}
 }

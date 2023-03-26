@@ -38,10 +38,10 @@ public class CancelReservationCallbackEntry : ICallbackEntry
 		}
 		else
 		{
-			ICancelReservationResult cancelReservationResult = ReservationServicesProxy.Instance.CancelRequestCallback(_referenceNumber);
-			BrokerResult.CancellationSucceeded = cancelReservationResult.Success;
-			BrokerResult.ErrorMessage = cancelReservationResult.ErrorMessage;
-			LogHelper.Instance.Log("BrokerServicesProxy Cancel reservation response: {0}", cancelReservationResult.ToJson());
+			ILocalCancelReservationResult localCancelReservationResult = ReservationServicesProxy.Instance.CancelRequestCallback(_referenceNumber);
+			BrokerResult.CancellationSucceeded = localCancelReservationResult.Success;
+			BrokerResult.ErrorMessage = localCancelReservationResult.ErrorMessage;
+			LogHelper.Instance.Log("BrokerServicesProxy Cancel reservation response: {0}", localCancelReservationResult.ToJson());
 			ResetEvent.Set();
 		}
 	}

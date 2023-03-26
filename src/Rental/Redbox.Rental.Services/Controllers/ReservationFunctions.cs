@@ -10,7 +10,6 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment.CardDataReader;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
@@ -274,8 +273,8 @@ public class ReservationFunctions
 		if (dataService != null && dataService.GetReservations("deddie") == null)
 		{
 			LogHelper.Instance.Log("ReservationFunctions.SyncReservations: downloading reservations from server.");
-			IInventory inventoryService = ServiceLocator.Instance.GetService<IInventory>();
-			ServiceLocator.Instance.GetService<IReservationServices>().GetReservations(dataService.GetStore()?.StoreId.ToString(), delegate(Redbox.BrokerServices.Proxy.ComponentModel.IRemoteServiceResult remoteServiceResult)
+			IInventoryService inventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
+			ServiceLocator.Instance.GetService<IReservationServices>().GetReservations(dataService.GetStore()?.StoreId.ToString(), delegate(IRemoteServiceResult remoteServiceResult)
 			{
 				if (remoteServiceResult?.Properties != null && remoteServiceResult.Properties.ContainsKey("reservations"))
 				{
@@ -568,7 +567,7 @@ public class ReservationFunctions
 						if (kioskProduct == null)
 						{
 							LogHelper.Instance.Log($"Unable to find kiosk product using dataService.GetProductByBarcode( {barcode} )");
-							Inventory inventory = ServiceLocator.Instance.GetService<IInventory>()?.GetInventory(barcode);
+							Inventory inventory = ServiceLocator.Instance.GetService<IInventoryService>()?.GetInventory(barcode);
 							if (inventory != null)
 							{
 								LogHelper.Instance.Log($"Found product id {inventory.TitleId} for barcode {barcode}");
@@ -847,7 +846,7 @@ public class ReservationFunctions
 		LogHelper.Instance.Log($"{logHeaderText} Begin");
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-		IInventory service2 = ServiceLocator.Instance.GetService<IInventory>();
+		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 		Dictionary<string, List<IProductItem>> dictionary = new Dictionary<string, List<IProductItem>>();
 		List<string> list = new List<string>();
 		if (commitShoppingCart)
@@ -910,38 +909,14 @@ public class ReservationFunctions
 			{
 				dictionary2[key3] = new ReadOnlyCollection<IProductItem>(dictionary[key3]);
 			}
-			bool isBlocklisted = ServiceLocator.Instance.GetService<IShoppingSessionService>()?.GetSession(rentalShoppingCart?.ShoppingSessionId.ToString())?.ShoppingCart.Blocklisted ?? false;
-			IConfiguration service3 = ServiceLocator.Instance.GetService<IConfiguration>();
 			if (rentalShoppingCart != null && !rentalShoppingCart.PickupRecommendationsShown)
 			{
 				LogHelper.Instance.Log($"{logHeaderText}: Calling PopulateShoppingCartWithReservationItems() for ref# {accountReservation?.ReferenceNumber}");
 				PopulateShoppingCartWithReservationItems(rentalShoppingCart, accountReservation?.ReferenceNumber);
 			}
-			if (isFromReservationPrepositionVendComplete && accountReservation.ReservationDetails.AuthorizeAtPickup)
-			{
-				if (service3.SendReservationPickupToKioskClientService)
-				{
-					IKioskClientService service4 = ServiceLocator.Instance.GetService<IKioskClientService>();
-					LogHelper.Instance.Log($"{logHeaderText}: Calling KioskClientService.Transaction.ReservationPickup()");
-					service4.Transaction.ReservationPickup(rentalShoppingCart.ShoppingSessionId.ToString(), Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.CustomerProfileNumber, accountReservation.ReservationDetails?.EmailAddress, result2, dictionary2, isBlocklisted, null);
-				}
-				else
-				{
-					LogHelper.Instance.Log($"{logHeaderText}: Calling MerchantServices.PickupReconcile()");
-					ServiceLocator.Instance.GetService<IMerchantServices>()?.PickupReconcile(rentalShoppingCart?.ShoppingSessionId.ToString(), Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.CustomerProfileNumber, result2, dictionary2, null);
-				}
-			}
-			else if (service3.SendReservationPickupToKioskClientService)
-			{
-				IKioskClientService service5 = ServiceLocator.Instance.GetService<IKioskClientService>();
-				LogHelper.Instance.Log($"{logHeaderText}: Calling KioskClientService.Transaction.ReservationPickup()");
-				service5.Transaction.ReservationPickup(rentalShoppingCart.ShoppingSessionId.ToString(), Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.CustomerProfileNumber, accountReservation.ReservationDetails?.EmailAddress, result2, dictionary2, isBlocklisted, null);
-			}
-			else
-			{
-				LogHelper.Instance.Log($"{logHeaderText}: Calling ReservationServices.Pickup()");
-				ServiceLocator.Instance.GetService<IReservationServices>()?.Pickup((service?.GetStore()?.StoreId ?? (-1)).ToString(), accountReservation.ReservationDetails?.EmailAddress, result2, dictionary2, isBlocklisted, null, rentalShoppingCart?.ShoppingSessionId.ToString());
-			}
+			IKioskClientService service3 = ServiceLocator.Instance.GetService<IKioskClientService>();
+			LogHelper.Instance.Log($"{logHeaderText}: Calling KioskClientService.Transaction.ReservationPickup()");
+			service3.Transaction.ReservationPickup(rentalShoppingCart.ShoppingSessionId.ToString(), Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.CustomerProfileNumber, accountReservation.ReservationDetails?.EmailAddress, result2, dictionary2, null);
 			LogHelper.Instance.Log($"{logHeaderText}: Removing reservation for reference nuber... {accountReservation.ReferenceNumber}");
 			DeleteReservation(accountReservation.ReferenceNumber);
 		}
@@ -1461,13 +1436,13 @@ public class ReservationFunctions
 		}
 	}
 
-	private static Redbox.BrokerServices.Proxy.ComponentModel.ICancelReservationResult CancelReservationCallback(long referenceNumber, bool cancelOnServer = true)
+	private static ILocalCancelReservationResult CancelReservationCallback(long referenceNumber, bool cancelOnServer = true)
 	{
 		ReservationCancelResult reservationCancelResult = ReservationCancelResult.Error;
 		reservationCancelResult = ((!cancelOnServer) ? CancelLocalReservation(referenceNumber.ToString()) : CancelLocalAndServerReservation(referenceNumber.ToString()));
-		Redbox.BrokerServices.Proxy.ComponentModel.ICancelReservationResult cancelReservationResult = ServiceLocator.Instance.GetService<IReservationServices>().NewCancelReservationResult();
-		cancelReservationResult.Success = reservationCancelResult == ReservationCancelResult.ReservationCancelled;
-		return cancelReservationResult;
+		ILocalCancelReservationResult localCancelReservationResult = ServiceLocator.Instance.GetService<IReservationServices>().NewCancelReservationResult();
+		localCancelReservationResult.Success = reservationCancelResult == ReservationCancelResult.ReservationCancelled;
+		return localCancelReservationResult;
 	}
 
 	public static ReservationCancelResult CancelLocalAndServerReservation(string referenceNumber)
@@ -1562,20 +1537,11 @@ public class ReservationFunctions
 		}
 		long.TryParse(referenceNumber, out var result);
 		Redbox.Rental.Model.Reservation.IReservation reservation = reservations.FirstOrDefault((Redbox.Rental.Model.Reservation.IReservation r) => r.ReferenceNumber == referenceNumber);
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 		if (IsAuthorizeAtPickup(referenceNumber, reservations))
 		{
-			if (service.SendReservationPickupToKioskClientService)
-			{
-				IKioskClientService service2 = ServiceLocator.Instance.GetService<IKioskClientService>();
-				LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVend: Calling KioskClientService.Transaction.ReservationPickup()");
-				service2.Transaction.ReservationPickup(rentalShoppingCart.ShoppingSessionId.ToString(), Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.CustomerProfileNumber, reservation?.ReservationDetails?.EmailAddress, result, new Dictionary<string, ReadOnlyCollection<IProductItem>>(), isBlocklisted: false, null);
-			}
-			else
-			{
-				LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVend: Calling MerchantServices.PickupReconcile()");
-				ServiceLocator.Instance.GetService<IMerchantServices>()?.PickupReconcile(rentalShoppingCart?.ShoppingSessionId.ToString(), Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.CustomerProfileNumber, result, new Dictionary<string, ReadOnlyCollection<IProductItem>>(), null);
-			}
+			IKioskClientService service = ServiceLocator.Instance.GetService<IKioskClientService>();
+			LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVend: Calling KioskClientService.Transaction.ReservationPickup()");
+			service.Transaction.ReservationPickup(rentalShoppingCart.ShoppingSessionId.ToString(), Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.CustomerProfileNumber, reservation?.ReservationDetails?.EmailAddress, result, new Dictionary<string, ReadOnlyCollection<IProductItem>>(), null);
 			return;
 		}
 		LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVend: Calling MerchantServices.ModResvPickup()");
@@ -1583,9 +1549,7 @@ public class ReservationFunctions
 		{
 			session.ShoppingCart.SetEmail(Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email);
 		}
-		IMerchantServices service3 = ServiceLocator.Instance.GetService<IMerchantServices>();
-		IDataService service4 = ServiceLocator.Instance.GetService<IDataService>();
-		service3?.ModResvPickup((service4?.GetStore()?.StoreId ?? (-1)).ToString(), Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email, result, rentalShoppingCart?.ShoppingSessionId.ToString(), modifiedCart, null);
+		LogHelper.Instance.Log("Error: ModResvPickup not supported by TransactionService");
 		OrchestrationService.ShoppingCartEndSession(rentalShoppingCart.ShoppingSessionId.ToString());
 		LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVend: Calling MerchantServices.ModResvPickup() complete");
 	}

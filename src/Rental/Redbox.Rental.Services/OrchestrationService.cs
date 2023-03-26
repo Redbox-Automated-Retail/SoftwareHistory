@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Media.Imaging;
 using System.Xml;
-using DeviceService.ComponentModel;
 using Redbox.Controls;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
@@ -22,7 +21,6 @@ using Redbox.Rental.Model.KioskClientService.Session;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
-using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
@@ -91,11 +89,6 @@ public static class OrchestrationService
 	public static void CloseAnalytics(Guid sessionId, bool isSessionAbandoned)
 	{
 		AnalyticsService?.End(sessionId.ToString(), isSessionAbandoned);
-	}
-
-	public static void RegisterEnvironmentChangeCallback()
-	{
-		ServiceLocator.Instance.GetService<IRedboxRental>()?.RegisterEnvironmentChangeCallback();
 	}
 
 	public static bool IsCollectionsPopupEnabled()
@@ -862,41 +855,9 @@ public static class OrchestrationService
 		ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
 		if (trackData != null)
 		{
-			return trackData.CardType == Redbox.Core.CardType.RedboxGiftCard;
+			return trackData.CardType == CardType.RedboxGiftCard;
 		}
 		return false;
-	}
-
-	public static bool IsCardBlocklisted()
-	{
-		bool result = false;
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.OfflineBlockListEnabled && !IsGiftCard())
-		{
-			ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
-			if (trackData != null && trackData.HasValidData())
-			{
-				if (trackData.CardSourceType == CardSourceType.Mobile || trackData.CardSourceType == CardSourceType.EMVContactless || trackData.CardSourceType == CardSourceType.MSDContactless)
-				{
-					return false;
-				}
-				string firstName = trackData.FirstName;
-				string lastName = trackData.LastName;
-				Store store = ServiceLocator.Instance.GetService<IDataService>().GetStore();
-				int num = (int)((store != null) ? (store?.MarketId).Value : 0);
-				string text = store?.Zip;
-				IBlockList service = ServiceLocator.Instance.GetService<IBlockList>();
-				if (service == null)
-				{
-					LogHelper.Instance.Log("IBlockList interface has not been added to the service locater.");
-				}
-				else
-				{
-					LogHelper.Instance.Log("IsNameInBlockList(FirstName={0},LastName={1},Market_id={2},ZipCode={3})", "pci", "pci", num, text);
-					result = service.IsNameInBlockList(firstName, lastName, num, text);
-				}
-			}
-		}
-		return result;
 	}
 
 	public static bool DoesShoppingCartContainAllReservedBarcodes()

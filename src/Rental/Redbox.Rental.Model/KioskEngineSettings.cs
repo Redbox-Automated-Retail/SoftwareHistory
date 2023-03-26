@@ -7,5 +7,7 @@ public static class KioskEngineSettings
 		public const string UseKCSPricing = "UseKCSPricing";
 
 		public const string UseKCSInCart = "UseKCSInCart";
+
+		public const string UseKCSStartScreen = "UseKCSStartScreen";
 	}
 }

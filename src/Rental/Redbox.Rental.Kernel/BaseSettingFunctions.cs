@@ -7,21 +7,6 @@ namespace Redbox.Rental.Kernel;
 
 public class BaseSettingFunctions
 {
-	public double AddDoubleValues(object value1, object value2)
-	{
-		return Convert.ToDouble(value1) + Convert.ToDouble(value2);
-	}
-
-	public decimal AddDecimalValues(object value1, object value2)
-	{
-		return Convert.ToDecimal(value1) + Convert.ToDecimal(value2);
-	}
-
-	public int AddIntValues(object value1, object value2)
-	{
-		return Convert.ToInt32(value1) + Convert.ToInt32(value2);
-	}
-
 	public object ConvertValueToPropertyType(PropertyInfo propertyInfo, object value)
 	{
 		object result = value;

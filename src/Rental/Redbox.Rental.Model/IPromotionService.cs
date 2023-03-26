@@ -24,6 +24,8 @@ public interface IPromotionService
 
 	bool IsFirstNightFreeItemInCartOfferRunning { get; }
 
+	bool NeedToShowReturnVisitIneligibleCartWarning { get; }
+
 	IPromotion GetPromotion();
 
 	void SetPromotion(IPromotion promotion);

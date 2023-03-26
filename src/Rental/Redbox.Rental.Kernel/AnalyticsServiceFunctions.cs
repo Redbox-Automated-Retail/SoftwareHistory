@@ -6,11 +6,6 @@ namespace Redbox.Rental.Kernel;
 
 public static class AnalyticsServiceFunctions
 {
-	[KernelFunction(Name = "kernel.analyticsserviceaddeventsessionevent")]
-	internal static void AddEventSessionEvent(string sessionId, string name, string value)
-	{
-	}
-
 	[KernelFunction(Name = "kernel.analyticsserviceaddauthtransactionInfo")]
 	internal static void AnalyticsAddAuthTransactionInfo(string customerProfileNumber, string accountNumber, string transactionId, string sessionId)
 	{

@@ -5,8 +5,8 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model.KioskClientService.Marketing;
+using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.Rental.Services.KioskClientService.Marketing;
 

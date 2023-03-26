@@ -5,17 +5,12 @@ using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
 using Redbox.REDS.Framework;
+using Redbox.Rental.Model;
 
 namespace Redbox.KioskServices.Kernel;
 
 internal static class HealthServicesFunctions
 {
-	[KernelFunction(Name = "kernel.healthsvcs_ping")]
-	internal static void Ping(string storeNumber)
-	{
-		ServiceLocator.Instance.GetService<IHealthServices>()?.Ping(storeNumber);
-	}
-
 	[KernelFunction(Name = "kernel.healthsvcs_sendalert")]
 	internal static void SendAlert(string storeNumber, string alertType, string message)
 	{
@@ -28,22 +23,10 @@ internal static class HealthServicesFunctions
 		InnerSendAlert(storeNumber, alertType, subType, message, null);
 	}
 
-	[KernelFunction(Name = "kernel.healthsvcs_sendalert3")]
-	internal static void SendAlert(string storeNumber, string alertType, string subType, string message, LuaFunction callback)
-	{
-		InnerSendAlert(storeNumber, alertType, subType, message, callback);
-	}
-
 	[KernelFunction(Name = "kernel.healthsvcs_sendauditevent")]
 	internal static void SendAuditEvent(string storeNumber, string eventType, string userName, string source, string message)
 	{
 		InnerSendAuditEvent(storeNumber, eventType, userName, source, message, null);
-	}
-
-	[KernelFunction(Name = "kernel.healthsvcs_sendauditevent2")]
-	internal static void SendAuditEvent(string storeNumber, string eventType, string userName, string source, string message, LuaFunction callback)
-	{
-		InnerSendAuditEvent(storeNumber, eventType, userName, source, message, callback);
 	}
 
 	[KernelFunction(Name = "kernel.healthsvcs_enqueuestatistic")]
@@ -56,18 +39,6 @@ internal static class HealthServicesFunctions
 	internal static void EnqueueProperty(string name, string value)
 	{
 		ServiceLocator.Instance.GetService<IHealthServices>()?.EnqueueProperty(name, value);
-	}
-
-	[KernelFunction(Name = "kernel.healthsvcs_queuedepth")]
-	internal static int QueueDepth()
-	{
-		IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
-		if (service == null)
-		{
-			return 0;
-		}
-		service.GetDepth(out var count);
-		return count;
 	}
 
 	[KernelFunction(Name = "kernel.getsoftwareversions")]

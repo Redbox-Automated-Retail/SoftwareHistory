@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Redbox.Core;
-using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.Rental.Model.Local;
 
@@ -16,7 +15,7 @@ public static class RemovedQueueItemExtensions
 		else
 		{
 			list = new List<IInventoryItem>();
-			IInventoryServices service = ServiceLocator.Instance.GetService<IInventoryServices>();
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			foreach (RemovedQueueItem item in source)
 			{
 				list.Add(service.CreateInventoryItem(item.Barcode, null, null, InventoryItemStatus.Removed));

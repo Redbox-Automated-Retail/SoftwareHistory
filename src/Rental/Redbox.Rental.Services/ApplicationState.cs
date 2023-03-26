@@ -94,8 +94,6 @@ public class ApplicationState : IApplicationState
 		}
 	}
 
-	public bool EnableOfflineBadCardList { get; set; }
-
 	public List<IKioskProduct> BrowseProducts { get; set; }
 
 	public bool IsStandAlone
@@ -147,12 +145,6 @@ public class ApplicationState : IApplicationState
 	public event OnRemoveMaintenanceModeReason OnRemoveMaintenanceModeReasonHandler;
 
 	public event OnAddMaintenanceModeReason OnAddMaintenanceModeReasonHandler;
-
-	public ApplicationState()
-	{
-		bool.TryParse(ServiceLocator.Instance.GetService<IMachineSettingsStore>()?.GetValue("Remote Services\\Merchant Services", "EnableOfflineBadCardList", "True"), out var result);
-		EnableOfflineBadCardList = result;
-	}
 
 	public bool HasMaintenanceModeReason(MaintenanceModeSource source, string code)
 	{

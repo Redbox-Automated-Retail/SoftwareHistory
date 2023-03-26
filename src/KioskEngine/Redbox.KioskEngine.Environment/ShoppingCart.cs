@@ -11,8 +11,6 @@ internal sealed class ShoppingCart : IShoppingCart
 
 	public string Email { get; internal set; }
 
-	public bool Blocklisted { get; internal set; }
-
 	public string PostalCode { get; internal set; }
 
 	public DateTime CreatedOn { get; internal set; }
@@ -43,12 +41,6 @@ internal sealed class ShoppingCart : IShoppingCart
 	{
 		CreatedOn = DateTime.Now;
 		ShoppingSessionId = shoppingSessionId;
-	}
-
-	public void SetBlocklisted(bool value)
-	{
-		LogHelper.Instance.Log("SetBlocklisted on Shopping Cart for Shopping Session '{0}': value={1}", ShoppingSessionId, value);
-		Blocklisted = value;
 	}
 
 	public void SetType(ShoppingCartType type)

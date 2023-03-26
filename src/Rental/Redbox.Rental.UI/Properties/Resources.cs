@@ -398,6 +398,8 @@ public class Resources
 
 	public static string discount_label_redbox_plus_benefit_text => ResourceManager.GetString("discount_label_redbox_plus_benefit_text", resourceCulture);
 
+	public static string discount_label_return_visit_not_applied_text => ResourceManager.GetString("discount_label_return_visit_not_applied_text", resourceCulture);
+
 	public static string discs_text => ResourceManager.GetString("discs_text", resourceCulture);
 
 	public static string do_not_sell_button => ResourceManager.GetString("do_not_sell_button", resourceCulture);
@@ -1554,8 +1556,6 @@ public class Resources
 
 	public static string promo_code_error_message => ResourceManager.GetString("promo_code_error_message", resourceCulture);
 
-	public static string promo_code_error_title => ResourceManager.GetString("promo_code_error_title", resourceCulture);
-
 	public static string promo_code_first_night_free_game => ResourceManager.GetString("promo_code_first_night_free_game", resourceCulture);
 
 	public static string promo_code_first_night_free_item => ResourceManager.GetString("promo_code_first_night_free_item", resourceCulture);
@@ -1568,9 +1568,23 @@ public class Resources
 
 	public static string promo_code_for_on_demand_message => ResourceManager.GetString("promo_code_for_on_demand_message", resourceCulture);
 
+	public static string promo_code_for_on_demand_title => ResourceManager.GetString("promo_code_for_on_demand_title", resourceCulture);
+
 	public static string promo_code_game_required_message => ResourceManager.GetString("promo_code_game_required_message", resourceCulture);
 
 	public static string promo_code_game_required_title => ResourceManager.GetString("promo_code_game_required_title", resourceCulture);
+
+	public static string promo_code_ineligible_cart_purchase_warning_message => ResourceManager.GetString("promo_code_ineligible_cart_purchase_warning_message", resourceCulture);
+
+	public static string promo_code_ineligible_cart_purchase_warning_title => ResourceManager.GetString("promo_code_ineligible_cart_purchase_warning_title", resourceCulture);
+
+	public static string promo_code_ineligible_cart_rental_warning_message => ResourceManager.GetString("promo_code_ineligible_cart_rental_warning_message", resourceCulture);
+
+	public static string promo_code_ineligible_cart_rental_warning_title => ResourceManager.GetString("promo_code_ineligible_cart_rental_warning_title", resourceCulture);
+
+	public static string promo_code_ineligible_cart_warning_message => ResourceManager.GetString("promo_code_ineligible_cart_warning_message", resourceCulture);
+
+	public static string promo_code_ineligible_cart_warning_title => ResourceManager.GetString("promo_code_ineligible_cart_warning_title", resourceCulture);
 
 	public static string promo_code_input_prompt => ResourceManager.GetString("promo_code_input_prompt", resourceCulture);
 
@@ -1578,11 +1592,17 @@ public class Resources
 
 	public static string promo_code_not_valid_location_message => ResourceManager.GetString("promo_code_not_valid_location_message", resourceCulture);
 
+	public static string promo_code_not_valid_location_title => ResourceManager.GetString("promo_code_not_valid_location_title", resourceCulture);
+
 	public static string promo_code_not_valid_message => ResourceManager.GetString("promo_code_not_valid_message", resourceCulture);
 
 	public static string promo_code_not_valid_message_title => ResourceManager.GetString("promo_code_not_valid_message_title", resourceCulture);
 
 	public static string promo_code_prompt_message => ResourceManager.GetString("promo_code_prompt_message", resourceCulture);
+
+	public static string promo_code_return_visit_ineligible_cart_warning_message => ResourceManager.GetString("promo_code_return_visit_ineligible_cart_warning_message", resourceCulture);
+
+	public static string promo_code_return_visit_ineligible_cart_warning_title => ResourceManager.GetString("promo_code_return_visit_ineligible_cart_warning_title", resourceCulture);
 
 	public static string promo_code_rxgx_message => ResourceManager.GetString("promo_code_rxgx_message", resourceCulture);
 
@@ -2047,6 +2067,12 @@ public class Resources
 	public static string return_visit_promo_offer_amount_text => ResourceManager.GetString("return_visit_promo_offer_amount_text", resourceCulture);
 
 	public static string return_visit_promo_offer_expiration_text => ResourceManager.GetString("return_visit_promo_offer_expiration_text", resourceCulture);
+
+	public static string return_visit_promo_offer_free_amount_text => ResourceManager.GetString("return_visit_promo_offer_free_amount_text", resourceCulture);
+
+	public static string return_visit_promo_offer_free_eligible_text => ResourceManager.GetString("return_visit_promo_offer_free_eligible_text", resourceCulture);
+
+	public static string return_visit_promo_offer_free_message_text => ResourceManager.GetString("return_visit_promo_offer_free_message_text", resourceCulture);
 
 	public static string return_visit_promo_offer_legal_text => ResourceManager.GetString("return_visit_promo_offer_legal_text", resourceCulture);
 

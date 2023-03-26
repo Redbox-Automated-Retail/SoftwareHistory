@@ -31,12 +31,6 @@ public class Configuration : IConfiguration
 
 	private List<long> _sendReturnImageProductIds;
 
-	private string _welcomeScreenABTestVersion;
-
-	private string _startViewAdABTestVersion;
-
-	private string _startViewRentAndBuyABTestVersion;
-
 	private string _priceFiltersOnBrowseABTestVersion;
 
 	private string _oosTitleDetailsABTestVersion;
@@ -139,8 +133,6 @@ public class Configuration : IConfiguration
 
 	public bool GiftCardsEnabled { get; private set; }
 
-	public bool ShowAuthChangeMessage { get; private set; }
-
 	public bool AnimatedDiscReturnEnabled { get; private set; }
 
 	public int BurnInTimeout { get; private set; }
@@ -184,8 +176,6 @@ public class Configuration : IConfiguration
 	public int OfflineGameRentalLimit { get; private set; }
 
 	public int OfflineGamePurchaseLimit { get; private set; }
-
-	public bool OfflineBlockListEnabled { get; private set; }
 
 	public int UploadDiscImageMessagePriority { get; private set; }
 
@@ -292,14 +282,6 @@ public class Configuration : IConfiguration
 	public bool HideGooglePayImage { get; private set; }
 
 	public bool PerksPassEnabled { get; private set; }
-
-	public string WelcomeScreenABTestVersion => GetCultureBasedValue(_welcomeScreenABTestVersion, "A");
-
-	public string WelcomeScreenTimingABTestVersion { get; private set; }
-
-	public string StartViewAdABTestVersion => GetCultureBasedValue(_startViewAdABTestVersion, "A");
-
-	public string StartViewRentAndBuyABTestVersion => GetCultureBasedValue(_startViewRentAndBuyABTestVersion, "A");
 
 	public string PriceFiltersOnBrowseABTestVersion => GetCultureBasedValue(_priceFiltersOnBrowseABTestVersion, "A");
 
@@ -429,39 +411,19 @@ public class Configuration : IConfiguration
 
 	public int AuthorizeTimeout { get; private set; }
 
-	public bool SendAuthorizeToKioskClientService { get; private set; }
-
-	public bool SendReturnToKioskClientService { get; set; }
-
 	public bool SendAuthenticationApisToKioskClientService { get; private set; }
 
 	public bool SendInstallerApisToKioskClientService { get; private set; }
-
-	public bool SendGiftCardAuthorizeToKioskClientService { get; private set; }
-
-	public bool SendPickupAuthorizeToKioskClientSerivce { get; private set; }
-
-	public bool SendReservationAuthorizeToKioskClientService { get; private set; }
 
 	public bool SendMarketingApisToKioskClientService { get; private set; }
 
 	public bool SendExpireAndCancelReservationToKioskClientService { get; private set; }
 
-	public bool SendReconcileToKioskClientService { get; private set; }
-
-	public bool SendInventorySnapshotToKioskClientService { get; private set; }
-
 	public int KioskClientServiceInventorySnapshotTimeout { get; private set; }
-
-	public bool SendReservationPickupToKioskClientService { get; private set; }
 
 	public bool SendCustomerOffersToKioskClientService { get; private set; }
 
-	public bool SendDiscActionToKioskClientService { get; private set; }
-
 	public int KioskClientServiceDiscActionTimeout { get; private set; }
-
-	public bool SendDiscFraudToKioskClientService { get; private set; }
 
 	public int KioskClientServiceDiscFraudTimeout { get; private set; }
 
@@ -481,8 +443,6 @@ public class Configuration : IConfiguration
 
 	public int KioskClientServiceUpdateAccountTimeout { get; private set; }
 
-	public bool SendPickupValidationToKioskClientService { get; private set; }
-
 	public bool ButtonAnimationEnabled { get; private set; }
 
 	public int LoginLockoutMinutes { get; private set; }
@@ -490,6 +450,8 @@ public class Configuration : IConfiguration
 	public bool UseKCSPricing { get; private set; }
 
 	public bool UseKCSInCart { get; private set; }
+
+	public bool UseKCSStartScreen { get; private set; }
 
 	private string GetCultureBasedValue(string defaultCultureValue, string alternateCultureValue)
 	{
@@ -545,12 +507,10 @@ public class Configuration : IConfiguration
 		OfflineItemsLimit = ConfigGetValue(service, "system", "General", "OfflineItemsLimit", 3);
 		OfflineGameRentalLimit = ConfigGetValue(service, "system", "General", "OfflineGameRentalLimit", 1);
 		OfflineGamePurchaseLimit = ConfigGetValue(service, "system", "General", "OfflineGamePurchaseLimit", 2);
-		OfflineBlockListEnabled = ConfigGetValue(service, "system", "General", "OfflineBlockListEnabled", defaultValue: true);
 		UploadDiscImageMessagePriority = ConfigGetValue(service, "system", "QueueService", "UploadDiscImageMessagePriority", 60);
 		KioskAnalyticsMessagePriority = ConfigGetValue(service, "system", "QueueService", "KioskAnalyticsMessagePriority", 0);
 		UseTimerToInvokeCallbackEntries = ConfigGetValue(service, "system", "General", "UseTimerToInvokeCallbackEntries", defaultValue: true);
 		GiftCardsEnabled = ConfigGetValue(service, "system", "General", "GiftCardsEnabled", defaultValue: true);
-		ShowAuthChangeMessage = false;
 		TextToSpeechVolume = ConfigGetValue(service, "system", "General", "TextToSpeechVolume", 100);
 		ButtonAnimationEnabled = ConfigGetValue(service, "system", "General", "ButtonAnimationEnabled", defaultValue: true);
 		UseLowestPriceSortOrder = ConfigGetValue(service, "system", "General", "UserLowestPriceSortOrder", defaultValue: false);
@@ -608,10 +568,6 @@ public class Configuration : IConfiguration
 		AwsUploadDiscImageEnabled = ConfigGetValue(service, "system", "Fraud", "AwsUploadDiscImageEnabled", defaultValue: false);
 		AwsFraudServicesUrl = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesUrl", null);
 		AwsFraudServicesKey = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesKey", null);
-		_welcomeScreenABTestVersion = GetABTestValue(service, "WelcomeScreen", "AB Testing");
-		WelcomeScreenTimingABTestVersion = ConfigGetValue(service, "marketing", "AB Testing", "WelcomeScreenTiming", "D");
-		_startViewAdABTestVersion = GetABTestValue(service, "StartViewAd", "AB Testing");
-		_startViewRentAndBuyABTestVersion = GetABTestValue(service, "StartViewRentAndBuy", "AB Testing");
 		_priceFiltersOnBrowseABTestVersion = GetABTestValue(service, "PriceFiltersOnBrowse", "MarketingGeneral");
 		_oosTitleDetailsABTestVersion = GetABTestValue(service, "OutOfStockTitleDetails", "AB Testing");
 		ScreenSaverTimeout = ConfigGetValue(service, "marketing", "AB Test Parameters", "ScreenSaverTimer", 25000);
@@ -673,26 +629,15 @@ public class Configuration : IConfiguration
 		ZeroTouchEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchEnabled", defaultValue: false) && (ZeroTouchPickupEnabled || ZeroTouchReturnEnabled);
 		ZeroTouchGoogleTwoTap = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchGoogleTwoTap", defaultValue: true);
 		AuthorizeTimeout = ConfigGetValue(service, "system", "General", "AuthorizeTimeout", 60000);
-		SendAuthorizeToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendAuthorizeToKioskClientService", defaultValue: true);
-		SendGiftCardAuthorizeToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendGiftCardAuthorizeToKioskClientService", defaultValue: true);
-		SendPickupAuthorizeToKioskClientSerivce = ConfigGetValue(service, "kioskengine", "Jarvis", "SendPickupAuthorizeToKioskClientService", defaultValue: true);
-		SendReservationAuthorizeToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendReservationAuthorizeToKioskClientService", defaultValue: true);
-		SendReturnToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendReturnToKioskClientService", defaultValue: true);
 		SendAuthenticationApisToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendAuthenticationApisToKioskClientService", defaultValue: true);
 		SendInstallerApisToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendInstallerApisToKioskClientService", defaultValue: true);
 		SendMarketingApisToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendMarketingApisToKioskClientService", defaultValue: true);
 		SendExpireAndCancelReservationToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendExpireAndCancelReservationToKioskClientService", defaultValue: true);
-		SendReconcileToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendReconcileToKioskClientService", defaultValue: true);
-		SendInventorySnapshotToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendInventorySnapshotToKioskClientService", defaultValue: true);
 		KioskClientServiceInventorySnapshotTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceInventorySnapshotTimeout", 60000);
 		UseLegacyBrokerService = ConfigGetValue(service, "kioskengine", "Jarvis", "UseLegacyBrokerService", defaultValue: true);
 		UseAWSBrokerService = ConfigGetValue(service, "kioskengine", "Jarvis", "UseAWSBrokerService", defaultValue: true);
-		SendReservationPickupToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendReservationPickupToKioskClientService", defaultValue: true);
 		SendCustomerOffersToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendCustomerOffersToKioskClientService", defaultValue: true);
-		SendDiscActionToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendDiscActionToKioskClientService", defaultValue: true);
 		KioskClientServiceDiscActionTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceDiscActionTimeout", 5000);
-		SendPickupValidationToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendPickupValidationToKioskClientService", defaultValue: true);
-		SendDiscFraudToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendDiscFraudToKioskClientService", defaultValue: true);
 		KioskClientServiceDiscFraudTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceDiscFraudTimeout", 5000);
 		SendEstimateAccrualToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendEstimateAccrualToKioskClientService", defaultValue: true);
 		KioskClientServiceEstimateAccrualTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceEstimateAccrualTimeout", 5000);
@@ -700,6 +645,7 @@ public class Configuration : IConfiguration
 		KioskClientServiceEstimateRedemptionTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceEstimateRedemptionTimeout", 5000);
 		UseKCSPricing = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSPricing", defaultValue: true);
 		UseKCSInCart = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSInCart", defaultValue: false);
+		UseKCSStartScreen = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSStartScreen", defaultValue: false);
 		SendPromoCodeValidationToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendPromoCodeValidationToKioskClientService", defaultValue: true);
 		KioskClientServicePromoCodeValidationTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServicePromoCodeValidationTimeout", 5000);
 		SendUpdateAccountToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendUpdateAccountToKioskClientService", defaultValue: true);

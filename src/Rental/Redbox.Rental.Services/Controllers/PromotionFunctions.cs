@@ -54,6 +54,7 @@ public class PromotionFunctions
 			};
 			if (promoCodeValidationResult.Success)
 			{
+				IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 				IPromotion newPromotion = CreatePromotionFromPromoCodeValidationResult(promoCodeValidationResult);
 				IPromoCodeValidationInfo promoCodeValidationInfo = SetAndValidateAndUpdatePromotion(newPromotion);
 				if (promoCodeValidationResult.IntentCode == PromotionIntentCode.FirstNightGameGameRequired && !promoCodeValidationInfo.IsCartValid && !promoCodeValidationInfo.IsCartInvalidBecauseOfMultiNightPricing)
@@ -143,6 +144,32 @@ public class PromotionFunctions
 					{
 						doneAction();
 					}
+				}
+				else if (newPromotion.ActionCode == PromotionActionCode.Rental && service.CurrentRentalShoppingCart.HasItemAction(RentalShoppingCartItemAction.purchase))
+				{
+					if (!promoCodeValidationInfo.IsCartValid)
+					{
+						MessagePopupViewController.ShowPromoCodeIneligibleCartPurchaseWarning(doneAction, doneAction);
+					}
+					else
+					{
+						doneAction();
+					}
+				}
+				else if (newPromotion.ActionCode == PromotionActionCode.Purchase && service.CurrentRentalShoppingCart.HasItemAction(RentalShoppingCartItemAction.rental))
+				{
+					if (!promoCodeValidationInfo.IsCartValid)
+					{
+						MessagePopupViewController.ShowPromoCodeIneligibleCartRentalWarning(doneAction, doneAction);
+					}
+					else
+					{
+						doneAction();
+					}
+				}
+				else if (!promoCodeValidationInfo.IsCartValid)
+				{
+					MessagePopupViewController.ShowPromoCodeIneligibleCartWarning(doneAction, doneAction);
 				}
 				else
 				{

@@ -4,11 +4,11 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Loyalty;
+using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Promotion;
@@ -495,6 +495,14 @@ public class RentalShoppingCart : IRentalShoppingCart
 		lock (_syncObject)
 		{
 			return SubscriptionItems.Any((IRentalShoppingCartSubscriptionItem x) => x?.SubscriptionProduct != null && x.SubscriptionProduct.SubscriptionType == subscriptionType);
+		}
+	}
+
+	public bool HasItemAction(RentalShoppingCartItemAction action)
+	{
+		lock (_syncObject)
+		{
+			return TitleItems.Any((IRentalShoppingCartTitleItem x) => x.Action == action);
 		}
 	}
 

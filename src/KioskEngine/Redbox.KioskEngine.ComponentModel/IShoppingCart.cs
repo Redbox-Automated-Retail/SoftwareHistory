@@ -7,8 +7,6 @@ public interface IShoppingCart
 {
 	string Email { get; }
 
-	bool Blocklisted { get; }
-
 	string PostalCode { get; }
 
 	DateTime CreatedOn { get; }
@@ -44,8 +42,6 @@ public interface IShoppingCart
 	void SetVariableAuthValues(bool authAcceptFlag, int authRuleId, decimal authAmount, bool skipAuthRule);
 
 	void SetPlayPassPromptAccepted(bool playPassPromptAccepted, int playPassPointsEarned);
-
-	void SetBlocklisted(bool value);
 
 	string GetPropertyBagEntry(string key);
 

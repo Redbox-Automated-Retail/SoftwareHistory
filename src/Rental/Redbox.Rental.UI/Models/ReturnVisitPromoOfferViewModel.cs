@@ -15,6 +15,8 @@ public class ReturnVisitPromoOfferViewModel : DependencyObject
 
 	public string MessageText { get; set; }
 
+	public string EligibleText { get; set; }
+
 	public string PromoCodeText { get; set; }
 
 	public string ExpirationText { get; set; }

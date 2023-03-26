@@ -18,18 +18,6 @@ public class ReturnFunctions
 		return Redbox.Rental.Services.Controllers.ReturnFunctions.IsValidBarcode(barcode);
 	}
 
-	[KernelFunction(Name = "kernel.can_show_return_visit_promo_offer_view")]
-	internal static bool CanShowReturnVisitPromoOfferView()
-	{
-		return Redbox.Rental.Services.Controllers.ReturnFunctions.CanShowReturnVisitPromoOfferView();
-	}
-
-	[KernelFunction(Name = "kernel.show_return_visit_promo_offer_view")]
-	internal static void ShowReturnVisitPromoOfferView(Action closeAction)
-	{
-		Redbox.Rental.Services.Controllers.ReturnFunctions.ShowReturnVisitPromoOfferView(closeAction);
-	}
-
 	[KernelFunction(Name = "kernel.show_return_complete_view_with_promo_check")]
 	internal static void ShowReturnCompleteViewWithPromoCheck(string barcode, Action closeAction)
 	{
