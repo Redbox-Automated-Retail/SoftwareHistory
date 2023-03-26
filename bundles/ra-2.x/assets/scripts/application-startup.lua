@@ -16,8 +16,6 @@ if kernel.getmachinevalueordefault( "Store", "OutOfOrder", "false" ) == "true" t
 	kernel.applyunsafeshutdown()
 end
 
-kernel.register_environment_change_callback()
-
 if not in_maintenance_mode() then
     view_show("application_load_view")
 end
@@ -698,15 +696,6 @@ kernel.timercreate("inventory-check-for-new-files-timer",
 	end
 )
 kernel.timerstart("inventory-check-for-new-files-timer")
-
-kernel.timercreate("blocklist-check-timer",
-	28000,
-	3600000,
-	function()
-		kernel.rental_check_for_new_blocklist()
-	end
-)
-kernel.timerstart("blocklist-check-timer")
 
 kernel.setup_the_rental_application()
 kernel.register_zero_touch_pickup_callbacks( swipe_view_next_func )

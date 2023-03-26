@@ -589,9 +589,6 @@ swipe_view_next_func = function()
 						end
 					else
 						local cancel_reason_code = result.properties.cancel_reason;
-						if kernel.session_get_is_blocklisted(ShoppingCart.session_id) == true then
-						    cancel_reason_code = "CUSTOMER BLOCKLISTED"
-						end
 						if cancel_reason_code ~= nil then
 							view_analytics_event( "context", "blocklisted" )
 							cancel_all_account_reservations(cancel_reason_code)

@@ -1,17 +1,17 @@
-# Ultima (2023-03-05)
+# Vega (2023-03-26)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-03-05
-- Store labels: kop-rental-bundles-Ultima
+- Date (first download in the snapshots): 2023-03-26
+- Store labels: kop-rental-bundles-Vega
 - Package revisions:
-  - `kop-rental-bundles` revision 171 (`C2E7421641B5B6F312D7820B3E3288EE12CE365F`)
+  - `kop-rental-bundles` revision 172 (`29405EBB52934E9DD305046A10CD46E903FDEE81`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `E9309B27171B248E6FF29130799E7B75F91AD02D` | exact |
-| `fm.bundle` |  |  | `85F43FC325C8AC26AFC7330D36A13A434F6F08C8` | exact |
-| `library-rental-common.bundle` |  |  | `E6C042256FE271B96E4F5043CEA66F3DE6CDAF5A` | exact |
-| `ra-2.x.bundle` |  |  | `C1909907ACCA2F47B1DD5FA1CAA6AC90ECFC511F` | exact |
+| `cp.bundle` |  |  | `796249143AD79875F49E21F40177874916E852E7` | exact |
+| `fm.bundle` |  |  | `20BEC81D7CB40BEBE9AF017612A8ECF1EC87144A` | exact |
+| `library-rental-common.bundle` |  |  | `395F10FAF0712F14369DC538E967CDAD2649C85A` | exact |
+| `ra-2.x.bundle` |  |  | `C9DE348E01E4A1DF38BE6B6B9B41A52E5A11CAB4` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
