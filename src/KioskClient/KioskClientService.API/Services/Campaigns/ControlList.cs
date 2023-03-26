@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace KioskClientService.API.Services.Campaigns;
 
-[JsonConverter(typeof(ViewControlListConverter))]
-public class ViewControlList : List<IViewControl>
+[JsonConverter(typeof(ControlListConverter))]
+public class ControlList : List<IControl>
 {
 }

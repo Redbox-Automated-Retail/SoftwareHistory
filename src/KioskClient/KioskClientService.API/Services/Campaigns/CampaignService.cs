@@ -9,12 +9,17 @@ using KioskClientService.API.Services.App;
 using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.ProxyApi;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace KioskClientService.API.Services.Campaigns;
 
 internal class CampaignService : ICampaignService
 {
+	private const string CampaignDataFileName = "Campaigns";
+
+	private const string StartAssetImagesFolder = "StartAssetImages";
+
+	private readonly string _startAssetControlFolderPath;
+
 	private readonly ILogger<CampaignService> _logger;
 
 	private readonly IStoreService _storeService;
@@ -25,95 +30,30 @@ internal class CampaignService : ICampaignService
 
 	private readonly IPersistentDataCacheService _persistentDataCacheService;
 
+	private readonly IHttpService _httpService;
+
 	private static DateTime? _nextRefresh;
 
-	private readonly string _campaignPath;
-
-	private const string CampaignFolder = "Campaigns";
-
-	private const string CampaignDataFileName = "Campaigns";
-
-	public CampaignService(ILogger<CampaignService> logger, IStoreService storeService, IOptionsSnapshotKioskConfiguration kioskConfiguration, IProxyApi proxyApi, IPersistentDataCacheService persistentDataCacheService)
+	public CampaignService(ILogger<CampaignService> logger, IStoreService storeService, IOptionsSnapshotKioskConfiguration kioskConfiguration, IProxyApi proxyApi, IPersistentDataCacheService persistentDataCacheService, IHttpService httpService)
 	{
 		_logger = logger;
 		_storeService = storeService;
 		_kioskConfiguration = kioskConfiguration;
 		_proxyApi = proxyApi;
 		_persistentDataCacheService = persistentDataCacheService;
+		_httpService = httpService;
+		_startAssetControlFolderPath = Path.Combine(_storeService.DataPath, "StartAssetImages");
+		if (!Directory.Exists(_startAssetControlFolderPath))
+		{
+			_logger.LogInfoWithSource("Creating Start Asset Image directory: " + _startAssetControlFolderPath, ".ctor");
+			Directory.CreateDirectory(_startAssetControlFolderPath);
+		}
 		if (!_nextRefresh.HasValue)
 		{
 			int num = new Random().Next(60, Math.Max(2, _kioskConfiguration.Campaigns.RefreshInterval) * 60);
 			_nextRefresh = DateTime.Now.AddSeconds(num);
 			_logger.LogInfoWithSource($"Next refresh at: {_nextRefresh}", ".ctor");
 		}
-		_campaignPath = Path.Combine(_storeService.DataPath, "Campaigns");
-		if (!Directory.Exists(_campaignPath))
-		{
-			Directory.CreateDirectory(_campaignPath);
-		}
-	}
-
-	public async Task<GetStartScreenResponse> GetStartScreen()
-	{
-		return await GetCampaign<GetStartScreenResponse, StartScreenData>(CampaignType.StartScreen);
-	}
-
-	private async Task<R> GetCampaign<R, D>(CampaignType campaignType) where R : ConcreteBaseResponse<D>, new() where D : ICampaignData
-	{
-		R result = new R();
-		try
-		{
-			string campaignPath = GetCampaignPath(campaignType);
-			if (File.Exists(campaignPath))
-			{
-				CampaignList<D> campaignList = JsonConvert.DeserializeObject<CampaignList<D>>(await File.ReadAllTextAsync(campaignPath));
-				if (campaignList == null)
-				{
-					_logger.LogErrorWithSource("Campaign file: " + campaignPath + " is not valid json.", "GetCampaign");
-					result.StatusCode = HttpStatusCode.UnprocessableEntity;
-					result.Error = "Campaign: '" + campaignPath + "' was not valid campaign json.";
-					result.Campaign = null;
-				}
-				else
-				{
-					Campaign<D> activeCampaign = campaignList.GetActiveCampaign();
-					if (activeCampaign == null)
-					{
-						_logger.LogErrorWithSource("Active campaign not found in " + campaignPath + ".", "GetCampaign");
-						result.StatusCode = HttpStatusCode.NoContent;
-						result.Error = "Campaign: '" + campaignPath + "' valid but no active campaign found.";
-						result.Campaign = null;
-					}
-					else
-					{
-						_logger.LogInfoWithSource($"Campaign lookup successful, returning id: {activeCampaign.CampaignId}.", "GetCampaign");
-						result.StatusCode = HttpStatusCode.OK;
-						result.Error = null;
-						result.Campaign = activeCampaign;
-					}
-				}
-			}
-			else
-			{
-				_logger.LogErrorWithSource("Campaign file: " + campaignPath + " not found.", "GetCampaign");
-				result.StatusCode = HttpStatusCode.NotFound;
-				result.Error = "Campaign: '" + campaignPath + "' was not found.";
-				result.Campaign = null;
-			}
-		}
-		catch (Exception ex)
-		{
-			_logger.LogErrorWithSource(ex, "Exception occurred", "GetCampaign");
-			result.StatusCode = HttpStatusCode.InternalServerError;
-			result.Error = ex.Message;
-			result.Campaign = null;
-		}
-		return result;
-	}
-
-	internal string GetCampaignPath(CampaignType campaignType)
-	{
-		return Path.Combine(_campaignPath, $"{campaignType}.json");
 	}
 
 	public async Task<ApiBaseResponse> RefreshIfNeeded()
@@ -185,14 +125,97 @@ internal class CampaignService : ICampaignService
 
 	private async void ProcessResponse(PostKioskCampaignsResponse response, CampaignData data)
 	{
-		data.LastSyncTime = response.LastSyncTime;
 		if (response.InCarts != null)
 		{
 			data.InCarts.Clear();
 			data.InCarts.AddRange(response.InCarts);
 			_logger.LogInfoWithSource("Processed updates to Incarts", "ProcessResponse");
 		}
+		if (response.StartScreens != null)
+		{
+			List<StartScreenDetails> processedStartScreens = new List<StartScreenDetails>();
+			List<string> existingFiles = (from f in new DirectoryInfo(_startAssetControlFolderPath).GetFiles()
+				select f.Name).ToList();
+			foreach (StartScreenDetails startScreen in response.StartScreens)
+			{
+				var (flag, item) = await ProcessStartScreen(startScreen, existingFiles);
+				if (!flag)
+				{
+					_logger.LogInfoWithSource($"Processing StartScreen: {startScreen.CampaignId} failed, exiting without updating campaigns cache", "ProcessResponse");
+					return;
+				}
+				processedStartScreens.Add(item);
+			}
+			data.StartScreens.Clear();
+			data.StartScreens.AddRange(processedStartScreens);
+			_logger.LogInfoWithSource($"expired assets to delete: {existingFiles.Count}", "ProcessResponse");
+			existingFiles.ForEach(DeleteStartAssetImage);
+			_logger.LogInfoWithSource("Processed updates to StartScreens", "ProcessResponse");
+		}
+		data.LastSyncTime = response.LastSyncTime;
 		await WriteCampaign(data);
+	}
+
+	private async Task<(bool, StartScreenDetails)> ProcessStartScreen(StartScreenDetails source, List<string> existingFiles)
+	{
+		IEnumerable<IControl> enumerable = source.Controls.Where((IControl c) => c.ControlType == ControlType.StartAsset);
+		foreach (IControl item in enumerable)
+		{
+			StartAssetControl startAsset = item as StartAssetControl;
+			Uri uri = new Uri(startAsset.Asset.PresignedUrl);
+			string text = await DownloadAsset(uri, existingFiles);
+			if (text == null)
+			{
+				_logger.LogErrorWithSource($"Failed to download asset for asset id: {startAsset.Asset.Id}", "ProcessStartScreen");
+				return (false, null);
+			}
+			startAsset.Asset.FullPath = text;
+			Asset asset = startAsset.Asset;
+			string url = (startAsset.Asset.PresignedUrl = new Uri(text).AbsoluteUri);
+			asset.Url = url;
+		}
+		return (true, source);
+	}
+
+	private async Task<string> DownloadAsset(Uri uri, List<string> existingFiles)
+	{
+		string result = null;
+		try
+		{
+			string imageFilename = Path.GetFileName(uri.LocalPath);
+			_logger.LogInfoWithSource("Downloading Asset: " + imageFilename, "DownloadAsset");
+			APIResponse<byte[]> response = await _httpService.DownloadFile(uri.AbsoluteUri);
+			if (response.IsSuccessStatusCode)
+			{
+				string destination = Path.Combine(_startAssetControlFolderPath, imageFilename);
+				await File.WriteAllBytesAsync(destination, response.Response);
+				_logger.LogInfoWithSource($"saved asset file: {imageFilename}, size: {response.Response.Length}", "DownloadAsset");
+				existingFiles.Remove(imageFilename);
+				result = destination;
+			}
+			else
+			{
+				_logger.LogErrorWithSource($"Received status {response.StatusCode} downloading asset file: {imageFilename} from {uri.AbsoluteUri}", "DownloadAsset");
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Error downloading asset: " + uri.AbsoluteUri, "DownloadAsset");
+		}
+		return result;
+	}
+
+	private void DeleteStartAssetImage(string file)
+	{
+		try
+		{
+			File.Delete(Path.Combine(_startAssetControlFolderPath, file));
+			_logger.LogInfoWithSource("deleted start asset image: " + file, "DeleteStartAssetImage");
+		}
+		catch (Exception exception)
+		{
+			_logger.LogError(exception, "Unable to delete start asset image file: " + file);
+		}
 	}
 
 	private async Task<CampaignData> ReadCampaign()
@@ -222,29 +245,29 @@ internal class CampaignService : ICampaignService
 		return _persistentDataCacheService.Delete("Campaigns");
 	}
 
-	public async Task<GetInCartsResponse> GetInCart()
+	public async Task<GetInCartResponse> GetInCart()
 	{
 		try
 		{
 			if (!_kioskConfiguration.Campaigns.InCartsActive)
 			{
-				return new GetInCartsResponse
+				return new GetInCartResponse
 				{
 					StatusCode = HttpStatusCode.NoContent,
 					Error = "InCartsActive is false"
 				};
 			}
 			KioskInCartDetails kioskInCartDetails = await GetActiveInCart();
-			return new GetInCartsResponse
+			return new GetInCartResponse
 			{
 				InCart = kioskInCartDetails,
-				StatusCode = ((kioskInCartDetails == null) ? HttpStatusCode.NoContent : HttpStatusCode.OK)
+				StatusCode = ((kioskInCartDetails == null) ? HttpStatusCode.NotFound : HttpStatusCode.OK)
 			};
 		}
 		catch (Exception ex)
 		{
 			_logger.LogErrorWithSource(ex, "Exception occurred", "GetInCart");
-			return new GetInCartsResponse
+			return new GetInCartResponse
 			{
 				StatusCode = HttpStatusCode.InternalServerError,
 				Error = "Exception occurred"
@@ -273,5 +296,50 @@ internal class CampaignService : ICampaignService
 			return campaignData.InCarts;
 		}
 		return new List<InCartDetails>();
+	}
+
+	public async Task<GetStartScreenResponse> GetStartScreen()
+	{
+		try
+		{
+			if (!_kioskConfiguration.Campaigns.StartScreensActive)
+			{
+				return new GetStartScreenResponse
+				{
+					StatusCode = HttpStatusCode.NoContent,
+					Error = "StartScreensActive is false"
+				};
+			}
+			KioskStartScreenDetails kioskStartScreenDetails = await GetActiveStartScreen();
+			return new GetStartScreenResponse
+			{
+				StartScreen = kioskStartScreenDetails,
+				StatusCode = ((kioskStartScreenDetails == null) ? HttpStatusCode.NotFound : HttpStatusCode.OK)
+			};
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception occurred", "GetStartScreen");
+			return new GetStartScreenResponse
+			{
+				StatusCode = HttpStatusCode.InternalServerError,
+				Error = ex.Message
+			};
+		}
+	}
+
+	private async Task<KioskStartScreenDetails> GetActiveStartScreen()
+	{
+		StartScreenDetails startScreenData = (from c in await GetAllStartScreens()
+			where c.StartDate <= DateTime.Now && (!c.EndDate.HasValue || c.EndDate > DateTime.Now)
+			orderby c.StartDate descending
+			orderby c.Rank descending, c.StartDate descending
+			select c).FirstOrDefault();
+		return KioskStartScreenDetails.FromStartScreenDetails(startScreenData);
+	}
+
+	private async Task<List<StartScreenDetails>> GetAllStartScreens()
+	{
+		return (await ReadCampaign())?.StartScreens ?? new List<StartScreenDetails>();
 	}
 }

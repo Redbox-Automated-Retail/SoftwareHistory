@@ -45,6 +45,8 @@ public class CustomerProfileService : ICustomerProfileService
 
 				public const string PointsExpirationDate = "Login.PointsExpirationDate";
 
+				public const string NumberOfSampleStoredPromos = "Login.NumberOfSampleStoredPromos";
+
 				public const string PromptForPerks = "Login.PromptForPerks";
 
 				public const string PromptForEarlyId = "Login.PromptForEarlyId";
@@ -200,18 +202,39 @@ public class CustomerProfileService : ICustomerProfileService
 		{
 			loginResponse.Response.Customer.TextClubEnabled = result3;
 		}
-		AddStoredPromo(loginResponse.Response, new KioskStoredPromoCode
+		if (int.TryParse(await GetTestDataValue("Login.NumberOfSampleStoredPromos"), out var result4))
 		{
-			Code = "UDVD01",
-			CampaignName = "First Night DVD Rental",
-			ExpirationDate = DateTime.Today.AddDays(1.0)
-		});
-		AddStoredPromo(loginResponse.Response, new KioskStoredPromoCode
-		{
-			Code = "UBLU01",
-			CampaignName = "First Night Blu-Ray Rental",
-			ExpirationDate = DateTime.Today.AddDays(0.0)
-		});
+			if (result4 > 0)
+			{
+				AddStoredPromo(loginResponse.Response, new KioskStoredPromoCode
+				{
+					Code = "UDVD01",
+					CampaignName = "First Night DVD Rental",
+					ExpirationDate = DateTime.Today.AddDays(1.0)
+				});
+			}
+			if (result4 > 1)
+			{
+				AddStoredPromo(loginResponse.Response, new KioskStoredPromoCode
+				{
+					Code = "UBLU01",
+					CampaignName = "First Night Blu-Ray Rental",
+					ExpirationDate = DateTime.Today.AddDays(0.0)
+				});
+			}
+			if (result4 > 2)
+			{
+				for (int i = 2; i < result4; i++)
+				{
+					AddStoredPromo(loginResponse.Response, new KioskStoredPromoCode
+					{
+						Code = $"UDVD{i}",
+						CampaignName = $"First Night DVD Rental ({i})",
+						ExpirationDate = DateTime.Today.AddDays(7 * i)
+					});
+				}
+			}
+		}
 		loginResponse.Response.Subscriptions = new KioskSubscriptions
 		{
 			EligibleSubscriptionPlanIds = new List<string>(),
@@ -240,15 +263,15 @@ public class CustomerProfileService : ICustomerProfileService
 			string redboxPlusSubscriptionTier = await GetTestDataValue("Login.RedboxPlusSubscriptionTier");
 			string s = await GetTestDataValue("Login.RedboxPlusSubscriptionEndDate");
 			DateTime redboxPlusSubscriptionEndDate = DateTime.Now.AddDays(200.0);
-			if (DateTime.TryParse(s, out var result4))
+			if (DateTime.TryParse(s, out var result5))
 			{
-				redboxPlusSubscriptionEndDate = result4;
+				redboxPlusSubscriptionEndDate = result5;
 			}
 			CustomerSubscriptionPlanStatus customerSubscriptionPlanStatus = CustomerSubscriptionPlanStatus.Active;
 			string value = await GetTestDataValue("Login.RedboxPlusSubscriptionStatus");
-			if (Enum.TryParse(typeof(CustomerSubscriptionPlanStatus), value, out object result5))
+			if (Enum.TryParse(typeof(CustomerSubscriptionPlanStatus), value, out object result6))
 			{
-				customerSubscriptionPlanStatus = (CustomerSubscriptionPlanStatus)result5;
+				customerSubscriptionPlanStatus = (CustomerSubscriptionPlanStatus)result6;
 			}
 			loginResponse.Response.Subscriptions.ExistingSubscriptions.Add(new KioskSubscription
 			{
@@ -260,20 +283,20 @@ public class CustomerProfileService : ICustomerProfileService
 				SubscriptionTier = redboxPlusSubscriptionTier
 			});
 			string value2 = await GetTestDataValue("Login.RedboxPlusFree1NightRentalAvailable");
-			bool result6 = false;
-			bool.TryParse(value2, out result6);
-			if (result6)
+			bool result7 = false;
+			bool.TryParse(value2, out result7);
+			if (result7)
 			{
 				string campaignName = ((redboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier1.ToString()) ? "RBPLUS 9.99" : "RBPLUS 19.99");
 				int campaignId = ((redboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier1.ToString()) ? 9979 : 9981);
 				DateTime dateTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(1).AddDays(-1.0);
 				DateTime expirationDate = ((redboxPlusSubscriptionTier == "Tier1") ? dateTime : dateTime.AddMonths(11));
 				int num = ((redboxPlusSubscriptionTier == "Tier1") ? 1 : 24);
-				for (int i = 0; i < num; i++)
+				for (int j = 0; j < num; j++)
 				{
 					AddStoredPromo(loginResponse.Response, new KioskStoredPromoCode
 					{
-						Code = $"RBPLUS{i}",
+						Code = $"RBPLUS{j}",
 						CampaignId = campaignId,
 						CampaignName = campaignName,
 						ExpirationDate = expirationDate
@@ -282,31 +305,31 @@ public class CustomerProfileService : ICustomerProfileService
 			}
 		}
 		loginResponse.Response.Loyalty = new KioskLoyalty();
-		if (bool.TryParse(await GetTestDataValue("Login.LoyaltyIsEnrolled"), out var result7))
+		if (bool.TryParse(await GetTestDataValue("Login.LoyaltyIsEnrolled"), out var result8))
 		{
-			loginResponse.Response.Loyalty.IsEnrolled = result7;
+			loginResponse.Response.Loyalty.IsEnrolled = result8;
 		}
-		if (bool.TryParse(await GetTestDataValue("Login.LoyaltySystemOnline"), out var result8))
+		if (bool.TryParse(await GetTestDataValue("Login.LoyaltySystemOnline"), out var result9))
 		{
-			loginResponse.Response.Loyalty.LoyaltySystemOnline = result8;
+			loginResponse.Response.Loyalty.LoyaltySystemOnline = result9;
 		}
-		if (int.TryParse(await GetTestDataValue("Login.LoyaltyPointBalance"), out var result9))
+		if (int.TryParse(await GetTestDataValue("Login.LoyaltyPointBalance"), out var result10))
 		{
-			loginResponse.Response.Loyalty.PointBalance = result9;
+			loginResponse.Response.Loyalty.PointBalance = result10;
 		}
 		KioskLoyalty loyalty = loginResponse.Response.Loyalty;
 		loyalty.CurrentTier = await GetTestDataValue("Login.LoyaltyTier");
-		if (int.TryParse(await GetTestDataValue("Login.LoyaltyTierCounter"), out var result10))
+		if (int.TryParse(await GetTestDataValue("Login.LoyaltyTierCounter"), out var result11))
 		{
-			loginResponse.Response.Loyalty.CurrentTierCounter = result10;
+			loginResponse.Response.Loyalty.CurrentTierCounter = result11;
 		}
-		if (int.TryParse(await GetTestDataValue("Login.PointsExpiring"), out var result11))
+		if (int.TryParse(await GetTestDataValue("Login.PointsExpiring"), out var result12))
 		{
-			loginResponse.Response.Loyalty.PointsExpiring = result11;
+			loginResponse.Response.Loyalty.PointsExpiring = result12;
 		}
-		if (DateTime.TryParse(await GetTestDataValue("Login.PointsExpirationDate"), out var result12))
+		if (DateTime.TryParse(await GetTestDataValue("Login.PointsExpirationDate"), out var result13))
 		{
-			loginResponse.Response.Loyalty.PointsExpirationDate = result12;
+			loginResponse.Response.Loyalty.PointsExpirationDate = result13;
 		}
 		loginResponse.Response.Recommendations = new KioskRecommendedTitles();
 		KioskRecommendedTitles recommendations = loginResponse.Response.Recommendations;

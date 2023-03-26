@@ -1,9 +1,8 @@
 using System;
-using KioskClientService.API.Services.ProxyApi;
 
-namespace KioskClientService.API.Services.Campaigns;
+namespace KioskClientService.API.Services.ProxyApi;
 
-public class CampaignBase
+public abstract class BaseDetails
 {
 	public long CampaignId { get; set; }
 
@@ -12,4 +11,6 @@ public class CampaignBase
 	public DateTime? EndDate { get; set; }
 
 	public CampaignType CampaignType { get; set; }
+
+	public int Rank { get; set; }
 }

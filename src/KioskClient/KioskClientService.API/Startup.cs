@@ -72,7 +72,7 @@ public class Startup
 		}).SetCompatibilityVersion(CompatibilityVersion.Version_2_2), (Action<MvcJsonOptions>)delegate(MvcJsonOptions options)
 		{
 			options.SerializerSettings.Converters.Add(new StringEnumConverter());
-			options.SerializerSettings.Converters.Add(new ViewControlListConverter());
+			options.SerializerSettings.Converters.Add(new ControlListConverter());
 			options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
 		});
 		services.PostConfigure(delegate(ApiBehaviorOptions options)

@@ -9,7 +9,7 @@ public interface ICampaignService
 
 	Task<ApiBaseResponse> Refresh();
 
-	Task<GetInCartsResponse> GetInCart();
+	Task<GetInCartResponse> GetInCart();
 
 	Task<GetStartScreenResponse> GetStartScreen();
 }

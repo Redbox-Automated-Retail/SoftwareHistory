@@ -1,8 +1,10 @@
 namespace KioskClientService.API.Services.Campaigns;
 
-public interface IViewControl
+public interface IControl
 {
-	ViewControlType ControlType { get; }
+	long? ControlId { get; }
+
+	ControlType ControlType { get; }
 
 	int? DisplayDuration { get; }
 }

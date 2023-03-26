@@ -1,6 +1,6 @@
 namespace KioskClientService.API.Services.Campaigns;
 
-public class StartScreenData : ICampaignData
+public class StartScreenData
 {
-	public ViewControlList Controls { get; set; } = new ViewControlList();
+	public ControlList Controls { get; set; } = new ControlList();
 }

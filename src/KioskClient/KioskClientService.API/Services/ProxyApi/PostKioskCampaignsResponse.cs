@@ -10,8 +10,10 @@ public class PostKioskCampaignsResponse : ApiBaseResponse
 
 	public List<InCartDetails> InCarts { get; set; }
 
-	public new object Scrub()
+	public List<StartScreenDetails> StartScreens { get; set; }
+
+	public override object Scrub()
 	{
-		return "Returning Incarts: " + ((InCarts == null) ? "No update" : InCarts.Count.ToString());
+		return "Returning Incarts: " + ((InCarts == null) ? "No update" : InCarts.Count.ToString()) + ", StartScreens: " + ((StartScreens == null) ? "No update" : StartScreens.Count.ToString());
 	}
 }

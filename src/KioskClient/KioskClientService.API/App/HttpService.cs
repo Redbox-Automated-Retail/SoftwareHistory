@@ -154,7 +154,6 @@ public class HttpService : IHttpService
 		sw.Start();
 		try
 		{
-			sw.Stop();
 			using HttpResponseMessage result = await _httpClient.GetAsync(url);
 			if (result.IsSuccessStatusCode)
 			{
@@ -163,7 +162,6 @@ public class HttpService : IHttpService
 		}
 		catch (Exception exception)
 		{
-			sw.Stop();
 			apiResponse.SetException(exception, (int)sw.ElapsedMilliseconds);
 		}
 		apiResponse.Log(responseContentLoggingEnabled: false);

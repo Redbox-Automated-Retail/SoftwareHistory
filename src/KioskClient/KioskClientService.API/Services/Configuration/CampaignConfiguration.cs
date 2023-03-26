@@ -8,4 +8,6 @@ public class CampaignConfiguration : BaseCategorySetting
 	public int RefreshInterval { get; set; } = 30;
 
 	public bool InCartsActive { get; set; } = true;
+
+	public bool StartScreensActive { get; set; } = true;
 }

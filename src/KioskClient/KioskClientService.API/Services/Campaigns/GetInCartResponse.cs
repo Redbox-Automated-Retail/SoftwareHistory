@@ -2,7 +2,7 @@ using KioskClientService.API.App;
 
 namespace KioskClientService.API.Services.Campaigns;
 
-public class GetInCartsResponse : ApiBaseResponse
+public class GetInCartResponse : ApiBaseResponse
 {
 	public KioskInCartDetails InCart { get; set; }
 

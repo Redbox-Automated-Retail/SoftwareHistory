@@ -4,7 +4,7 @@ using Newtonsoft.Json.Converters;
 namespace KioskClientService.API.Services.Campaigns;
 
 [JsonConverter(typeof(StringEnumConverter))]
-public enum ViewControlType
+public enum ControlType
 {
 	NotSet,
 	StartAsset,

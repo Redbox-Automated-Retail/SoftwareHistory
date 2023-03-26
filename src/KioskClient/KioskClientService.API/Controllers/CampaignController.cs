@@ -33,10 +33,10 @@ public class CampaignController : ControllerBase
 
 	[HttpGet]
 	[Route("incart")]
-	[ProducesResponseType(typeof(GetInCartsResponse), 200)]
-	[ProducesResponseType(typeof(ApiBaseResponse), 204)]
+	[ProducesResponseType(typeof(GetInCartResponse), 200)]
+	[ProducesResponseType(typeof(ApiBaseResponse), 404)]
 	[ProducesResponseType(typeof(ApiBaseResponse), 500)]
-	public async Task<ActionResult<GetInCartsResponse>> GetInCart()
+	public async Task<ActionResult<GetInCartResponse>> GetInCart()
 	{
 		return (await _campaignService.GetInCart()).ToObjectResult();
 	}
