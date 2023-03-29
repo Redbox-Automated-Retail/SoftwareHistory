@@ -468,6 +468,10 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			{
 				viewService?.UnwindToSafe("keyboard_promo_view", discard: false, "ShoppingCart:get_promo_code (on_error)");
 			}
+			else
+			{
+				viewService?.UnwindToSafe("shopping_cart_view", discard: false, "ShoppingCart:get_promo_code (on_error)");
+			}
 		};
 		PromotionFunctions.ValidatePromoCode(promoCode, doneCallback, afterErrorMessageCallback);
 	}
