@@ -44,7 +44,7 @@ public class ReturnVisitPromoOfferViewController : BaseViewController
 			_promoCode = returnVisitPromoOfferViewParameters.PromoCode;
 			string arg2 = string.Format(Resources.return_visit_promo_offer_expiration_text, returnVisitPromoOfferViewParameters.ExpirationDate);
 			returnVisitPromoOfferViewModel.ExpirationText = string.Format($"{arg} - {arg2}");
-			returnVisitPromoOfferViewModel.LegalText = Resources.return_visit_promo_offer_legal_text;
+			returnVisitPromoOfferViewModel.LegalText = ((returnVisitPromoOfferViewParameters.PromoType == ReturnPromoType.FirstNightFree) ? Resources.return_visit_promo_offer_first_night_free_legal_text : Resources.return_visit_promo_offer_legal_text);
 			returnVisitPromoOfferViewModel.CloseButtonText = Resources.close_button.ToUpper();
 			returnVisitPromoOfferViewModel.UseNowButtonText = Resources.use_now_button_text.ToUpper();
 			_closeAction = returnVisitPromoOfferViewParameters.CloseAction;

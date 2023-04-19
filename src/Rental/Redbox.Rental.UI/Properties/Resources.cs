@@ -2068,6 +2068,8 @@ public class Resources
 
 	public static string return_visit_promo_offer_expiration_text => ResourceManager.GetString("return_visit_promo_offer_expiration_text", resourceCulture);
 
+	public static string return_visit_promo_offer_first_night_free_legal_text => ResourceManager.GetString("return_visit_promo_offer_first_night_free_legal_text", resourceCulture);
+
 	public static string return_visit_promo_offer_free_amount_text => ResourceManager.GetString("return_visit_promo_offer_free_amount_text", resourceCulture);
 
 	public static string return_visit_promo_offer_free_eligible_text => ResourceManager.GetString("return_visit_promo_offer_free_eligible_text", resourceCulture);
