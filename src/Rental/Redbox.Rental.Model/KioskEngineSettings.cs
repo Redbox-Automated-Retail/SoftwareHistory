@@ -9,5 +9,7 @@ public static class KioskEngineSettings
 		public const string UseKCSInCart = "UseKCSInCart";
 
 		public const string UseKCSStartScreen = "UseKCSStartScreen";
+
+		public const string KCSLoadCampaignTimerDuration = "KCSLoadCampaignTimerDuration";
 	}
 }

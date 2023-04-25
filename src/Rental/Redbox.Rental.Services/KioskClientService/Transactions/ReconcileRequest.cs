@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Redbox.Core;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskClientService.Transactions;
 using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Services.KioskClientService.Transactions;
@@ -21,7 +22,7 @@ internal class ReconcileRequest : MessageBase
 
 	public long? ParentTransactionId { get; set; }
 
-	public ShoppingCart ShoppingCart { get; set; }
+	public MessageShoppingCart ShoppingCart { get; set; }
 
 	public bool IsOffline { get; set; }
 

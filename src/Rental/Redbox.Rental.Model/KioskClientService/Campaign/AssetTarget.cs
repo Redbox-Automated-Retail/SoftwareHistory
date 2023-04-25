@@ -4,5 +4,5 @@ public enum AssetTarget
 {
 	ProductGroupId,
 	PromoCode,
-	ValueMenu
+	None
 }

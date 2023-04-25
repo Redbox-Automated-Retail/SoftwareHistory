@@ -1246,21 +1246,21 @@ public class RentalShoppingCart : IRentalShoppingCart
 		decimal num = func(arg);
 		decimal num2 = 0m;
 		promoCodeValidationInfo.IsCartValid = list.Any();
-		if (promoCodeValidationInfo.IsCartValid)
+		promoCodeValidationInfo.Price = num;
+		promoCodeValidationInfo.Percent = Promotion.Percent;
+		foreach (IRentalShoppingCartTitleItem item in list)
 		{
-			promoCodeValidationInfo.Price = num;
-			promoCodeValidationInfo.Percent = Promotion.Percent;
-			foreach (IRentalShoppingCartTitleItem item in list)
+			PromotionItem promotionItem = new PromotionItem
 			{
-				PromotionItem promotionItem = new PromotionItem
-				{
-					RentalShoppingCartItem = item,
-					PromotionAmount = func(((promotion.ActionCode == PromotionActionCode.Rental) ? item?.PricingRecord?.InitialNight : item?.PricingRecord?.Purchase) ?? 0m)
-				};
-				promoCodeValidationInfo.PromotionItems.Add(promotionItem);
-				promoCodeValidationInfo.QualifyingItems.Add(item);
-				num2 += promotionItem.PromotionAmount;
-			}
+				RentalShoppingCartItem = item,
+				PromotionAmount = func(((promotion.ActionCode == PromotionActionCode.Rental) ? item?.PricingRecord?.InitialNight : item?.PricingRecord?.Purchase) ?? 0m)
+			};
+			promoCodeValidationInfo.PromotionItems.Add(promotionItem);
+			promoCodeValidationInfo.QualifyingItems.Add(item);
+			num2 += promotionItem.PromotionAmount;
+		}
+		if (promoCodeValidationInfo.PromotionItems != null && promoCodeValidationInfo.PromotionItems.Count >= 1)
+		{
 			decimal num3 = num - num2;
 			promoCodeValidationInfo.PromotionItems[0].PromotionAmount += num3;
 		}

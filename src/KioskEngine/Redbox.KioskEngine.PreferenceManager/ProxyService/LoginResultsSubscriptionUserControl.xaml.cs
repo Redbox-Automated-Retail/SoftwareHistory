@@ -13,7 +13,7 @@ using Redbox.Rental.Model.KioskClientService.Subscriptions;
 
 namespace Redbox.KioskEngine.PreferenceManager.ProxyService;
 
-[PreferencePage(Name = "Subscriptions", Path = "Kiosk Client Service/Proxy Service/Login Results/Subscriptions")]
+[PreferencePage(Name = "Subscriptions", Path = "Kiosk Client Service/Proxy Service/Login Results/Subscriptions", TreeOrder = 334)]
 public partial class LoginResultsSubscriptionUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	private LoginResultsGeneralUserControl.ProxyServiceLoginResultsModel _model = new LoginResultsGeneralUserControl.ProxyServiceLoginResultsModel();

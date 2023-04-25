@@ -170,8 +170,6 @@ public interface IConfiguration
 
 	int TextToSpeechVolume { get; }
 
-	bool ShowKMTInCartOffers { get; }
-
 	bool ShowAfterSwipePersonalizedOffers { get; }
 
 	bool UseDiscountsForPmnpOffers { get; }
@@ -188,14 +186,6 @@ public interface IConfiguration
 
 	bool ReturnVisitPromoOfferEnabled { get; }
 
-	string ReturnVisitPromoOfferPromotionName { get; }
-
-	decimal ReturnVisitPromoOfferPromotionPrice { get; }
-
-	string ReturnVisitPromoOfferPromotionExpirationDate { get; }
-
-	bool CallReturnVisitPromoCheck { get; }
-
 	int ReturnVisitPromoCheckTimeout { get; }
 
 	string KioskDataServicesUrl { get; }
@@ -203,14 +193,6 @@ public interface IConfiguration
 	string KioskDataServicesKey { get; }
 
 	bool SendJsonKioskAnalyticsToKioskDataService { get; }
-
-	bool SendKioskAlertsToKioskDataService { get; }
-
-	bool SendKioskVersionsToKioskDataService { get; }
-
-	bool SendKioskStatisticsToKioskDataService { get; }
-
-	bool SendKioskPropertiesToKioskDataService { get; }
 
 	bool EnableVistarAds { get; }
 
@@ -223,10 +205,6 @@ public interface IConfiguration
 	string KioskEngineApiServiceBaseUrl { get; }
 
 	bool ForcedAirExchangerConfigured { get; }
-
-	bool SendKioskFunctionChecksToKioskDataService { get; }
-
-	bool SendKioskEventsToKioskDataService { get; }
 
 	string FAQDocument { get; }
 
@@ -262,8 +240,6 @@ public interface IConfiguration
 
 	bool ZeroTouchGoogleTwoTap { get; }
 
-	bool SendAuditEventsToKioskDataService { get; }
-
 	bool UseMerchOrdersForThinning { get; }
 
 	int KioskClientServiceGetMerchandizingOrdersTimeout { get; }
@@ -278,39 +254,21 @@ public interface IConfiguration
 
 	int LoginLockoutMinutes { get; }
 
-	bool SendAuthenticationApisToKioskClientService { get; }
-
-	bool SendInstallerApisToKioskClientService { get; }
-
-	bool SendMarketingApisToKioskClientService { get; }
-
-	bool SendExpireAndCancelReservationToKioskClientService { get; }
-
 	int KioskClientServiceInventorySnapshotTimeout { get; }
 
 	bool UseLegacyBrokerService { get; }
 
 	bool UseAWSBrokerService { get; }
 
-	bool SendCustomerOffersToKioskClientService { get; }
-
 	int KioskClientServiceDiscActionTimeout { get; }
 
 	int KioskClientServiceDiscFraudTimeout { get; }
 
-	bool SendEstimateAccrualToKioskClientService { get; }
-
 	int KioskClientServiceEstimateAccrualTimeout { get; }
-
-	bool SendEstimateRedemptionToKioskClientService { get; }
 
 	int KioskClientServiceEstimateRedemptionTimeout { get; }
 
-	bool SendPromoCodeValidationToKioskClientService { get; }
-
 	int KioskClientServicePromoCodeValidationTimeout { get; }
-
-	bool SendUpdateAccountToKioskClientService { get; }
 
 	int KioskClientServiceUpdateAccountTimeout { get; }
 
@@ -319,6 +277,8 @@ public interface IConfiguration
 	bool UseKCSInCart { get; }
 
 	bool UseKCSStartScreen { get; }
+
+	int KCSLoadCampaignTimerDuration { get; }
 
 	bool ButtonAnimationEnabled { get; }
 

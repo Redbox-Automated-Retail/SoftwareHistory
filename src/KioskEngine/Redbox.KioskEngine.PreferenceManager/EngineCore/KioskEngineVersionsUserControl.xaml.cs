@@ -11,7 +11,7 @@ using Redbox.Rental.Services.App;
 
 namespace Redbox.KioskEngine.PreferenceManager.EngineCore;
 
-[PreferencePage(Name = "Kiosk Versions", Path = "Engine Core/Versions")]
+[PreferencePage(Name = "Kiosk Versions", Path = "Engine Core/Versions", TreeOrder = 105)]
 public partial class KioskEngineVersionsUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	public KioskEngineVersionsUserControl()

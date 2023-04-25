@@ -19,8 +19,8 @@ using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.IDE;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Health;
 
 namespace Redbox.ControlPanel.UI;
 

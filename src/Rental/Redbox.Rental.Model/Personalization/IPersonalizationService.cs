@@ -1,6 +1,5 @@
 using System;
 using System.Security;
-using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.Rental.Model.Personalization;
 

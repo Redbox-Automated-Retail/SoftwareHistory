@@ -21,7 +21,7 @@ using Redbox.Rental.Services.App;
 
 namespace Redbox.KioskEngine.PreferenceManager.UpdateClientService;
 
-[PreferencePage(Name = "Create Reservation", Path = "Update Client Service/Reservations/Create Reservation")]
+[PreferencePage(Name = "Create Reservation", Path = "Update Client Service/Reservations/Create Reservation", TreeOrder = 240)]
 public partial class CreateReservationUserControl : UserControl, Redbox.KioskEngine.PreferenceManager.Preferences.IPreferencePageHost, IComponentConnector
 {
 	private StoreInfo _storeInfo;

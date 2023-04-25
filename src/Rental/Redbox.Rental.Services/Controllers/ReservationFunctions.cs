@@ -82,7 +82,7 @@ public class ReservationFunctions
 
 	private static readonly object _reservationSyncObject = new object();
 
-	public static int GetRecommendedProductCount(List<Redbox.Rental.Model.Reservation.IReservation> reservations)
+	public static int GetRecommendedProductCount(List<IReservation> reservations)
 	{
 		return GetRecommendedProducts(reservations).Count();
 	}
@@ -90,10 +90,10 @@ public class ReservationFunctions
 	public static List<string> GetReservedBarcodes()
 	{
 		List<string> list = new List<string>();
-		List<Redbox.Rental.Model.Reservation.IReservation> allReservations = GetAllReservations();
+		List<IReservation> allReservations = GetAllReservations();
 		if (allReservations != null)
 		{
-			foreach (Redbox.Rental.Model.Reservation.IReservation item in allReservations)
+			foreach (IReservation item in allReservations)
 			{
 				foreach (IReservedTitle reservedTitle in item.ReservationDetails.ReservedTitles)
 				{
@@ -110,10 +110,10 @@ public class ReservationFunctions
 	public static int GetReservedBarcodesCount()
 	{
 		int num = 0;
-		List<Redbox.Rental.Model.Reservation.IReservation> allReservations = GetAllReservations();
+		List<IReservation> allReservations = GetAllReservations();
 		if (allReservations != null)
 		{
-			foreach (Redbox.Rental.Model.Reservation.IReservation item in allReservations)
+			foreach (IReservation item in allReservations)
 			{
 				foreach (IReservedTitle reservedTitle in item.ReservationDetails.ReservedTitles)
 				{
@@ -130,10 +130,10 @@ public class ReservationFunctions
 	public static bool IsBarcodeReserved(string barcode)
 	{
 		bool result = false;
-		List<Redbox.Rental.Model.Reservation.IReservation> allReservations = GetAllReservations();
+		List<IReservation> allReservations = GetAllReservations();
 		if (allReservations != null)
 		{
-			foreach (Redbox.Rental.Model.Reservation.IReservation item in allReservations)
+			foreach (IReservation item in allReservations)
 			{
 				foreach (IReservedTitle reservedTitle in item.ReservationDetails.ReservedTitles)
 				{
@@ -148,9 +148,9 @@ public class ReservationFunctions
 		return result;
 	}
 
-	public static List<Redbox.Rental.Model.Reservation.IReservation> GetAllReservations()
+	public static List<IReservation> GetAllReservations()
 	{
-		return ServiceLocator.Instance.GetService<IDataService>()?.GetAllReservations() ?? new List<Redbox.Rental.Model.Reservation.IReservation>();
+		return ServiceLocator.Instance.GetService<IDataService>()?.GetAllReservations() ?? new List<IReservation>();
 	}
 
 	private static string ObfuscateHashedCardId(string hashedCardId)
@@ -158,7 +158,7 @@ public class ReservationFunctions
 		return hashedCardId.Substring(0, Math.Min(5, hashedCardId.Length));
 	}
 
-	public static void ExpireReservations(List<Redbox.Rental.Model.Reservation.IReservation> reservations = null)
+	public static void ExpireReservations(List<IReservation> reservations = null)
 	{
 		DateTime dateTime = DateTime.Parse(GetStoreReturnTime(), new CultureInfo("en-US"));
 		LogHelper.Instance.Log($"Reservation expire running for time {dateTime}");
@@ -174,7 +174,7 @@ public class ReservationFunctions
 			reservations = service?.GetAllReservations();
 		}
 		List<IReservationDetails> list = new List<IReservationDetails>();
-		foreach (Redbox.Rental.Model.Reservation.IReservation reservation in reservations)
+		foreach (IReservation reservation in reservations)
 		{
 			if (!(reservation.HashedCardId != "deddie"))
 			{
@@ -183,17 +183,10 @@ public class ReservationFunctions
 			if (reservation.ReservationDetails.TransactionDate < dateTime)
 			{
 				LogHelper.Instance.Log($"Expiring Reference Number {reservation.ReservationDetails?.ReferenceNumber}");
-				IReservationServices service2 = ServiceLocator.Instance.GetService<IReservationServices>();
+				ServiceLocator.Instance.GetService<IReservationServices>();
 				if (long.TryParse(reservation.ReservationDetails?.ReferenceNumber, out var result))
 				{
-					if (ServiceLocator.Instance.GetService<IConfiguration>().SendExpireAndCancelReservationToKioskClientService)
-					{
-						ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.ExpireReservation(service?.GetStore()?.Key, result, null);
-					}
-					else
-					{
-						service2?.Expire(service?.GetStore()?.Key, result, null);
-					}
+					ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.ExpireReservation(service?.GetStore()?.Key, result, null);
 				}
 				list.Add(reservation.ReservationDetails);
 			}
@@ -205,28 +198,28 @@ public class ReservationFunctions
 		DeleteReservationDetails(list, reservations);
 		foreach (IReservationDetails resDetail in list)
 		{
-			reservations.Remove(reservations.Where((Redbox.Rental.Model.Reservation.IReservation r) => r.ReferenceNumber == resDetail.ReferenceNumber).FirstOrDefault());
+			reservations.Remove(reservations.Where((IReservation r) => r.ReferenceNumber == resDetail.ReferenceNumber).FirstOrDefault());
 		}
 	}
 
-	public static bool IsAuthorizeAtPickup(string referenceNumber, List<Redbox.Rental.Model.Reservation.IReservation> reservations = null)
+	public static bool IsAuthorizeAtPickup(string referenceNumber, List<IReservation> reservations = null)
 	{
 		return PerformIsAuthorizeAtPickup(referenceNumber, reservations);
 	}
 
-	public static bool IsOnlyAuthorizeAtPickup(List<Redbox.Rental.Model.Reservation.IReservation> reservations = null)
+	public static bool IsOnlyAuthorizeAtPickup(List<IReservation> reservations = null)
 	{
 		return PerformIsAuthorizeAtPickup(null, reservations, evaluateAll: true);
 	}
 
-	private static bool PerformIsAuthorizeAtPickup(string referenceNumber, List<Redbox.Rental.Model.Reservation.IReservation> reservations = null, bool evaluateAll = false)
+	private static bool PerformIsAuthorizeAtPickup(string referenceNumber, List<IReservation> reservations = null, bool evaluateAll = false)
 	{
 		bool result = false;
 		if (reservations == null)
 		{
 			reservations = GetAccountReservations();
 		}
-		foreach (Redbox.Rental.Model.Reservation.IReservation reservation in reservations)
+		foreach (IReservation reservation in reservations)
 		{
 			if ((referenceNumber == null || reservation.ReferenceNumber == referenceNumber) && reservation.ReservationDetails.AuthorizeAtPickup)
 			{
@@ -240,7 +233,7 @@ public class ReservationFunctions
 		return result;
 	}
 
-	private static void DeleteReservationDetails(List<IReservationDetails> reservationDetailsToDelete, List<Redbox.Rental.Model.Reservation.IReservation> reservations = null)
+	private static void DeleteReservationDetails(List<IReservationDetails> reservationDetailsToDelete, List<IReservation> reservations = null)
 	{
 		if ((reservationDetailsToDelete?.Count ?? 0) <= 0)
 		{
@@ -253,7 +246,7 @@ public class ReservationFunctions
 		}
 		foreach (IReservationDetails eachReservationDetailToDelete in reservationDetailsToDelete)
 		{
-			Redbox.Rental.Model.Reservation.IReservation reservation = reservations.FirstOrDefault((Redbox.Rental.Model.Reservation.IReservation x) => x.ReferenceNumber == eachReservationDetailToDelete.ReferenceNumber);
+			IReservation reservation = reservations.FirstOrDefault((IReservation x) => x.ReferenceNumber == eachReservationDetailToDelete.ReferenceNumber);
 			IReservationDetails reservationDetails = reservation?.ReservationDetails;
 			if (reservation != null && reservationDetails != null)
 			{
@@ -269,69 +262,12 @@ public class ReservationFunctions
 
 	public static void SyncReservations()
 	{
-		IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
-		if (dataService != null && dataService.GetReservations("deddie") == null)
+		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+		if (service != null && service.GetReservations("deddie") == null)
 		{
 			LogHelper.Instance.Log("ReservationFunctions.SyncReservations: downloading reservations from server.");
-			IInventoryService inventoryService = ServiceLocator.Instance.GetService<IInventoryService>();
-			ServiceLocator.Instance.GetService<IReservationServices>().GetReservations(dataService.GetStore()?.StoreId.ToString(), delegate(IRemoteServiceResult remoteServiceResult)
-			{
-				if (remoteServiceResult?.Properties != null && remoteServiceResult.Properties.ContainsKey("reservations"))
-				{
-					List<string> list = new List<string>();
-					foreach (Redbox.BrokerServices.Proxy.ComponentModel.IReservation item2 in (List<Redbox.BrokerServices.Proxy.ComponentModel.IReservation>)remoteServiceResult.Properties["reservations"])
-					{
-						List<Redbox.Rental.Model.Reservation.IReservation> reservations = dataService.GetReservations(item2.CardId);
-						Redbox.Rental.Model.Reservation.IReservation reservation = null;
-						if (reservations == null)
-						{
-							reservation = new Reservation
-							{
-								HashedCardId = item2.CardId,
-								Id = Guid.NewGuid()
-							};
-						}
-						IReservationDetails reservationDetails = reservation.ReservationDetails;
-						if (reservationDetails == null)
-						{
-							reservationDetails = (reservation.ReservationDetails = new ReservationDetails
-							{
-								ReferenceNumber = item2.ReferenceNumber.ToString(),
-								TransactionDate = item2.TransactionDate
-							});
-							LogHelper.Instance.Log($"ReservationFunctions.SyncReservations - adding reservation with reference number {reservationDetails.ReferenceNumber}");
-							if (item2.Barcodes != null)
-							{
-								foreach (KeyValuePair<string, ICollection<string>> barcode in item2.Barcodes)
-								{
-									if (barcode.Value != null)
-									{
-										foreach (string item3 in barcode.Value)
-										{
-											RentalShoppingCartItemAction result = RentalShoppingCartItemAction.rental;
-											Enum.TryParse<RentalShoppingCartItemAction>(barcode.Key, ignoreCase: true, out result);
-											Inventory inventory = inventoryService?.GetInventory(item3);
-											IReservedTitle item = new ReservedTitle
-											{
-												Action = result,
-												Barcode = item3,
-												TitleId = (inventory?.TitleId ?? 0)
-											};
-											reservationDetails.ReservedTitles.Add(item);
-											list.Add(item3);
-										}
-									}
-								}
-							}
-							UpdateReservation(reservation);
-						}
-					}
-					if (list.Count > 0)
-					{
-						UpdateBarcodeStatus(list, "Reserved");
-					}
-				}
-			});
+			ServiceLocator.Instance.GetService<IInventoryService>();
+			ServiceLocator.Instance.GetService<IReservationServices>();
 			UpdateReservation(new Reservation
 			{
 				HashedCardId = "deddie",
@@ -356,11 +292,11 @@ public class ReservationFunctions
 
 	public static void SetValidatedReservations(List<string> validatedRefNumbers)
 	{
-		List<Redbox.Rental.Model.Reservation.IReservation> list = new List<Redbox.Rental.Model.Reservation.IReservation>();
+		List<IReservation> list = new List<IReservation>();
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		foreach (string validatedRefNumber in validatedRefNumbers)
 		{
-			Redbox.Rental.Model.Reservation.IReservation reservation = service.GetReservation(validatedRefNumber);
+			IReservation reservation = service.GetReservation(validatedRefNumber);
 			if (reservation != null)
 			{
 				list.Add(reservation);
@@ -427,7 +363,7 @@ public class ReservationFunctions
 		});
 	}
 
-	public static List<IKioskProduct> GetRecommendedProducts(List<Redbox.Rental.Model.Reservation.IReservation> reservations = null)
+	public static List<IKioskProduct> GetRecommendedProducts(List<IReservation> reservations = null)
 	{
 		LogHelper.Instance.Log("ReservationFunctions.GetRecommendedProducts", LogEntryType.Info);
 		if (reservations == null)
@@ -436,7 +372,7 @@ public class ReservationFunctions
 		}
 		new List<IKioskProduct>();
 		List<long> excludeProducts = new List<long>();
-		reservations.ForEach(delegate(Redbox.Rental.Model.Reservation.IReservation x)
+		reservations.ForEach(delegate(IReservation x)
 		{
 			x.ReservationDetails.HistoryTitleIds.ForEach(delegate(int t)
 			{
@@ -465,10 +401,10 @@ public class ReservationFunctions
 		return RecommendationOnPickupViewController.GenerateRecommendations(flag, excludeProducts);
 	}
 
-	private static IReservationDetails FindReservationDetailsWithDuplicateTitles(IReservationDetails searchForReservationDetails, List<Redbox.Rental.Model.Reservation.IReservation> reservations)
+	private static IReservationDetails FindReservationDetailsWithDuplicateTitles(IReservationDetails searchForReservationDetails, List<IReservation> reservations)
 	{
 		IReservationDetails result = null;
-		foreach (Redbox.Rental.Model.Reservation.IReservation reservation in reservations)
+		foreach (IReservation reservation in reservations)
 		{
 			if (searchForReservationDetails.ReferenceNumber != reservation.ReservationDetails.ReferenceNumber && reservation.ReservationDetails.ReservedTitles.Count == searchForReservationDetails.ReservedTitles.Count && reservation.ReservationDetails.ReservedTitles.All((IReservedTitle x) => searchForReservationDetails.ReservedTitles.Any((IReservedTitle y) => x.TitleId == y.TitleId)))
 			{
@@ -482,8 +418,8 @@ public class ReservationFunctions
 	{
 		List<string> list = new List<string>();
 		LogHelper.Instance.Log("ReservationFunctions.CheckForDuplicateReservations called.", LogEntryType.Info);
-		List<Redbox.Rental.Model.Reservation.IReservation> accountReservations = GetAccountReservations();
-		foreach (Redbox.Rental.Model.Reservation.IReservation item in accountReservations)
+		List<IReservation> accountReservations = GetAccountReservations();
+		foreach (IReservation item in accountReservations)
 		{
 			if (list.Contains(item.ReferenceNumber))
 			{
@@ -508,10 +444,10 @@ public class ReservationFunctions
 	public static void DeleteReservation(string referenceNumber)
 	{
 		ServiceLocator.Instance.GetService<IDataService>()?.DeleteReservation(referenceNumber);
-		List<Redbox.Rental.Model.Reservation.IReservation> validatedReservations = Redbox.Rental.Services.Session.Session.Instance.ValidatedReservations;
+		List<IReservation> validatedReservations = Redbox.Rental.Services.Session.Session.Instance.ValidatedReservations;
 		if (validatedReservations != null)
 		{
-			Redbox.Rental.Model.Reservation.IReservation reservation = validatedReservations.FirstOrDefault((Redbox.Rental.Model.Reservation.IReservation r) => r.ReferenceNumber == referenceNumber);
+			IReservation reservation = validatedReservations.FirstOrDefault((IReservation r) => r.ReferenceNumber == referenceNumber);
 			if (reservation != null)
 			{
 				Redbox.Rental.Services.Session.Session.Instance.ValidatedReservations.Remove(reservation);
@@ -519,7 +455,7 @@ public class ReservationFunctions
 		}
 	}
 
-	public static bool UpdateReservation(Redbox.Rental.Model.Reservation.IReservation reservation)
+	public static bool UpdateReservation(IReservation reservation)
 	{
 		LogHelper.Instance.Log($"ReservationFunctions.UpdateReservation {ObfuscateHashedCardId(reservation?.HashedCardId)}");
 		return ServiceLocator.Instance.GetService<IDataService>()?.SaveReservation(reservation) ?? false;
@@ -536,7 +472,7 @@ public class ReservationFunctions
 		try
 		{
 			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-			GetAccountReservations().ForEach(delegate(Redbox.Rental.Model.Reservation.IReservation y)
+			GetAccountReservations().ForEach(delegate(IReservation y)
 			{
 				if (referenceNumber == null || y.ReferenceNumber == referenceNumber)
 				{
@@ -716,22 +652,22 @@ public class ReservationFunctions
 	public static bool IsQualifiedForRecommendationOnPickup()
 	{
 		bool flag = false;
-		List<Redbox.Rental.Model.Reservation.IReservation> accountReservations = GetAccountReservations();
+		List<IReservation> accountReservations = GetAccountReservations();
 		int count = accountReservations.Count;
-		bool flag2 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.IsGiftCard);
-		bool flag3 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.IsMultiNightPrice);
-		bool flag4 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.IsMultiDiscVend);
-		bool flag5 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.IsLoyaltyRedemption);
-		bool flag6 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.ReservedTitles.Any((IReservedTitle w) => w.Action == RentalShoppingCartItemAction.purchase));
+		bool flag2 = accountReservations.Any((IReservation x) => x.ReservationDetails.IsGiftCard);
+		bool flag3 = accountReservations.Any((IReservation x) => x.ReservationDetails.IsMultiNightPrice);
+		bool flag4 = accountReservations.Any((IReservation x) => x.ReservationDetails.IsMultiDiscVend);
+		bool flag5 = accountReservations.Any((IReservation x) => x.ReservationDetails.IsLoyaltyRedemption);
+		bool flag6 = accountReservations.Any((IReservation x) => x.ReservationDetails.ReservedTitles.Any((IReservedTitle w) => w.Action == RentalShoppingCartItemAction.purchase));
 		bool flag7 = OrchestrationService.IsGiftCard();
 		bool isInZeroTouchMode = Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode;
-		bool flag8 = accountReservations.All((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.AuthorizeAtPickup);
+		bool flag8 = accountReservations.All((IReservation x) => x.ReservationDetails.AuthorizeAtPickup);
 		bool flag9 = Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames;
 		bool flag10 = flag9;
 		IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
 		if ((dataService != null) & flag9)
 		{
-			flag10 = accountReservations.Any((Redbox.Rental.Model.Reservation.IReservation x) => x.ReservationDetails.ReservedTitles.Any(delegate(IReservedTitle t)
+			flag10 = accountReservations.Any((IReservation x) => x.ReservationDetails.ReservedTitles.Any(delegate(IReservedTitle t)
 			{
 				dataService.GetProductByBarcode(t.Barcode, out var kioskProduct);
 				return ((ITitleProduct)kioskProduct).TitleFamily == TitleFamily.Games;
@@ -750,7 +686,7 @@ public class ReservationFunctions
 		return flag;
 	}
 
-	public static List<string> GetReservedBarcodesToVend(List<Redbox.Rental.Model.Reservation.IReservation> reservations = null)
+	public static List<string> GetReservedBarcodesToVend(List<IReservation> reservations = null)
 	{
 		List<string> result = new List<string>();
 		if (reservations == null)
@@ -760,7 +696,7 @@ public class ReservationFunctions
 		LogHelper.Instance.Log($"ReservationFunctions.GetBarcodesToVend - reservation count: {reservations?.Count ?? 0}");
 		if (reservations != null)
 		{
-			foreach (Redbox.Rental.Model.Reservation.IReservation reservation in reservations)
+			foreach (IReservation reservation in reservations)
 			{
 				reservation.ReservationDetails.ReservedTitles.ForEach(delegate(IReservedTitle x)
 				{
@@ -773,15 +709,15 @@ public class ReservationFunctions
 		return result;
 	}
 
-	public static List<Redbox.Rental.Model.Reservation.IReservation> GetAccountReservations(bool runExpire = false)
+	public static List<IReservation> GetAccountReservations(bool runExpire = false)
 	{
-		List<Redbox.Rental.Model.Reservation.IReservation> list = new List<Redbox.Rental.Model.Reservation.IReservation>();
+		List<IReservation> list = new List<IReservation>();
 		if (Redbox.Rental.Services.Session.Session.Instance.ValidatedReservations == null)
 		{
 			ITrackData trackData = Redbox.Rental.Services.Session.Session.Instance?.TrackData;
 			if (trackData != null && trackData.HasValidData())
 			{
-				List<Redbox.Rental.Model.Reservation.IReservation> allReservations = ServiceLocator.Instance.GetService<IDataService>()?.GetAllReservations();
+				List<IReservation> allReservations = ServiceLocator.Instance.GetService<IDataService>()?.GetAllReservations();
 				string cardHashId = trackData.CardHashId;
 				string reservationHashId = trackData.ReservationHashId;
 				list = GetReservationsForHashedCardId(cardHashId, reservationHashId, allReservations);
@@ -812,7 +748,7 @@ public class ReservationFunctions
 		{
 			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 			List<IReservationDetails> list = new List<IReservationDetails>();
-			Redbox.Rental.Model.Reservation.IReservation reservation = service?.GetReservation(referenceNumber);
+			IReservation reservation = service?.GetReservation(referenceNumber);
 			if (reservation != null)
 			{
 				LogHelper.Instance.Log($"ReservationFunctions.CancelReservation removed reservation for Reference Number {referenceNumber}:");
@@ -853,7 +789,7 @@ public class ReservationFunctions
 		{
 			OrchestrationService.ShoppingCartCommit(rentalShoppingCart?.ShoppingSessionId.ToString(), commitReason, shouldEndAndSave: false);
 		}
-		foreach (Redbox.Rental.Model.Reservation.IReservation accountReservation in GetAccountReservations())
+		foreach (IReservation accountReservation in GetAccountReservations())
 		{
 			dictionary.Clear();
 			foreach (IReservedTitle eachReservedTitle in accountReservation.ReservationDetails.ReservedTitles)
@@ -943,7 +879,7 @@ public class ReservationFunctions
 				UpdateRentalShoppingCartItemStatuses(vendResultList, rentalShoppingCart);
 				List<string> list = new List<string>();
 				ProcessRentalShoppingCartItems(rentalShoppingCart, list);
-				List<Redbox.Rental.Model.Reservation.IReservation> accountReservations = GetAccountReservations();
+				List<IReservation> accountReservations = GetAccountReservations();
 				CallMerchantService(referenceNumber, modifiedCart, rentalShoppingCart, shoppingSession, accountReservations);
 				LogHelper.Instance.Log($"ReservationFunctions.ReservationPrepositionVend: Removing reservations for reference number...{referenceNumber}");
 				DeleteReservation(referenceNumber);
@@ -1216,15 +1152,15 @@ public class ReservationFunctions
 		{
 			return false;
 		}
-		List<Redbox.Rental.Model.Reservation.IReservation> allReservations = GetAllReservations();
-		Redbox.Rental.Model.Reservation.IReservation reservation = null;
+		List<IReservation> allReservations = GetAllReservations();
+		IReservation reservation = null;
 		string hashedCardId = reservationRequest.CardID;
 		bool flag = reservationRequest?.ReservationCardHash?.CardBinHash != null && reservationRequest?.ReservationCardHash?.Last4 != null;
 		if (flag)
 		{
 			hashedCardId = CreateCardHash(reservationRequest.ReservationCardHash);
 		}
-		reservation = allReservations.FirstOrDefault((Redbox.Rental.Model.Reservation.IReservation x) => x.ReferenceNumber == reservationRequest.ReferenceNumber.ToString());
+		reservation = allReservations.FirstOrDefault((IReservation x) => x.ReferenceNumber == reservationRequest.ReferenceNumber.ToString());
 		bool flag2 = reservation == null;
 		if (flag2)
 		{
@@ -1315,7 +1251,7 @@ public class ReservationFunctions
 		return cardHashData.CardBinHash + text;
 	}
 
-	private static void LogTheNewlyCreatedReservation(Redbox.Rental.Model.Reservation.IReservation reservation, bool isNewReservation, IReservationDetails newReservationDetails)
+	private static void LogTheNewlyCreatedReservation(IReservation reservation, bool isNewReservation, IReservationDetails newReservationDetails)
 	{
 		string text = (isNewReservation ? "Adding" : "Updating");
 		StringBuilder stringBuilder = new StringBuilder();
@@ -1448,17 +1384,10 @@ public class ReservationFunctions
 	public static ReservationCancelResult CancelLocalAndServerReservation(string referenceNumber)
 	{
 		string storeNumber = ServiceLocator.Instance.GetService<IDataService>()?.GetStore()?.StoreId.ToString();
-		IReservationServices service = ServiceLocator.Instance.GetService<IReservationServices>();
+		ServiceLocator.Instance.GetService<IReservationServices>();
 		if (long.TryParse(referenceNumber, out var result))
 		{
-			if (ServiceLocator.Instance.GetService<IConfiguration>().SendExpireAndCancelReservationToKioskClientService)
-			{
-				ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.CancelReservation(storeNumber, result, null, null);
-			}
-			else
-			{
-				service.Cancel(storeNumber, result, null);
-			}
+			ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.CancelReservation(storeNumber, result, null, null);
 		}
 		else
 		{
@@ -1529,14 +1458,14 @@ public class ReservationFunctions
 		return dictionary;
 	}
 
-	private static void CallMerchantService(string referenceNumber, bool modifiedCart, IRentalShoppingCart rentalShoppingCart, IShoppingSession session, List<Redbox.Rental.Model.Reservation.IReservation> reservations)
+	private static void CallMerchantService(string referenceNumber, bool modifiedCart, IRentalShoppingCart rentalShoppingCart, IShoppingSession session, List<IReservation> reservations)
 	{
 		if (session.Status != ShoppingSessionStatus.Committed)
 		{
 			return;
 		}
 		long.TryParse(referenceNumber, out var result);
-		Redbox.Rental.Model.Reservation.IReservation reservation = reservations.FirstOrDefault((Redbox.Rental.Model.Reservation.IReservation r) => r.ReferenceNumber == referenceNumber);
+		IReservation reservation = reservations.FirstOrDefault((IReservation r) => r.ReferenceNumber == referenceNumber);
 		if (IsAuthorizeAtPickup(referenceNumber, reservations))
 		{
 			IKioskClientService service = ServiceLocator.Instance.GetService<IKioskClientService>();
@@ -1602,20 +1531,20 @@ public class ReservationFunctions
 		LogHelper.Instance.Log("ReservationFunctions.UpdateRentalShoppingCartItemStatuses - error vendResultList is null");
 	}
 
-	private static List<Redbox.Rental.Model.Reservation.IReservation> GetReservationsForHashedCardId(string swipedhashedCardId, string newHashedCardId, List<Redbox.Rental.Model.Reservation.IReservation> allReservations)
+	private static List<IReservation> GetReservationsForHashedCardId(string swipedhashedCardId, string newHashedCardId, List<IReservation> allReservations)
 	{
-		List<Redbox.Rental.Model.Reservation.IReservation> list = new List<Redbox.Rental.Model.Reservation.IReservation>();
+		List<IReservation> list = new List<IReservation>();
 		if (!string.IsNullOrEmpty(swipedhashedCardId))
 		{
-			list.AddRange(allReservations.Where((Redbox.Rental.Model.Reservation.IReservation r) => r.HashedCardId == swipedhashedCardId));
+			list.AddRange(allReservations.Where((IReservation r) => r.HashedCardId == swipedhashedCardId));
 		}
 		if (!string.IsNullOrEmpty(newHashedCardId) && newHashedCardId != swipedhashedCardId)
 		{
-			list.AddRange(allReservations.Where((Redbox.Rental.Model.Reservation.IReservation r) => r.HashedCardId == newHashedCardId));
+			list.AddRange(allReservations.Where((IReservation r) => r.HashedCardId == newHashedCardId));
 		}
 		if (list.Count == 0)
 		{
-			foreach (Redbox.Rental.Model.Reservation.IReservation allReservation in allReservations)
+			foreach (IReservation allReservation in allReservations)
 			{
 				if (!string.IsNullOrEmpty(swipedhashedCardId))
 				{

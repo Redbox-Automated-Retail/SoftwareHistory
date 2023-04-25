@@ -51,8 +51,6 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 		Right
 	}
 
-	private const double ROTATION_DELAY = 2.0;
-
 	public static readonly DependencyProperty IsRotatingProperty = DependencyProperty.Register("IsRotating", typeof(bool), typeof(RedboxProductCarouselUserControl), new FrameworkPropertyMetadata(false));
 
 	private int _carouselPositionCount;
@@ -74,8 +72,6 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 	private Point _carouselImageLargeSize;
 
 	private CarouselPositionList _carouselPositions = new CarouselPositionList();
-
-	private CarouselTestModel _carouselModel;
 
 	private List<DisplayProductModel> _carouselProducts;
 
@@ -117,10 +113,11 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 		}
 	}
 
+	private CarouselTestModel CarouselTestModel => base.DataContext as CarouselTestModel;
+
 	public RedboxProductCarouselUserControl()
 	{
 		InitializeComponent();
-		ConfigureTimer();
 	}
 
 	private void UserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -133,14 +130,14 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 		_displayProductUserControlList.Clear();
 		CarouselContainer.Children.Clear();
 		_rotatingCarouselProducts = new List<DisplayProductModel>();
+		ConfigureTimer();
 		InitializeCarouselPositions();
-		_carouselModel = base.DataContext as CarouselTestModel;
-		if (_carouselModel == null)
+		if (CarouselTestModel == null)
 		{
 			return;
 		}
-		_carouselModel.OnIsAnimationOnChanged += _carouselModel_OnIsAnimationOnChanged;
-		_carouselProducts = _carouselModel.CarouselDisplayProductModels;
+		CarouselTestModel.OnIsAnimationOnChanged += _carouselModel_OnIsAnimationOnChanged;
+		_carouselProducts = CarouselTestModel.CarouselDisplayProductModels;
 		_rotatingCarouselProducts.AddRange(_carouselProducts);
 		_nextCarouselDirection = CarouselDirection.Right;
 		foreach (DisplayProductModel rotatingCarouselProduct in _rotatingCarouselProducts)
@@ -606,7 +603,8 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 
 	private void carousel_animation_storyBoard_Completed(object sender, EventArgs e)
 	{
-		if (_carouselModel.IsAnimationOn)
+		CarouselTestModel carouselTestModel = CarouselTestModel;
+		if (carouselTestModel != null && carouselTestModel.IsAnimationOn)
 		{
 			_carouselRotationStoryboard?.Stop();
 			_carouselRotationStoryboard = null;
@@ -618,7 +616,8 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 
 	private void StartTimer()
 	{
-		if (_carouselModel.IsAnimationOn && !_timerStarted)
+		CarouselTestModel carouselTestModel = CarouselTestModel;
+		if (carouselTestModel != null && carouselTestModel.IsAnimationOn && !_timerStarted)
 		{
 			_timerStarted = true;
 			_timer.Start();
@@ -635,7 +634,7 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 	{
 		_timer = new DispatcherTimer(DispatcherPriority.Send);
 		_timer.Tick += _timer_Tick;
-		_timer.Interval = TimeSpan.FromSeconds(2.0);
+		_timer.Interval = TimeSpan.FromSeconds(CarouselTestModel?.RotationDelay ?? 2.0);
 	}
 
 	private void _timer_Tick(object sender, EventArgs e)
@@ -678,7 +677,7 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 			displayProductUserControl.ImageBorderThickness = new Thickness(3.0);
 			displayProductUserControl.ImageBorderColor = _imageBorderColor;
 		}
-		_carouselModel.ProcessCarouselRotation(_rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex], null);
+		CarouselTestModel?.ProcessCarouselRotation(_rotatingCarouselProducts[_carouselPositions.CenterCarouselPositionIndex], null);
 	}
 
 	private void InitializeCarouselPositions()
@@ -702,7 +701,7 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 
 	private void InitializeCarouselImageSizes()
 	{
-		_isDarkMode = (base.DataContext as CarouselTestModel)?.IsDarkMode ?? false;
+		_isDarkMode = CarouselTestModel?.IsDarkMode ?? false;
 		_carouselImageSmallSize = new Point(244.0, 366.0);
 		_carouselImageLargeSize = new Point(284.0, 426.0);
 		_carouselPositionCount = 9;
@@ -722,13 +721,13 @@ public partial class RedboxProductCarouselUserControl : BaseUserControl, ICompon
 				if (displayProductUserControl == _displayProductUserControlList[_carouselPositions.CenterCarouselPositionIndex])
 				{
 					DisplayProductModel displayProductModel = displayProductUserControl.DataContext as DisplayProductModel;
-					_carouselModel.ProcessDisplayProductModelSelected(displayProductModel, e.Parameter);
+					CarouselTestModel?.ProcessDisplayProductModelSelected(displayProductModel, e.Parameter);
 				}
-				else if (displayProductUserControl.Tag != null)
+				else if (displayProductUserControl.Tag != null && CarouselTestModel != null)
 				{
 					_nextCarouselDirection = (CarouselDirection)displayProductUserControl.Tag;
 					_forceRotation = true;
-					_carouselModel.IsAnimationOn = true;
+					CarouselTestModel.IsAnimationOn = true;
 					StopTimer();
 					AnimateCarouselRotation();
 				}

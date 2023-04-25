@@ -38,12 +38,7 @@ public class BrokerServicesHost : IKernelExtensionHost, IDisposable
 		ErrorList result = new ErrorList();
 		LogHelper.Instance.Log("Broker Services Kernel Extension Load:");
 		ServiceLocator.Instance.AddService(typeof(IReservationServices), ReservationServicesProxy.Instance);
-		IPreferenceService service = ServiceLocator.Instance.GetService<IPreferenceService>();
-		if (service != null)
-		{
-			service.AddPreferencePage("BrokerServices_General", "Remote Services\\Reservation Services", "Broker Reservation Services/General", PreferencePageTarget.LocalSystem, new GeneralPreferencePage());
-			service.AddPreferencePage("BrokerServices_Reservation", "Remote Services\\Reservation Services", "Broker Reservation Services/Reservation", PreferencePageTarget.LocalSystem, new ReservationPreferencePage());
-		}
+		ServiceLocator.Instance.GetService<IPreferenceService>()?.AddPreferencePage("BrokerServices_General", "Remote Services\\Reservation Services", "Broker Reservation Services/General", PreferencePageTarget.LocalSystem, new GeneralPreferencePage());
 		LogHelper.Instance.Log("...Loaded.");
 		return result;
 	}

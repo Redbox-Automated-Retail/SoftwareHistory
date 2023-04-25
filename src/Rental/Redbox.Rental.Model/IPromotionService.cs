@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Redbox.Rental.Model.KioskClientService.Campaign;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.ShoppingCart;
@@ -32,7 +33,7 @@ public interface IPromotionService
 
 	void ClearPromotion();
 
-	void LoadInCartData();
+	void LoadInCartData(KioskInCartDetails inCart);
 
 	IPromoCodeValidationInfo ValidateFreeInCartOffer();
 

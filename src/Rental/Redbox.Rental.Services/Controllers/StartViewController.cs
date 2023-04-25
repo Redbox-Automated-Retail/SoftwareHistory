@@ -24,6 +24,7 @@ using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.Campaign;
 using Redbox.Rental.Model.KioskClientService.WelcomeScreenAssets;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.KioskProduct;
@@ -65,9 +66,13 @@ public class StartViewController : BaseViewController
 
 		public static int MarketingAdTimerDuration = 60000;
 
-		public static int MinimumCarouselItems = 8;
+		public static int DefaultCarouselItems = 11;
 
-		public static int MaximumCarouselItems = 11;
+		public static int MinimumCarouselItems = 9;
+
+		public static int DefaultRotationDelay = 2;
+
+		public static string LoadCampaignTimerName = "load-campaign-timer";
 	}
 
 	private static int _startingCardReadFlag;
@@ -132,6 +137,12 @@ public class StartViewController : BaseViewController
 
 	private static IAdService AdService => ServiceLocator.Instance.GetService<IAdService>();
 
+	private static IKioskClientService KioskClientService => ServiceLocator.Instance.GetService<IKioskClientService>();
+
+	private static ICarouselControl CarouselControl => KioskClientService?.Campaign?.GetCarouselControl();
+
+	private static IList<IStartAssetControl> StartAssetControls => KioskClientService?.Campaign?.GetStartAssetControls();
+
 	private static bool UseContactless
 	{
 		get
@@ -184,6 +195,7 @@ public class StartViewController : BaseViewController
 				TurnAdaOff();
 			}
 			ConfigureCarousel(startViewModel);
+			ConfigureLoadCampaignTimer();
 			startViewModel.UseClassicStartView = false;
 			startViewModel.UseScreenSaverStartView = true;
 			startViewModel.CarouselModel.IsAnimationOn = false;
@@ -656,14 +668,13 @@ public class StartViewController : BaseViewController
 
 	private static void ConfigureScreenSaver(StartViewModel startViewModel)
 	{
-		List<WelcomeScreenAsset> welcomeScreenAssets = ServiceLocator.Instance.GetService<IKioskClientService>()?.WelcomeScreenAssets?.GetWelcomeScreenAssets();
 		MarketingScreenSaverModel marketingScreenSaverModel = new MarketingScreenSaverModel();
 		marketingScreenSaverModel.StartButtonText = Resources.screen_saver_start_button_text;
 		marketingScreenSaverModel.BrowseCommand = DynamicRouting.RegisterRoutedCommand<PerksPopupInfo>(new DynamicRoutedCommand(), delegate
 		{
 			GoToStartViewFromScreenSaver();
 		});
-		marketingScreenSaverModel.ImageModels = ConfigureScreenSaverImages(welcomeScreenAssets);
+		marketingScreenSaverModel.ImageModels = ConfigureScreenSaverImages();
 		marketingScreenSaverModel.OnLeaveLastImage = delegate
 		{
 			GoToStartViewFromScreenSaverLastImage(startViewModel);
@@ -672,12 +683,76 @@ public class StartViewController : BaseViewController
 		startViewModel.ScreenSaverModel = marketingScreenSaverModel;
 	}
 
-	private static ObservableCollection<ClickableImageModel> ConfigureScreenSaverImages(List<WelcomeScreenAsset> welcomeScreenAssets)
+	private static ObservableCollection<ClickableImageModel> ConfigureScreenSaverImages()
 	{
 		ObservableCollection<ClickableImageModel> imageList = new ObservableCollection<ClickableImageModel>();
-		if (welcomeScreenAssets != null)
+		List<WelcomeScreenAsset> list = KioskClientService?.WelcomeScreenAssets?.GetWelcomeScreenAssets();
+		if (StartAssetControls != null)
 		{
-			welcomeScreenAssets.ForEach(delegate(WelcomeScreenAsset welcomeScreenAsset)
+			StartAssetControls.ForEach(delegate(IStartAssetControl startAssetControl)
+			{
+				if (startAssetControl.Target == AssetTarget.None)
+				{
+					imageList.Add(new ClickableImageModel
+					{
+						ImageUrl = startAssetControl.Asset?.FullPath,
+						ClickAction = null,
+						DisplayDuration = startAssetControl.DisplayDuration
+					});
+				}
+				else if (startAssetControl.Target == AssetTarget.ProductGroupId)
+				{
+					if ((!startAssetControl.IncludeIfNoInventory) ?? true)
+					{
+						if (long.TryParse(startAssetControl.TargetValue, out var productGroupId))
+						{
+							IKioskProduct kioskProduct = null;
+							ServiceLocator.Instance.GetService<IDataService>()?.GetTitleRollupProduct(productGroupId, out kioskProduct);
+							ITitleRollupProduct obj = kioskProduct as ITitleRollupProduct;
+							if (obj != null && obj.IsRentableAndInStock)
+							{
+								imageList.Add(new ClickableImageModel
+								{
+									ImageUrl = startAssetControl.Asset?.FullPath,
+									ClickAction = delegate
+									{
+										GoToTitleDetailsViewFromScreenSaver(productGroupId);
+									},
+									DisplayDuration = startAssetControl.DisplayDuration
+								});
+							}
+						}
+					}
+					else
+					{
+						imageList.Add(new ClickableImageModel
+						{
+							ImageUrl = startAssetControl.Asset?.FullPath,
+							ClickAction = (long.TryParse(startAssetControl.TargetValue, out var productGroupId2) ? ((Action)delegate
+							{
+								GoToTitleDetailsViewFromScreenSaver(productGroupId2);
+							}) : null),
+							DisplayDuration = startAssetControl.DisplayDuration
+						});
+					}
+				}
+				else if (startAssetControl.Target == AssetTarget.PromoCode && startAssetControl.Validation != null && !string.IsNullOrEmpty(startAssetControl.Validation.Code))
+				{
+					imageList.Add(new ClickableImageModel
+					{
+						ImageUrl = startAssetControl.Asset?.FullPath,
+						ClickAction = delegate
+						{
+							GoToBrowseViewPromotionFromScreenSaver(startAssetControl.Validation);
+						},
+						DisplayDuration = startAssetControl.DisplayDuration
+					});
+				}
+			});
+		}
+		else
+		{
+			list?.ForEach(delegate(WelcomeScreenAsset welcomeScreenAsset)
 			{
 				imageList.Add(new ClickableImageModel
 				{
@@ -687,33 +762,6 @@ public class StartViewController : BaseViewController
 						GoToTitleDetailsViewFromScreenSaver(welcomeScreenAsset.ProductGroupId.Value);
 					}) : null)
 				});
-			});
-		}
-		else
-		{
-			imageList.Add(new ClickableImageModel
-			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.3_June_KioskWelcome_TheBatman.jpg",
-				ClickAction = delegate
-				{
-					GoToTitleDetailsViewFromScreenSaver(215943L);
-				}
-			});
-			imageList.Add(new ClickableImageModel
-			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.1_June_KioskWelcome_Morbius.jpg",
-				ClickAction = delegate
-				{
-					GoToTitleDetailsViewFromScreenSaver(211703L);
-				}
-			});
-			imageList.Add(new ClickableImageModel
-			{
-				ImageUrl = "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/COR_7207.2_June_KioskWelcome_Ambulance.jpg",
-				ClickAction = delegate
-				{
-					GoToTitleDetailsViewFromScreenSaver(216146L);
-				}
 			});
 		}
 		return imageList;
@@ -760,7 +808,7 @@ public class StartViewController : BaseViewController
 	public static void ReloadCarousel(bool force)
 	{
 		StartViewModel startViewModelFromView = GetStartViewModelFromView();
-		if (startViewModelFromView != null && ((startViewModelFromView.CarouselModel.CarouselDisplayProductModels.Count() < Constants.MaximumCarouselItems) | force))
+		if (startViewModelFromView != null && ((startViewModelFromView.CarouselModel.CarouselDisplayProductModels.Count() < (CarouselControl?.MaxTitles ?? Constants.DefaultCarouselItems)) | force))
 		{
 			LogHelper.Instance.Log("Reloading Carousel");
 			BaseViewController.ApplicationState.NeedToReloadCarousel = false;
@@ -772,6 +820,7 @@ public class StartViewController : BaseViewController
 	public static void LeaveStartView(IViewFrameInstance viewFrameInstance)
 	{
 		BaseViewController.RecordAdImpression(BaseViewController.GetViewModel<StartViewModel>(viewFrameInstance.Id)?.AdImpression);
+		(TimerService?.GetTimer(Constants.LoadCampaignTimerName))?.Stop();
 		(IdleTimerService?.GetIdleTimer(Constants.BurnInIdleTimerName))?.Stop();
 		(TimerService?.GetTimer(Constants.BurnInViewDurationTimerName))?.Stop();
 		(IdleTimerService?.CreateIdleTimer(Constants.StartIdleTimerName))?.Stop();
@@ -799,6 +848,23 @@ public class StartViewController : BaseViewController
 					service2?.ActivateCampaigns();
 					ConfigureBanner(GetStartViewModelFromView());
 				}
+			}
+		}))?.Start();
+	}
+
+	private static void ConfigureLoadCampaignTimer()
+	{
+		int value = KioskClientService?.Campaign?.KCSLoadCampaignTimerDuration ?? 1800000;
+		(TimerService?.CreateTimer(Constants.LoadCampaignTimerName, value, value, delegate
+		{
+			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+			if (service != null && service.Peek() == service.GetStartOverViewName())
+			{
+				LogHelper.Instance.Log("StartViewController.ConfigureLoadCampaignTimer");
+				BaseViewController.ProcessWPFHit();
+				KioskClientService?.Campaign?.LoadCampaign();
+				PrepareToLeaveStartView();
+				OrchestrationService.ResetCurrentView();
 			}
 		}))?.Start();
 	}
@@ -1167,6 +1233,10 @@ public class StartViewController : BaseViewController
 
 	private static void ConfigureCarousel(StartViewModel startViewModel)
 	{
+		if (startViewModel == null)
+		{
+			return;
+		}
 		CarouselModel carouselModel = new CarouselModel();
 		carouselModel.OnDisplayProductModelSelected += CarouselModel_OnDisplayProductModelSelected;
 		carouselModel.OnAddDisplayProductModel += CarouselModel_OnAddDisplayProductModel;
@@ -1178,7 +1248,7 @@ public class StartViewController : BaseViewController
 		carouselModel.OnTitleRollupOverlayVisibilityChange += CarouselModel_OnTitleRollupOverlayVisibilityChange;
 		carouselModel.ShowAddButton = !(ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.IsFull ?? true);
 		OrchestrationService.RentalRefreshIfNeeded();
-		List<IKioskProduct> list = ((!startViewModel.IsReturnOnlyMode) ? OrchestrationService.RentalGetCarouselProducts() : new List<IKioskProduct>());
+		List<IKioskProduct> list = ((!startViewModel.IsReturnOnlyMode) ? OrchestrationService.RentalGetCarouselProducts(CarouselControl?.MaxTitles ?? Constants.DefaultCarouselItems) : new List<IKioskProduct>());
 		List<DisplayProductModel> list2 = new List<DisplayProductModel>();
 		ServiceLocator.Instance.GetService<IBitmapCacheService>();
 		foreach (IKioskProduct item in list)
@@ -1197,22 +1267,21 @@ public class StartViewController : BaseViewController
 			list2.Add(displayProductModel);
 		}
 		carouselModel.CarouselDisplayProductModels = list2;
+		carouselModel.IsAnimationOn = false;
 		CarouselTestModel carouselTestModel = new CarouselTestModel();
 		carouselTestModel.OnDisplayProductModelSelected += CarouselModel_OnDisplayProductModelSelected;
 		carouselTestModel.CarouselDisplayProductModels = list2;
-		carouselModel.IsAnimationOn = false;
+		carouselTestModel.CarouselVisibility = ((startViewModel.IsReturnOnlyMode || list2.Count < Constants.MinimumCarouselItems) ? Visibility.Collapsed : Visibility.Visible);
+		carouselTestModel.RotationDelay = CarouselControl?.DisplayDuration ?? Constants.DefaultRotationDelay;
 		carouselTestModel.IsAnimationOn = !startViewModel.IsReturnOnlyMode;
 		carouselTestModel.IsStartViewAdABTest = false;
 		carouselTestModel.IsScreenSaverStartView = true;
 		carouselTestModel.IsDarkMode = IsDarkMode;
-		if (startViewModel != null)
-		{
-			startViewModel.CarouselModel = carouselModel;
-			startViewModel.CarouselTestModel = carouselTestModel;
-			startViewModel.CarouselGridRowHeight = 438;
-			bool flag = (startViewModel?.CarouselModel?.CarouselDisplayProductModels?.Count ?? 0) >= Constants.MinimumCarouselItems;
-			startViewModel.LoadingTitlesImageVisibility = ((startViewModel.IsReturnOnlyMode | flag) ? Visibility.Collapsed : Visibility.Visible);
-		}
+		startViewModel.CarouselModel = carouselModel;
+		startViewModel.CarouselTestModel = carouselTestModel;
+		startViewModel.CarouselGridRowHeight = 438;
+		bool flag = (startViewModel.CarouselModel?.CarouselDisplayProductModels?.Count ?? 0) >= Constants.MinimumCarouselItems;
+		startViewModel.LoadingTitlesImageVisibility = ((startViewModel.IsReturnOnlyMode | flag) ? Visibility.Collapsed : Visibility.Visible);
 	}
 
 	private static void CarouselModel_OnTitleRollupOverlayVisibilityChange(Visibility newVisibility)
@@ -1524,13 +1593,6 @@ public class StartViewController : BaseViewController
 		GoToBrowseView("screen_saver_99_cents_movies", TitleFamily.Movies, "StartScreenSaver99CentsMovies");
 	}
 
-	private static void GoToForSaleMovieBrowseViewFromScreenSaver()
-	{
-		BaseViewController.ProcessWPFHit();
-		PrepareToLeaveStartView();
-		GoToBrowseView("screen_saver_buy_movies", TitleFamily.Movies, "StartScreenSaverBuyMovies");
-	}
-
 	private static void GoToTitleDetailsViewFromScreenSaver(long productGroupId)
 	{
 		BaseViewController.ProcessWPFHit();
@@ -1553,6 +1615,24 @@ public class StartViewController : BaseViewController
 		{
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct = kioskProduct;
 			OrchestrationService.ViewShow("product_detail_view");
+		}
+	}
+
+	private static void GoToBrowseViewPromotionFromScreenSaver(StartScreenPromotionCodeValidationResponse startScreenPromotionCodeValidationResponse)
+	{
+		IPromotion promotion = PromotionFunctions.CreatePromotionFromPromotionCodeValidationResponse(startScreenPromotionCodeValidationResponse.Code, startScreenPromotionCodeValidationResponse);
+		if (promotion != null)
+		{
+			BaseViewController.ProcessWPFHit();
+			PrepareToLeaveStartView();
+			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowBrowseView));
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
+			OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
+			PromotionService.Instance?.SetPromotion(promotion);
+			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+			service?.CurrentRentalShoppingCart?.ValidateAndUpdatePromoCode();
+			service?.CurrentRentalShoppingCart?.UpdateServiceFee();
+			service?.CurrentRentalShoppingCart?.ClearLoyaltyPointsToBeEarned();
 		}
 	}
 
@@ -1662,32 +1742,6 @@ public class StartViewController : BaseViewController
 		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowHelpView));
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartHelp");
 		HelpViewController.ShowFullHelpView(allowFMA: true, restartTimer: true);
-	}
-
-	private static void ShowReserveOnlinePopupView()
-	{
-		BaseViewController.ProcessWPFHit();
-		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowReserveOnlinePopupView));
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverReserveOnlineLearnMore");
-		BulletListPopupParameters parameter = new BulletListPopupParameters
-		{
-			ViewAnalyticsName = "screen_saver_reserve_online"
-		};
-		OrchestrationService.ViewShow("reserve_online_popup_view", parameter);
-		PrepareToLeaveStartView();
-	}
-
-	private static void ShowPerksInfoPopupView()
-	{
-		BaseViewController.ProcessWPFHit();
-		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowPerksInfoPopupView));
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverRedboxPerksLearnMore");
-		BulletListPopupParameters parameter = new BulletListPopupParameters
-		{
-			ViewAnalyticsName = "screen_saver_redbox_perks"
-		};
-		OrchestrationService.ViewShow("perks_info_popup_view", parameter);
-		PrepareToLeaveStartView();
 	}
 
 	private static bool IsCurrentViewValid(bool logError = true)

@@ -16,7 +16,7 @@ using Redbox.Rental.Model.Transaction;
 
 namespace Redbox.KioskEngine.PreferenceManager.TransactionService;
 
-[PreferencePage(Name = "Gift Card Authorize Results", Path = "Kiosk Client Service/Transaction Service/Gift Card Authorize Results")]
+[PreferencePage(Name = "Gift Card Authorize Results", Path = "Kiosk Client Service/Transaction Service/Gift Card Authorize Results", TreeOrder = 415)]
 public partial class GCAuthorizeResultUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	public class TransactionServiceGiftCardAuthorizeResultsModel : DependencyObject

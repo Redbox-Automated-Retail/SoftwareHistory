@@ -16,7 +16,7 @@ public class KioskHealthController : ApiController
 	[Route("api/kioskhealth/ping")]
 	[SwaggerResponse(HttpStatusCode.OK, Description = "Ping sent", Type = typeof(PingResponse))]
 	[SwaggerResponse(HttpStatusCode.InternalServerError, Description = "Internal system error", Type = typeof(PingResponse))]
-	public async Task<PingResponse> CancelReservation()
+	public async Task<PingResponse> SendPing()
 	{
 		Stopwatch.StartNew();
 		PingResponse response = new PingResponse();

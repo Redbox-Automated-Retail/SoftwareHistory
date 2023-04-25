@@ -1,4 +1,5 @@
 using System;
+using Redbox.Rental.Model.KioskClientService.Transactions;
 
 namespace Redbox.Rental.Services.KioskClientService.Transactions;
 
@@ -8,7 +9,7 @@ public class BaseAuthorizeRequest : MessageBase
 
 	public CreditCard CreditCard { get; set; }
 
-	public ShoppingCart ShoppingCart { get; set; }
+	public MessageShoppingCart ShoppingCart { get; set; }
 
 	public string CustomerProfileNumber { get; set; }
 

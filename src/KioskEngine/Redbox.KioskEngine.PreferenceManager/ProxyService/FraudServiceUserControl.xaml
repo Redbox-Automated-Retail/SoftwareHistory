@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="Redbox.KioskEngine.PreferenceManager.ProxyService.FraudServiceUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.KioskEngine.PreferenceManager.ProxyService" xmlns:controls="clr-namespace:Redbox.KioskEngine.PreferenceManager.Controls">
+  <Grid Background="#FFFFFFFF">
+    <StackPanel Orientation="Vertical">
+      <controls:PreferencePageHeaderUserControl x:Name="PreferencePageHeaderUserControl" HeaderBackgroundColor="#008B8B" DockPanel.Dock="Top" RefreshButtonVisibilty="Visible" SaveButtonVisibilty="Collapsed" />
+      <StackPanel Margin="20,5,0,5">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+          </Grid.RowDefinitions>
+          <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Margin="0,5">
+            <CheckBox Name="IsHardwareIrEnabledCheckBox" IsEnabled="False" IsChecked="{Binding Path=IsHardwareIrEnabled}">
+              <TextBlock Text="Hardware IR Enabled" FontSize="10" Margin="0,1" />
+            </CheckBox>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Margin="0,5">
+            <CheckBox Name="IsPaperEnabledCheckBox" IsEnabled="False" IsChecked="{Binding Path=IsPaperEnabled}">
+              <TextBlock Text="Paper Enabled" FontSize="10" Margin="0,1" />
+            </CheckBox>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" Margin="0,5">
+            <CheckBox Name="IsPeeledEnabledCheckBox" IsEnabled="False" IsChecked="{Binding Path=IsPeeledEnabled}">
+              <TextBlock Text="Peeled Enabled" FontSize="10" Margin="0,1" />
+            </CheckBox>
+          </StackPanel>
+          <TextBlock Text="Paper Exclusions" Grid.Row="4" Margin="0,10,0,0" />
+          <TextBox Name="PaperExclusionsTextBox" Grid.Row="5" Width="200" Height="150" IsReadOnly="True" Text="{Binding Path=PaperExclusions}" />
+          <TextBlock Text="Peeled Inclusions" Grid.Row="4" Grid.Column="1" Margin="20,10,0,0" />
+          <TextBox Name="PeeledInclusionsTextBox" Grid.Row="5" Grid.Column="1" Width="200" Height="150" HorizontalAlignment="Left" Margin="20,0,0,0" IsReadOnly="True" Text="{Binding Path=PeeledInclusions}" />
+        </Grid>
+      </StackPanel>
+    </StackPanel>
+  </Grid>
+</UserControl>

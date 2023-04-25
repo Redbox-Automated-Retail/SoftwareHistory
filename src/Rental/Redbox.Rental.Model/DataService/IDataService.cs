@@ -41,7 +41,7 @@ public interface IDataService
 
 	ErrorList GetTitleRollupProduct(long productGroupId, out IKioskProduct kioskProduct);
 
-	ErrorList GetCarouselProducts(bool showCollections, out List<IKioskProduct> products);
+	ErrorList GetCarouselProducts(bool showCollections, int maxCarouselItems, out List<IKioskProduct> products);
 
 	ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, bool isPurchase, out List<ITitleProduct> products);
 

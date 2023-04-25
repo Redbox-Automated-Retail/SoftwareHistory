@@ -4,10 +4,10 @@ using System.Collections.ObjectModel;
 using System.Timers;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.Health;
 using Redbox.Rental.Model.Profile;
 
 namespace Redbox.Rental.Kernel;

@@ -169,6 +169,7 @@ public class RedboxRentalService : IRedboxRental
 			}
 			OrchestrationService.InvokeStartNewRentalSessionCallback();
 			ServiceLocator.Instance.GetService<IMarketingAdService>()?.ActivateCampaigns();
+			ServiceLocator.Instance.GetService<IKioskClientService>()?.Campaign?.LoadCampaign();
 			OrchestrationService.ViewShow(ViewService.GetStartOverViewName());
 		}
 	}

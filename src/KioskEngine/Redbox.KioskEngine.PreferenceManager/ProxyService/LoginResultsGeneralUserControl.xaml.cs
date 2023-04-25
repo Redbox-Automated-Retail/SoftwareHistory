@@ -16,7 +16,7 @@ using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.KioskEngine.PreferenceManager.ProxyService;
 
-[PreferencePage(Name = "General", Path = "Kiosk Client Service/Proxy Service/Login Results/General")]
+[PreferencePage(Name = "General", Path = "Kiosk Client Service/Proxy Service/Login Results/General", TreeOrder = 330)]
 public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	public class ProxyServiceLoginResultsModel : DependencyObject
@@ -588,7 +588,7 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 
 	private List<LoginResponseErrorItem> _responseItems = new List<LoginResponseErrorItem>();
 
-	private SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+	private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
 	public LoginResultsGeneralUserControl()
 	{
@@ -776,7 +776,7 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 
 	public async void LoadValues(IPreferencePage preferencePage)
 	{
-		await semaphoreSlim.WaitAsync();
+		await _semaphoreSlim.WaitAsync();
 		try
 		{
 			PreferencePageHeaderUserControl.SetStatusText("Loading...");
@@ -798,13 +798,13 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 		}
 		finally
 		{
-			semaphoreSlim.Release();
+			_semaphoreSlim.Release();
 		}
 	}
 
 	public async Task<bool> SaveValues(IPreferencePage preferencePage)
 	{
-		await semaphoreSlim.WaitAsync();
+		await _semaphoreSlim.WaitAsync();
 		try
 		{
 			PreferencePageHeaderUserControl.SetStatusText("Saving...");
@@ -832,7 +832,7 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 		}
 		finally
 		{
-			semaphoreSlim.Release();
+			_semaphoreSlim.Release();
 		}
 	}
 }

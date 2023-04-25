@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
-using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.Transactions;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Promotion;
@@ -40,6 +43,8 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 
 	private CustomerOffer _selectedOffer;
 
+	private int m_working;
+
 	public static IAfterSwipeOfferService Instance
 	{
 		get
@@ -67,17 +72,173 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 			_previousPromotion = service.GetPromotion();
 			_newProduct = null;
 			Redbox.Rental.Services.Session.Session.Instance.PromoOfferState = new PromoOfferState();
-			ICustomerOfferService service2 = ServiceLocator.Instance.GetService<ICustomerOfferService>();
-			IStoreManager service3 = ServiceLocator.Instance.GetService<IStoreManager>();
-			IRentalShoppingCartService service4 = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-			int num = (int)(service3?.KioskId ?? 0);
-			service2.GetOffers(languageCode: OrchestrationService.GetCulture()?.Substring(0, 2), kioskId: num.ToString(), storefrontEventType: StorefrontEventType.OnSwipe.ToString(), sessionId: service4.CurrentRentalShoppingCart.ShoppingSessionId.ToString(), completeCallback: ProcessCustomerOffers);
+			IStoreManager service2 = ServiceLocator.Instance.GetService<IStoreManager>();
+			IRentalShoppingCartService service3 = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
+			int num = (int)(service2?.KioskId ?? 0);
+			string languageCode = OrchestrationService.GetCulture()?.Substring(0, 2);
+			GetOffers(num.ToString(), languageCode, StorefrontEventType.OnSwipe.ToString(), service3.CurrentRentalShoppingCart.ShoppingSessionId.ToString(), ProcessCustomerOffers);
 		}
 		else
 		{
 			LogHelper.Instance.Log("AfterSwipeOfferService: ShowAfterSwipePersonalizedOffers config is false, not getting offers.");
 			callbackAction(obj: true);
 		}
+	}
+
+	private void GetOffers(string kioskId, string languageCode, string storefrontEventType, string sessionId, RemoteServiceCallback completeCallback)
+	{
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			IShoppingSession session = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetSession(sessionId);
+			if (session == null)
+			{
+				LogHelper.Instance.Log("The specified shopping session does not exist: {0}", sessionId);
+				return;
+			}
+			RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
+			remoteServiceResult.Properties["is_online"] = true;
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
+				{
+					IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>().GetRentalShoppingCart(new Guid(sessionId));
+					IPromotion promo = rentalShoppingCart?.Promotion;
+					ServiceLocator.Instance.GetService<IMacroService>();
+					Dictionary<string, object> creditCardData = ShoppingCartMessageHelper.GetCreditCardData(session, includeTrack2: true);
+					MessageShoppingCart instance = ShoppingCartMessageHelper.CreateShoppingCart(rentalShoppingCart, promo, titleItemsOnly: true);
+					string utcOffset = ShoppingCartMessageHelper.CalcUtcOffset(DateTime.Now);
+					LogHelper.Instance.Log("Live call to remote KioskClientService");
+					IGetCustomerOffersResult result = ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.GetCustomerOffersAsync(kioskId, creditCardData, instance.ToJson().ToObject<Dictionary<string, object>>(), utcOffset, languageCode, storefrontEventType).Result;
+					remoteServiceResult.Properties["CustomerProfileNumber"] = result.CustomerProfileNumber;
+					remoteServiceResult.Properties["AccountNumber"] = result.AccountNumber;
+					remoteServiceResult.Properties["EmailAddress"] = result.EmailAddress;
+					if (result.StoredOffers != null && result.StoredOffers.Count > 0)
+					{
+						List<CustomerOffer> list = new List<CustomerOffer>();
+						foreach (CustomerOfferResult storedOffer in result.StoredOffers)
+						{
+							list.Add(CustomerOfferFromCustomerOfferResult(storedOffer));
+						}
+						remoteServiceResult.Properties["StoredOffers"] = list;
+					}
+					if (result.NewOffers != null && result.NewOffers.Count > 0)
+					{
+						List<CustomerOffer> list2 = new List<CustomerOffer>();
+						foreach (CustomerOfferResult newOffer in result.NewOffers)
+						{
+							list2.Add(CustomerOfferFromCustomerOfferResult(newOffer));
+						}
+						remoteServiceResult.Properties["NewOffers"] = list2;
+					}
+					remoteServiceResult.Success = result.Success;
+					if (!remoteServiceResult.Success)
+					{
+						Redbox.KioskEngine.ComponentModel.Error error = result.Errors.FirstOrDefault();
+						if (error != null)
+						{
+							object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), error.Code);
+							remoteServiceResult.Properties["response"] = fieldsForResponseCode ?? ((object)KioskLoginResponseErrors.Error);
+						}
+						else
+						{
+							remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+						}
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("In stand alone mode, skipping call to get offers.", LogEntryType.Info);
+					remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.LoyaltyIsDown;
+					remoteServiceResult.Properties["is_online"] = false;
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in CustomerOfferProxy.PerformGetOffersLiveCall.", e);
+				remoteServiceResult.Properties["response"] = KioskLoginResponseErrors.Error;
+			}
+			finally
+			{
+				try
+				{
+					remoteServiceResult.ExecutionTime = executionTimer.Elapsed;
+					remoteServiceResult.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", remoteServiceResult?.ToObfuscatedString());
+					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
+					{
+						Callback = completeCallback,
+						Result = remoteServiceResult,
+						Message = "Invoking completeCallback from CustomerOfferProxy.PerformGetOffersLiveCall."
+					});
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
+	}
+
+	private CustomerOffer CustomerOfferFromCustomerOfferResult(CustomerOfferResult offer)
+	{
+		bool flag = offer.IncludeFormatIds != null && offer.IncludeFormatIds.Count > 0;
+		bool flag2 = offer.IncludeTitleIds != null && offer.IncludeTitleIds.Count > 0;
+		CustomerOffer customerOffer = new CustomerOffer
+		{
+			OfferId = offer.OfferId,
+			StoredOfferId = offer.StoredOfferId,
+			OfferDiscountCode = offer.OfferDiscountCode,
+			PromotionCode = offer.PromotionCode,
+			DiscountType = (OfferDiscountType)Enum.Parse(typeof(OfferDiscountType), offer.DiscountType),
+			CampaignId = offer.CampaignId,
+			TitleFamily = ParseTitleFamily(offer.ProductType),
+			ExpirationDate = offer.ExpirationDate,
+			IncludeOlderThan = offer.ExcludeIfWithinRedboxReleaseDate,
+			Amount = offer.DiscountAmount,
+			ActionCode = ParseActionCode(offer.ActionCode),
+			IncludeFormats = flag,
+			FormatIds = (flag ? offer.IncludeFormatIds.ToList() : offer.ExcludeFormatIds.ToList()),
+			IncludeTitles = flag2,
+			TitleIds = (flag2 ? offer.IncludeTitleIds.ToList() : offer.ExcludeTitleIds.ToList()),
+			RedeemedDateTime = offer.RedeemedDateTime
+		};
+		if (!string.IsNullOrEmpty(offer.OfferScopeType))
+		{
+			customerOffer.OfferScopeType = (OfferScopeType)Enum.Parse(typeof(OfferScopeType), offer.OfferScopeType);
+		}
+		if (!string.IsNullOrEmpty(offer.CustomerSegmentType))
+		{
+			customerOffer.CustomerSegmentType = (CustomerSegmentType)Enum.Parse(typeof(CustomerSegmentType), offer.CustomerSegmentType);
+		}
+		customerOffer.OfferProducts = offer.OfferProducts?.Select((OfferProductResult op) => new OfferProduct
+		{
+			ProductId = op.ProductId,
+			NumberOfNights = op.NumberOfNights,
+			DiscountedPrice = op.DiscountedPrice,
+			TotalDiscountAmount = op.TotalDiscountAmount
+		}).ToList();
+		return customerOffer;
+	}
+
+	private ActionCode ParseActionCode(string code)
+	{
+		ActionCode result = ActionCode.Rental;
+		if (code == ActionCode.Purchase.ToString())
+		{
+			result = ActionCode.Purchase;
+		}
+		return result;
+	}
+
+	private TitleFamily? ParseTitleFamily(string productTypeString)
+	{
+		if (string.IsNullOrEmpty(productTypeString) || productTypeString.ToUpper() == "ANY")
+		{
+			return TitleFamily.All;
+		}
+		return (TitleFamily)Enum.Parse(typeof(TitleFamily), productTypeString);
 	}
 
 	private void ProcessCustomerOffers(IRemoteServiceResult result)

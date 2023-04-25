@@ -5,8 +5,8 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Lua;
+using Redbox.Rental.Model.Health;
 
 namespace Redbox.HardwareServices.Kernel;
 

@@ -2,8 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Redbox.Core;
+using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
+using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
@@ -15,7 +18,6 @@ using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Promotion;
 using Redbox.Rental.Services.Session;
@@ -86,6 +88,8 @@ public class PromotionService : IPromotionService
 	private static IPromotionService _instance;
 
 	private Action<IPromoCodeValidationResult> _validatePromoCodeResultCallback;
+
+	private int m_working;
 
 	private IPromotion _promotion;
 
@@ -407,10 +411,115 @@ public class PromotionService : IPromotionService
 	public void ValidatePromoCodeOnServer(string promoCode, Action<IPromoCodeValidationResult> promoCodeValidationResultCallback)
 	{
 		_validatePromoCodeResultCallback = promoCodeValidationResultCallback;
-		IPromotionServices service = ServiceLocator.Instance.GetService<IPromotionServices>();
 		RemoteServiceCallback completeCallback = ProcessPromoCodeValidationResult;
-		long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
-		service?.ValidatePromotionCode(num.ToString(), promoCode, completeCallback);
+		ValidatePromoCodeInKioskClientService((ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0).ToString(), promoCode, completeCallback);
+	}
+
+	private void ValidatePromoCodeInKioskClientService(string storeNumber, string promotionCode, RemoteServiceCallback completeCallback)
+	{
+		ThreadPool.QueueUserWorkItem(async delegate
+		{
+			RemoteServiceResult result = new RemoteServiceResult();
+			result.Properties["is_online"] = true;
+			result.Properties["store"] = storeNumber;
+			result.Properties["code"] = promotionCode;
+			using ExecutionTimer executionTimer = new ExecutionTimer();
+			try
+			{
+				Interlocked.Increment(ref m_working);
+				string kioskClientServiceBaseUrl = ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl;
+				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
+				{
+					LogHelper.Instance.Log($"Live call to remote IPromotionServices.ValidatePromotionCode, URL: {kioskClientServiceBaseUrl}");
+					if (!int.TryParse(storeNumber, out var result2))
+					{
+						LogHelper.Instance.Log($"The passed storeNumber '{storeNumber}' cannot be converted into an Int32.", LogEntryType.Error);
+						result.Success = false;
+						result.Properties["response"] = PromotionValidationResponse.Error.ToString();
+					}
+					else
+					{
+						ServiceLocator.Instance.GetService<IMacroService>();
+						Guid messageId = Guid.NewGuid();
+						IDictionary<string, object> dictionary = await ServiceLocator.Instance.GetService<IKioskClientService>().Promotion.ValidatePromotionCode(messageId, promotionCode, result2);
+						result.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
+						result.Properties["response"] = PromotionValidationResponse.Valid.ToString();
+						result.Properties["amount"] = (dictionary.ContainsKey("Amount") ? dictionary["Amount"] : ((object)1));
+						result.Properties["promotion_intent"] = (dictionary.ContainsKey("PromotionIntentCode") ? dictionary["PromotionIntentCode"] : PromotionIntentCode.FixedValue.ToString());
+						result.Properties["rent_qty"] = (dictionary.ContainsKey("RentQty") ? dictionary["RentQty"] : ((object)0));
+						result.Properties["rent_format"] = (dictionary.ContainsKey("RentFormat") ? dictionary["RentFormat"] : null);
+						result.Properties["get_qty"] = (dictionary.ContainsKey("GetQty") ? dictionary["GetQty"] : ((object)0));
+						result.Properties["get_format"] = (dictionary.ContainsKey("GetFormat") ? dictionary["GetFormat"] : null);
+						Dictionary<string, object> dictionary2 = (dictionary.ContainsKey("CampaignTitles") ? (dictionary["CampaignTitles"] as Dictionary<string, object>) : null);
+						if (dictionary2 != null)
+						{
+							ArrayList value = dictionary2["Titles"] as ArrayList;
+							Dictionary<string, object> value2 = new Dictionary<string, object>
+							{
+								["include"] = (bool)dictionary2["Include"],
+								["titles"] = value
+							};
+							result.Properties["campaign_titles"] = value2;
+						}
+						if (dictionary.ContainsKey("ServerName"))
+						{
+							result.Properties["server_name"] = dictionary["ServerName"];
+						}
+						result.Properties["product_type_id"] = (dictionary.ContainsKey("ProductTypeId") ? dictionary["ProductTypeId"] : null);
+						result.Properties["format_ids"] = (dictionary.ContainsKey("FormatIds") ? (dictionary["FormatIds"] as ArrayList) : null);
+						result.Properties["action_code"] = (dictionary.ContainsKey("ActionType") ? dictionary["ActionType"] : PromotionActionCode.Rental.ToString());
+						result.Properties["allow_full_discount"] = (dictionary.ContainsKey("AllowFullDiscount") ? dictionary["AllowFullDiscount"] : ((object)true));
+						result.Properties["default_promo"] = (dictionary.ContainsKey("DefaultPromo") ? dictionary["DefaultPromo"] : null);
+						if (!result.Success)
+						{
+							ArrayList arrayList = (dictionary.ContainsKey("Errors") ? (dictionary["Errors"] as ArrayList) : null);
+							if (arrayList != null && arrayList.Count > 0)
+							{
+								if (arrayList[0] is Dictionary<string, object> dictionary3)
+								{
+									object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(PromotionValidationResponse?), (string)dictionary3["Code"]);
+									result.Properties["response"] = ((fieldsForResponseCode != null) ? fieldsForResponseCode.ToString() : PromotionValidationResponse.Error.ToString());
+								}
+							}
+							else
+							{
+								result.Properties["response"] = PromotionValidationResponse.Error.ToString();
+							}
+						}
+					}
+				}
+				else
+				{
+					LogHelper.Instance.Log("In stand alone mode, not issuing realtime call to ValidatePromotionCode.", LogEntryType.Info);
+					result.Properties["response"] = PromotionValidationResponse.Error.ToString();
+					result.Properties["is_online"] = false;
+				}
+			}
+			catch (Exception e)
+			{
+				LogHelper.Instance.Log("An unhandled exception was raised in PromotionServicesProxy.ValidatePromotionCode.", e);
+				result.Properties["response"] = PromotionValidationResponse.Error.ToString();
+			}
+			finally
+			{
+				try
+				{
+					result.ExecutionTime = executionTimer.Elapsed;
+					result.Properties["stand_alone"] = ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone;
+					LogHelper.Instance.Log("IRemoteServiceResult: {0}", result?.ToObfuscatedString());
+					ServiceLocator.Instance.GetService<ICallbackService>()?.EnqueueCallback(new RemoteServiceCallbackEntry
+					{
+						Callback = completeCallback,
+						Result = result,
+						Message = "Invoking completeCallback from PromotionServicesProxy.ValidatePromotionCode."
+					});
+				}
+				finally
+				{
+					Interlocked.Decrement(ref m_working);
+				}
+			}
+		});
 	}
 
 	private void ProcessPromoCodeValidationResult(IRemoteServiceResult result)
@@ -1280,10 +1389,10 @@ public class PromotionService : IPromotionService
 		return result;
 	}
 
-	public void LoadInCartData()
+	public void LoadInCartData(KioskInCartDetails inCart)
 	{
-		List<Dictionary<string, object>> list = (Redbox.Rental.Services.Configuration.Configuration.Instance.UseKCSInCart ? GetKCSInCartConfigSettings() : OrchestrationService.GetResourceTable("in_cart_config_settings"));
-		Dictionary<string, object> dictionary = ((list != null && list.Count > 0) ? list[0] : null);
+		List<Dictionary<string, object>> kCSInCartConfigSettings = GetKCSInCartConfigSettings(inCart);
+		Dictionary<string, object> dictionary = ((kCSInCartConfigSettings != null && kCSInCartConfigSettings.Count > 0) ? kCSInCartConfigSettings[0] : null);
 		bool flag = false;
 		if (dictionary != null)
 		{
@@ -1381,12 +1490,11 @@ public class PromotionService : IPromotionService
 		}
 	}
 
-	private List<Dictionary<string, object>> GetKCSInCartConfigSettings()
+	private List<Dictionary<string, object>> GetKCSInCartConfigSettings(KioskInCartDetails inCart)
 	{
-		KioskInCartDetails kioskInCartDetails = ServiceLocator.Instance.GetService<IKioskClientService>()?.Campaign?.GetInCart();
-		if (kioskInCartDetails != null)
+		if (inCart != null)
 		{
-			if (kioskInCartDetails.InCartType == InCartType.RentOneGetFixedOff)
+			if (inCart.InCartType == InCartType.RentOneGetFixedOff)
 			{
 				return new List<Dictionary<string, object>>
 				{
@@ -1395,17 +1503,17 @@ public class PromotionService : IPromotionService
 						{ "template_name", "ROGO MOVIE A" },
 						{
 							"EXCLUDED_TITLES",
-							string.Join(",", kioskInCartDetails.ExcludeTitles)
+							string.Join(",", inCart.ExcludeTitles)
 						},
 						{
 							"DISCOUNT_AMOUNT",
-							(kioskInCartDetails.Amount ?? 0m).ToString("N2")
+							(inCart.Amount ?? 0m).ToString("N2")
 						},
-						{ "PROMO_CODE", kioskInCartDetails.PromoCode }
+						{ "PROMO_CODE", inCart.PromoCode }
 					}
 				};
 			}
-			if (kioskInCartDetails.InCartType == InCartType.FirstNightFree)
+			if (inCart.InCartType == InCartType.FirstNightFree)
 			{
 				return new List<Dictionary<string, object>>
 				{
@@ -1414,9 +1522,9 @@ public class PromotionService : IPromotionService
 						{ "template_name", "FREE NIGHT M" },
 						{
 							"EXCLUDED_TITLES",
-							string.Join(",", kioskInCartDetails.ExcludeTitles)
+							string.Join(",", inCart.ExcludeTitles)
 						},
-						{ "PROMO_CODE", kioskInCartDetails.PromoCode }
+						{ "PROMO_CODE", inCart.PromoCode }
 					}
 				};
 			}

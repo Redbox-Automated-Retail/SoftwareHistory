@@ -12,10 +12,10 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.Health;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.Session;
 using Redbox.Rental.Model.KioskProduct;
@@ -401,12 +401,12 @@ public static class OrchestrationService
 		ServiceLocator.Instance.GetService<IPricingService>()?.Reload();
 	}
 
-	public static List<IKioskProduct> RentalGetCarouselProducts()
+	public static List<IKioskProduct> RentalGetCarouselProducts(int maxCarouselItems)
 	{
 		LogHelper.Instance.Log("RentalGetCarouselProducts");
 		try
 		{
-			ErrorList carouselProducts = ServiceLocator.Instance.GetService<IDataService>().GetCarouselProducts(RentalIsCollectionsEnabled(), out var products);
+			ErrorList carouselProducts = ServiceLocator.Instance.GetService<IDataService>().GetCarouselProducts(RentalIsCollectionsEnabled(), maxCarouselItems, out var products);
 			if (carouselProducts.Count > 0)
 			{
 				carouselProducts.ToLogHelper();

@@ -94,16 +94,6 @@ public class SessionStartTriggerActionList : List<ISessionStartTriggerAction>, I
 					},
 					new SessionStartTriggerAction
 					{
-						Name = SessionStartTriggerActionConstants.ShowReserveOnlinePopupView,
-						StartedTimedSession = false
-					},
-					new SessionStartTriggerAction
-					{
-						Name = SessionStartTriggerActionConstants.ShowPerksInfoPopupView,
-						StartedTimedSession = false
-					},
-					new SessionStartTriggerAction
-					{
 						Name = SessionStartTriggerActionConstants.SignOut,
 						StartedTimedSession = true
 					},

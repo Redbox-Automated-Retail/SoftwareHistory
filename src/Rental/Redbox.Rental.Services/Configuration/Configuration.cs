@@ -317,8 +317,6 @@ public class Configuration : IConfiguration
 
 	public bool BluefinAutoActivate { get; private set; }
 
-	public bool ShowKMTInCartOffers { get; private set; }
-
 	public bool UseDiscountsForPmnpOffers { get; private set; }
 
 	public bool EnableStarzOffer { get; private set; }
@@ -331,14 +329,6 @@ public class Configuration : IConfiguration
 
 	public bool ReturnVisitPromoOfferEnabled { get; private set; }
 
-	public string ReturnVisitPromoOfferPromotionName { get; private set; }
-
-	public decimal ReturnVisitPromoOfferPromotionPrice { get; private set; }
-
-	public string ReturnVisitPromoOfferPromotionExpirationDate { get; private set; }
-
-	public bool CallReturnVisitPromoCheck { get; private set; }
-
 	public int ReturnVisitPromoCheckTimeout { get; private set; }
 
 	public int StartViewAdTimeout { get; private set; }
@@ -348,20 +338,6 @@ public class Configuration : IConfiguration
 	public string KioskDataServicesKey { get; private set; }
 
 	public bool SendJsonKioskAnalyticsToKioskDataService { get; private set; }
-
-	public bool SendKioskAlertsToKioskDataService { get; private set; }
-
-	public bool SendAuditEventsToKioskDataService { get; private set; }
-
-	public bool SendKioskFunctionChecksToKioskDataService { get; private set; }
-
-	public bool SendKioskVersionsToKioskDataService { get; private set; }
-
-	public bool SendKioskStatisticsToKioskDataService { get; private set; }
-
-	public bool SendKioskPropertiesToKioskDataService { get; private set; }
-
-	public bool SendKioskEventsToKioskDataService { get; private set; }
 
 	public bool ForcedAirExchangerConfigured { get; private set; }
 
@@ -411,35 +387,17 @@ public class Configuration : IConfiguration
 
 	public int AuthorizeTimeout { get; private set; }
 
-	public bool SendAuthenticationApisToKioskClientService { get; private set; }
-
-	public bool SendInstallerApisToKioskClientService { get; private set; }
-
-	public bool SendMarketingApisToKioskClientService { get; private set; }
-
-	public bool SendExpireAndCancelReservationToKioskClientService { get; private set; }
-
 	public int KioskClientServiceInventorySnapshotTimeout { get; private set; }
-
-	public bool SendCustomerOffersToKioskClientService { get; private set; }
 
 	public int KioskClientServiceDiscActionTimeout { get; private set; }
 
 	public int KioskClientServiceDiscFraudTimeout { get; private set; }
 
-	public bool SendEstimateAccrualToKioskClientService { get; private set; }
-
 	public int KioskClientServiceEstimateAccrualTimeout { get; private set; }
-
-	public bool SendEstimateRedemptionToKioskClientService { get; private set; }
 
 	public int KioskClientServiceEstimateRedemptionTimeout { get; private set; }
 
-	public bool SendPromoCodeValidationToKioskClientService { get; private set; }
-
 	public int KioskClientServicePromoCodeValidationTimeout { get; private set; }
-
-	public bool SendUpdateAccountToKioskClientService { get; private set; }
 
 	public int KioskClientServiceUpdateAccountTimeout { get; private set; }
 
@@ -452,6 +410,8 @@ public class Configuration : IConfiguration
 	public bool UseKCSInCart { get; private set; }
 
 	public bool UseKCSStartScreen { get; private set; }
+
+	public int KCSLoadCampaignTimerDuration { get; private set; }
 
 	private string GetCultureBasedValue(string defaultCultureValue, string alternateCultureValue)
 	{
@@ -523,7 +483,6 @@ public class Configuration : IConfiguration
 		ShowBrowse10Titles = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowBrowse10Titles", defaultValue: false);
 		Show99CentsBrowseFilterButton = ConfigGetValue(service, "marketing", "MarketingGeneral", "Show99CentsBrowseFilterButton", defaultValue: false);
 		ShowAfterSwipePersonalizedOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowAfterSwipePersonalizedOffers", defaultValue: false);
-		ShowKMTInCartOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowKMTInCartOffers", defaultValue: true);
 		UseDiscountsForPmnpOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "UseDiscountsForPmnpOffers", defaultValue: false);
 		EnableBrowseMessagePopup = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableBrowseMessagePopup", defaultValue: false);
 		BrowseMessagePopupDuration = ConfigGetValue(service, "marketing", "MarketingGeneral", "BrowseMessagePopupDuration", 15000);
@@ -538,10 +497,6 @@ public class Configuration : IConfiguration
 		ShowKioskClosingVSM = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowKioskClosingVSM", defaultValue: false);
 		DisplayUpdatedPerksPoints = ConfigGetValue(service, "marketing", "MarketingGeneral", "DisplayUpdatedPerksPoints", defaultValue: false);
 		ReturnVisitPromoOfferEnabled = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferEnabled", defaultValue: false);
-		ReturnVisitPromoOfferPromotionName = ConfigGetValue<string>(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionName", null);
-		ReturnVisitPromoOfferPromotionPrice = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionPrice", 0m);
-		ReturnVisitPromoOfferPromotionExpirationDate = ConfigGetValue<string>(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferPromotionExpirationDate", null);
-		CallReturnVisitPromoCheck = ConfigGetValue(service, "marketing", "MarketingReturn", "CallReturnVisitPromoCheck", defaultValue: false);
 		ReturnVisitPromoCheckTimeout = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoCheckTimeout", 10000);
 		StartViewAdTimeout = ConfigGetValue(service, "marketing", "MarketingAd", "StartViewAdTimeout", 120000);
 		EarlyIdEnabled = ConfigGetValue(service, "system", "Personalization", "EarlyIDEnabled", defaultValue: false);
@@ -598,13 +553,6 @@ public class Configuration : IConfiguration
 		KioskDataServicesUrl = ConfigGetValue<string>(service, "system", "General", "KioskDataServicesUrl", null);
 		KioskDataServicesKey = ConfigGetValue<string>(service, "system", "General", "KioskDataServicesKey", null);
 		SendJsonKioskAnalyticsToKioskDataService = ConfigGetValue(service, "system", "General", "SendJsonKioskAnalyticsToKioskDataService", defaultValue: true);
-		SendKioskAlertsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskAlertsToKioskDataService", defaultValue: true);
-		SendAuditEventsToKioskDataService = ConfigGetValue(service, "system", "General", "SendAuditEventsToKioskDataService", defaultValue: true);
-		SendKioskFunctionChecksToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskFunctionChecksToKioskDataService", defaultValue: true);
-		SendKioskVersionsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskVersionsToKioskDataService", defaultValue: true);
-		SendKioskStatisticsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskStatisticsToKioskDataService", defaultValue: true);
-		SendKioskPropertiesToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskPropertiesToKioskDataService", defaultValue: true);
-		SendKioskEventsToKioskDataService = ConfigGetValue(service, "system", "General", "SendKioskEventsToKioskDataService", defaultValue: true);
 		ForcedAirExchangerConfigured = ConfigGetValue(service, "system", "General", "ForcedAirExchangerConfigured", defaultValue: true);
 		FAQDocument = ConfigGetValue(service, "system", "Documents", "FAQDocument", "document-faqs");
 		TermsDocument = ConfigGetValue(service, "system", "Documents", "TermsDocument", "document-terms");
@@ -629,26 +577,18 @@ public class Configuration : IConfiguration
 		ZeroTouchEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchEnabled", defaultValue: false) && (ZeroTouchPickupEnabled || ZeroTouchReturnEnabled);
 		ZeroTouchGoogleTwoTap = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchGoogleTwoTap", defaultValue: true);
 		AuthorizeTimeout = ConfigGetValue(service, "system", "General", "AuthorizeTimeout", 60000);
-		SendAuthenticationApisToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendAuthenticationApisToKioskClientService", defaultValue: true);
-		SendInstallerApisToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendInstallerApisToKioskClientService", defaultValue: true);
-		SendMarketingApisToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendMarketingApisToKioskClientService", defaultValue: true);
-		SendExpireAndCancelReservationToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendExpireAndCancelReservationToKioskClientService", defaultValue: true);
 		KioskClientServiceInventorySnapshotTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceInventorySnapshotTimeout", 60000);
 		UseLegacyBrokerService = ConfigGetValue(service, "kioskengine", "Jarvis", "UseLegacyBrokerService", defaultValue: true);
 		UseAWSBrokerService = ConfigGetValue(service, "kioskengine", "Jarvis", "UseAWSBrokerService", defaultValue: true);
-		SendCustomerOffersToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendCustomerOffersToKioskClientService", defaultValue: true);
 		KioskClientServiceDiscActionTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceDiscActionTimeout", 5000);
 		KioskClientServiceDiscFraudTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceDiscFraudTimeout", 5000);
-		SendEstimateAccrualToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendEstimateAccrualToKioskClientService", defaultValue: true);
 		KioskClientServiceEstimateAccrualTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceEstimateAccrualTimeout", 5000);
-		SendEstimateRedemptionToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendEstimateRedemptionToKioskClientService", defaultValue: true);
 		KioskClientServiceEstimateRedemptionTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceEstimateRedemptionTimeout", 5000);
 		UseKCSPricing = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSPricing", defaultValue: true);
 		UseKCSInCart = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSInCart", defaultValue: false);
 		UseKCSStartScreen = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSStartScreen", defaultValue: false);
-		SendPromoCodeValidationToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendPromoCodeValidationToKioskClientService", defaultValue: true);
+		KCSLoadCampaignTimerDuration = ConfigGetValue(service, "kioskengine", "Jarvis", "KCSLoadCampaignTimerDuration", 1800000);
 		KioskClientServicePromoCodeValidationTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServicePromoCodeValidationTimeout", 5000);
-		SendUpdateAccountToKioskClientService = ConfigGetValue(service, "kioskengine", "Jarvis", "SendUpdateAccountToKioskClientService", defaultValue: true);
 		KioskClientServiceUpdateAccountTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceUpdateAccountTimeout", 3000);
 		LoginLockoutMinutes = ConfigGetValue(service, "kioskengine", "FMACP", "LoginLockoutMinutes", 5);
 	}

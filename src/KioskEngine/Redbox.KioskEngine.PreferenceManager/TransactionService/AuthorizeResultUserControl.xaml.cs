@@ -17,7 +17,7 @@ using Redbox.Rental.Model.Transaction;
 
 namespace Redbox.KioskEngine.PreferenceManager.TransactionService;
 
-[PreferencePage(Name = "Authorize Results", Path = "Kiosk Client Service/Transaction Service/Authorize Results")]
+[PreferencePage(Name = "Authorize Results", Path = "Kiosk Client Service/Transaction Service/Authorize Results", TreeOrder = 410)]
 public partial class AuthorizeResultUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	public class TransactionServiceAuthorizeResultsModel : DependencyObject

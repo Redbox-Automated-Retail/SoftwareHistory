@@ -2,7 +2,11 @@ namespace Redbox.Rental.Model.KioskClientService.Campaign;
 
 public class Asset
 {
-	public long AssetId { get; set; }
+	public long Id { get; set; }
 
-	public string AssetUrl { get; set; }
+	public string Name { get; set; }
+
+	public string Url { get; set; }
+
+	public string FullPath { get; set; }
 }

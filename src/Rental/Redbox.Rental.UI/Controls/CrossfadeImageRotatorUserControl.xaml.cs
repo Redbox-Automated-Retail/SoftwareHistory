@@ -124,6 +124,7 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 			clickableImageModel.ZIndex = ImageModels.Count - i;
 		}
 		_currentImageIndex = 0;
+		DisplayDuration = ((ImageModels.Count >= _currentImageIndex + 1) ? ImageModels[_currentImageIndex].DisplayDuration : 5.0);
 	}
 
 	private static void DisplayDurationChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -260,8 +261,13 @@ public partial class CrossfadeImageRotatorUserControl : UserControl, IComponentC
 
 	private void FadeStoryBoard_Completed(object sender, EventArgs e)
 	{
+		if (_currentImageIndex == 0 && ImageModels != null && ImageModels.Count >= 1)
+		{
+			ImageModels[0].Opacity = 0.0;
+		}
 		_currentImageIndex = _nextImageIndex;
 		_isRotating = false;
+		DisplayDuration = ((ImageModels != null && ImageModels.Count >= _currentImageIndex + 1) ? ImageModels[_currentImageIndex].DisplayDuration : 5.0);
 		StartTimer();
 	}
 }

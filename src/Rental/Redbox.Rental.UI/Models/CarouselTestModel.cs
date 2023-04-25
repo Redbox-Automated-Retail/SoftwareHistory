@@ -8,6 +8,10 @@ public class CarouselTestModel : DependencyObject
 {
 	public static readonly DependencyProperty CarouselProductsProperty = DependencyProperty.Register("CarouselProducts", typeof(List<DisplayProductModel>), typeof(CarouselTestModel), new FrameworkPropertyMetadata(null));
 
+	public static readonly DependencyProperty CarouselVisibilityProperty = DependencyProperty.Register("CarouselVisibility", typeof(Visibility), typeof(CarouselTestModel), new FrameworkPropertyMetadata(Visibility.Visible));
+
+	public static readonly DependencyProperty RotationDelayProperty = DependencyProperty.Register("RotationDelay", typeof(double), typeof(CarouselTestModel), new FrameworkPropertyMetadata(2.0));
+
 	public static readonly DependencyProperty IsAnimationOnProperty = DependencyProperty.Register("IsAnimationOn", typeof(bool), typeof(CarouselTestModel), new FrameworkPropertyMetadata(true, OnIsAnimationOnPropertyChanged));
 
 	public static readonly DependencyProperty IsStartViewAdABTestProperty = DependencyProperty.Register("IsStartViewAdABTest", typeof(bool), typeof(CarouselTestModel), new FrameworkPropertyMetadata(false));
@@ -27,6 +31,36 @@ public class CarouselTestModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(CarouselProductsProperty, value);
+			});
+		}
+	}
+
+	public Visibility CarouselVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(CarouselVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(CarouselVisibilityProperty, value);
+			});
+		}
+	}
+
+	public double RotationDelay
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (double)GetValue(RotationDelayProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(RotationDelayProperty, value);
 			});
 		}
 	}

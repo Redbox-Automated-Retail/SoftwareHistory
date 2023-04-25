@@ -3,8 +3,8 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Health;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
 

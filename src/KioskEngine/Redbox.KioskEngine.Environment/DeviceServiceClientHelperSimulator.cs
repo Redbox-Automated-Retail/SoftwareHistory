@@ -8,8 +8,8 @@ using DeviceService.ComponentModel.Responses;
 using Newtonsoft.Json;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Health;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskEngine.Environment;

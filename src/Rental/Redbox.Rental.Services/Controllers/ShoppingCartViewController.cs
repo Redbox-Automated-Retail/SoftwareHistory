@@ -41,6 +41,8 @@ public class ShoppingCartViewController : BaseLoyaltyController
 
 	private static IPricingService PricingService => ServiceLocator.Instance.GetService<IPricingService>();
 
+	private static IKioskClientService KioskClientService => ServiceLocator.Instance.GetService<IKioskClientService>();
+
 	private static bool EndGames
 	{
 		get
@@ -671,14 +673,16 @@ public class ShoppingCartViewController : BaseLoyaltyController
 
 	private static void ShowInCartOfferOrProceedCheckout(IRentalShoppingCart rentalShoppingCart)
 	{
-		if (rentalShoppingCart != null && !rentalShoppingCart.IsFull && (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers || Redbox.Rental.Services.Configuration.Configuration.Instance.UseKCSInCart) && !PromotionService.Instance.IsFreeInCartOfferRunning && !PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance.CartQualifiesForInCartOffer(rentalShoppingCart) && !rentalShoppingCart.InCartPromoOfferMade)
+		if (rentalShoppingCart != null && !rentalShoppingCart.IsFull)
 		{
-			ShoppingCartViewFunctions.ShowInCartOfferMessage();
+			bool? flag = KioskClientService?.Campaign?.IsKCSInCartEnabled;
+			if (flag.HasValue && flag == true && !PromotionService.Instance.IsFreeInCartOfferRunning && !PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance.CartQualifiesForInCartOffer(rentalShoppingCart) && !rentalShoppingCart.InCartPromoOfferMade)
+			{
+				ShoppingCartViewFunctions.ShowInCartOfferMessage();
+				return;
+			}
 		}
-		else
-		{
-			CheckoutFunctions.BeginCheckout();
-		}
+		CheckoutFunctions.BeginCheckout();
 	}
 
 	private static void ShoppingCartViewModel_OnAddGameButtonClicked()
@@ -739,7 +743,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		string text2 = viewModel?.StarzSubscriptionProduct?.MyBagQRCodeURL;
 		if (!string.IsNullOrEmpty(text) && !string.IsNullOrEmpty(text2))
 		{
-			BitmapImage bitmapImage = ServiceLocator.Instance.GetService<IKioskClientService>()?.QRCodeUtilities?.GetQRCodeImage(text2, returnDefaultOnError: true);
+			BitmapImage bitmapImage = KioskClientService?.QRCodeUtilities?.GetQRCodeImage(text2, returnDefaultOnError: true);
 			if (bitmapImage != null)
 			{
 				Action action = delegate

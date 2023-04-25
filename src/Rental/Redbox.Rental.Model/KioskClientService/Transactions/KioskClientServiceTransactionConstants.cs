@@ -48,6 +48,39 @@ public class KioskClientServiceTransactionConstants
 			public const string MaxDiscs = "GCAuth.MaxDiscs";
 		}
 
+		public class AfterSwipeCustomerOffers
+		{
+			public enum Offers
+			{
+				NoOffer,
+				InCartOffers,
+				FracFreeMovieFirstVisit,
+				FracFreeMovieSecondVisit,
+				FracDiscountedDiscFirstVisit,
+				FracDiscountedDiscSecondVisit,
+				FreeItemPerksEquivalent,
+				AmountOffPerksEquivalent,
+				ExtraPointsPerksEquivalent,
+				PerksMessage
+			}
+
+			public const string LiveCall = "AfterSwipeCustomerOffers.LiveCall";
+
+			public const string Success = "AfterSwipeCustomerOffers.Success";
+
+			public const string SelectedOffer = "AfterSwipeCustomerOffers.SelectedOffer";
+
+			public const string IncludeMovieInCartOffer = "AfterSwipeCustomerOffers.IncludeMovieInCartOffer";
+
+			public const string IncludeFreeGameInCartOffer = "AfterSwipeCustomerOffers.IncludeFreeGameInCartOffer";
+
+			public const string IncludeAmountOffPurchaseInCartOffer = "AfterSwipeCustomerOffers.IncludeAmountOffPurchaseInCartOffer";
+
+			public const string IncludeMultiNightPriceInCartOffer = "AfterSwipeCustomerOffers.IncludeMultiNightPriceInCartOffer";
+
+			public const string MultiNightPriceProductIds = "AfterSwipeCustomerOffers.MultiNightPriceProductIds";
+		}
+
 		public const string CategoryName = "TransactionService";
 	}
 }

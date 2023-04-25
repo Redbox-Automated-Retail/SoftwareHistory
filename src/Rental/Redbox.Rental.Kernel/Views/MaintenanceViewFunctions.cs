@@ -1,8 +1,8 @@
 using System;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Health;
 
 namespace Redbox.Rental.Kernel.Views;
 

@@ -10,7 +10,7 @@
       <ItemsControl.ItemTemplate>
         <DataTemplate>
           <controls:RoundedButton Style="{StaticResource transparent_button_style}" Opacity="{Binding Opacity, FallbackValue=1}" Panel.ZIndex="{Binding ZIndex}" Click="Button_Click">
-            <Image Stretch="Uniform" Source="{Binding ImageUrl}" />
+            <Image Stretch="Fill" Source="{Binding ImageUrl}" />
           </controls:RoundedButton>
         </DataTemplate>
       </ItemsControl.ItemTemplate>

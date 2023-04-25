@@ -19,7 +19,7 @@ using Redbox.Rental.Services.App;
 
 namespace Redbox.KioskEngine.PreferenceManager.UpdateClientService;
 
-[PreferencePage(Name = "Reservation Service Status", Path = "Update Client Service/Reservations/Reservation Service Status")]
+[PreferencePage(Name = "Reservation Service Status", Path = "Update Client Service/Reservations/Reservation Service Status", TreeOrder = 230)]
 public partial class ReservationServiceStatusUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	public ReservationServiceStatusUserControl()

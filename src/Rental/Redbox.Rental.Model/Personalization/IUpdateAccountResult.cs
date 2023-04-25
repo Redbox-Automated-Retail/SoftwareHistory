@@ -1,5 +1,4 @@
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
 
 namespace Redbox.Rental.Model.Personalization;
 

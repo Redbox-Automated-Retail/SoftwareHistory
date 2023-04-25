@@ -32,10 +32,6 @@ public class SessionStartTriggerActionConstants
 
 	public static string ShowHelpView = "ShowHelpView";
 
-	public static string ShowReserveOnlinePopupView = "ShowReserveOnlinePopupView";
-
-	public static string ShowPerksInfoPopupView = "ShowPerksInfoPopupView";
-
 	public static string SignOut = "SignOut";
 
 	public static string PickupReservation = "PickupReservation";

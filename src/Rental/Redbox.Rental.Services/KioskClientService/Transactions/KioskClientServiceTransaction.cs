@@ -14,13 +14,11 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.TestData;
 using Redbox.Rental.Model.KioskClientService.Transactions;
 using Redbox.Rental.Model.Personalization;
-using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Promotion;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
@@ -102,7 +100,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 					AuthRuleId = session.ShoppingCart.AuthRuleId,
 					AuthAmount = session.ShoppingCart.AuthAmount,
 					SkipAuthRule = session.ShoppingCart.SkipAuthRule,
-					ShoppingCart = CreateShoppingCart(sessionId),
+					ShoppingCart = ShoppingCartMessageHelper.CreateShoppingCart(sessionId),
 					CustomerProfileNumber = customerProfileNumber
 				};
 				LogHelper.Instance.Log($"AuthorizeRequest: {authorizeRequest?.Scrub()}");
@@ -132,7 +130,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 				{
 					authorizeResult.Response = response;
 				}
-				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false);
 				PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
 			}
 			else
@@ -218,7 +215,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 					AuthRuleId = session.ShoppingCart.AuthRuleId,
 					AuthAmount = session.ShoppingCart.AuthAmount,
 					SkipAuthRule = session.ShoppingCart.SkipAuthRule,
-					ShoppingCart = CreateShoppingCart(sessionId),
+					ShoppingCart = ShoppingCartMessageHelper.CreateShoppingCart(sessionId),
 					CustomerProfileNumber = customerProfileNumber,
 					ReferenceNumber = referenceNumber,
 					CartWasModified = cartWasModified
@@ -250,7 +247,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 				{
 					authorizeResult.Response = response;
 				}
-				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false);
 				PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
 			}
 			else
@@ -332,7 +328,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 					KioskId = int.Parse(session.StoreNumber),
 					CreditCard = GetCreditCardData(session, includeTrack2: true),
 					TransactionDate = DateTime.Now,
-					ShoppingCart = CreateShoppingCart(sessionId),
+					ShoppingCart = ShoppingCartMessageHelper.CreateShoppingCart(sessionId),
 					CustomerProfileNumber = customerProfileNumber,
 					ReferenceNumber = referenceNumber.ToString()
 				};
@@ -363,7 +359,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 				{
 					authorizeResult.Response = response;
 				}
-				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false);
 				PopulateFirstNameAndLastNameFromTrackData(authorizeResult, trackData);
 			}
 			else
@@ -565,7 +560,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 					ReferenceNumbers = referenceNumbers
 				};
 				DeserializablePickupValidationResult deserializablePickupValidationResult = await CallPickupValidationAsync(validationRequest);
-				ServiceLocator.Instance.GetService<IHealthServices>().UpdateOnlineStatus(isServerBusy: false);
 				result.Success = deserializablePickupValidationResult?.Success ?? false;
 				result.Response = AuthorizeResponse.Approved.ToString();
 				result.IsOnline = deserializablePickupValidationResult != null && !deserializablePickupValidationResult.Errors.Any((Redbox.Rental.Model.Error error2) => error2.Code == "PV999");
@@ -713,7 +707,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 			TransactionDate = DateTime.Now,
 			PlayPassPromptAccepted = session.ShoppingCart.PlayPassPromptAccepted,
 			PlayPassPointsEarned = session.ShoppingCart.PlayPassPointsEarned,
-			ShoppingCart = CreateShoppingCart(rentalShoppingCart, promo),
+			ShoppingCart = ShoppingCartMessageHelper.CreateShoppingCart(rentalShoppingCart, promo),
 			CustomerProfileNumber = customerProfileNumber,
 			UtcOffset = CalcUtcOffset(DateTime.Now),
 			RedeemedCustomerOffer = (flag ? BuildRedeemedOffer(acceptedOffer) : null),
@@ -817,7 +811,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 			CartWasModified = rentalShoppingCart.PickupRecommendationsSelected,
 			PickupDateTime = DateTime.Now,
 			CreditCard = GetCreditCardData(session, includeTrack2: true),
-			ShoppingCart = CreateShoppingCart(rentalShoppingCart, promo),
+			ShoppingCart = ShoppingCartMessageHelper.CreateShoppingCart(rentalShoppingCart, promo),
 			CustomerProfileNumber = customerProfileNumber,
 			IsEarlyId = (session.ShoppingCart.GetPropertyBagEntry("EarlyIdIndicator") == "true"),
 			IsEarlyIdApple = (session.ShoppingCart.GetPropertyBagEntry("EarlyIdApple") == "true"),
@@ -994,150 +988,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 	{
 		result.Properties["first_name"] = (((trackData == null) & defaultToNA) ? "NA" : trackData?.FirstName);
 		result.Properties["last_name"] = (((trackData == null) & defaultToNA) ? "NA" : trackData?.LastName);
-	}
-
-	private ShoppingCart CreateShoppingCart(Guid sessionId)
-	{
-		IRentalShoppingCart obj = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.GetRentalShoppingCart(sessionId);
-		return CreateShoppingCart(obj, obj.Promotion);
-	}
-
-	public static ShoppingCart CreateShoppingCart(IRentalShoppingCart rentalShoppingCart, IPromotion promo)
-	{
-		ShoppingCart shoppingCart = new ShoppingCart();
-		if (rentalShoppingCart?.Items?.Any() ?? false)
-		{
-			(rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.ForEach(delegate(IRentalShoppingCartTitleItem x)
-			{
-				shoppingCart.Discounts.Add(new Discount
-				{
-					ProductId = x.ProductId,
-					DiscountType = DiscountType.Loyalty,
-					RedemptionPoints = x.LoyaltyPointsRecord.PointsToRedeem,
-					Amount = (x.PricingRecord?.InitialNight ?? 0m)
-				});
-			});
-			if (rentalShoppingCart.Promotion != null)
-			{
-				promo?.PromotionItems?.ForEach(delegate(IPromotionItem x)
-				{
-					shoppingCart.Discounts.Add(new Discount
-					{
-						Amount = x.PromotionAmount,
-						DiscountType = (DiscountType)rentalShoppingCart.Promotion.DiscountType,
-						PromotionCode = promo.Name,
-						PromotionCodeValue = promo.OriginalPrice,
-						PromotionIntentCode = (PromotionIntentCode)promo.Intent,
-						ProductId = x.RentalShoppingCartItem.ProductId,
-						ApplyOnlyToProduct = (promo.IsValidatedPostVend ? new bool?(promo.IsProductSpecific) : ((bool?)null))
-					});
-				});
-			}
-			foreach (IGrouping<RentalShoppingCartItemAction, IBaseRentalShoppingCartItem> item in from x in rentalShoppingCart.Items
-				group x by x.Action)
-			{
-				List<LineItem> list = new List<LineItem>();
-				TransactionServiceGroupType groupType = ((item.Key == RentalShoppingCartItemAction.subscription) ? TransactionServiceGroupType.Subscription : ((item.Key == RentalShoppingCartItemAction.rental) ? TransactionServiceGroupType.Rental : TransactionServiceGroupType.Purchase));
-				if (item.Key == RentalShoppingCartItemAction.subscription)
-				{
-					foreach (IRentalShoppingCartSubscriptionItem item2 in item)
-					{
-						list.Add(new LineItem
-						{
-							SubscriptionId = item2.SubscriptionProduct.SubscriptionId,
-							TempPassword = item2.TempPassword
-						});
-					}
-					shoppingCart.Groups.Add(new LineItemGroup
-					{
-						GroupType = groupType,
-						Items = list
-					});
-					continue;
-				}
-				foreach (IRentalShoppingCartTitleItem item3 in item)
-				{
-					IUpsellItem upsellItemByRentalShoppingCartItem = rentalShoppingCart.UpsellInfo.GetUpsellItemByRentalShoppingCartItem(item3);
-					BlurayUpsell blurayUpsell = null;
-					if (upsellItemByRentalShoppingCartItem != null)
-					{
-						blurayUpsell = new BlurayUpsell
-						{
-							ProductGroupId = (int)upsellItemByRentalShoppingCartItem.ProductGroupId,
-							TitleId = item3.ProductId,
-							Offer = upsellItemByRentalShoppingCartItem.OfferResponse.ToString(),
-							TypeId = (int)upsellItemByRentalShoppingCartItem.TypeId
-						};
-					}
-					IPricingRecord pricingRecord = item3?.PricingRecord;
-					list.Add(new LineItem
-					{
-						Barcode = item3.Barcode,
-						BlurayUpsell = blurayUpsell,
-						SourceType = (ItemSourceType)item3.SourceType,
-						ProductFamily = item3.TitleFamily.ToString(),
-						ProductId = item3.ProductId,
-						ProductType = item3.TitleType.GetDisplayName(),
-						ProductName = item3.TitleProduct.ProductName,
-						OfferCode = item3.OfferCode,
-						Pricing = new Pricing
-						{
-							DefaultExtraNight = pricingRecord?.DefaultExtraNightPrice,
-							DefaultInitialNight = pricingRecord?.DefaultInitialNightPrice,
-							Expiration = (pricingRecord?.ExpirationPrice ?? 0m),
-							ExtraNight = (pricingRecord?.ExtraNight ?? 0m),
-							InitialDays = pricingRecord?.InitialDays,
-							InitialNight = (pricingRecord?.InitialNight ?? 0m),
-							NonReturn = (pricingRecord?.NonReturn ?? 0m),
-							NonReturnDays = (int)(pricingRecord?.NonReturnDays ?? 0m),
-							PriceSetId = (pricingRecord?.PriceSetId ?? 0),
-							ProductPriceId = (int)(pricingRecord?.ProductPricingId ?? 0),
-							Purchase = (pricingRecord?.Purchase ?? 0m)
-						},
-						VendStatus = ConvertToVendStatus(item3.Status),
-						TivoQueryId = item3.TivoQueryId,
-						PersonalizationTitleTags = item3.PersonalizationTitleTags
-					});
-				}
-				ISubTotalGroup subTotalGroup = rentalShoppingCart.Totals.SubTotalGroups.FirstOrDefault((ISubTotalGroup y) => item.Key == y.Action);
-				shoppingCart.Groups.Add(new LineItemGroup
-				{
-					GroupType = groupType,
-					Items = list,
-					Totals = new Totals
-					{
-						DiscountedSubtotal = subTotalGroup.SubTotal,
-						Subtotal = subTotalGroup.Amount,
-						GrandTotal = subTotalGroup.GrantTotal,
-						TaxAmount = subTotalGroup.TaxAmount,
-						TaxRate = subTotalGroup.TaxRate * 100m
-					}
-				});
-			}
-		}
-		return shoppingCart;
-	}
-
-	private static VendStatus ConvertToVendStatus(LineItemStatus status)
-	{
-		switch (status)
-		{
-		case LineItemStatus.Pending:
-		case LineItemStatus.InventoryError:
-			return VendStatus.EmptyOrStuck;
-		case LineItemStatus.CustomerDisabled:
-			return VendStatus.CustomerDisabled;
-		case LineItemStatus.ItemNotTaken:
-			return VendStatus.DiskNotTaken;
-		case LineItemStatus.HardwareError:
-			return VendStatus.HardwareError;
-		case LineItemStatus.InventoryCapacity:
-			return VendStatus.KioskFull;
-		case LineItemStatus.Fullfilled:
-			return VendStatus.Vended;
-		default:
-			return VendStatus.NotVended;
-		}
 	}
 
 	private CreditCard GetCreditCardData(IShoppingSession session, bool includeTrack2)

@@ -13,7 +13,7 @@ using Redbox.Rental.Services.App;
 
 namespace Redbox.KioskEngine.PreferenceManager.UpdateClientService;
 
-[PreferencePage(Name = "Ping Service", Path = "Update Client Service/Kiosk Health/Ping Service")]
+[PreferencePage(Name = "Ping Service", Path = "Update Client Service/Kiosk Health/Ping Service", TreeOrder = 220)]
 public partial class PingUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	public PingUserControl()

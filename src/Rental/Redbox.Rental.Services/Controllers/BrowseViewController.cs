@@ -739,6 +739,7 @@ public class BrowseViewController : BaseViewController
 		IViewService viewService = BaseViewController.GetViewService();
 		if (viewService != null && ShowHomeButton())
 		{
+			BaseViewController.ProcessWPFHit();
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("BrowseHome");
 			if (BrowseState.ShowingBrowseMessagePopup)
 			{

@@ -7,9 +7,9 @@ using System.Threading;
 using System.Windows.Forms;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
 using Redbox.Log.Framework;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.Health;
 
 namespace Redbox.KioskEngine.Bootstrap;
 

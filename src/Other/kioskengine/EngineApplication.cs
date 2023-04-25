@@ -35,7 +35,6 @@ using Redbox.KioskEngine.Environment;
 using Redbox.KioskEngine.Environment.CardDataReader;
 using Redbox.KioskEngine.IDE;
 using Redbox.KioskEngine.Kernel;
-using Redbox.KioskServices.KernelExtension;
 using Redbox.REDS.Framework;
 using Redbox.Rental.Data;
 using Redbox.Rental.Kernel;
@@ -44,6 +43,7 @@ using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.EngineApplication;
+using Redbox.Rental.Model.Health;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
@@ -58,7 +58,9 @@ using Redbox.Rental.Services;
 using Redbox.Rental.Services.Ads;
 using Redbox.Rental.Services.Analytics;
 using Redbox.Rental.Services.App;
+using Redbox.Rental.Services.Authentication;
 using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.Health;
 using Redbox.Rental.Services.KioskClientService;
 using Redbox.Rental.Services.KioskEvents;
 using Redbox.Rental.Services.KioskHealth;
@@ -70,6 +72,7 @@ using Redbox.Rental.Services.Pricing;
 using Redbox.Rental.Services.Reservations;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.Services.ShoppingCart;
+using Redbox.Rental.Services.StoreServices;
 using Redbox.Rental.Services.UpdateClientService;
 using Redbox.UpdateServices.KernelExtension;
 using WindowsInput;
@@ -567,7 +570,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			typeof(BrokerServicesHost),
 			typeof(HardwareServicesHost),
-			typeof(KioskServicesHost),
 			typeof(UpdateServicesHost)
 		}));
 		errorList.AddRange(InitializeConfiguration());
@@ -634,6 +636,10 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		errorList.AddRange(ShoppingSessionService.Instance.Initialize(Path.Combine(RunningPath, "session.data")));
 		errorList.AddRange(DebugService.Instance.Initialize());
 		_ = ApplicationState.Instance.IsStandAlone;
+		ServiceLocator.Instance.AddAuthenticationServices();
+		ServiceLocator.Instance.AddStoreServices();
+		ServiceLocator.Instance.AddService(typeof(IHealthServices), HealthService.Instance);
+		ServiceLocator.Instance.AddMarketingServices();
 		errorList.AddRange(KernelExtensionService.Instance.LoadAllExtensions());
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList2 = ResourceBundleService.Instance.Initialize(System.Windows.Forms.Application.ExecutablePath, Settings.Default.DevBundlePath);
 		if (errorList2.ContainsError())
@@ -671,6 +677,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			LogHelper.Instance.Log("No Default Bundle specified in System.Config");
 		}
+		ServiceLocator.Instance.GetService<IHealthServices>()?.StartPingTimer();
 		ServiceLocator.Instance.GetService<IApiService>()?.Initialize();
 		return errorList;
 	}
@@ -867,6 +874,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			service14.IsActive = false;
 		}
+		ServiceLocator.Instance.GetService<IHealthServices>()?.StopPingTimer();
 		ServiceLocator.Instance.GetService<IKernelExtensionService>()?.DeactivateAllExtensions();
 		ServiceLocator.Instance.GetService<IConfigurationService>()?.Stop().ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error error)
 		{
@@ -1120,6 +1128,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			try
 			{
 				ServiceLocator.Instance.GetService<IKernelExtensionService>()?.NotifyOfHostCrash(e.Exception);
+				LogHelper.Instance.Log("Sending ApplicationCrash KioskAlert");
+				ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(ServiceLocator.Instance.GetService<IStoreServices>()?.StoreNumberString, "ApplicationCrash", null, e.Exception.ToString(), DateTime.Now, null);
 			}
 			catch (Exception e2)
 			{

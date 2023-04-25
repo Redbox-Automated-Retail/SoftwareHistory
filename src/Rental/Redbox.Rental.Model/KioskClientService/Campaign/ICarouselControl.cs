@@ -1,6 +1,6 @@
 namespace Redbox.Rental.Model.KioskClientService.Campaign;
 
-public interface ICarouselControl : IViewControl
+public interface ICarouselControl : IControl
 {
-	int? MaxTitles { get; }
+	int MaxTitles { get; }
 }

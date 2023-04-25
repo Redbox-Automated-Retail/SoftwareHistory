@@ -437,10 +437,6 @@ public static class AnalyticsConstants
 
 		public const string StartBannerCollections = "StartBannerCollections";
 
-		public const string StartScreenSaverReserveOnlineLearnMore = "StartScreenSaverReserveOnlineLearnMore";
-
-		public const string StartScreenSaverRedboxPerksLearnMore = "StartScreenSaverRedboxPerksLearnMore";
-
 		public const string StartMovies = "StartMovies";
 
 		public const string StartBuyMovies = "StartBuyMovies";
@@ -454,8 +450,6 @@ public static class AnalyticsConstants
 		public const string StartRentAndBuyGames = "StartRentAndBuyGames";
 
 		public const string StartScreenSaver99CentsMovies = "StartScreenSaver99CentsMovies";
-
-		public const string StartScreenSaverBuyMovies = "StartScreenSaverBuyMovies";
 
 		public const string StartScreenSaverGames = "StartScreenSaverGames";
 

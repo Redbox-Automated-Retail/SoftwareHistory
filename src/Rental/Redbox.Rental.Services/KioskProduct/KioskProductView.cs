@@ -466,15 +466,13 @@ public class KioskProductView
 		return list.OrderList(BrowseSort.SortDate, BrowseViewFilter.All, MovieTitles);
 	}
 
-	public List<IKioskProduct> GetCarouselProducts(bool showCollections)
+	public List<IKioskProduct> GetCarouselProducts(bool showCollections, int maxCarouselItems)
 	{
-		BrowseViewFilter browseFilter = BrowseViewFilter.All;
 		List<IKioskProduct> resultList = new List<IKioskProduct>();
-		int num = 11;
-		List<ITitleProduct> source = _movieProducts.OrderList(BrowseSort.SortDate, browseFilter, MovieTitles).ToList();
-		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.HitMovies) && !resultList.Contains(x)).Take(num)?.ForEach(resultList.Add);
-		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.Top20Movies) && !resultList.Contains(x)).Take(num - resultList.Count)?.ForEach(resultList.Add);
-		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.ActionAndAdventure) && !resultList.Contains(x)).Take(num - resultList.Count)?.ForEach(resultList.Add);
+		List<ITitleProduct> source = _movieProducts.OrderList(BrowseSort.SortDate, BrowseViewFilter.All, MovieTitles).ToList();
+		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.HitMovies) && !resultList.Contains(x)).Take(maxCarouselItems)?.ForEach(resultList.Add);
+		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.Top20Movies) && !resultList.Contains(x)).Take(maxCarouselItems - resultList.Count)?.ForEach(resultList.Add);
+		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.ActionAndAdventure) && !resultList.Contains(x)).Take(maxCarouselItems - resultList.Count)?.ForEach(resultList.Add);
 		if (showCollections)
 		{
 			resultList.Insert(Math.Min(5, resultList.Count()), new CollectionProduct(new Collection
@@ -486,7 +484,7 @@ public class KioskProductView
 				ImageFile = "image_collections_carousel"
 			});
 		}
-		return resultList.Take(num).ToList();
+		return resultList.Take(maxCarouselItems).ToList();
 	}
 
 	public List<ITitleProduct> GetOutOfStockMovies()

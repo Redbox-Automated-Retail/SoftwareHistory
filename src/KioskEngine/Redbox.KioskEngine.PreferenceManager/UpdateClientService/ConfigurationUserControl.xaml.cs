@@ -14,7 +14,7 @@ using Redbox.Rental.Services.App;
 
 namespace Redbox.KioskEngine.PreferenceManager.UpdateClientService;
 
-[PreferencePage(Name = "Get Configuration Changes", Path = "Update Client Service/Configuration/Get Configuration Changes")]
+[PreferencePage(Name = "Get Configuration Changes", Path = "Update Client Service/Configuration/Get Configuration Changes", TreeOrder = 210)]
 public partial class ConfigurationUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	public ConfigurationUserControl()

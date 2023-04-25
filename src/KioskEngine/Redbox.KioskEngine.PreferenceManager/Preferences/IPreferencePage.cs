@@ -8,6 +8,8 @@ public interface IPreferencePage
 
 	string Path { get; set; }
 
+	int TreeOrder { get; set; }
+
 	Type PreferencePageHostType { get; set; }
 
 	object PreferencePageHost { get; set; }

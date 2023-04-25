@@ -16,6 +16,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.IDE;
 using Redbox.REDS.Framework;
+using Redbox.Rental.Model.Health;
 using Redbox.Rental.Model.Reservation;
 
 namespace Redbox.KioskEngine.Environment;
@@ -185,6 +186,7 @@ public class ResourceBundleService : IResourceBundleService
 					return errorList;
 				}
 			}
+			ServiceLocator.Instance.GetService<IHealthServices>()?.ResetMinutesInMaintenanceMode();
 		}
 		finally
 		{

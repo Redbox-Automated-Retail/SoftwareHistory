@@ -4,10 +4,10 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Promotion;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.Services.ViewDefinitions;
@@ -23,6 +23,8 @@ public class ShoppingCartViewFunctions
 	private static IRentalShoppingCartService RentalShoppingCartService => ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 
 	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
+
+	private static IKioskClientService KioskClientService => ServiceLocator.Instance.GetService<IKioskClientService>();
 
 	public static void ViewShoppingCart()
 	{
@@ -44,8 +46,10 @@ public class ShoppingCartViewFunctions
 				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning continue", popOnly: false);
 				OrchestrationService.ViewShow("shopping_cart_view");
 			});
+			return;
 		}
-		else if ((Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKMTInCartOffers || Redbox.Rental.Services.Configuration.Configuration.Instance.UseKCSInCart) && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
+		bool? flag = KioskClientService?.Campaign?.IsKCSInCartEnabled;
+		if (flag.HasValue && flag == true && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
 		{
 			BrowseState.ItemAddedFromView = null;
 			ShowInCartOfferMessage();

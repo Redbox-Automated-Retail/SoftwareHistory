@@ -12,7 +12,7 @@ using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.KioskEngine.PreferenceManager.ProxyService;
 
-[PreferencePage(Name = "Recommended Titles", Path = "Kiosk Client Service/Proxy Service/Login Results/Recommended Titles")]
+[PreferencePage(Name = "Recommended Titles", Path = "Kiosk Client Service/Proxy Service/Login Results/Recommended Titles", TreeOrder = 332)]
 public partial class LoginResultRecommendedTitlesUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	private LoginResultsGeneralUserControl.ProxyServiceLoginResultsModel _model = new LoginResultsGeneralUserControl.ProxyServiceLoginResultsModel();

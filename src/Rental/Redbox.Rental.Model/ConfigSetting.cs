@@ -58,14 +58,6 @@ public static class ConfigSetting
 
 	public const string SendJsonKioskAnalyticsToKioskDataService = "SendJsonKioskAnalyticsToKioskDataService";
 
-	public const string SendKioskAlertsToKioskDataService = "SendKioskAlertsToKioskDataService";
-
-	public const string SendKioskStatisticsToKioskDataService = "SendKioskStatisticsToKioskDataService";
-
-	public const string SendKioskPropertiesToKioskDataService = "SendKioskPropertiesToKioskDataService";
-
-	public const string SendKioskVersionsToKioskDataService = "SendKioskVersionsToKioskDataService";
-
 	public const string MaxUnknownSyncs = "MaxUnknownSyncs";
 
 	public const string SyncUnknownEnabled = "SyncUnknownEnabled";
@@ -80,17 +72,9 @@ public static class ConfigSetting
 
 	public const string SyncEmptyStartTimeRangeEnd = "SyncEmptyStartTimeRangeEnd";
 
-	public const string ShowKMTInCartOffers = "ShowKMTInCartOffers";
-
 	public const string UseDiscountsForPmnpOffers = "UseDiscountsForPmnpOffers";
 
 	public const string ForcedAirExchangerConfigured = "ForcedAirExchangerConfigured";
-
-	public const string SendAuditEventsToKioskDataService = "SendAuditEventsToKioskDataService";
-
-	public const string SendKioskFunctionChecksToKioskDataService = "SendKioskFunctionChecksToKioskDataService";
-
-	public const string SendKioskEventsToKioskDataService = "SendKioskEventsToKioskDataService";
 
 	public const string TextToSpeechVolume = "TextToSpeechVolume";
 
@@ -179,14 +163,6 @@ public static class ConfigSetting
 	public const string DisplayUpdatedPerksPoints = "DisplayUpdatedPerksPoints";
 
 	public const string ReturnVisitPromoOfferEnabled = "ReturnVisitPromoOfferEnabled";
-
-	public const string ReturnVisitPromoOfferPromotionName = "ReturnVisitPromoOfferPromotionName";
-
-	public const string ReturnVisitPromoOfferPromotionPrice = "ReturnVisitPromoOfferPromotionPrice";
-
-	public const string ReturnVisitPromoOfferPromotionExpirationDate = "ReturnVisitPromoOfferPromotionExpirationDate";
-
-	public const string CallReturnVisitPromoCheck = "CallReturnVisitPromoCheck";
 
 	public const string ReturnVisitPromoCheckTimeout = "ReturnVisitPromoCheckTimeout";
 
@@ -350,35 +326,17 @@ public static class ConfigSetting
 
 	public const string AuthorizeTimeout = "AuthorizeTimeout";
 
-	public const string SendExpireAndCancelReservationToKioskClientService = "SendExpireAndCancelReservationToKioskClientService";
-
 	public const string KioskClientServiceInventorySnapshotTimeout = "KioskClientServiceInventorySnapshotTimeout";
-
-	public const string SendCustomerOffersToKioskClientService = "SendCustomerOffersToKioskClientService";
 
 	public const string KioskClientServiceDiscActionTimeout = "KioskClientServiceDiscActionTimeout";
 
 	public const string KioskClientServiceDiscFraudTimeout = "KioskClientServiceDiscFraudTimeout";
 
-	public const string SendAuthenticationApisToKioskClientService = "SendAuthenticationApisToKioskClientService";
-
-	public const string SendInstallerApisToKioskClientService = "SendInstallerApisToKioskClientService";
-
-	public const string SendMarketingApisToKioskClientService = "SendMarketingApisToKioskClientService";
-
-	public const string SendEstimateAccrualToKioskClientService = "SendEstimateAccrualToKioskClientService";
-
 	public const string KioskClientServiceEstimateAccrualTimeout = "KioskClientServiceEstimateAccrualTimeout";
-
-	public const string SendEstimateRedemptionToKioskClientService = "SendEstimateRedemptionToKioskClientService";
 
 	public const string KioskClientServiceEstimateRedemptionTimeout = "KioskClientServiceEstimateRedemptionTimeout";
 
-	public const string SendPromoCodeValidationToKioskClientService = "SendPromoCodeValidationToKioskClientService";
-
 	public const string KioskClientServicePromoCodeValidationTimeout = "KioskClientServicePromoCodeValidationTimeout";
-
-	public const string SendUpdateAccountToKioskClientService = "SendUpdateAccountToKioskClientService";
 
 	public const string KioskClientServiceUpdateAccountTimeout = "KioskClientServiceUpdateAccountTimeout";
 

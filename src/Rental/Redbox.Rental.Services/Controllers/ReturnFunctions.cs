@@ -43,46 +43,14 @@ public class ReturnFunctions
 		return false;
 	}
 
-	public static bool CanShowReturnVisitPromoOfferView()
-	{
-		bool flag = false;
-		if (DateTime.TryParse(Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionExpirationDate, out var result))
-		{
-			flag = DateTime.Now <= result;
-		}
-		if ((Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferEnabled & flag) && !string.IsNullOrEmpty(Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionName))
-		{
-			return Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionPrice > 0m;
-		}
-		return false;
-	}
-
-	public static void ShowReturnVisitPromoOfferView(Action closeAction)
-	{
-		DateTime.TryParse(Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionExpirationDate, out var result);
-		OrchestrationService.ViewShow("return_visit_promo_offer_view", new ReturnVisitPromoOfferViewParameters
-		{
-			PromoCode = Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionName,
-			PromoType = ReturnPromoType.AmountOff,
-			Amount = Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferPromotionPrice,
-			ExpirationDate = result,
-			CloseAction = closeAction
-		});
-	}
-
 	public static void ShowReturnCompleteViewWithPromoCheck(string barcode, Action closeAction)
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.CallReturnVisitPromoCheck)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferEnabled)
 		{
-			ServiceLocator.Instance.GetService<ICallbackService>();
 			ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.ReturnPromoCheck(barcode, delegate(ReturnVisitPromotionInfo promo)
 			{
 				PromoCheckCallback(promo, closeAction);
 			});
-		}
-		else if (CanShowReturnVisitPromoOfferView())
-		{
-			ShowReturnVisitPromoOfferView(closeAction);
 		}
 		else
 		{

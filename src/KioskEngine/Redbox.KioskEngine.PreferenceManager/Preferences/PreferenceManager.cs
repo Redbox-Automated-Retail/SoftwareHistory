@@ -23,9 +23,11 @@ public class PreferenceManager
 				{
 					Path = preferencePageAttribute.Path,
 					Name = preferencePageAttribute.Name,
-					PreferencePageHostType = item
+					PreferencePageHostType = item,
+					TreeOrder = preferencePageAttribute.TreeOrder
 				});
 			}
 		}
+		PreferencePages.Sort((IPreferencePage a, IPreferencePage b) => a.TreeOrder.CompareTo(b.TreeOrder));
 	}
 }

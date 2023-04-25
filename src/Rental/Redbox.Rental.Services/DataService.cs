@@ -591,7 +591,7 @@ public class DataService : IDataService
 		return errorList;
 	}
 
-	public ErrorList GetCarouselProducts(bool showCollections, out List<IKioskProduct> products)
+	public ErrorList GetCarouselProducts(bool showCollections, int maxCarouselItems, out List<IKioskProduct> products)
 	{
 		WaitForFirstLoad();
 		products = null;
@@ -600,7 +600,7 @@ public class DataService : IDataService
 		{
 			lock (_lock)
 			{
-				products = _kioskProductView.GetCarouselProducts(showCollections);
+				products = _kioskProductView.GetCarouselProducts(showCollections, maxCarouselItems);
 			}
 		}
 		catch (Exception e)

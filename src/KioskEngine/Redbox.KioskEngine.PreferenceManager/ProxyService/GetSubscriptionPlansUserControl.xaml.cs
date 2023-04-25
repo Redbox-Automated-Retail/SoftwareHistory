@@ -18,7 +18,7 @@ using Redbox.Rental.Services.KioskClientService.Subscriptions;
 
 namespace Redbox.KioskEngine.PreferenceManager.ProxyService;
 
-[PreferencePage(Name = "Subscription Plans", Path = "Kiosk Client Service/Proxy Service/Subscription Plans")]
+[PreferencePage(Name = "Subscription Plans", Path = "Kiosk Client Service/Proxy Service/Subscription Plans", TreeOrder = 380)]
 public partial class GetSubscriptionPlansUserControl : UserControl, IPreferencePageHost, IComponentConnector
 {
 	private class ProxyServiceSubscriptionModel : DependencyObject

@@ -8,6 +8,7 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
+using Redbox.Rental.Model.KioskClientService.Promotion;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Promotion;
@@ -232,7 +233,7 @@ public class PromotionFunctions
 		};
 		if (promoCodeValidationResult.DefaultPromo != null)
 		{
-			promotion.DefaultPromo = new DefaultPromo
+			promotion.DefaultPromo = new Redbox.Rental.Services.Promotion.DefaultPromo
 			{
 				PromoCode = promoCodeValidationResult.DefaultPromo.PromoCode,
 				PromotionIntentCode = promoCodeValidationResult.DefaultPromo.PromotionIntentCode,
@@ -245,6 +246,49 @@ public class PromotionFunctions
 			promotion.CampaignId = storedPromoCode.CampaignId;
 		}
 		return promotion;
+	}
+
+	public static IPromotion CreatePromotionFromPromotionCodeValidationResponse(string promoCode, PromotionCodeValidationResponse promotionCodeValidationResponse)
+	{
+		if (!string.IsNullOrEmpty(promoCode) && promotionCodeValidationResponse != null && Enum.TryParse<PromotionIntentCode>(promotionCodeValidationResponse.PromotionIntentCode, out var result))
+		{
+			decimal amount = promotionCodeValidationResponse.Amount;
+			decimal num = ((result == PromotionIntentCode.PercentOffCartTotal) ? amount : 0m);
+			PromotionRentFormat result2;
+			PromotionGetFormat result3;
+			PromotionActionCode result4;
+			return new Redbox.Rental.Services.Promotion.Promotion
+			{
+				Name = promoCode,
+				OriginalPrice = amount,
+				Price = amount,
+				Quantity = 1,
+				Intent = result,
+				OriginalPercent = num,
+				Percent = num,
+				RentQuantity = (byte)(promotionCodeValidationResponse.RentQty.HasValue ? promotionCodeValidationResponse.RentQty.Value : 0),
+				RentFormat = (Enum.TryParse<PromotionRentFormat>(promotionCodeValidationResponse.RentFormat, out result2) ? new PromotionRentFormat?(result2) : ((PromotionRentFormat?)null)),
+				GetQuantity = (byte)(promotionCodeValidationResponse.GetQty.HasValue ? promotionCodeValidationResponse.GetQty.Value : 0),
+				GetFormat = (Enum.TryParse<PromotionGetFormat>(promotionCodeValidationResponse.GetFormat, out result3) ? new PromotionGetFormat?(result3) : ((PromotionGetFormat?)null)),
+				CampaignTitles = ((promotionCodeValidationResponse.CampaignTitles != null) ? new CampaignTitles
+				{
+					Include = promotionCodeValidationResponse.CampaignTitles.Include,
+					Titles = promotionCodeValidationResponse.CampaignTitles.Titles
+				} : null),
+				ProductTypeId = promotionCodeValidationResponse.ProductTypeId,
+				FormatIds = promotionCodeValidationResponse.FormatIds,
+				ActionCode = ((!Enum.TryParse<PromotionActionCode>(promotionCodeValidationResponse.ActionType, out result4)) ? PromotionActionCode.Rental : result4),
+				AllowFullDiscount = (promotionCodeValidationResponse.AllowFullDiscount ?? true),
+				DefaultPromo = ((promotionCodeValidationResponse.DefaultPromo != null) ? new Redbox.Rental.Services.Promotion.DefaultPromo
+				{
+					PromoCode = promotionCodeValidationResponse.DefaultPromo.PromoCode,
+					PromotionIntentCode = promotionCodeValidationResponse.DefaultPromo.PromotionIntentCode,
+					Amount = promotionCodeValidationResponse.DefaultPromo.Amount
+				} : null),
+				CampaignId = 0
+			};
+		}
+		return null;
 	}
 
 	private static IPromotion CreatePromotionFromDefaultPromo(IDefaultPromo defaultPromo)

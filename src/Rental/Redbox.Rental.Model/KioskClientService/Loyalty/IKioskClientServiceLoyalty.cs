@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Security;
 using System.Threading.Tasks;
-using Redbox.KioskServices.Proxy.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel.Loyalty;
+using Redbox.Rental.Model.KioskClientService.Transactions;
+using Redbox.Rental.Model.Personalization;
 
 namespace Redbox.Rental.Model.KioskClientService.Loyalty;
 

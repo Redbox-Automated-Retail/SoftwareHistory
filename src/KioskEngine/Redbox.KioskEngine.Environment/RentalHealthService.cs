@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
-using Redbox.KioskServices.Proxy.ComponentModel;
+using Redbox.Rental.Model.Health;
 
 namespace Redbox.KioskEngine.Environment;
 

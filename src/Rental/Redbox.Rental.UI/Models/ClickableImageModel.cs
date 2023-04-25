@@ -11,6 +11,8 @@ public class ClickableImageModel : BaseModel<ClickableImageModel>
 
 	public static readonly DependencyProperty ZIndexProperty = BaseModel<ClickableImageModel>.CreateDependencyProperty("ZIndex", typeof(double), 0.0);
 
+	public static readonly DependencyProperty DisplayDurationProperty = BaseModel<ClickableImageModel>.CreateDependencyProperty("DisplayDuration", typeof(double), 5.0);
+
 	public string ImageUrl
 	{
 		get
@@ -54,6 +56,21 @@ public class ClickableImageModel : BaseModel<ClickableImageModel>
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ZIndexProperty, value);
+			});
+		}
+	}
+
+	public double DisplayDuration
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (double)GetValue(DisplayDurationProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DisplayDurationProperty, value);
 			});
 		}
 	}

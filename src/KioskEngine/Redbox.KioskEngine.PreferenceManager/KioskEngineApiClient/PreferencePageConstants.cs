@@ -19,4 +19,32 @@ public class PreferencePageConstants
 
 		public const string Environment = "Environment";
 	}
+
+	public class StoreService
+	{
+		public const string SettingPath = "Store";
+
+		public const string StoreNumber = "ID";
+
+		public const string RunInitialSync = "RunInitialSync";
+
+		public const string InitialSyncType = "InitialSyncType";
+
+		public const string SynchronizeTimeToServer = "SynchronizeTimeToServer";
+
+		public const string IsStandAlone = "IsStandAlone";
+	}
+
+	public class HealthService
+	{
+		public const string SettingPath = "Remote Services\\Health Services";
+
+		public const string LiveCall = "LiveCall";
+
+		public const string PingPeriod = "PingPeriod";
+
+		public const string SmtpServer = "SmtpServer";
+
+		public const string Recipients = "Recipients";
+	}
 }
