@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Models;
 using KioskClientService.API.Services.HttpQueue;
+using KioskClientService.API.Services.Marketing;
 using KioskClientService.API.Services.ProxyApi;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -16,13 +17,16 @@ public class MarketingController : ControllerBase
 
 	private readonly IProxyApi _proxyApi;
 
+	private readonly IMarketingService _marketingService;
+
 	private readonly IHttpQueueService _httpQueueService;
 
-	public MarketingController(ILogger<MarketingController> logger, IProxyApi proxyApi, IHttpQueueService httpQueueService)
+	public MarketingController(ILogger<MarketingController> logger, IProxyApi proxyApi, IHttpQueueService httpQueueService, IMarketingService marketingService)
 	{
 		_logger = logger;
 		_proxyApi = proxyApi;
 		_httpQueueService = httpQueueService;
+		_marketingService = marketingService;
 	}
 
 	[Route("emailconfirmation")]
@@ -31,13 +35,7 @@ public class MarketingController : ControllerBase
 	public async Task<ActionResult<EmailConfirmationResponse>> EmailConfirmation(EmailConfirmationPayload payload)
 	{
 		_logger?.LogInfoWithSource("MarketingController.EmailConfirmation called.", "EmailConfirmation");
-		APIResponse<EmailConfirmationResponse> aPIResponse = await _proxyApi.EmailConfirmation(payload);
-		EmailConfirmationResponse emailConfirmationResponse = (aPIResponse.IsSuccessStatusCode ? aPIResponse.Response : ((aPIResponse.Response != null) ? aPIResponse.Response : new EmailConfirmationResponse
-		{
-			MessageId = payload.MessageId,
-			StatusCode = (int)aPIResponse.StatusCode
-		}));
-		return emailConfirmationResponse.ToObjectResult();
+		return (await _marketingService.EmailConfirmation(payload)).ToObjectResult();
 	}
 
 	[Route("kioskoptin")]

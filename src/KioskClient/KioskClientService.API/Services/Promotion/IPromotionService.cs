@@ -5,5 +5,7 @@ namespace KioskClientService.API.Services.Promotion;
 
 public interface IPromotionService
 {
-	Task<APIResponse<PromotionCodeValidationResponse>> ValidatePromotionCodeAsync(PromotionCodeValidationPayload payload);
+	Task<APIResponse<PromotionCodeValidationResponse>> ValidatePromotionCode(PromotionCodeValidationPayload payload);
+
+	Task<APIResponse<PromotionCodeValidationResponse>> ValidatePromotionCode(string code);
 }

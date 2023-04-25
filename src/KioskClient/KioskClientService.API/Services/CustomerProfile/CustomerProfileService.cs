@@ -13,7 +13,7 @@ namespace KioskClientService.API.Services.CustomerProfile;
 
 public class CustomerProfileService : ICustomerProfileService
 {
-	private class Constants
+	public class Constants
 	{
 		public class TestData
 		{

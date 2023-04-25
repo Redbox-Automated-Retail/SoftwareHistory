@@ -101,6 +101,39 @@ public class TransactionService : ITransactionService
 				public const string MaxDiscs = "GCAuth.MaxDiscs";
 			}
 
+			public class AfterSwipeCustomerOffers
+			{
+				public enum Offers
+				{
+					NoOffer,
+					InCartOffers,
+					FracFreeMovieFirstVisit,
+					FracFreeMovieSecondVisit,
+					FracDiscountedDiscFirstVisit,
+					FracDiscountedDiscSecondVisit,
+					FreeItemPerksEquivalent,
+					AmountOffPerksEquivalent,
+					ExtraPointsPerksEquivalent,
+					PerksMessage
+				}
+
+				public const string LiveCall = "AfterSwipeCustomerOffers.LiveCall";
+
+				public const string Success = "AfterSwipeCustomerOffers.Success";
+
+				public const string SelectedOffer = "AfterSwipeCustomerOffers.SelectedOffer";
+
+				public const string IncludeMovieInCartOffer = "AfterSwipeCustomerOffers.IncludeMovieInCartOffer";
+
+				public const string IncludeFreeGameInCartOffer = "AfterSwipeCustomerOffers.IncludeFreeGameInCartOffer";
+
+				public const string IncludeAmountOffPurchaseInCartOffer = "AfterSwipeCustomerOffers.IncludeAmountOffPurchaseInCartOffer";
+
+				public const string IncludeMultiNightPriceInCartOffer = "AfterSwipeCustomerOffers.IncludeMultiNightPriceInCartOffer";
+
+				public const string MultiNightPriceProductIds = "AfterSwipeCustomerOffers.MultiNightPriceProductIds";
+			}
+
 			public const string CategoryName = "TransactionService";
 		}
 	}
@@ -309,13 +342,275 @@ public class TransactionService : ITransactionService
 
 	public async Task<APIResponse<GetCustomerOffersResponse>> GetCustomerOffers(GetCustomerOffersRequest request)
 	{
-		APIResponse<GetCustomerOffersResponse> aPIResponse = await _transactionClient.GetCustomerOffers(request);
-		if (!(aPIResponse.Response?.Success ?? false))
+		APIResponse<GetCustomerOffersResponse> aPIResponse;
+		if (await GetUseTestData("AfterSwipeCustomerOffers.LiveCall"))
 		{
-			_logger.LogErrorWithSource(aPIResponse.Exception, "GetCustomerOffers was unsuccessful.", "GetCustomerOffers");
-			LogResponseErrors(aPIResponse);
+			aPIResponse = await GetTestDataGetCustomerOfferResponse(request);
+		}
+		else
+		{
+			aPIResponse = await _transactionClient.GetCustomerOffers(request);
+			if (!(aPIResponse.Response?.Success ?? false))
+			{
+				_logger.LogErrorWithSource(aPIResponse.Exception, "GetCustomerOffers was unsuccessful.", "GetCustomerOffers");
+				LogResponseErrors(aPIResponse);
+			}
 		}
 		return aPIResponse;
+	}
+
+	private async Task<APIResponse<GetCustomerOffersResponse>> GetTestDataGetCustomerOfferResponse(GetCustomerOffersRequest request)
+	{
+		_logger?.LogInformation("TransactionService.GetCustomerOffers returning test data result");
+		GetCustomerOffersResponse getCustomerOffersResponse = new GetCustomerOffersResponse
+		{
+			NewOffers = new List<CustomerOffer>(),
+			StoredOffers = new List<CustomerOffer>(),
+			Success = true
+		};
+		if (bool.TryParse(await GetTestDataValue("AfterSwipeCustomerOffers.Success"), out var result))
+		{
+			getCustomerOffersResponse.Success = result;
+		}
+		GetCustomerOffersResponse getCustomerOffersResponse2 = getCustomerOffersResponse;
+		getCustomerOffersResponse2.EmailAddress = await GetTestDataValue("Login.LoginEmail");
+		switch (ToOffer(await GetTestDataValue("AfterSwipeCustomerOffers.SelectedOffer")))
+		{
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.InCartOffers:
+			await AddMultiNightPriceInCartOffer(getCustomerOffersResponse);
+			await AddMovieInCartOffer(getCustomerOffersResponse);
+			await AddPurchaseInCartOffer(getCustomerOffersResponse);
+			await AddFreeGameInCartOffer(getCustomerOffersResponse);
+			break;
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.FracFreeMovieFirstVisit:
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 1L,
+				StoredOfferId = 3L,
+				DiscountType = "Free",
+				ProductType = "Movies",
+				OfferScopeType = "StoredRedeemable",
+				IncludeFormatIds = new List<int> { 1, 2, 19 },
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 7, 25),
+				OfferDiscountCode = "FracRedeemFree",
+				CustomerSegmentType = "Frac",
+				CampaignId = 123L
+			});
+			break;
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.FracFreeMovieSecondVisit:
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 5L,
+				DiscountType = "Free",
+				ProductType = "Movies",
+				OfferScopeType = "Storeable",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 7, 25),
+				OfferDiscountCode = "FracStorableFree",
+				CustomerSegmentType = "Frac",
+				CampaignId = 123L
+			});
+			break;
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.FracDiscountedDiscFirstVisit:
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 2L,
+				StoredOfferId = 4L,
+				DiscountType = "AmountOff",
+				DiscountAmount = 1.25m,
+				ProductType = "All",
+				OfferScopeType = "StoredRedeemable",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 7, 5),
+				CustomerSegmentType = "Frac",
+				OfferDiscountCode = "FracRedeemDisc",
+				CampaignId = 123L
+			});
+			break;
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.FracDiscountedDiscSecondVisit:
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 6L,
+				DiscountType = "AmountOff",
+				DiscountAmount = 1.25m,
+				ProductType = "All",
+				OfferScopeType = "Storeable",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 7, 5),
+				PromotionCode = null,
+				OfferDiscountCode = "FracStorableDicount",
+				CustomerSegmentType = "Frac",
+				CampaignId = 123L
+			});
+			break;
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.FreeItemPerksEquivalent:
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 7L,
+				DiscountType = "Free",
+				ProductType = "All",
+				OfferScopeType = "Session",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 7, 5),
+				CustomerSegmentType = "NewMemberPerksSignup",
+				OfferDiscountCode = "PerksFreeRental",
+				CampaignId = 123L
+			});
+			break;
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.AmountOffPerksEquivalent:
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 7L,
+				DiscountType = "AmountOff",
+				DiscountAmount = 1.00m,
+				ProductType = "All",
+				OfferScopeType = "Session",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 11, 5),
+				CustomerSegmentType = "NewMemberPerksSignup",
+				OfferDiscountCode = "PerksAmountOff",
+				CampaignId = 123L
+			});
+			break;
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.ExtraPointsPerksEquivalent:
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 7L,
+				DiscountType = "Loyalty",
+				DiscountAmount = 1500m,
+				ProductType = "All",
+				OfferScopeType = "Session",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 11, 5),
+				CustomerSegmentType = "NewMemberPerksSignup",
+				OfferDiscountCode = "PerksExtraDVDPoints",
+				CampaignId = 123L
+			});
+			break;
+		case Constants.TestData.AfterSwipeCustomerOffers.Offers.PerksMessage:
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 0L,
+				DiscountType = "Treatment",
+				ProductType = "All",
+				OfferScopeType = "Session",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 11, 5),
+				CustomerSegmentType = "NewMemberPerksSignup",
+				OfferDiscountCode = "NoOffer",
+				CampaignId = 123L
+			});
+			break;
+		}
+		APIResponse<GetCustomerOffersResponse> aPIResponse = new APIResponse<GetCustomerOffersResponse>(null, _logger);
+		aPIResponse.Response = getCustomerOffersResponse;
+		aPIResponse.StatusCode = HttpStatusCode.OK;
+		return aPIResponse;
+	}
+
+	private async Task AddMultiNightPriceInCartOffer(GetCustomerOffersResponse getCustomerOffersResponse)
+	{
+		if (!bool.TryParse(await GetTestDataValue("AfterSwipeCustomerOffers.IncludeMultiNightPriceInCartOffer"), out var result) || !result)
+		{
+			return;
+		}
+		CustomerOffer offer = new CustomerOffer
+		{
+			OfferId = 1234L,
+			DiscountType = "MultiNightPrice",
+			DiscountAmount = 0.5m,
+			ProductType = "Movies",
+			OfferScopeType = "Session",
+			ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+			ExpirationDate = new DateTime(2019, 7, 25),
+			CustomerSegmentType = "PersonalizedMultiNightPrice",
+			OfferProducts = new List<OfferProduct>(),
+			OfferDiscountCode = "ExtraNight50c",
+			CampaignId = 123L
+		};
+		string[] array = (await GetTestDataValue("AfterSwipeCustomerOffers.MultiNightPriceProductIds"))?.Replace(" ", null)?.Split(',');
+		string[] array2 = array;
+		foreach (string s in array2)
+		{
+			if (long.TryParse(s, out var result2))
+			{
+				offer.OfferProducts.Add(new OfferProduct
+				{
+					ProductId = result2,
+					DiscountedPrice = 0.5m,
+					NumberOfNights = (byte)2
+				});
+			}
+		}
+		getCustomerOffersResponse.NewOffers.Add(offer);
+	}
+
+	private async Task AddMovieInCartOffer(GetCustomerOffersResponse getCustomerOffersResponse)
+	{
+		if (bool.TryParse(await GetTestDataValue("AfterSwipeCustomerOffers.IncludeMovieInCartOffer"), out var result) && result)
+		{
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 2L,
+				DiscountType = "AmountOff",
+				DiscountAmount = 1m,
+				ProductType = "Movies",
+				OfferScopeType = "Session",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				CustomerSegmentType = "BasketStretch",
+				OfferDiscountCode = "MovieDollarOff",
+				CampaignId = 123L
+			});
+		}
+	}
+
+	private async Task AddPurchaseInCartOffer(GetCustomerOffersResponse getCustomerOffersResponse)
+	{
+		if (bool.TryParse(await GetTestDataValue("AfterSwipeCustomerOffers.IncludeAmountOffPurchaseInCartOffer"), out var result) && result)
+		{
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				OfferId = 9L,
+				DiscountType = "AmountOff",
+				DiscountAmount = 1m,
+				ProductType = "Movies",
+				OfferScopeType = "Session",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				CustomerSegmentType = "BasketStretch",
+				OfferDiscountCode = "PrmDollarOff",
+				CampaignId = 1234L,
+				ActionCode = "Purchase"
+			});
+		}
+	}
+
+	private async Task AddFreeGameInCartOffer(GetCustomerOffersResponse getCustomerOffersResponse)
+	{
+		if (bool.TryParse(await GetTestDataValue("AfterSwipeCustomerOffers.IncludeFreeGameInCartOffer"), out var result) && result)
+		{
+			getCustomerOffersResponse.NewOffers.Add(new CustomerOffer
+			{
+				DiscountType = "Free",
+				ProductType = "Games",
+				OfferScopeType = "Session",
+				ExcludeIfWithinRedboxReleaseDate = TimeSpan.FromDays(35.0),
+				ExpirationDate = new DateTime(2019, 7, 25),
+				PromotionCode = "DVDONME",
+				CustomerSegmentType = "BasketStretch",
+				CampaignId = 123L
+			});
+		}
+	}
+
+	private static Constants.TestData.AfterSwipeCustomerOffers.Offers ToOffer(string offer)
+	{
+		Constants.TestData.AfterSwipeCustomerOffers.Offers result = Constants.TestData.AfterSwipeCustomerOffers.Offers.NoOffer;
+		if (Enum.TryParse<Constants.TestData.AfterSwipeCustomerOffers.Offers>(offer, out var result2))
+		{
+			result = result2;
+		}
+		return result;
 	}
 
 	public async Task<ReturnPromoCheckResponse> ReturnPromoCheck(string barcode)

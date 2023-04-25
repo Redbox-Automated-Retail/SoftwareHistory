@@ -10,4 +10,6 @@ public class CampaignConfiguration : BaseCategorySetting
 	public bool InCartsActive { get; set; } = true;
 
 	public bool StartScreensActive { get; set; } = true;
+
+	public int PromoCodeCacheTTLMinutes { get; set; } = 60;
 }

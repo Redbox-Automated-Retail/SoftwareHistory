@@ -8,7 +8,5 @@ public class Asset
 
 	public string Url { get; set; }
 
-	public string PresignedUrl { get; set; }
-
 	public string FullPath { get; set; }
 }

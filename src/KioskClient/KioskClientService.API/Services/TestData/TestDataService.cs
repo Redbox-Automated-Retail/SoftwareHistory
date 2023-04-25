@@ -84,6 +84,11 @@ public class TestDataService : ITestDataService
 		_storeService = storeService;
 	}
 
+	public ITestDataHelper GetTestDataHelper(string category, string liveCallPropertyName)
+	{
+		return new TestDataHelper(this, category, liveCallPropertyName);
+	}
+
 	public async Task<IsTestDataEnabledResponse> GetIsTestDataEnabledAsync()
 	{
 		Stopwatch stopwatch = new Stopwatch();

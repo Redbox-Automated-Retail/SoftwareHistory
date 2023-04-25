@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using KioskClientService.API.Models;
-using KioskClientService.API.Services.ProxyApi;
+using KioskClientService.API.Services.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -12,12 +12,12 @@ public class KioskController : ControllerBase
 {
 	private readonly ILogger<InstallerController> _logger;
 
-	private readonly IProxyApi _proxyApi;
+	private readonly IAuthenticationService _authenticationService;
 
-	public KioskController(ILogger<InstallerController> logger, IProxyApi proxyApi)
+	public KioskController(ILogger<InstallerController> logger, IAuthenticationService authenticationService)
 	{
 		_logger = logger;
-		_proxyApi = proxyApi;
+		_authenticationService = authenticationService;
 	}
 
 	[Route("authenticate")]
@@ -26,6 +26,6 @@ public class KioskController : ControllerBase
 	public async Task<ActionResult<KioskModels.KioskAuthenticateResponse>> Authenticate(KioskModels.KioskAuthenticateRequest request)
 	{
 		_logger?.LogInfoWithSource("KioskController.Authenticate called.", "Authenticate");
-		return new ObjectResult((await _proxyApi.Authenticate(request))?.Response);
+		return new ObjectResult(await _authenticationService.Authenticate(request));
 	}
 }

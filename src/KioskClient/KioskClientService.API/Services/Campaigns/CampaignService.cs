@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.App;
+using KioskClientService.API.Services.Assets;
 using KioskClientService.API.Services.Configuration;
+using KioskClientService.API.Services.Promotion;
 using KioskClientService.API.Services.ProxyApi;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.Campaigns;
@@ -16,13 +18,11 @@ internal class CampaignService : ICampaignService
 {
 	private const string CampaignDataFileName = "Campaigns";
 
-	private const string StartAssetImagesFolder = "StartAssetImages";
-
-	private readonly string _startAssetControlFolderPath;
-
 	private readonly ILogger<CampaignService> _logger;
 
 	private readonly IStoreService _storeService;
+
+	private readonly IPromotionService _promoService;
 
 	private readonly IOptionsSnapshotKioskConfiguration _kioskConfiguration;
 
@@ -30,29 +30,27 @@ internal class CampaignService : ICampaignService
 
 	private readonly IPersistentDataCacheService _persistentDataCacheService;
 
-	private readonly IHttpService _httpService;
+	private readonly IMemoryCache _memoryCache;
+
+	private readonly IAssetsService _assets;
 
 	private static DateTime? _nextRefresh;
 
-	public CampaignService(ILogger<CampaignService> logger, IStoreService storeService, IOptionsSnapshotKioskConfiguration kioskConfiguration, IProxyApi proxyApi, IPersistentDataCacheService persistentDataCacheService, IHttpService httpService)
+	public CampaignService(ILogger<CampaignService> logger, IStoreService storeService, IPromotionService promo, IOptionsSnapshotKioskConfiguration kioskConfiguration, IProxyApi proxyApi, IPersistentDataCacheService persistentDataCacheService, IMemoryCache memoryCache, IAssetsService assets)
 	{
 		_logger = logger;
 		_storeService = storeService;
+		_promoService = promo;
 		_kioskConfiguration = kioskConfiguration;
 		_proxyApi = proxyApi;
 		_persistentDataCacheService = persistentDataCacheService;
-		_httpService = httpService;
-		_startAssetControlFolderPath = Path.Combine(_storeService.DataPath, "StartAssetImages");
-		if (!Directory.Exists(_startAssetControlFolderPath))
-		{
-			_logger.LogInfoWithSource("Creating Start Asset Image directory: " + _startAssetControlFolderPath, ".ctor");
-			Directory.CreateDirectory(_startAssetControlFolderPath);
-		}
+		_memoryCache = memoryCache;
+		_assets = assets;
 		if (!_nextRefresh.HasValue)
 		{
 			int num = new Random().Next(60, Math.Max(2, _kioskConfiguration.Campaigns.RefreshInterval) * 60);
 			_nextRefresh = DateTime.Now.AddSeconds(num);
-			_logger.LogInfoWithSource($"Next refresh at: {_nextRefresh}", ".ctor");
+			_logger.LogInfoWithSource($"Next Campaign refresh at: {_nextRefresh}", ".ctor");
 		}
 	}
 
@@ -133,89 +131,15 @@ internal class CampaignService : ICampaignService
 		}
 		if (response.StartScreens != null)
 		{
-			List<StartScreenDetails> processedStartScreens = new List<StartScreenDetails>();
-			List<string> existingFiles = (from f in new DirectoryInfo(_startAssetControlFolderPath).GetFiles()
-				select f.Name).ToList();
-			foreach (StartScreenDetails startScreen in response.StartScreens)
-			{
-				var (flag, item) = await ProcessStartScreen(startScreen, existingFiles);
-				if (!flag)
-				{
-					_logger.LogInfoWithSource($"Processing StartScreen: {startScreen.CampaignId} failed, exiting without updating campaigns cache", "ProcessResponse");
-					return;
-				}
-				processedStartScreens.Add(item);
-			}
+			IEnumerable<Asset> assets = response.StartScreens.GetAssets();
+			_assets.BuildLocalPaths(assets);
 			data.StartScreens.Clear();
-			data.StartScreens.AddRange(processedStartScreens);
-			_logger.LogInfoWithSource($"expired assets to delete: {existingFiles.Count}", "ProcessResponse");
-			existingFiles.ForEach(DeleteStartAssetImage);
+			data.StartScreens.AddRange(response.StartScreens);
+			await Task.WhenAll(_assets.Refresh(response.StartScreens), ValidatePromoCodes(response.StartScreens));
 			_logger.LogInfoWithSource("Processed updates to StartScreens", "ProcessResponse");
 		}
 		data.LastSyncTime = response.LastSyncTime;
 		await WriteCampaign(data);
-	}
-
-	private async Task<(bool, StartScreenDetails)> ProcessStartScreen(StartScreenDetails source, List<string> existingFiles)
-	{
-		IEnumerable<IControl> enumerable = source.Controls.Where((IControl c) => c.ControlType == ControlType.StartAsset);
-		foreach (IControl item in enumerable)
-		{
-			StartAssetControl startAsset = item as StartAssetControl;
-			Uri uri = new Uri(startAsset.Asset.PresignedUrl);
-			string text = await DownloadAsset(uri, existingFiles);
-			if (text == null)
-			{
-				_logger.LogErrorWithSource($"Failed to download asset for asset id: {startAsset.Asset.Id}", "ProcessStartScreen");
-				return (false, null);
-			}
-			startAsset.Asset.FullPath = text;
-			Asset asset = startAsset.Asset;
-			string url = (startAsset.Asset.PresignedUrl = new Uri(text).AbsoluteUri);
-			asset.Url = url;
-		}
-		return (true, source);
-	}
-
-	private async Task<string> DownloadAsset(Uri uri, List<string> existingFiles)
-	{
-		string result = null;
-		try
-		{
-			string imageFilename = Path.GetFileName(uri.LocalPath);
-			_logger.LogInfoWithSource("Downloading Asset: " + imageFilename, "DownloadAsset");
-			APIResponse<byte[]> response = await _httpService.DownloadFile(uri.AbsoluteUri);
-			if (response.IsSuccessStatusCode)
-			{
-				string destination = Path.Combine(_startAssetControlFolderPath, imageFilename);
-				await File.WriteAllBytesAsync(destination, response.Response);
-				_logger.LogInfoWithSource($"saved asset file: {imageFilename}, size: {response.Response.Length}", "DownloadAsset");
-				existingFiles.Remove(imageFilename);
-				result = destination;
-			}
-			else
-			{
-				_logger.LogErrorWithSource($"Received status {response.StatusCode} downloading asset file: {imageFilename} from {uri.AbsoluteUri}", "DownloadAsset");
-			}
-		}
-		catch (Exception ex)
-		{
-			_logger.LogErrorWithSource(ex, "Error downloading asset: " + uri.AbsoluteUri, "DownloadAsset");
-		}
-		return result;
-	}
-
-	private void DeleteStartAssetImage(string file)
-	{
-		try
-		{
-			File.Delete(Path.Combine(_startAssetControlFolderPath, file));
-			_logger.LogInfoWithSource("deleted start asset image: " + file, "DeleteStartAssetImage");
-		}
-		catch (Exception exception)
-		{
-			_logger.LogError(exception, "Unable to delete start asset image file: " + file);
-		}
 	}
 
 	private async Task<CampaignData> ReadCampaign()
@@ -330,16 +254,83 @@ internal class CampaignService : ICampaignService
 
 	private async Task<KioskStartScreenDetails> GetActiveStartScreen()
 	{
-		StartScreenDetails startScreenData = (from c in await GetAllStartScreens()
+		StartScreenDetails activeStartScreen = (from c in await GetAllStartScreens()
 			where c.StartDate <= DateTime.Now && (!c.EndDate.HasValue || c.EndDate > DateTime.Now)
 			orderby c.StartDate descending
 			orderby c.Rank descending, c.StartDate descending
 			select c).FirstOrDefault();
-		return KioskStartScreenDetails.FromStartScreenDetails(startScreenData);
+		if (activeStartScreen != null)
+		{
+			foreach (IControl control in activeStartScreen.Controls.Where((IControl c) => c.ControlType == ControlType.StartAsset).ToList())
+			{
+				if (!(control is StartAssetControl startAsset))
+				{
+					continue;
+				}
+				startAsset.Asset.Url = null;
+				if (_assets.IsNotAValidAsset(startAsset.Asset.FullPath))
+				{
+					_logger.LogErrorWithSource($"Start asset control {control.ControlId} does not have a valid asset for: {startAsset.Asset.FullPath}, removing from start screen campaign", "GetActiveStartScreen");
+					activeStartScreen.Controls.Remove(startAsset);
+				}
+				else if (startAsset.Target == AssetTarget.PromoCode)
+				{
+					PromotionCodeValidationResponse promotionCodeValidationResponse = await ValidatePromoCode(startAsset.TargetValue);
+					if (promotionCodeValidationResponse != null && promotionCodeValidationResponse.Error == null)
+					{
+						startAsset.Validation = new StartScreenPromotionCodeValidationResponse(startAsset.TargetValue, promotionCodeValidationResponse);
+						continue;
+					}
+					_logger.LogErrorWithSource($"Start asset control {control.ControlId} does not have a valid promo code: {startAsset.TargetValue}, removing from start screen campaign", "GetActiveStartScreen");
+					activeStartScreen.Controls.Remove(startAsset);
+				}
+			}
+		}
+		return KioskStartScreenDetails.FromStartScreenDetails(activeStartScreen);
 	}
 
 	private async Task<List<StartScreenDetails>> GetAllStartScreens()
 	{
 		return (await ReadCampaign())?.StartScreens ?? new List<StartScreenDetails>();
+	}
+
+	private async Task ValidatePromoCodes(IEnumerable<StartScreenDetails> startScreenDetails)
+	{
+		HashSet<string> hashSet = new HashSet<string>();
+		foreach (StartScreenDetails startScreenDetail in startScreenDetails)
+		{
+			IEnumerable<string> enumerable = from c in startScreenDetail.Controls
+				where c.ControlType == ControlType.StartAsset && ((StartAssetControl)c).Target == AssetTarget.PromoCode
+				select ((StartAssetControl)c).TargetValue;
+			_logger.LogInfoWithSource($"campaign id: {startScreenDetail.CampaignId}, promos: {string.Join(',', enumerable)}", "ValidatePromoCodes");
+			hashSet.UnionWith(enumerable);
+		}
+		List<Task> list = new List<Task>();
+		foreach (string item in hashSet)
+		{
+			list.Add(ValidatePromoCode(item));
+		}
+		await Task.WhenAll(list);
+	}
+
+	private async Task<PromotionCodeValidationResponse> ValidatePromoCode(string code)
+	{
+		PromotionCodeValidationResponse response = null;
+		if (_memoryCache.TryGetValue<PromotionCodeValidationResponse>(code, out var value))
+		{
+			_logger.LogInfoWithSource("code: " + code + ", memory: " + value.ToJson(), "ValidatePromoCode");
+			response = value;
+		}
+		else
+		{
+			APIResponse<PromotionCodeValidationResponse> aPIResponse = await _promoService.ValidatePromotionCode(code);
+			_logger.LogInfoWithSource($"code: {code}, live call: {aPIResponse.StatusCode}, {aPIResponse.Response.ToJson()}", "ValidatePromoCode");
+			if (aPIResponse.StatusCode == HttpStatusCode.OK || aPIResponse.StatusCode == HttpStatusCode.UnprocessableEntity)
+			{
+				_memoryCache.Set(code, aPIResponse.Response, DateTimeOffset.Now.AddMinutes(_kioskConfiguration.Campaigns.PromoCodeCacheTTLMinutes));
+				response = aPIResponse.Response;
+			}
+		}
+		return response;
 	}
 }

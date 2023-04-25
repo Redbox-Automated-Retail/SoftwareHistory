@@ -11,9 +11,9 @@ public class CustomerOffer
 
 	public string PromotionCode { get; set; }
 
-	public ICollection<long> IncludeTitleIds { get; set; }
+	public ICollection<long> IncludeTitleIds { get; set; } = new List<long>();
 
-	public ICollection<long> ExcludeTitleIds { get; set; }
+	public ICollection<long> ExcludeTitleIds { get; set; } = new List<long>();
 
 	public TimeSpan? ExcludeIfWithinRedboxReleaseDate { get; set; }
 
@@ -23,9 +23,9 @@ public class CustomerOffer
 
 	public string ProductType { get; set; }
 
-	public List<int> IncludeFormatIds { get; set; }
+	public List<int> IncludeFormatIds { get; set; } = new List<int>();
 
-	public List<int> ExcludeFormatIds { get; set; }
+	public List<int> ExcludeFormatIds { get; set; } = new List<int>();
 
 	public string OfferScopeType { get; set; }
 

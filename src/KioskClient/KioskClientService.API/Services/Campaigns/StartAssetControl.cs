@@ -14,6 +14,8 @@ internal class StartAssetControl : Control, IStartAssetControl, IControl
 
 	public bool? IncludeIfNoInventory { get; internal set; }
 
+	public StartScreenPromotionCodeValidationResponse Validation { get; internal set; }
+
 	public StartAssetControl()
 	{
 		base.ControlType = ControlType.StartAsset;

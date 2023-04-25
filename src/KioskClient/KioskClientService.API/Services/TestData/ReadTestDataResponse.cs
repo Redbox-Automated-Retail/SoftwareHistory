@@ -25,6 +25,10 @@ public class ReadTestDataResponse : BaseResponse
 				return default(T);
 			}
 		}
+		if (typeof(T).IsEnum)
+		{
+			return (T)Enum.Parse(typeof(T), PropertyValue);
+		}
 		T result;
 		try
 		{

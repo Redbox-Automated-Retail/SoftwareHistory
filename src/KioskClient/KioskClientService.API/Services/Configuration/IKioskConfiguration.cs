@@ -6,7 +6,9 @@ public interface IKioskConfiguration
 
 	MarketingWelcomeScreen MarketingWelcomeScreen { get; }
 
-	CampaignConfiguration Campaigns { get; set; }
+	CampaignConfiguration Campaigns { get; }
+
+	AssetsConfiguration Assets { get; }
 
 	KioskClientAds KioskClientAds { get; }
 

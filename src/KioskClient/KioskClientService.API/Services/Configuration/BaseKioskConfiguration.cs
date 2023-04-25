@@ -10,6 +10,8 @@ public class BaseKioskConfiguration : BaseConfiguration, IKioskConfiguration
 
 	public CampaignConfiguration Campaigns { get; set; }
 
+	public AssetsConfiguration Assets { get; set; }
+
 	public KioskClientAds KioskClientAds { get; set; }
 
 	public KioskClientDefault KioskClientDefault { get; set; }

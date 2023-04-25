@@ -1,3 +1,4 @@
+using KioskClientService.API.Services.Assets;
 using KioskClientService.API.Services.Campaign;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,6 +8,6 @@ public static class CampaignExtensions
 {
 	public static IServiceCollection AddCampaignService(this IServiceCollection services)
 	{
-		return services.AddScoped<ICampaignService, CampaignService>().AddScoped<CampaignJob>();
+		return services.AddAssetsService().AddScoped<ICampaignService, CampaignService>().AddScoped<CampaignJob>();
 	}
 }

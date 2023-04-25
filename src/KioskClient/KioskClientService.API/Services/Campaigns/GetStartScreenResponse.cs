@@ -8,6 +8,6 @@ public class GetStartScreenResponse : ApiBaseResponse
 
 	public override object Scrub()
 	{
-		return string.Empty;
+		return this.ToJson();
 	}
 }

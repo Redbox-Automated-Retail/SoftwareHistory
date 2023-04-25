@@ -31,7 +31,7 @@ public class PromotionController : ControllerBase
 		_logger.LogInfoWithSource("PromoCodeValidation called.", "PromoCodeValidation");
 		if (base.ModelState.IsValid)
 		{
-			APIResponse<PromotionCodeValidationResponse> aPIResponse = await _promotionService.ValidatePromotionCodeAsync(payload);
+			APIResponse<PromotionCodeValidationResponse> aPIResponse = await _promotionService.ValidatePromotionCode(payload);
 			PromotionCodeValidationResponse value;
 			if (aPIResponse == null || aPIResponse.Response == null)
 			{

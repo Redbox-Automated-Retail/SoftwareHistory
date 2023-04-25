@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using KioskClientService.API.Models;
-using KioskClientService.API.Services.ProxyApi;
+using KioskClientService.API.Services.Installer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -12,12 +12,12 @@ public class InstallerController : ControllerBase
 {
 	private readonly ILogger<InstallerController> _logger;
 
-	private readonly IProxyApi _proxyApi;
+	private readonly IInstallerService _installerService;
 
-	public InstallerController(ILogger<InstallerController> logger, IProxyApi proxyApi)
+	public InstallerController(ILogger<InstallerController> logger, IInstallerService installerService)
 	{
 		_logger = logger;
-		_proxyApi = proxyApi;
+		_installerService = installerService;
 	}
 
 	[Route("getopsmarket")]
@@ -26,7 +26,7 @@ public class InstallerController : ControllerBase
 	public async Task<ActionResult<InstallerModels.OpsMarketResponse>> GetOpsMarket(int kioskid)
 	{
 		_logger?.LogInfoWithSource("InstallerController.GetOpsMarket called.", "GetOpsMarket");
-		return new ObjectResult((await _proxyApi.GetOpsMarket(kioskid))?.Response);
+		return new ObjectResult(await _installerService.GetOpsMarket(kioskid));
 	}
 
 	[Route("getpendingbanners")]
@@ -35,7 +35,7 @@ public class InstallerController : ControllerBase
 	public async Task<ActionResult<InstallerModels.PendingBannersResponse>> GetPendingBanners(int stateid)
 	{
 		_logger?.LogInfoWithSource("InstallerController.GetPendingBanners called.", "GetPendingBanners");
-		return new ObjectResult((await _proxyApi.GetPendingBanners(stateid))?.Response);
+		return new ObjectResult(await _installerService.GetPendingBanners(stateid));
 	}
 
 	[Route("getpendingkiosks")]
@@ -44,7 +44,7 @@ public class InstallerController : ControllerBase
 	public async Task<ActionResult<InstallerModels.PendingKiosksResponse>> GetPendingKiosks(short stateid, int bannerId)
 	{
 		_logger?.LogInfoWithSource("InstallerController.GetPendingKiosks called.", "GetPendingKiosks");
-		return new ObjectResult((await _proxyApi.GetPendingKiosks(stateid, bannerId))?.Response);
+		return new ObjectResult(await _installerService.GetPendingKiosks(stateid, bannerId));
 	}
 
 	[Route("getpendingstates")]
@@ -53,6 +53,6 @@ public class InstallerController : ControllerBase
 	public async Task<ActionResult<InstallerModels.PendingStatesResponse>> GetPendingStates()
 	{
 		_logger?.LogInfoWithSource("InstallerController.GetPendingStates called.", "GetPendingStates");
-		return new ObjectResult((await _proxyApi.GetPendingStates())?.Response);
+		return new ObjectResult(await _installerService.GetPendingStates());
 	}
 }
