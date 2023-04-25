@@ -1,17 +1,17 @@
-# Vega (2023-03-26)
+# Willys (2023-04-25)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-03-26
-- Store labels: kop-rental-bundles-Vega
+- Date (first download in the snapshots): 2023-04-25
+- Store labels: kop-rental-bundles-Willys
 - Package revisions:
-  - `kop-rental-bundles` revision 172 (`29405EBB52934E9DD305046A10CD46E903FDEE81`)
+  - `kop-rental-bundles` revision 173 (`90FF8151B8F2E9C551F2AD6A86243D0B83167250`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `796249143AD79875F49E21F40177874916E852E7` | exact |
-| `fm.bundle` |  |  | `20BEC81D7CB40BEBE9AF017612A8ECF1EC87144A` | exact |
-| `library-rental-common.bundle` |  |  | `395F10FAF0712F14369DC538E967CDAD2649C85A` | exact |
-| `ra-2.x.bundle` |  |  | `C9DE348E01E4A1DF38BE6B6B9B41A52E5A11CAB4` | exact |
+| `cp.bundle` |  |  | `65640D778C072DD74C11B2D8F12A0CB0C5353868` | exact |
+| `fm.bundle` |  |  | `0E8C99AAA5F408B1641CB77FCFCD3C20AD7C92FB` | exact |
+| `library-rental-common.bundle` |  |  | `E8463E269A72B9EDCC1A3380D5E57E9242751B81` | exact |
+| `ra-2.x.bundle` |  |  | `B2DF749F4C9B8E8AEB031DE1DFE73246BC831B3F` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

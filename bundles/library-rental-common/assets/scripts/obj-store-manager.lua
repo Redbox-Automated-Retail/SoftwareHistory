@@ -118,8 +118,6 @@ function newstoremanager()
 	t.reload_pricing_data = function( self, ui_version )
 		-- Product Pricing
 		kernel.reload_pricing_service()
-		-- In cart promotion
-		kernel.rental_promotion_load_incart_data()
 		-- Email Opt In Campaign
 		kernel.load_email_optin_campaign()
 		kernel.log( "EmailOptin loaded: " .. tostring( kernel.getresourceproperty( "opt_in_campaign", "program_name" )))
