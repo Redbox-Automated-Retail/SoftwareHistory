@@ -4,6 +4,7 @@ using Redbox.Rental.Model.KioskClientService.Ads;
 using Redbox.Rental.Model.KioskClientService.Application;
 using Redbox.Rental.Model.KioskClientService.Authentication;
 using Redbox.Rental.Model.KioskClientService.Campaign;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskClientService.CustomerProfile;
 using Redbox.Rental.Model.KioskClientService.Data;
 using Redbox.Rental.Model.KioskClientService.Installer;
@@ -19,11 +20,11 @@ using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskClientService.TestData;
 using Redbox.Rental.Model.KioskClientService.Transactions;
 using Redbox.Rental.Model.KioskClientService.Utilities;
-using Redbox.Rental.Model.KioskClientService.WelcomeScreenAssets;
 using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.KioskClientService.Application;
 using Redbox.Rental.Services.KioskClientService.Authentication;
 using Redbox.Rental.Services.KioskClientService.Campaign;
+using Redbox.Rental.Services.KioskClientService.Configuration;
 using Redbox.Rental.Services.KioskClientService.CustomerProfile;
 using Redbox.Rental.Services.KioskClientService.Data;
 using Redbox.Rental.Services.KioskClientService.Installer;
@@ -39,7 +40,6 @@ using Redbox.Rental.Services.KioskClientService.Subscriptions;
 using Redbox.Rental.Services.KioskClientService.TestData;
 using Redbox.Rental.Services.KioskClientService.Transactions;
 using Redbox.Rental.Services.KioskClientService.Utilities;
-using Redbox.Rental.Services.KioskClientService.WelcomeScreenAssets;
 
 namespace Redbox.Rental.Services.KioskClientService;
 
@@ -85,7 +85,7 @@ public class KioskClientService : IKioskClientService
 
 	public IKioskClientServiceTransaction Transaction { get; private set; }
 
-	public IKioskClientServiceWelcomeScreenAssets WelcomeScreenAssets { get; private set; }
+	public IKioskClientServiceConfiguration Configuration { get; private set; }
 
 	private KioskClientService()
 	{
@@ -108,6 +108,6 @@ public class KioskClientService : IKioskClientService
 		TestData = new KioskClientServiceTestData();
 		Transaction = new KioskClientServiceTransaction();
 		Planogram = new KioskClientServicePlanogram();
-		WelcomeScreenAssets = new KioskClientServiceWelcomeScreenAssets();
+		Configuration = new KioskClientServiceConfiguration();
 	}
 }

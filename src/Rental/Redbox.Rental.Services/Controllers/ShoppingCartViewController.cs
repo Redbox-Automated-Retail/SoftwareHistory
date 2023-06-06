@@ -673,16 +673,14 @@ public class ShoppingCartViewController : BaseLoyaltyController
 
 	private static void ShowInCartOfferOrProceedCheckout(IRentalShoppingCart rentalShoppingCart)
 	{
-		if (rentalShoppingCart != null && !rentalShoppingCart.IsFull)
+		if (rentalShoppingCart != null && !rentalShoppingCart.IsFull && (KioskClientService?.Campaign?.EnableInCart ?? true) && !PromotionService.Instance.IsFreeInCartOfferRunning && !PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance.CartQualifiesForInCartOffer(rentalShoppingCart) && !rentalShoppingCart.InCartPromoOfferMade)
 		{
-			bool? flag = KioskClientService?.Campaign?.IsKCSInCartEnabled;
-			if (flag.HasValue && flag == true && !PromotionService.Instance.IsFreeInCartOfferRunning && !PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance.CartQualifiesForInCartOffer(rentalShoppingCart) && !rentalShoppingCart.InCartPromoOfferMade)
-			{
-				ShoppingCartViewFunctions.ShowInCartOfferMessage();
-				return;
-			}
+			ShoppingCartViewFunctions.ShowInCartOfferMessage();
 		}
-		CheckoutFunctions.BeginCheckout();
+		else
+		{
+			CheckoutFunctions.BeginCheckout();
+		}
 	}
 
 	private static void ShoppingCartViewModel_OnAddGameButtonClicked()
@@ -885,7 +883,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		shoppingCartViewModel.PayButtonText2 = (PersonalizationFunctions.IsSignedIn ? Resources.shopping_cart_pay_button_text1.ToUpper() : Resources.shopping_cart_pay_button_text2.ToUpper());
 		string text3 = ((starzSubscriptionProduct == null) ? null : (starzSubscriptionProduct.IsFreeTrial ? $" {Resources.shopping_cart_starz_accept_and_pay_text_free_trial}" : $" {Resources.shopping_cart_starz_accept_and_pay_text}"));
 		string text4 = ((rentalShoppingCartSubscriptionItem != null) ? $" {Resources.shopping_cart_redbox_plus_accept_and_pay_text}" : null);
-		string text5 = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes || rentalShoppingCart == null || !rentalShoppingCart.TitleItems.Any((IRentalShoppingCartTitleItem x) => x.TitleProduct.Studio.ToLower() == "sony")) ? null : ((starzSubscriptionProduct == null && string.IsNullOrEmpty(text4)) ? $" {Resources.sony_sweepstakes_legal_text}" : $" {Resources.sony_sweepstakes_abbreviated_legal_text}"));
+		string text5 = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.EnableSonySweepstakes || rentalShoppingCart == null || !rentalShoppingCart.TitleItems.Any((IRentalShoppingCartTitleItem x) => x.TitleProduct.Studio.ToLower() == "sony")) ? null : ((starzSubscriptionProduct == null && string.IsNullOrEmpty(text4)) ? $" {Resources.sony_sweepstakes_legal_text}" : $" {Resources.sony_sweepstakes_abbreviated_legal_text}"));
 		shoppingCartViewModel.AcceptAndPayText = $"{Resources.shopping_cart_accept_and_pay_text}{text3}{text4}{text5}";
 		if (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxSweepstakes && (rentalShoppingCart?.TitleItems?.Count ?? 0) > 0)
 		{

@@ -18,7 +18,6 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
@@ -428,7 +427,7 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.MultiNightReturnTimeLabel = (((titleProduct?.TitleType ?? TitleType.All) != TitleType.DigitalCode) ? displayProductModel.DisplayProductModelConstants.MultiNightReturnTimeLabel : null);
 		displayProductModel.MultiNightReturnTimeVisibility = ((!flag || flag2 || titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.DealText = GetDealText(titleProduct);
-		displayProductModel.HotDealTextVisibility = ((!titleProduct.HasDeal) ? Visibility.Collapsed : Visibility.Visible);
+		displayProductModel.DealTextVisibility = ((!titleProduct.HasDeal) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.RunningTimeVisibility = ((titleProduct == null || titleProduct.IsEmptyCase || titleProduct == null || !titleProduct.IsMovie || string.IsNullOrEmpty(titleProduct?.RunningTime)) ? Visibility.Collapsed : Visibility.Visible);
 		int releaseYearVisibility;
 		if (titleProduct != null && !titleProduct.IsEmptyCase && titleProduct != null)
@@ -662,11 +661,7 @@ public class TitleDetailsController : BaseViewController
 				});
 			}
 		});
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableFlashDeals)
-		{
-			return string.Format(Resources.flash_deal_text, string.Join(", ", dealText));
-		}
-		return string.Format(Resources.hot_deal_text, string.Join(", ", dealText));
+		return string.Format(Resources.flash_deal_text, string.Join(", ", dealText));
 	}
 
 	public static BitmapImage GetSubPlatformBitmapImage(ITitleProduct kioskProduct)

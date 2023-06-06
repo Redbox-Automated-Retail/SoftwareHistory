@@ -743,7 +743,7 @@ public class KioskProductView
 
 	private bool ApplyBrowseFilter(ITitleProduct titleProduct, BrowseViewFilter browseFilter)
 	{
-		if ((browseFilter != BrowseViewFilter.All || (!IsRentable(titleProduct) && !titleProduct.ShowOutOfStock)) && (browseFilter != BrowseViewFilter.ComingSoon || !titleProduct.ComingSoon))
+		if ((browseFilter != BrowseViewFilter.All || (!IsRentable(titleProduct) && !titleProduct.ShowOutOfStock)) && (browseFilter != BrowseViewFilter.ComingSoon || !titleProduct.ComingSoon) && (browseFilter != BrowseViewFilter.Deals || !titleProduct.HasDeal || (!IsRentable(titleProduct) && !titleProduct.ShowOutOfStock)))
 		{
 			if (browseFilter != BrowseViewFilter.ForSale || !IsSellable(titleProduct))
 			{

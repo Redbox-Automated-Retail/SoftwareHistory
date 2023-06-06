@@ -124,6 +124,10 @@ public static class KioskProductExtensions
 				select item).ToList();
 		case BrowseSort.Alpha:
 			return source.OrderBy((ITitleProduct item) => item.SortAlpha).ToList();
+		case BrowseSort.InitialNightPrice:
+			return (from item in source
+				orderby (item.RentalPriceRecords == null || item.RentalPriceRecords.Count < 1) ? 0m : item.RentalPriceRecords[0].InitialNight, item.SortAlpha
+				select item).ToList();
 		default:
 		{
 			ProductGroupSortOrder sortOrder = ServiceLocator.Instance.GetService<IProductGroupService>()?.GetSortOrder();
@@ -235,11 +239,12 @@ public static class KioskProductExtensions
 		{
 			return BrowseSort.Alpha;
 		}
-		if (browseViewFilter == BrowseViewFilter.ComingSoon)
+		return browseViewFilter switch
 		{
-			return BrowseSort.MerchandiseDate;
-		}
-		return BrowseSort.SortDate;
+			BrowseViewFilter.ComingSoon => BrowseSort.MerchandiseDate, 
+			BrowseViewFilter.Deals => BrowseSort.InitialNightPrice, 
+			_ => BrowseSort.SortDate, 
+		};
 	}
 
 	public static BrowseViewFilter ConvertToBrowseViewFilter(this string filter)

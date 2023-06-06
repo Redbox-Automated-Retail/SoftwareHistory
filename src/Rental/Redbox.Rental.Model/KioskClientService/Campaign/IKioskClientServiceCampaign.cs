@@ -4,11 +4,11 @@ namespace Redbox.Rental.Model.KioskClientService.Campaign;
 
 public interface IKioskClientServiceCampaign
 {
-	bool IsKCSInCartEnabled { get; }
+	bool EnableInCart { get; }
 
-	bool IsKCSStartScreenEnabled { get; }
+	bool ShowStartScreen { get; }
 
-	int KCSLoadCampaignTimerDuration { get; }
+	int LoadCampaignTimerDuration { get; }
 
 	void LoadCampaign();
 

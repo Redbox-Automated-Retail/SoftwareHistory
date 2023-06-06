@@ -5,7 +5,11 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
+using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskProduct;
+using Redbox.Rental.Services.KioskClientService.Configuration;
+using Redbox.Rental.Services.Session;
 
 namespace Redbox.Rental.Services.Configuration;
 
@@ -41,7 +45,52 @@ public class Configuration : IConfiguration
 
 	private TimeSpan _thinJobEndTime;
 
+	private KioskConfiguration _lifetimeKioskConfiguration;
+
+	private KioskConfiguration _sessionKioskConfiguration;
+
 	public static IConfiguration Instance => Singleton<Configuration>.Instance;
+
+	public KioskConfiguration Current
+	{
+		get
+		{
+			KioskConfiguration kioskConfiguration = ServiceLocator.Instance.GetService<IKioskClientService>()?.Configuration?.GetCurrentKioskConfiguration(KioskClientServiceBaseUrl);
+			if (kioskConfiguration == null)
+			{
+				kioskConfiguration = new KioskClientServiceConfiguration()?.GetCurrentKioskConfiguration(KioskClientServiceBaseUrl);
+			}
+			if (kioskConfiguration == null)
+			{
+				return new KioskConfiguration();
+			}
+			return kioskConfiguration;
+		}
+	}
+
+	public KioskConfiguration KioskSession
+	{
+		get
+		{
+			if (_sessionKioskConfiguration == null)
+			{
+				return new KioskConfiguration();
+			}
+			return _sessionKioskConfiguration;
+		}
+	}
+
+	public KioskConfiguration Lifetime
+	{
+		get
+		{
+			if (_lifetimeKioskConfiguration == null)
+			{
+				return new KioskConfiguration();
+			}
+			return _lifetimeKioskConfiguration;
+		}
+	}
 
 	public Dictionary<TitleType, bool> EnabledGameTypes
 	{
@@ -185,19 +234,11 @@ public class Configuration : IConfiguration
 
 	public int VistarGetAdTimeout { get; private set; }
 
-	public bool EnableFlashDeals { get; private set; }
-
-	public List<decimal> FlashDealPrices { get; private set; }
-
 	public bool ShowBrowse10Titles { get; private set; }
-
-	public bool Show99CentsBrowseFilterButton { get; private set; }
 
 	public bool EnableBrowseMessagePopup { get; private set; }
 
 	public int BrowseMessagePopupDuration { get; private set; }
-
-	public bool EnableSonySweepstakes { get; private set; }
 
 	public bool EnableRedboxSweepstakes { get; private set; }
 
@@ -247,40 +288,6 @@ public class Configuration : IConfiguration
 
 	public string AwsFraudServicesKey { get; private set; }
 
-	public string DeviceServiceClientUrl { get; private set; }
-
-	public bool ChipEnabled { get; private set; }
-
-	public bool ContactlessEnabled { get; private set; }
-
-	public int CardReadTechnicalFallbackCountLimit { get; private set; }
-
-	public int DeviceServicePleaseWaitDuration { get; private set; }
-
-	public bool CardReadTechnicalFallbackEnabled { get; private set; }
-
-	public bool ContactlessVisaEnabled { get; private set; }
-
-	public bool ContactlessAmexEnabled { get; private set; }
-
-	public bool ContactlessMasterCardEnabled { get; private set; }
-
-	public bool ContactlessDiscoverEnabled { get; private set; }
-
-	public bool VisaInsertChipEnabled { get; private set; }
-
-	public bool AmexInsertChipEnabled { get; private set; }
-
-	public bool MasterCardInsertChipEnabled { get; private set; }
-
-	public bool DiscoverInsertChipEnabled { get; private set; }
-
-	public bool HideMobilePayOption { get; private set; }
-
-	public bool HideApplePayImage { get; private set; }
-
-	public bool HideGooglePayImage { get; private set; }
-
 	public bool PerksPassEnabled { get; private set; }
 
 	public string PriceFiltersOnBrowseABTestVersion => GetCultureBasedValue(_priceFiltersOnBrowseABTestVersion, "A");
@@ -308,14 +315,6 @@ public class Configuration : IConfiguration
 	public bool UseAWSBrokerService { get; private set; }
 
 	public bool AuthorizeAtPickup { get; private set; }
-
-	public string BluefinServiceUrl { get; private set; }
-
-	public string BluefinServiceApiKey { get; private set; }
-
-	public int BluefinServiceTimeout { get; private set; }
-
-	public bool BluefinAutoActivate { get; private set; }
 
 	public bool UseDiscountsForPmnpOffers { get; private set; }
 
@@ -365,8 +364,6 @@ public class Configuration : IConfiguration
 
 	public bool ZeroTouchPickupEnabled { get; private set; }
 
-	public bool ZeroTouchReturnEnabled { get; private set; }
-
 	public bool ZeroTouchContactlessEnabled { get; private set; }
 
 	public int ZeroTouchReadTimeout { get; private set; }
@@ -407,12 +404,6 @@ public class Configuration : IConfiguration
 
 	public bool UseKCSPricing { get; private set; }
 
-	public bool UseKCSInCart { get; private set; }
-
-	public bool UseKCSStartScreen { get; private set; }
-
-	public int KCSLoadCampaignTimerDuration { get; private set; }
-
 	private string GetCultureBasedValue(string defaultCultureValue, string alternateCultureValue)
 	{
 		if (!_cachedIsDefaultCulture.HasValue)
@@ -445,15 +436,27 @@ public class Configuration : IConfiguration
 		SignInTimeout = ConfigGetValue(service, "system", "Personalization", "SignInTimeout", 20000);
 		SignInADATimeout = ConfigGetValue(service, "system", "Personalization", "SignInADATimeout", 90000);
 		EnablePricingEngine = ConfigGetValue(service, "system", "General", "EnablePricingEngine", defaultValue: true);
-		DeviceServiceClientUrl = ConfigGetValue(service, "system", "DeviceService", "DeviceServiceClientUrl", "http://localhost:9000/CardReaderEvents");
 		KioskClientServiceBaseUrl = ConfigGetValue(service, "system", "KioskClientService", "KioskClientServiceBaseUrl", "http://localhost:9001");
 		UpdateClientServiceBaseUrl = ConfigGetValue(service, "system", "UpdateClientService", "UpdateClientServiceBaseUrl", "http://localhost:6001");
 		KioskEngineApiServiceBaseUrl = ConfigGetValue(service, "system", "KioskEngineApiService", "KioskEngineApiServiceBaseUrl", "http://localhost:9002");
+		_lifetimeKioskConfiguration = new KioskClientServiceConfiguration()?.GetCurrentKioskConfiguration(KioskClientServiceBaseUrl);
+		LogHelper.Instance.Log("Loaded static KioskConfiguration");
+		_lifetimeKioskConfiguration?.Log();
 		SessionReload();
 	}
 
 	public void SessionReload()
 	{
+		_sessionKioskConfiguration = ServiceLocator.Instance.GetService<IKioskClientService>()?.Configuration?.GetKioskSessionKioskConfiguration(KioskClientServiceBaseUrl);
+		if (_sessionKioskConfiguration == null)
+		{
+			_sessionKioskConfiguration = _lifetimeKioskConfiguration;
+		}
+		else
+		{
+			LogHelper.Instance.Log($"Loaded KioskConfiguration for KioskSession id {Redbox.Rental.Services.Session.Session.Instance?.KioskSessionId}");
+			_sessionKioskConfiguration?.Log();
+		}
 		ResetCachedIsDefaultCulture();
 		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
 		AnimatedDiscReturnEnabled = ConfigGetValue(service, "system", "General", "AnimatedDiscReturnEnabled", defaultValue: false);
@@ -478,15 +481,11 @@ public class Configuration : IConfiguration
 		EndGames = ConfigGetValue(service, "marketing", "MarketingGeneral", "EndGames", defaultValue: true);
 		EnableVistarAds = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableVistarAds", defaultValue: false);
 		VistarGetAdTimeout = ConfigGetValue(service, "marketing", "MarketingGeneral", "VistarGetAdTimeout", 500);
-		EnableFlashDeals = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableFlashDeals", defaultValue: false);
-		FlashDealPrices = ParseFlashDealPrices(ConfigGetValue<string>(service, "marketing", "MarketingGeneral", "FlashDealPrices", null));
 		ShowBrowse10Titles = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowBrowse10Titles", defaultValue: false);
-		Show99CentsBrowseFilterButton = ConfigGetValue(service, "marketing", "MarketingGeneral", "Show99CentsBrowseFilterButton", defaultValue: false);
 		ShowAfterSwipePersonalizedOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowAfterSwipePersonalizedOffers", defaultValue: false);
 		UseDiscountsForPmnpOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "UseDiscountsForPmnpOffers", defaultValue: false);
 		EnableBrowseMessagePopup = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableBrowseMessagePopup", defaultValue: false);
 		BrowseMessagePopupDuration = ConfigGetValue(service, "marketing", "MarketingGeneral", "BrowseMessagePopupDuration", 15000);
-		EnableSonySweepstakes = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableSonySweepstakes", defaultValue: false);
 		EnableRedboxSweepstakes = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxSweepstakes", defaultValue: false);
 		EnableAvodLeadGenerationOfferWithoutBoxArt = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableAvodLeadGenerationOfferWithoutBoxArt", defaultValue: false);
 		EnableAvodLeadGenerationOfferWithBoxArt = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableAvodLeadGenerationOfferWithBoxArt", defaultValue: false);
@@ -530,26 +529,6 @@ public class Configuration : IConfiguration
 		StartViewDarkModeEnabled = ConfigGetValue(service, "system", "General", "StartViewDarkModeEnabled", defaultValue: false);
 		StartViewDarkModeStartTime = ConfigGetValue(service, "system", "General", "StartViewDarkModeStartTime", "19:0:0");
 		StartViewDarkModeEndTime = ConfigGetValue(service, "system", "General", "StartViewDarkModeEndTime", "7:0:0");
-		ChipEnabled = ConfigGetValue(service, "system", "DeviceService", "ChipEnabled", defaultValue: false);
-		ContactlessEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessEnabled", defaultValue: false);
-		CardReadTechnicalFallbackEnabled = ConfigGetValue(service, "system", "DeviceService", "CardReadTechnicalFallbackEnabled", defaultValue: true);
-		CardReadTechnicalFallbackCountLimit = ConfigGetValue(service, "system", "DeviceService", "CardReadTechnicalFallbackCountLimit", 3);
-		DeviceServicePleaseWaitDuration = ConfigGetValue(service, "system", "DeviceService", "DeviceServicePleaseWaitDuration", 90000);
-		ContactlessVisaEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessVisaEnabled", defaultValue: true);
-		ContactlessAmexEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessAmexEnabled", defaultValue: true);
-		ContactlessMasterCardEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessMasterCardEnabled", defaultValue: true);
-		ContactlessDiscoverEnabled = ConfigGetValue(service, "system", "DeviceService", "ContactlessDiscoverEnabled", defaultValue: true);
-		VisaInsertChipEnabled = ConfigGetValue(service, "system", "DeviceService", "VisaInsertChipEnabled", defaultValue: true);
-		AmexInsertChipEnabled = ConfigGetValue(service, "system", "DeviceService", "AmexInsertChipEnabled", defaultValue: true);
-		MasterCardInsertChipEnabled = ConfigGetValue(service, "system", "DeviceService", "MasterCardInsertChipEnabled", defaultValue: true);
-		DiscoverInsertChipEnabled = ConfigGetValue(service, "system", "DeviceService", "DiscoverInsertChipEnabled", defaultValue: true);
-		HideMobilePayOption = ConfigGetValue(service, "system", "DeviceService", "HideMobilePayOption", defaultValue: false);
-		HideApplePayImage = ConfigGetValue(service, "system", "DeviceService", "HideApplePayImage", defaultValue: false);
-		HideGooglePayImage = ConfigGetValue(service, "system", "DeviceService", "HideGooglePayImage", defaultValue: false);
-		BluefinAutoActivate = ConfigGetValue(service, "system", "DeviceService", "BluefinAutoActivate", defaultValue: false);
-		BluefinServiceUrl = ConfigGetValue<string>(service, "system", "DeviceService", "BluefinServiceUrl", null);
-		BluefinServiceApiKey = ConfigGetValue<string>(service, "system", "DeviceService", "BluefinServiceApiKey", null);
-		BluefinServiceTimeout = ConfigGetValue(service, "system", "DeviceService", "BluefinServiceTimeout", 5000);
 		KioskDataServicesUrl = ConfigGetValue<string>(service, "system", "General", "KioskDataServicesUrl", null);
 		KioskDataServicesKey = ConfigGetValue<string>(service, "system", "General", "KioskDataServicesKey", null);
 		SendJsonKioskAnalyticsToKioskDataService = ConfigGetValue(service, "system", "General", "SendJsonKioskAnalyticsToKioskDataService", defaultValue: true);
@@ -571,10 +550,9 @@ public class Configuration : IConfiguration
 		MerchOrderExpirationDays = ConfigGetValue(service, "system", "General", "MerchOrderExpirationDays", 7);
 		ZeroTouchReadTimeout = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchReadTimeout", 600000);
 		ZeroTouchPickupEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchPickupEnabled", defaultValue: true);
-		ZeroTouchReturnEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchReturnEnabled", defaultValue: true);
 		ZeroTouchVasEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchVasEnabled", defaultValue: false);
-		ZeroTouchContactlessEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchContactlessEnabled", defaultValue: true) && ContactlessEnabled;
-		ZeroTouchEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchEnabled", defaultValue: false) && (ZeroTouchPickupEnabled || ZeroTouchReturnEnabled);
+		ZeroTouchContactlessEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchContactlessEnabled", defaultValue: true) && KioskSession.DeviceService.ContactlessEnabled;
+		ZeroTouchEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchEnabled", defaultValue: false) && ZeroTouchPickupEnabled;
 		ZeroTouchGoogleTwoTap = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchGoogleTwoTap", defaultValue: true);
 		AuthorizeTimeout = ConfigGetValue(service, "system", "General", "AuthorizeTimeout", 60000);
 		KioskClientServiceInventorySnapshotTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceInventorySnapshotTimeout", 60000);
@@ -585,9 +563,6 @@ public class Configuration : IConfiguration
 		KioskClientServiceEstimateAccrualTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceEstimateAccrualTimeout", 5000);
 		KioskClientServiceEstimateRedemptionTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceEstimateRedemptionTimeout", 5000);
 		UseKCSPricing = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSPricing", defaultValue: true);
-		UseKCSInCart = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSInCart", defaultValue: false);
-		UseKCSStartScreen = ConfigGetValue(service, "kioskengine", "Jarvis", "UseKCSStartScreen", defaultValue: false);
-		KCSLoadCampaignTimerDuration = ConfigGetValue(service, "kioskengine", "Jarvis", "KCSLoadCampaignTimerDuration", 1800000);
 		KioskClientServicePromoCodeValidationTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServicePromoCodeValidationTimeout", 5000);
 		KioskClientServiceUpdateAccountTimeout = ConfigGetValue(service, "kioskengine", "Jarvis", "KioskClientServiceUpdateAccountTimeout", 3000);
 		LoginLockoutMinutes = ConfigGetValue(service, "kioskengine", "FMACP", "LoginLockoutMinutes", 5);
@@ -735,22 +710,5 @@ public class Configuration : IConfiguration
 			return true;
 		}
 		return false;
-	}
-
-	private List<decimal> ParseFlashDealPrices(string flashDealPrices)
-	{
-		List<decimal> list = new List<decimal>();
-		if (!string.IsNullOrEmpty(flashDealPrices))
-		{
-			string[] array = flashDealPrices.Split(',');
-			for (int i = 0; i < array.Length; i++)
-			{
-				if (decimal.TryParse(array[i], out var result))
-				{
-					list.Add(result);
-				}
-			}
-		}
-		return list;
 	}
 }

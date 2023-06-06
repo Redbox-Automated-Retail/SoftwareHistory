@@ -276,7 +276,7 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 
 	private void RenderPageNumbers()
 	{
-		PageNumberText.Text = string.Format(Redbox.Rental.UI.Properties.Resources.browse_view_control_page_mask, CurrentPage, PageCount);
+		PageNumberText.Text = string.Format(_browseControlModel?.PageNumberText ?? Redbox.Rental.UI.Properties.Resources.browse_view_control_page_mask, CurrentPage, PageCount);
 	}
 
 	private void UserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

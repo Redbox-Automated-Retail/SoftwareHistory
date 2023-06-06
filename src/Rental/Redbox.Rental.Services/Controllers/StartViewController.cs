@@ -25,7 +25,6 @@ using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.Campaign;
-using Redbox.Rental.Model.KioskClientService.WelcomeScreenAssets;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Marketing;
@@ -73,6 +72,8 @@ public class StartViewController : BaseViewController
 		public static int DefaultRotationDelay = 2;
 
 		public static string LoadCampaignTimerName = "load-campaign-timer";
+
+		public static int LoadCampaignTimerDuration = 2220000;
 	}
 
 	private static int _startingCardReadFlag;
@@ -85,12 +86,14 @@ public class StartViewController : BaseViewController
 
 	private static readonly ManualResetEvent _cardReadComplete = new ManualResetEvent(initialState: true);
 
+	private static readonly ManualResetEvent _startCardReadComplete = new ManualResetEvent(initialState: true);
+
 	private static bool VasEnabled
 	{
 		get
 		{
 			IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (Redbox.Rental.Services.Configuration.Configuration.Instance.ContactlessEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.PerksPassEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.ZeroTouchVasEnabled)
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.DeviceService.ContactlessEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.PerksPassEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.ZeroTouchVasEnabled)
 			{
 				return service?.SupportsVas ?? false;
 			}
@@ -270,6 +273,7 @@ public class StartViewController : BaseViewController
 				}
 				else
 				{
+					_startCardReadComplete.WaitOne(3000);
 					_cardReadUserInteractionStarted = false;
 					service.StopCardRead(CancelReason.RestartingCardRead);
 					IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
@@ -311,10 +315,12 @@ public class StartViewController : BaseViewController
 						VasMode = vasMode,
 						SessionId = (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart.ShoppingSessionId ?? default(Guid))
 					};
+					_startCardReadComplete.Reset();
 					service.StartCardRead(request, delegate(IReadCardJob readCardJob)
 					{
 						LogHelper.Instance.Log($"Card read Starting - RequestId: {readCardJob.RequestId}");
 						cardReadAttempt.CardReadJobCommandRequestId = readCardJob.RequestId;
+						_startCardReadComplete.Set();
 					}, OnCardReadUserInteractionStarted, OnCardReadComplete);
 					_cardReadComplete.Reset();
 				}
@@ -472,15 +478,6 @@ public class StartViewController : BaseViewController
 				Redbox.Rental.Services.Session.Session.Instance.IsInReservationFlow = true;
 				ReservationFunctions.InvokeZeroTouchContinueReservation();
 			}, CancellationToken.None, TaskCreationOptions.None, BaseViewController.GetViewService()?.UITaskScheduler);
-		}
-		else if (service != null && service.ZeroTouchReturnEnabled)
-		{
-			BaseViewController.AnalyticsService?.AddSessionProperty("SessionType", AnalyticsConstants.SessionType.Return.ToString());
-			Task.Factory.StartNew(delegate
-			{
-				GoToReturnProductView(isZeroTouch: true);
-			}, CancellationToken.None, TaskCreationOptions.None, BaseViewController.GetViewService()?.UITaskScheduler);
-			ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>()?.ReportAuthorizeResult(authorizeSuccessful: true);
 		}
 		else
 		{
@@ -686,57 +683,56 @@ public class StartViewController : BaseViewController
 	private static ObservableCollection<ClickableImageModel> ConfigureScreenSaverImages()
 	{
 		ObservableCollection<ClickableImageModel> imageList = new ObservableCollection<ClickableImageModel>();
-		List<WelcomeScreenAsset> list = KioskClientService?.WelcomeScreenAssets?.GetWelcomeScreenAssets();
-		if (StartAssetControls != null)
+		StartAssetControls?.ForEach(delegate(IStartAssetControl startAssetControl)
 		{
-			StartAssetControls.ForEach(delegate(IStartAssetControl startAssetControl)
+			bool flag = !(startAssetControl.IncludeIfNoInventory ?? true);
+			switch (startAssetControl.Target)
 			{
-				if (startAssetControl.Target == AssetTarget.None)
+			case AssetTarget.None:
+				imageList.Add(new ClickableImageModel
+				{
+					ImageUrl = startAssetControl.Asset?.FullPath,
+					ClickAction = null,
+					DisplayDuration = startAssetControl.DisplayDuration
+				});
+				break;
+			case AssetTarget.ProductGroupId:
+				if (flag)
+				{
+					if (long.TryParse(startAssetControl.TargetValue, out var productGroupId))
+					{
+						IKioskProduct kioskProduct = null;
+						ServiceLocator.Instance.GetService<IDataService>()?.GetTitleRollupProduct(productGroupId, out kioskProduct);
+						ITitleRollupProduct obj = kioskProduct as ITitleRollupProduct;
+						if (obj != null && obj.IsRentableAndInStock)
+						{
+							imageList.Add(new ClickableImageModel
+							{
+								ImageUrl = startAssetControl.Asset?.FullPath,
+								ClickAction = delegate
+								{
+									GoToTitleDetailsViewFromScreenSaver(productGroupId);
+								},
+								DisplayDuration = startAssetControl.DisplayDuration
+							});
+						}
+					}
+				}
+				else
 				{
 					imageList.Add(new ClickableImageModel
 					{
 						ImageUrl = startAssetControl.Asset?.FullPath,
-						ClickAction = null,
+						ClickAction = (long.TryParse(startAssetControl.TargetValue, out var productGroupId2) ? ((Action)delegate
+						{
+							GoToTitleDetailsViewFromScreenSaver(productGroupId2);
+						}) : null),
 						DisplayDuration = startAssetControl.DisplayDuration
 					});
 				}
-				else if (startAssetControl.Target == AssetTarget.ProductGroupId)
-				{
-					if ((!startAssetControl.IncludeIfNoInventory) ?? true)
-					{
-						if (long.TryParse(startAssetControl.TargetValue, out var productGroupId))
-						{
-							IKioskProduct kioskProduct = null;
-							ServiceLocator.Instance.GetService<IDataService>()?.GetTitleRollupProduct(productGroupId, out kioskProduct);
-							ITitleRollupProduct obj = kioskProduct as ITitleRollupProduct;
-							if (obj != null && obj.IsRentableAndInStock)
-							{
-								imageList.Add(new ClickableImageModel
-								{
-									ImageUrl = startAssetControl.Asset?.FullPath,
-									ClickAction = delegate
-									{
-										GoToTitleDetailsViewFromScreenSaver(productGroupId);
-									},
-									DisplayDuration = startAssetControl.DisplayDuration
-								});
-							}
-						}
-					}
-					else
-					{
-						imageList.Add(new ClickableImageModel
-						{
-							ImageUrl = startAssetControl.Asset?.FullPath,
-							ClickAction = (long.TryParse(startAssetControl.TargetValue, out var productGroupId2) ? ((Action)delegate
-							{
-								GoToTitleDetailsViewFromScreenSaver(productGroupId2);
-							}) : null),
-							DisplayDuration = startAssetControl.DisplayDuration
-						});
-					}
-				}
-				else if (startAssetControl.Target == AssetTarget.PromoCode && startAssetControl.Validation != null && !string.IsNullOrEmpty(startAssetControl.Validation.Code))
+				break;
+			case AssetTarget.PromoCode:
+				if (startAssetControl.Validation != null && !string.IsNullOrEmpty(startAssetControl.Validation.Code))
 				{
 					imageList.Add(new ClickableImageModel
 					{
@@ -748,23 +744,67 @@ public class StartViewController : BaseViewController
 						DisplayDuration = startAssetControl.DisplayDuration
 					});
 				}
-			});
-		}
-		else
-		{
-			list?.ForEach(delegate(WelcomeScreenAsset welcomeScreenAsset)
+				break;
+			case AssetTarget.BrowseFilter:
 			{
-				imageList.Add(new ClickableImageModel
+				if (Enum.TryParse<Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter>(startAssetControl.TargetValue, out var browseFilter))
 				{
-					ImageUrl = welcomeScreenAsset.FilePath,
-					ClickAction = (welcomeScreenAsset.ProductGroupId.HasValue ? ((Action)delegate
+					bool flag2 = false;
+					bool flag3 = false;
+					bool flag4 = false;
+					bool flag5 = false;
+					switch (browseFilter)
 					{
-						GoToTitleDetailsViewFromScreenSaver(welcomeScreenAsset.ProductGroupId.Value);
-					}) : null)
-				});
-			});
-		}
+					case Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter.None:
+						flag2 = true;
+						break;
+					case Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter.ForSale:
+						flag3 = OrchestrationService.GetCanSellUsedMovies();
+						if (flag3 & flag)
+						{
+							flag3 = HasBrowseViewFilterProducts(BrowseViewFilter.ForSale, BrowseSort.SortDate);
+						}
+						break;
+					case Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter.ComingSoon:
+						flag4 = !Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.ShowDealsBrowseFilterButton && !Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.EnableSonySweepstakes && !Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show99CentsBrowseFilterButton;
+						if (flag4 & flag)
+						{
+							flag4 = HasBrowseViewFilterProducts(BrowseViewFilter.ComingSoon, BrowseSort.MerchandiseDate);
+						}
+						break;
+					case Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter.Deals:
+						flag5 = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.ShowDealsBrowseFilterButton;
+						if (flag5 & flag)
+						{
+							flag5 = HasBrowseViewFilterProducts(BrowseViewFilter.Deals, BrowseSort.InitialNightPrice);
+						}
+						break;
+					}
+					if (flag2 | flag3 | flag4 | flag5)
+					{
+						imageList.Add(new ClickableImageModel
+						{
+							ImageUrl = startAssetControl.Asset?.FullPath,
+							ClickAction = delegate
+							{
+								GoToBrowseViewBrowseFilterFromScreenSaver(browseFilter);
+							},
+							DisplayDuration = startAssetControl.DisplayDuration
+						});
+					}
+				}
+				break;
+			}
+			}
+		});
 		return imageList;
+	}
+
+	private static bool HasBrowseViewFilterProducts(BrowseViewFilter browseViewFilter, BrowseSort browseSort)
+	{
+		List<IKioskProduct> products = null;
+		ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(browseViewFilter, TitleFamily.Movies, TitleType.All, browseSort, null, null, null, isADAView: false, null, null, out products);
+		return (products?.Count ?? 0) >= 1;
 	}
 
 	public static bool IsProductInCarousel(long productId)
@@ -821,6 +861,7 @@ public class StartViewController : BaseViewController
 	{
 		BaseViewController.RecordAdImpression(BaseViewController.GetViewModel<StartViewModel>(viewFrameInstance.Id)?.AdImpression);
 		(TimerService?.GetTimer(Constants.LoadCampaignTimerName))?.Stop();
+		TimerService?.RemoveTimer(Constants.LoadCampaignTimerName);
 		(IdleTimerService?.GetIdleTimer(Constants.BurnInIdleTimerName))?.Stop();
 		(TimerService?.GetTimer(Constants.BurnInViewDurationTimerName))?.Stop();
 		(IdleTimerService?.CreateIdleTimer(Constants.StartIdleTimerName))?.Stop();
@@ -854,7 +895,11 @@ public class StartViewController : BaseViewController
 
 	private static void ConfigureLoadCampaignTimer()
 	{
-		int value = KioskClientService?.Campaign?.KCSLoadCampaignTimerDuration ?? 1800000;
+		if (TimerService?.GetTimer(Constants.LoadCampaignTimerName) != null)
+		{
+			return;
+		}
+		int value = KioskClientService?.Campaign?.LoadCampaignTimerDuration ?? Constants.LoadCampaignTimerDuration;
 		(TimerService?.CreateTimer(Constants.LoadCampaignTimerName, value, value, delegate
 		{
 			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
@@ -862,6 +907,8 @@ public class StartViewController : BaseViewController
 			{
 				LogHelper.Instance.Log("StartViewController.ConfigureLoadCampaignTimer");
 				BaseViewController.ProcessWPFHit();
+				(TimerService?.GetTimer(Constants.LoadCampaignTimerName))?.Stop();
+				TimerService?.RemoveTimer(Constants.LoadCampaignTimerName);
 				KioskClientService?.Campaign?.LoadCampaign();
 				PrepareToLeaveStartView();
 				OrchestrationService.ResetCurrentView();
@@ -1586,13 +1633,6 @@ public class StartViewController : BaseViewController
 		GoToBrowseView("buy_movies_button", TitleFamily.Movies, "StartBuyMovies");
 	}
 
-	private static void GoTo99CentsMoviesBrowseViewFromScreenSaver()
-	{
-		BaseViewController.ProcessWPFHit();
-		PrepareToLeaveStartView();
-		GoToBrowseView("screen_saver_99_cents_movies", TitleFamily.Movies, "StartScreenSaver99CentsMovies");
-	}
-
 	private static void GoToTitleDetailsViewFromScreenSaver(long productGroupId)
 	{
 		BaseViewController.ProcessWPFHit();
@@ -1626,6 +1666,7 @@ public class StartViewController : BaseViewController
 			BaseViewController.ProcessWPFHit();
 			PrepareToLeaveStartView();
 			OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowBrowseView));
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverBrowsePromotion");
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
 			OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 			PromotionService.Instance?.SetPromotion(promotion);
@@ -1634,6 +1675,40 @@ public class StartViewController : BaseViewController
 			service?.CurrentRentalShoppingCart?.UpdateServiceFee();
 			service?.CurrentRentalShoppingCart?.ClearLoyaltyPointsToBeEarned();
 		}
+	}
+
+	private static void GoToBrowseViewBrowseFilterFromScreenSaver(Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter browseFilter)
+	{
+		BaseViewController.ProcessWPFHit();
+		PrepareToLeaveStartView();
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowBrowseView));
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("StartScreenSaverBrowseBrowseFilter")?.AddData(new AnalyticsData
+		{
+			DataType = browseFilter.ToString()
+		});
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
+		switch (browseFilter)
+		{
+		case Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter.ForSale:
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.ForSale;
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort.ForSale;
+			break;
+		case Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter.ComingSoon:
+			if (!BaseViewController.ApplicationState.IsABEOn)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.ComingSoon;
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort.ComingSoon;
+			}
+			break;
+		case Redbox.Rental.Model.KioskClientService.Campaign.BrowseFilter.Deals:
+			if (!BaseViewController.ApplicationState.IsABEOn)
+			{
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.Deals;
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort.Deals;
+			}
+			break;
+		}
+		OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 	}
 
 	private static void GoToForSaleGamesBrowseView()
@@ -1661,25 +1736,10 @@ public class StartViewController : BaseViewController
 		BaseViewController.AnalyticsService?.AddButtonPressEvent(analyticsButtonName);
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
 		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = titleFamily;
-		switch (pressedButtonName)
+		if (pressedButtonName == "buy_movies_button" || pressedButtonName == "buy_games_button")
 		{
-		case "buy_movies_button":
-		case "buy_games_button":
-		case "screen_saver_buy_movies":
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.ForSale;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort.ForSale;
-			break;
-		case "screen_saver_99_cents_movies":
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.All;
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort._99Cents;
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.PageNumber = 1;
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowsePriceRangeFilter = new BrowsePriceRangeParameter
-			{
-				PriceRangeLow = 0.99m,
-				PriceRangeHigh = 0.99m
-			};
-			break;
 		}
 		OrchestrationService.ViewShow("browse_view", BrowseFunctions.GetBrowseViewparameters());
 	}
@@ -1699,17 +1759,12 @@ public class StartViewController : BaseViewController
 
 	private static void GoToReturnProductView()
 	{
-		GoToReturnProductView(isZeroTouch: false);
-	}
-
-	private static void GoToReturnProductView(bool isZeroTouch)
-	{
 		LockHelper.TryLockObject(_lockObject, delegate
 		{
 			if ((!(Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.InReturnFlow)) ?? false)
 			{
 				StartViewModel startViewModelFromView = GetStartViewModelFromView();
-				if (isZeroTouch || (startViewModelFromView != null && startViewModelFromView.ReturnButtonEnabled))
+				if (startViewModelFromView != null && startViewModelFromView.ReturnButtonEnabled)
 				{
 					Redbox.Rental.Services.Session.Session.Instance.BrowseState.InReturnFlow = true;
 					if (startViewModelFromView != null)
@@ -1717,11 +1772,8 @@ public class StartViewController : BaseViewController
 						startViewModelFromView.ReturnButtonEnabled = false;
 					}
 					PrepareToLeaveStartView();
-					if (!isZeroTouch)
-					{
-						OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowReturnView), AnalyticsSessionType.Return);
-						BaseViewController.AnalyticsService?.AddButtonPressEvent("StartReturn");
-					}
+					OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ShowReturnView), AnalyticsSessionType.Return);
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("StartReturn");
 					OrchestrationService.ExecuteScript("return_product");
 				}
 				else

@@ -2,6 +2,7 @@ using Redbox.Rental.Model.KioskClientService.Ads;
 using Redbox.Rental.Model.KioskClientService.Application;
 using Redbox.Rental.Model.KioskClientService.Authentication;
 using Redbox.Rental.Model.KioskClientService.Campaign;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskClientService.CustomerProfile;
 using Redbox.Rental.Model.KioskClientService.Data;
 using Redbox.Rental.Model.KioskClientService.Installer;
@@ -17,7 +18,6 @@ using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskClientService.TestData;
 using Redbox.Rental.Model.KioskClientService.Transactions;
 using Redbox.Rental.Model.KioskClientService.Utilities;
-using Redbox.Rental.Model.KioskClientService.WelcomeScreenAssets;
 
 namespace Redbox.Rental.Model.KioskClientService;
 
@@ -61,5 +61,5 @@ public interface IKioskClientService
 
 	IKioskClientServiceTransaction Transaction { get; }
 
-	IKioskClientServiceWelcomeScreenAssets WelcomeScreenAssets { get; }
+	IKioskClientServiceConfiguration Configuration { get; }
 }

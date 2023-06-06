@@ -4,5 +4,6 @@ public enum AssetTarget
 {
 	ProductGroupId,
 	PromoCode,
-	None
+	None,
+	BrowseFilter
 }

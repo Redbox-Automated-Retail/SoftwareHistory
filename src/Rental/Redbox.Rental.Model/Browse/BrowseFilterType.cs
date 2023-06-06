@@ -27,5 +27,6 @@ public enum BrowseFilterType
 	Family,
 	PriceRange,
 	_99Cents,
-	SonySweepstakes
+	SonySweepstakes,
+	Deals
 }

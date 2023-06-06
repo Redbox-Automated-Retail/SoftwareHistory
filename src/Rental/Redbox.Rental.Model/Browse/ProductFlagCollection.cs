@@ -58,12 +58,6 @@ public class ProductFlagCollection : List<ProductFlag>
 					},
 					new ProductFlag
 					{
-						Flag = ProductFlags.HotDeal,
-						TextKeyName = "flag_hot_deal",
-						FlagStyleName = "orange_flag_style"
-					},
-					new ProductFlag
-					{
 						Flag = ProductFlags.FlashDeal,
 						TextKeyName = "flag_flash_deal",
 						FlagStyleName = "orange_flag_style"

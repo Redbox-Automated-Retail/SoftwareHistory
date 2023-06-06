@@ -323,8 +323,8 @@ public abstract class TrackData : ITrackData
 		if (service != null && service.SupportsEMV)
 		{
 			IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();
-			_chipEnabled = service2.ChipEnabled;
-			_contactlessEnabled = service2.ContactlessEnabled;
+			_chipEnabled = service2.KioskSession.DeviceService.ChipEnabled;
+			_contactlessEnabled = service2.KioskSession.DeviceService.ContactlessEnabled;
 		}
 	}
 

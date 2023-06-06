@@ -145,9 +145,11 @@ public class RedboxRentalService : IRedboxRental
 			}
 			OrchestrationService.StartTimer("reservation-expire-timer");
 			OrchestrationService.StopIdleTimer("idle_timer");
-			Redbox.Rental.Services.Configuration.Configuration.Instance.SessionReload();
 			OrchestrationService.SetThemeAnimationState();
 			Redbox.Rental.Services.Session.Session.Instance = new Redbox.Rental.Services.Session.Session();
+			ServiceLocator.Instance.GetService<IKioskClientService>()?.Session?.Create(Redbox.Rental.Services.Session.Session.Instance.KioskSessionId);
+			Redbox.Rental.Services.Configuration.Configuration.Instance.SessionReload();
+			ServiceLocator.Instance.GetService<ITrackDataEncryptionService>()?.RefreshCertificate();
 			OrchestrationService.ResetApplicationIdleTimerTimeout();
 			ITextToSpeechService service2 = ServiceLocator.Instance.GetService<ITextToSpeechService>();
 			if ((service2 != null && service2.TTSEnabled) || ApplicationState.Instance.IsADAAccessible)

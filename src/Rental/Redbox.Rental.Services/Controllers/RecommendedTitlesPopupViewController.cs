@@ -445,7 +445,6 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
 			IsInCartBrowse = false,
-			FlashDealPrices = Redbox.Rental.Services.Configuration.Configuration.Instance.FlashDealPrices,
 			EnableRedboxPlus = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption
 		};
 	}

@@ -65,7 +65,7 @@ public class SwipeViewController : BaseViewController
 		{
 			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (service != null && service.ChipEnabled)
+			if (service == null || service.KioskSession.DeviceService.ChipEnabled)
 			{
 				return service2?.SupportsEMV ?? false;
 			}
@@ -80,7 +80,7 @@ public class SwipeViewController : BaseViewController
 			bool flag = false;
 			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 			IDeviceServiceClientHelper service2 = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			flag = service != null && service.ContactlessEnabled && (service2?.SupportsEMV ?? false);
+			flag = (service == null || service.KioskSession.DeviceService.ContactlessEnabled) && (service2?.SupportsEMV ?? false);
 			if (ServiceLocator.Instance.GetService<IEMVReaderHealth>().ContactlessOffDueToDisconnectThresholdReached)
 			{
 				flag = false;
@@ -94,7 +94,7 @@ public class SwipeViewController : BaseViewController
 		get
 		{
 			IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (Redbox.Rental.Services.Configuration.Configuration.Instance.ContactlessEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.PerksPassEnabled)
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.DeviceService.ContactlessEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.PerksPassEnabled)
 			{
 				return service?.SupportsEMV ?? false;
 			}
@@ -152,7 +152,7 @@ public class SwipeViewController : BaseViewController
 			{
 				if (ContactlessEnabled)
 				{
-					if (service != null && service.HideMobilePayOption)
+					if (service?.KioskSession?.DeviceService?.HideMobilePayOption ?? false)
 					{
 						_swipeViewType = SwipeViewType.EMVInsertTapHideMobileRegularCheckout;
 					}
@@ -364,8 +364,8 @@ public class SwipeViewController : BaseViewController
 		}
 		swipeViewModel.GridBackground = WPFFunctions.GetBrush(BaseViewController.GetViewUserControl(), (_swipeViewType == SwipeViewType.EMVInsertTapRegularCheckout || _swipeViewType == SwipeViewType.EncryptedSwipeRegularCheckOut || _swipeViewType == SwipeViewType.EMVInsertTapReservationPickup || _swipeViewType == SwipeViewType.EMVTapToLogin) ? "RubineToDarkPurpleGradientBrush" : "RubineRedBrush");
 		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-		swipeViewModel.ApplePayImageVisibility = ((service != null && service.HideApplePayImage) ? Visibility.Collapsed : Visibility.Visible);
-		swipeViewModel.GooglePayImageVisibility = ((service != null && service.HideGooglePayImage) ? Visibility.Collapsed : Visibility.Visible);
+		swipeViewModel.ApplePayImageVisibility = ((service?.KioskSession?.DeviceService?.HideApplePayImage ?? false) ? Visibility.Collapsed : Visibility.Visible);
+		swipeViewModel.GooglePayImageVisibility = ((service?.KioskSession?.DeviceService?.HideGooglePayImage ?? false) ? Visibility.Collapsed : Visibility.Visible);
 		IDeviceServiceTrackDataService deviceServiceTrackDataService = ServiceLocator.Instance.GetService<ITrackDataService>() as IDeviceServiceTrackDataService;
 		swipeViewModel.ChipNotEnabledText = Resources.chip_not_enabled_text;
 		swipeViewModel.BackButtonText = Resources.back_button.ToUpper();

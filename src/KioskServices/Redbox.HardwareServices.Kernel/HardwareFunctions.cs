@@ -956,6 +956,7 @@ public static class HardwareFunctions
 		LuaTable luaTable2 = (LuaTable)service.NewTable();
 		foreach (Redbox.KioskEngine.ComponentModel.Error error in errors)
 		{
+			LogHelper.Instance.Log($"HardwareFunctions.CreateResultTable contains error {error.ToString()}");
 			luaTable2[error.Code] = error.Description;
 		}
 		luaTable["errors"] = luaTable2;

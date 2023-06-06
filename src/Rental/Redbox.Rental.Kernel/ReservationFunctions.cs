@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Redbox.Core;
+using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Model;
@@ -160,6 +161,11 @@ public class ReservationFunctions
 	{
 		if (vendResults != null)
 		{
+			if ((vendResults.Values?.Count ?? 0) <= 0)
+			{
+				ServiceLocator.Instance.GetService<IHardwareAlertManagerService>()?.SendAlert("HardwareError", "ReservationFunctions.ReservationPrepositionVendComplete", "vendResults empty", null, null, "PrepositionVendResultsEmpty");
+				LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVendComplete vendResults empty, Alert sent");
+			}
 			List<VendResult> list = new List<VendResult>();
 			foreach (object value in vendResults.Values)
 			{

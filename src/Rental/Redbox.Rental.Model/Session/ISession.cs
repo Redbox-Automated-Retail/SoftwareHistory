@@ -11,6 +11,8 @@ namespace Redbox.Rental.Model.Session;
 
 public interface ISession
 {
+	Guid KioskSessionId { get; }
+
 	IBrowseState BrowseState { get; set; }
 
 	IHelpState HelpState { get; set; }

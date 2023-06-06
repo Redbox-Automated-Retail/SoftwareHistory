@@ -43,8 +43,6 @@ public class ProductFlag
 
 		public const string ClassicsKey = "flag_classics";
 
-		public const string HotDealKey = "flag_hot_deal";
-
 		public const string FlashDealKey = "flag_flash_deal";
 
 		public const string PointsKey = "flag_points";

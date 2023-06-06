@@ -30,8 +30,6 @@ public static class ConfigCategory
 
 	public const string Fraud = "Fraud";
 
-	public const string DeviceService = "DeviceService";
-
 	public const string KioskClientService = "KioskClientService";
 
 	public const string ZeroTouch = "ZeroTouch";

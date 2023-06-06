@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Redbox.Core;
+using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Lua;
 using Redbox.Rental.Services;
@@ -41,6 +42,11 @@ public class CheckoutFunctions
 	{
 		if (vendResults != null)
 		{
+			if ((vendResults.Values?.Count ?? 0) <= 0)
+			{
+				ServiceLocator.Instance.GetService<IHardwareAlertManagerService>()?.SendAlert("HardwareError", "CheckoutFunctions.RegularCheckoutPrepositionVendComplete", "vendResults empty", null, null, "PrepositionVendResultsEmpty");
+				LogHelper.Instance.Log("CheckoutFunctions.RegularCheckoutPrepositionVendComplete vendResults empty, Alert sent");
+			}
 			List<VendResult> list = new List<VendResult>();
 			foreach (object value in vendResults.Values)
 			{

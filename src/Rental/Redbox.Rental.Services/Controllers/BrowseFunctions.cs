@@ -251,8 +251,8 @@ public class BrowseFunctions
 			if (productFlag != null && productFlag.Flag == ProductFlags.FlashDeal)
 			{
 				decimal num = ((titleProduct?.RentalPriceRecords != null && titleProduct.RentalPriceRecords.Count > 0 && titleProduct.RentalPriceRecords[0] != null) ? titleProduct.RentalPriceRecords[0].InitialNight : 0m);
-				string text = ((num < 1m) ? string.Format(Resources.flag_flash_deal_price_cents, num * 100m) : string.Format(Resources.flag_flash_deal_price_dollar, num));
-				displayProductModel.FlagText = ((num != 0m && displayProductModelConstants?.FlashDealPrices != null && displayProductModelConstants.FlashDealPrices.Contains(num)) ? text : Resources.flag_flash_deal);
+				string flagText = ((num < 1m) ? string.Format(Resources.flag_flash_deal_price_cents, num * 100m) : string.Format(Resources.flag_flash_deal_price_dollar, num));
+				displayProductModel.FlagText = flagText;
 			}
 			else
 			{
@@ -271,13 +271,13 @@ public class BrowseFunctions
 		if (titleProduct != null)
 		{
 			ServiceLocator.Instance.GetService<IConfiguration>();
-			if (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes && titleProduct.Studio.ToLower() == "sony")
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.EnableSonySweepstakes && titleProduct.Studio.ToLower() == "sony")
 			{
 				result = ProductFlags.SonySweepstakes;
 			}
 			else if (titleProduct.HasDeal && BrowseState.BrowseMode != BrowseViewFilter.ForSale && BrowseState.BrowseSelectedSort != BrowseSelectedSort.DigitalCode)
 			{
-				result = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.EnableFlashDeals) ? ProductFlags.HotDeal : ProductFlags.FlashDeal);
+				result = ProductFlags.FlashDeal;
 			}
 			else if (titleProduct.Genres.Contains(1002L))
 			{

@@ -19,6 +19,8 @@ public class Session : ISession
 
 	public static ISession Instance { get; set; }
 
+	public Guid KioskSessionId { get; set; } = Guid.NewGuid();
+
 	public IBrowseState BrowseState { get; set; }
 
 	public IHelpState HelpState { get; set; }
@@ -125,12 +127,12 @@ public class Session : ISession
 		BrowseState = new BrowseState();
 		HelpState = new HelpState();
 		UserInfo = new UserInfo();
-		ServiceLocator.Instance.GetService<ITrackDataEncryptionService>()?.RefreshCertificate();
 		ValidatedReservations = null;
 		CardReadAttemptCollection = new CardReadAttemptCollection();
 		TransactionData = new TransactionData();
 		RentalReturnTime = TimeSpan.FromHours(21.0);
 		SessionStartTriggerActions = new SessionStartTriggerActionList();
+		LogHelper.Instance.Log($"Created KisokSession with id: {KioskSessionId}");
 	}
 
 	public void ClearTrackData()

@@ -194,6 +194,8 @@ public class BrowseControlModel : DependencyObject
 		}
 	}
 
+	public string PageNumberText { get; set; }
+
 	public event BrowseItemModelEvent OnBrowseItemModelSelected;
 
 	public event BrowseItemModelEvent OnAddBrowseItemModel;

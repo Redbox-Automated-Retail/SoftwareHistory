@@ -102,7 +102,7 @@ public class CheckoutFunctions
 		get
 		{
 			IDeviceServiceClientHelper service = ServiceLocator.Instance.GetService<IDeviceServiceClientHelper>();
-			if (Redbox.Rental.Services.Configuration.Configuration.Instance.ContactlessEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.PerksPassEnabled)
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.DeviceService.ContactlessEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.PerksPassEnabled)
 			{
 				return service?.SupportsEMV ?? false;
 			}
@@ -742,7 +742,7 @@ public class CheckoutFunctions
 				Redbox.Rental.Services.Session.Session.Instance.WaitingForCardReaderConnection = true;
 			}
 			OrchestrationService.ViewShow("please_wait_view", null);
-			int value = ServiceLocator.Instance.GetService<IConfiguration>()?.DeviceServicePleaseWaitDuration ?? 90000;
+			int value = ServiceLocator.Instance.GetService<IConfiguration>()?.KioskSession.DeviceService.DeviceServicePleaseWaitDuration ?? 90000;
 			ServiceLocator.Instance.GetService<ITimerService>()?.CreateTimer("PleaseWaitTimer", value, value, delegate
 			{
 				RemovePleaseWaitTimer();
@@ -1052,7 +1052,7 @@ public class CheckoutFunctions
 			authorizeResult.HasProfile = true;
 		}
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		bool num = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableSonySweepstakes && (rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.TitleProduct.Studio.ToLower() == "sony") ?? false);
+		bool num = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.EnableSonySweepstakes && (rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.TitleProduct.Studio.ToLower() == "sony") ?? false);
 		bool flag = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxSweepstakes && (rentalShoppingCart?.TitleItems?.Count ?? 0) > 0;
 		if (num | flag)
 		{

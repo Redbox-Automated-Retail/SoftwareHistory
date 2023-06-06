@@ -898,6 +898,7 @@ signing up for Redbox Perks</value></data>
   <data name="perks_earned_level1_message" xml:space="preserve"><value>{0:n0} points until a FREE 
 1-night DVD rental</value></data>
   <data name="go_back_button" xml:space="preserve"><value>Go Back</value></data>
+  <data name="deals_browse_view_control_page_mask" xml:space="preserve"><value>1-Night Deals: Page {0} of {1}</value></data>
   <data name="starz_offer_2_my_bag_sub_text" xml:space="preserve"><value>Then $8.99/month</value></data>
   <data name="promo_code_button_edit_text" xml:space="preserve"><value>EDIT PROMO</value></data>
   <data name="vend_quick_return_wait" xml:space="preserve"><value>Thank you for your patience.
@@ -921,7 +922,6 @@ If you have any questions, please contact the Redbox Customer Care team at 1.866
   <data name="sorry" xml:space="preserve"><value>Sorry</value></data>
   <data name="estimated_tax_label" xml:space="preserve"><value>Estimated Tax</value></data>
   <data name="Games" xml:space="preserve"><value>Games</value></data>
-  <data name="hot_deal_text" xml:space="preserve"><value>Extra nights for Hot Deals are {0}. Our Hot Deal can change at any time. It only shows up for specific titles, locations, and dates - so you're in luck.</value></data>
   <data name="Movie" xml:space="preserve"><value>movie</value></data>
   <data name="shopping_cart_points_balance_insufficient_message_title_type_text" xml:space="preserve"><value>You're {0} points away from a FREE {1}-night
 {2} rental</value></data>
@@ -1481,6 +1481,7 @@ rental</value></data>
 need </value></data>
   <data name="perks_snapshot_next_level_string3" xml:space="preserve"><value> more to become a {0}</value></data>
   <data name="perks_snapshot_next_level_string1" xml:space="preserve"><value>You have </value></data>
+  <data name="deals_button" xml:space="preserve"><value>DEALS</value></data>
   <data name="abe_mode_text" xml:space="preserve"><value>ADA mode</value></data>
   <data name="authorize_at_pickup_offline_message" xml:space="preserve"><value>Don’t worry – your card won’t be charged.
 

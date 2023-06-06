@@ -455,6 +455,10 @@ public static class AnalyticsConstants
 
 		public const string StartScreenSaverTitleDetails = "StartScreenSaverTitleDetails";
 
+		public const string StartScreenSaverBrowsePromotion = "StartScreenSaverBrowsePromotion";
+
+		public const string StartScreenSaverBrowseBrowseFilter = "StartScreenSaverBrowseBrowseFilter";
+
 		public const string SwipeViewMessageButton = "SwipeViewMessageButton";
 
 		public const string SwipeCardSwipeBack = "SwipeCardSwipeBack";

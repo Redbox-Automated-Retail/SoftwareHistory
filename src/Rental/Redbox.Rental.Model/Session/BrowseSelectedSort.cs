@@ -53,5 +53,7 @@ public enum BrowseSelectedSort
 	[Display(Name = "$.99")]
 	_99Cents,
 	[Display(Name = "$15K Summer Sweeps")]
-	SonySweepstakes
+	SonySweepstakes,
+	[Display(Name = "Deals")]
+	Deals
 }

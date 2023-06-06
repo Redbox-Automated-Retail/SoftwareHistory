@@ -12,33 +12,39 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 {
 	private const string _controllerPrefix = "api/campaign";
 
-	private IConfiguration _configuration;
+	private bool _enableInCart;
+
+	private bool _showStartScreen;
+
+	private int _loadCampaignTimerDuration;
 
 	private KioskInCartDetails _inCart;
 
 	private KioskStartScreenDetails _startScreen;
 
-	public bool IsKCSInCartEnabled => _configuration?.UseKCSInCart ?? false;
+	public bool EnableInCart => _enableInCart;
 
-	public bool IsKCSStartScreenEnabled => _configuration?.UseKCSStartScreen ?? false;
+	public bool ShowStartScreen => _showStartScreen;
 
-	public int KCSLoadCampaignTimerDuration => _configuration?.KCSLoadCampaignTimerDuration ?? 1800000;
+	public int LoadCampaignTimerDuration => _loadCampaignTimerDuration;
 
 	public KioskClientServiceCampaign()
 	{
-		_configuration = ServiceLocator.Instance.GetService<IConfiguration>();
 		LoadCampaign();
 	}
 
 	public void LoadCampaign()
 	{
 		LogHelper.Instance.Log("KCS.Campaign.KioskClientServiceCampaign.LoadCampaign");
-		LogHelper.Instance.Log($"IsKCSInCartEnabled {IsKCSInCartEnabled}");
-		_inCart = (IsKCSInCartEnabled ? GetKCSInCart() : null);
+		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		_enableInCart = service?.Current?.CMS?.EnableInCart ?? true;
+		LogHelper.Instance.Log($"EnableInCart {_enableInCart}");
+		_inCart = (_enableInCart ? GetKCSInCart() : null);
 		LogHelper.Instance.Log(string.Format("InCart {0}", (_inCart != null) ? "loaded" : "null"));
 		PromotionService.Instance?.LoadInCartData(_inCart);
-		LogHelper.Instance.Log($"IsKCSStartScreenEnabled {IsKCSStartScreenEnabled}");
-		_startScreen = (IsKCSStartScreenEnabled ? GetKCSStartScreen() : null);
+		_showStartScreen = service?.Current?.CMS?.ShowStartScreen ?? true;
+		LogHelper.Instance.Log($"ShowStartScreen {_showStartScreen}");
+		_startScreen = (_showStartScreen ? GetKCSStartScreen() : null);
 		LogHelper instance = LogHelper.Instance;
 		KioskStartScreenDetails startScreen = _startScreen;
 		object arg;
@@ -51,14 +57,16 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 				if (true)
 				{
 					arg = $"loaded {_startScreen.Controls.Count}";
-					goto IL_011f;
+					goto IL_01e0;
 				}
 			}
 		}
 		arg = "null";
-		goto IL_011f;
-		IL_011f:
+		goto IL_01e0;
+		IL_01e0:
 		instance.Log($"StartScreen {arg}");
+		_loadCampaignTimerDuration = service?.Current?.CMS?.LoadCampaignTimerDuration ?? 2220000;
+		LogHelper.Instance.Log($"LoadCampaignTimerDuration {_loadCampaignTimerDuration}");
 	}
 
 	public KioskInCartDetails GetInCart()

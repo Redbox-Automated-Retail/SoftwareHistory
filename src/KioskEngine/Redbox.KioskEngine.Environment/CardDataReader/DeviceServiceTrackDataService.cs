@@ -47,10 +47,10 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		{
 			bool result = false;
 			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			if (service != null && service.CardReadTechnicalFallbackEnabled)
+			if (service == null || service.KioskSession.DeviceService.CardReadTechnicalFallbackEnabled)
 			{
 				int num = (ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession())?.CardReadTechnicalFallbackCount ?? 0;
-				int num2 = service?.CardReadTechnicalFallbackCountLimit ?? 3;
+				int num2 = service?.KioskSession.DeviceService.CardReadTechnicalFallbackCountLimit ?? 3;
 				result = num >= num2;
 			}
 			return result;
@@ -379,7 +379,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		case FallbackStatusAction.ImmediateFallback:
 			if (session != null && service2 != null)
 			{
-				session.CardReadTechnicalFallbackCount = service2.CardReadTechnicalFallbackCountLimit;
+				session.CardReadTechnicalFallbackCount = service2.KioskSession.DeviceService.CardReadTechnicalFallbackCountLimit;
 				session.LastFallbackType = trackData?.FallbackReason;
 			}
 			break;
@@ -409,7 +409,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		if (trackData != null && trackData.IsInTechnicalFallback && trackData.CardSourceType == CardSourceType.Swipe && trackData.CardHasChip && trackData.CardType == Redbox.Core.CardType.AmericanExpress)
 		{
 			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			if (trackData != null && trackData.ChipEnabledAndSupportsEmv && (service == null || service.CardReadTechnicalFallbackEnabled))
+			if (trackData != null && trackData.ChipEnabledAndSupportsEmv && (service == null || service.KioskSession.DeviceService.CardReadTechnicalFallbackEnabled))
 			{
 				trackData.Errors.Add(CardHelper.ErrorCodes.NewAmexCannotFallbackError());
 				trackData.FallbackStatusAction = FallbackStatusAction.ResetFallbackCounter;

@@ -5,5 +5,6 @@ public enum BrowseViewFilter
 	All,
 	ForSale,
 	ComingSoon,
-	RedboxPlus
+	RedboxPlus,
+	Deals
 }

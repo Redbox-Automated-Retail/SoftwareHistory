@@ -46,10 +46,8 @@ public class ShoppingCartViewFunctions
 				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning continue", popOnly: false);
 				OrchestrationService.ViewShow("shopping_cart_view");
 			});
-			return;
 		}
-		bool? flag = KioskClientService?.Campaign?.IsKCSInCartEnabled;
-		if (flag.HasValue && flag == true && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
+		else if ((KioskClientService?.Campaign?.EnableInCart ?? true) && (PromotionService.Instance.NeedToShowFreeInCartMessage || PromotionService.Instance.NeedToShowRentTwoInCartMessage))
 		{
 			BrowseState.ItemAddedFromView = null;
 			ShowInCartOfferMessage();

@@ -10,7 +10,6 @@ public enum ProductFlags
 	Classics,
 	New,
 	LastChance,
-	HotDeal,
 	FlashDeal,
 	Points,
 	Excluded,

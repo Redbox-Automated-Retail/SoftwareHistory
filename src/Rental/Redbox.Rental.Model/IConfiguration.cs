@@ -1,11 +1,18 @@
 using System;
 using System.Collections.Generic;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.Model;
 
 public interface IConfiguration
 {
+	KioskConfiguration Current { get; }
+
+	KioskConfiguration KioskSession { get; }
+
+	KioskConfiguration Lifetime { get; }
+
 	Dictionary<TitleType, bool> EnabledGameTypes { get; }
 
 	Dictionary<TitleType, bool> GameHasContentTypes { get; }
@@ -46,19 +53,11 @@ public interface IConfiguration
 
 	bool EndGames { get; }
 
-	bool EnableFlashDeals { get; }
-
-	List<decimal> FlashDealPrices { get; }
-
 	bool ShowBrowse10Titles { get; }
-
-	bool Show99CentsBrowseFilterButton { get; }
 
 	bool EnableBrowseMessagePopup { get; }
 
 	int BrowseMessagePopupDuration { get; }
-
-	bool EnableSonySweepstakes { get; }
 
 	bool EnableRedboxSweepstakes { get; }
 
@@ -124,48 +123,6 @@ public interface IConfiguration
 
 	string AwsFraudServicesKey { get; }
 
-	string DeviceServiceClientUrl { get; }
-
-	bool ChipEnabled { get; }
-
-	bool ContactlessEnabled { get; }
-
-	int CardReadTechnicalFallbackCountLimit { get; }
-
-	bool CardReadTechnicalFallbackEnabled { get; }
-
-	int DeviceServicePleaseWaitDuration { get; }
-
-	bool ContactlessVisaEnabled { get; }
-
-	bool ContactlessAmexEnabled { get; }
-
-	bool ContactlessMasterCardEnabled { get; }
-
-	bool ContactlessDiscoverEnabled { get; }
-
-	bool HideMobilePayOption { get; }
-
-	bool HideApplePayImage { get; }
-
-	bool HideGooglePayImage { get; }
-
-	bool VisaInsertChipEnabled { get; }
-
-	bool AmexInsertChipEnabled { get; }
-
-	bool MasterCardInsertChipEnabled { get; }
-
-	bool DiscoverInsertChipEnabled { get; }
-
-	string BluefinServiceUrl { get; }
-
-	string BluefinServiceApiKey { get; }
-
-	int BluefinServiceTimeout { get; }
-
-	bool BluefinAutoActivate { get; }
-
 	bool GiftCardsEnabled { get; }
 
 	int TextToSpeechVolume { get; }
@@ -230,8 +187,6 @@ public interface IConfiguration
 
 	bool ZeroTouchPickupEnabled { get; }
 
-	bool ZeroTouchReturnEnabled { get; }
-
 	bool ZeroTouchContactlessEnabled { get; }
 
 	int ZeroTouchReadTimeout { get; }
@@ -273,12 +228,6 @@ public interface IConfiguration
 	int KioskClientServiceUpdateAccountTimeout { get; }
 
 	bool UseKCSPricing { get; }
-
-	bool UseKCSInCart { get; }
-
-	bool UseKCSStartScreen { get; }
-
-	int KCSLoadCampaignTimerDuration { get; }
 
 	bool ButtonAnimationEnabled { get; }
 

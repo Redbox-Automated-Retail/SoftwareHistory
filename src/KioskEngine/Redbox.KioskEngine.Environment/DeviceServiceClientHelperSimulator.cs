@@ -10,6 +10,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Health;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskEngine.Environment;
@@ -211,15 +212,15 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 	{
 		List<CardBrandAndSource> list = new List<CardBrandAndSource>();
 		Dictionary<CardBrandAndSource, bool> dictionary = new Dictionary<CardBrandAndSource, bool>();
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-		dictionary.Add(CardBrandAndSource.VisaTap, service.ContactlessVisaEnabled);
-		dictionary.Add(CardBrandAndSource.AmexTap, service.ContactlessAmexEnabled);
-		dictionary.Add(CardBrandAndSource.MasterCardTap, service.ContactlessMasterCardEnabled);
-		dictionary.Add(CardBrandAndSource.DiscoverTap, service.ContactlessDiscoverEnabled);
-		dictionary.Add(CardBrandAndSource.VisaChip, service.VisaInsertChipEnabled);
-		dictionary.Add(CardBrandAndSource.AmexChip, service.AmexInsertChipEnabled);
-		dictionary.Add(CardBrandAndSource.MasterCardChip, service.MasterCardInsertChipEnabled);
-		dictionary.Add(CardBrandAndSource.DiscoverChip, service.AmexInsertChipEnabled);
+		DeviceServiceConfiguration deviceServiceConfiguration = ServiceLocator.Instance.GetService<IConfiguration>()?.KioskSession?.DeviceService;
+		dictionary.Add(CardBrandAndSource.VisaTap, deviceServiceConfiguration.ContactlessVisaEnabled);
+		dictionary.Add(CardBrandAndSource.AmexTap, deviceServiceConfiguration.ContactlessAmexEnabled);
+		dictionary.Add(CardBrandAndSource.MasterCardTap, deviceServiceConfiguration.ContactlessMasterCardEnabled);
+		dictionary.Add(CardBrandAndSource.DiscoverTap, deviceServiceConfiguration.ContactlessDiscoverEnabled);
+		dictionary.Add(CardBrandAndSource.VisaChip, deviceServiceConfiguration.VisaInsertChipEnabled);
+		dictionary.Add(CardBrandAndSource.AmexChip, deviceServiceConfiguration.AmexInsertChipEnabled);
+		dictionary.Add(CardBrandAndSource.MasterCardChip, deviceServiceConfiguration.MasterCardInsertChipEnabled);
+		dictionary.Add(CardBrandAndSource.DiscoverChip, deviceServiceConfiguration.AmexInsertChipEnabled);
 		foreach (KeyValuePair<CardBrandAndSource, bool> item in dictionary)
 		{
 			if (!item.Value)

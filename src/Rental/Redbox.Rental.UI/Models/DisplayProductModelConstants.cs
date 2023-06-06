@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Redbox.Rental.Model.Pricing;
@@ -69,8 +68,6 @@ public class DisplayProductModelConstants
 	public string Game { get; set; }
 
 	public string OutOfStockTitleDetailsABTestVersion { get; set; }
-
-	public List<decimal> FlashDealPrices { get; set; }
 
 	public bool EnableRedboxPlus { get; set; }
 }

@@ -69,7 +69,7 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty DealTextProperty = DependencyProperty.Register("DealText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty HotDealTextVisibilityProperty = DependencyProperty.Register("HotDealTextVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
+	public static readonly DependencyProperty DealTextVisibilityProperty = DependencyProperty.Register("DealTextVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RatingLabelProperty = DependencyProperty.Register("RatingLabel", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
@@ -1350,17 +1350,17 @@ public class DisplayProductModel : BrowseItemModel
 		}
 	}
 
-	public Visibility HotDealTextVisibility
+	public Visibility DealTextVisibility
 	{
 		get
 		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(HotDealTextVisibilityProperty));
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DealTextVisibilityProperty));
 		}
 		set
 		{
 			base.Dispatcher.Invoke(delegate
 			{
-				SetValue(HotDealTextVisibilityProperty, value);
+				SetValue(DealTextVisibilityProperty, value);
 			});
 		}
 	}

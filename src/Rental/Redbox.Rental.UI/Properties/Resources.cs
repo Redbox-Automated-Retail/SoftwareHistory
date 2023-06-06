@@ -346,6 +346,10 @@ public class Resources
 
 	public static string customer_black_list_title => ResourceManager.GetString("customer_black_list_title", resourceCulture);
 
+	public static string deals_browse_view_control_page_mask => ResourceManager.GetString("deals_browse_view_control_page_mask", resourceCulture);
+
+	public static string deals_button => ResourceManager.GetString("deals_button", resourceCulture);
+
 	public static string digital_code => ResourceManager.GetString("digital_code", resourceCulture);
 
 	public static string digital_code_alert_message => ResourceManager.GetString("digital_code_alert_message", resourceCulture);
@@ -667,8 +671,6 @@ public class Resources
 	public static string home_button => ResourceManager.GetString("home_button", resourceCulture);
 
 	public static string horror_filter_button => ResourceManager.GetString("horror_filter_button", resourceCulture);
-
-	public static string hot_deal_text => ResourceManager.GetString("hot_deal_text", resourceCulture);
 
 	public static string in_cart => ResourceManager.GetString("in_cart", resourceCulture);
 

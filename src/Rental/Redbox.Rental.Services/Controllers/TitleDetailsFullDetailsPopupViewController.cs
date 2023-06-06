@@ -39,7 +39,7 @@ public class TitleDetailsFullDetailsPopupViewController : BaseViewController
 			titleDetailsFullDetailsPopupViewModel.ServiceFeeMessage = titleDetailsFullDetailsPopupViewInfo.DisplayProductModel.ServiceFeeText;
 			titleDetailsFullDetailsPopupViewModel.ServiceFeeMessageVisibility = titleDetailsFullDetailsPopupViewInfo.DisplayProductModel.ServiceFeeTextVisibility;
 			titleDetailsFullDetailsPopupViewModel.DealMessage = titleDetailsFullDetailsPopupViewInfo.DisplayProductModel.DealText;
-			titleDetailsFullDetailsPopupViewModel.DealMessageVisibility = titleDetailsFullDetailsPopupViewInfo.DisplayProductModel.HotDealTextVisibility;
+			titleDetailsFullDetailsPopupViewModel.DealMessageVisibility = titleDetailsFullDetailsPopupViewInfo.DisplayProductModel.DealTextVisibility;
 			titleDetailsFullDetailsPopupViewModel.CloseButtonText = Resources.close_button.ToUpper();
 			titleDetailsFullDetailsPopupViewModel.OnFullDetailsCloseButtonClicked = (Action)Delegate.Combine(titleDetailsFullDetailsPopupViewModel.OnFullDetailsCloseButtonClicked, new Action(TitleDetailsFullDetailsPopupViewModel_OnCloseButtonClicked));
 			viewUserControl.DataContext = titleDetailsFullDetailsPopupViewModel;

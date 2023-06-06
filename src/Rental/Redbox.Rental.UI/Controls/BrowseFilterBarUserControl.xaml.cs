@@ -147,7 +147,17 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 					Orientation = Orientation.Horizontal
 				};
 				stackPanel3.Children.Add(roundedButton);
-				if (filter.IsSelected && filter.IsVisible)
+				if (filter.ButtonType == BrowseFilterType.Deals && filter.IsVisible && !filter.IsSelected)
+				{
+					stackPanel3.Children.Add(new Image
+					{
+						Source = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-new-sm.png")),
+						Width = 36.0,
+						Height = 20.0,
+						Margin = new Thickness(-11.0, -15.0, -9.0, 0.0)
+					});
+				}
+				else if (filter.IsVisible && filter.IsSelected)
 				{
 					stackPanel3.Children.Add(new Image
 					{

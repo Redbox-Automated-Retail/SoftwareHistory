@@ -7,6 +7,11 @@ namespace Redbox.Rental.Services.KioskClientService.Session;
 
 public class KioskClientServiceSession : BaseKioskClientService, IKioskClientServiceSession
 {
+	private class CreateSessionRequest
+	{
+		public Guid KioskSessionId { get; set; }
+	}
+
 	private const string _apiPath = "api/session";
 
 	public async Task<bool> Start(SessionType sessionType)
@@ -20,6 +25,17 @@ public class KioskClientServiceSession : BaseKioskClientService, IKioskClientSer
 	{
 		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/end", base.KioskClientServiceBaseUrl, "api/session")), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
 		LogResponse("KioskClientServiceSession.End", webResult);
+		return webResult?.Response?.Success ?? false;
+	}
+
+	public bool Create(Guid kioskSessionId)
+	{
+		CreateSessionRequest requestPayload = new CreateSessionRequest
+		{
+			KioskSessionId = kioskSessionId
+		};
+		WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}", base.KioskClientServiceBaseUrl, "api/session")), requestPayload, "POST");
+		LogResponse("KioskClientServiceSession.Create", webResult);
 		return webResult?.Response?.Success ?? false;
 	}
 }

@@ -130,19 +130,11 @@ public static class ConfigSetting
 
 	public const string VistarGetAdTimeout = "VistarGetAdTimeout";
 
-	public const string EnableFlashDeals = "EnableFlashDeals";
-
-	public const string FlashDealPrices = "FlashDealPrices";
-
 	public const string ShowBrowse10Titles = "ShowBrowse10Titles";
-
-	public const string Show99CentsBrowseFilterButton = "Show99CentsBrowseFilterButton";
 
 	public const string EnableBrowseMessagePopup = "EnableBrowseMessagePopup";
 
 	public const string BrowseMessagePopupDuration = "BrowseMessagePopupDuration";
-
-	public const string EnableSonySweepstakes = "EnableSonySweepstakes";
 
 	public const string EnableRedboxSweepstakes = "EnableRedboxSweepstakes";
 
@@ -252,52 +244,6 @@ public static class ConfigSetting
 
 	public const string PerksPassEnabled = "PerksPassEnabled";
 
-	public const string DeviceServiceClientUrl = "DeviceServiceClientUrl";
-
-	public const string ChipEnabled = "ChipEnabled";
-
-	public const string ContactlessEnabled = "ContactlessEnabled";
-
-	public const string CardReadTechnicalFallbackEnabled = "CardReadTechnicalFallbackEnabled";
-
-	public const string CardReadTechnicalFallbackCountLimit = "CardReadTechnicalFallbackCountLimit";
-
-	public const string DeviceServicePleaseWaitDuration = "DeviceServicePleaseWaitDuration";
-
-	public const string ContactlessVisaEnabled = "ContactlessVisaEnabled";
-
-	public const string ContactlessAmexEnabled = "ContactlessAmexEnabled";
-
-	public const string ContactlessMasterCardEnabled = "ContactlessMasterCardEnabled";
-
-	public const string ContactlessDiscoverEnabled = "ContactlessDiscoverEnabled";
-
-	public const string VisaInsertChipEnabled = "VisaInsertChipEnabled";
-
-	public const string AmexInsertChipEnabled = "AmexInsertChipEnabled";
-
-	public const string MasterCardInsertChipEnabled = "MasterCardInsertChipEnabled";
-
-	public const string DiscoverInsertChipEnabled = "DiscoverInsertChipEnabled";
-
-	public const string HideMobilePayOption = "HideMobilePayOption";
-
-	public const string HideApplePayImage = "HideApplePayImage";
-
-	public const string HideGooglePayImage = "HideGooglePayImage";
-
-	public const string GoogleUrl = "GoogleUrl";
-
-	public const string AppleUrl = "AppleUrl";
-
-	public const string BluefinAutoActivate = "BluefinAutoActivate";
-
-	public const string BluefinServiceUrl = "BluefinServiceUrl";
-
-	public const string BluefinServiceApiKey = "BluefinServiceApiKey";
-
-	public const string BluefinServiceTimeout = "BluefinServiceTimeout";
-
 	public const string KioskClientServiceBaseUrl = "KioskClientServiceBaseUrl";
 
 	public const string UpdateClientServiceBaseUrl = "UpdateClientServiceBaseUrl";
@@ -313,8 +259,6 @@ public static class ConfigSetting
 	public const string ZeroTouchEnabled = "ZeroTouchEnabled";
 
 	public const string ZeroTouchPickupEnabled = "ZeroTouchPickupEnabled";
-
-	public const string ZeroTouchReturnEnabled = "ZeroTouchReturnEnabled";
 
 	public const string ZeroTouchContactlessEnabled = "ZeroTouchContactlessEnabled";
 

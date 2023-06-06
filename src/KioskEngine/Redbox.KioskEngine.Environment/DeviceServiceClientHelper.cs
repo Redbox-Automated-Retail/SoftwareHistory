@@ -11,6 +11,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Health;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.ShoppingCart;
 
 namespace Redbox.KioskEngine.Environment;
@@ -82,7 +83,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 			}
 			if (_deviceServiceClient != null)
 			{
-				string url = ServiceLocator.Instance.GetService<IConfiguration>()?.DeviceServiceClientUrl;
+				string url = ServiceLocator.Instance.GetService<IConfiguration>()?.Lifetime.DeviceService.DeviceServiceClientUrl;
 				Task.Run(delegate
 				{
 					result = _deviceServiceClient.ConnectToDeviceService(url, 5000);
@@ -292,15 +293,15 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 	{
 		List<CardBrandAndSource> list = new List<CardBrandAndSource>();
 		Dictionary<CardBrandAndSource, bool> dictionary = new Dictionary<CardBrandAndSource, bool>();
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-		dictionary.Add(CardBrandAndSource.VisaTap, service.ContactlessVisaEnabled);
-		dictionary.Add(CardBrandAndSource.AmexTap, service.ContactlessAmexEnabled);
-		dictionary.Add(CardBrandAndSource.MasterCardTap, service.ContactlessMasterCardEnabled);
-		dictionary.Add(CardBrandAndSource.DiscoverTap, service.ContactlessDiscoverEnabled);
-		dictionary.Add(CardBrandAndSource.VisaChip, service.VisaInsertChipEnabled);
-		dictionary.Add(CardBrandAndSource.AmexChip, service.AmexInsertChipEnabled);
-		dictionary.Add(CardBrandAndSource.MasterCardChip, service.MasterCardInsertChipEnabled);
-		dictionary.Add(CardBrandAndSource.DiscoverChip, service.DiscoverInsertChipEnabled);
+		DeviceServiceConfiguration deviceServiceConfiguration = ServiceLocator.Instance.GetService<IConfiguration>()?.KioskSession?.DeviceService;
+		dictionary.Add(CardBrandAndSource.VisaTap, deviceServiceConfiguration.ContactlessVisaEnabled);
+		dictionary.Add(CardBrandAndSource.AmexTap, deviceServiceConfiguration.ContactlessAmexEnabled);
+		dictionary.Add(CardBrandAndSource.MasterCardTap, deviceServiceConfiguration.ContactlessMasterCardEnabled);
+		dictionary.Add(CardBrandAndSource.DiscoverTap, deviceServiceConfiguration.ContactlessDiscoverEnabled);
+		dictionary.Add(CardBrandAndSource.VisaChip, deviceServiceConfiguration.VisaInsertChipEnabled);
+		dictionary.Add(CardBrandAndSource.AmexChip, deviceServiceConfiguration.AmexInsertChipEnabled);
+		dictionary.Add(CardBrandAndSource.MasterCardChip, deviceServiceConfiguration.MasterCardInsertChipEnabled);
+		dictionary.Add(CardBrandAndSource.DiscoverChip, deviceServiceConfiguration.DiscoverInsertChipEnabled);
 		foreach (KeyValuePair<CardBrandAndSource, bool> item in dictionary)
 		{
 			if (!item.Value)
@@ -365,21 +366,21 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 
 	public void CheckDeviceActivation()
 	{
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-		if (service.BluefinAutoActivate)
+		DeviceServiceConfiguration deviceServiceConfiguration = ServiceLocator.Instance.GetService<IConfiguration>()?.KioskSession?.DeviceService;
+		if (deviceServiceConfiguration.BluefinAutoActivate)
 		{
 			if (IsCardReaderConnected)
 			{
 				LogHelper.Instance.Log("CheckDeviceActivation: Sending CheckActivation command to Device Service Client.");
-				IStoreManager service2 = ServiceLocator.Instance.GetService<IStoreManager>();
-				if (service2 != null)
+				IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
+				if (service != null)
 				{
 					BluefinActivationRequest request = new BluefinActivationRequest
 					{
-						KioskId = service2.KioskId,
-						BluefinServiceUrl = service.BluefinServiceUrl,
-						ApiKey = service.BluefinServiceApiKey,
-						Timeout = service.BluefinServiceTimeout
+						KioskId = service.KioskId,
+						BluefinServiceUrl = deviceServiceConfiguration.BluefinServiceUrl,
+						ApiKey = deviceServiceConfiguration.BluefinServiceApiKey,
+						Timeout = deviceServiceConfiguration.BluefinServiceTimeout
 					};
 					_deviceServiceClient.CheckActivation(request);
 				}
