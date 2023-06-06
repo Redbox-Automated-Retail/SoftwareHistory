@@ -110,7 +110,7 @@ internal class AssetsService : IAssetsService
 					fileInfo.Delete();
 					return true;
 				}
-				if (IsNotAValidAsset(file))
+				if (IsNotAValidAlreadyDownloadedAsset(file))
 				{
 					_logger.LogInfoWithSource("Deleting invalid asset: " + file, "CheckAndDeleteAsset");
 					fileInfo.Delete();
@@ -128,21 +128,15 @@ internal class AssetsService : IAssetsService
 	private async Task DownloadAssets(IEnumerable<StartScreenDetails> startScreens)
 	{
 		IEnumerable<Asset> assets = startScreens.GetAssets();
-		HashSet<(string, string)> hashSet = new HashSet<(string, string)>();
-		foreach (Asset item in assets)
-		{
-			hashSet.Add((item.Url, item.FullPath));
-		}
-		int num = hashSet.Count();
-		if (num <= 0)
+		if (!assets.Any())
 		{
 			return;
 		}
-		_logger.LogInfoWithSource($"found {num} possible assets for download", "DownloadAssets");
+		_logger.LogInfoWithSource($"found {assets.Count()} possible assets for download", "DownloadAssets");
 		List<Task<bool>> list = new List<Task<bool>>();
-		foreach (var item2 in hashSet)
+		foreach (Asset item in assets)
 		{
-			list.Add(CheckAndDownloadAsset(item2.Item1, item2.Item2));
+			list.Add(CheckAndDownloadAsset(item.Url, item.FullPath));
 		}
 		list.ForEach(delegate(Task<bool> t)
 		{
@@ -152,7 +146,7 @@ internal class AssetsService : IAssetsService
 		_logger.LogInfoWithSource($"downloaded {source.Count((bool r) => r)} assets from cms", "DownloadAssets");
 	}
 
-	public bool IsNotAValidAsset(string file)
+	public bool IsNotAValidAlreadyDownloadedAsset(string file)
 	{
 		try
 		{
@@ -172,7 +166,7 @@ internal class AssetsService : IAssetsService
 
 	private Task<bool> CheckAndDownloadAsset(string url, string local)
 	{
-		return new Task<bool>(() => IsNotAValidAsset(local) && DownloadAsset(url, local).Result);
+		return new Task<bool>(() => IsNotAValidAlreadyDownloadedAsset(local) && DownloadAsset(url, local).Result);
 	}
 
 	private async Task<bool> DownloadAsset(string url, string local)
@@ -181,18 +175,26 @@ internal class AssetsService : IAssetsService
 		bool result;
 		try
 		{
-			_logger.LogInfoWithSource("Downloading asset: " + local, "DownloadAsset");
-			APIResponse<byte[]> response = await _httpService.DownloadFile(url);
-			if (response.IsSuccessStatusCode)
+			if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(local))
 			{
-				await File.WriteAllBytesAsync(local, response.Response);
-				_logger.LogInfoWithSource($"saved asset file: {local}, size: {response.Response.Length}", "DownloadAsset");
-				result = true;
+				_logger.LogErrorWithSource("Asset is invalid, skipping download", "DownloadAsset");
+				result = false;
 			}
 			else
 			{
-				_logger.LogErrorWithSource($"Received status {response.StatusCode} downloading asset file: {local}", "DownloadAsset");
-				result = false;
+				_logger.LogInfoWithSource("Downloading asset: " + local, "DownloadAsset");
+				APIResponse<byte[]> response = await _httpService.DownloadFile(url);
+				if (response.IsSuccessStatusCode)
+				{
+					await File.WriteAllBytesAsync(local, response.Response);
+					_logger.LogInfoWithSource($"saved asset file: {local}, size: {response.Response.Length}", "DownloadAsset");
+					result = true;
+				}
+				else
+				{
+					_logger.LogErrorWithSource($"Received status {response.StatusCode} downloading asset file: {local}", "DownloadAsset");
+					result = false;
+				}
 			}
 		}
 		catch (Exception ex)
@@ -207,7 +209,14 @@ internal class AssetsService : IAssetsService
 	{
 		foreach (Asset asset in assets)
 		{
-			asset.FullPath = Path.Combine(_assetsFolderPath, Path.GetFileName(new Uri(asset.Url).LocalPath));
+			if (Uri.TryCreate(asset.Url, UriKind.Absolute, out Uri result))
+			{
+				asset.FullPath = Path.Combine(_assetsFolderPath, Path.GetFileName(result.LocalPath));
+			}
+			else
+			{
+				_logger.LogErrorWithSource($"Invalid asset url: '{asset.Url}' for asset id: {asset.Id}!", "BuildLocalPaths");
+			}
 		}
 	}
 }

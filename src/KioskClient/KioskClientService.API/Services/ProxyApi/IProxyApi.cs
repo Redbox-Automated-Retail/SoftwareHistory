@@ -44,7 +44,5 @@ public interface IProxyApi
 
 	Task<APIResponse<GetPlanogramsResponse>> GetPlanograms(long kioskId, DateTime? lastChange = null);
 
-	Task<APIResponse<GetWelcomeScreenAssetsResponse>> GetWelcomeScreenAssets(long kioskId, DateTime? lastChange = null);
-
 	Task<APIResponse<PostKioskCampaignsResponse>> PostKioskCampaigns(long kioskId, PostKioskCampaignsRequest request);
 }

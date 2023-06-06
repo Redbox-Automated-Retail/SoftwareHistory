@@ -1,5 +1,5 @@
 using KioskClientService.API.Services.Ads;
-using KioskClientService.API.Services.App;
+using KioskClientService.API.Services.Session;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -19,10 +19,18 @@ public class SessionController : ControllerBase
 		_sessionService = sessionService;
 	}
 
-	[HttpPost("start")]
-	public ActionResult<SessionResponse> StartSession(SessionType sessionType)
+	[ProducesResponseType(typeof(SessionResponse), 200)]
+	[HttpPost]
+	public ActionResult<SessionResponse> CreateKioskSession(CreateKioskSessionRequest createKioskSessionRequest)
 	{
-		_sessionService?.Start(sessionType);
+		_sessionService?.CreateKioskSession(createKioskSessionRequest.KioskSessionId);
+		return new OkObjectResult(new SessionResponse());
+	}
+
+	[HttpPost("start")]
+	public ActionResult<SessionResponse> StartUserInteraction(SessionType sessionType)
+	{
+		_sessionService?.StartUserInteraction(sessionType);
 		return new OkObjectResult(new SessionResponse());
 	}
 

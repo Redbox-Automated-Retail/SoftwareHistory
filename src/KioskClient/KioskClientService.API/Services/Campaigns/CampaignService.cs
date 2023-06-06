@@ -103,7 +103,7 @@ internal class CampaignService : ICampaignService
 					StatusCode = HttpStatusCode.AlreadyReported
 				};
 			}
-			ProcessResponse(aPIResponse.Response, data);
+			await ProcessResponse(aPIResponse.Response, data);
 			return new ApiBaseResponse
 			{
 				StatusCode = HttpStatusCode.OK
@@ -121,7 +121,7 @@ internal class CampaignService : ICampaignService
 		}
 	}
 
-	private async void ProcessResponse(PostKioskCampaignsResponse response, CampaignData data)
+	private async Task ProcessResponse(PostKioskCampaignsResponse response, CampaignData data)
 	{
 		if (response.InCarts != null)
 		{
@@ -268,7 +268,7 @@ internal class CampaignService : ICampaignService
 					continue;
 				}
 				startAsset.Asset.Url = null;
-				if (_assets.IsNotAValidAsset(startAsset.Asset.FullPath))
+				if (_assets.IsNotAValidAlreadyDownloadedAsset(startAsset.Asset.FullPath))
 				{
 					_logger.LogErrorWithSource($"Start asset control {control.ControlId} does not have a valid asset for: {startAsset.Asset.FullPath}, removing from start screen campaign", "GetActiveStartScreen");
 					activeStartScreen.Controls.Remove(startAsset);

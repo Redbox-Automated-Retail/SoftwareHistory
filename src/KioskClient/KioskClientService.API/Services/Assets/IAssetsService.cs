@@ -10,7 +10,7 @@ public interface IAssetsService
 {
 	Task<ApiBaseResponse> Refresh(IEnumerable<StartScreenDetails> startScreens);
 
-	bool IsNotAValidAsset(string file);
+	bool IsNotAValidAlreadyDownloadedAsset(string file);
 
 	void BuildLocalPaths(IEnumerable<Asset> assets);
 }

@@ -1,4 +1,4 @@
-namespace KioskClientService.API.Services.App;
+namespace KioskClientService.API.Services.Session;
 
 public enum SessionType
 {

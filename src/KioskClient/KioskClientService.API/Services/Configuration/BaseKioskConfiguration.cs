@@ -6,8 +6,6 @@ namespace KioskClientService.API.Services.Configuration;
 
 public class BaseKioskConfiguration : BaseConfiguration, IKioskConfiguration
 {
-	public MarketingWelcomeScreen MarketingWelcomeScreen { get; set; }
-
 	public CampaignConfiguration Campaigns { get; set; }
 
 	public AssetsConfiguration Assets { get; set; }
@@ -19,6 +17,12 @@ public class BaseKioskConfiguration : BaseConfiguration, IKioskConfiguration
 	public KioskClientProxyApi KioskClientProxyApi { get; set; }
 
 	public KioskClientSubscription KioskClientSubscriptions { get; set; }
+
+	public DeviceServiceConfiguration DeviceService { get; set; }
+
+	public BrowseConfiguration Browse { get; set; }
+
+	public CMSConfiguration CMS { get; set; }
 
 	public TestData TestData { get; set; }
 

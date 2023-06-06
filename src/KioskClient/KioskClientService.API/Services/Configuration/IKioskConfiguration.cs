@@ -4,8 +4,6 @@ public interface IKioskConfiguration
 {
 	long ConfigurationVersion { get; }
 
-	MarketingWelcomeScreen MarketingWelcomeScreen { get; }
-
 	CampaignConfiguration Campaigns { get; }
 
 	AssetsConfiguration Assets { get; }
@@ -17,6 +15,12 @@ public interface IKioskConfiguration
 	KioskClientProxyApi KioskClientProxyApi { get; }
 
 	KioskClientSubscription KioskClientSubscriptions { get; }
+
+	DeviceServiceConfiguration DeviceService { get; }
+
+	BrowseConfiguration Browse { get; }
+
+	CMSConfiguration CMS { get; }
 
 	TestData TestData { get; }
 

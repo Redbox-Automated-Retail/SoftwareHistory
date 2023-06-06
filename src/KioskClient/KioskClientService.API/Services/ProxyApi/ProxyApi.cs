@@ -40,8 +40,6 @@ internal class ProxyApi : IProxyApi
 
 	private const string _planogram = "api/planogram";
 
-	private const string _welcomeScreenAssets = "api/welcomescreenassets";
-
 	private const string _cms = "api/cms";
 
 	private const string _proxyAuthHeader = "x-api-key";
@@ -192,16 +190,6 @@ internal class ProxyApi : IProxyApi
 	{
 		List<Header> kioskCloudHeaders = _kioskCloudClientConfiguration.GetKioskCloudHeaders(Guid.NewGuid(), kioskId);
 		return kioskCloudHeaders.AddCompression();
-	}
-
-	public async Task<APIResponse<GetWelcomeScreenAssetsResponse>> GetWelcomeScreenAssets(long kioskId, DateTime? lastChange = null)
-	{
-		string text = "api/welcomescreenassets";
-		if (lastChange.HasValue)
-		{
-			text = text + "?lastReportedTime=" + lastChange.Value.ToString("yyyy-MM-ddTHH:mm:ss");
-		}
-		return await _httpService.SendRequest<GetWelcomeScreenAssetsResponse>(ProxyApiUrl, text, null, HttpMethod.Get, GetHeaders(kioskId));
 	}
 
 	public async Task<APIResponse<PostKioskCampaignsResponse>> PostKioskCampaigns(long kioskId, PostKioskCampaignsRequest request)
