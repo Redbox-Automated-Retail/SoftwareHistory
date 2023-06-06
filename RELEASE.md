@@ -1,17 +1,17 @@
-# Willys (2023-04-25)
+# Xterra (2023-06-06)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-04-25
-- Store labels: kop-rental-bundles-Willys
+- Date (first download in the snapshots): 2023-06-06
+- Store labels: kop-rental-bundles-Xterra
 - Package revisions:
-  - `kop-rental-bundles` revision 173 (`90FF8151B8F2E9C551F2AD6A86243D0B83167250`)
+  - `kop-rental-bundles` revision 174 (`C60D492A01AB50C45A39C06E2A265FA1441CAD37`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `65640D778C072DD74C11B2D8F12A0CB0C5353868` | exact |
-| `fm.bundle` |  |  | `0E8C99AAA5F408B1641CB77FCFCD3C20AD7C92FB` | exact |
-| `library-rental-common.bundle` |  |  | `E8463E269A72B9EDCC1A3380D5E57E9242751B81` | exact |
-| `ra-2.x.bundle` |  |  | `B2DF749F4C9B8E8AEB031DE1DFE73246BC831B3F` | exact |
+| `cp.bundle` |  |  | `D3331660C6A7808E8843934B79F3FC04DB42494B` | exact |
+| `fm.bundle` |  |  | `FD0F1DDAC8A613E453494897A0D5ECC6305B1447` | exact |
+| `library-rental-common.bundle` |  |  | `59320BC240638C618B2E45A404713C9EE5419812` | exact |
+| `ra-2.x.bundle` |  |  | `C1A5F2E66BF972F2C4172C4F96B44467F13D371C` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
