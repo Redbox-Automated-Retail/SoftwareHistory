@@ -1,17 +1,17 @@
-# Xterra (2023-06-06)
+# Xterra SR (2023-06-26)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-06-06
-- Store labels: kop-rental-bundles-Xterra
+- Date (first download in the snapshots): 2023-06-26
+- Store labels: kop-rental-bundles-XterraSR
 - Package revisions:
-  - `kop-rental-bundles` revision 174 (`C60D492A01AB50C45A39C06E2A265FA1441CAD37`)
+  - `kop-rental-bundles` revision 175 (`1575FFA146CE7B815D68D7BACE295B014E2E86E6`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `D3331660C6A7808E8843934B79F3FC04DB42494B` | exact |
-| `fm.bundle` |  |  | `FD0F1DDAC8A613E453494897A0D5ECC6305B1447` | exact |
-| `library-rental-common.bundle` |  |  | `59320BC240638C618B2E45A404713C9EE5419812` | exact |
-| `ra-2.x.bundle` |  |  | `C1A5F2E66BF972F2C4172C4F96B44467F13D371C` | exact |
+| `cp.bundle` |  |  | `F49477B618F3165F161B8625A1836C8B9ED13E7C` | exact |
+| `fm.bundle` |  |  | `1A4407300738EF5E777D7217E2F9CB6AAFB34970` | exact |
+| `library-rental-common.bundle` |  |  | `19A4991C77D8739A476DCAA833C89B7D51A6891E` | exact |
+| `ra-2.x.bundle` |  |  | `4CC1527843BA7AF60264E87D2B3FF5447C6C35F2` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
