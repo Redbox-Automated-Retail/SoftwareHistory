@@ -47,7 +47,7 @@
             <TextBlock Name="DealMessageText" MaxHeight="32" Margin="0,8,0,8" Style="{StaticResource font_montserrat_medium_12}" Foreground="#060208" LineHeight="16" TextWrapping="Wrap" TextTrimming="WordEllipsis" Text="{Binding Path=DealMessage, FallbackValue='Extra nights for Hot Deals are $1.50 DVD, $2.00 Blu-ray. Our Hot Deal can change at any time. It only shows up for specific titles, locations and dates – so you&amp;rsquo;re in luck.'}" Visibility="{Binding Path=DealMessageVisibility, FallbackValue=Collapsed}" />
           </StackPanel>
         </DockPanel>
-        <Border Width="944" Height="104" CornerRadius="0,0,28,28" VerticalAlignment="Bottom" Background="#EBEBEB">
+        <Border Width="944" Height="104" CornerRadius="0,0,28,28" VerticalAlignment="Bottom" Background="#D8D8D8">
           <Redbox:RoundedButton Name="CloseButton" Width="172" Style="{StaticResource button_light_large_secondary_style}" Command="{x:Static views:TitleDetailsFullDetailsPopupViewUserControlCommands.CloseCommand}">
             <TextBlock Name="CloseButtonText" Style="{StaticResource button_text_large_style}" Text="{Binding Path=CloseButtonText, FallbackValue=CLOSE}" />
           </Redbox:RoundedButton>

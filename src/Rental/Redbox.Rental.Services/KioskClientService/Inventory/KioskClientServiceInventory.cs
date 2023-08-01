@@ -9,6 +9,7 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService.Inventory;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskClientService.Inventory;
 
@@ -265,5 +266,45 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 	public async Task<IKioskClientServiceResult> DiscFraudAsync(string storeNumber, string barcode, DateTime readDate, Dictionary<string, string> properties)
 	{
 		return await Task.Run(() => DiscFraud(storeNumber, barcode, readDate, properties));
+	}
+
+	public IKioskTitlesCountResponse KioskTitlesCount(long sourceKioskId, List<long> kioskIds, List<long> titleIds)
+	{
+		KioskTitlesCountResponse kioskTitlesCountResponse = new KioskTitlesCountResponse();
+		try
+		{
+			var anon = new
+			{
+				MessageId = Guid.NewGuid(),
+				SourceKioskId = sourceKioskId,
+				KioskIds = kioskIds,
+				Titles = titleIds
+			};
+			LogHelper.Instance.Log($"KioskClientServiceInventory.KioskTitlesCount - sending request of {anon.ToJson()}");
+			WebResult<KioskTitlesCountResponse> webResult = ExecuteWebRequest<KioskTitlesCountResponse>(new Uri(string.Format("{0}/{1}/kiosktitlescount", base.KioskClientServiceBaseUrl, "api/inventory")), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Inventory.KioskTitlesCountTimeout);
+			LogHelper.Instance.Log($"KioskClientServiceInventory.KioskTitlesCount - api response: {webResult}");
+			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
+			{
+				LogHelper.Instance.Log("KioskClientServiceInventory.KioskTitlesCount - api call successful");
+				kioskTitlesCountResponse.KioskTitlesCount.AddRange(webResult.Response.KioskTitlesCount);
+			}
+			else
+			{
+				string text = $"api call returned result code: {webResult.ExceptionStatus}";
+				LogHelper.Instance.Log($"KioskClientServiceInventory.KioskTitlesCount - {text}");
+				kioskTitlesCountResponse.Error = text;
+			}
+		}
+		catch (Exception ex)
+		{
+			LogHelper.Instance.Log("KioskClientServiceInventory.KioskTitlesCount - An unhandled exception was raised!", ex);
+			kioskTitlesCountResponse.Error = ex.Message;
+		}
+		return kioskTitlesCountResponse;
+	}
+
+	public async Task<IKioskTitlesCountResponse> KioskTitlesCountAsync(long sourceKioskId, List<long> kioskIds, List<long> titleIds)
+	{
+		return await Task.Run(() => KioskTitlesCount(sourceKioskId, kioskIds, titleIds));
 	}
 }

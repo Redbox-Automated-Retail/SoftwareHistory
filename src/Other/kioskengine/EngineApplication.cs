@@ -708,6 +708,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			ServiceLocator.Instance.AddService(typeof(IRentalSessionService), new RentalSessionService());
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
+			IKioskClientService service3 = ServiceLocator.Instance.GetService<IKioskClientService>();
 			ControlPanelService instance = new ControlPanelService();
 			ServiceLocator.Instance.AddService(typeof(IControlPanelService), instance);
 			FieldMaintenanceService instance2 = new FieldMaintenanceService();
@@ -716,6 +717,8 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			ServiceLocator.Instance.AddService(typeof(IMarketingConfigurationManager), marketingConfigurationManager);
 			StoreManagerService storeManagerService = new StoreManagerService(Country.US, service2);
 			ServiceLocator.Instance.AddService(typeof(IStoreManager), storeManagerService);
+			service3?.Kiosk?.LoadNearbyKiosks();
+			service3?.Dual?.Refresh();
 			KioskHealthConfiguration kioskHealthConfiguration = new KioskHealthConfiguration(service2);
 			ServiceLocator.Instance.AddService(typeof(IKioskHealthConfiguration), kioskHealthConfiguration);
 			KioskEventService kioskEventService = new KioskEventService(storeManagerService, kioskHealthConfiguration);
@@ -740,9 +743,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			PricingService pricingService = new PricingService(service, storeManagerService);
 			ServiceLocator.Instance.AddService(typeof(IPricingService), pricingService);
 			pricingService.Start();
-			IResourceBundleService service3 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			service3.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
-			MarketingAdService marketingAdService = new MarketingAdService(marketingConfigurationManager, storeManagerService, service3);
+			IResourceBundleService service4 = ServiceLocator.Instance.GetService<IResourceBundleService>();
+			service4.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
+			MarketingAdService marketingAdService = new MarketingAdService(marketingConfigurationManager, storeManagerService, service4);
 			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), marketingAdService);
 			VistarAdService vistarAdService = new VistarAdService();
 			ServiceLocator.Instance.AddService(typeof(IVistarAdService), vistarAdService);

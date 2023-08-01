@@ -7,8 +7,10 @@ using Redbox.Rental.Model.KioskClientService.Campaign;
 using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskClientService.CustomerProfile;
 using Redbox.Rental.Model.KioskClientService.Data;
+using Redbox.Rental.Model.KioskClientService.Dual;
 using Redbox.Rental.Model.KioskClientService.Installer;
 using Redbox.Rental.Model.KioskClientService.Inventory;
+using Redbox.Rental.Model.KioskClientService.Kiosk;
 using Redbox.Rental.Model.KioskClientService.Loyalty;
 using Redbox.Rental.Model.KioskClientService.Marketing;
 using Redbox.Rental.Model.KioskClientService.Personalization;
@@ -27,8 +29,10 @@ using Redbox.Rental.Services.KioskClientService.Campaign;
 using Redbox.Rental.Services.KioskClientService.Configuration;
 using Redbox.Rental.Services.KioskClientService.CustomerProfile;
 using Redbox.Rental.Services.KioskClientService.Data;
+using Redbox.Rental.Services.KioskClientService.Dual;
 using Redbox.Rental.Services.KioskClientService.Installer;
 using Redbox.Rental.Services.KioskClientService.Inventory;
+using Redbox.Rental.Services.KioskClientService.Kiosk;
 using Redbox.Rental.Services.KioskClientService.Loyalty;
 using Redbox.Rental.Services.KioskClientService.Marketing;
 using Redbox.Rental.Services.KioskClientService.Personalization;
@@ -59,9 +63,13 @@ public class KioskClientService : IKioskClientService
 
 	public IKioskClientServiceData Data { get; private set; }
 
+	public IKioskClientServiceDual Dual { get; private set; }
+
 	public IKioskClientServiceInstaller Installer { get; private set; }
 
 	public IKioskClientServiceInventory Inventory { get; private set; }
+
+	public IKioskClientServiceKiosk Kiosk { get; private set; }
 
 	public IKioskClientServiceLoyalty Loyalty { get; private set; }
 
@@ -95,8 +103,10 @@ public class KioskClientService : IKioskClientService
 		Campaign = new KioskClientServiceCampaign();
 		CustomerProfile = new KioskClientServiceCustomerProfile();
 		Data = new KioskClientServiceData();
+		Dual = new KioskClientServiceDual();
 		Installer = new KioskClientServiceInstaller();
 		Inventory = new KioskClientServiceInventory();
+		Kiosk = new KioskClientServiceKiosk();
 		Loyalty = new KioskClientServiceLoyalty();
 		Marketing = new KioskClientServiceMarketing();
 		Personalization = new KioskClientServicePersonalization();

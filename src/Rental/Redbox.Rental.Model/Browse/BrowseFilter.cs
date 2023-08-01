@@ -63,6 +63,8 @@ public class BrowseFilter : DependencyObject
 		}
 	}
 
+	public bool IsDeselectable { get; set; }
+
 	public bool IsButtonEnabled
 	{
 		get

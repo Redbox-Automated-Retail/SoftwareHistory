@@ -24,23 +24,5 @@ public partial class DisplayProductAToZUserControl : UserControl, IComponentConn
 		_displayProductModel = base.DataContext as DisplayProductModel;
 		_displayGroupModel = base.DataContext as DisplayGroupModel;
 		MainGrid.Visibility = ((_displayProductModel == null && _displayGroupModel == null) ? Visibility.Collapsed : Visibility.Visible);
-		UpdateTextStyle();
-	}
-
-	private void UpdateTextStyle()
-	{
-		if (_displayGroupModel != null)
-		{
-			ProductName.FontSize = Math.Max(0.34 * base.ActualHeight, 1.0);
-		}
-		else if (_displayProductModel != null)
-		{
-			ProductName.FontSize = Math.Max(0.25 * base.ActualHeight, 1.0);
-		}
-	}
-
-	private void UserControl_SizeChanged(object sender, SizeChangedEventArgs e)
-	{
-		UpdateTextStyle();
 	}
 }

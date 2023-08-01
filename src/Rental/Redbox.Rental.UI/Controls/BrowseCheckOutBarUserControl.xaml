@@ -7,7 +7,7 @@
     <CommandBinding Command="{x:Static localbase:Commands.SignOutCommand}" Executed="SignOutCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.MyPerksCommand}" Executed="MyPerksCommandBinding_Executed" />
   </UIElement.CommandBindings>
-  <Grid Background="{StaticResource LightGrayBackgroundBrush}" VerticalAlignment="Bottom" Height="145">
+  <Grid Background="{StaticResource MediumGrayBrush}" VerticalAlignment="Bottom" Height="145">
     <DockPanel LastChildFill="True">
       <StackPanel Name="LoyaltyStackPanel" DockPanel.Dock="Left" Orientation="Horizontal">
         <Grid Name="ADARedboxPlusSignOutGrid" MinWidth="120" MaxWidth="170" Visibility="{Binding ADARedboxPlusSignOutGridVisibility, FallbackValue=Collapsed}">
@@ -67,8 +67,8 @@
                     <Setter Property="Template">
                       <Setter.Value>
                         <ControlTemplate TargetType="{x:Type UserControl}">
-                          <Grid Background="#FFFFFFFF" Margin="8,19,16,15">
-                            <Border BorderThickness="1" BorderBrush="#FFD3D3D3" />
+                          <Grid Background="#FFFFFFFF" Margin="10,19,17,15">
+                            <Border BorderThickness="1" BorderBrush="#FF000000" />
                           </Grid>
                         </ControlTemplate>
                       </Setter.Value>
@@ -101,7 +101,7 @@
             </Grid>
             <local:BrowseUserControl x:Name="MiniCartControl" Height="128" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,5,0,0" ShowPaddles="False" BorderShadowVisibility="Collapsed" DataContext="{Binding Path=MiniCartControlModel}" />
           </Grid>
-          <Redbox:RoundedButton Name="EmptyCartAddItemMessage" Height="60" Width="310" UsedDefaultCornerRadius="True" Style="{StaticResource TransparentButton}" Visibility="{Binding Path=EmptyCartAddItemMessageVisibility, FallbackValue=Visible}">
+          <Redbox:RoundedButton Name="EmptyCartAddItemMessage" Margin="-7,0,0,0" Height="60" Width="310" UsedDefaultCornerRadius="True" Style="{StaticResource TransparentButton}" Visibility="{Binding Path=EmptyCartAddItemMessageVisibility, FallbackValue=Visible}">
             <Grid Background="{StaticResource LightGrayBackgroundBrush}">
               <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Name="AddToCartLabelText1" Style="{StaticResource font_montserrat_medium_16}" Foreground="#4A4A4A" Margin="3,3,3,3" VerticalAlignment="Center" Text="{Binding Path=AddToCartLabel1Text, FallbackValue=PRESS}" />
@@ -112,7 +112,7 @@
               </StackPanel>
             </Grid>
           </Redbox:RoundedButton>
-          <TextBlock Name="AddToADACartLabel" Style="{StaticResource font_montserrat_regular_13}" Foreground="{StaticResource RbPurpleBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="3" Text="{Binding Path=AddToADACartLabelText, FallbackValue=To rent a disc touch its picture or its number above.}" Visibility="{Binding Path=AddToADACartLabelVisibility, FallbackValue=Collapsed}" />
+          <TextBlock Name="AddToADACartLabel" Style="{StaticResource font_montserrat_regular_13}" Foreground="{StaticResource RbPurpleBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="3,3,3,3" Text="{Binding Path=AddToADACartLabelText, FallbackValue=To rent a disc touch its picture or its number above.}" Visibility="{Binding Path=AddToADACartLabelVisibility, FallbackValue=Collapsed}" />
         </Grid>
       </DockPanel>
     </DockPanel>

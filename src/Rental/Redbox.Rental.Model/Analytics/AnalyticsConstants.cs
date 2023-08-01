@@ -161,6 +161,8 @@ public static class AnalyticsConstants
 
 		public const string BrowseQuitMessagePopupQuit = "BrowseQuitMessagePopupQuit";
 
+		public const string BrowseWatchOptions = "BrowseWatchOptions";
+
 		public const string BulletListPopupReserveOnlineGotit = "BulletListPopupReserveOnlineGotit";
 
 		public const string BulletListPopupRedboxPerksGotit = "BulletListPopupRedboxPerksGotit";
@@ -489,7 +491,17 @@ public static class AnalyticsConstants
 
 		public const string TitleDetailsMoreLikeThis = "TitleDetailsMoreLikeThis";
 
+		public const string TitleDetailsDualInStockLearnMore = "TitleDetailsDualInStockLearnMore";
+
+		public const string TitleDetailsDualInStockLearnMoreClose = "TitleDetailsDualInStockLearnMoreClose";
+
 		public const string TitleDetailsFullDetailsPopupClose = "TitleDetailsFullDetailsPopupClose";
+
+		public const string TitleDetailsWatchOptionsPopupMoreLikeThis = "TitleDetailsWatchOptionsPopupMoreLikeThis";
+
+		public const string TitleDetailsWatchOptionsPopupSeeFullDetails = "TitleDetailsWatchOptionsPopupSeeFullDetails";
+
+		public const string TitleDetailsWatchOptionsPopupClose = "TitleDetailsWatchOptionsPopupClose";
 
 		public const string UpsellUpgrade = "UpsellUpgrade";
 

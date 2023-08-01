@@ -7,11 +7,13 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.Products;
 using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.ShoppingCart;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
@@ -964,11 +966,20 @@ public class KioskProductView
 	private void LoadTitleRollupProducts()
 	{
 		_titleRollupProducts.Clear();
+		List<long> sortOrderProductGroupIds = null;
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.Current.Browse.LoadSortOrderProductGroups)
+		{
+			ProductGroupSortOrder productGroupSortOrder = ServiceLocator.Instance.GetService<IKioskClientService>()?.ProductGroups?.GetSortOrder();
+			sortOrderProductGroupIds = ((productGroupSortOrder != null && productGroupSortOrder.SortOrderType > 0 && productGroupSortOrder.SortOrders != null && productGroupSortOrder.SortOrders.Count > 0) ? ((IEnumerable<SortOrder>)productGroupSortOrder.SortOrders).Select((Func<SortOrder, long>)((SortOrder so) => so.ProductGroupId)).ToList() : null);
+		}
 		ProfileDataInstance.ProductGroups.Where((KeyValuePair<long, ProductGroup> pair) => pair.Value.ProductGroupTypeId == 1).ForEach(delegate(KeyValuePair<long, ProductGroup> pair)
 		{
-			if (pair.Value.ProductIds.Any((long id) => _titleProducts.ContainsKey(id)))
+			bool num = pair.Value.ProductIds.Any((long id) => _titleProducts.ContainsKey(id));
+			bool flag = sortOrderProductGroupIds?.Contains(pair.Value.ProductGroupId) ?? false;
+			bool flag2 = !num & flag;
+			if (num | flag2)
 			{
-				AddMissingProductIds(pair.Value.ProductIds);
+				AddMissingProductIds(pair.Value.ProductIds, flag2);
 				TitleRollupProduct titleRollupProduct = new TitleRollupProduct(pair.Value, _titleProducts, _mdvProducts, ProfileDataInstance, _store);
 				_titleRollupProducts[titleRollupProduct.ProductGroupId] = titleRollupProduct;
 			}

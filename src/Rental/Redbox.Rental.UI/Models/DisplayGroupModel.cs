@@ -8,6 +8,41 @@ public class DisplayGroupModel : BrowseItemModel
 {
 	private Visibility _rightAddButtonVisibility;
 
+	public static readonly DependencyProperty WatchOptionsVisibilityProperty = DependencyProperty.Register("WatchOptionsVisibility", typeof(Visibility), typeof(DisplayGroupModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty WatchOptionsAZVisibilityProperty = DependencyProperty.Register("WatchOptionsAZVisibility", typeof(Visibility), typeof(DisplayGroupModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockVisibilityProperty = DependencyProperty.Register("DualInStockVisibility", typeof(Visibility), typeof(DisplayGroupModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockAZVisibilityProperty = DependencyProperty.Register("DualInStockAZVisibility", typeof(Visibility), typeof(DisplayGroupModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty OutOfStockTextAZVisibilityProperty = DependencyProperty.Register("OutOfStockTextAZVisibility", typeof(Visibility), typeof(DisplayGroupModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockTextKioskTextProperty = DependencyProperty.Register("DualInStockTextKioskText", typeof(string), typeof(DisplayGroupModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockTextAZKioskTextProperty = DependencyProperty.Register("DualInStockTextAZKioskText", typeof(string), typeof(DisplayGroupModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
 	public static readonly DependencyProperty SeparatorLineStyleProperty = DependencyProperty.Register("SeparatorLineStyle", typeof(Style), typeof(DisplayGroupModel), new FrameworkPropertyMetadata(null)
 	{
 		AffectsRender = true
@@ -158,6 +193,111 @@ public class DisplayGroupModel : BrowseItemModel
 	public string ComingSoonButtonText { get; set; }
 
 	public Brush BackgroundBrush { get; set; }
+
+	public Visibility WatchOptionsVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(WatchOptionsVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(WatchOptionsVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility WatchOptionsAZVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(WatchOptionsAZVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(WatchOptionsAZVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility DualInStockVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DualInStockVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility DualInStockAZVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DualInStockAZVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockAZVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility OutOfStockTextAZVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(OutOfStockTextAZVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OutOfStockTextAZVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string DualInStockTextKioskText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DualInStockTextKioskTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockTextKioskTextProperty, value);
+			});
+		}
+	}
+
+	public string DualInStockTextAZKioskText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DualInStockTextAZKioskTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockTextAZKioskTextProperty, value);
+			});
+		}
+	}
 
 	public Style SelectedTitleStyle { get; set; }
 

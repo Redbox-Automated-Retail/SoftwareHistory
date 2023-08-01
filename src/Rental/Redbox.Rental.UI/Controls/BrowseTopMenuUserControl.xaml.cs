@@ -131,6 +131,7 @@ public partial class BrowseTopMenuUserControl : RentalUserControl, IWPFActor, IC
 				stackPanel2.Children.Add(roundedButton);
 				if (menuButton.IsSelected)
 				{
+					roundedButton.Style = GetStyle(this, "classic_menu_button_style_disabled");
 					stackPanel2.Children.Add(new Image
 					{
 						Source = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-lg.png")),

@@ -566,6 +566,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 				if (result.Success && (deserializablePickupValidationResult?.ReferenceNumbers?.Count ?? 0) > 0)
 				{
 					session.ShoppingCart.SetReferenceNumber(deserializablePickupValidationResult.ReferenceNumbers.First());
+					result.ReferenceNumbers = deserializablePickupValidationResult.ReferenceNumbers;
 				}
 				if (deserializablePickupValidationResult != null)
 				{
@@ -1072,5 +1073,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		result.Properties["cancelled_reservations"] = validateResult.CancelledReservations?.ToLuaTable();
 		result.Properties["allow_rop"] = validateResult.AllowRop;
 		result.Properties["cancel_reason"] = validateResult.CancelReason;
+		result.Properties["reference_number"] = validateResult.ReferenceNumbers?.FirstOrDefault();
 	}
 }

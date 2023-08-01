@@ -54,7 +54,7 @@ public class ProductFlagCollection : List<ProductFlag>
 					{
 						Flag = ProductFlags.OutOfStock,
 						TextKeyName = "flag_out_of_stock",
-						FlagStyleName = "charcoal_grey_flag_style"
+						FlagStyleName = "gray_flag_style"
 					},
 					new ProductFlag
 					{

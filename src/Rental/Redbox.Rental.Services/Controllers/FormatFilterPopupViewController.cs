@@ -120,13 +120,20 @@ public class FormatFilterPopupViewController : BaseViewController
 
 	private static void ProcessButtonClick(TitleType filterType, string analysisText)
 	{
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("FormatFilterPopupFilter", filterType.ToString());
-		BrowseState.TitleType = filterType;
-		BrowseState.BrowseSelectedSort = TitleTypeToSelectedSort(filterType);
-		BrowseState.BrowseMode = BrowseFunctions.GetBrowseMode(filterType);
-		BrowseState.PageNumber = 1;
-		BrowseState.BrowsePriceRangeFilter = null;
-		BrowseState.BrowseStudio = null;
+		if (!BaseViewController.IsADAMode && filterType == TitleType.All)
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("FormatFilterPopupFilter", "Cancel");
+		}
+		else
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("FormatFilterPopupFilter", filterType.ToString());
+			BrowseState.TitleType = filterType;
+			BrowseState.BrowseSelectedSort = TitleTypeToSelectedSort(filterType);
+			BrowseState.BrowseMode = BrowseFunctions.GetBrowseMode(filterType);
+			BrowseState.PageNumber = 1;
+			BrowseState.BrowsePriceRangeFilter = null;
+			BrowseState.BrowseStudio = null;
+		}
 		OrchestrationService.ViewGoBackSafe($"FormatFilterPopupViewController {analysisText}", popOnly: false);
 	}
 

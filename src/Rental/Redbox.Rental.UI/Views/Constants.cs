@@ -164,6 +164,8 @@ public class Constants
 		public const string LeadGenerationOfferConfirmationView = "LeadGenerationOfferConfirmationView";
 
 		public const string ReturnVisitPromoOfferView = "ReturnVisitPromoOfferView";
+
+		public const string TitleDetailsWatchOptionsPopupView = "TitleDetailsWatchOptionsPopupView";
 	}
 
 	public class ViewNames
@@ -345,6 +347,10 @@ public class Constants
 		public const string LeadGenerationOfferConfirmationView = "lead_generation_offer_confirmation_view";
 
 		public const string ReturnVisitPromoOfferView = "return_visit_promo_offer_view";
+
+		public const string TitleDetailsWatchOptionsPopupView = "title_details_watch_options_popup_view";
+
+		public const string DualInStockLearnMorePopupView = "dual_in_stock_learn_more_popup_view";
 	}
 
 	public class ThemeNames

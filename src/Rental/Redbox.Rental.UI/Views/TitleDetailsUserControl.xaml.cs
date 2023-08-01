@@ -107,6 +107,12 @@ public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActo
 		HandleWPFHit();
 	}
 
+	private void DualInStockLearnMore_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		Model.ProcessDualInStockLearnMore();
+		HandleWPFHit();
+	}
+
 	private void StatisticsPopup_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 	}

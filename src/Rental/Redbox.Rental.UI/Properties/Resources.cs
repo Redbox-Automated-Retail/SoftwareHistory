@@ -418,6 +418,18 @@ public class Resources
 
 	public static string drama_filter_button => ResourceManager.GetString("drama_filter_button", resourceCulture);
 
+	public static string dual_in_stock_learn_more_popup_message => ResourceManager.GetString("dual_in_stock_learn_more_popup_message", resourceCulture);
+
+	public static string dual_in_stock_learn_more_popup_title => ResourceManager.GetString("dual_in_stock_learn_more_popup_title", resourceCulture);
+
+	public static string dual_in_stock_text_az_kiosk_text => ResourceManager.GetString("dual_in_stock_text_az_kiosk_text", resourceCulture);
+
+	public static string dual_in_stock_text_kiosk_text => ResourceManager.GetString("dual_in_stock_text_kiosk_text", resourceCulture);
+
+	public static string dual_in_stock_text_title_details_in_stock_kiosk_text => ResourceManager.GetString("dual_in_stock_text_title_details_in_stock_kiosk_text", resourceCulture);
+
+	public static string dual_in_stock_text_title_details_out_of_stock_kiosk_text => ResourceManager.GetString("dual_in_stock_text_title_details_out_of_stock_kiosk_text", resourceCulture);
+
 	public static string due_today_label => ResourceManager.GetString("due_today_label", resourceCulture);
 
 	public static string dvd => ResourceManager.GetString("dvd", resourceCulture);
@@ -671,6 +683,8 @@ public class Resources
 	public static string home_button => ResourceManager.GetString("home_button", resourceCulture);
 
 	public static string horror_filter_button => ResourceManager.GetString("horror_filter_button", resourceCulture);
+
+	public static string im_here_button => ResourceManager.GetString("im_here_button", resourceCulture);
 
 	public static string in_cart => ResourceManager.GetString("in_cart", resourceCulture);
 
@@ -1649,6 +1663,8 @@ public class Resources
 	public static string qr_code_dialog_title => ResourceManager.GetString("qr_code_dialog_title", resourceCulture);
 
 	public static string quit_button => ResourceManager.GetString("quit_button", resourceCulture);
+
+	public static string quit_button_english => ResourceManager.GetString("quit_button_english", resourceCulture);
 
 	public static string quit_confirm_button => ResourceManager.GetString("quit_confirm_button", resourceCulture);
 

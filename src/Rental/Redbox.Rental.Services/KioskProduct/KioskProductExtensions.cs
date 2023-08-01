@@ -155,8 +155,12 @@ public static class KioskProductExtensions
 						item.p.SortOrderPosition = item.Position ?? 0;
 						item.p.SortOrderType = sortOrder.SortOrderType;
 					});
+					List<long> outOfStockTitleRollupProductGroupIdsToShow = (from item in list
+						where item.p.ShowOutOfStock
+						orderby item.Position ?? int.MaxValue, item.p.SortMerchandise descending, item.p.SortBoxOfficeGross descending, item.p.SortName descending
+						select item.p.TitleRollupProductGroupId).Take(Redbox.Rental.Services.Configuration.Configuration.Instance.Current.Browse.NumberOfOutOfStockProductGroupsToShow).ToList();
 					return (from item in list
-						orderby item.p.ShowOutOfStock, item.p.IsEmptyCase, item.Position ?? int.MaxValue, item.p.SortMerchandise descending, item.p.SortBoxOfficeGross descending, item.p.SortName descending
+						orderby item.p.ShowOutOfStock && !outOfStockTitleRollupProductGroupIdsToShow.Contains(item.p.TitleRollupProductGroupId), item.p.IsEmptyCase, item.Position ?? int.MaxValue, item.p.SortMerchandise descending, item.p.SortBoxOfficeGross descending, item.p.SortName descending
 						select item.p).ToList();
 				}
 			}

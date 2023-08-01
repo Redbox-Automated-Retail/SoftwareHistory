@@ -14,6 +14,6 @@ public class KioskEngineApiConfigurationClient : KioskEngineApiBaseClient
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, $"{_apiPath}/settingvalues/changes", null, HttpMethod.Get);
-		return await service.SendRequestAsync<GetConfigurationChangesResponse>(request, null, "GetConfigurationChanges", "D:\\work\\54\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Configuration\\KioskEngineApiConfigurationClient.cs");
+		return await service.SendRequestAsync<GetConfigurationChangesResponse>(request, null, "GetConfigurationChanges", "D:\\work\\55\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Configuration\\KioskEngineApiConfigurationClient.cs");
 	}
 }

@@ -8,4 +8,12 @@ public class BrowseConfiguration : BaseCategorySetting
 	public bool Show99CentsBrowseFilterButton { get; set; }
 
 	public bool EnableSonySweepstakes { get; set; }
+
+	public bool LoadSortOrderProductGroups { get; set; }
+
+	public int NumberOfOutOfStockProductGroupsToShow { get; set; }
+
+	public bool ShowWatchOptions { get; set; }
+
+	public bool ShowDualInStock { get; set; }
 }

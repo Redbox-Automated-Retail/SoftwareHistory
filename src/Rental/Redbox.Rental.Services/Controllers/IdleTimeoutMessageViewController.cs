@@ -44,8 +44,8 @@ public class IdleTimeoutMessageViewController : BaseViewController
 		{
 			IdleTimeoutMessageViewModel idleTimeoutMessageViewModel = new IdleTimeoutMessageViewModel();
 			OrchestrationService.SetCurrentUICulture();
-			idleTimeoutMessageViewModel.ButtonNoText = Resources.no_thanks_button.ToUpper();
-			idleTimeoutMessageViewModel.ButtonYesText = Resources.yes_button;
+			idleTimeoutMessageViewModel.ButtonNoText = Resources.quit_button_english.ToUpper();
+			idleTimeoutMessageViewModel.ButtonYesText = Resources.im_here_button.ToUpper();
 			idleTimeoutMessageViewModel.MessageText = Resources.more_time_prompt_message;
 			idleTimeoutMessageViewModel.OnButtonNoClicked = idleTimeoutMessageViewParameter.NoAction;
 			idleTimeoutMessageViewModel.OnButtonYesClicked = idleTimeoutMessageViewParameter.YesAction;

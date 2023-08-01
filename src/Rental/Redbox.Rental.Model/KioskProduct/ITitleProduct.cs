@@ -93,6 +93,8 @@ public interface ITitleProduct : IKioskProduct
 
 	bool HasBeenInStock { get; }
 
+	bool HasNeverBeenInStockAndSortOrderPosition { get; }
+
 	bool HasDeal { get; }
 
 	bool HasMultiNightPrice { get; }
@@ -126,4 +128,6 @@ public interface ITitleProduct : IKioskProduct
 	bool IsRedboxPlusEligible { get; }
 
 	DiscountRestriction DiscountRestriction { get; }
+
+	string ProductWebPageUrl { get; }
 }

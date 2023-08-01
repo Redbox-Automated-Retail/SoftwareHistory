@@ -107,7 +107,7 @@
             </StackPanel>
           </DockPanel>
         </Grid>
-        <Grid Name="Buttons" ColumnSpan="2" Row="3" Margin="0,0,0,-34" Height="104" Background="#EBEBEB">
+        <Grid Name="Buttons" ColumnSpan="2" Row="3" Margin="0,0,0,-34" Height="104" Background="#D8D8D8">
           <DockPanel>
             <StackPanel Name="leftButtons" Orientation="Horizontal" DockPanel.Dock="Left" Margin="24,0,0,0">
               <Redbox:RoundedButton Name="go_back_button" Style="{StaticResource button_light_large_secondary_style}" Command="{x:Static localbase:Commands.GoBackCommand}" Focusable="False">
@@ -158,6 +158,19 @@
               </TextBlock>
               <TextBlock Name="OutOfStockLine4" Grid.Row="2" TextAlignment="Right" LineHeight="16" Style="{StaticResource font_montserrat_medium_12}" Foreground="#060208" TextWrapping="Wrap" Text="{Binding OutOfStockLine4Text, FallbackValue=You will get up to 2 messages. Msg. &amp; data rates may apply.}" />
             </Grid>
+            <StackPanel Name="dualInStock" DockPanel.Dock="Right" Width="708" Margin="0,0,24,0" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="{Binding DualInStockTitleDetailsVisibility, FallbackValue=Collapsed}">
+              <TextBlock TextAlignment="Right" LineHeight="28" Style="{StaticResource font_montserrat_medium_18}">
+                <TextBlock.Inlines>
+                  <Run Text="Out of Stock" Foreground="{StaticResource RubineRedBrush}" /> <Run Text="{Binding DualInStockTextTitleDetailsOutOfStockKioskText, FallbackValue=at this kiosk - Kiosk A}" /></TextBlock.Inlines>
+              </TextBlock>
+              <TextBlock TextAlignment="Right" LineHeight="28" Style="{StaticResource font_montserrat_bold_20}">
+                <TextBlock.Inlines>
+                  <Run Text="In Stock" Foreground="#4F8D34" /> <Run Text="{Binding DualInStockTextTitleDetailsInStockKioskText, FallbackValue=at the other kiosk - Kiosk B}" /></TextBlock.Inlines>
+              </TextBlock>
+              <Redbox:RoundedButton Style="{StaticResource transparent_button_style}" HorizontalAlignment="Right" Command="{x:Static localbase:Commands.DualInStockLearnMoreCommand}">
+                <TextBlock Style="{StaticResource font_montserrat_extrabold_14}" Foreground="{StaticResource RubineRedBrush}" TextDecorations="Underline" LineHeight="20" Text="LEARN MORE" />
+              </Redbox:RoundedButton>
+            </StackPanel>
           </DockPanel>
         </Grid>
       </Grid>

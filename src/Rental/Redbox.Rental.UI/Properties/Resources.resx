@@ -277,7 +277,7 @@ Sorry for the inconvenience.</value></data>
   <data name="email_marketing_message" xml:space="preserve"><value>Redbox will never sell your email address to any third parties. We promise. This does not affect any of your coming soon notifications.</value></data>
   <data name="cart_first_day" xml:space="preserve"><value>/first day</value></data>
   <data name="title_rollup_format_selection_oos_text" xml:space="preserve"><value>Out of stock</value></data>
-  <data name="more_time_prompt_message" xml:space="preserve"><value>Need more time?</value></data>
+  <data name="more_time_prompt_message" xml:space="preserve"><value>Are you still here?</value></data>
   <data name="cart_full_header" xml:space="preserve"><value>Your Cart's Full</value></data>
   <data name="phone_and_pin_sub_header_text" xml:space="preserve"><value>Don't have a PIN? Go to Redbox.com to set up your Kiosk Sign In.</value></data>
   <data name="number_9" xml:space="preserve"><value>NINE</value></data>
@@ -296,11 +296,15 @@ Sorry for the inconvenience.</value></data>
   <data name="night_rental" xml:space="preserve"><value>{0}-night rental</value></data>
   <data name="shopping_cart_remove_button_text" xml:space="preserve"><value>REMOVE</value></data>
   <data name="return_success_with_browse_popup_message" xml:space="preserve"><value>Check out what's new and available now</value></data>
+  <data name="dual_in_stock_learn_more_popup_message" xml:space="preserve"><value>Look next to this Kiosk or near another entrance.
+
+Or visit redbox.com or our app to reserve for pickup at a different location.</value></data>
   <data name="bluray_tm" xml:space="preserve"><value>Blu-ray™</value></data>
   <data name="perks_level2_message" xml:space="preserve"><value>Looks like you're on a roll!</value></data>
   <data name="starz_offer_accept_button_legal_text_already_in_cart" xml:space="preserve"><value>Available only to our first-time STARZ subscribers</value></data>
   <data name="pickup_movie" xml:space="preserve"><value>You have {0} movie ready for pickup:</value></data>
   <data name="pickup_games" xml:space="preserve"><value>You have {0} games ready for pickup:</value></data>
+  <data name="dual_in_stock_text_title_details_in_stock_kiosk_text" xml:space="preserve"><value>at the other kiosk - Kiosk {0}</value></data>
   <data name="undo_points" xml:space="preserve"><value>Undo Points</value></data>
   <data name="mini_cart_subscription_text" xml:space="preserve"><value>SUBSCRIPTION</value></data>
   <data name="pickup_discs" xml:space="preserve"><value>You have {0} discs ready for pickup:</value></data>
@@ -522,6 +526,7 @@ To confirm that you would like to make this purchase, press "Buy Used DVD(s)". I
   <data name="cart_purchase" xml:space="preserve"><value>Purchase</value></data>
   <data name="reserved_title" xml:space="preserve"><value>Reserved</value></data>
   <data name="return_visit_promo_offer_free_amount_text" xml:space="preserve"><value>FREE</value></data>
+  <data name="dual_in_stock_learn_more_popup_title" xml:space="preserve"><value>There's another Kiosk at this store - and it has your movie!</value></data>
   <data name="mini_cart_plan_text" xml:space="preserve"><value>PLAN</value></data>
   <data name="offline_game_rental_and_purchase_limit_zero_message" xml:space="preserve"><value>At this time, we are temporarily unable to allow the rental or purchase of games.  So please remove them from your cart and continue on to rent up to {0} new release movies!  See you back here at the cart soon.</value></data>
   <data name="loyalty_redeeming_points" xml:space="preserve"><value>REDEEMING {0} POINTS</value></data>
@@ -607,6 +612,7 @@ Forgot your password? Visit redbox.com for help</value></data>
   <data name="subscriptions_button" xml:space="preserve"><value>Subscriptions</value></data>
   <data name="apply_promo_message_text" xml:space="preserve"><value>You're a promo pro! Which one would you like to use now?</value></data>
   <data name="item_in_cart_quit_popup_message" xml:space="preserve"><value>Quit and empty your bag?</value></data>
+  <data name="im_here_button" xml:space="preserve"><value>I'm Here</value></data>
   <data name="perks_thanks_free_stuff_message" xml:space="preserve"><value>You get free stuff just for signing up for Redbox Perks:</value></data>
   <data name="phone_and_pin_sign_up_after_swipe_sub_header_text" xml:space="preserve"><value>It’s a faster way to sign in at the Kiosk, keep track of your points 
 and redeem free stuff. Plus, you’ll rack up points just for signing up.</value></data>
@@ -652,10 +658,12 @@ And then stick around to see what's new to rent!</value></data>
   <data name="perks_thanks_comment_all_details_text" xml:space="preserve"><value>Look for an email with all the details</value></data>
   <data name="sign_in_point_one_text_updated" xml:space="preserve"><value>Free 1-night disc rental</value></data>
   <data name="discount_label_redbox_plus_benefit_text" xml:space="preserve"><value>Redbox+ Benefit</value></data>
+  <data name="dual_in_stock_text_az_kiosk_text" xml:space="preserve"><value>IN STOCK AT KIOSK {0}</value></data>
   <data name="multi_disc_vend_note_header" xml:space="preserve"><value>Important Note: </value></data>
   <data name="technical_fallback_message" xml:space="preserve"><value>Please swipe your card.</value></data>
   <data name="offer_info_hold_up" xml:space="preserve"><value>HOLD UP!</value></data>
   <data name="one_night_price_label" xml:space="preserve"><value>1-Night Rental:</value></data>
+  <data name="dual_in_stock_text_title_details_out_of_stock_kiosk_text" xml:space="preserve"><value>at this kiosk - Kiosk {0}</value></data>
   <data name="flash_deal_text" xml:space="preserve"><value>Extra nights for Flash Deals are {0}. Our Flash Deal can change at any time. It only shows up for specific titles, locations, and dates - so you're in luck.</value></data>
   <data name="personalization_service_error_KLI0005" xml:space="preserve"><value>Our points system is down, but no worries – you’re all signed in.</value></data>
   <data name="personalization_service_error_KLI0004" xml:space="preserve"><value>Whoops, something went wrong.</value></data>
@@ -982,6 +990,7 @@ for signing up</value></data>
   <data name="perks_signup_info_use_header" xml:space="preserve"><value>Use Points</value></data>
   <data name="pickup_game" xml:space="preserve"><value>You have {0} game ready for pickup:</value></data>
   <data name="tsp_invalid_header2" xml:space="preserve"><value>That promo code can't be used for your movie(s).</value></data>
+  <data name="dual_in_stock_text_kiosk_text" xml:space="preserve"><value>KIOSK {0}</value></data>
   <data name="promo_amount_off_purchase_browse_title_text" xml:space="preserve"><value>Add a {0} to buy below for ${1:C} OFF</value></data>
   <data name="starz_offer_2_acceptance_terms" xml:space="preserve"><value>I understand that I am enrolling in a monthly subscription that will auto-renew until I cancel at redbox.com/account. I will be charged $5.00 now and each month for the next 2 months (plus applicable taxes) and the then-current subscription price for each month thereafter (prices are subject to change) until I cancel. Cancellation is effective at the end of the current billing period. I authorize Redbox to charge any payment method they have on file for me, should my primary payment method fail. I understand I will receive 3 Redbox 1-night disc rental codes during each of the first 3 months and 2 codes in each of the next 9 months, if I remain a STARZ subscriber through Redbox. Codes expire 1 month from issue. See FAQs below for more info.
 
@@ -1333,6 +1342,7 @@ of movies on the STARZ app or starz.com</value></data>
   <data name="redbox_plus_view_movies" xml:space="preserve"><value>VIEW REDBOX+ MOVIES</value></data>
   <data name="starz_offer_terms_button_1_text" xml:space="preserve"><value>FAQs and
 Terms &amp; Conditions</value></data>
+  <data name="quit_button_english" xml:space="preserve"><value>Quit</value></data>
   <data name="skip_offer_button_text" xml:space="preserve"><value>Skip Offer</value></data>
   <data name="keep_browsing_1" xml:space="preserve"><value>Keep</value></data>
   <data name="keep_browsing_2" xml:space="preserve"><value>Browsing</value></data>

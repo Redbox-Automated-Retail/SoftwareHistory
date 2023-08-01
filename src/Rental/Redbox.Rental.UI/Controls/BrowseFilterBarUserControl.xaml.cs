@@ -129,6 +129,7 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 				stackPanel2.Children.Add(roundedButton);
 				if (filter.IsSelected && filter.IsVisible)
 				{
+					roundedButton.Style = GetStyle(this, "purple_with_purple_border_button_style_disabled");
 					stackPanel2.Children.Add(new Image
 					{
 						Source = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-sm.png")),
@@ -159,6 +160,7 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 				}
 				else if (filter.IsVisible && filter.IsSelected)
 				{
+					roundedButton.Style = GetStyle(this, "purple_with_purple_border_button_style_disabled");
 					stackPanel3.Children.Add(new Image
 					{
 						Source = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-sm.png")),

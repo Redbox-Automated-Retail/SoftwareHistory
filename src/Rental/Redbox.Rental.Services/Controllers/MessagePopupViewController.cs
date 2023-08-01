@@ -1482,6 +1482,21 @@ public class MessagePopupViewController : BaseViewController
 		});
 	}
 
+	public static void ShowDualInStockLearnMorePopup(Action timeOutAction, Action continueAction)
+	{
+		LogHelper.Instance.Log("Showing Dual In Stock Learn More Popup");
+		ShowModal(new ModalParameters(ModalType.Informational)
+		{
+			TitleText = Resources.dual_in_stock_learn_more_popup_title,
+			MessageText = Resources.dual_in_stock_learn_more_popup_message,
+			Button1Text = Resources.close_button.ToUpper(),
+			TimeOutAction = timeOutAction,
+			Button1Action = continueAction,
+			ViewName = "dual_in_stock_learn_more_popup_view",
+			AnalyticsContextList = new List<string> { "dual_in_stock_learn_more_popup_view" }
+		});
+	}
+
 	public static void HideMessagePopupView(bool popOnly)
 	{
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();

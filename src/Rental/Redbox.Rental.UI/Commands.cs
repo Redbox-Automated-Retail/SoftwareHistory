@@ -52,6 +52,8 @@ public class Commands
 
 	public static readonly RoutedCommand RedboxPlusInfoCommand = new RoutedCommand();
 
+	public static readonly RoutedCommand DualInStockLearnMoreCommand = new RoutedCommand();
+
 	public static readonly RoutedCommand BrowseItemSelectedCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand BrowseItemAddCommand = new RoutedCommand();

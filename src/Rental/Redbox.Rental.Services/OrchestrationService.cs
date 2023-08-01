@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.Xml;
 using Redbox.Controls;
@@ -436,6 +437,23 @@ public static class OrchestrationService
 			LogHelper.Instance.Log("OrchestrationService.RentalRefreshIfNeeded - PricingService");
 			ServiceLocator.Instance.GetService<IPricingService>().UpdatePricingInstance();
 			ServiceLocator.Instance.GetService<IProductGroupService>()?.StartSession();
+			IKioskClientService kioskClientService = ServiceLocator.Instance.GetService<IKioskClientService>();
+			if (kioskClientService?.Kiosk?.HasDual ?? false)
+			{
+				kioskClientService?.Dual?.LoadInStockInOther();
+				IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+				IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
+				if (service != null && service.KioskSession.Browse.ShowDualInStock)
+				{
+					Task.Run(delegate
+					{
+						kioskClientService?.Dual?.UpdateTitles();
+					}).ContinueWith(delegate
+					{
+						BrowseViewController.UpdateTitles();
+					}, CancellationToken.None, TaskContinuationOptions.None, service2.UITaskScheduler);
+				}
+			}
 			return result;
 		}
 		catch (Exception e)

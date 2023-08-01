@@ -257,6 +257,56 @@ public class DisplayProductModel : BrowseItemModel
 		AffectsRender = true
 	});
 
+	public static readonly DependencyProperty WatchOptionsVisibilityProperty = DependencyProperty.Register("WatchOptionsVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty WatchOptionsAZVisibilityProperty = DependencyProperty.Register("WatchOptionsAZVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockVisibilityProperty = DependencyProperty.Register("DualInStockVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockAZVisibilityProperty = DependencyProperty.Register("DualInStockAZVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty OutOfStockTextAZVisibilityProperty = DependencyProperty.Register("OutOfStockTextAZVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockTextKioskTextProperty = DependencyProperty.Register("DualInStockTextKioskText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockTextAZKioskTextProperty = DependencyProperty.Register("DualInStockTextAZKioskText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockTitleDetailsVisibilityProperty = DependencyProperty.Register("DualInStockTitleDetailsVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockTextTitleDetailsOutOfStockKioskTextProperty = DependencyProperty.Register("DualInStockTextTitleDetailsOutOfStockKioskText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
+	public static readonly DependencyProperty DualInStockTextTitleDetailsInStockKioskTextProperty = DependencyProperty.Register("DualInStockTextTitleDetailsInStockKioskText", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null)
+	{
+		AffectsRender = true
+	});
+
 	public static readonly DependencyProperty FlagVisibilityProperty = DependencyProperty.Register("FlagVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(Visibility.Visible)
 	{
 		AffectsRender = true
@@ -803,6 +853,156 @@ public class DisplayProductModel : BrowseItemModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(BannerProperty, value);
+			});
+		}
+	}
+
+	public Visibility WatchOptionsVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(WatchOptionsVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(WatchOptionsVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility WatchOptionsAZVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(WatchOptionsAZVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(WatchOptionsAZVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility DualInStockVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DualInStockVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility DualInStockAZVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DualInStockAZVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockAZVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Visibility OutOfStockTextAZVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(OutOfStockTextAZVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(OutOfStockTextAZVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string DualInStockTextKioskText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DualInStockTextKioskTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockTextKioskTextProperty, value);
+			});
+		}
+	}
+
+	public string DualInStockTextAZKioskText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DualInStockTextAZKioskTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockTextAZKioskTextProperty, value);
+			});
+		}
+	}
+
+	public Visibility DualInStockTitleDetailsVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(DualInStockTitleDetailsVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockTitleDetailsVisibilityProperty, value);
+			});
+		}
+	}
+
+	public string DualInStockTextTitleDetailsOutOfStockKioskText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DualInStockTextTitleDetailsOutOfStockKioskTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockTextTitleDetailsOutOfStockKioskTextProperty, value);
+			});
+		}
+	}
+
+	public string DualInStockTextTitleDetailsInStockKioskText
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (string)GetValue(DualInStockTextTitleDetailsInStockKioskTextProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(DualInStockTextTitleDetailsInStockKioskTextProperty, value);
 			});
 		}
 	}
@@ -2260,6 +2460,7 @@ public class DisplayProductModel : BrowseItemModel
 		ShowBuy = Visibility.Collapsed;
 		AddButtonBarVisibility = Visibility.Visible;
 		OutOfStockVisibility = Visibility.Collapsed;
+		DualInStockTitleDetailsVisibility = Visibility.Collapsed;
 		ComingSoonVisibility = Visibility.Collapsed;
 	}
 
@@ -2317,6 +2518,8 @@ public class DisplayProductModel : BrowseItemModel
 		ComingSoonButtonCheckMarkVisibility = Visibility.Collapsed;
 		ComingSoonButtonVisibility = Visibility.Collapsed;
 		BannerVisibility = Visibility.Collapsed;
+		WatchOptionsVisibility = Visibility.Collapsed;
+		DualInStockVisibility = Visibility.Collapsed;
 		AddButtonTextVisibility = Visibility.Collapsed;
 		IsTitleDetailsFlag = true;
 	}

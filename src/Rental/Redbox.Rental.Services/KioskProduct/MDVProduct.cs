@@ -481,6 +481,18 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 		}
 	}
 
+	public bool HasNeverBeenInStockAndSortOrderPosition
+	{
+		get
+		{
+			if (_titleProducts.Where((ITitleProduct tp) => tp.HasNeverBeenInStockAndSortOrderPosition).ToList().Count == 0)
+			{
+				return false;
+			}
+			return _titleProducts.All((ITitleProduct tp) => tp.HasNeverBeenInStockAndSortOrderPosition);
+		}
+	}
+
 	public bool HasDeal => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_primaryTitle.ProductId))?.Any((IPricingRecord pr) => pr?.IsDeal ?? false) ?? false;
 
 	public bool HasMultiNightPrice => (ServiceLocator.Instance.GetService<IPricingService>()?.GetProductPricingRecords(_primaryTitle.ProductId))?.Any((IPricingRecord pr) => pr?.IsMultiNightPrice ?? false) ?? false;
@@ -596,6 +608,18 @@ public class MDVProduct : KioskProduct, ITitleProduct, IKioskProduct
 				return _primaryTitle.DiscountRestriction;
 			}
 			return DiscountRestriction.None;
+		}
+	}
+
+	public string ProductWebPageUrl
+	{
+		get
+		{
+			if (_primaryTitle != null)
+			{
+				return _primaryTitle.ProductWebPageUrl;
+			}
+			return string.Empty;
 		}
 	}
 

@@ -390,25 +390,27 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 	{
 		get
 		{
-			List<ITitleProduct> list = _kioskProducts.Where((ITitleProduct kp) => kp.TitleType != TitleType.DigitalCode).ToList();
-			if (list.Count == 0)
+			if (_kioskProducts.Where((ITitleProduct kp) => kp.ShowOutOfStock).ToList().Count == 0)
 			{
 				return false;
 			}
-			if (list.Any((ITitleProduct kp) => kp.InStock))
-			{
-				return false;
-			}
-			list = list.Where((ITitleProduct kp) => kp.HasBeenInStock).ToList();
-			if (list.Count == 0)
-			{
-				return false;
-			}
-			return list.All((ITitleProduct kp) => kp.ShowOutOfStock);
+			return _kioskProducts.All((ITitleProduct kp) => kp.ShowOutOfStock);
 		}
 	}
 
 	public bool HasBeenInStock => _kioskProducts.Any((ITitleProduct kp) => kp.HasBeenInStock);
+
+	public bool HasNeverBeenInStockAndSortOrderPosition
+	{
+		get
+		{
+			if (_kioskProducts.Where((ITitleProduct kp) => kp.HasNeverBeenInStockAndSortOrderPosition).ToList().Count == 0)
+			{
+				return false;
+			}
+			return _kioskProducts.All((ITitleProduct kp) => kp.HasNeverBeenInStockAndSortOrderPosition);
+		}
+	}
 
 	public bool HasDeal => _kioskProducts.Any((ITitleProduct kp) => kp.HasDeal);
 
@@ -555,6 +557,18 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 				return _primaryTitle.DiscountRestriction;
 			}
 			return DiscountRestriction.None;
+		}
+	}
+
+	public string ProductWebPageUrl
+	{
+		get
+		{
+			if (_primaryTitle != null)
+			{
+				return _primaryTitle.ProductWebPageUrl;
+			}
+			return string.Empty;
 		}
 	}
 

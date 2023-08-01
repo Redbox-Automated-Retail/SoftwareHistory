@@ -14,13 +14,13 @@ public class KioskEngineApiHealthClient : KioskEngineApiBaseClient
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, $"{_apiPath}/ping", null, HttpMethod.Post);
-		return await service.SendRequestAsync<HealthPingResponse>(request, null, "SendPing", "D:\\work\\54\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Health\\KioskEngineApiHealthClient.cs");
+		return await service.SendRequestAsync<HealthPingResponse>(request, null, "SendPing", "D:\\work\\55\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Health\\KioskEngineApiHealthClient.cs");
 	}
 
 	public static async Task<APIResponse<HealthPingResponse>> SendAlert()
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, $"{_apiPath}/alert", null, HttpMethod.Post);
-		return await service.SendRequestAsync<HealthPingResponse>(request, null, "SendAlert", "D:\\work\\54\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Health\\KioskEngineApiHealthClient.cs");
+		return await service.SendRequestAsync<HealthPingResponse>(request, null, "SendAlert", "D:\\work\\55\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Health\\KioskEngineApiHealthClient.cs");
 	}
 }

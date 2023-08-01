@@ -334,7 +334,11 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return false;
 			}
-			if (!_titleCache.LastDateOutOfStock.HasValue)
+			if (HasNeverBeenInStockAndSortOrderPosition)
+			{
+				return true;
+			}
+			if (!HasBeenInStock)
 			{
 				return false;
 			}
@@ -355,6 +359,18 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				return false;
 			}
 			return true;
+		}
+	}
+
+	public bool HasNeverBeenInStockAndSortOrderPosition
+	{
+		get
+		{
+			if (!InStock && !HasBeenInStock && SortOrderPosition > 0)
+			{
+				return true;
+			}
+			return false;
 		}
 	}
 
@@ -423,6 +439,37 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	}
 
 	public DiscountRestriction DiscountRestriction => _title.DiscountRestriction;
+
+	public string ProductWebPageUrl
+	{
+		get
+		{
+			string text = _title.LongName.ToLower();
+			if (text.EndsWith(")"))
+			{
+				text = text.Remove(text.Length - 1, 1);
+			}
+			return text.Replace("\\s", "-").Replace("(", "-").Replace(")", "-")
+				.Replace("/", "-")
+				.Replace(":", "-")
+				.Replace(" ", "-")
+				.Replace("--", "-")
+				.Replace("'", "")
+				.Replace("*", "")
+				.Replace("?", "")
+				.Replace(".", "")
+				.Replace("!", "")
+				.Replace(",", "")
+				.Replace("%", "")
+				.Replace(">", "")
+				.Replace("<", "")
+				.Replace("+", "and")
+				.Replace("$", "s")
+				.Replace("#", "number")
+				.Replace("@", "at")
+				.Replace("=", "equals");
+		}
+	}
 
 	public TitleProduct(Title title, TitleCache titleCache, TitleType titleType, IProfileDataInstance profile, Store store, IStoreManager storeManager)
 		: base(store)

@@ -7,7 +7,7 @@
   </FrameworkElement.Resources>
   <Redbox:GridExt Name="MainGrid" RowHeights="63*,21*,16*" ColumnWidths="73*,18*,7*,2*">
     <local:DisplayProductUserControl x:Name="DisplayProductUserControl" Grid.ColumnSpan="2" Grid.RowSpan="2" />
-    <Redbox:RoundedButton Name="CornerAddButton" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" BorderThickness="2" DropShadowDepth="1" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" Style="{Binding Path=AddButtonStyle, FallbackValue={StaticResource rubine_no_border_button_style}}" Visibility="{Binding Path=DisplayCornerAddButtonVisibility}">
+    <Redbox:RoundedButton Name="CornerAddButton" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="1" Margin="0,3,0,-3" BorderThickness="2" DropShadowDepth="1" UsedDefaultCornerRadius="True" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" Style="{Binding Path=AddButtonStyle, FallbackValue={StaticResource rubine_no_border_button_style}}" Visibility="{Binding Path=DisplayCornerAddButtonVisibility}">
       <Grid>
         <Redbox:GridExt RowHeights="15*,70*,15*">
           <Viewbox Grid.Row="1">

@@ -16,6 +16,7 @@
   <Color x:Key="SelectedPurple">#A88AB4</Color>
   <Color x:Key="DeepPurple">#2F1E36</Color>
   <Color x:Key="PopupMask">#1C0F1E</Color>
+  <Color x:Key="Black">#000000</Color>
   <Color x:Key="BorderRed">#E32044</Color>
   <Color x:Key="ActiveBorder">#782d8d</Color>
   <Color x:Key="InactiveBorder">#979797</Color>
@@ -634,23 +635,13 @@
       </Trigger>
     </Style.Triggers>
   </Style>
-  <Style x:Key="white_with_purple_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
+  <Style x:Key="purple_with_purple_border_button_style_disabled" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource purple_with_purple_border_button_style}">
     <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
     <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
     <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="White" />
     <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="White" />
     <Setter Property="Foreground" Value="#481B54" />
-    <Setter Property="BorderThickness" Value="3" />
-    <Style.Triggers>
-      <Trigger Property="IsEnabled" Value="False">
-        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
-        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
-        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#EDE3EF" />
-        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#EDE3EF" />
-        <Setter Property="Foreground" Value="#481B54" />
-        <Setter Property="BorderThickness" Value="2" />
-      </Trigger>
-    </Style.Triggers>
+    <Setter Property="BorderThickness" Value="2" />
   </Style>
   <Style x:Key="classic_rubine_radio_button_with_dropshadow_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource classic_rubine_radio_button_style}">
     <Setter Property="Redbox:RoundedButton.DropShadowOpacity" Value="0.4" />
@@ -699,6 +690,14 @@
       </Trigger>
     </Style.Triggers>
   </Style>
+  <Style x:Key="classic_menu_button_style_disabled" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource classic_menu_button_style}">
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Redbox:RoundedButton.BorderColor" Value="#792D8D" />
+    <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#792D8D" />
+    <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="White" />
+    <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="White" />
+    <Setter Property="Foreground" Value="#481B54" />
+  </Style>
   <Style x:Key="glass_menu_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource gray_glass_rounded_menu_button_style}">
     <Setter Property="VerticalAlignment" Value="Top" />
     <Setter Property="BorderThickness" Value="1" />
@@ -714,12 +713,12 @@
   <Style x:Key="inactive_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource base_disabled_rounded_button_style}">
     <Style.Triggers>
       <Trigger Property="IsEnabled" Value="False">
-        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#C4C3C4" />
-        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#C4C3C4" />
+        <Setter Property="Redbox:RoundedButton.BorderColor" Value="#AFAFAF" />
+        <Setter Property="Redbox:RoundedButton.BorderGradientColor" Value="#AFAFAF" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#D4D3D4" />
-        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#D4D3D4" />
-        <Setter Property="Foreground" Value="#959495" />
+        <Setter Property="Redbox:RoundedButton.BackgroundColor" Value="#AFAFAF" />
+        <Setter Property="Redbox:RoundedButton.BackgroundGradientColor" Value="#AFAFAF" />
+        <Setter Property="Foreground" Value="#5B5B5B" />
       </Trigger>
     </Style.Triggers>
   </Style>
@@ -2195,13 +2194,6 @@
     <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="FontSize" Value="24" />
     <Setter Property="Foreground" Value="#990000" />
-  </Style>
-  <Style x:Key="browse_product_title" TargetType="{x:Type TextBlock}">
-    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Berthold Akzidenz Grotesk" />
-    <Setter Property="FontSize" Value="21.3" />
-    <Setter Property="FontStyle" Value="Normal" />
-    <Setter Property="FontWeight" Value="Regular" />
-    <Setter Property="Foreground" Value="#FF000000" />
   </Style>
   <Style x:Key="group_selection_item_enabled" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_akzidenz_bold_smaller}">
     <Setter Property="Foreground" Value="#FFFFFFFF" />

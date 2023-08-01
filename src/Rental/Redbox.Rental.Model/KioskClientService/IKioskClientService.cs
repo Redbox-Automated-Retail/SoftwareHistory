@@ -5,8 +5,10 @@ using Redbox.Rental.Model.KioskClientService.Campaign;
 using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskClientService.CustomerProfile;
 using Redbox.Rental.Model.KioskClientService.Data;
+using Redbox.Rental.Model.KioskClientService.Dual;
 using Redbox.Rental.Model.KioskClientService.Installer;
 using Redbox.Rental.Model.KioskClientService.Inventory;
+using Redbox.Rental.Model.KioskClientService.Kiosk;
 using Redbox.Rental.Model.KioskClientService.Loyalty;
 using Redbox.Rental.Model.KioskClientService.Marketing;
 using Redbox.Rental.Model.KioskClientService.Personalization;
@@ -35,9 +37,13 @@ public interface IKioskClientService
 
 	IKioskClientServiceData Data { get; }
 
+	IKioskClientServiceDual Dual { get; }
+
 	IKioskClientServiceInstaller Installer { get; }
 
 	IKioskClientServiceInventory Inventory { get; }
+
+	IKioskClientServiceKiosk Kiosk { get; }
 
 	IKioskClientServiceLoyalty Loyalty { get; }
 

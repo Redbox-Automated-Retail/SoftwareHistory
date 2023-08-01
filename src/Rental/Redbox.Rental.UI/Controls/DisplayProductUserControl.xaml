@@ -30,6 +30,28 @@
                 <TextBlock Name="BannerText" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_bold_13}" VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding Path=BannerText}" />
               </Viewbox>
             </Redbox:GridExt>
+            <Border Name="WatchOptions" Grid.Row="2" Grid.RowSpan="2" Padding="0,2,0,2" Background="#FF000000" Opacity="0.75" CornerRadius="6" Visibility="{Binding Path=WatchOptionsVisibility, FallbackValue=Collapsed}">
+              <UIElement.InputBindings>
+                <MouseBinding Gesture="LeftClick" Command="{x:Static localbase:Commands.BrowseItemSelectedCommand}" />
+              </UIElement.InputBindings>
+              <Viewbox Name="WatchOptionsTextViewBox">
+                <TextBlock Name="WatchOptionsText" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_extrabold_14_correct}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" Text="SEE WATCH&#xA;OPTIONS" />
+              </Viewbox>
+            </Border>
+            <Border Name="DualInStock" Grid.Row="2" Grid.RowSpan="2" Padding="0,2,0,2" Background="#FF000000" Opacity="0.75" CornerRadius="6" Visibility="{Binding Path=DualInStockVisibility, FallbackValue=Collapsed}">
+              <UIElement.InputBindings>
+                <MouseBinding Gesture="LeftClick" Command="{x:Static localbase:Commands.BrowseItemSelectedCommand}" />
+              </UIElement.InputBindings>
+              <Viewbox Name="DualInStockTextViewBox">
+                <TextBlock Name="DualInStockText" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_bold_12}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center">
+                  <TextBlock.Inlines>
+                    <Run Foreground="#63FFA1" Text="In stock " />
+                    <Run Text="here at&#xA;" />
+                    <Run FontWeight="ExtraBold" TextDecorations="Underline" Text="{Binding Path=DualInStockTextKioskText, FallbackValue=KIOSK A}" />
+                  </TextBlock.Inlines>
+                </TextBlock>
+              </Viewbox>
+            </Border>
             <Redbox:GridExt Name="ComingSoonButtonGrid" RowHeights="1*,89*,10*" ColumnWidths="2*,96*,2*" Row="2" RowSpan="2">
               <Redbox:RoundedButton Name="ComingSoonButton" Command="{x:Static localbase:Commands.BrowseItemAddCommand}" CommandParameter="ComingSoon" Grid.Row="1" Grid.Column="1" UsedDefaultCornerRadius="True" Style="{Binding Path=ComingSoonButtonStyle, FallbackValue={StaticResource rubine_white_border_button_style}}" Visibility="{Binding Path=ComingSoonButtonVisibility}">
                 <Grid>

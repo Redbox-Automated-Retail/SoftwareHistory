@@ -13,7 +13,6 @@ using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
-using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Session;
@@ -62,6 +61,7 @@ public class TitleDetailsController : BaseViewController
 		titleDetailModel.GoBackHit += OnGoBack;
 		titleDetailModel.SeeFullDetails += OnSeeFullDetails;
 		titleDetailModel.RedboxPlusInfo += OnRedboxPlusInfo;
+		titleDetailModel.DualInStockLearnMore += OnDualInStockLearnMore;
 		titleDetailModel.BackText = Resources.back_button.ToUpper();
 		return titleDetailModel;
 	}
@@ -112,9 +112,9 @@ public class TitleDetailsController : BaseViewController
 		IKioskProduct browseSelectionSelectedProduct = Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectionSelectedProduct;
 		_ = BaseViewController.IsADAMode;
 		int pageNumber = GetPageNumber(browseProductControl);
-		ConfigurePage(browseProductControl, pageNumber - 1, loadAd: false);
-		ConfigurePage(browseProductControl, pageNumber, loadAd: true);
-		ConfigurePage(browseProductControl, pageNumber + 1, loadAd: false);
+		ConfigurePage(browseProductControl, pageNumber - 1, loadAd: false, loadMoreLikeThis: false);
+		ConfigurePage(browseProductControl, pageNumber, loadAd: true, loadMoreLikeThis: true);
+		ConfigurePage(browseProductControl, pageNumber + 1, loadAd: false, loadMoreLikeThis: false);
 		browseProductControl.SetPageNumber(pageNumber, PageChangeSource.None);
 		browseProductControl.OnPageChanged += delegate(int prevPageNumber, int newPageNumber, PageChangeSource pageSource)
 		{
@@ -123,11 +123,11 @@ public class TitleDetailsController : BaseViewController
 			RecordAdImpression(browseProductControl, prevPageNumber);
 			if (newPageNumber > prevPageNumber)
 			{
-				ConfigurePage(browseProductControl, newPageNumber + 1, loadAd: false);
+				ConfigurePage(browseProductControl, newPageNumber + 1, loadAd: false, loadMoreLikeThis: false);
 			}
 			else if (newPageNumber < prevPageNumber)
 			{
-				ConfigurePage(browseProductControl, newPageNumber - 1, loadAd: false);
+				ConfigurePage(browseProductControl, newPageNumber - 1, loadAd: false, loadMoreLikeThis: false);
 			}
 			ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddButtonPressEvent((prevPageNumber < newPageNumber) ? "TitleDetailsPageNext" : "TitleDetailsPageBack");
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.ProductSelectedFromCarousel = false;
@@ -148,13 +148,13 @@ public class TitleDetailsController : BaseViewController
 		return browseProductControl;
 	}
 
-	private static void ConfigurePage(BrowseControlModel browseControlModel, int pageNumber, bool loadAd)
+	private static void ConfigurePage(BrowseControlModel browseControlModel, int pageNumber, bool loadAd, bool loadMoreLikeThis)
 	{
 		if (browseControlModel?.BrowseItems != null && pageNumber >= 1 && pageNumber <= browseControlModel.BrowseItems.Count && browseControlModel.BrowseItems[pageNumber - 1] is DisplayProductModel displayProductModel)
 		{
 			BrowseViewController.ConfigureDisplayProductModel(displayProductModel.Data as IKioskProduct, displayProductModel, isADAMiniCart: false, displayProductModel.DisplayProductModelConstants);
 			displayProductModel?.ConfigureForTitleDetail();
-			PopulateTitleDetailProperties(displayProductModel, loadAd);
+			PopulateTitleDetailProperties(displayProductModel, loadAd, loadMoreLikeThis);
 		}
 	}
 
@@ -348,7 +348,20 @@ public class TitleDetailsController : BaseViewController
 		OrchestrationService.ViewShow("redbox_plus_info_popup_view");
 	}
 
-	private static void PopulateTitleDetailProperties(DisplayProductModel displayProductModel, bool loadAd)
+	public static void OnDualInStockLearnMore()
+	{
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsDualInStockLearnMore");
+		MessagePopupViewController.ShowDualInStockLearnMorePopup(delegate
+		{
+			OrchestrationService.ViewGoBackSafe("DualInStockLearnMorePopupTimeout", popOnly: false);
+		}, delegate
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsDualInStockLearnMoreClose");
+			OrchestrationService.ViewGoBackSafe("DualInStockLearnMorePopupClose", popOnly: false);
+		});
+	}
+
+	public static void PopulateTitleDetailProperties(DisplayProductModel displayProductModel, bool loadAd, bool loadMoreLikeThis)
 	{
 		if (displayProductModel.TitleDetailPropertiesInitialized)
 		{
@@ -470,9 +483,13 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.OutOfStockLine2Text = displayProductModel.DisplayProductModelConstants.OutOfStockLine2Text;
 		displayProductModel.OutOfStockLine3Text = string.Format(displayProductModel.DisplayProductModelConstants.OutOfStockLine3Text, (titleProduct != null && titleProduct.IsMovie) ? displayProductModel.DisplayProductModelConstants.Movie : displayProductModel.DisplayProductModelConstants.Game);
 		displayProductModel.OutOfStockLine4Text = displayProductModel.DisplayProductModelConstants.OutOfStockLine4Text;
+		string arg = displayProductModel.DisplayProductModelConstants.KioskClientService?.Kiosk?.KioskLabel ?? "A";
+		string arg2 = displayProductModel.DisplayProductModelConstants.KioskClientService?.Kiosk?.DualKiosk?.Label ?? "A";
+		displayProductModel.DualInStockTextTitleDetailsOutOfStockKioskText = string.Format(Resources.dual_in_stock_text_title_details_out_of_stock_kiosk_text, arg);
+		displayProductModel.DualInStockTextTitleDetailsInStockKioskText = string.Format(Resources.dual_in_stock_text_title_details_in_stock_kiosk_text, arg2);
 		IAd ad = ((!loadAd || BaseViewController.ApplicationState.IsADAAccessible) ? null : ServiceLocator.Instance.GetService<IAdService>()?.GetScreenAd(AdLocation.TitleDetail));
 		PopulateModelAdImage(displayProductModel, ad);
-		if (Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily == TitleFamily.Movies && Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort != BrowseSelectedSort.ComingSoon && !BaseViewController.ApplicationState.IsADAAccessible)
+		if (loadMoreLikeThis && Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily == TitleFamily.Movies && Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort != BrowseSelectedSort.ComingSoon && !BaseViewController.ApplicationState.IsADAAccessible)
 		{
 			PopulateModelMoreLikeThis(displayProductModel, titleProduct);
 		}
@@ -496,77 +513,12 @@ public class TitleDetailsController : BaseViewController
 
 	private static void PopulateModelMoreLikeThis(DisplayProductModel displayProductModel, ITitleProduct titleProduct)
 	{
-		List<DisplayProductMoreLikeThisModel> list = CreateMoreLikeThisDisplayProducts(titleProduct);
+		List<DisplayProductMoreLikeThisModel> list = BrowseFunctions.CreateMoreLikeThis(titleProduct, DisplayProductMoreLikeThisModel_OnMoreLikeThisSelected).Take(4).ToList();
 		displayProductModel.MoreLikeThisVisibility = ((list == null || list.Count <= 1) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.DisplayProductMoreLikeThis1 = ((list != null && list.Count > 0) ? list[0] : null);
 		displayProductModel.DisplayProductMoreLikeThis2 = ((list != null && list.Count > 1) ? list[1] : null);
 		displayProductModel.DisplayProductMoreLikeThis3 = ((list != null && list.Count > 2) ? list[2] : null);
 		displayProductModel.DisplayProductMoreLikeThis4 = ((list != null && list.Count > 3) ? list[3] : null);
-	}
-
-	private static List<DisplayProductMoreLikeThisModel> CreateMoreLikeThisDisplayProducts(ITitleProduct titleProduct)
-	{
-		List<DisplayProductMoreLikeThisModel> list = new List<DisplayProductMoreLikeThisModel>();
-		long productGroupId = ((titleProduct is ITitleRollupProduct titleRollupProduct) ? titleRollupProduct.ProductGroupId : titleProduct.TitleRollupProductGroupId);
-		List<long> list2 = ServiceLocator.Instance.GetService<IKioskClientService>()?.ProductGroups?.GetMoreLikeThis(productGroupId);
-		if (list2 != null)
-		{
-			foreach (long item in list2)
-			{
-				IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-				if (service == null)
-				{
-					continue;
-				}
-				service.GetTitleRollupProduct(item, out var kioskProduct);
-				if (kioskProduct == null)
-				{
-					continue;
-				}
-				ITitleRollupProduct moreLikeThisTitleRollupProduct = kioskProduct as ITitleRollupProduct;
-				if (moreLikeThisTitleRollupProduct == null)
-				{
-					continue;
-				}
-				if (Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseItemModels.Any((IBrowseItemModel item) => item.Data == moreLikeThisTitleRollupProduct) && (moreLikeThisTitleRollupProduct.IsRentableAndInStock || moreLikeThisTitleRollupProduct.IsSellableAndInStock))
-				{
-					DisplayProductMoreLikeThisModel displayProductMoreLikeThisModel = new DisplayProductMoreLikeThisModel
-					{
-						Name = moreLikeThisTitleRollupProduct.ProductName,
-						Data = moreLikeThisTitleRollupProduct,
-						Image = OrchestrationService.GetProductBitmapImage(moreLikeThisTitleRollupProduct)
-					};
-					displayProductMoreLikeThisModel.OnMoreLikeThisSelected += DisplayProductMoreLikeThisModel_OnMoreLikeThisSelected;
-					list.Add(displayProductMoreLikeThisModel);
-				}
-				else
-				{
-					List<ITitleProduct> kioskProducts = moreLikeThisTitleRollupProduct.KioskProducts;
-					if (kioskProducts != null)
-					{
-						foreach (ITitleProduct eachMoreLikeThisKioskProduct in kioskProducts)
-						{
-							if (Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseItemModels.Any((IBrowseItemModel item) => item.Data == eachMoreLikeThisKioskProduct) && (eachMoreLikeThisKioskProduct.IsRentableAndInStock || eachMoreLikeThisKioskProduct.IsSellableAndInStock))
-							{
-								DisplayProductMoreLikeThisModel displayProductMoreLikeThisModel2 = new DisplayProductMoreLikeThisModel
-								{
-									Name = eachMoreLikeThisKioskProduct.ProductName,
-									Data = eachMoreLikeThisKioskProduct,
-									Image = OrchestrationService.GetProductBitmapImage(eachMoreLikeThisKioskProduct)
-								};
-								displayProductMoreLikeThisModel2.OnMoreLikeThisSelected += DisplayProductMoreLikeThisModel_OnMoreLikeThisSelected;
-								list.Add(displayProductMoreLikeThisModel2);
-							}
-						}
-					}
-				}
-				if (list.Count >= 4)
-				{
-					break;
-				}
-			}
-		}
-		return list.Take(4).ToList();
 	}
 
 	private static void DisplayProductMoreLikeThisModel_OnMoreLikeThisSelected(IBrowseItemModel browseItemModel)
@@ -670,7 +622,7 @@ public class TitleDetailsController : BaseViewController
 		long? num = kioskProduct?.SubPlatformId;
 		if (num.HasValue && num > 0)
 		{
-			result = Redbox.Rental.UI.Views.Constants.SubPlatformImages.GetSubPlatformImage((Redbox.Rental.UI.Views.Constants.SubPlatforms)num.Value);
+			result = Constants.SubPlatformImages.GetSubPlatformImage((Constants.SubPlatforms)num.Value);
 		}
 		return result;
 	}

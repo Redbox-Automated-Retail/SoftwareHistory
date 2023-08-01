@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Media.Imaging;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
 
@@ -70,4 +71,10 @@ public class DisplayProductModelConstants
 	public string OutOfStockTitleDetailsABTestVersion { get; set; }
 
 	public bool EnableRedboxPlus { get; set; }
+
+	public IKioskClientService KioskClientService { get; set; }
+
+	public bool ShowWatchOptions { get; set; }
+
+	public bool ShowDualInStock { get; set; }
 }

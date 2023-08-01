@@ -9,6 +9,7 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
+using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.Subscriptions;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Personalization;
@@ -1056,5 +1057,55 @@ public class BrowseFunctions
 				MessagePopupViewController.ShowRedboxPlusFreeOneNightRentalAlreadyUsedTier2Message(action, action);
 			}
 		}
+	}
+
+	public static List<DisplayProductMoreLikeThisModel> CreateMoreLikeThis(ITitleProduct titleProduct, Action<IBrowseItemModel> onMoreLikeThisSelected)
+	{
+		List<DisplayProductMoreLikeThisModel> result = new List<DisplayProductMoreLikeThisModel>();
+		long productGroupId = ((titleProduct is ITitleRollupProduct titleRollupProduct) ? titleRollupProduct.ProductGroupId : titleProduct.TitleRollupProductGroupId);
+		(ServiceLocator.Instance.GetService<IKioskClientService>()?.ProductGroups?.GetMoreLikeThis(productGroupId))?.ForEach(delegate(long eachMoreLikeThis)
+		{
+			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
+			if (service != null)
+			{
+				service.GetTitleRollupProduct(eachMoreLikeThis, out var kioskProduct);
+				if (kioskProduct != null)
+				{
+					ITitleRollupProduct moreLikeThisTitleRollupProduct = kioskProduct as ITitleRollupProduct;
+					if (moreLikeThisTitleRollupProduct != null)
+					{
+						if (BrowseState.BrowseItemModels.Any((IBrowseItemModel item) => item.Data == moreLikeThisTitleRollupProduct) && (moreLikeThisTitleRollupProduct.IsRentableAndInStock || moreLikeThisTitleRollupProduct.IsSellableAndInStock))
+						{
+							DisplayProductMoreLikeThisModel displayProductMoreLikeThisModel = new DisplayProductMoreLikeThisModel
+							{
+								Name = moreLikeThisTitleRollupProduct.ProductName,
+								Data = moreLikeThisTitleRollupProduct,
+								Image = OrchestrationService.GetProductBitmapImage(moreLikeThisTitleRollupProduct)
+							};
+							displayProductMoreLikeThisModel.OnMoreLikeThisSelected += onMoreLikeThisSelected;
+							result.Add(displayProductMoreLikeThisModel);
+						}
+						else
+						{
+							moreLikeThisTitleRollupProduct.KioskProducts?.ForEach(delegate(ITitleProduct eachMoreLikeThisKioskProduct)
+							{
+								if (BrowseState.BrowseItemModels.Any((IBrowseItemModel item) => item.Data == eachMoreLikeThisKioskProduct) && (eachMoreLikeThisKioskProduct.IsRentableAndInStock || eachMoreLikeThisKioskProduct.IsSellableAndInStock))
+								{
+									DisplayProductMoreLikeThisModel displayProductMoreLikeThisModel2 = new DisplayProductMoreLikeThisModel
+									{
+										Name = eachMoreLikeThisKioskProduct.ProductName,
+										Data = eachMoreLikeThisKioskProduct,
+										Image = OrchestrationService.GetProductBitmapImage(eachMoreLikeThisKioskProduct)
+									};
+									displayProductMoreLikeThisModel2.OnMoreLikeThisSelected += onMoreLikeThisSelected;
+									result.Add(displayProductMoreLikeThisModel2);
+								}
+							});
+						}
+					}
+				}
+			}
+		});
+		return result;
 	}
 }

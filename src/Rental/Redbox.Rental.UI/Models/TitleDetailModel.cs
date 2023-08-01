@@ -75,6 +75,8 @@ public class TitleDetailModel : DependencyObject
 
 	public event Action RedboxPlusInfo;
 
+	public event Action DualInStockLearnMore;
+
 	public event Action StatisticPopup;
 
 	public event Action<TitleDetailModel> OnTitleDetailModelChanged;
@@ -117,6 +119,11 @@ public class TitleDetailModel : DependencyObject
 	public void ProcessRedboxPlusInfo()
 	{
 		RedboxPlusInfo?.Invoke();
+	}
+
+	public void ProcessDualInStockLearnMore()
+	{
+		DualInStockLearnMore?.Invoke();
 	}
 
 	public void ProcessStatisticPopup()
