@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Models;
 using KioskClientService.API.Services.Configuration;
+using KioskClientService.API.Services.Inventory.Models;
 using KioskClientService.API.Services.Promotion;
 using Microsoft.Extensions.Logging;
 
@@ -24,23 +25,27 @@ internal class ProxyApi : IProxyApi
 
 	private long _kioskId;
 
-	private const string _subscription = "api/subscription";
+	private const string _cms = "api/cms";
 
 	private const string _customerProfile = "api/customerprofile";
 
 	private const string _installer = "api/installer";
 
+	private const string _inventory = "api/inventory";
+
+	private const string _kiosk = "api/kiosk";
+
 	private const string _loyalty = "api/loyalty";
 
 	private const string _marketing = "api/marketing";
+
+	private const string _planogram = "api/planogram";
 
 	private const string _pricing = "api/pricing";
 
 	private const string _promotion = "api/promotion";
 
-	private const string _planogram = "api/planogram";
-
-	private const string _cms = "api/cms";
+	private const string _subscription = "api/subscription";
 
 	private const string _proxyAuthHeader = "x-api-key";
 
@@ -186,15 +191,25 @@ internal class ProxyApi : IProxyApi
 		return await _httpService.SendRequest<GetPlanogramsResponse>(ProxyApiUrl, endpoint, null, HttpMethod.Get, GetHeaders(kioskId));
 	}
 
-	private List<Header> GetHeaders(long kioskId)
-	{
-		List<Header> kioskCloudHeaders = _kioskCloudClientConfiguration.GetKioskCloudHeaders(Guid.NewGuid(), kioskId);
-		return kioskCloudHeaders.AddCompression();
-	}
-
 	public async Task<APIResponse<PostKioskCampaignsResponse>> PostKioskCampaigns(long kioskId, PostKioskCampaignsRequest request)
 	{
 		string endpoint = "api/cms" + $"/campaign/kiosk/{kioskId}";
 		return await _httpService.SendRequest<PostKioskCampaignsResponse>(ProxyApiUrl, endpoint, request, HttpMethod.Post, GetHeaders(kioskId));
+	}
+
+	public async Task<APIResponse<NearbyKiosksResponse>> GetNearbyKiosks(NearbyKiosksRequest request)
+	{
+		return await _httpService.SendRequest<NearbyKiosksResponse>(ProxyApiUrl, string.Format("{0}/{1}/nearby", "api/kiosk", request.KioskId), null, HttpMethod.Get, _kioskCloudClientConfiguration.GetKioskCloudHeaders(request.MessageId, request.KioskId).AddCompression());
+	}
+
+	public async Task<APIResponse<KioskTitlesCountResponse>> KioskTitlesCount(KiosksAndTitlesPayload payload)
+	{
+		return await _httpService.SendRequest<KioskTitlesCountResponse>(ProxyApiUrl, "api/inventory/kiosktitlescount", payload, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(payload.MessageId, payload.SourceKioskId).AddCompression());
+	}
+
+	private List<Header> GetHeaders(long kioskId)
+	{
+		List<Header> kioskCloudHeaders = _kioskCloudClientConfiguration.GetKioskCloudHeaders(Guid.NewGuid(), kioskId);
+		return kioskCloudHeaders.AddCompression();
 	}
 }

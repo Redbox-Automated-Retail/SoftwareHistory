@@ -1,10 +1,9 @@
 using System;
 using KioskClientService.API.App;
-using KioskClientService.API.Services.HttpQueue;
 
 namespace KioskClientService.API.Services.Inventory.Models;
 
-public class InventoryResponse : BaseResponse, IReplayableApiCall
+public class InventoryResponse : BaseResponse
 {
 	public Guid MessageId { get; set; }
 

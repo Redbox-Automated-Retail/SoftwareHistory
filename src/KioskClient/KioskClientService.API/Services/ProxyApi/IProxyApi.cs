@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Models;
+using KioskClientService.API.Services.Inventory.Models;
 using KioskClientService.API.Services.Promotion;
 
 namespace KioskClientService.API.Services.ProxyApi;
@@ -45,4 +46,8 @@ public interface IProxyApi
 	Task<APIResponse<GetPlanogramsResponse>> GetPlanograms(long kioskId, DateTime? lastChange = null);
 
 	Task<APIResponse<PostKioskCampaignsResponse>> PostKioskCampaigns(long kioskId, PostKioskCampaignsRequest request);
+
+	Task<APIResponse<NearbyKiosksResponse>> GetNearbyKiosks(NearbyKiosksRequest request);
+
+	Task<APIResponse<KioskTitlesCountResponse>> KioskTitlesCount(KiosksAndTitlesPayload payload);
 }

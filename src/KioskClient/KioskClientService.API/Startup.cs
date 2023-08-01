@@ -20,11 +20,13 @@ using KioskClientService.API.Services.Campaigns;
 using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.CustomerProfile;
 using KioskClientService.API.Services.Data;
+using KioskClientService.API.Services.Dual;
 using KioskClientService.API.Services.Encryption;
 using KioskClientService.API.Services.HttpQueue;
 using KioskClientService.API.Services.Installer;
 using KioskClientService.API.Services.Inventory;
 using KioskClientService.API.Services.Inventory.API;
+using KioskClientService.API.Services.Kiosk;
 using KioskClientService.API.Services.KioskEngineApi;
 using KioskClientService.API.Services.Loyalty;
 using KioskClientService.API.Services.Marketing;
@@ -148,7 +150,7 @@ public class Startup
 		services.AddScoped<ITransactionService, TransactionService>();
 		services.AddScoped<IProductGroupSortOrderService, ProductGroupSortOrderService>();
 		services.AddScoped<ProductGroupSortOrderJob>();
-		services.AddScoped<IProxyApi, ProxyApi>();
+		services.AddProxyApiService();
 		services.AddScoped<IAuthenticationService, AuthenticationService>();
 		services.AddScoped<IInstallerService, InstallerService>();
 		services.AddScoped<IMarketingService, MarketingService>();
@@ -166,6 +168,8 @@ public class Startup
 		services.AddLoyaltyService();
 		services.AddDataService();
 		services.AddMemoryCache();
+		services.AddKioskService();
+		services.AddDualService();
 	}
 
 	public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger, IApplicationSettings applicationSettings, IOptionsSnapshotKioskConfiguration kioskConfigiuration)

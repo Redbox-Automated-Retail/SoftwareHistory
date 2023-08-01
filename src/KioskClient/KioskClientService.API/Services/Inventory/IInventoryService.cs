@@ -15,4 +15,6 @@ public interface IInventoryService
 	Task<InventoryResponse> DiscAction(DiscActionRequest request);
 
 	Task<InventoryResponse> DiscFraud(DiscFraudRequest request);
+
+	Task<KioskTitlesCountResponse> KioskTitlesCount(KiosksAndTitlesPayload payload);
 }

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.Inventory.API;
 using KioskClientService.API.Services.Inventory.Models;
+using KioskClientService.API.Services.ProxyApi;
 using Microsoft.Extensions.Logging;
 
 namespace KioskClientService.API.Services.Inventory;
@@ -14,10 +16,13 @@ public class InventoryService : IInventoryService
 
 	private ILogger<InventoryService> _logger;
 
-	public InventoryService(IInventoryApiClient inventoryApiClient, ILogger<InventoryService> logger)
+	private IProxyApi _proxyApi;
+
+	public InventoryService(IInventoryApiClient inventoryApiClient, ILogger<InventoryService> logger, IProxyApi proxyApi)
 	{
 		_inventoryClient = inventoryApiClient;
 		_logger = logger;
+		_proxyApi = proxyApi;
 	}
 
 	public async Task<GetMerchandizingOrdersResponse> GetAllCurrentMerchandizingOrders()
@@ -171,6 +176,44 @@ public class InventoryService : IInventoryService
 			{
 				_logger.LogErrorWithSource("DiscFraud was unsuccessful, errors: " + result.Errors.ToJson(), "DiscFraud");
 			}
+		}
+		return result;
+	}
+
+	public async Task<KioskTitlesCountResponse> KioskTitlesCount(KiosksAndTitlesPayload payload)
+	{
+		KioskTitlesCountResponse result = new KioskTitlesCountResponse
+		{
+			MessageId = payload.MessageId
+		};
+		try
+		{
+			_logger.LogInfoWithSource("calling kiosk titles count with kiosks: " + string.Join(',', payload.KioskIds) + ", titles: " + string.Join(',', payload.TitleIds), "KioskTitlesCount");
+			APIResponse<KioskTitlesCountResponse> aPIResponse = await _proxyApi.KioskTitlesCount(payload);
+			if (aPIResponse == null)
+			{
+				string text = "no response returned from api call";
+				_logger.LogErrorWithSource(text, "KioskTitlesCount");
+				result.StatusCode = HttpStatusCode.InternalServerError;
+				result.Error = text;
+			}
+			else if (aPIResponse.IsSuccessStatusCode)
+			{
+				result.StatusCode = HttpStatusCode.OK;
+				result.KioskTitlesCount.AddRange(aPIResponse.Response.KioskTitlesCount);
+				_logger.LogInfoWithSource("found the following kiosk titles count results: " + result.KioskTitlesCount.ToJson(), "KioskTitlesCount");
+			}
+			else
+			{
+				_logger.LogInfoWithSource($"kiosk titles count failed with the following status code: {aPIResponse.StatusCode}, error: {aPIResponse.Errors.ToJson()}", "KioskTitlesCount");
+				aPIResponse.CopyTo(result);
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogErrorWithSource(ex, "Exception during kiosk titles count", "KioskTitlesCount");
+			result.StatusCode = HttpStatusCode.InternalServerError;
+			result.Error = ex.Message;
 		}
 		return result;
 	}

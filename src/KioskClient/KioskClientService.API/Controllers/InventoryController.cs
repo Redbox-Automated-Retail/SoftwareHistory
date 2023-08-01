@@ -90,4 +90,15 @@ public class InventoryController : ControllerBase
 		inventoryResponse.CheckAndReplay(_logger, request.MessageId, base.ControllerContext.HttpContext.Request, _httpQueueService);
 		return inventoryResponse.ToObjectResult();
 	}
+
+	[Route("kiosktitlescount")]
+	[HttpPost]
+	[ProducesResponseType(typeof(KioskTitlesCountResponse), 200)]
+	[ProducesResponseType(400)]
+	[ProducesResponseType(401)]
+	[ProducesResponseType(500)]
+	public async Task<ActionResult<KioskTitlesCountResponse>> KioskTitlesCount([FromBody] KiosksAndTitlesPayload payload)
+	{
+		return (await _inventoryService.KioskTitlesCount(payload)).ToObjectResult();
+	}
 }
