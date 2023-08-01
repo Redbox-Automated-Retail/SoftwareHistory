@@ -1,17 +1,17 @@
-# Xterra SR (2023-06-26)
+# Yugo (2023-08-01)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-06-26
-- Store labels: kop-rental-bundles-XterraSR
+- Date (first download in the snapshots): 2023-08-01
+- Store labels: kop-rental-bundles-Yugo
 - Package revisions:
-  - `kop-rental-bundles` revision 175 (`1575FFA146CE7B815D68D7BACE295B014E2E86E6`)
+  - `kop-rental-bundles` revision 176 (`39CC51700357BD42C7D6268DB2976BE403245627`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `F49477B618F3165F161B8625A1836C8B9ED13E7C` | exact |
-| `fm.bundle` |  |  | `1A4407300738EF5E777D7217E2F9CB6AAFB34970` | exact |
-| `library-rental-common.bundle` |  |  | `19A4991C77D8739A476DCAA833C89B7D51A6891E` | exact |
-| `ra-2.x.bundle` |  |  | `4CC1527843BA7AF60264E87D2B3FF5447C6C35F2` | exact |
+| `cp.bundle` |  |  | `98EDB259A35034636CD090294321F068CD63E9C4` | exact |
+| `fm.bundle` |  |  | `65CCE642EE5B94E16391C97177133375F22942E6` | exact |
+| `library-rental-common.bundle` |  |  | `36438C118FDF7FBAB9E330E16B4FC27B98833FE7` | exact |
+| `ra-2.x.bundle` |  |  | `39C68A6F1C088DAECAB50A9DD31610C90CEE7765` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

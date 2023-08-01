@@ -40,7 +40,7 @@
 		y="2"
 		optionFlags="Background, Text, TextShadow, DrawRoundedCorners"
 		backgroundColor="DarkRed"
-		text="  Software Versions - Xterra"
+		text="  Software Versions - Yugo"
 		foregroundColor="White"
 		verticalAlignment="center"
 		font="medium_larger_font"
