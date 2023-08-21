@@ -18,8 +18,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	public void OnStuck(IGetResult result)
 	{
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		service.UpdateEmptyStuck(result.Location);
+		ServiceLocator.Instance.GetService<IInventoryService>().UpdateEmptyStuck(result.Location);
 	}
 
 	public bool OnEmpty(IGetResult result)
@@ -144,8 +143,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 				}
 				if (ControllerConfiguration.Instance.PrepositionVendFraudMove && VendMethod.Preposition == Method)
 				{
-					IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-					service2.MoveTo(6, location.Slot, MoveMode.None, base.AppLog);
+					ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(6, location.Slot, MoveMode.None, base.AppLog);
 					if (!OnPrePosition(location, text))
 					{
 						break;
@@ -165,8 +163,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 					break;
 				}
 				base.Context.Send("PickupGraphicDisplay");
-				IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
-				IVendItemResult vendItemResult = service3.VendItemInPicker();
+				IVendItemResult vendItemResult = ServiceLocator.Instance.GetService<IControllerService>().VendItemInPicker();
 				if (ErrorCodes.PickerEmpty == vendItemResult.Status)
 				{
 					base.Context.Send("ItemVended");
@@ -194,15 +191,15 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 		{
 			if (ControllerConfiguration.Instance.EmptyStuckAlertThreshold > 0)
 			{
-				IPersistentCounterService service4 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-				IPersistentCounter persistentCounter = service4.Find("EmptyOrStuckCount");
+				IPersistentCounterService service2 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
+				IPersistentCounter persistentCounter = service2.Find("EmptyOrStuckCount");
 				if (persistentCounter != null && persistentCounter.Value > ControllerConfiguration.Instance.EmptyStuckAlertThreshold)
 				{
 					LogHelper.Instance.Log(LogEntryType.Error, "The Empty/Stuck counter for alert generation has exceeded its threshold (value = {0})", persistentCounter.Value);
 					if (ControllerConfiguration.Instance.AlertForEmptyStuck)
 					{
 						base.Context.CreateInfoResult("EmptyStuckThresholdExceeded", "There are too many empty/stuck failures transactions on this kiosk, please investigate.");
-						service4.Reset(persistentCounter);
+						service2.Reset(persistentCounter);
 					}
 				}
 			}
@@ -245,8 +242,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	private ErrorCodes OnFraudAttempt(ILocation source, string id)
 	{
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		if (service.AcceptDiskAtDoor() != ErrorCodes.PickerFull)
+		if (ServiceLocator.Instance.GetService<IControllerService>().AcceptDiskAtDoor() != ErrorCodes.PickerFull)
 		{
 			LogHelper.Instance.WithContext("Unable to move disc back to sensor 3; assume the disc is vended.");
 			return FileFraudedDisk(source, id);
@@ -307,22 +303,20 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 
 	private bool FileDisk(ILocation location, string id)
 	{
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		if (service.MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
+		if (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			return false;
 		}
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		if (!service2.Put(id).Success)
+		if (!ServiceLocator.Instance.GetService<IControllerService>().Put(id).Success)
 		{
 			return false;
 		}
 		if (CurrentGetResult != null)
 		{
-			IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			location.Flags = CurrentGetResult.Flags;
 			location.ReturnDate = CurrentGetResult.ReturnTime;
-			service3.Save(location);
+			service.Save(location);
 		}
 		return true;
 	}
@@ -348,8 +342,7 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 	{
 		CurrentGetResult = null;
 		LogHelper.Instance.WithContext("Move {0} to get requested barcode = {1}.", loc, barcode);
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		switch (service.MoveTo(loc, MoveMode.Get, base.Context.AppLog))
+		switch (ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(loc, MoveMode.Get, base.Context.AppLog))
 		{
 		case ErrorCodes.Timeout:
 			base.Context.CreateInfoResult("MoveFailure", "The MOVE instruction returned TIMEOUT.", barcode);
@@ -359,8 +352,8 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			return TransactionResult.MachineError;
 		case ErrorCodes.Success:
 		{
-			IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-			CurrentGetResult = service2.Get(this);
+			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+			CurrentGetResult = service.Get(this);
 			if (CurrentGetResult.Success)
 			{
 				return TransactionResult.Success;
@@ -373,10 +366,9 @@ internal sealed class VendJob : NativeJobAdapter, IGetObserver
 			}
 			if (CurrentGetResult.ItemStuck && ControllerConfiguration.Instance.EmptyStuckAlertThreshold > 0 && Method != VendMethod.Location)
 			{
-				IPersistentCounterService service3 = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-				service3.Increment("EmptyOrStuckCount");
+				ServiceLocator.Instance.GetService<IPersistentCounterService>().Increment("EmptyOrStuckCount");
 			}
-			service2.ClearGripper();
+			service.ClearGripper();
 			IPickerSensorReadResult pickerSensorReadResult = base.ControlSystem.ReadPickerSensors();
 			if (!pickerSensorReadResult.Success)
 			{

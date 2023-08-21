@@ -5,10 +5,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class PutOperation : AbstractOperation<PutResult>
 {
-	private const string AggressivePutFailuresCounter = "AggressivePutFailures";
-
-	private const string AggressivePutSuccessCounter = "AggressivePutSuccesses";
-
 	private readonly string ID;
 
 	private readonly IPutObserver Observer;
@@ -18,6 +14,10 @@ internal sealed class PutOperation : AbstractOperation<PutResult>
 	private readonly PutResult Result;
 
 	private readonly IFormattedLog Log;
+
+	private const string AggressivePutFailuresCounter = "AggressivePutFailures";
+
+	private const string AggressivePutSuccessCounter = "AggressivePutSuccesses";
 
 	public override PutResult Execute()
 	{
@@ -62,9 +62,9 @@ internal sealed class PutOperation : AbstractOperation<PutResult>
 			return ErrorCodes.GripperRentTimeout;
 		}
 		Controller.StartRollerIn();
-		bool flag = ClearDiskFromPicker();
+		bool num = ClearDiskFromPicker();
 		RuntimeService.SpinWait(100);
-		if (flag)
+		if (num)
 		{
 			LogHelper.Instance.WithContext(LogEntryType.Error, "PUT: Disk cannot be placed into {0} because it cannot clear sensor 2.", PutLocation.ToString());
 			Controller.LogPickerSensorState(LogEntryType.Error);
@@ -76,8 +76,7 @@ internal sealed class PutOperation : AbstractOperation<PutResult>
 			}
 			Controller.TrackClose();
 			RuntimeService.SpinWait(100);
-			IControlResponse controlResponse = Controller.RollerToPosition(RollerPosition.Position5, 8000);
-			if (!controlResponse.Success)
+			if (!Controller.RollerToPosition(RollerPosition.Position5, 8000).Success)
 			{
 				LogHelper.Instance.Log("Put: roll item back to sensor 5 returned TIMEOUT");
 				LogHelper.Instance.Log("PUT: unable to roll item into slot, and cannot move it back into the picker.", LogEntryType.Error);
@@ -121,8 +120,7 @@ internal sealed class PutOperation : AbstractOperation<PutResult>
 		{
 			return ErrorCodes.TrackCloseTimeout;
 		}
-		IControlResponse controlResponse2 = Controller.RollerToPosition(RollerPosition.Position5, 5000);
-		if (!controlResponse2.Success)
+		if (!Controller.RollerToPosition(RollerPosition.Position5, 5000).Success)
 		{
 			Controller.LogPickerSensorState(LogEntryType.Error);
 			RuntimeService.SpinWait(100);
@@ -175,8 +173,7 @@ internal sealed class PutOperation : AbstractOperation<PutResult>
 		PullFrom(PutLocation);
 		IControlResponse controlResponse = Controller.RollerToPosition(RollerPosition.Position5, 5000);
 		LogHelper.Instance.Log(LogEntryType.Error, "[PUT] gripperClear: false, rollerTo 5 returned {0}", controlResponse.ToString());
-		IPickerSensorReadResult pickerSensorReadResult2 = Controller.ReadPickerSensors();
-		pickerSensorReadResult2.Log(LogEntryType.Error);
+		Controller.ReadPickerSensors().Log(LogEntryType.Error);
 		RuntimeService.SpinWait(100);
 		Controller.StopRoller();
 		return ErrorCodes.PickerObstructed;
@@ -206,8 +203,7 @@ internal sealed class PutOperation : AbstractOperation<PutResult>
 		}
 		if (Result.IsDuplicate)
 		{
-			IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-			service.GetActiveContext();
+			ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
 			Result.OriginalMatrixLocation = original;
 			Result.StoredMatrix = (ControllerConfiguration.Instance.MarkDuplicatesUnknown ? "UNKNOWN" : string.Format("{0}{1}", ID, "(DUPLICATE)"));
 			LogHelper.Instance.WithContext("The ID {0} is a duplicate ( original at Deck = {1} Slot = {2} ); marking as {3}", ID, original.Deck, original.Slot, Result.StoredMatrix);

@@ -34,7 +34,8 @@ internal struct CleanResult
 	{
 		if (MerchandizeResult.EmptyStuck != result && result != MerchandizeResult.Success)
 		{
-			TransferFailures++;
+			int transferFailures = TransferFailures + 1;
+			TransferFailures = transferFailures;
 		}
 	}
 }

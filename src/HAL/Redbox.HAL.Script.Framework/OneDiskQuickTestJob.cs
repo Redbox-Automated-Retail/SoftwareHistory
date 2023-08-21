@@ -33,8 +33,7 @@ internal sealed class OneDiskQuickTestJob : NativeJobAdapter
 				break;
 			}
 			int[] array3 = ((i == num) ? array : array2);
-			int[] array4 = array3;
-			foreach (int slot2 in array4)
+			foreach (int slot2 in array3)
 			{
 				if (!MoveAndPut(i, slot2, "UNKNOWN"))
 				{

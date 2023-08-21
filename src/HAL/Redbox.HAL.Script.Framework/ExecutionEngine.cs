@@ -26,7 +26,7 @@ public sealed class ExecutionEngine : IExecutionService, IConfigurationObserver
 
 	private Thread SchedulerThread;
 
-	private TimeSpan? RebootWindowStart = null;
+	private TimeSpan? RebootWindowStart;
 
 	private readonly PollerManager PollerManager = new PollerManager();
 
@@ -108,7 +108,7 @@ public sealed class ExecutionEngine : IExecutionService, IConfigurationObserver
 				catch (Exception e)
 				{
 					LogHelper.Instance.Log("[ExecutionEngine] Parsing kiosk reboot time failed.", e);
-					KioskRebootTime = (RebootWindowStart = (RebootWindowStart = null));
+					KioskRebootTime = (RebootWindowStart = null);
 					return;
 				}
 			}
@@ -451,11 +451,9 @@ public sealed class ExecutionEngine : IExecutionService, IConfigurationObserver
 
 	private void SuspendCritical(bool force)
 	{
-		List<ExecutionContext> list = Contexts.FindAll((ExecutionContext each) => !each.IsComplete && each.Status != ExecutionContextStatus.Suspended);
-		list.ForEach(delegate(ExecutionContext each)
+		Contexts.FindAll((ExecutionContext each) => !each.IsComplete && each.Status != ExecutionContextStatus.Suspended).ForEach(delegate(ExecutionContext each)
 		{
-			string value = Array.Find(NonSchedulableJobsWithinReboot, (string job) => job == each.ProgramName);
-			if (!string.IsNullOrEmpty(value))
+			if (!string.IsNullOrEmpty(Array.Find(NonSchedulableJobsWithinReboot, (string job) => job == each.ProgramName)))
 			{
 				each.Suspend();
 				if (force)
@@ -596,8 +594,7 @@ public sealed class ExecutionEngine : IExecutionService, IConfigurationObserver
 			{
 				using (FileStream serializationStream = File.OpenRead(path2))
 				{
-					BinaryFormatter binaryFormatter = new BinaryFormatter();
-					executionContext = (ExecutionContext)binaryFormatter.Deserialize(serializationStream);
+					executionContext = (ExecutionContext)new BinaryFormatter().Deserialize(serializationStream);
 				}
 				if (executionContext != null)
 				{

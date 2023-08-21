@@ -57,8 +57,7 @@ internal abstract class SyncDecorator
 
 	internal virtual IGetResult GetDisk(IFormattedLog applog)
 	{
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		return service.Get();
+		return ServiceLocator.Instance.GetService<IControllerService>().Get();
 	}
 
 	internal virtual void OnGetFailure(IGetResult gr)

@@ -18,15 +18,13 @@ internal sealed class TakeDiskAtDoorJob : NativeJobAdapter
 			base.Context.CreateInfoResult("PickerFull", "The picker is full.");
 			return;
 		}
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ErrorCodes errorCodes = service.MoveVend(MoveMode.None, base.Context.AppLog);
+		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(MoveMode.None, base.Context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("HardwareError", $"MOVE failed with error {errorCodes.ToString()}");
 			return;
 		}
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		ErrorCodes errorCodes2 = service2.AcceptDiskAtDoor();
+		ErrorCodes errorCodes2 = ServiceLocator.Instance.GetService<IControllerService>().AcceptDiskAtDoor();
 		if (ErrorCodes.PickerFull != errorCodes2)
 		{
 			base.Context.CreateInfoResult("ReceiveFailure", $"Accept disk returned status {errorCodes2.ToString().ToUpper()}");

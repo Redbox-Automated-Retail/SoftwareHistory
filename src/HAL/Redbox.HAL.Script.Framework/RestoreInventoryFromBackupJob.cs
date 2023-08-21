@@ -38,8 +38,7 @@ internal sealed class RestoreInventoryFromBackupJob : NativeJobAdapter
 				base.Result.Errors.Add(Error.NewError("I001", "Invalid document.", "The specified document is invalid."));
 				return;
 			}
-			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-			service.ResetState(xmlDocument, base.Result.Errors);
+			ServiceLocator.Instance.GetService<IInventoryService>().ResetState(xmlDocument, base.Result.Errors);
 			if (base.Result.Errors.Count > 0)
 			{
 				applicationLog.WriteFormatted("Reset inventory FAILED to import inventory.");

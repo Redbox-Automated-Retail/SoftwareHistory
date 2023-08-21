@@ -42,9 +42,9 @@ public sealed class BatchCommandRunner : ISession, IMessageSink
 		string[] files = Directory.GetFiles(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "*.txt");
 		ErrorList errorList = new ErrorList();
 		string[] array = files;
-		foreach (string fileName in array)
+		for (int i = 0; i < array.Length; i++)
 		{
-			ExecuteFile(fileName, errorList);
+			ExecuteFile(array[i], errorList);
 		}
 		return errorList;
 	}
@@ -70,13 +70,12 @@ public sealed class BatchCommandRunner : ISession, IMessageSink
 	public void Start()
 	{
 		StringBuilder stringBuilder = new StringBuilder();
-		CommandResult commandResult;
 		while (true)
 		{
 			stringBuilder.Length = 0;
 			if (!Read(stringBuilder))
 			{
-				return;
+				break;
 			}
 			string text = stringBuilder.ToString();
 			if (text.Length <= 0)
@@ -89,9 +88,9 @@ public sealed class BatchCommandRunner : ISession, IMessageSink
 			}
 			if (text.IndexOf("quit", 0, StringComparison.CurrentCultureIgnoreCase) != -1)
 			{
-				return;
+				break;
 			}
-			commandResult = CommandService.Instance.Execute(this, text);
+			CommandResult commandResult = CommandService.Instance.Execute(this, text);
 			if (commandResult != null)
 			{
 				ProtocolHelper.FormatErrors(commandResult.Errors, commandResult.Messages);
@@ -102,11 +101,11 @@ public sealed class BatchCommandRunner : ISession, IMessageSink
 				}
 				if (commandResult.Errors.ContainsError())
 				{
+					Errors.AddRange(commandResult.Errors);
 					break;
 				}
 			}
 		}
-		Errors.AddRange(commandResult.Errors);
 	}
 
 	private bool Read(StringBuilder builder)

@@ -53,12 +53,12 @@ public abstract class TokenizerBase<T>
 		}
 		while (true)
 		{
-			StateHandler stateHandler = (m_handlers.ContainsKey(CurrentState) ? m_handlers[CurrentState] : null);
-			if (stateHandler == null)
+			StateHandler obj = (m_handlers.ContainsKey(CurrentState) ? m_handlers[CurrentState] : null);
+			if (obj == null)
 			{
 				break;
 			}
-			switch (stateHandler())
+			switch (obj())
 			{
 			case StateResult.Terminal:
 				StopMachine();

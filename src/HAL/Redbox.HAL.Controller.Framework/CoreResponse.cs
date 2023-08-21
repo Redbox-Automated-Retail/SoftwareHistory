@@ -17,7 +17,7 @@ internal sealed class CoreResponse : IControlResponse
 
 	private static readonly char[] TrimChars = Environment.NewLine.ToCharArray();
 
-	public bool Success => ErrorCodes.Success == Error;
+	public bool Success => Error == ErrorCodes.Success;
 
 	public bool TimedOut => ErrorCodes.Timeout == Error;
 
@@ -31,9 +31,10 @@ internal sealed class CoreResponse : IControlResponse
 		{
 			if (m_commErrorResponse == null)
 			{
-				CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
-				coreResponse.Error = ErrorCodes.CommunicationError;
-				m_commErrorResponse = coreResponse;
+				m_commErrorResponse = new CoreResponse(AddressSelector.H101)
+				{
+					Error = ErrorCodes.CommunicationError
+				};
 			}
 			return m_commErrorResponse;
 		}
@@ -45,9 +46,10 @@ internal sealed class CoreResponse : IControlResponse
 		{
 			if (m_timeoutResponse == null)
 			{
-				CoreResponse coreResponse = new CoreResponse(AddressSelector.H101);
-				coreResponse.Error = ErrorCodes.Timeout;
-				m_timeoutResponse = coreResponse;
+				m_timeoutResponse = new CoreResponse(AddressSelector.H101)
+				{
+					Error = ErrorCodes.Timeout
+				};
 			}
 			return m_timeoutResponse;
 		}

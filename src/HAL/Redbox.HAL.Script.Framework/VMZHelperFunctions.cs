@@ -9,18 +9,15 @@ internal class VMZHelperFunctions
 
 	internal static ErrorCodes MoveViewable(ExecutionContext context)
 	{
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		ILocation location = service.Get(3, 86);
-		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		return service2.MoveTo(location, MoveMode.None, context.AppLog);
+		ILocation location = ServiceLocator.Instance.GetService<IInventoryService>().Get(3, 86);
+		return ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(location, MoveMode.None, context.AppLog);
 	}
 
 	internal MerchandizeResult UnloadDisc(ExecutionResult result, ExecutionContext context)
 	{
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 		ILocation loc = null;
-		IDecksService service2 = ServiceLocator.Instance.GetService<IDecksService>();
-		service2.ForAllDecksDo(delegate(IDeck deck)
+		ServiceLocator.Instance.GetService<IDecksService>().ForAllDecksDo(delegate(IDeck deck)
 		{
 			for (int i = 1; i <= deck.NumberOfSlots; i++)
 			{

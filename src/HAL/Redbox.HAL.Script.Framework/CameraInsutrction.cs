@@ -57,8 +57,7 @@ public class CameraInsutrction : Instruction
 			flag = boolValue;
 		}
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		IScannerDeviceService service2 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-		IScannerDevice configuredDevice = service2.GetConfiguredDevice();
+		IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
 		switch (Enum<ExpectedOperand>.ParseIgnoringCase(base.Operands[0].Value, ExpectedOperand.None))
 		{
 		case ExpectedOperand.IRCamera:

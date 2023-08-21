@@ -140,8 +140,7 @@ internal sealed class GetOperation : AbstractOperation<GetResult>
 			Result.Update(ErrorCodes.TrackCloseTimeout);
 			return false;
 		}
-		IPickerSensorReadResult pickerSensorReadResult = Controller.ReadPickerSensors();
-		if (pickerSensorReadResult.IsFull)
+		if (Controller.ReadPickerSensors().IsFull)
 		{
 			Result.Update(ErrorCodes.PickerFull);
 			return false;

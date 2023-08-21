@@ -68,8 +68,7 @@ internal struct CheckPickerOperation : IFileDiskHandler, IDisposable
 			OnComplete();
 			return ErrorCodes.PickerEmpty;
 		}
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		if (service2.ClearGripper() != ErrorCodes.Success)
+		if (ServiceLocator.Instance.GetService<IControllerService>().ClearGripper() != ErrorCodes.Success)
 		{
 			Context.CreateItemStuckResult(vendId);
 			Context.SetSymbolValue("MSTESTER-SYMBOL-PICKER-FULL", "The gripper is obstructed.");

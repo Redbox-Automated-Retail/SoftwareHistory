@@ -9,8 +9,7 @@ internal sealed class ClearImagesFolderJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IBarcodeReaderFactory service = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>();
-		string[] files = Directory.GetFiles(service.ImagePath);
+		string[] files = Directory.GetFiles(ServiceLocator.Instance.GetService<IBarcodeReaderFactory>().ImagePath);
 		int errors = 0;
 		Array.ForEach(files, delegate(string file)
 		{
@@ -22,7 +21,8 @@ internal sealed class ClearImagesFolderJob : NativeJobAdapter
 			{
 				LogHelper.Instance.WithContext("Failed to delete file '{0}'", file);
 				LogHelper.Instance.Log(ex.Message);
-				errors++;
+				int num = errors + 1;
+				errors = num;
 			}
 		});
 		if (errors > 0)

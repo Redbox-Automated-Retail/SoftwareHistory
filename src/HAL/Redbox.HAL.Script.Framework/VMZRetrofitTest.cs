@@ -110,8 +110,7 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 			AddError("Test failure!");
 			return false;
 		}
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		if (!service.Put("UNKNOWN").Success)
+		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN").Success)
 		{
 			AddError("Test failure.");
 			return false;
@@ -128,9 +127,7 @@ internal sealed class VMZRetrofitTest : NativeJobAdapter
 			return false;
 		}
 		base.ControlSystem.TrackCycle();
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IPutResult putResult = service.Put("UNKNOWN");
-		if (!putResult.IsSlotInUse)
+		if (!ServiceLocator.Instance.GetService<IControllerService>().Put("UNKNOWN").IsSlotInUse)
 		{
 			return false;
 		}

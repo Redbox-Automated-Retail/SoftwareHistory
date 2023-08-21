@@ -44,9 +44,8 @@ internal sealed class TcpClientSession : Redbox.HAL.IPC.Framework.Client.ClientS
 			SslStream sslStream = new SslStream(stream, leaveInnerStreamOpen: false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true);
 			sslStream.ReadTimeout = base.Timeout;
 			sslStream.WriteTimeout = base.Timeout;
-			SslStream sslStream2 = sslStream;
-			sslStream2.AuthenticateAsClient(base.Protocol.Host);
-			stream = sslStream2;
+			sslStream.AuthenticateAsClient(base.Protocol.Host);
+			stream = sslStream;
 		}
 		Stream = stream;
 		m_channel = new AsyncChannel(stream, TransportClient.ReceiveBufferSize, base.Identifier);

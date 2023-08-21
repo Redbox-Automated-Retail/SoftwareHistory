@@ -7,8 +7,7 @@ public sealed class PeekOperation : AbstractOperation<IPeekResult>
 	public override IPeekResult Execute()
 	{
 		IPeekResult peekResult = OnPeek();
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		string printableLocation = service.GetPrintableLocation();
+		string printableLocation = ServiceLocator.Instance.GetService<IMotionControlService>().GetPrintableLocation();
 		if (!peekResult.TestOk)
 		{
 			LogHelper.Instance.WithContext(true, LogEntryType.Error, "Peek {0} returned error status {1}", printableLocation, peekResult.Error.ToString().ToUpper());
@@ -22,8 +21,7 @@ public sealed class PeekOperation : AbstractOperation<IPeekResult>
 
 	private IPeekResult OnPeek()
 	{
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ILocation currentLocation = service.CurrentLocation;
+		ILocation currentLocation = ServiceLocator.Instance.GetService<IMotionControlService>().CurrentLocation;
 		LocationTestResult locationTestResult = new LocationTestResult(currentLocation.Deck, currentLocation.Slot);
 		if (currentLocation.IsWide)
 		{

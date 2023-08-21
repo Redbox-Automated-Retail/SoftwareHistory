@@ -46,13 +46,14 @@ public class CallFrame
 	{
 		string text = (string)parentKey.GetValue("ProgramName");
 		int num = (int)parentKey.GetValue("ParentContext");
-		CallFrame callFrame = new CallFrame();
-		callFrame.X = (int)parentKey.GetValue("X", 0);
-		callFrame.Y = (int)parentKey.GetValue("Y", 0);
-		callFrame.PC = (int)parentKey.GetValue("PC");
-		callFrame.ProgramName = text;
-		callFrame.ParentContext = ((num != -1 && programCache.ContainsKey(text)) ? programCache[text].GetByLineNumber(num) : null);
-		return callFrame;
+		return new CallFrame
+		{
+			X = (int)parentKey.GetValue("X", 0),
+			Y = (int)parentKey.GetValue("Y", 0),
+			PC = (int)parentKey.GetValue("PC"),
+			ProgramName = text,
+			ParentContext = ((num != -1 && programCache.ContainsKey(text)) ? programCache[text].GetByLineNumber(num) : null)
+		};
 	}
 
 	internal void Save(RegistryKey parentKey)

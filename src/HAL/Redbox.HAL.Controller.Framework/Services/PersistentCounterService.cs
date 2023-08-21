@@ -18,8 +18,7 @@ internal sealed class PersistentCounterService : IPersistentCounterService
 		{
 			return Counters[name];
 		}
-		ITableTypeFactory service = ServiceLocator.Instance.GetService<ITableTypeFactory>();
-		IPersistentCounter persistentCounter = service.NewCounter(name, 0);
+		IPersistentCounter persistentCounter = ServiceLocator.Instance.GetService<ITableTypeFactory>().NewCounter(name, 0);
 		if (CounterTable.Insert(persistentCounter))
 		{
 			Counters[name] = persistentCounter;

@@ -16,8 +16,7 @@ public struct CAUUID
 		for (int i = 0; i < cElems; i++)
 		{
 			IntPtr ptr = new IntPtr(pElems.ToInt64() + i * Marshal.SizeOf(typeof(Guid)));
-			ref Guid reference = ref array[i];
-			reference = (Guid)Marshal.PtrToStructure(ptr, typeof(Guid));
+			array[i] = (Guid)Marshal.PtrToStructure(ptr, typeof(Guid));
 		}
 		return array;
 	}

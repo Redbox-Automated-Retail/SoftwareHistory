@@ -23,12 +23,11 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB list")]
 	[CommandForm(Name = "list")]
+	[Usage("JOB list")]
 	public void List(CommandContext context)
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		List<IExecutionContext> jobList = service.GetJobList();
+		List<IExecutionContext> jobList = ServiceLocator.Instance.GetService<IExecutionService>().GetJobList();
 		using (new DisposeableList<IExecutionContext>(jobList))
 		{
 			jobList.Sort((IExecutionContext x, IExecutionContext y) => x.Priority.CompareTo(y.Priority));
@@ -81,8 +80,8 @@ public sealed class JobCommand
 		});
 	}
 
-	[Usage("JOB disconnect job: job-id")]
 	[CommandForm(Name = "disconnect")]
+	[Usage("JOB disconnect job: job-id")]
 	public void Disconnect(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors)?.Disconnect();
@@ -124,8 +123,8 @@ public sealed class JobCommand
 		CommandHelper.GetJob(jobId, context.Errors)?.Trash();
 	}
 
-	[Usage("JOB resume job: job-id")]
 	[CommandForm(Name = "resume")]
+	[Usage("JOB resume job: job-id")]
 	public void Resume(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "job")] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors)?.Resume();
@@ -145,8 +144,8 @@ public sealed class JobCommand
 		context.Errors.Add(Error.NewError("C999", "Unsupported Client API", "The SuspendAll client API is no longer supported."));
 	}
 
-	[Usage("JOB resume-all")]
 	[CommandForm(Name = "resume-all")]
+	[Usage("JOB resume-all")]
 	public void ResumeAll(CommandContext context)
 	{
 		context.Errors.Add(Error.NewError("C999", "Unsupported Client API", "The ResumeAll client API is no longer supported."));
@@ -181,20 +180,18 @@ public sealed class JobCommand
 		}
 	}
 
-	[Usage("JOB collect-garbage force: true|false")]
 	[CommandForm(Name = "collect-garbage")]
+	[Usage("JOB collect-garbage force: true|false")]
 	public void CollectGarbage(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "force")] bool force)
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		service.CleanupJobs(force);
+		ServiceLocator.Instance.GetService<IExecutionService>().CleanupJobs(force);
 	}
 
-	[Usage("JOB scheduler-status")]
 	[CommandForm(Name = "scheduler-status")]
+	[Usage("JOB scheduler-status")]
 	public void GetSchedulerStatus(CommandContext context)
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IExecutionContext activeContext = service.GetActiveContext();
+		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
 		context.Messages.Add((activeContext != null) ? activeContext.ID : "idle");
 	}
 
@@ -210,12 +207,12 @@ public sealed class JobCommand
 	public void Schedule(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, bool? debugging, ProgramPriority? priority, DateTime? startTime, string label)
 	{
 		bool flag = context.Parameters.ContainsKey("resume-now");
-		bool flag2 = context.Parameters.ContainsKey("no-duplicates");
+		bool num = context.Parameters.ContainsKey("no-duplicates");
 		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		if (flag2 && label != null)
+		if (num && label != null)
 		{
 			IExecutionContext[] byLabel = service.GetByLabel(label);
-			if (byLabel.Length > 0)
+			if (byLabel.Length != 0)
 			{
 				context.Errors.Add(Error.NewWarning("S998", $"A job with the label '{label}' already exists and the no-duplicates flag was specified.", "Issue the JOB schedule command again passing in a non-duplicate label: or remove the no-duplicates parameter."));
 				if (flag)
@@ -228,24 +225,24 @@ public sealed class JobCommand
 				return;
 			}
 		}
-		IExecutionContext executionContext = ScheduleJob(name, label, startTime, priority ?? ProgramPriority.Normal, debugging ?? false);
+		IExecutionContext executionContext = ScheduleJob(name, label, startTime, priority ?? ProgramPriority.Normal, debugging == true);
 		context.Errors.AddRange(executionContext.Result.Errors);
-		if (!context.Errors.ContainsError() && flag)
+		if (!context.Errors.ContainsError() & flag)
 		{
 			executionContext.Resume();
 		}
 		CommandHelper.FormatJob(executionContext, context);
 	}
 
-	[Usage("JOB execute-immediate statement: statement-line")]
 	[CommandForm(Name = "execute-immediate")]
+	[Usage("JOB execute-immediate statement: statement-line")]
 	public void ExecuteImmediate([CommandKeyValue(IsRequired = true)] CommandContext context, string statement)
 	{
 		OnExecuteImmediate(Encoding.ASCII.GetBytes(statement), context);
 	}
 
-	[Usage("JOB execute-immediate-base64 statement: base64-encoded-statement")]
 	[CommandForm(Name = "execute-immediate-base64")]
+	[Usage("JOB execute-immediate-base64 statement: base64-encoded-statement")]
 	public void ExecuteImmediateBase64(CommandContext context, [CommandKeyValue(IsRequired = true, BinaryEncoding = BinaryEncoding.Base64)] byte[] statement)
 	{
 		OnExecuteImmediate(statement, context);
@@ -268,8 +265,7 @@ public sealed class JobCommand
 
 	private static IExecutionContext ScheduleJob(string programName, string label, DateTime? startTime, ProgramPriority priority, bool enableDebugging)
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		return service.ScheduleJob(programName, label, startTime, priority);
+		return ServiceLocator.Instance.GetService<IExecutionService>().ScheduleJob(programName, label, startTime, priority);
 	}
 
 	private static void OnExecuteImmediate(byte[] statement, CommandContext context)

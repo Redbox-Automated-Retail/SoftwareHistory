@@ -14,9 +14,9 @@ namespace Redbox.HAL.IPC.Framework;
 
 public class ClientCommand<T> where T : ClientCommandResult, new()
 {
-	private const string IPCLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs\\IPCFramework";
-
 	private TextWriter m_logFile;
+
+	private const string IPCLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs\\IPCFramework";
 
 	private IPCProtocol m_protocol;
 
@@ -97,17 +97,14 @@ public class ClientCommand<T> where T : ClientCommandResult, new()
 				session.ConnectThrowOnError();
 			}
 			List<string> list = session.ExecuteCommand(CommandText);
-			bool success = session.IsStatusOK(list);
-			val.Success = success;
+			val.Success = session.IsStatusOK(list);
 			if (list.Count > 0)
 			{
-				string statusMessage = list[list.Count - 1];
-				val.StatusMessage = statusMessage;
+				val.StatusMessage = list[list.Count - 1];
 				list.RemoveAt(list.Count - 1);
 			}
 			val.CommandMessages.AddRange(list);
-			List<int> list2 = ConvertMessages(val);
-			foreach (int item in list2)
+			foreach (int item in ConvertMessages(val))
 			{
 				if (item < val.CommandMessages.Count)
 				{
@@ -133,8 +130,7 @@ public class ClientCommand<T> where T : ClientCommandResult, new()
 		}
 		finally
 		{
-			TimeSpan elapsed = executionTimer.Elapsed;
-			val.ExecutionTime = elapsed;
+			val.ExecutionTime = executionTimer.Elapsed;
 			ExecutionTime = val.ExecutionTime;
 		}
 		return val;

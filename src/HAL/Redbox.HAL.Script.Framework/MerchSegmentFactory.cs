@@ -52,9 +52,10 @@ internal static class MerchSegmentFactory
 			return SegmentMap[flags];
 		}
 		MerchSegment merchSegment = null;
-		if (flags <= MerchFlags.ThinRedeploy && flags >= MerchFlags.Thin)
+		MerchFlags num = flags - 1;
+		if ((ulong)num <= 3uL)
 		{
-			switch ((int)(flags - 1))
+			switch ((int)num)
 			{
 			case 0:
 				merchSegment = new ThinSegment(ThinHelper.Debug);

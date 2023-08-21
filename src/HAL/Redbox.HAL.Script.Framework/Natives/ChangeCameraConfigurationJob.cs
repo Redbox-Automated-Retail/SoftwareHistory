@@ -8,11 +8,8 @@ internal sealed class ChangeCameraConfigurationJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		ScannerServices scannerServices = base.Context.PopTop<ScannerServices>();
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		service.SetPropertyByName("CAMERA", "ScannerService", new object[1] { scannerServices });
-		IScannerDeviceService service2 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-		IScannerDevice configuredDevice = service2.GetConfiguredDevice();
-		if (configuredDevice.Service != scannerServices)
+		ServiceLocator.Instance.GetService<IConfigurationService>().SetPropertyByName("CAMERA", "ScannerService", new object[1] { scannerServices });
+		if (ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice().Service != scannerServices)
 		{
 			AddError("Failed to toggle service.");
 		}

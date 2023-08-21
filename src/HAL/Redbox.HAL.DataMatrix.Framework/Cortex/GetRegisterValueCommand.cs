@@ -32,8 +32,7 @@ internal sealed class GetRegisterValueCommand : TextCommand
 		string text = Encoding.ASCII.GetString(parsedPackets[0].PayloadData, 0, 8);
 		try
 		{
-			int num2 = int.Parse(text, NumberStyles.HexNumber);
-			if (num2 != num)
+			if (int.Parse(text, NumberStyles.HexNumber) != num)
 			{
 				LogHelper.Instance.Log("[GetRegisterValue] register {0} expected value {1} found {2}", Register.Register, Register.Value, text);
 				return false;

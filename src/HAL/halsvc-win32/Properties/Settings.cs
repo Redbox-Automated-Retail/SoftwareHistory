@@ -5,17 +5,17 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.Service.Win32.Properties;
 
-[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
 [CompilerGenerated]
+[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
 internal sealed class Settings : ApplicationSettingsBase
 {
 	private static Settings defaultInstance = (Settings)SettingsBase.Synchronized(new Settings());
 
 	public static Settings Default => defaultInstance;
 
-	[DefaultSettingValue("Modern")]
 	[UserScopedSetting]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("Modern")]
 	public string MotionControlServiceVersion
 	{
 		get
@@ -59,8 +59,8 @@ internal sealed class Settings : ApplicationSettingsBase
 	}
 
 	[UserScopedSetting]
-	[DefaultSettingValue("rcp://127.0.0.1:7001")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("rcp://127.0.0.1:7001")]
 	public string ServiceProtocol
 	{
 		get
@@ -74,8 +74,8 @@ internal sealed class Settings : ApplicationSettingsBase
 	}
 
 	[UserScopedSetting]
-	[DefaultSettingValue("Legacy")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("Legacy")]
 	public string ServiceHostGeneration
 	{
 		get

@@ -165,11 +165,8 @@ public sealed class GripperInstruction : Instruction
 			break;
 		}
 		case "PUSH-OUT":
-		{
-			ErrorCodes errorCodes = service3.PushOut();
-			context.PushTop(errorCodes.ToString().ToUpper());
+			context.PushTop(service3.PushOut().ToString().ToUpper());
 			break;
-		}
 		case "CHECK-PICKER":
 		{
 			string vendId = null;
@@ -199,8 +196,7 @@ public sealed class GripperInstruction : Instruction
 
 	private void TestFingerOperation(GripperFingerState state, ExecutionContext context)
 	{
-		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		IControlResponse response = service.SetFinger(state);
+		IControlResponse response = ServiceLocator.Instance.GetService<IControlSystem>().SetFinger(state);
 		HandleError(response, context);
 	}
 

@@ -13,8 +13,7 @@ internal sealed class ResetInventoryJob : NativeJobAdapter
 		string text = base.Context.PopTop<string>();
 		if (!File.Exists(text))
 		{
-			IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-			text = Path.Combine(service.DataPath, text);
+			text = Path.Combine(ServiceLocator.Instance.GetService<IRuntimeService>().DataPath, text);
 			if (!File.Exists(text))
 			{
 				AddError("The file {0} doesn't exist.");
@@ -40,10 +39,8 @@ internal sealed class ResetInventoryJob : NativeJobAdapter
 				base.Result.Errors.Add(Error.NewError("I001", "Invalid document.", e));
 				return;
 			}
-			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-			service2.ResetState(xmlDocument, base.Result.Errors);
-			IDumpbinService service3 = ServiceLocator.Instance.GetService<IDumpbinService>();
-			service3.ResetState(xmlDocument, base.Result.Errors);
+			ServiceLocator.Instance.GetService<IInventoryService>().ResetState(xmlDocument, base.Result.Errors);
+			ServiceLocator.Instance.GetService<IDumpbinService>().ResetState(xmlDocument, base.Result.Errors);
 			if (base.Result.Errors.Count > 0)
 			{
 				LogHelper.Instance.Log("RESET INVENTORY Failed to import inventory.", LogEntryType.Error);

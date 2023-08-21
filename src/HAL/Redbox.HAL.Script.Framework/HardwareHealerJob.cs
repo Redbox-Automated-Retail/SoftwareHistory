@@ -10,18 +10,14 @@ internal class HardwareHealerJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Service", flushOnWrite: false, null);
-		if (ControllerConfiguration.Instance.EnableLeiweHealing)
+		if (ControllerConfiguration.Instance.EnableLeiweHealing && !base.ControlSystem.GetRevision().Success)
 		{
-			IControlSystemRevision revision = base.ControlSystem.GetRevision();
-			if (!revision.Success)
+			base.ControlSystem.Shutdown();
+			Thread.Sleep(500);
+			base.ControlSystem.Initialize();
+			if (!base.ControlSystem.GetRevision().Success)
 			{
-				base.ControlSystem.Shutdown();
-				Thread.Sleep(500);
-				base.ControlSystem.Initialize();
-				if (!base.ControlSystem.GetRevision().Success)
-				{
-					AddError("Failed to reset boards.");
-				}
+				AddError("Failed to reset boards.");
 			}
 		}
 		if (ControllerConfiguration.Instance.EnableArcusHealing)

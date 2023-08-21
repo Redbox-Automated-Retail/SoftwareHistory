@@ -17,8 +17,7 @@ public static class CommandHelper
 			errors.Add(Error.NewError("S001", "The job: parameter is required.", "Correct your command and resubmit."));
 			return null;
 		}
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IExecutionContext job = service.GetJob(jobId);
+		IExecutionContext job = ServiceLocator.Instance.GetService<IExecutionService>().GetJob(jobId);
 		if (job == null)
 		{
 			errors.Add(Error.NewError("S001", $"The job for ID '{jobId}' does not exist.", "Correct your command and resubmit."));

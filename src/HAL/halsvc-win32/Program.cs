@@ -14,8 +14,7 @@ public static class Program
 		try
 		{
 			Exception arg = (Exception)e.ExceptionObject;
-			string path = Path.Combine("c:\\program files\\redbox\\kiosklogs", logFilePath);
-			File.AppendAllText(path, $"{DateTime.Now} - Unhandled Application Exception. Exiting Application {arg}");
+			File.AppendAllText(Path.Combine("c:\\program files\\redbox\\kiosklogs", logFilePath), $"{DateTime.Now} - Unhandled Application Exception. Exiting Application {arg}");
 		}
 		finally
 		{
@@ -27,10 +26,9 @@ public static class Program
 	{
 		AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 		Thread.CurrentThread.Name = "HAL Service";
-		ServiceBase[] services = new ServiceBase[1]
+		ServiceBase.Run(new ServiceBase[1]
 		{
 			new HALService()
-		};
-		ServiceBase.Run(services);
+		});
 	}
 }

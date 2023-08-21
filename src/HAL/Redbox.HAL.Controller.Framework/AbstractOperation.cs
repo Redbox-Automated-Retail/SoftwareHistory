@@ -74,12 +74,8 @@ public abstract class AbstractOperation<T> : IDisposable
 			service.SpinWait(clearSensorPauseDelay);
 			bool flag2 = true;
 			IPickerSensorReadResult pickerSensorReadResult;
-			for (int i = 0; i < 3; i++)
+			for (int i = 0; (i < 3) & flag2; i++)
 			{
-				if (!flag2)
-				{
-					break;
-				}
 				if (flag2)
 				{
 					if (i > 0)
@@ -126,16 +122,15 @@ public abstract class AbstractOperation<T> : IDisposable
 					errorCodes = ErrorCodes.SensorReadError;
 					break;
 				}
-				if (!pickerSensorReadResult.IsInState(sensor, state))
+				if (pickerSensorReadResult.IsInState(sensor, state))
 				{
-					if (executionTimer.ElapsedMilliseconds > timeout)
-					{
-						errorCodes = ErrorCodes.Timeout;
-						break;
-					}
-					continue;
+					break;
 				}
-				break;
+				if (executionTimer.ElapsedMilliseconds > timeout)
+				{
+					errorCodes = ErrorCodes.Timeout;
+					break;
+				}
 			}
 		}
 		if (errorCodes != ErrorCodes.Success && ErrorCodes.Timeout != errorCodes)
@@ -199,8 +194,7 @@ public abstract class AbstractOperation<T> : IDisposable
 				}
 				return ErrorCodes.GripperOpenTimeout;
 			}
-			IDeck byNumber = DeckService.GetByNumber(MotionService.CurrentLocation.Deck);
-			if (byNumber.IsQlm)
+			if (DeckService.GetByNumber(MotionService.CurrentLocation.Deck).IsQlm)
 			{
 				int qlmExtendTime = ControllerConfiguration.Instance.QlmExtendTime;
 				if (ControllerConfiguration.Instance.QlmTimedExtend)

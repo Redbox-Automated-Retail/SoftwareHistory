@@ -8,12 +8,10 @@ internal sealed class ClearHardwareStatisticsJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		string value = base.Context.PopTop<string>();
-		HardwareCorrectionStatistic hardwareCorrectionStatistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(value, HardwareCorrectionStatistic.None);
+		HardwareCorrectionStatistic hardwareCorrectionStatistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(base.Context.PopTop<string>(), HardwareCorrectionStatistic.None);
 		if (hardwareCorrectionStatistic != HardwareCorrectionStatistic.None)
 		{
-			IHardwareCorrectionStatisticService service = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
-			service.RemoveAll(hardwareCorrectionStatistic);
+			ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().RemoveAll(hardwareCorrectionStatistic);
 		}
 	}
 

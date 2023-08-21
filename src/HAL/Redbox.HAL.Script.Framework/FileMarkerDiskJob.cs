@@ -27,16 +27,14 @@ internal sealed class FileMarkerDiskJob : NativeJobAdapter
 			break;
 		case ErrorCodes.PickerFull:
 		{
-			IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-			errorCodes = service2.MoveTo(num, num2, MoveMode.Put, base.Context.AppLog);
+			errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(num, num2, MoveMode.Put, base.Context.AppLog);
 			if (errorCodes != ErrorCodes.Success)
 			{
 				HandleHWError(errorCodes.ToString());
 				break;
 			}
 			base.ControlSystem.TrackCycle();
-			IPutResult putResult = service.Put("UNKNOWN");
-			if (putResult.Success)
+			if (service.Put("UNKNOWN").Success)
 			{
 				base.Context.CreateResult("ItemReturned", "The marker disk was filed.", num, num2, "UNKNOWN", null, null);
 				break;

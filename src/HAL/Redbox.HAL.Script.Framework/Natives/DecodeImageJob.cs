@@ -19,10 +19,7 @@ internal sealed class DecodeImageJob : NativeJobAdapter
 		}
 		else
 		{
-			IBarcodeReader configuredReader = service.GetConfiguredReader();
-			IScanResult sr = configuredReader.Scan(text);
-			ScanResult scanResult = new ScanResult(sr);
-			scanResult.PushTo(base.Context);
+			new ScanResult(service.GetConfiguredReader().Scan(text)).PushTo(base.Context);
 		}
 	}
 

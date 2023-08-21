@@ -37,8 +37,7 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			AddError("The dumpbin is full.");
 			return;
 		}
-		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ErrorCodes errorCodes = service2.MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
+		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(service.PutLocation, MoveMode.Put, applicationLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			base.Context.CreateInfoResult("MoveError", $"MOVE failed with error {errorCodes.ToString()}");
@@ -46,8 +45,7 @@ internal sealed class PutDiskInDumpBinJob : NativeJobAdapter
 			return;
 		}
 		string text = Scanner.ReadDiskInPicker(ReadDiskOptions.LeaveCaptureResult, base.Context);
-		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
-		IPutResult putResult = service3.Put(text);
+		IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(text);
 		if (!putResult.Success)
 		{
 			base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");

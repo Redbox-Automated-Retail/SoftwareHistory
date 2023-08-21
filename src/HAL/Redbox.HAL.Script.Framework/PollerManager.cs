@@ -43,8 +43,7 @@ internal sealed class PollerManager
 	public void InitializePollers()
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		string text = service.RuntimePath(Assembly.GetExecutingAssembly().GetName().Name + ".dll");
+		string text = ServiceLocator.Instance.GetService<IRuntimeService>().RuntimePath(Assembly.GetExecutingAssembly().GetName().Name + ".dll");
 		Assembly assembly = null;
 		try
 		{

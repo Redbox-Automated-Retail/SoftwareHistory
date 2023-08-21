@@ -117,8 +117,7 @@ public sealed class VMZInstruction : Instruction
 			}
 			else if (string.Compare(base.Operands[0].Value, "UNLOAD-DISC", ignoreCase: true) == 0)
 			{
-				MerchandizeResult merchandizeResult = VMZHelperFunctions.Instance.UnloadDisc(result, context);
-				context.PushTop(merchandizeResult.ToString().ToUpper());
+				context.PushTop(VMZHelperFunctions.Instance.UnloadDisc(result, context).ToString().ToUpper());
 			}
 			else if (string.Compare(base.Operands[0].Value, "GET-LAST-THIN", ignoreCase: true) == 0)
 			{
@@ -176,8 +175,7 @@ public sealed class VMZInstruction : Instruction
 			context.PushTop(errorCodes.ToString().ToUpper());
 			return;
 		}
-		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = service3.Get();
+		IGetResult getResult = ServiceLocator.Instance.GetService<IControllerService>().Get();
 		if (getResult.Success)
 		{
 			VMZHelperFunctions.MoveViewable(context);

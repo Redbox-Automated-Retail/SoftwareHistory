@@ -8,8 +8,7 @@ internal sealed class GetMachineInfoJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-		IDeck qlmDeck = service.QlmDeck;
+		IDeck qlmDeck = ServiceLocator.Instance.GetService<IDecksService>().QlmDeck;
 		if (qlmDeck == null)
 		{
 			base.Context.CreateInfoResult("QlmMissingInfo", "There is no QLM deck defined for this machine.");

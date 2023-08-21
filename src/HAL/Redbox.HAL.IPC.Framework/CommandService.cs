@@ -19,13 +19,14 @@ public class CommandService
 	{
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		CommandResult commandResult = new CommandResult();
-		CommandContext commandContext = new CommandContext();
-		commandContext.Session = session;
-		commandContext.MessageSink = session;
-		CommandContext commandContext2 = commandContext;
+		CommandContext commandContext = new CommandContext
+		{
+			Session = session,
+			MessageSink = session
+		};
 		try
 		{
-			if (!GetTokenizer(input, commandResult, commandContext2, out var tokenizer))
+			if (!GetTokenizer(input, commandResult, commandContext, out var tokenizer))
 			{
 				return commandResult;
 			}
@@ -46,7 +47,7 @@ public class CommandService
 				TokenList symbols = tokenizer.Tokens.GetSymbols();
 				if ((symbols.Count == 0 && command.HasDefault()) || command.HasOnlyDefault())
 				{
-					command.InvokeDefault(commandResult, commandContext2, tokenizer);
+					command.InvokeDefault(commandResult, commandContext, tokenizer);
 					return commandResult;
 				}
 				if (symbols.Count == 0)
@@ -64,7 +65,7 @@ public class CommandService
 				{
 					return commandResult;
 				}
-				method.Invoke(commandResult, commandContext2, tokenizer, command.GetInstance());
+				method.Invoke(commandResult, commandContext, tokenizer, command.GetInstance());
 			}
 		}
 		catch (Exception e)
@@ -74,12 +75,12 @@ public class CommandService
 		finally
 		{
 			commandResult.ExecutionTime = executionTimer.Elapsed;
-			commandResult.Success = !commandContext2.Errors.ContainsError() && !commandResult.Errors.ContainsError();
-			commandResult.Messages.AddRange(commandContext2.Messages);
-			commandResult.Errors.AddRange(commandContext2.Errors);
+			commandResult.Success = !commandContext.Errors.ContainsError() && !commandResult.Errors.ContainsError();
+			commandResult.Messages.AddRange(commandContext.Messages);
+			commandResult.Errors.AddRange(commandContext.Errors);
 			Statistics.Instance.TrackCommandStatistics(commandResult.ExecutionTime);
-			commandContext2.Messages.Clear();
-			commandContext2.Errors.Clear();
+			commandContext.Messages.Clear();
+			commandContext.Errors.Clear();
 		}
 		return commandResult;
 	}
@@ -92,8 +93,7 @@ public class CommandService
 
 	private static bool GetTokenizer(string input, CommandResult result, CommandContext context, out CommandTokenizer tokenizer)
 	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		input = service.ExpandConstantMacros(input);
+		input = ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(input);
 		tokenizer = new CommandTokenizer(0, input);
 		tokenizer.Tokenize();
 		if (tokenizer.Tokens.HasOnlyComments())
@@ -110,10 +110,9 @@ public class CommandService
 		{
 			context.Parameters[symbol.Value] = symbol.Value;
 		}
-		TokenList keyValuePairs = tokenizer.Tokens.GetKeyValuePairs();
-		foreach (Token item in keyValuePairs)
+		foreach (Token keyValuePair2 in tokenizer.Tokens.GetKeyValuePairs())
 		{
-			if (item.ConvertValue() is KeyValuePair keyValuePair)
+			if (keyValuePair2.ConvertValue() is KeyValuePair keyValuePair)
 			{
 				context.Parameters[$"{keyValuePair.Key}:"] = keyValuePair.Value;
 			}

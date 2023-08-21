@@ -37,7 +37,6 @@ public sealed class WaitInstruction : Instruction
 		{
 			ms = result2;
 		}
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		service.Wait(ms);
+		ServiceLocator.Instance.GetService<IRuntimeService>().Wait(ms);
 	}
 }

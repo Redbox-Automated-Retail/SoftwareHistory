@@ -54,8 +54,7 @@ internal sealed class CoreCommand
 				coreResponse.Error = WaitForCommand(trace);
 				if (coreResponse.TimedOut && !string.IsNullOrEmpty(ResetCommand))
 				{
-					string[] array = ResetCommand.Split(CommaSplit, StringSplitOptions.RemoveEmptyEntries);
-					Array.ForEach(array, delegate(string s)
+					Array.ForEach(ResetCommand.Split(CommaSplit, StringSplitOptions.RemoveEmptyEntries), delegate(string s)
 					{
 						SendCommand(s, trace);
 					});
@@ -179,7 +178,7 @@ internal sealed class CoreCommand
 		Address = properties.Address;
 		ResetCommand = properties.ResetCommand;
 		WaitPauseTime = ((-1 != properties.WaitPauseTime) ? properties.WaitPauseTime : 0);
-		OperationTimeout = timeout ?? 0;
+		OperationTimeout = timeout.GetValueOrDefault();
 		StatusBit = null;
 		if (-1 != properties.StatusBit)
 		{

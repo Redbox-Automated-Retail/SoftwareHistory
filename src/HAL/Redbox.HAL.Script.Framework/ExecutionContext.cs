@@ -16,10 +16,6 @@ namespace Redbox.HAL.Script.Framework;
 [Serializable]
 public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, IHardwareCorrectionObserver
 {
-	private const string ResultPrefix = "RESULT";
-
-	private const string EmptyItemToken = "~";
-
 	internal readonly ExecutionStatus Status = new ExecutionStatus();
 
 	internal readonly Registers Registers;
@@ -52,7 +48,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 
 	private ExecutionResult m_result;
 
-	private DateTime? m_startTime = null;
+	private DateTime? m_startTime;
 
 	private bool IsHydrating;
 
@@ -71,6 +67,10 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 	private readonly List<string> CachedResults = new List<string>();
 
 	private readonly ReaderWriterLockSlim ObserverLock = new ReaderWriterLockSlim();
+
+	private const string ResultPrefix = "RESULT";
+
+	private const string EmptyItemToken = "~";
 
 	public IFormattedLog ContextLog => AppLog;
 
@@ -96,7 +96,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 
 	public DateTime CreatedOn { get; private set; }
 
-	public bool IsConnected => ConnectionState.Connected == m_connectionState;
+	public bool IsConnected => m_connectionState == ConnectionState.Connected;
 
 	public IExecutionResult Result => m_result;
 
@@ -170,8 +170,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		{
 			if (string.IsNullOrEmpty(m_contextDirectory))
 			{
-				IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-				string path = service.RuntimePath("data\\contexts");
+				string path = ServiceLocator.Instance.GetService<IRuntimeService>().RuntimePath("data\\contexts");
 				m_contextDirectory = Path.Combine(path, ID);
 			}
 			return m_contextDirectory;
@@ -316,17 +315,20 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		{
 			return true;
 		}
-		try
+		while (true)
 		{
-			while (!CompletionWaitHandle.WaitOne(50, exitContext: false) && !IsComplete)
+			try
 			{
+				if (CompletionWaitHandle.WaitOne(50, exitContext: false) || IsComplete)
+				{
+					return true;
+				}
 				Thread.Sleep(0);
 			}
-			return true;
-		}
-		catch (ObjectDisposedException)
-		{
-			return true;
+			catch (ObjectDisposedException)
+			{
+				return true;
+			}
 		}
 	}
 
@@ -446,12 +448,13 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		{
 			foreach (string key in SymbolTable.Keys)
 			{
-				ContextSymbol contextSymbol = new ContextSymbol(key);
-				contextSymbol.Value = SymbolTable[key];
-				ContextSymbol contextSymbol2 = contextSymbol;
-				if (!contextSymbol2.IsReserved)
+				ContextSymbol contextSymbol = new ContextSymbol(key)
 				{
-					action(contextSymbol2);
+					Value = SymbolTable[key]
+				};
+				if (!contextSymbol.IsReserved)
+				{
+					action(contextSymbol);
 				}
 			}
 		}
@@ -515,7 +518,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		if (!string.IsNullOrEmpty(text2))
 		{
 			string[] array = text2.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			if (array != null && array.Length > 0)
+			if (array != null && array.Length != 0)
 			{
 				m_result.Errors.AddRange(ErrorList.NewFromStrings(array));
 			}
@@ -523,8 +526,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		string text3 = info.GetString("Messages");
 		if (!string.IsNullOrEmpty(text3))
 		{
-			string[] array2 = text3.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			Array.ForEach(array2, delegate(string item)
+			Array.ForEach(text3.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries), delegate(string item)
 			{
 				if (!string.IsNullOrEmpty(item))
 				{
@@ -535,8 +537,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		string text4 = info.GetString("Results");
 		if (!string.IsNullOrEmpty(text4))
 		{
-			string[] array3 = text4.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			Array.ForEach(array3, delegate(string item)
+			Array.ForEach(text4.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries), delegate(string item)
 			{
 				if (!string.IsNullOrEmpty(item))
 				{
@@ -547,17 +548,16 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		ParentID = info.GetString("ParentID");
 		if (flag)
 		{
-			string text5 = info.GetString("Programs");
-			string[] array4 = text5.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			string[] array2 = info.GetString("Programs").Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 			BinaryFormatter binaryFormatter = new BinaryFormatter();
-			string[] array5 = array4;
-			foreach (string text6 in array5)
+			string[] array3 = array2;
+			foreach (string text5 in array3)
 			{
-				string path = Path.Combine(ContextDirectory, text6);
+				string path = Path.Combine(ContextDirectory, text5);
 				try
 				{
 					using FileStream serializationStream = File.OpenRead(path);
-					ProgramCache[text6] = (ProgramInstruction)binaryFormatter.Deserialize(serializationStream);
+					ProgramCache[text5] = (ProgramInstruction)binaryFormatter.Deserialize(serializationStream);
 				}
 				catch (Exception e2)
 				{
@@ -569,34 +569,31 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 		{
 			SymbolTable = (IDictionary<string, object>)info.GetValue("SymbolTable", typeof(Dictionary<string, object>));
 		}
-		string text7 = info.GetString("Stack");
-		string[] array6 = text7.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-		for (int num2 = array6.Length - 1; num2 >= 0; num2--)
+		string[] array4 = info.GetString("Stack").Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+		for (int num2 = array4.Length - 1; num2 >= 0; num2--)
 		{
-			string[] array7 = array6[num2].Split("=".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries);
-			if (array7.Length >= 2)
+			string[] array5 = array4[num2].Split("=".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries);
+			if (array5.Length >= 2)
 			{
-				OnPush(ConversionHelper.ChangeType(array7[1], Type.GetType(array7[0])), StackEnd.Top);
+				OnPush(ConversionHelper.ChangeType(array5[1], Type.GetType(array5[0])), StackEnd.Top);
 			}
 		}
 		if (flag)
 		{
-			string text8 = info.GetString("CallFrames");
-			string[] array8 = text8.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			for (int num3 = array8.Length - 1; num3 >= 0; num3--)
+			string[] array6 = info.GetString("CallFrames").Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			for (int num3 = array6.Length - 1; num3 >= 0; num3--)
 			{
-				string text9 = array8[num3];
-				string[] array9 = text9.Split('|');
-				string text10 = array9[3];
-				int parentContextLineNumber = int.Parse(array9[4]);
+				string[] array7 = array6[num3].Split('|');
+				string text6 = array7[3];
+				int parentContextLineNumber = int.Parse(array7[4]);
 				CallFrame callFrame = new CallFrame
 				{
-					PC = int.Parse(array9[0]),
-					X = int.Parse(array9[1]),
-					Y = int.Parse(array9[2]),
-					ProgramName = text10
+					PC = int.Parse(array7[0]),
+					X = int.Parse(array7[1]),
+					Y = int.Parse(array7[2]),
+					ProgramName = text6
 				};
-				ProgramInstruction program = (ProgramCache.ContainsKey(text10) ? ProgramCache[text10] : null);
+				ProgramInstruction program = (ProgramCache.ContainsKey(text6) ? ProgramCache[text6] : null);
 				callFrame.LoadInstructionPointer(parentContextLineNumber, program);
 				Registers.CallStack.Push(callFrame);
 			}
@@ -1137,8 +1134,7 @@ public class ExecutionContext : IMessageSink, ISerializable, IExecutionContext, 
 				Directory.CreateDirectory(ContextDirectory);
 			}
 			using FileStream serializationStream = File.OpenWrite(Path.Combine(ContextDirectory, "ctx.data"));
-			BinaryFormatter binaryFormatter = new BinaryFormatter();
-			binaryFormatter.Serialize(serializationStream, this);
+			new BinaryFormatter().Serialize(serializationStream, this);
 		}
 		catch (Exception e)
 		{

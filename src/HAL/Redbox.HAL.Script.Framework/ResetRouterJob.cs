@@ -7,8 +7,7 @@ internal sealed class ResetRouterJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IPowerCycleDeviceService service = ServiceLocator.Instance.GetService<IPowerCycleDeviceService>();
-		IPowerCycleDevice powerCycleDevice = service.Get(PowerCycleDevices.Router);
+		IPowerCycleDevice powerCycleDevice = ServiceLocator.Instance.GetService<IPowerCycleDeviceService>().Get(PowerCycleDevices.Router);
 		if (!powerCycleDevice.Configured)
 		{
 			AddError("Router relay is not configured.");
@@ -16,13 +15,11 @@ internal sealed class ResetRouterJob : NativeJobAdapter
 		}
 		ErrorCodes errorCodes = powerCycleDevice.CyclePower();
 		LogHelper.Instance.Log("[ResetRouterJob] CyclePower returned {0}", errorCodes);
-		IHardwareCorrectionStatisticService service2 = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
-		service2.Insert(HardwareCorrectionStatistic.RouterRecycle, base.Context, ErrorCodes.Success == errorCodes);
+		ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().Insert(HardwareCorrectionStatistic.RouterRecycle, base.Context, errorCodes == ErrorCodes.Success);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			AddError("Power cycle failed.");
-			IControlSystemService service3 = ServiceLocator.Instance.GetService<IControlSystemService>();
-			service3.Restart();
+			ServiceLocator.Instance.GetService<IControlSystemService>().Restart();
 		}
 	}
 

@@ -123,8 +123,7 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 				}
 				base.Context.Send("DisableCancel");
 				base.Context.Send("BlockingOnSensor");
-				IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-				ErrorCodes errorCodes = service.AcceptDiskAtDoor();
+				ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IControllerService>().AcceptDiskAtDoor();
 				if (ErrorCodes.SensorReadError == errorCodes)
 				{
 					base.Context.Send("MachineError");
@@ -159,26 +158,22 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 					{
 					}, scannedId);
 				}
+				else if (ServiceLocator.Instance.GetService<IBarcodeValidatorService>().IsValid(scannedId))
+				{
+					if (ControllerConfiguration.Instance.MarkDuplicatesUnknown && ControllerConfiguration.Instance.LeaveDuplicateResultInReturn && base.InventoryService.IsBarcodeDuplicate(scannedId, out var _))
+					{
+						base.Context.CreateInfoResult("CameraCaptureFailure", "Return has detected a duplicate barcode.");
+					}
+					FileDiskInKiosk(scannedId);
+				}
 				else
 				{
-					IBarcodeValidatorService service2 = ServiceLocator.Instance.GetService<IBarcodeValidatorService>();
-					if (service2.IsValid(scannedId))
+					base.Context.Send("UnrecognizedBarcodeReturned");
+					base.Context.AppLog.WriteFormatted($"The barcode {scannedId} is not a recognized Redbox barcode.");
+					ReturnToUserOrFile(FileUnrecognizedDisk, delegate(string barcode)
 					{
-						if (ControllerConfiguration.Instance.MarkDuplicatesUnknown && ControllerConfiguration.Instance.LeaveDuplicateResultInReturn && base.InventoryService.IsBarcodeDuplicate(scannedId, out var _))
-						{
-							base.Context.CreateInfoResult("CameraCaptureFailure", "Return has detected a duplicate barcode.");
-						}
-						FileDiskInKiosk(scannedId);
-					}
-					else
-					{
-						base.Context.Send("UnrecognizedBarcodeReturned");
-						base.Context.AppLog.WriteFormatted($"The barcode {scannedId} is not a recognized Redbox barcode.");
-						ReturnToUserOrFile(FileUnrecognizedDisk, delegate(string barcode)
-						{
-							base.Context.CreateInfoResult("NonRedboxDiskReturnedToUser", "The disk was returned to the user.", barcode);
-						}, scannedId);
-					}
+						base.Context.CreateInfoResult("NonRedboxDiskReturnedToUser", "The disk was returned to the user.", barcode);
+					}, scannedId);
 				}
 				IPickerSensorReadResult pickerSensorReadResult2 = base.ControlSystem.ReadPickerSensors();
 				if (pickerSensorReadResult2.Success && !pickerSensorReadResult2.IsFull)
@@ -198,16 +193,15 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 		{
 			if (ControllerConfiguration.Instance.IsVMZMachine)
 			{
-				IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
-				base.Context.CreateInfoResult("EmptySlotCount", service3.GetMachineEmptyCount().ToString());
-				IDumpbinService service4 = ServiceLocator.Instance.GetService<IDumpbinService>();
-				base.Context.CreateInfoResult("DumpBinRemainingCapacity", service4.RemainingSpace().ToString());
+				IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+				base.Context.CreateInfoResult("EmptySlotCount", service.GetMachineEmptyCount().ToString());
+				IDumpbinService service2 = ServiceLocator.Instance.GetService<IDumpbinService>();
+				base.Context.CreateInfoResult("DumpBinRemainingCapacity", service2.RemainingSpace().ToString());
 				base.Context.CreateInfoResult("ReturnSlotBufferValue", ControllerConfiguration.Instance.ReturnSlotBuffer.ToString());
 			}
 			if (CameraErrored && ControllerConfiguration.Instance.FixCameraAfterReturn)
 			{
-				IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
-				configuredDevice.Restart();
+				ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice().Restart();
 			}
 		}
 	}
@@ -273,16 +267,14 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 				FileDiskInKiosk("UNKNOWN");
 				return;
 			}
-			IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-			ErrorCodes errorCodes = service2.MoveTo(service.PutLocation, MoveMode.Put, appLog);
+			ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(service.PutLocation, MoveMode.Put, appLog);
 			if (errorCodes != ErrorCodes.Success)
 			{
 				base.Context.CreateInfoResult("MachineError", $"MOVE failed with error {errorCodes.ToString()}");
 				AddError("The MOVE instruction failed.");
 				return;
 			}
-			IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
-			IPutResult putResult = service3.Put(matrix);
+			IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(matrix);
 			if (!putResult.Success)
 			{
 				base.Context.CreateInfoResult("PutError", $"PUT failed with error {putResult.ToString()}");
@@ -313,8 +305,7 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 
 	private ErrorCodes RejectDisk()
 	{
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		ErrorCodes errorCodes = service.RejectDiskInPicker();
+		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IControllerService>().RejectDiskInPicker();
 		switch (errorCodes)
 		{
 		case ErrorCodes.VendDoorRentTimeout:
@@ -340,9 +331,7 @@ internal sealed class ReturnJob : NativeJobAdapter, IFileDiskHandler
 
 	private bool ReadDisk(out string scannedId)
 	{
-		IScannerDeviceService service = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-		IScannerDevice configuredDevice = service.GetConfiguredDevice();
-		if (!configuredDevice.SupportsSecureReads)
+		if (!ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice().SupportsSecureReads)
 		{
 			return OnReadWithLegacy(out scannedId);
 		}

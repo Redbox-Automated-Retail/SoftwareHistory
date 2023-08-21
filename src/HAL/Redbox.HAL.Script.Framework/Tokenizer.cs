@@ -349,7 +349,7 @@ public class Tokenizer : Tokenizer<TokenizerState>
 
 	private bool StreamTerminated()
 	{
-		if (((int?)PeekNextToken()).HasValue)
+		if (PeekNextToken().HasValue)
 		{
 			return $"{GetCurrentToken()}{PeekNextToken()}" == Environment.NewLine;
 		}
@@ -358,8 +358,7 @@ public class Tokenizer : Tokenizer<TokenizerState>
 
 	private void CloseSymbolState()
 	{
-		TokenList tokens = base.Tokens;
-		string value = tokens[0].Value;
+		string value = base.Tokens[0].Value;
 		string accumulatedToken = GetAccumulatedToken();
 		if (ConstTable.ContainsKey(accumulatedToken) || Instruction.MnemonicImpliesConstSymbol(value))
 		{

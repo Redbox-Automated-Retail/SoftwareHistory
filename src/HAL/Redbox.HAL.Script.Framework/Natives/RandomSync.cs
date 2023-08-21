@@ -41,8 +41,7 @@ internal sealed class RandomSync : NativeJobAdapter
 			}
 			RandomSyncDecorator randomSyncDecorator = new RandomSyncDecorator(base.Context, base.Result, location, num2, vend);
 			SyncResult syncResult = SyncHelper.SyncSlot(base.Result, base.Context, location, randomSyncDecorator);
-			SyncResult syncResult2 = syncResult;
-			if (syncResult2 == SyncResult.HardwareError || syncResult2 == SyncResult.GetError)
+			if (syncResult == SyncResult.HardwareError || syncResult == SyncResult.GetError)
 			{
 				base.Context.AppLog.WriteFormatted("Sync returned error {0}", syncResult.ToString());
 				flag = false;

@@ -10,9 +10,8 @@ internal sealed class KioskConfigurationJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		IScannerDeviceService service = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-		IScannerDevice configuredDevice = service.GetConfiguredDevice();
-		IDoorSensorService service2 = ServiceLocator.Instance.GetService<IDoorSensorService>();
+		IScannerDevice configuredDevice = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice();
+		IDoorSensorService service = ServiceLocator.Instance.GetService<IDoorSensorService>();
 		IDeck first = base.DecksService.First;
 		base.Context.CreateInfoResult("MachineConfig", (first.NumberOfSlots == 90) ? "Dense" : "Sparse");
 		base.Context.CreateInfoResult("DeckCount", base.DecksService.DeckCount.ToString());
@@ -28,30 +27,29 @@ internal sealed class KioskConfigurationJob : NativeJobAdapter
 		base.Context.CreateInfoResult("CameraConfig", configuredDevice.Service.ToString());
 		base.Context.CreateInfoResult("AuxRelayBoard", "Not Configured");
 		base.Context.CreateInfoResult("MerchMode", ControllerConfiguration.Instance.IsVMZMachine ? "VMZ" : "QLM");
-		base.Context.CreateInfoResult("DoorSensors", service2.SensorsEnabled ? "On" : "Off");
-		if (service2.SensorsEnabled)
+		base.Context.CreateInfoResult("DoorSensors", service.SensorsEnabled ? "On" : "Off");
+		if (service.SensorsEnabled)
 		{
-			base.Context.CreateInfoResult("DoorSensorStatus", service2.Query().ToString().ToUpper());
+			base.Context.CreateInfoResult("DoorSensorStatus", service.Query().ToString().ToUpper());
 		}
 		base.Context.CreateInfoResult("QuickReturn", "Not configured");
-		IAirExchangerService service3 = ServiceLocator.Instance.GetService<IAirExchangerService>();
-		base.Context.CreateInfoResult("AirExchangerConfigured", service3.Configured ? "Configured" : "Not configured");
-		base.Context.CreateInfoResult("AirExchangerStatus", service3.CheckStatus().ToString());
-		base.Context.CreateInfoResult("AirExchangerFanStatus", service3.FanStatus.ToString());
-		IUsbDeviceService service4 = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		IAirExchangerService service2 = ServiceLocator.Instance.GetService<IAirExchangerService>();
+		base.Context.CreateInfoResult("AirExchangerConfigured", service2.Configured ? "Configured" : "Not configured");
+		base.Context.CreateInfoResult("AirExchangerStatus", service2.CheckStatus().ToString());
+		base.Context.CreateInfoResult("AirExchangerFanStatus", service2.FanStatus.ToString());
+		IUsbDeviceService service3 = ServiceLocator.Instance.GetService<IUsbDeviceService>();
 		base.Context.CreateInfoResult("FraudSensorEnabled", ControllerConfiguration.Instance.EnableSecureDiskValidator ? "Enabled" : "Not Enabled");
-		AbeDeviceDescriptor abeDeviceDescriptor = new AbeDeviceDescriptor(service4, debug: true);
+		AbeDeviceDescriptor abeDeviceDescriptor = new AbeDeviceDescriptor(service3, debug: true);
 		base.Context.CreateInfoResult("AbeDeviceStatus", abeDeviceDescriptor.Locate() ? "ATTACHED" : "NOT ATTACHED");
 		base.Context.CreateInfoResult("QuickReturnStatus", DeviceStatus.None.ToString());
 		base.Context.CreateInfoResult("RouterPowerRelay", (ControllerConfiguration.Instance.RouterPowerCyclePause > 0) ? "Configured" : "Not Configured");
 		base.Context.CreateInfoResult("SupportsArcusReset", (ControllerConfiguration.Instance.RestartControllerDuringUserJobs && ControllerConfiguration.Instance.TrackHardwareCorrections) ? "Configured" : "Not Configured");
-		IFraudService service5 = ServiceLocator.Instance.GetService<IFraudService>();
-		base.Context.CreateInfoResult("SupportsFraudScan", service5.IsConfigured ? "Configured" : "Not Configured");
-		IScannerDeviceService service6 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-		base.Context.CreateInfoResult("IRCameraHardwareInstall", service6.IRHardwareInstall.HasValue ? service6.IRHardwareInstall.ToString() : "NONE");
-		base.Context.CreateInfoResult("CurrentCameraGeneration", service6.CurrentCameraGeneration.ToString());
-		IBarcodeReaderFactory service7 = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>();
-		IBarcodeReader configuredReader = service7.GetConfiguredReader();
+		IFraudService service4 = ServiceLocator.Instance.GetService<IFraudService>();
+		base.Context.CreateInfoResult("SupportsFraudScan", service4.IsConfigured ? "Configured" : "Not Configured");
+		IScannerDeviceService service5 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
+		base.Context.CreateInfoResult("IRCameraHardwareInstall", service5.IRHardwareInstall.HasValue ? service5.IRHardwareInstall.ToString() : "NONE");
+		base.Context.CreateInfoResult("CurrentCameraGeneration", service5.CurrentCameraGeneration.ToString());
+		IBarcodeReader configuredReader = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>().GetConfiguredReader();
 		base.Context.CreateInfoResult("BarcodeDecoder", configuredReader.IsLicensed ? configuredReader.Service.ToString() : BarcodeServices.None.ToString());
 		List<ILocation> excludedSlots = base.InventoryService.GetExcludedSlots();
 		if (excludedSlots.Count > 0)

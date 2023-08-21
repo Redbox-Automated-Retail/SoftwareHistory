@@ -9,7 +9,7 @@ internal abstract class AbstractReadInputsResult<T> : IReadInputsResult<T>
 
 	public ErrorCodes Error { get; protected set; }
 
-	public bool Success => ErrorCodes.Success == Error;
+	public bool Success => Error == ErrorCodes.Success;
 
 	public int InputCount => Inputs.Length;
 

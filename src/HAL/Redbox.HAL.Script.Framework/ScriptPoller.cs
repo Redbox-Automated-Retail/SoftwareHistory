@@ -103,17 +103,14 @@ internal abstract class ScriptPoller : IConfigurationObserver
 
 	protected ScriptPoller()
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		service.EngineModeChange += es_EngineModeChange;
+		ServiceLocator.Instance.GetService<IExecutionService>().EngineModeChange += es_EngineModeChange;
 	}
 
 	internal void Initialize()
 	{
 		if (ConfigNotifications)
 		{
-			IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-			IAttributeXmlConfiguration attributeXmlConfiguration = service.FindConfiguration(Configurations.Controller);
-			attributeXmlConfiguration.AddObserver(this);
+			ServiceLocator.Instance.GetService<IConfigurationService>().FindConfiguration(Configurations.Controller).AddObserver(this);
 		}
 	}
 

@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using ClearImage;
 using RBDM;
@@ -66,8 +65,7 @@ internal sealed class ClearImageReaderV2 : AbstractBarcodeReader
 	{
 		try
 		{
-			Module module = GetType().Module;
-			int hModule = Marshal.GetHINSTANCE(module).ToInt32();
+			int hModule = Marshal.GetHINSTANCE(GetType().Module).ToInt32();
 			CiServer ciServer = new CiServerClass();
 			ciServer.OpenExt(hModule, 74391114, 0);
 			TheReader = new clsRBDM

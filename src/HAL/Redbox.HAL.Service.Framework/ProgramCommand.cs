@@ -23,12 +23,11 @@ public sealed class ProgramCommand
 		}
 	}
 
-	[Usage("PROGRAM remove name: progam-name")]
 	[CommandForm(Name = "remove")]
+	[Usage("PROGRAM remove name: progam-name")]
 	public void Remove(CommandContext context, [CommandKeyValue(IsRequired = true)] string name)
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		service.RemoveProgram(name);
+		ServiceLocator.Instance.GetService<IExecutionService>().RemoveProgram(name);
 	}
 
 	[CommandForm(Name = "get")]
@@ -40,12 +39,11 @@ public sealed class ProgramCommand
 		ProtocolHelper.FormatCompressedBytes(service.ReadToBuffer(fileName), context);
 	}
 
-	[Usage("PROGRAM set name: program-name data: base4-encoded-script [requires-client-connection: true|false]")]
 	[CommandForm(Name = "set")]
+	[Usage("PROGRAM set name: program-name data: base4-encoded-script [requires-client-connection: true|false]")]
 	public void Set(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(IsRequired = true, BinaryEncoding = BinaryEncoding.Base64, CompressionType = CompressionType.LZMA)] byte[] data, [CommandKeyValue(KeyName = "requires-client-connection")] bool? requiresClientConnection)
 	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		string path = service.ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
+		string path = ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros($"$(RunningPath)\\..\\scripts\\{name}.hs");
 		File.WriteAllBytes(path, data);
 		CompileProgram(context.Errors, name, path);
 	}
@@ -77,8 +75,7 @@ public sealed class ProgramCommand
 			programName = Path.GetFileNameWithoutExtension(path);
 		}
 		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
-		using MemoryStream stream = new MemoryStream(service2.ReadToBuffer(path));
+		using MemoryStream stream = new MemoryStream(ServiceLocator.Instance.GetService<IRuntimeService>().ReadToBuffer(path));
 		IExecutionResult executionResult = service.Compile(stream, programName);
 		errors.AddRange(executionResult.Errors);
 	}

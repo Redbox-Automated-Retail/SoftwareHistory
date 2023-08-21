@@ -51,10 +51,8 @@ internal sealed class EmptySearchPatternService : IInventoryObserver, IEmptySear
 
 	public void DumpESP(bool dumpStore)
 	{
-		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-		string path = service.CreateSubpath("Service");
-		string path2 = Path.Combine(path, "ESP.log");
-		StreamWriter log = new StreamWriter(File.Open(path2, FileMode.Append, FileAccess.Write, FileShare.Read));
+		string path = Path.Combine(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().CreateSubpath("Service"), "ESP.log");
+		StreamWriter log = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read));
 		try
 		{
 			string value = $"{DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()}: *** Dump of ESP list ***";
@@ -125,19 +123,18 @@ internal sealed class EmptySearchPatternService : IInventoryObserver, IEmptySear
 		foreach (ESPNode item in Pattern)
 		{
 			ILocation location = InventoryService.Get(item.Deck, item.Slot);
-			if (!top.Equals(location))
+			if (top.Equals(location))
 			{
-				if (location.IsEmpty)
-				{
-					emptySearchResult.EmptyLocations.Add(location);
-				}
-				if (emptySearchResult.EmptyLocations.Count == num)
-				{
-					break;
-				}
-				continue;
+				break;
 			}
-			break;
+			if (location.IsEmpty)
+			{
+				emptySearchResult.EmptyLocations.Add(location);
+			}
+			if (emptySearchResult.EmptyLocations.Count == num)
+			{
+				break;
+			}
 		}
 		return emptySearchResult;
 	}
@@ -245,38 +242,38 @@ internal sealed class EmptySearchPatternService : IInventoryObserver, IEmptySear
 		}
 		for (int num3 = 1; num3 < 6; num3++)
 		{
-			int[] array3 = array;
-			foreach (int number2 in array3)
+			int[] array2 = array;
+			foreach (int number2 in array2)
 			{
 				deck = service.GetByNumber(number2);
-				int num5 = num3 * deck.SlotsPerQuadrant + 1;
-				for (int num6 = num5; num6 <= num5 + deck.SlotsPerQuadrant - 1; num6++)
+				int num4 = num3 * deck.SlotsPerQuadrant + 1;
+				for (int num5 = num4; num5 <= num4 + deck.SlotsPerQuadrant - 1; num5++)
 				{
-					AddLocation(deck, num6, ref idx);
+					AddLocation(deck, num5, ref idx);
 				}
 			}
 		}
 		deck = service.GetByNumber(6);
+		for (int num6 = 16; num6 <= deck.NumberOfSlots; num6++)
+		{
+			AddLocation(deck, num6, ref idx);
+		}
+		deck = service.GetByNumber(8);
 		for (int num7 = 16; num7 <= deck.NumberOfSlots; num7++)
 		{
 			AddLocation(deck, num7, ref idx);
 		}
-		deck = service.GetByNumber(8);
+		deck = service.GetByNumber(7);
 		for (int num8 = 16; num8 <= deck.NumberOfSlots; num8++)
 		{
 			AddLocation(deck, num8, ref idx);
 		}
-		deck = service.GetByNumber(7);
-		for (int num9 = 16; num9 <= deck.NumberOfSlots; num9++)
+		for (int num9 = 1; num9 <= 8; num9++)
 		{
-			AddLocation(deck, num9, ref idx);
-		}
-		for (int num10 = 1; num10 <= 8; num10++)
-		{
-			deck = service.GetByNumber(num10);
-			for (int num11 = 15; num11 >= 1; num11--)
+			deck = service.GetByNumber(num9);
+			for (int num10 = 15; num10 >= 1; num10--)
 			{
-				AddLocation(deck, num11, ref idx);
+				AddLocation(deck, num10, ref idx);
 			}
 		}
 	}

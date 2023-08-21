@@ -46,8 +46,7 @@ internal sealed class SyncLocationDecorator : SyncDecorator, IGetObserver
 			num = 0;
 			timeSpan = default(TimeSpan);
 		}
-		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		string value = (service.IsBarcodeDuplicate(scannedMatrix, out var _) ? $"SUCCESS: {scannedMatrix} codes ({num}), time = {timeSpan.ToString()} DUPLICATE" : $"SUCCESS: {scannedMatrix} codes ({num}), time = {timeSpan.ToString()}");
+		string value = (ServiceLocator.Instance.GetService<IInventoryService>().IsBarcodeDuplicate(scannedMatrix, out var _) ? $"SUCCESS: {scannedMatrix} codes ({num}), time = {timeSpan.ToString()} DUPLICATE" : $"SUCCESS: {scannedMatrix} codes ({num}), time = {timeSpan.ToString()}");
 		UpdateSymbol("MSTESTER-SYMBOL-FORMATTED-DETAIL-MSG", value);
 	}
 
@@ -58,8 +57,7 @@ internal sealed class SyncLocationDecorator : SyncDecorator, IGetObserver
 
 	internal override IGetResult GetDisk(IFormattedLog applog)
 	{
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		return service.Get(this);
+		return ServiceLocator.Instance.GetService<IControllerService>().Get(this);
 	}
 
 	internal override void OnGetFailure(IGetResult gr)

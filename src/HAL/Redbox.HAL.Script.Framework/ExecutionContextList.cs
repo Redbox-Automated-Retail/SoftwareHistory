@@ -73,7 +73,8 @@ internal sealed class ExecutionContextList
 					{
 						g.Dispose();
 						m_list.Remove(g);
-						cleaned++;
+						int num = cleaned + 1;
+						cleaned = num;
 					}
 				});
 			}

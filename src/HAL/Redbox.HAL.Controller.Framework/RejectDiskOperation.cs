@@ -57,8 +57,7 @@ internal sealed class RejectDiskOperation : AbstractOperation<ErrorCodes>
 					service.Wait(ms);
 					continue;
 				}
-				IControlResponse controlResponse = Controller.RollerToPosition(RollerPosition.Position3, 8000);
-				if (controlResponse.Success)
+				if (Controller.RollerToPosition(RollerPosition.Position3, 8000).Success)
 				{
 					pickerSensorReadResult = Controller.ReadPickerSensors();
 					if (!pickerSensorReadResult.Success)

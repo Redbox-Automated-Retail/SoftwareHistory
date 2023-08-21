@@ -26,8 +26,6 @@ public class Instruction : ICloneable<Instruction>
 
 	protected const string FailureMessage = "FAILURE";
 
-	private const string ErrorMessageFormat = "The {0} instruction failed (line {1} of script {2}): {3}";
-
 	private TokenList m_operands;
 
 	private InstructionList m_instructions;
@@ -35,6 +33,8 @@ public class Instruction : ICloneable<Instruction>
 	private int m_trueBranch = ProgramInstruction.EndLineNumber;
 
 	private int m_falseBranch = ProgramInstruction.InvalidLineNumber;
+
+	private const string ErrorMessageFormat = "The {0} instruction failed (line {1} of script {2}): {3}";
 
 	public Instruction FirstInstruction => Instructions[0];
 

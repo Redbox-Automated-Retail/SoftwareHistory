@@ -21,8 +21,7 @@ internal sealed class PutDiskToLocationJob : NativeJobAdapter
 			using ScanResult scanResult = scanner.Read();
 			text = scanResult.ScannedMatrix;
 		}
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IPutResult putResult = service.Put(text);
+		IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(text);
 		if (putResult.Success)
 		{
 			base.Context.CreateInfoResult("JobSuccess", $"PUT SUCCESS (barcode = {text})");

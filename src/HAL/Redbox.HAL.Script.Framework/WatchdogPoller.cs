@@ -81,10 +81,8 @@ internal sealed class WatchdogPoller : ScriptPoller
 		{
 			return;
 		}
-		IFormattedLogFactoryService service = ServiceLocator.Instance.GetService<IFormattedLogFactoryService>();
-		string[] directories = Directory.GetDirectories(service.LogsBasePath);
-		string[] array = directories;
-		foreach (string text in array)
+		string[] directories = Directory.GetDirectories(ServiceLocator.Instance.GetService<IFormattedLogFactoryService>().LogsBasePath);
+		foreach (string text in directories)
 		{
 			if (!text.Contains("Service") && !text.Contains("ErrorLogs"))
 			{
@@ -99,8 +97,7 @@ internal sealed class WatchdogPoller : ScriptPoller
 	{
 		int num = 0;
 		string[] files = Directory.GetFiles(directory, filePattern);
-		string[] array = files;
-		foreach (string text in array)
+		foreach (string text in files)
 		{
 			FileInfo fileInfo = new FileInfo(text);
 			if (DateTime.Now.Subtract(fileInfo.LastWriteTime).Days < ageInDays)
@@ -135,9 +132,9 @@ internal sealed class WatchdogPoller : ScriptPoller
 			return false;
 		}
 		string[] array = ignoreList;
-		foreach (string text in array)
+		for (int i = 0; i < array.Length; i++)
 		{
-			if (text.Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase))
+			if (array[i].Equals(context.ProgramName, StringComparison.CurrentCultureIgnoreCase))
 			{
 				return true;
 			}
@@ -162,11 +159,13 @@ internal sealed class WatchdogPoller : ScriptPoller
 				}
 				else
 				{
-					time++;
+					int num = time + 1;
+					time = num;
 				}
 				if (now >= dateTime.AddHours(time))
 				{
-					trashed++;
+					int num = trashed + 1;
+					trashed = num;
 					job.Trash();
 				}
 			}
@@ -185,7 +184,8 @@ internal sealed class WatchdogPoller : ScriptPoller
 				DateTime createdOn = job.CreatedOn;
 				if (now >= createdOn.AddDays(5.0))
 				{
-					cleaned++;
+					int num = cleaned + 1;
+					cleaned = num;
 					job.Trash();
 				}
 			}

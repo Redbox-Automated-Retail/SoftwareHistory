@@ -48,7 +48,8 @@ internal sealed class CortexSettingsValidator
 			getRegisterValueCommand.Send(Service.ConfiguredPort());
 			if (!getRegisterValueCommand.IsCorrectlySet)
 			{
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				sink.Send($"The register {register.Register} received an unexpected response");
 			}
 			else
@@ -57,6 +58,6 @@ internal sealed class CortexSettingsValidator
 			}
 			RuntimeService.SpinWait(200);
 		});
-		return 0 == errors;
+		return errors == 0;
 	}
 }

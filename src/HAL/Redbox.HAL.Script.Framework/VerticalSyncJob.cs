@@ -23,7 +23,8 @@ internal sealed class VerticalSyncJob : NativeJobAdapter
 			if (!transferResult.Transferred)
 			{
 				HandleError(deck.Number, slot, $"Transfer failed with error {transferResult.TransferError}");
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			return true;

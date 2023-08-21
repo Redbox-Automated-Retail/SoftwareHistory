@@ -5,8 +5,8 @@ using System.Runtime.InteropServices.ComTypes;
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("36B73882-C2C8-11CF-8B46-00805F6CEF60")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IFilterGraph2
 {
 	[PreserveSig]

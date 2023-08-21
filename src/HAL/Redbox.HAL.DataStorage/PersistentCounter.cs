@@ -10,13 +10,15 @@ internal sealed class PersistentCounter : IPersistentCounter
 
 	public int Increment()
 	{
-		Value++;
+		int value = Value + 1;
+		Value = value;
 		return Value;
 	}
 
 	public int Decrement()
 	{
-		Value--;
+		int value = Value - 1;
+		Value = value;
 		return Value;
 	}
 

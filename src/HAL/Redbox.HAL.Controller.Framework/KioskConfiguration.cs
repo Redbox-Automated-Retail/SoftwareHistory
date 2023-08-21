@@ -8,13 +8,13 @@ namespace Redbox.HAL.Controller.Framework;
 
 public sealed class KioskConfiguration
 {
-	private const string FILE_NAME = "Kiosk.xml";
-
-	private const string IRHardwareInstallDateName = "IRHardwareInstallDate";
-
 	private bool _loaded;
 
 	private static XmlSerializer _serializer = new XmlSerializer(typeof(KioskConfiguration));
+
+	private const string FILE_NAME = "Kiosk.xml";
+
+	private const string IRHardwareInstallDateName = "IRHardwareInstallDate";
 
 	public static KioskConfiguration Instance => Singleton<KioskConfiguration>.Instance;
 
@@ -29,8 +29,7 @@ public sealed class KioskConfiguration
 			{
 				return service.RuntimePath("Kiosk.xml");
 			}
-			string directoryName = Path.GetDirectoryName(typeof(KioskConfiguration).Assembly.Location);
-			return Path.Combine(directoryName, "Kiosk.xml");
+			return Path.Combine(Path.GetDirectoryName(typeof(KioskConfiguration).Assembly.Location), "Kiosk.xml");
 		}
 	}
 
@@ -45,8 +44,7 @@ public sealed class KioskConfiguration
 	public void SetConfig(string name, string value, bool saveValue = false)
 	{
 		LogHelper.Instance.Log($"KioskConfiguration.SetConfig - name: {name}, value: {value}, save: {saveValue}");
-		string text;
-		if ((text = name) != null && text == "IRHardwareInstallDate")
+		if (name == "IRHardwareInstallDate")
 		{
 			IRHardwareInstallDate = ((!string.IsNullOrEmpty(value) && DateTime.TryParse(value, out var result)) ? new DateTime?(result) : ((DateTime?)null));
 		}

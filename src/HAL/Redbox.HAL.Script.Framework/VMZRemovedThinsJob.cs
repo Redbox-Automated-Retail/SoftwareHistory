@@ -30,7 +30,8 @@ internal sealed class VMZRemovedThinsJob : NativeJobAdapter
 				{
 					base.Context.CreateResult("NonThinRemoved", "The disk was removed from the VMZ.", loc.Deck, loc.Slot, loc.ID, null, null);
 				}
-				totalEmptyNow++;
+				int num = totalEmptyNow + 1;
+				totalEmptyNow = num;
 				return true;
 			}, location);
 		}

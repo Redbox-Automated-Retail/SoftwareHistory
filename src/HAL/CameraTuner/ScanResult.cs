@@ -29,16 +29,15 @@ internal sealed class ScanResult
 		{
 			return ErrorResult();
 		}
-		IBarcodeReaderFactory service = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>();
-		IBarcodeReader configuredReader = service.GetConfiguredReader();
-		IScanResult scanResult = configuredReader.Scan(file);
-		ScanResult scanResult2 = new ScanResult();
-		scanResult2.SnapOk = true;
-		ScanResult scanResult3 = scanResult2;
+		IScanResult scanResult = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>().GetConfiguredReader().Scan(file);
+		ScanResult scanResult2 = new ScanResult
+		{
+			SnapOk = true
+		};
 		if (scanResult.DecodeResults.Count > 2 || scanResult.DecodeResults.Count == 0)
 		{
 			LogHelper.Instance.Log("[ScanResult] There are {0} matrix entries.", scanResult.DecodeResults.Count);
-			return scanResult3;
+			return scanResult2;
 		}
 		IDecodeResult decodeResult = null;
 		foreach (IDecodeResult decodeResult2 in scanResult.DecodeResults)
@@ -49,16 +48,16 @@ internal sealed class ScanResult
 			}
 			else
 			{
-				scanResult3.SecureCount = decodeResult2.Count;
+				scanResult2.SecureCount = decodeResult2.Count;
 			}
 		}
 		if (decodeResult != null)
 		{
-			scanResult3.ScannedMatrix = decodeResult.Matrix;
-			scanResult3.ReadCount = ((decodeResult.Count > 4) ? 4 : decodeResult.Count);
-			scanResult3.ExecutionTime = scanResult.ExecutionTime;
+			scanResult2.ScannedMatrix = decodeResult.Matrix;
+			scanResult2.ReadCount = ((decodeResult.Count > 4) ? 4 : decodeResult.Count);
+			scanResult2.ExecutionTime = scanResult.ExecutionTime;
 		}
-		return scanResult3;
+		return scanResult2;
 	}
 
 	private ScanResult()
@@ -71,7 +70,6 @@ internal sealed class ScanResult
 
 	static ScanResult()
 	{
-		IEncryptionService service = ServiceLocator.Instance.GetService<IEncryptionService>();
-		SecretToken = service.DecryptFromBase64("2PiCFxFlrO8=");
+		SecretToken = ServiceLocator.Instance.GetService<IEncryptionService>().DecryptFromBase64("2PiCFxFlrO8=");
 	}
 }

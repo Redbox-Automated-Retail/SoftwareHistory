@@ -123,8 +123,7 @@ public sealed class SyscallInstruction : Instruction
 				{
 					string text = $"Cannot reboot - the current time {DateTime.Now.ToShortTimeString()} is not within 12 am - 5 am.";
 					LogHelper.Instance.Log(text, LogEntryType.Info);
-					ApplicationLog appLog = context.AppLog;
-					appLog.Write(text);
+					context.AppLog.Write(text);
 					AddError("E005", "Kiosk reboot now allowed because of time constraint.", result.Errors);
 					return;
 				}
@@ -133,8 +132,7 @@ public sealed class SyscallInstruction : Instruction
 			ExecutionEngine.Instance.PerformContextSwitch(runtimeOnly: false);
 			if (!Shutdown(ShutdownFlags.Reboot | ShutdownFlags.ForceIfHung, ShutdownReason.FlagPlanned))
 			{
-				ApplicationLog appLog2 = context.AppLog;
-				appLog2.Write("Unable to execute a reboot.");
+				context.AppLog.Write("Unable to execute a reboot.");
 				LogHelper.Instance.Log("Call to reboot kiosk failed.", LogEntryType.Error);
 				AddError("E005", "Request to reboot failed.", result.Errors);
 			}

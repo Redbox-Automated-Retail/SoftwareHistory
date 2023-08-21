@@ -37,16 +37,7 @@ public sealed class PlatterConfig
 		{
 			array[i] = (int)num;
 			decimal num2 = 0m;
-			if (PlatterType.Sparse == Type)
-			{
-				decimal num3 = (decimal)(SlotsPerQuadrant - 1) * SlotWidth;
-				num3 += 0.5m;
-				num2 = num3 + 466m;
-			}
-			else
-			{
-				num2 = (decimal)SlotsPerQuadrant * SlotWidth + SlotWidth;
-			}
+			num2 = ((PlatterType.Sparse != Type) ? ((decimal)SlotsPerQuadrant * SlotWidth + SlotWidth) : ((decimal)(SlotsPerQuadrant - 1) * SlotWidth + 0.5m + 466m));
 			num += num2;
 		}
 		return array;

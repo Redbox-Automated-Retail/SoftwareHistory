@@ -16,8 +16,6 @@ internal sealed class FmeControlSystem : AbstractRedboxControlSystem, ICoreComma
 		public string Revision => "A";
 	}
 
-	private const int LifterTimeout = 120000;
-
 	private readonly ControlBoards[] ControllerBoards = new ControlBoards[3]
 	{
 		ControlBoards.Serial,
@@ -26,6 +24,8 @@ internal sealed class FmeControlSystem : AbstractRedboxControlSystem, ICoreComma
 	};
 
 	private readonly ICommPort Port;
+
+	private const int LifterTimeout = 120000;
 
 	public CoreResponse ExecuteControllerCommand(CommandType type)
 	{
@@ -314,10 +314,11 @@ internal sealed class FmeControlSystem : AbstractRedboxControlSystem, ICoreComma
 				num++;
 			}
 		}
-		FmeControllerRevision fmeControllerRevision = new FmeControllerRevision();
-		fmeControllerRevision.Responses = array;
-		fmeControllerRevision.Success = 0 == num;
-		return fmeControllerRevision;
+		return new FmeControllerRevision
+		{
+			Responses = array,
+			Success = (num == 0)
+		};
 	}
 
 	internal FmeControlSystem(IRuntimeService rts)

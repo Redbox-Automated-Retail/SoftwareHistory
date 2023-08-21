@@ -28,10 +28,11 @@ public sealed class SetConfigInstruction : Instruction
 			if (string.Compare(keyValuePair.Value, "KIOSK", ignoreCase: true) == 0)
 			{
 				Redbox.HAL.Controller.Framework.KioskConfiguration.Instance.SetConfig(value, array[0] as string, saveValue: true);
-				return;
 			}
-			IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-			service.SetPropertyByName(keyValuePair.Value, value, array);
+			else
+			{
+				ServiceLocator.Instance.GetService<IConfigurationService>().SetPropertyByName(keyValuePair.Value, value, array);
+			}
 		}
 	}
 }

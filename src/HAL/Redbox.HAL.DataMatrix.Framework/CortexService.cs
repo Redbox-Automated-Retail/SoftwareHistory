@@ -69,8 +69,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 			}
 			ConfiguredPortName = Port.PortName;
 		}
-		InfaredLightCommand infaredLightCommand = new InfaredLightCommand();
-		infaredLightCommand.Send(Port);
+		new InfaredLightCommand().Send(Port);
 		RuntimeService.Wait(300);
 		ScanResult scanResult = OnScan();
 		return IsConnected = !scanResult.DeviceError;
@@ -84,8 +83,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 		}
 		if (Port != null)
 		{
-			IPortManagerService service = ServiceLocator.Instance.GetService<IPortManagerService>();
-			service.Dispose(Port);
+			ServiceLocator.Instance.GetService<IPortManagerService>().Dispose(Port);
 			Port = null;
 		}
 		IsConnected = false;
@@ -149,8 +147,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 			LogHelper.Instance.Log("[Cortex Service] Snap time: {0}ms", getImageCommand.ExecutionTime.Milliseconds);
 			getImageCommand.CreateImage(text);
 		}
-		DeleteFileCommand deleteFileCommand = new DeleteFileCommand(imagePacket);
-		deleteFileCommand.Send(Port);
+		new DeleteFileCommand(imagePacket).Send(Port);
 		return new SnapResult(text);
 	}
 
@@ -161,8 +158,7 @@ internal sealed class CortexService : ScannerAdapter, IScannerDevice, IDisposabl
 
 	public bool ValidateSettings(IMessageSink sink)
 	{
-		CortexSettingsValidator cortexSettingsValidator = new CortexSettingsValidator(this, RuntimeService);
-		return cortexSettingsValidator.Validate(sink);
+		return new CortexSettingsValidator(this, RuntimeService).Validate(sink);
 	}
 
 	public void NotifyConfigurationLoaded()

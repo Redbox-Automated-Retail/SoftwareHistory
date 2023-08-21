@@ -76,10 +76,8 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 
 	public void Shutdown()
 	{
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		service.Shutdown();
-		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
-		service2.Shutdown();
+		ServiceLocator.Instance.GetService<IMotionControlService>().Shutdown();
+		ServiceLocator.Instance.GetService<IControlSystem>().Shutdown();
 	}
 
 	public IGetResult Get()
@@ -150,8 +148,7 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 		putToResult.MoveResult = service.MoveTo(location, MoveMode.Put);
 		if (putToResult.MoveResult == ErrorCodes.Success)
 		{
-			IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
-			service2.TrackCycle();
+			ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
 			putToResult.PutResult = OnPut(observer, id, location);
 		}
 		else
@@ -192,8 +189,7 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 		if (errorCodes != ErrorCodes.Success)
 		{
 			LogHelper.Instance.WithContext(LogEntryType.Error, "Push out disk returned error status {0}", errorCodes.ToString().ToUpper());
-			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-			service.LogPickerSensorState(LogEntryType.Error);
+			ServiceLocator.Instance.GetService<IControlSystem>().LogPickerSensorState(LogEntryType.Error);
 		}
 		return errorCodes;
 	}
@@ -205,8 +201,7 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 		if (errorCodes != ErrorCodes.Success)
 		{
 			LogHelper.Instance.WithContext(LogEntryType.Error, "Clear gripper returned error status {0}", errorCodes.ToString().ToUpper());
-			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-			service.LogPickerSensorState(LogEntryType.Error);
+			ServiceLocator.Instance.GetService<IControlSystem>().LogPickerSensorState(LogEntryType.Error);
 		}
 		return errorCodes;
 	}
@@ -273,8 +268,7 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 	private void OnCheckInventory(string expected, IFormattedLog log)
 	{
 		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
-		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ILocation currentLocation = service2.CurrentLocation;
+		ILocation currentLocation = ServiceLocator.Instance.GetService<IMotionControlService>().CurrentLocation;
 		ILocation location = service.Get(currentLocation.Deck, currentLocation.Slot);
 		if (location.ID != expected)
 		{
@@ -290,8 +284,7 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 			getResult.Update(ErrorCodes.LocationOutOfRange);
 			return getResult;
 		}
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IFormattedLog contextLog = service.GetActiveContext().ContextLog;
+		IFormattedLog contextLog = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext().ContextLog;
 		using GetOperation getOperation = new GetOperation(location, observer, contextLog);
 		GetResult getResult2 = getOperation.Execute();
 		if (getResult2.IsSlotEmpty)
@@ -318,35 +311,35 @@ public sealed class ControllerService : IMoveVeto, IControllerService
 		IPickerSensorReadResult pickerSensorReadResult = service.ReadPickerSensors();
 		if (!pickerSensorReadResult.Success)
 		{
-			PutResult putResult = new PutResult(id, location);
-			putResult.Code = ErrorCodes.SensorReadError;
-			return putResult;
+			return new PutResult(id, location)
+			{
+				Code = ErrorCodes.SensorReadError
+			};
 		}
 		if (!pickerSensorReadResult.IsFull)
 		{
 			LogHelper.Instance.WithContext(LogEntryType.Error, "PUT: picker is empty.");
 			service.LogPickerSensorState();
 			service.LogInputs(ControlBoards.Picker, LogEntryType.Info);
-			PutResult putResult2 = new PutResult(id, location);
-			putResult2.Code = ErrorCodes.PickerEmpty;
-			return putResult2;
+			return new PutResult(id, location)
+			{
+				Code = ErrorCodes.PickerEmpty
+			};
 		}
-		IDumpbinService service2 = ServiceLocator.Instance.GetService<IDumpbinService>();
-		string arg = (service2.IsBin(location) ? "DUMPBIN" : $"Deck = {location.Deck} Slot = {location.Slot}");
-		IExecutionService service3 = ServiceLocator.Instance.GetService<IExecutionService>();
-		IFormattedLog contextLog = service3.GetActiveContext().ContextLog;
+		string arg = (ServiceLocator.Instance.GetService<IDumpbinService>().IsBin(location) ? "DUMPBIN" : $"Deck = {location.Deck} Slot = {location.Slot}");
+		IFormattedLog contextLog = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext().ContextLog;
 		using PutOperation putOperation = new PutOperation(id, observer, location, contextLog);
-		PutResult putResult3 = putOperation.Execute();
-		if (putResult3.Success)
+		PutResult putResult = putOperation.Execute();
+		if (putResult.Success)
 		{
 			contextLog.WriteFormatted($"PUT {arg} ID={id}");
 			OnCheckInventory(id, contextLog);
 		}
 		else
 		{
-			string msg = $"PUT {arg} ID={id} returned error status {putResult3.ToString().ToUpper()}";
+			string msg = $"PUT {arg} ID={id} returned error status {putResult.ToString().ToUpper()}";
 			LogHelper.Instance.WithContext(LogEntryType.Error, msg);
 		}
-		return putResult3;
+		return putResult;
 	}
 }

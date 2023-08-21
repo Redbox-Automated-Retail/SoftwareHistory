@@ -34,16 +34,14 @@ public sealed class DeckInstruction : Instruction
 			AddError("E777", "Missing 'NUMBER' operand to DECK.", result.Errors);
 			return;
 		}
-		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-		IDeck byNumber = service.GetByNumber(nullableNumericOperand.Value);
+		IDeck byNumber = ServiceLocator.Instance.GetService<IDecksService>().GetByNumber(nullableNumericOperand.Value);
 		if (deckOperands == DeckOperands.MaxSlots)
 		{
 			context.PushTop(byNumber.NumberOfSlots);
 		}
 		else if (DeckOperands.Reset == deckOperands)
 		{
-			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-			service2.ResetAndMark(byNumber, "EMPTY");
+			ServiceLocator.Instance.GetService<IInventoryService>().ResetAndMark(byNumber, "EMPTY");
 		}
 	}
 }

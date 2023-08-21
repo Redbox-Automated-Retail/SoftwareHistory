@@ -42,9 +42,7 @@ internal struct Scanner : IDisposable
 	internal static ScanResult SmartReadDisk(CenterDiskMethod[] methods)
 	{
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		IScannerDeviceService service2 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-		IScannerDevice configuredDevice = service2.GetConfiguredDevice();
-		ScanResult result = (configuredDevice.SupportsSecureReads ? OnIRScan(service, methods) : OnNonIRScan(service, methods));
+		ScanResult result = (ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice().SupportsSecureReads ? OnIRScan(service, methods) : OnNonIRScan(service, methods));
 		CreateJsonResult(result);
 		return result;
 	}
@@ -66,13 +64,9 @@ internal struct Scanner : IDisposable
 			}
 			else if (scanResult.ReadCode)
 			{
-				if ((options & ReadDiskOptions.CheckForDuplicate) != ReadDiskOptions.None)
+				if ((options & ReadDiskOptions.CheckForDuplicate) != ReadDiskOptions.None && ServiceLocator.Instance.GetService<IInventoryService>().IsBarcodeDuplicate(scanResult.ScannedMatrix, out var _))
 				{
-					IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-					if (service2.IsBarcodeDuplicate(scanResult.ScannedMatrix, out var _))
-					{
-						context.CreateDuplicateItemResult(scanResult.ScannedMatrix);
-					}
+					context.CreateDuplicateItemResult(scanResult.ScannedMatrix);
 				}
 			}
 			else if ((options & ReadDiskOptions.LeaveNoReadResult) != ReadDiskOptions.None)
@@ -85,10 +79,8 @@ internal struct Scanner : IDisposable
 
 	internal ScanResult Read()
 	{
-		IScanResult sr = Device.Scan();
-		ScanResult scanResult = new ScanResult(sr);
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IExecutionContext activeContext = service.GetActiveContext();
+		ScanResult scanResult = new ScanResult(Device.Scan());
+		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
 		if (!scanResult.SnapOk)
 		{
 			LogHelper.Instance.Log(LogEntryType.Error, "[{0}, {1}]: Read disk returned a camera error status CAMERA CAPTURE ERROR", activeContext.ProgramName, activeContext.ID);
@@ -224,14 +216,15 @@ internal struct Scanner : IDisposable
 
 	internal static void CreateJsonResult(ScanResult result)
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IExecutionContext activeContext = service.GetActiveContext();
-		Dictionary<string, object> dictionary = new Dictionary<string, object>();
-		dictionary.Add("BarcodesRead", result.ReadCount);
-		dictionary.Add("SecureCodesRead", result.SecureTokensFound);
-		dictionary.Add("ReadAttempts", result.ReadAttempts);
-		dictionary.Add("ExecutionTime", result.ExecutionTime.ToString());
-		Dictionary<string, object> jsonMessage = dictionary;
-		activeContext.CreateJSONResult("CameraStatsJson", result.ScannedMatrix.ToString(), jsonMessage);
+		ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext().CreateJSONResult(jsonMessage: new Dictionary<string, object>
+		{
+			{ "BarcodesRead", result.ReadCount },
+			{ "SecureCodesRead", result.SecureTokensFound },
+			{ "ReadAttempts", result.ReadAttempts },
+			{
+				"ExecutionTime",
+				result.ExecutionTime.ToString()
+			}
+		}, code: "CameraStatsJson", item: result.ScannedMatrix.ToString());
 	}
 }

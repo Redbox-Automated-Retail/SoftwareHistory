@@ -41,8 +41,7 @@ public class TcpServiceHost : IPCServiceHost
 		{
 			try
 			{
-				TcpClient client = m_listener.AcceptTcpClient();
-				TcpServerSession tcpServerSession = new TcpServerSession(client, this);
+				TcpServerSession tcpServerSession = new TcpServerSession(m_listener.AcceptTcpClient(), this);
 				Register(tcpServerSession);
 				tcpServerSession.Start();
 			}

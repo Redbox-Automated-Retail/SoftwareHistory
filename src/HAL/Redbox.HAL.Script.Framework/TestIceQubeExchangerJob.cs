@@ -30,8 +30,7 @@ internal sealed class TestIceQubeExchangerJob : NativeJobAdapter
 				service.ResetFailureCount();
 				return;
 			}
-			IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
-			service2.Wait(2000);
+			ServiceLocator.Instance.GetService<IRuntimeService>().Wait(2000);
 		}
 		if (AirExchangerStatus.Error == airExchangerStatus2)
 		{

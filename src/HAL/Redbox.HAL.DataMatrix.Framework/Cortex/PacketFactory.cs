@@ -5,11 +5,11 @@ namespace Redbox.HAL.DataMatrix.Framework.Cortex;
 
 internal sealed class PacketFactory
 {
-	private const ushort PacketOverhead = 17;
-
 	private readonly BigEndianConverter Converter = new BigEndianConverter();
 
 	private static PacketFactory m_instance = new PacketFactory();
+
+	private const ushort PacketOverhead = 17;
 
 	internal static PacketFactory Instance => m_instance;
 

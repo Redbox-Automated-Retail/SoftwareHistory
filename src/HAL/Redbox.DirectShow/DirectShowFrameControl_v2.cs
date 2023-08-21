@@ -13,8 +13,6 @@ namespace Redbox.DirectShow;
 
 public class DirectShowFrameControl_v2 : IVideoSource, ISampleGrabberCB
 {
-	private const string Moniker = "DirectShowSlim_v2";
-
 	private string deviceMoniker;
 
 	private Size FrameSize;
@@ -35,11 +33,13 @@ public class DirectShowFrameControl_v2 : IVideoSource, ISampleGrabberCB
 
 	private int m_request;
 
-	private bool? isCrossbarAvailable = null;
+	private bool? isCrossbarAvailable;
 
 	private VideoInput[] crossbarVideoInputs;
 
 	private VideoInput crossbarVideoInput = VideoInput.Default;
+
+	private const string Moniker = "DirectShowSlim_v2";
 
 	private readonly AtomicFlag TriggerFlag = new AtomicFlag();
 
@@ -272,7 +272,7 @@ public class DirectShowFrameControl_v2 : IVideoSource, ISampleGrabberCB
 			BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, FrameSize.Width, FrameSize.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 			int stride = bitmapData.Stride;
 			int stride2 = bitmapData.Stride;
-			byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + (nint)stride2 * (nint)(FrameSize.Height - 1);
+			byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + stride2 * (FrameSize.Height - 1);
 			byte* ptr2 = (byte*)buffer.ToPointer();
 			for (int i = 0; i < FrameSize.Height; i++)
 			{
@@ -313,12 +313,12 @@ public class DirectShowFrameControl_v2 : IVideoSource, ISampleGrabberCB
 			thread.Name = deviceMoniker;
 			thread.Start();
 		}
-		bool flag = StartEvent.WaitOne(10000);
-		if (!flag)
+		bool num = StartEvent.WaitOne(10000);
+		if (!num)
 		{
 			LogHelper.Instance.Log("timed out waiting for start event.");
 		}
-		return flag;
+		return num;
 	}
 
 	public void SignalToStop()
@@ -376,7 +376,7 @@ public class DirectShowFrameControl_v2 : IVideoSource, ISampleGrabberCB
 					}
 				}
 			}
-			return isCrossbarAvailable ?? false;
+			return isCrossbarAvailable == true;
 		}
 	}
 

@@ -112,8 +112,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 
 	public ErrorCodes MoveTo(int deck, int slot, MoveMode mode, IFormattedLog _log, ref OffsetMoveData data)
 	{
-		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-		IDeck byNumber = service.GetByNumber(deck);
+		IDeck byNumber = ServiceLocator.Instance.GetService<IDecksService>().GetByNumber(deck);
 		if (byNumber == null)
 		{
 			return ErrorCodes.DeckOutOfRange;
@@ -201,8 +200,8 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		if (errorCodes2 == ErrorCodes.Success)
 		{
 			AtVendDoor = false;
-			IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-			CurrentLocation = service2.Get(deck, slot);
+			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+			CurrentLocation = service.Get(deck, slot);
 		}
 		return errorCodes2;
 	}
@@ -243,7 +242,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 			errorCodes3 = Controller.MoveToVend(mode);
 		}
 		LogMoveVendError(errorCodes3);
-		AtVendDoor = ErrorCodes.Success == errorCodes3;
+		AtVendDoor = errorCodes3 == ErrorCodes.Success;
 		return errorCodes3;
 	}
 
@@ -257,7 +256,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		if (ControllerConfiguration.Instance.RestartControllerDuringUserJobs && !CommunicationOk())
 		{
 			ErrorCodes errorCodes = OnReset();
-			InsertCorrectionStat(ErrorCodes.Success == errorCodes);
+			InsertCorrectionStat(errorCodes == ErrorCodes.Success);
 			if (errorCodes != ErrorCodes.Success)
 			{
 				OnResetFailure(errorCodes);
@@ -426,8 +425,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		{
 			clearPickerFrontOperation.Execute();
 		}
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IFormattedLog contextLog = service.GetActiveContext().ContextLog;
+		IFormattedLog contextLog = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext().ContextLog;
 		contextLog.WriteFormatted("Home the X motor.");
 		int num = (fast ? 1 : 2);
 		for (int i = 0; i < num; i++)
@@ -458,8 +456,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 		{
 			return false;
 		}
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IExecutionContext activeContext = service.GetActiveContext();
+		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
 		HardwareCorrectionEventArgs e = new HardwareCorrectionEventArgs(HardwareCorrectionStatistic.Arcus);
 		activeContext?.HardwareCorrectionStart(e);
 		e.CorrectionOk = Reset(quick: true) == ErrorCodes.Success;
@@ -470,8 +467,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 
 	private void InsertCorrectionStat(bool ok)
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		IExecutionContext activeContext = service.GetActiveContext();
+		IExecutionContext activeContext = ServiceLocator.Instance.GetService<IExecutionService>().GetActiveContext();
 		InsertCorrectionStat(activeContext, ok);
 	}
 
@@ -479,8 +475,7 @@ internal sealed class MotionControlService_v2 : IConfigurationObserver, IMotionC
 	{
 		if (activeContext != null)
 		{
-			IHardwareCorrectionStatisticService service = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
-			service.Insert(HardwareCorrectionStatistic.Arcus, activeContext, ok);
+			ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().Insert(HardwareCorrectionStatistic.Arcus, activeContext, ok);
 		}
 	}
 

@@ -15,19 +15,22 @@ internal sealed class MSMoveToSlot : NativeJobAdapter
 		if (!service.GetBoardVersion(ControlBoards.Aux).ReadSuccess)
 		{
 			base.Context.CreateInfoResult("BoardVersionTimeout", "Move: AUX board not responsive.");
-			failures++;
+			int num3 = failures + 1;
+			failures = num3;
 		}
 		if (!service.GetBoardVersion(ControlBoards.Picker).ReadSuccess)
 		{
 			base.Context.CreateInfoResult("BoardVersionTimeout", "Move: PCB not responsive.");
-			failures++;
+			int num3 = failures + 1;
+			failures = num3;
 		}
 		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		IMotionControlLimitResponse motionControlLimitResponse = service2.ReadLimits();
 		if (!motionControlLimitResponse.ReadOk)
 		{
 			base.Context.CreateInfoResult(ErrorCodes.ArcusNotResponsive.ToString().ToUpper(), "Unable to read limits.");
-			failures++;
+			int num3 = failures + 1;
+			failures = num3;
 		}
 		else
 		{
@@ -36,7 +39,8 @@ internal sealed class MSMoveToSlot : NativeJobAdapter
 				if (limit.Blocked)
 				{
 					base.Context.CreateInfoResult("LimitBlocked", $"MOVE: {limit.Limit.ToString().ToUpper()} LIMIT BLOCKED");
-					failures++;
+					int num4 = failures + 1;
+					failures = num4;
 				}
 			});
 		}

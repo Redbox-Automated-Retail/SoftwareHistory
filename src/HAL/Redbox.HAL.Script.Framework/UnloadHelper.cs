@@ -64,8 +64,7 @@ internal struct UnloadHelper : IFileDiskHandler
 				return;
 			}
 			string id = "UNKNOWN";
-			IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-			if (service2.ClearGripper() != ErrorCodes.Success)
+			if (ServiceLocator.Instance.GetService<IControllerService>().ClearGripper() != ErrorCodes.Success)
 			{
 				Context.CreateItemStuckResult(id);
 				result.Errors.Add(Error.NewError("E001", "Item stuck", "There is an item stuck in the gripper; can't continue."));
@@ -182,8 +181,7 @@ internal struct UnloadHelper : IFileDiskHandler
 		{
 			return MerchandizeResult.Success;
 		}
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ErrorCodes errorCodes2 = service.MoveTo(srcDeck, srcSlot, MoveMode.Put, Context.AppLog);
+		ErrorCodes errorCodes2 = ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(srcDeck, srcSlot, MoveMode.Put, Context.AppLog);
 		if (errorCodes2 != ErrorCodes.Success)
 		{
 			MerchandizingHelper.Instance.CleanupJob(Result, Context, errorCodes2);
@@ -191,8 +189,7 @@ internal struct UnloadHelper : IFileDiskHandler
 			return MerchandizeResult.HardwareError;
 		}
 		ServiceLocator.Instance.GetService<IControlSystem>().TrackCycle();
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		if (!service2.Put(readMatrix).Success)
+		if (!ServiceLocator.Instance.GetService<IControllerService>().Put(readMatrix).Success)
 		{
 			Context.CreateResult("MachineError", "There was an error executing the PUT instruction.", srcDeck, srcSlot, readMatrix, null, null);
 		}

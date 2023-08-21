@@ -53,8 +53,7 @@ internal abstract class AbstractCortexCommand : IDisposable
 			return;
 		}
 		using ExecutionTimer executionTimer = new ExecutionTimer();
-		IChannelResponse channelResponse = port.SendRecv(Command, ReadTimeout);
-		if (!channelResponse.CommOk)
+		if (!port.SendRecv(Command, ReadTimeout).CommOk)
 		{
 			LogHelper.Instance.Log("[Cortex Service] Communication error with the device.");
 			PortError = true;
@@ -105,8 +104,7 @@ internal abstract class AbstractCortexCommand : IDisposable
 		{
 			return false;
 		}
-		List<CortexPacket> list2 = list.FindAll((CortexPacket each) => each.PacketType == PacketType.Incomplete);
-		if (list2.Count > 0)
+		if (list.FindAll((CortexPacket each) => each.PacketType == PacketType.Incomplete).Count > 0)
 		{
 			return false;
 		}

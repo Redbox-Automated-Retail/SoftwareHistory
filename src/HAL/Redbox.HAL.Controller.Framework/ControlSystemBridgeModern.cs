@@ -120,11 +120,9 @@ internal sealed class ControlSystemBridgeModern : IConfigurationObserver, IContr
 		if (!coreResponse.Success)
 		{
 			PersistentCounterService.Increment(TimeoutCounters.VendDoorRent);
+			return coreResponse;
 		}
-		else
-		{
-			VendDoorState = VendDoorState.Rent;
-		}
+		VendDoorState = VendDoorState.Rent;
 		return coreResponse;
 	}
 
@@ -135,11 +133,9 @@ internal sealed class ControlSystemBridgeModern : IConfigurationObserver, IContr
 		if (!coreResponse.Success)
 		{
 			PersistentCounterService.Increment(TimeoutCounters.VendDoorClose);
+			return coreResponse;
 		}
-		else
-		{
-			VendDoorState = VendDoorState.Closed;
-		}
+		VendDoorState = VendDoorState.Closed;
 		return coreResponse;
 	}
 
@@ -155,11 +151,9 @@ internal sealed class ControlSystemBridgeModern : IConfigurationObserver, IContr
 		if (coreResponse.Success)
 		{
 			TrackState = TrackState.Open;
+			return coreResponse;
 		}
-		else
-		{
-			PersistentCounterService.Increment(TimeoutCounters.TrackOpen);
-		}
+		PersistentCounterService.Increment(TimeoutCounters.TrackOpen);
 		return coreResponse;
 	}
 
@@ -170,23 +164,19 @@ internal sealed class ControlSystemBridgeModern : IConfigurationObserver, IContr
 		if (coreResponse.Success)
 		{
 			TrackState = TrackState.Closed;
+			return coreResponse;
 		}
-		else
-		{
-			PersistentCounterService.Increment(TimeoutCounters.TrackClose);
-		}
+		PersistentCounterService.Increment(TimeoutCounters.TrackClose);
 		return coreResponse;
 	}
 
 	public ErrorCodes TrackCycle()
 	{
-		IControlResponse controlResponse = TrackOpen();
-		if (!controlResponse.Success)
+		if (!TrackOpen().Success)
 		{
 			return ErrorCodes.TrackOpenTimeout;
 		}
-		controlResponse = TrackClose();
-		if (!controlResponse.Success)
+		if (!TrackClose().Success)
 		{
 			return ErrorCodes.TrackCloseTimeout;
 		}
@@ -207,13 +197,11 @@ internal sealed class ControlSystemBridgeModern : IConfigurationObserver, IContr
 	{
 		int timeout = ControllerConfiguration.Instance.GripperArmExtendRetractTimeout;
 		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		ILocation currentLocation = service2.CurrentLocation;
+		ILocation currentLocation = ServiceLocator.Instance.GetService<IMotionControlService>().CurrentLocation;
 		bool flag = false;
 		if (currentLocation != null)
 		{
-			IDeck byNumber = service.GetByNumber(currentLocation.Deck);
-			flag = byNumber.IsQlm;
+			flag = service.GetByNumber(currentLocation.Deck).IsQlm;
 		}
 		if (flag)
 		{
@@ -253,14 +241,12 @@ internal sealed class ControlSystemBridgeModern : IConfigurationObserver, IContr
 			{
 			case GripperFingerState.Closed:
 				service.Increment(TimeoutCounters.FingerClose);
-				break;
+				return coreResponse;
 			case GripperFingerState.Open:
 				service.Increment(TimeoutCounters.FingerOpen);
-				break;
-			default:
-				service.Increment(TimeoutCounters.FingerRent);
-				break;
+				return coreResponse;
 			}
+			service.Increment(TimeoutCounters.FingerRent);
 		}
 		return coreResponse;
 	}
@@ -361,13 +347,9 @@ internal sealed class ControlSystemBridgeModern : IConfigurationObserver, IContr
 
 	public IPickerSensorReadResult ReadPickerSensors(bool closeTrack)
 	{
-		if (closeTrack && TrackState.Closed != TrackState)
+		if (closeTrack && TrackState.Closed != TrackState && !TrackClose().Success)
 		{
-			IControlResponse controlResponse = TrackClose();
-			if (!controlResponse.Success)
-			{
-				return new PickerSensorReadResult(ErrorCodes.TrackCloseTimeout);
-			}
+			return new PickerSensorReadResult(ErrorCodes.TrackCloseTimeout);
 		}
 		try
 		{
@@ -497,22 +479,18 @@ internal sealed class ControlSystemBridgeModern : IConfigurationObserver, IContr
 		{
 			return ErrorCodes.Timeout;
 		}
-		if (home)
+		if (home && ServiceLocator.Instance.GetService<IMotionControlService>().HomeAxis(Axis.X) != ErrorCodes.Success)
 		{
-			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-			if (service.HomeAxis(Axis.X) != ErrorCodes.Success)
-			{
-				return ErrorCodes.HomeXTimeout;
-			}
+			return ErrorCodes.HomeXTimeout;
 		}
 		CoreResponse coreResponse = Implementor.OnQlm(operation);
-		ErrorCodes errorCodes = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
-		string msg = $"{operation.ToString().ToUpper()} returned status {errorCodes.ToString().ToUpper()}.";
+		ErrorCodes result = ((!coreResponse.Success) ? ErrorCodes.Timeout : ErrorCodes.Success);
+		string msg = $"{operation.ToString().ToUpper()} returned status {result.ToString().ToUpper()}.";
 		log.WriteFormatted(msg);
 		if (!coreResponse.Success)
 		{
 			PersistentCounterService.Increment((QlmOperation.Engage == operation) ? TimeoutCounters.QlmEngage : TimeoutCounters.QlmDisengage);
 		}
-		return errorCodes;
+		return result;
 	}
 }

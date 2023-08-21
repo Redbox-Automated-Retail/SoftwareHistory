@@ -8,8 +8,7 @@ internal sealed class LegacyDeviceDescriptor : AbstractDeviceDescriptor
 
 	protected override bool OnLocate()
 	{
-		DeviceStatus status = GetStatus();
-		return (status & DeviceStatus.Found) != 0;
+		return (GetStatus() & DeviceStatus.Found) != 0;
 	}
 
 	protected override bool OnMatchDriver()

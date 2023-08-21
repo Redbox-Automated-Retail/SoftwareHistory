@@ -38,7 +38,7 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 
 	private int m_request;
 
-	private bool? isCrossbarAvailable = null;
+	private bool? isCrossbarAvailable;
 
 	private VideoInput[] crossbarVideoInputs;
 
@@ -196,7 +196,7 @@ public abstract class AbstractDirectShowFrameControl : IVideoSource, ISampleGrab
 			BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, FrameSize.Width, FrameSize.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 			int stride = bitmapData.Stride;
 			int stride2 = bitmapData.Stride;
-			byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + (nint)stride2 * (nint)(FrameSize.Height - 1);
+			byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + stride2 * (FrameSize.Height - 1);
 			byte* ptr2 = (byte*)buffer.ToPointer();
 			for (int i = 0; i < FrameSize.Height; i++)
 			{

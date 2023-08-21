@@ -45,8 +45,7 @@ internal sealed class BackupHelper
 
 	internal static BackupHelper GetInventoryHelper()
 	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		return new BackupHelper(service.DataPath, "inventory");
+		return new BackupHelper(ServiceLocator.Instance.GetService<IRuntimeService>().DataPath, "inventory");
 	}
 
 	internal BackupHelper(string path, string filePrefix)
@@ -59,10 +58,9 @@ internal sealed class BackupHelper
 	{
 		List<BackupEntry> list = new List<BackupEntry>();
 		string[] files = Directory.GetFiles(BackupPath, $"{BackupPrefix}*.xml");
-		string[] array = files;
-		foreach (string fullPath in array)
+		for (int i = 0; i < files.Length; i++)
 		{
-			BackupEntry backupEntry = new BackupEntry(fullPath);
+			BackupEntry backupEntry = new BackupEntry(files[i]);
 			if (backupEntry.CreateDate.HasValue)
 			{
 				list.Add(backupEntry);

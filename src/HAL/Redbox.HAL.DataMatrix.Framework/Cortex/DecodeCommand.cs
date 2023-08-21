@@ -74,8 +74,7 @@ internal sealed class DecodeCommand : AbstractCortexCommand
 					{
 						LogHelper.Instance.Log(" [DecodeCommand] Data packet: barcode data = {0} number = {1}", text, packet.PacketNumber);
 					}
-					List<int> list = DataPackets.FindAll((int each) => each == packet.PacketNumber);
-					if (list.Count != 0)
+					if (DataPackets.FindAll((int each) => each == packet.PacketNumber).Count != 0)
 					{
 						continue;
 					}

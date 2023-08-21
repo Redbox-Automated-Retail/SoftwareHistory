@@ -21,8 +21,8 @@ public sealed class SymbolCommand
 	}
 
 	[CommandForm(Name = "clear")]
-	[Description("Clears the execution engine's symbol list.")]
 	[Usage("SYMBOL clear job: job-id")]
+	[Description("Clears the execution engine's symbol list.")]
 	public void Clear(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors)?.ClearSymbolTable();

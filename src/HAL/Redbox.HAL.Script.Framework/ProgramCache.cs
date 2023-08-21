@@ -90,8 +90,7 @@ internal sealed class ProgramCache : IDisposable
 			{
 				LogHelper.Instance.Log($"Compile program {fileNameWithoutExtension} from file {text3}", LogEntryType.Info);
 			}
-			IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
-			using MemoryStream stream = new MemoryStream(service2.ReadToBuffer(text3));
+			using MemoryStream stream = new MemoryStream(ServiceLocator.Instance.GetService<IRuntimeService>().ReadToBuffer(text3));
 			ExecutionResult executionResult2 = CompileInner(stream, fileNameWithoutExtension);
 			errorList.AddRange(executionResult2.Errors);
 			if (!executionResult2.Errors.ContainsError())
@@ -111,8 +110,7 @@ internal sealed class ProgramCache : IDisposable
 	internal NativeJobAdapter MakeJobFromOperand(ExecutionContext ctx, ExecutionResult result, string key)
 	{
 		NativeJobAdapter result2 = null;
-		string text;
-		if ((text = key) != null && text == "RETURN")
+		if (key == "RETURN")
 		{
 			result2 = new ReturnJob(result, ctx);
 		}
@@ -175,9 +173,10 @@ internal sealed class ProgramCache : IDisposable
 			{
 				LogHelper.Instance.Log($"Not allowing replacement of program {programName}", LogEntryType.Info);
 			}
-			ExecutionResult executionResult = new ExecutionResult();
-			executionResult.ExecutionTime = new TimeSpan(0L);
-			return executionResult;
+			return new ExecutionResult
+			{
+				ExecutionTime = new TimeSpan(0L)
+			};
 		}
 	}
 
@@ -204,9 +203,8 @@ internal sealed class ProgramCache : IDisposable
 		{
 			foreach (string key in CompiledPrograms.Keys)
 			{
-				List<string> noShowJobs = NoShowJobs;
-				Predicate<string> match = (string each) => each.Equals(key, StringComparison.CurrentCultureIgnoreCase);
-				if (noShowJobs.Find(match) == null)
+				string text = NoShowJobs.Find((string each) => each.Equals(key, StringComparison.CurrentCultureIgnoreCase));
+				if (text == null)
 				{
 					list.Add(key);
 				}
@@ -262,9 +260,9 @@ internal sealed class ProgramCache : IDisposable
 					continue;
 				}
 				ConstructorInfo[] array3 = constructors;
-				foreach (ConstructorInfo constructorInfo in array3)
+				for (int j = 0; j < array3.Length; j++)
 				{
-					ParameterInfo[] parameters = constructorInfo.GetParameters();
+					ParameterInfo[] parameters = array3[j].GetParameters();
 					if (parameters == null || parameters.Length == 0)
 					{
 						LogHelper.Instance.Log("Type {0} has a ctor that does not match.", type.ToString());

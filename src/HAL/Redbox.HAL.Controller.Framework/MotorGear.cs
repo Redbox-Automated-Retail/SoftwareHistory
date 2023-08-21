@@ -6,8 +6,8 @@ namespace Redbox.HAL.Controller.Framework;
 
 public sealed class MotorGear
 {
-	[Description("The ratio of the Step Resolution value.  Step Ratio is divided by 10 and then multiplied by Step Resolution to yield the multiplied Step Ratio.")]
 	[DisplayName("Step Ratio")]
+	[Description("The ratio of the Step Resolution value.  Step Ratio is divided by 10 and then multiplied by Step Resolution to yield the multiplied Step Ratio.")]
 	public double StepRatio { get; private set; }
 
 	[DisplayName("Pulse Ratio")]

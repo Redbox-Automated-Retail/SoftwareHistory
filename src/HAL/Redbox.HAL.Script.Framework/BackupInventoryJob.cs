@@ -16,17 +16,17 @@ internal sealed class BackupInventoryJob : NativeJobAdapter
 			BackupHelper inventoryHelper = BackupHelper.GetInventoryHelper();
 			using (FileStream w = new FileStream(inventoryHelper.MakeNewBackup(), FileMode.OpenOrCreate))
 			{
-				XmlTextWriter xmlTextWriter = new XmlTextWriter(w, Encoding.ASCII);
-				xmlTextWriter.Formatting = Formatting.Indented;
-				XmlTextWriter xmlTextWriter2 = xmlTextWriter;
-				xmlTextWriter2.WriteStartDocument();
-				xmlTextWriter2.WriteStartElement("inventory-items");
-				service.GetState(xmlTextWriter2);
-				IDumpbinService service2 = ServiceLocator.Instance.GetService<IDumpbinService>();
-				service2.GetState(xmlTextWriter2);
-				xmlTextWriter2.WriteEndElement();
-				xmlTextWriter2.WriteEndDocument();
-				xmlTextWriter2.Flush();
+				XmlTextWriter xmlTextWriter = new XmlTextWriter(w, Encoding.ASCII)
+				{
+					Formatting = Formatting.Indented
+				};
+				xmlTextWriter.WriteStartDocument();
+				xmlTextWriter.WriteStartElement("inventory-items");
+				service.GetState(xmlTextWriter);
+				ServiceLocator.Instance.GetService<IDumpbinService>().GetState(xmlTextWriter);
+				xmlTextWriter.WriteEndElement();
+				xmlTextWriter.WriteEndDocument();
+				xmlTextWriter.Flush();
 			}
 			inventoryHelper.Trim();
 		}

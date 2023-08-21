@@ -14,8 +14,7 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 			EndJob(errored: true);
 			return;
 		}
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		ErrorCodes errorCodes = service.AcceptDiskAtDoor();
+		ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IControllerService>().AcceptDiskAtDoor();
 		if (ErrorCodes.PickerFull != errorCodes)
 		{
 			EndJob(errored: true);
@@ -56,8 +55,7 @@ internal sealed class ReadFraudDiskJob : NativeJobAdapter
 			}
 			if (pickerSensorReadResult.IsFull)
 			{
-				IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-				service.VendItemInPicker();
+				ServiceLocator.Instance.GetService<IControllerService>().VendItemInPicker();
 			}
 			base.ControlSystem.VendDoorClose();
 		}

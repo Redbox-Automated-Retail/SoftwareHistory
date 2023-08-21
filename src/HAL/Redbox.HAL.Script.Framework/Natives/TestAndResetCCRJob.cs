@@ -49,8 +49,7 @@ internal sealed class TestAndResetCCRJob : NativeJobAdapter
 			AddError("Failed to restart CCR");
 			e.CorrectionOk = false;
 		}
-		IHardwareCorrectionStatisticService service2 = ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>();
-		service2.Insert(e, base.Context);
+		ServiceLocator.Instance.GetService<IHardwareCorrectionStatisticService>().Insert(e, base.Context);
 	}
 
 	internal TestAndResetCCRJob(ExecutionResult result, ExecutionContext ctx)

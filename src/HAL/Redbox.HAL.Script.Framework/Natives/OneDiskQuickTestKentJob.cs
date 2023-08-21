@@ -21,7 +21,8 @@ internal sealed class OneDiskQuickTestKentJob : NativeJobAdapter
 			}
 			if (!TestDeck(deck))
 			{
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			IDeck byNumber = decksService.GetByNumber(deck.Number + 1);
@@ -32,7 +33,8 @@ internal sealed class OneDiskQuickTestKentJob : NativeJobAdapter
 			if (!MoveAndPut(byNumber.Number, 1, "UNKNOWN"))
 			{
 				AddError("Unable to place the into the slot.");
-				errors++;
+				int num = errors + 1;
+				errors = num;
 				return false;
 			}
 			return true;
@@ -43,8 +45,7 @@ internal sealed class OneDiskQuickTestKentJob : NativeJobAdapter
 			{
 				AddError("Unable to place the disk back into the source slot.");
 			}
-			IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-			service.MoveVend(MoveMode.Get, appLog);
+			ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(MoveMode.Get, appLog);
 		}
 	}
 

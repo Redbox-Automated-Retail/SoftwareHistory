@@ -4,7 +4,7 @@ namespace Redbox.HAL.Controller.Framework.Services;
 
 internal sealed class DuplicateSearchResult : IDuplicateSearchResult
 {
-	public bool IsDuplicate => null != Original;
+	public bool IsDuplicate => Original != null;
 
 	public ILocation Original { get; internal set; }
 }

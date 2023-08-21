@@ -161,13 +161,12 @@ public sealed class LocInstruction : Instruction
 			}
 			else if (base.Operands[0].Value.Equals("RESETRT"))
 			{
+				DateTime result2;
 				if (base.Operands[1].Type != TokenType.StringLiteral)
 				{
 					AddError("E999", "Unspecified context exit; check the logs.", result.Errors);
-					return;
 				}
-				string value = base.Operands[1].Value;
-				if (!DateTime.TryParse(value, out var result2))
+				else if (!DateTime.TryParse(base.Operands[1].Value, out result2))
 				{
 					LogHelper.Instance.Log("Location RESETRT Instruction - Unable to parse date/time information.", LogEntryType.Error);
 					AddError("E999", "Unspecified context exit; check the logs.", result.Errors);

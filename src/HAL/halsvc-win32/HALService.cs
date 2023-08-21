@@ -162,12 +162,9 @@ public class HALService : ServiceBase, ILogger
 
 	internal void StopService()
 	{
-		IExecutionService service = ServiceLocator.Instance.GetService<IExecutionService>();
-		service.Shutdown();
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		service2.Shutdown();
-		IScannerDeviceService service3 = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-		service3.Shutdown();
+		ServiceLocator.Instance.GetService<IExecutionService>().Shutdown();
+		ServiceLocator.Instance.GetService<IControllerService>().Shutdown();
+		ServiceLocator.Instance.GetService<IScannerDeviceService>().Shutdown();
 		Log("Stop Hardware Abstraction Layer (HAL) Service.", LogEntryType.Info);
 		WriteEventLogEntry("Stop Hardware Abstraction Layer (HAL) Service.", EventLogEntryType.Information);
 		Proxy.Dispose();
@@ -201,8 +198,7 @@ public class HALService : ServiceBase, ILogger
 			ServiceLocator.Instance.AddService<IUsbDeviceService>(new UsbDeviceService(Settings.Default.UsbServiceDebug));
 			ServiceLocator.Instance.AddService<IDataTableService>(new DataTableService(Settings.Default.CountersDBExclusiveMode));
 			ServiceLocator.Instance.AddService<IPersistentMapService>(new PersistentMapService());
-			string configFile = runtimeService.RuntimePath("HAL.xml");
-			ConfigurationService configurationService = ConfigurationService.Make(configFile);
+			ConfigurationService configurationService = ConfigurationService.Make(runtimeService.RuntimePath("HAL.xml"));
 			ServiceLocator.Instance.AddService<IConfigurationService>(configurationService);
 			Redbox.HAL.Controller.Framework.KioskConfiguration.Instance.Initialize(errorList);
 			ControllerService controllerService = new ControllerService();
@@ -233,8 +229,7 @@ public class HALService : ServiceBase, ILogger
 				Stop();
 				return;
 			}
-			IpcHostVersion version = Enum<IpcHostVersion>.Parse(Settings.Default.ServiceHostGeneration, IpcHostVersion.Legacy);
-			IPCProxy.InitializeServices(version);
+			IPCProxy.InitializeServices(Enum<IpcHostVersion>.Parse(Settings.Default.ServiceHostGeneration, IpcHostVersion.Legacy));
 			Proxy = IPCProxy.Parse(Settings.Default.ServiceProtocol);
 			if (!Proxy.ProtocolValid)
 			{

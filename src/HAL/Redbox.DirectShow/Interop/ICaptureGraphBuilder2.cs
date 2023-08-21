@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("93E5A4E0-2D50-11d2-ABFA-00A0C9C6E38D")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface ICaptureGraphBuilder2
 {
 	[PreserveSig]

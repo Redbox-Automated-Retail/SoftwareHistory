@@ -85,14 +85,13 @@ public sealed class LegacySlotData : IConfigurationFile, IDisposable
 		KioskConfig = KioskConfiguration.None;
 		if (SlotData.Count > 0)
 		{
-			PlatterConfig platterConfig = SlotData[1];
-			if (platterConfig.Type == PlatterType.Sparse)
+			if (SlotData[1].Type == PlatterType.Sparse)
 			{
 				KioskConfig = KioskConfiguration.R504;
 				return;
 			}
-			PlatterConfig platterConfig2 = SlotData[SlotData.Count - 1];
-			KioskConfig = ((platterConfig2.Type == PlatterType.Qlm) ? KioskConfiguration.R630 : KioskConfiguration.R717);
+			PlatterConfig platterConfig = SlotData[SlotData.Count - 1];
+			KioskConfig = ((platterConfig.Type == PlatterType.Qlm) ? KioskConfiguration.R630 : KioskConfiguration.R717);
 		}
 	}
 
@@ -115,8 +114,7 @@ public sealed class LegacySlotData : IConfigurationFile, IDisposable
 		bool flag = false;
 		StringBuilder stringBuilder = new StringBuilder();
 		string[] array = File.ReadAllLines(FullSourcePath);
-		string[] array2 = array;
-		foreach (string text in array2)
+		foreach (string text in array)
 		{
 			List<int> list = new List<int>();
 			int result;

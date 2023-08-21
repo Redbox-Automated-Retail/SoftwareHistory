@@ -45,14 +45,12 @@ internal sealed class InitJob : NativeJobAdapter
 		}
 		try
 		{
-			IControlSystemService service2 = ServiceLocator.Instance.GetService<IControlSystemService>();
-			if (service2.IsInitialized)
+			if (ServiceLocator.Instance.GetService<IControlSystemService>().IsInitialized)
 			{
 				base.ControlSystem.Shutdown();
 				service.Wait(2000);
 			}
-			IControlResponse controlResponse = base.ControlSystem.Initialize();
-			if (!controlResponse.Success)
+			if (!base.ControlSystem.Initialize().Success)
 			{
 				applicationLog.Write("Reset of the boards timed out.");
 				LogHelper.Instance.Log("RESET instruction returned timeout; maybe communication error?", LogEntryType.Error);
@@ -61,8 +59,7 @@ internal sealed class InitJob : NativeJobAdapter
 				AddError("RESET instruction returned timeout.");
 				return;
 			}
-			IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
-			service3.Initialize();
+			ServiceLocator.Instance.GetService<IMotionControlService>().Initialize();
 			applicationLog.Write("RESET completed successfully; get controller board VERSION stamps.");
 			base.Context.Send("GET VERSION INFO");
 			IControlSystemRevision revision = base.ControlSystem.GetRevision();
@@ -101,8 +98,7 @@ internal sealed class InitJob : NativeJobAdapter
 			service.Wait(200);
 			applicationLog.Write("Ensure the gripper is not obstructed.");
 			base.Context.Send("CHECK OBSTRUCTIONS");
-			IControllerService service4 = ServiceLocator.Instance.GetService<IControllerService>();
-			ErrorCodes errorCodes = service4.ClearGripper();
+			ErrorCodes errorCodes = ServiceLocator.Instance.GetService<IControllerService>().ClearGripper();
 			if (errorCodes != ErrorCodes.Success)
 			{
 				if (base.MotionService.CurrentLocation != null)
@@ -163,8 +159,7 @@ internal sealed class InitJob : NativeJobAdapter
 		{
 			return;
 		}
-		EventLog[] eventLogs = EventLog.GetEventLogs();
-		EventLog eventLog = Array.Find(eventLogs, (EventLog each) => each.Log == "System");
+		EventLog eventLog = Array.Find(EventLog.GetEventLogs(), (EventLog each) => each.Log == "System");
 		if (eventLog == null)
 		{
 			return;

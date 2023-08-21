@@ -115,7 +115,7 @@ public sealed class MotionControlInstruction : Instruction
 				break;
 			}
 			ErrorCodes errorCodes = service.InitAxes();
-			context.PushTop(ErrorCodes.Success == errorCodes);
+			context.PushTop(errorCodes == ErrorCodes.Success);
 			break;
 		}
 		case Operand.Restart:

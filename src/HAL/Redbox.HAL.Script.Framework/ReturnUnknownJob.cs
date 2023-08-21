@@ -59,8 +59,7 @@ internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 		}
 		else
 		{
-			IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-			service.VendItemInPicker();
+			ServiceLocator.Instance.GetService<IControllerService>().VendItemInPicker();
 			AddError("Unable to put away disk.");
 		}
 	}
@@ -177,8 +176,7 @@ internal class ReturnUnknownJob : NativeJobAdapter, IFileDiskHandler
 						base.Context.CreateNoBarcodeReadResult();
 						if (IsFieldInsert)
 						{
-							IVendItemResult vendItemResult = base.ControlService.VendItemInPicker();
-							switch (vendItemResult.Status)
+							switch (base.ControlService.VendItemInPicker().Status)
 							{
 							case ErrorCodes.PickerEmpty:
 								base.Context.CreateInfoResult("BackwardDiscTaken", "The backward disc was taken.");

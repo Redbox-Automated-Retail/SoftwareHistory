@@ -24,25 +24,26 @@ internal sealed class VendItemOperation : AbstractOperation<VendItemResult>
 	private VendItemResult OnExecute()
 	{
 		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		VendItemResult vendItemResult = new VendItemResult();
-		vendItemResult.Presented = true;
-		vendItemResult.Status = ErrorCodes.PickerEmpty;
-		VendItemResult vendItemResult2 = vendItemResult;
+		VendItemResult vendItemResult = new VendItemResult
+		{
+			Presented = true,
+			Status = ErrorCodes.PickerEmpty
+		};
 		LogHelper.Instance.WithContext(toFormattedLog: false, LogEntryType.Info, "VendDiskAtDoor...");
 		Controller.RollerToPosition(RollerPosition.Position5, 3000);
 		ErrorCodes errorCodes = OpenDoorChecked();
 		if (errorCodes != ErrorCodes.Success)
 		{
-			vendItemResult2.Status = errorCodes;
-			return vendItemResult2;
+			vendItemResult.Status = errorCodes;
+			return vendItemResult;
 		}
 		int ms = 1000;
 		ErrorCodes errorCodes2 = ControllerService.PushOut();
 		if (ErrorCodes.TrackCloseTimeout == errorCodes2 || ErrorCodes.SensorReadError == errorCodes2)
 		{
-			vendItemResult2.Status = errorCodes2;
-			vendItemResult2.Presented = false;
-			return vendItemResult2;
+			vendItemResult.Status = errorCodes2;
+			vendItemResult.Presented = false;
+			return vendItemResult;
 		}
 		Controller.TrackCycle();
 		int num = 0;
@@ -52,18 +53,18 @@ internal sealed class VendItemOperation : AbstractOperation<VendItemResult>
 			pickerSensorReadResult = Controller.ReadPickerSensors();
 			if (!pickerSensorReadResult.Success)
 			{
-				vendItemResult2.Status = ErrorCodes.SensorReadError;
-				return vendItemResult2;
+				vendItemResult.Status = ErrorCodes.SensorReadError;
+				return vendItemResult;
 			}
 			if (pickerSensorReadResult.IsInputActive(PickerInputs.Sensor1) || pickerSensorReadResult.IsInputActive(PickerInputs.Sensor2) || pickerSensorReadResult.IsInputActive(PickerInputs.Sensor3) || pickerSensorReadResult.IsInputActive(PickerInputs.Sensor4))
 			{
 				pickerSensorReadResult.Log(LogEntryType.Error);
 				if (num == 1 && ControllerConfiguration.Instance.TrackPushOutFailures)
 				{
-					vendItemResult2.Presented = false;
+					vendItemResult.Presented = false;
 					LogHelper.Instance.WithContext(toFormattedLog: false, LogEntryType.Error, "[VendItemInPicker] After 2 pushes, the disk has not cleared sensor 4.");
-					vendItemResult2.Status = ErrorCodes.PickerFull;
-					return vendItemResult2;
+					vendItemResult.Status = ErrorCodes.PickerFull;
+					return vendItemResult;
 				}
 				num++;
 				LogHelper.Instance.WithContext(toFormattedLog: false, LogEntryType.Error, "[VendItemInPicker] Disc was pushed to the drum - push it back out.");
@@ -84,20 +85,20 @@ internal sealed class VendItemOperation : AbstractOperation<VendItemResult>
 			}
 			if (!pickerSensorReadResult.IsInputActive(PickerInputs.Sensor6))
 			{
-				vendItemResult2.Status = ErrorCodes.PickerEmpty;
-				return vendItemResult2;
+				vendItemResult.Status = ErrorCodes.PickerEmpty;
+				return vendItemResult;
 			}
 			service.Wait(ms);
 		}
 		pickerSensorReadResult = Controller.ReadPickerSensors();
 		if (!pickerSensorReadResult.Success)
 		{
-			vendItemResult2.Status = ErrorCodes.SensorReadError;
+			vendItemResult.Status = ErrorCodes.SensorReadError;
 		}
 		else
 		{
-			vendItemResult2.Status = (pickerSensorReadResult.IsFull ? ErrorCodes.PickerFull : ErrorCodes.PickerEmpty);
+			vendItemResult.Status = (pickerSensorReadResult.IsFull ? ErrorCodes.PickerFull : ErrorCodes.PickerEmpty);
 		}
-		return vendItemResult2;
+		return vendItemResult;
 	}
 }

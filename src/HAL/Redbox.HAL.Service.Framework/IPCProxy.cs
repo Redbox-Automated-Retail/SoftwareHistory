@@ -74,8 +74,7 @@ public sealed class IPCProxy : IDisposable
 		if (File.Exists(serviceStartup))
 		{
 			using StreamReader reader = new StreamReader(serviceStartup);
-			BatchCommandRunner batchCommandRunner = new BatchCommandRunner(reader);
-			batchCommandRunner.Start();
+			new BatchCommandRunner(reader).Start();
 		}
 		return true;
 	}

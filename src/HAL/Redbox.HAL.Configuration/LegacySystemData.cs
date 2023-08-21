@@ -133,13 +133,12 @@ public sealed class LegacySystemData : IConfigurationFile, IDisposable
 			return;
 		}
 		string[] array = File.ReadAllLines(FullSourcePath);
-		string[] array2 = array;
-		foreach (string text in array2)
+		for (int i = 0; i < array.Length; i++)
 		{
-			string[] array3 = text.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-			if (array3.Length >= 2 && int.TryParse(array3[1], out var result))
+			string[] array2 = array[i].Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			if (array2.Length >= 2 && int.TryParse(array2[1], out var result))
 			{
-				action(array3[0], result);
+				action(array2[0], result);
 			}
 		}
 	}

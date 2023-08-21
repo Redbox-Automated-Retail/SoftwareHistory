@@ -9,10 +9,6 @@ namespace Redbox.HAL.Controller.Framework;
 
 internal sealed class ArcusMotionController2 : AbstractMotionController
 {
-	private const string HaltMotorCommand = "RSTOP";
-
-	private const string NopCommand = "NOP";
-
 	private readonly List<string> MovePreamble = new List<string>();
 
 	private readonly string[] InvalidQueryResponse = new string[1] { "INVALID QUERY RESPONSE" };
@@ -22,6 +18,10 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 	private readonly List<string> ErrorCorrectPreamble = new List<string>();
 
 	private readonly List<string> InitCommands = new List<string>();
+
+	private const string HaltMotorCommand = "RSTOP";
+
+	private const string NopCommand = "NOP";
 
 	private bool DebugEnabled;
 
@@ -124,10 +124,9 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 		ArcusControllerPosition arcusControllerPosition = new ArcusControllerPosition();
 		arcusControllerPosition.XCoordinate = null;
 		arcusControllerPosition.YCoordinate = null;
-		ArcusControllerPosition arcusControllerPosition2 = arcusControllerPosition;
-		arcusControllerPosition2.XCoordinate = DecodePositionResponse(Axis.X);
-		arcusControllerPosition2.YCoordinate = DecodePositionResponse(Axis.Y);
-		return arcusControllerPosition2;
+		arcusControllerPosition.XCoordinate = DecodePositionResponse(Axis.X);
+		arcusControllerPosition.YCoordinate = DecodePositionResponse(Axis.Y);
+		return arcusControllerPosition;
 	}
 
 	internal override bool OnShutdown()
@@ -321,8 +320,8 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 		{
 			return errorCodes;
 		}
-		string[] array2 = new string[2] { "I2=3136", "I7=15" };
-		foreach (string command2 in array2)
+		array = new string[2] { "I2=3136", "I7=15" };
+		foreach (string command2 in array)
 		{
 			if (SendReciveRaw(command2) == null)
 			{
@@ -434,13 +433,9 @@ internal sealed class ArcusMotionController2 : AbstractMotionController
 	{
 		string command = ((axis == Axis.X) ? "EX" : "PY");
 		string text = SendReciveRaw(command);
-		if (text != null)
+		if (text != null && int.TryParse(text.Substring(text.IndexOf('=') + 1), out var result))
 		{
-			string s = text.Substring(text.IndexOf('=') + 1);
-			if (int.TryParse(s, out var result))
-			{
-				return result;
-			}
+			return result;
 		}
 		return null;
 	}

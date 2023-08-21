@@ -8,8 +8,7 @@ internal sealed class QuickReturnCountersJob : NativeJobAdapter
 	protected override void ExecuteInner()
 	{
 		IPersistentCounterService pcs = ServiceLocator.Instance.GetService<IPersistentCounterService>();
-		QuickReturnCounters quickReturnCounters = new QuickReturnCounters();
-		quickReturnCounters.DoForeach(delegate(string counter)
+		new QuickReturnCounters().DoForeach(delegate(string counter)
 		{
 			IPersistentCounter persistentCounter = pcs.Find(counter);
 			string message = ((persistentCounter == null) ? "0" : persistentCounter.Value.ToString());

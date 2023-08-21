@@ -21,10 +21,9 @@ internal class Resources
 	{
 		get
 		{
-			if (object.ReferenceEquals(resourceMan, null))
+			if (resourceMan == null)
 			{
-				ResourceManager resourceManager = new ResourceManager("Redbox.HAL.CameraTuner.Properties.Resources", typeof(Resources).Assembly);
-				resourceMan = resourceManager;
+				resourceMan = new ResourceManager("Redbox.HAL.CameraTuner.Properties.Resources", typeof(Resources).Assembly);
 			}
 			return resourceMan;
 		}

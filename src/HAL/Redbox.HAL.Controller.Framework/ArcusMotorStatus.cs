@@ -110,8 +110,7 @@ internal struct ArcusMotorStatus
 	{
 		if ("X".Equals(axisAsString.ToUpper()))
 		{
-			Axis[] axes = new Axis[1];
-			Axes = axes;
+			Axes = new Axis[1];
 		}
 		else if ("Y".Equals(axisAsString.ToUpper()))
 		{

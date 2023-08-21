@@ -27,8 +27,7 @@ public sealed class GetConfigInstruction : Instruction
 			object empty = string.Empty;
 			try
 			{
-				IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-				empty = service.GetPropertyByName(keyValuePair.Value, name);
+				empty = ServiceLocator.Instance.GetService<IConfigurationService>().GetPropertyByName(keyValuePair.Value, name);
 			}
 			catch (ArgumentException ex)
 			{

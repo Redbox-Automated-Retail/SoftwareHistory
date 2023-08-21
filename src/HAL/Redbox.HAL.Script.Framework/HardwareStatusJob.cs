@@ -20,8 +20,7 @@ internal sealed class HardwareStatusJob : NativeJobAdapter
 			base.Context.CreateInfoResult("MotionControllerCommunicationError", "The door sensors are not in a safe mode.");
 			num++;
 		}
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		if (service2.ClearGripper() != ErrorCodes.Success)
+		if (ServiceLocator.Instance.GetService<IControllerService>().ClearGripper() != ErrorCodes.Success)
 		{
 			num++;
 			base.Context.CreateInfoResult("GripperObstructed", "The gripper is obstructed.");

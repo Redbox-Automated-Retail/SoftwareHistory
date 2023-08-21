@@ -12,7 +12,7 @@ public sealed class AudioInstruction : Instruction
 
 	protected override bool IsOperandRecognized(string operand)
 	{
-		return AudioChannelState.None != Enum<AudioChannelState>.ParseIgnoringCase(operand, AudioChannelState.None);
+		return Enum<AudioChannelState>.ParseIgnoringCase(operand, AudioChannelState.None) != AudioChannelState.None;
 	}
 
 	protected override void ParseOperands(TokenList operandTokens, ExecutionResult result)

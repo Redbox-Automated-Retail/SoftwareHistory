@@ -22,7 +22,7 @@ internal sealed class PickerSensorReadResult : IPickerSensorReadResult, IReadInp
 
 	public ErrorCodes Error { get; private set; }
 
-	public bool Success => ErrorCodes.Success == Error;
+	public bool Success => Error == ErrorCodes.Success;
 
 	public int InputCount => PickerSensors.Length;
 
@@ -83,6 +83,7 @@ internal sealed class PickerSensorReadResult : IPickerSensorReadResult, IReadInp
 
 	internal PickerSensorReadResult(ReadPickerInputsResult result)
 	{
+		PickerSensorReadResult pickerSensorReadResult = this;
 		ReadResult = result;
 		Error = result.Error;
 		if (Error != ErrorCodes.Success)
@@ -94,9 +95,10 @@ internal sealed class PickerSensorReadResult : IPickerSensorReadResult, IReadInp
 		int bc = 0;
 		Array.ForEach(PickerSensors, delegate(PickerInputs each)
 		{
-			if (ReadResult.IsInputActive(each))
+			if (pickerSensorReadResult.ReadResult.IsInputActive(each))
 			{
-				bc++;
+				int num = bc + 1;
+				bc = num;
 			}
 		});
 		m_blockedCount = bc;

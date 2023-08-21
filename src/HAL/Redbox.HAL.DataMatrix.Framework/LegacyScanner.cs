@@ -25,10 +25,8 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		get
 		{
 			IScannerDeviceService service = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-			IBarcodeReaderFactory service2 = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>();
-			IBarcodeReader configuredReader = service2.GetConfiguredReader();
-			bool flag = configuredReader.Service == BarcodeServices.Cortex;
-			if (service.IRHardwareInstall.HasValue && flag)
+			bool flag = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>().GetConfiguredReader().Service == BarcodeServices.Cortex;
+			if (service.IRHardwareInstall.HasValue & flag)
 			{
 				if (CurrentCameraGeneration != CameraGeneration.Fifth)
 				{
@@ -49,8 +47,7 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			if (_currentCameraGeneration == CameraGeneration.Unknown)
 			{
 				LogHelper.Instance.Log("[Legacy Camera Service] locate camera generation.");
-				IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-				IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: false);
+				IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindActiveCamera(matchDriver: false);
 				if (deviceDescriptor != null)
 				{
 					LogHelper.Instance.Log("Found camera {0}", deviceDescriptor.Friendlyname);
@@ -142,11 +139,10 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			return false;
 		}
 		Stop();
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		service.SpinWait(500);
+		ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(500);
 		LogHelper.Instance.Log("[Legacy Camera Service] Cycle camera driver.");
-		IUsbDeviceService service2 = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		IDeviceDescriptor deviceDescriptor = service2.FindActiveCamera(matchDriver: false);
+		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
+		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: false);
 		if (deviceDescriptor != null)
 		{
 			LogHelper.Instance.Log("Found camera {0}", deviceDescriptor.Friendlyname);
@@ -155,7 +151,7 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 			{
 				LogHelper.Instance.Log("The running driver for the camera {0}", deviceDescriptor.MatchDriver() ? "is correct" : "is not correct.");
 			}
-			DeviceStatus deviceStatus = service2.FindDeviceStatus(deviceDescriptor);
+			DeviceStatus deviceStatus = service.FindDeviceStatus(deviceDescriptor);
 			if ((deviceStatus & DeviceStatus.Found) != DeviceStatus.None && (deviceStatus & DeviceStatus.Enabled) != DeviceStatus.None)
 			{
 				bool flag = deviceDescriptor.ResetDriver();
@@ -170,13 +166,12 @@ internal sealed class LegacyScanner : ScannerAdapter, IScannerDevice, IDisposabl
 		ISnapResult snapResult = Snap();
 		if (!snapResult.SnapOk)
 		{
-			ScanResult scanResult = new ScanResult();
-			scanResult.DeviceError = true;
-			return scanResult;
+			return new ScanResult
+			{
+				DeviceError = true
+			};
 		}
-		IBarcodeReaderFactory service = ServiceLocator.Instance.GetService<IBarcodeReaderFactory>();
-		IBarcodeReader configuredReader = service.GetConfiguredReader();
-		return configuredReader.Scan(snapResult);
+		return ServiceLocator.Instance.GetService<IBarcodeReaderFactory>().GetConfiguredReader().Scan(snapResult);
 	}
 
 	public void NotifyConfigurationLoaded()

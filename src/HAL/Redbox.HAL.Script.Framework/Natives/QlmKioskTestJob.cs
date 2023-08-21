@@ -30,14 +30,13 @@ internal sealed class QlmKioskTestJob : NativeJobAdapter
 		protected override bool OnVendDisk(string matrix)
 		{
 			IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-			IControlResponse controlResponse = ControlSystem.VendDoorRent();
-			if (!controlResponse.Success)
+			if (!ControlSystem.VendDoorRent().Success)
 			{
 				Context.CreateInfoResult("VendDoorRentError", "Failed to open the vend door.");
 				return false;
 			}
 			service.SpinWait(500);
-			controlResponse = ControlSystem.VendDoorClose();
+			IControlResponse controlResponse = ControlSystem.VendDoorClose();
 			if (!controlResponse.Success)
 			{
 				Context.CreateInfoResult("VendDoorCloseError", "Failed to close the vend door.");

@@ -28,7 +28,7 @@ internal sealed class GetImageCommand : TextCommand
 	{
 		if (Descriptor != null)
 		{
-			return null != ImageBytes;
+			return ImageBytes != null;
 		}
 		return false;
 	}
@@ -37,8 +37,7 @@ internal sealed class GetImageCommand : TextCommand
 	{
 		if (Descriptor == null)
 		{
-			List<CortexPacket> list = PacketFactory.Instance.Parse(array);
-			CortexPacket cortexPacket = list.Find((CortexPacket each) => each.RawPacketType == 'g');
+			CortexPacket cortexPacket = PacketFactory.Instance.Parse(array).Find((CortexPacket each) => each.RawPacketType == 'g');
 			if (cortexPacket != null)
 			{
 				Descriptor = new ImageDescriptorPacket(cortexPacket);
@@ -53,24 +52,24 @@ internal sealed class GetImageCommand : TextCommand
 		{
 			return false;
 		}
-		List<CortexPacket> list2 = PacketFactory.Instance.Parse(array);
-		if (list2.Count == 0)
+		List<CortexPacket> list = PacketFactory.Instance.Parse(array);
+		if (list.Count == 0)
 		{
 			return false;
 		}
-		if (list2[0].RawPacketType != 'g' || list2[list2.Count - 1].RawPacketType != 'd')
+		if (list[0].RawPacketType != 'g' || list[list.Count - 1].RawPacketType != 'd')
 		{
 			return false;
 		}
-		List<CortexPacket> list3 = list2.FindAll((CortexPacket each) => each.PacketType == PacketType.Data);
+		List<CortexPacket> list2 = list.FindAll((CortexPacket each) => each.PacketType == PacketType.Data);
 		ImageBytes = new byte[Descriptor.ImageSize];
 		int offset = 0;
-		list3.ForEach(delegate(CortexPacket each)
+		list2.ForEach(delegate(CortexPacket each)
 		{
 			Array.Copy(each.PayloadData, 0, ImageBytes, offset, each.PayloadData.Length);
 			offset += each.PayloadData.Length;
 		});
-		DumpPackets(list2);
+		DumpPackets(list);
 		return true;
 	}
 

@@ -10,8 +10,8 @@ namespace Redbox.HAL.Service.Win32.Commands;
 public sealed class SymbolCommand
 {
 	[CommandForm(Name = "show")]
-	[Description("Dumps a diagnostic list of the symbol list contents.")]
 	[Usage("SYMBOL show job: job-id")]
+	[Description("Dumps a diagnostic list of the symbol list contents.")]
 	public void Show(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors)?.ForeachSymbol(delegate(IContextSymbol symbol)
@@ -21,8 +21,8 @@ public sealed class SymbolCommand
 	}
 
 	[CommandForm(Name = "clear")]
-	[Description("Clears the execution engine's symbol list.")]
 	[Usage("SYMBOL clear job: job-id")]
+	[Description("Clears the execution engine's symbol list.")]
 	public void Clear(CommandContext context, [CommandKeyValue(KeyName = "job", IsRequired = true)] string jobId)
 	{
 		CommandHelper.GetJob(jobId, context.Errors)?.ClearSymbolTable();

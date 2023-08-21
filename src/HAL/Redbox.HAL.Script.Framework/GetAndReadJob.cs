@@ -5,8 +5,7 @@ internal sealed class GetAndReadJob : NativeJobAdapter
 {
 	protected override void ExecuteInner()
 	{
-		GetAndCenterOperation getAndCenterOperation = new GetAndCenterOperation(base.Context);
-		if (getAndCenterOperation.Run())
+		if (new GetAndCenterOperation(base.Context).Run())
 		{
 			using (Scanner scanner = new Scanner(base.ControlSystem))
 			{

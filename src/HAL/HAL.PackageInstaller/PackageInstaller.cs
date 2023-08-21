@@ -17,14 +17,6 @@ namespace Redbox.HAL.PackageInstaller;
 
 internal sealed class PackageInstaller : IDisposable
 {
-	private const int BackupsToKeep = 2;
-
-	private const string KioskLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs";
-
-	private const string DefaultConfiguration = "HAL.xml.default";
-
-	private const string ConfigurationFileName = "hal.xml";
-
 	private readonly string[] DefaultDatabases = new string[2] { "HALCounters.vdb3", "HALData.vdb3" };
 
 	private readonly string ServiceInstallerBatchFile;
@@ -42,6 +34,14 @@ internal sealed class PackageInstaller : IDisposable
 	private readonly List<IPackageInstallHandler> PackageHandlers = new List<IPackageInstallHandler>();
 
 	private readonly ErrorList InstallErrors = new ErrorList();
+
+	private const int BackupsToKeep = 2;
+
+	private const string KioskLogsDirectory = "C:\\Program Files\\Redbox\\KioskLogs";
+
+	private const string DefaultConfiguration = "HAL.xml.default";
+
+	private const string ConfigurationFileName = "hal.xml";
 
 	private bool Disposed;
 
@@ -145,8 +145,7 @@ internal sealed class PackageInstaller : IDisposable
 		List<FileInfo> backups = new List<FileInfo>();
 		using (new DisposeableList<FileInfo>(backups))
 		{
-			string[] files = Directory.GetFiles(RuntimeService.AssemblyDirectory, "hal*.xml");
-			Array.ForEach(files, delegate(string bf)
+			Array.ForEach(Directory.GetFiles(RuntimeService.AssemblyDirectory, "hal*.xml"), delegate(string bf)
 			{
 				FileInfo fileInfo = new FileInfo(bf);
 				if (!fileInfo.Name.Equals("hal.xml", StringComparison.CurrentCultureIgnoreCase) && !fileInfo.Name.Equals("HAL.xml.default", StringComparison.CurrentCultureIgnoreCase))
@@ -168,10 +167,9 @@ internal sealed class PackageInstaller : IDisposable
 	private bool ServiceIsInstalled()
 	{
 		ServiceController[] services = ServiceController.GetServices();
-		ServiceController[] array = services;
-		foreach (ServiceController serviceController in array)
+		for (int i = 0; i < services.Length; i++)
 		{
-			if (serviceController.ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
+			if (services[i].ServiceName.Equals("halsvc$default", StringComparison.CurrentCultureIgnoreCase))
 			{
 				return true;
 			}
@@ -215,8 +213,7 @@ internal sealed class PackageInstaller : IDisposable
 		foreach (string text in array2)
 		{
 			string file = Path.GetFileName(text);
-			string value = Array.Find(array, (string a) => a.Equals(file, StringComparison.CurrentCultureIgnoreCase));
-			if (!string.IsNullOrEmpty(value))
+			if (!string.IsNullOrEmpty(Array.Find(array, (string a) => a.Equals(file, StringComparison.CurrentCultureIgnoreCase))))
 			{
 				Writer.WriteLine(" Exclude {0} ( '{1}' ) from handler search", file, text);
 				continue;

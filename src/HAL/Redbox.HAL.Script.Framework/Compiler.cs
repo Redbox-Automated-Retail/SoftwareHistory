@@ -9,13 +9,13 @@ namespace Redbox.HAL.Script.Framework;
 
 public class Compiler
 {
+	private static Dictionary<string, bool> m_warningTable;
+
 	private const string DirectiveToken = "@";
 
 	private const string IncludeDirective = "INC";
 
 	private const string PragmaDirective = "PRAGMA";
-
-	private static Dictionary<string, bool> m_warningTable;
 
 	private static readonly Deque<string> m_configScriptPaths;
 
@@ -175,7 +175,7 @@ public class Compiler
 		}
 		if (stack.Count > 1)
 		{
-			executionResult.Errors.Add(Error.NewError("C005", string.Concat("A context block was not properly closed: ", stack.Peek(), ", expected closing mnemonic ", stack.Peek().EndContextMnemonic), "Correct your source and recompile."));
+			executionResult.Errors.Add(Error.NewError("C005", "A context block was not properly closed: " + stack.Peek()?.ToString() + ", expected closing mnemonic " + stack.Peek().EndContextMnemonic, "Correct your source and recompile."));
 		}
 		if (!executionResult.Errors.ContainsError())
 		{
@@ -258,7 +258,7 @@ public class Compiler
 	public static void AppendSearchPath(string wholePath)
 	{
 		string[] array = ParseDelimitedPaths(wholePath);
-		if (array.Length > 0)
+		if (array.Length != 0)
 		{
 			m_configScriptPaths.AddManyToFront(array);
 		}
@@ -310,8 +310,7 @@ public class Compiler
 			{
 				return null;
 			}
-			string[] array = symbol.Value.Split(new string[1] { symbol.PairSeparator }, StringSplitOptions.RemoveEmptyEntries);
-			return array[1];
+			return symbol.Value.Split(new string[1] { symbol.PairSeparator }, StringSplitOptions.RemoveEmptyEntries)[1];
 		}
 		return symbol.Value;
 	}
@@ -397,8 +396,7 @@ public class Compiler
 	private static string[] ParseDelimitedPaths(string wholeLot)
 	{
 		List<string> rv = new List<string>();
-		string[] array = wholeLot.Split(Path.PathSeparator);
-		Array.ForEach(array, delegate(string path)
+		Array.ForEach(wholeLot.Split(Path.PathSeparator), delegate(string path)
 		{
 			if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
 			{

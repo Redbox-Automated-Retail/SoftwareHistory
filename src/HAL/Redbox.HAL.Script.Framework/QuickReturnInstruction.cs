@@ -25,8 +25,7 @@ public sealed class QuickReturnInstruction : Instruction
 			return;
 		}
 		string text = string.Empty;
-		Forms forms2 = forms;
-		if (forms2 != Forms.PollStatus)
+		if (forms != Forms.PollStatus)
 		{
 			text = "Only the POLLSTATUS form of QUICKRETURN is supported.";
 		}
@@ -43,20 +42,17 @@ public sealed class QuickReturnInstruction : Instruction
 			AddError("E002", "There are no operands for this instruction.", result.Errors);
 			return;
 		}
-		Forms forms = CheckForm(base.Operands[0].Value);
-		if (forms == Forms.Unknown)
+		switch (CheckForm(base.Operands[0].Value))
 		{
+		case Forms.Unknown:
 			AddError("E002", "There is an unknown form of this instruction.", result.Errors);
-			return;
-		}
-		Forms forms2 = forms;
-		if (forms2 == Forms.PollStatus)
-		{
+			break;
+		case Forms.PollStatus:
 			context.PushTop("INACTIVE");
-		}
-		else
-		{
+			break;
+		default:
 			result.AddError(ExecutionErrors.InvalidOperand, "The QUICKRETURN operand is no longer supported.");
+			break;
 		}
 	}
 

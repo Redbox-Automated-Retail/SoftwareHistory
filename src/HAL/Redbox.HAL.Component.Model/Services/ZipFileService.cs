@@ -12,9 +12,10 @@ public sealed class ZipFileService : IZipFileService
 
 	public ZipResult Zip(IEnumerable<string> files, string zipPath)
 	{
-		ZipResult zipResult = new ZipResult();
-		zipResult.ZipFile = zipPath;
-		ZipResult zipResult2 = zipResult;
+		ZipResult zipResult = new ZipResult
+		{
+			ZipFile = zipPath
+		};
 		try
 		{
 			using ZipOutputStream zipOutputStream = new ZipOutputStream(File.Create(zipPath));
@@ -24,9 +25,10 @@ public sealed class ZipFileService : IZipFileService
 			foreach (string file in files)
 			{
 				FileInfo fileInfo = new FileInfo(file);
-				ZipEntry zipEntry = new ZipEntry(fileInfo.Name);
-				zipEntry.DateTime = fileInfo.CreationTime;
-				zipOutputStream.PutNextEntry(zipEntry);
+				zipOutputStream.PutNextEntry(new ZipEntry(fileInfo.Name)
+				{
+					DateTime = fileInfo.CreationTime
+				});
 				using (FileStream fileStream = File.OpenRead(file))
 				{
 					int num2;
@@ -41,15 +43,15 @@ public sealed class ZipFileService : IZipFileService
 			}
 			zipOutputStream.Finish();
 			zipOutputStream.Close();
-			zipResult2.EntryCount = num;
-			zipResult2.Success = true;
+			zipResult.EntryCount = num;
+			zipResult.Success = true;
 		}
 		catch (Exception e)
 		{
 			LogHelper.Instance.Log("!!OnZipImages: exception!!", e);
-			zipResult2.Success = false;
+			zipResult.Success = false;
 		}
-		return zipResult2;
+		return zipResult;
 	}
 
 	public UnzipResult Unzip(string zipFile)
@@ -61,14 +63,15 @@ public sealed class ZipFileService : IZipFileService
 
 	public UnzipResult Unzip(string zipFile, string unzipPath)
 	{
-		UnzipResult unzipResult = new UnzipResult();
-		unzipResult.SourceZip = zipFile;
-		unzipResult.OutputPath = unzipPath;
-		unzipResult.Success = false;
-		UnzipResult unzipResult2 = unzipResult;
+		UnzipResult unzipResult = new UnzipResult
+		{
+			SourceZip = zipFile,
+			OutputPath = unzipPath,
+			Success = false
+		};
 		if (!SafeCreateDirectory(unzipPath))
 		{
-			return unzipResult2;
+			return unzipResult;
 		}
 		try
 		{
@@ -77,8 +80,7 @@ public sealed class ZipFileService : IZipFileService
 				ZipEntry nextEntry;
 				while ((nextEntry = zipInputStream.GetNextEntry()) != null)
 				{
-					string fileName = Path.GetFileName(nextEntry.Name);
-					if (!(fileName != string.Empty))
+					if (!(Path.GetFileName(nextEntry.Name) != string.Empty))
 					{
 						continue;
 					}
@@ -98,18 +100,17 @@ public sealed class ZipFileService : IZipFileService
 							break;
 						}
 					}
-					FileInfo fileInfo = new FileInfo(text);
-					fileInfo.CreationTime = nextEntry.DateTime;
+					new FileInfo(text).CreationTime = nextEntry.DateTime;
 				}
 			}
-			unzipResult2.Success = true;
+			unzipResult.Success = true;
 		}
 		catch (Exception ex)
 		{
 			LogHelper.Instance.WithContext("ZipService UnZip failed with an exception", ex);
-			unzipResult2.Success = false;
+			unzipResult.Success = false;
 		}
-		return unzipResult2;
+		return unzipResult;
 	}
 
 	public ZipFileService(IRuntimeService rts)
@@ -119,14 +120,15 @@ public sealed class ZipFileService : IZipFileService
 
 	private UnzipResult OnUnzip(string zipFile, string outputPath)
 	{
-		UnzipResult unzipResult = new UnzipResult();
-		unzipResult.OutputPath = outputPath;
-		unzipResult.SourceZip = zipFile;
-		unzipResult.Success = false;
-		UnzipResult unzipResult2 = unzipResult;
+		UnzipResult unzipResult = new UnzipResult
+		{
+			OutputPath = outputPath,
+			SourceZip = zipFile,
+			Success = false
+		};
 		if (!SafeCreateDirectory(outputPath))
 		{
-			return unzipResult2;
+			return unzipResult;
 		}
 		int num = 0;
 		using ZipFile zipFile2 = new ZipFile(zipFile);
@@ -137,7 +139,7 @@ public sealed class ZipFileService : IZipFileService
 			{
 				if (!SafeCreateDirectory(item.Name))
 				{
-					return unzipResult2;
+					return unzipResult;
 				}
 				continue;
 			}
@@ -147,14 +149,14 @@ public sealed class ZipFileService : IZipFileService
 			string directoryName = Path.GetDirectoryName(path);
 			if (directoryName.Length > 0 && !SafeCreateDirectory(directoryName))
 			{
-				return unzipResult2;
+				return unzipResult;
 			}
 			using FileStream destination = File.Create(path);
 			StreamUtils.Copy(inputStream, destination, buffer);
 		}
-		unzipResult2.EntryCount = num;
-		unzipResult2.Success = num == zipFile2.Count;
-		return unzipResult2;
+		unzipResult.EntryCount = num;
+		unzipResult.Success = num == zipFile2.Count;
+		return unzipResult;
 	}
 
 	private bool SafeCreateDirectory(string directory)

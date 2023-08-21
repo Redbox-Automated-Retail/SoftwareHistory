@@ -35,7 +35,7 @@ public class SampleGrabber : ISampleGrabberCB
 		BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, Size.Width, Size.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 		int stride = bitmapData.Stride;
 		int stride2 = bitmapData.Stride;
-		byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + (nint)stride2 * (nint)(Size.Height - 1);
+		byte* ptr = (byte*)bitmapData.Scan0.ToPointer() + stride2 * (Size.Height - 1);
 		byte* ptr2 = (byte*)buffer.ToPointer();
 		for (int i = 0; i < Size.Height; i++)
 		{

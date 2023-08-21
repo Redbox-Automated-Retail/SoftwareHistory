@@ -6,13 +6,13 @@ namespace Redbox.HAL.CameraTuner;
 
 public sealed class TunerLog : ILogger
 {
-	private const string LogFileName = "CameraTuner.log";
-
-	private const string LogDirectory = "c:\\Program Files\\Redbox\\KioskLogs\\Service";
-
 	private bool Disposed;
 
 	private TextWriter m_logFile;
+
+	private const string LogFileName = "CameraTuner.log";
+
+	private const string LogDirectory = "c:\\Program Files\\Redbox\\KioskLogs\\Service";
 
 	private TextWriter LogFile
 	{

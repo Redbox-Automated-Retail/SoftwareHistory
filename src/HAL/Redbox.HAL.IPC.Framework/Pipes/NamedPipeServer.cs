@@ -8,6 +8,22 @@ namespace Redbox.HAL.IPC.Framework.Pipes;
 
 public sealed class NamedPipeServer : IDisposable
 {
+	private bool Disposed;
+
+	private readonly string PipeName;
+
+	private readonly string PipePath;
+
+	private readonly Win32.SecurityDescriptor m_securityDescriptor;
+
+	private readonly Win32.SecurityAttributes m_securityAttributes;
+
+	private readonly IntPtr m_securityDescriptorPointer = IntPtr.Zero;
+
+	private readonly IntPtr m_securityAttributesPointer = IntPtr.Zero;
+
+	private readonly int BufferSize = 4096;
+
 	private const int PIPE_FLAGS_OVERLAPPED = 1073741824;
 
 	private const int PIPE_ACCESS_OUTBOUND = 2;
@@ -40,25 +56,9 @@ public sealed class NamedPipeServer : IDisposable
 
 	private const uint NMPWAIT_USE_DEFAULT_WAIT = 0u;
 
-	private const uint SECURITY_DESCRIPTOR_REVISION = 1u;
-
-	private bool Disposed;
-
-	private readonly string PipeName;
-
-	private readonly string PipePath;
-
-	private readonly Win32.SecurityDescriptor m_securityDescriptor;
-
-	private readonly Win32.SecurityAttributes m_securityAttributes;
-
-	private readonly IntPtr m_securityDescriptorPointer = IntPtr.Zero;
-
-	private readonly IntPtr m_securityAttributesPointer = IntPtr.Zero;
-
-	private readonly int BufferSize = 4096;
-
 	private static IntPtr INVALID_HANDLE_VALUE = (IntPtr)(-1);
+
+	private const uint SECURITY_DESCRIPTOR_REVISION = 1u;
 
 	public static NamedPipeServer Create(string pipeName)
 	{

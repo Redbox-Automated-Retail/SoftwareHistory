@@ -39,9 +39,9 @@ public sealed class RollerInstruction : Instruction
 		Token token = base.Operands[0];
 		if (token.IsKeyValuePair)
 		{
-			KeyValuePair keyValuePair = (KeyValuePair)token.ConvertValue();
+			KeyValuePair obj = (KeyValuePair)token.ConvertValue();
 			RollerPosition position = RollerPosition.Position4;
-			if (int.TryParse(keyValuePair.Value, out var result2))
+			if (int.TryParse(obj.Value, out var result2))
 			{
 				position = (RollerPosition)result2;
 			}

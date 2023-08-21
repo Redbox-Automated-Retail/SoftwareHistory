@@ -174,17 +174,18 @@ internal abstract class RedboxSerialPort : ICommPort, IDisposable
 		if (!Port.IsOpen)
 		{
 			LogHelper.Instance.Log(LogEntryType.Error, "[RedboxSerialPort, {0}] Send/Recv: the port is not open.", DisplayName);
-			ChannelResponse channelResponse = new ChannelResponse();
-			channelResponse.Error = ErrorCodes.CommunicationError;
-			return channelResponse;
+			return new ChannelResponse
+			{
+				Error = ErrorCodes.CommunicationError
+			};
 		}
 		if (EnableDebugging)
 		{
 			LogHelper.Instance.Log("[RedboxSerialPort, {0}] Send command {1}", DisplayName, bytes.AsString());
 		}
-		IChannelResponse channelResponse2 = OnSendReceive(bytes, readTimeout);
-		LogResponse(channelResponse2);
-		return channelResponse2;
+		IChannelResponse channelResponse = OnSendReceive(bytes, readTimeout);
+		LogResponse(channelResponse);
+		return channelResponse;
 	}
 
 	public IChannelResponse SendRecv(string command, int readTimeout)
@@ -193,17 +194,18 @@ internal abstract class RedboxSerialPort : ICommPort, IDisposable
 		if (!Port.IsOpen)
 		{
 			LogHelper.Instance.Log(LogEntryType.Error, "[RedboxSerialPort, {0}] Send/Recv: the port is not open.", DisplayName);
-			ChannelResponse channelResponse = new ChannelResponse();
-			channelResponse.Error = ErrorCodes.CommunicationError;
-			return channelResponse;
+			return new ChannelResponse
+			{
+				Error = ErrorCodes.CommunicationError
+			};
 		}
 		if (EnableDebugging)
 		{
 			LogHelper.Instance.Log("[RedboxSerialPort, {0}] Send command {1}", DisplayName, command);
 		}
-		IChannelResponse channelResponse2 = OnSendReceive(Encoding.ASCII.GetBytes(command), readTimeout);
-		LogResponse(channelResponse2);
-		return channelResponse2;
+		IChannelResponse channelResponse = OnSendReceive(Encoding.ASCII.GetBytes(command), readTimeout);
+		LogResponse(channelResponse);
+		return channelResponse;
 	}
 
 	protected virtual void OnPreOpenPort()

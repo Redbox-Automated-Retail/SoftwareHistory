@@ -3,8 +3,8 @@
 namespace Redbox.DirectShow.Interop;
 
 [ComImport]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [Guid("C6E13370-30AC-11d0-A18C-00A0C9118956")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IAMCameraControl
 {
 	[PreserveSig]

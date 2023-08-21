@@ -12,11 +12,11 @@ namespace Redbox.HAL.Configuration;
 
 public abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IConfigurationObserver
 {
-	private const BindingFlags PropertyFlags = BindingFlags.Instance | BindingFlags.Public;
-
 	private readonly Type ThisType;
 
 	private readonly List<IConfigurationObserver> Observers = new List<IConfigurationObserver>();
+
+	private const BindingFlags PropertyFlags = BindingFlags.Instance | BindingFlags.Public;
 
 	[Browsable(false)]
 	public string RootName { get; private set; }
@@ -61,8 +61,7 @@ public abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IC
 	{
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
-			XmlNode xmlNode = document.DocumentElement.SelectSingleNode(FileNodeName);
-			foreach (XmlNode childNode in xmlNode.ChildNodes)
+			foreach (XmlNode childNode in document.DocumentElement.SelectSingleNode(FileNodeName).ChildNodes)
 			{
 				string name = childNode.Name;
 				try
@@ -97,8 +96,7 @@ public abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IC
 		using (ExecutionTimer executionTimer = new ExecutionTimer())
 		{
 			PropertyInfo[] properties = ThisType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-			PropertyInfo[] array = properties;
-			foreach (PropertyInfo propertyInfo in array)
+			foreach (PropertyInfo propertyInfo in properties)
 			{
 				if (Attribute.GetCustomAttribute(propertyInfo, typeof(XmlConfigurationAttribute)) is XmlConfigurationAttribute)
 				{
@@ -135,8 +133,7 @@ public abstract class AttributeXmlConfiguration : IAttributeXmlConfiguration, IC
 		ThisType = type;
 		using ExecutionTimer executionTimer = new ExecutionTimer();
 		PropertyInfo[] properties = ThisType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-		PropertyInfo[] array = properties;
-		foreach (PropertyInfo propertyInfo in array)
+		foreach (PropertyInfo propertyInfo in properties)
 		{
 			if (Attribute.GetCustomAttribute(propertyInfo, typeof(XmlConfigurationAttribute)) is XmlConfigurationAttribute xmlConfigurationAttribute)
 			{

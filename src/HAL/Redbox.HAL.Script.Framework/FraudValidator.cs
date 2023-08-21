@@ -17,8 +17,7 @@ internal struct FraudValidator : IDisposable
 		{
 			scanResult.CopyToFraudFolder();
 		}
-		IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
-		if (!service.IsConfigured)
+		if (!ServiceLocator.Instance.GetService<IFraudService>().IsConfigured)
 		{
 			Context.CreateInfoResult("ServiceNotConfigured", "The service is not configured for fraud scan.");
 			return FraudValidationResult.NotConfigured;

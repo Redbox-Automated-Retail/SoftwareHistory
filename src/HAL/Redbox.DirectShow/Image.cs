@@ -42,8 +42,7 @@ public static class Image
 		ColorPalette palette = image.Palette;
 		for (int i = 0; i < 256; i++)
 		{
-			ref Color reference = ref palette.Entries[i];
-			reference = Color.FromArgb(i, i, i);
+			palette.Entries[i] = Color.FromArgb(i, i, i);
 		}
 		image.Palette = palette;
 	}
@@ -75,8 +74,7 @@ public static class Image
 			int num = palette.Entries.Length;
 			for (int i = 0; i < num; i++)
 			{
-				ref Color reference = ref palette2.Entries[i];
-				reference = palette.Entries[i];
+				palette2.Entries[i] = palette.Entries[i];
 			}
 			bitmap.Palette = palette2;
 		}
@@ -159,8 +157,8 @@ public static class Image
 		int stride2 = bitmapData2.Stride;
 		for (int i = 0; i < height; i++)
 		{
-			ushort* ptr3 = (ushort*)(ptr + (nint)i * (nint)stride);
-			byte* ptr4 = ptr2 + (nint)i * (nint)stride2;
+			ushort* ptr3 = (ushort*)(ptr + i * stride);
+			byte* ptr4 = ptr2 + i * stride2;
 			int num2 = 0;
 			int num3 = width * num;
 			while (num2 < num3)
@@ -211,8 +209,8 @@ public static class Image
 		int stride2 = bitmapData2.Stride;
 		for (int i = 0; i < height; i++)
 		{
-			byte* ptr3 = ptr + (nint)i * (nint)stride;
-			ushort* ptr4 = (ushort*)(ptr2 + (nint)i * (nint)stride2);
+			byte* ptr3 = ptr + i * stride;
+			ushort* ptr4 = (ushort*)(ptr2 + i * stride2);
 			int num2 = 0;
 			int num3 = width * num;
 			while (num2 < num3)

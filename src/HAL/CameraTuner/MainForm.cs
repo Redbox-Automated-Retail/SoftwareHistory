@@ -144,8 +144,7 @@ public class MainForm : Form
 	{
 		if (SnapFlag.Clear())
 		{
-			IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-			string path = service.GenerateUniqueFile("jpg");
+			string path = ServiceLocator.Instance.GetService<IRuntimeService>().GenerateUniqueFile("jpg");
 			CurrentImage = Path.Combine(ImagesFolder, path);
 			if (Details)
 			{

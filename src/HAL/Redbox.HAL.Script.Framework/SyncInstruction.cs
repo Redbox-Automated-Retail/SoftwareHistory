@@ -29,7 +29,6 @@ public sealed class SyncInstruction : Instruction
 			return;
 		}
 		SyncDecorator decorator = SyncDecorator.Get(syncType, context, result, location);
-		SyncResult syncResult = SyncHelper.SyncSlot(result, context, location, decorator);
-		context.PushTop(syncResult.ToString().ToUpper());
+		context.PushTop(SyncHelper.SyncSlot(result, context, location, decorator).ToString().ToUpper());
 	}
 }

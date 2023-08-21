@@ -56,31 +56,25 @@ internal sealed class ScanResult : IDisposable
 		string text = ImageFile;
 		if (string.IsNullOrEmpty(text))
 		{
-			IScannerDeviceService service = ServiceLocator.Instance.GetService<IScannerDeviceService>();
-			IScannerDevice configuredDevice = service.GetConfiguredDevice();
-			ISnapResult snapResult = configuredDevice.Snap();
+			ISnapResult snapResult = ServiceLocator.Instance.GetService<IScannerDeviceService>().GetConfiguredDevice().Snap();
 			if (!snapResult.SnapOk)
 			{
 				return false;
 			}
 			text = snapResult.Path;
 		}
-		IFraudService service2 = ServiceLocator.Instance.GetService<IFraudService>();
-		string path = $"{ScannedMatrix}_{Path.GetFileName(text)}";
-		string text2 = Path.Combine(service2.FraudImagesPath, path);
-		IRuntimeService service3 = ServiceLocator.Instance.GetService<IRuntimeService>();
-		bool flag = service3.SafeMove(text, text2);
-		string path2 = (flag ? text2 : text);
+		IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
+		string text2 = Path.Combine(path2: $"{ScannedMatrix}_{Path.GetFileName(text)}", path1: service.FraudImagesPath);
+		bool num = ServiceLocator.Instance.GetService<IRuntimeService>().SafeMove(text, text2);
+		string path = (num ? text2 : text);
 		IExecutionContext executionContext = ServiceLocator.Instance.GetService<IExecutionService>()?.GetActiveContext();
-		if (executionContext != null && File.Exists(path2))
+		if (executionContext != null && File.Exists(path))
 		{
-			executionContext.CreateResult("PeeledImageFile", Path.GetFileName(path2), ScannedMatrix);
+			executionContext.CreateResult("PeeledImageFile", Path.GetFileName(path), ScannedMatrix);
+			return num;
 		}
-		else
-		{
-			executionContext.ContextLog.WriteFormatted("Failed to create PeeledImageFile Result.");
-		}
-		return flag;
+		executionContext.ContextLog.WriteFormatted("Failed to create PeeledImageFile Result.");
+		return num;
 	}
 
 	internal void PushTo(ExecutionContext context)
@@ -145,7 +139,6 @@ internal sealed class ScanResult : IDisposable
 	static ScanResult()
 	{
 		NoReadResult = new ScanResult();
-		IEncryptionService service = ServiceLocator.Instance.GetService<IEncryptionService>();
-		SecretToken = service.DecryptFromBase64("2PiCFxFlrO8=");
+		SecretToken = ServiceLocator.Instance.GetService<IEncryptionService>().DecryptFromBase64("2PiCFxFlrO8=");
 	}
 }

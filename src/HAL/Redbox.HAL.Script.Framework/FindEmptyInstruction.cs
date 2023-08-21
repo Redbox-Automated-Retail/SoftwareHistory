@@ -12,8 +12,7 @@ public class FindEmptyInstruction : Instruction
 
 	protected override void OnExecute(ExecutionResult result, ExecutionContext context)
 	{
-		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
-		using IEmptySearchResult emptySearchResult = service.FindEmptyLocations();
+		using IEmptySearchResult emptySearchResult = ServiceLocator.Instance.GetService<IEmptySearchPatternService>().FindEmptyLocations();
 		if (emptySearchResult.FoundEmpty == 0)
 		{
 			context.PushTop("MACHINE FULL");

@@ -33,15 +33,14 @@ internal class RandomSyncDecorator : SyncDecorator
 		{
 			return SyncResult.Success;
 		}
-		IMotionControlService service = ServiceLocator.Instance.GetService<IMotionControlService>();
-		if (service.MoveVend(MoveMode.None, Context.AppLog) != ErrorCodes.Success)
+		if (ServiceLocator.Instance.GetService<IMotionControlService>().MoveVend(MoveMode.None, Context.AppLog) != ErrorCodes.Success)
 		{
 			Context.CreateMoveErrorResult(SyncLocation.Deck, SyncLocation.Slot);
 			AddError("job error.");
 			return SyncResult.HardwareError;
 		}
-		IControllerService service2 = ServiceLocator.Instance.GetService<IControllerService>();
-		IVendItemResult vendItemResult = service2.VendItemInPicker(VendTime);
+		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
+		IVendItemResult vendItemResult = service.VendItemInPicker(VendTime);
 		if (!vendItemResult.Presented)
 		{
 			AddError("Job error.");
@@ -52,16 +51,16 @@ internal class RandomSyncDecorator : SyncDecorator
 			AddError("Job error.");
 			return SyncResult.HardwareError;
 		}
-		ErrorCodes errorCodes = service2.AcceptDiskAtDoor();
+		ErrorCodes errorCodes = service.AcceptDiskAtDoor();
 		if (ErrorCodes.PickerFull != errorCodes)
 		{
 			AddError("Job error.");
 			return SyncResult.HardwareError;
 		}
-		IControlSystem service3 = ServiceLocator.Instance.GetService<IControlSystem>();
-		service3.TrackCycle();
+		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
+		service2.TrackCycle();
 		SyncResult result = SyncResult.Success;
-		using (Scanner scanner = new Scanner(service3))
+		using (Scanner scanner = new Scanner(service2))
 		{
 			using ScanResult scanResult = scanner.Read();
 			if (!scanResult.SnapOk)

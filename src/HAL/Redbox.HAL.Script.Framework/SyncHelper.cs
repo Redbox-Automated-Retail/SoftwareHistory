@@ -8,10 +8,9 @@ internal static class SyncHelper
 {
 	internal static SyncResult SyncSlot(ExecutionResult result, ExecutionContext context, ILocation loc, SyncDecorator decorator)
 	{
-		IDecksService service = ServiceLocator.Instance.GetService<IDecksService>();
-		IDeck deck = service.GetFrom(loc);
-		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		IDeck deck = ServiceLocator.Instance.GetService<IDecksService>().GetFrom(loc);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		if (deck == null)
 		{
 			context.AppLog.Write($"The deck {loc.Deck} is not a valid deck.");
@@ -35,7 +34,7 @@ internal static class SyncHelper
 		int deck2 = loc.Deck;
 		int slot = loc.Slot;
 		context.Send($"SYNC {deck2},{slot}");
-		ErrorCodes errorCodes = service3.MoveTo(loc, MoveMode.Get, context.AppLog);
+		ErrorCodes errorCodes = service2.MoveTo(loc, MoveMode.Get, context.AppLog);
 		if (errorCodes != ErrorCodes.Success)
 		{
 			context.CreateResult("MachineError", "There was an error executing the MOVE instruction.", deck2, slot, null, null, null);
@@ -47,7 +46,7 @@ internal static class SyncHelper
 		{
 			context.CreateResult("InventoryState", "This location was updated in inventory.", deck2, slot, "EMPTY", null, disk.Previous);
 			loc.ReturnDate = null;
-			service2.Save(loc);
+			service.Save(loc);
 			return SyncResult.SlotEmpty;
 		}
 		if (!disk.Success)
@@ -71,15 +70,14 @@ internal static class SyncHelper
 			{
 				return syncResult;
 			}
-			errorCodes = service3.MoveTo(loc, MoveMode.Put, context.AppLog);
+			errorCodes = service2.MoveTo(loc, MoveMode.Put, context.AppLog);
 			if (errorCodes != ErrorCodes.Success)
 			{
 				decorator.OnMoveError(errorCodes);
 				context.CreateMoveErrorResult(deck2, slot);
 				return SyncResult.HardwareError;
 			}
-			IControllerService service4 = ServiceLocator.Instance.GetService<IControllerService>();
-			IPutResult putResult = service4.Put(scanResult.ScannedMatrix);
+			IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(scanResult.ScannedMatrix);
 			if (!putResult.Success)
 			{
 				decorator.OnPutError(scanResult.ScannedMatrix, putResult);
@@ -89,7 +87,7 @@ internal static class SyncHelper
 			MerchFlags flags = ((scanResult.ScannedMatrix == disk.Previous) ? disk.Flags : MerchFlags.None);
 			loc.ReturnDate = ((!scanResult.ReadCode) ? disk.ReturnTime : ((DateTime?)null));
 			loc.Flags = flags;
-			service2.Save(loc);
+			service.Save(loc);
 			if (!scanResult.SnapOk && ControllerConfiguration.Instance.ErrorSyncOnCameraFailure)
 			{
 				decorator.AddError("The CAMERA isn't working.");

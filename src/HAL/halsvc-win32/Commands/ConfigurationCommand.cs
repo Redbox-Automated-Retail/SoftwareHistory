@@ -10,28 +10,28 @@ using Redbox.IPC.Framework;
 
 namespace Redbox.HAL.Service.Win32.Commands;
 
-[Description("The CONFIG command is reponsible for loading, retrieving and setting configuration for individual HAL driver systems.")]
 [Command("config")]
+[Description("The CONFIG command is reponsible for loading, retrieving and setting configuration for individual HAL driver systems.")]
 public sealed class ConfigurationCommand
 {
+	[CommandForm(Name = "save")]
 	[Usage("config save [path: path-to-config]")]
 	[Description("Forces the HAL Service to save its current state to the HAL.xml configuration file or the file specified by the optional path parameter.")]
-	[CommandForm(Name = "save")]
 	public void SaveConfiguration(CommandContext context, [CommandKeyValue(IsRequired = false)] string path)
 	{
 		if (string.IsNullOrEmpty(path))
 		{
 			path = "$(RunningPath)\\HAL.xml";
 		}
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		path = service.ExpandConstantMacros(path);
+		path = ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(path);
 		if (!File.Exists(path))
 		{
 			context.Errors.Add(Error.NewError("S001", $"The file '{path}' does not exist.", "Use $(RunningPath) macro to easily reference relative paths from the service working path."));
-			return;
 		}
-		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
-		service2.Save(context.Errors);
+		else
+		{
+			ServiceLocator.Instance.GetService<IConfigurationService>().Save(context.Errors);
+		}
 	}
 
 	[CommandForm(Name = "get")]
@@ -43,8 +43,7 @@ public sealed class ConfigurationCommand
 			context.Errors.Add(Error.NewError("S001", "The parameter name: is required.", "Specify the name: parameter when calling the CONFIG GET command form."));
 			return;
 		}
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		string value = service.FormatAsXml(name);
+		string value = ServiceLocator.Instance.GetService<IConfigurationService>().FormatAsXml(name);
 		if (string.IsNullOrEmpty(value))
 		{
 			context.Errors.Add(Error.NewError("S001", $"The requested configuration name '{name}' is not known.", "Specify one of the valid configuration names."));
@@ -55,8 +54,8 @@ public sealed class ConfigurationCommand
 		}
 	}
 
-	[Usage("config set name: config-name data: base64-encoded-config")]
 	[CommandForm(Name = "set")]
+	[Usage("config set name: config-name data: base64-encoded-config")]
 	public void SetConfiguration(CommandContext context, [CommandKeyValue(IsRequired = true)] string name, [CommandKeyValue(IsRequired = true, BinaryEncoding = BinaryEncoding.Base64, CompressionType = CompressionType.LZMA)] byte[] data)
 	{
 		if (data == null)
@@ -70,8 +69,7 @@ public sealed class ConfigurationCommand
 			return;
 		}
 		string data2 = Encoding.ASCII.GetString(data);
-		IConfigurationService service = ServiceLocator.Instance.GetService<IConfigurationService>();
-		service.UpdateFromXml(name, data2, context.Errors);
+		ServiceLocator.Instance.GetService<IConfigurationService>().UpdateFromXml(name, data2, context.Errors);
 	}
 
 	[CommandForm(Name = "get-inventory-state")]
@@ -85,17 +83,17 @@ public sealed class ConfigurationCommand
 			return;
 		}
 		using MemoryStream memoryStream = new MemoryStream();
-		XmlTextWriter xmlTextWriter = new XmlTextWriter(memoryStream, Encoding.ASCII);
-		xmlTextWriter.Formatting = Formatting.Indented;
-		XmlTextWriter xmlTextWriter2 = xmlTextWriter;
-		xmlTextWriter2.WriteStartDocument();
-		xmlTextWriter2.WriteStartElement("inventory-items");
-		service.GetState(xmlTextWriter2);
-		IDumpbinService service2 = ServiceLocator.Instance.GetService<IDumpbinService>();
-		service2.GetState(xmlTextWriter2);
-		xmlTextWriter2.WriteEndElement();
-		xmlTextWriter2.WriteEndDocument();
-		xmlTextWriter2.Flush();
+		XmlTextWriter xmlTextWriter = new XmlTextWriter(memoryStream, Encoding.ASCII)
+		{
+			Formatting = Formatting.Indented
+		};
+		xmlTextWriter.WriteStartDocument();
+		xmlTextWriter.WriteStartElement("inventory-items");
+		service.GetState(xmlTextWriter);
+		ServiceLocator.Instance.GetService<IDumpbinService>().GetState(xmlTextWriter);
+		xmlTextWriter.WriteEndElement();
+		xmlTextWriter.WriteEndDocument();
+		xmlTextWriter.Flush();
 		ProtocolHelper.FormatCompressedString(Encoding.ASCII.GetString(memoryStream.ToArray()), context);
 	}
 
@@ -113,8 +111,7 @@ public sealed class ConfigurationCommand
 		try
 		{
 			File.WriteAllText(Path.Combine(service.DataPath, text), Encoding.ASCII.GetString(data));
-			IExecutionService service2 = ServiceLocator.Instance.GetService<IExecutionService>();
-			IExecutionContext executionContext = service2.ScheduleJob("reset-inventory-job", string.Empty, DateTime.Now, ProgramPriority.Low);
+			IExecutionContext executionContext = ServiceLocator.Instance.GetService<IExecutionService>().ScheduleJob("reset-inventory-job", string.Empty, DateTime.Now, ProgramPriority.Low);
 			executionContext.Push(text, StackEnd.Top);
 			LogHelper.Instance.Log("Reset-Inventory job ( job ID = {0} ).", executionContext.ID);
 			executionContext.Pend();

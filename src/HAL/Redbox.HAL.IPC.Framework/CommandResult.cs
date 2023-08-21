@@ -35,7 +35,7 @@ public sealed class CommandResult
 				stringBuilder.AppendFormat(" {0}", ExtendedErrorMessage);
 			}
 		}
-		stringBuilder.AppendLine(string.Concat(" (Execution Time = ", ExecutionTime, ")"));
+		stringBuilder.AppendLine(" (Execution Time = " + ExecutionTime.ToString() + ")");
 		return stringBuilder.ToString();
 	}
 

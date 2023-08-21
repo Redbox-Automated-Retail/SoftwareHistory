@@ -9,8 +9,7 @@ internal sealed class DumpbinPutObserver : IPutToObserver, IPutObserver
 		IDumpbinService service = ServiceLocator.Instance.GetService<IDumpbinService>();
 		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
 		service.AddBinItem(res.StoredMatrix);
-		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		service3.MoveTo(service.RotationLocation, MoveMode.None, log);
+		ServiceLocator.Instance.GetService<IMotionControlService>().MoveTo(service.RotationLocation, MoveMode.None, log);
 		service2.Reset(service.PutLocation);
 	}
 

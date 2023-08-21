@@ -75,14 +75,12 @@ public sealed class ConfigurationService : IConfigurationService
 		}
 		foreach (string key in Configurations.Keys)
 		{
-			IAttributeXmlConfiguration attributeXmlConfiguration = Configurations[key];
-			attributeXmlConfiguration.LoadProperties(xmlDocument, errors);
+			Configurations[key].LoadProperties(xmlDocument, errors);
 		}
 		LogHelper.Instance.Log("[Configuration Service] Broadcast configuration load.");
 		foreach (string key2 in Configurations.Keys)
 		{
-			IConfigurationObserver configurationObserver = Configurations[key2];
-			configurationObserver.NotifyConfigurationLoaded();
+			Configurations[key2].NotifyConfigurationLoaded();
 		}
 	}
 
@@ -101,8 +99,7 @@ public sealed class ConfigurationService : IConfigurationService
 		}
 		foreach (string key in Configurations.Keys)
 		{
-			IAttributeXmlConfiguration attributeXmlConfiguration = Configurations[key];
-			attributeXmlConfiguration.StoreProperties(xmlDocument, errors);
+			Configurations[key].StoreProperties(xmlDocument, errors);
 		}
 		xmlDocument.Save(ConfigurationFile);
 	}
@@ -174,8 +171,7 @@ public sealed class ConfigurationService : IConfigurationService
 		}
 		foreach (string key in Configurations.Keys)
 		{
-			IAttributeXmlConfiguration attributeXmlConfiguration = Configurations[key];
-			attributeXmlConfiguration.Upgrade(xmlDocument, errors);
+			Configurations[key].Upgrade(xmlDocument, errors);
 		}
 		xmlDocument.Save(ConfigurationFile);
 	}
@@ -242,17 +238,14 @@ public sealed class ConfigurationService : IConfigurationService
 		Match match = Regex.Match(part, "\\[\"(?<indexer>.*?)\"\\]", RegexOptions.Singleline);
 		Match match2 = Regex.Match(part, "\\[(?<indexer>[0-9]*?)\\]", RegexOptions.Singleline);
 		object result = null;
+		int result2;
 		if (match.Success)
 		{
 			result = match.Groups["indexer"].Captures[0].Value;
 		}
-		else if (match2.Success)
+		else if (match2.Success && int.TryParse(match2.Groups["indexer"].Captures[0].Value, out result2))
 		{
-			string value = match2.Groups["indexer"].Captures[0].Value;
-			if (int.TryParse(value, out var result2))
-			{
-				result = result2;
-			}
+			result = result2;
 		}
 		return result;
 	}
@@ -286,8 +279,7 @@ public sealed class ConfigurationService : IConfigurationService
 			}
 			try
 			{
-				object obj3 = obj.GetType().InvokeMember(text, GetObjectFromPathBindingFlags, null, obj, args);
-				obj = obj3;
+				obj = obj.GetType().InvokeMember(text, GetObjectFromPathBindingFlags, null, obj, args);
 				if (obj == null)
 				{
 					break;

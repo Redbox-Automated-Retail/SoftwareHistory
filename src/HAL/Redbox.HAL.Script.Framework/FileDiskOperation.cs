@@ -37,23 +37,21 @@ internal struct FileDiskOperation : IDisposable
 
 	private ErrorCodes OnFileDisk(ExecutionResult result, string idInPicker)
 	{
-		IEmptySearchPatternService service = ServiceLocator.Instance.GetService<IEmptySearchPatternService>();
-		using IEmptySearchResult emptySearchResult = service.FindEmptyLocations();
+		using IEmptySearchResult emptySearchResult = ServiceLocator.Instance.GetService<IEmptySearchPatternService>().FindEmptyLocations();
 		if (emptySearchResult.FoundEmpty == 0)
 		{
 			Handler.MachineFull(result, idInPicker);
 			return ErrorCodes.MachineFull;
 		}
-		IControlSystem service2 = ServiceLocator.Instance.GetService<IControlSystem>();
-		IInventoryService service3 = ServiceLocator.Instance.GetService<IInventoryService>();
-		service3.IsBarcodeDuplicate(idInPicker, out var _);
+		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
+		ServiceLocator.Instance.GetService<IInventoryService>().IsBarcodeDuplicate(idInPicker, out var _);
 		int num = ((emptySearchResult.FoundEmpty > 1) ? (emptySearchResult.FoundEmpty - 1) : 0);
-		IMotionControlService service4 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
 		int num2 = 0;
 		foreach (ILocation emptyLocation in emptySearchResult.EmptyLocations)
 		{
 			LogHelper.Instance.WithContext("Moving to {0} to put item in picker away.", emptyLocation.ToString());
-			ErrorCodes errorCodes = service4.MoveTo(emptyLocation, MoveMode.Put, Context.AppLog);
+			ErrorCodes errorCodes = service2.MoveTo(emptyLocation, MoveMode.Put, Context.AppLog);
 			if (errorCodes != ErrorCodes.Success)
 			{
 				FileDiscIterationResult fileDiscIterationResult = Handler.MoveError(result, idInPicker, errorCodes, emptyLocation.Deck, emptyLocation.Slot);
@@ -67,8 +65,7 @@ internal struct FileDiskOperation : IDisposable
 				}
 			}
 			LogHelper.Instance.WithContext("Putting item in picker into slot.");
-			IControllerService service5 = ServiceLocator.Instance.GetService<IControllerService>();
-			IPutResult putResult = service5.Put(idInPicker);
+			IPutResult putResult = ServiceLocator.Instance.GetService<IControllerService>().Put(idInPicker);
 			if (putResult.Success)
 			{
 				Handler.DiskFiled(result, putResult);
@@ -76,13 +73,13 @@ internal struct FileDiskOperation : IDisposable
 			}
 			if (putResult.IsSlotInUse && ++num2 == num)
 			{
-				service4.InitAxes();
+				service2.InitAxes();
 			}
 			if (FileDiscIterationResult.Halt == Handler.OnFailedPut(result, putResult))
 			{
 				return ErrorCodes.DiskNotFiled;
 			}
-			service2.TrackCycle();
+			service.TrackCycle();
 		}
 		Handler.FailedToFileDisk(result, idInPicker);
 		return ErrorCodes.DiskNotFiled;

@@ -55,8 +55,7 @@ internal class KioskTestAdapter : IDisposable
 			return;
 		}
 		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = service.Get();
-		if (!getResult.Success)
+		if (!service.Get().Success)
 		{
 			Context.CreateInfoResult("GetError", "Failed to pull disc from slot");
 			HandleMachineError();
@@ -75,8 +74,7 @@ internal class KioskTestAdapter : IDisposable
 			return;
 		}
 		ControlSystem.TrackCycle();
-		IPutResult putResult = service.Put(text);
-		if (!putResult.Success)
+		if (!service.Put(text).Success)
 		{
 			Context.CreateInfoResult("PutFailed", "Kiosk failed to put disc into slot");
 			HandleMachineError();
@@ -105,8 +103,7 @@ internal class KioskTestAdapter : IDisposable
 
 	private bool VendDisk(string matrix)
 	{
-		ApplicationLog appLog = Context.AppLog;
-		appLog.Write("Performing a Vend Test.");
+		Context.AppLog.Write("Performing a Vend Test.");
 		if (MotionService.MoveVend(MoveMode.None, AppLog) != ErrorCodes.Success)
 		{
 			Context.CreateInfoResult("MoveVendError", "Failed to move to vend position");

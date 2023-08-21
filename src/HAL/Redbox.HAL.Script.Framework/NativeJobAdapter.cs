@@ -64,8 +64,7 @@ internal abstract class NativeJobAdapter
 		{
 			return false;
 		}
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		return service.Get().Success;
+		return ServiceLocator.Instance.GetService<IControllerService>().Get().Success;
 	}
 
 	protected bool MoveAndPut(int deck, int slot, string id)
@@ -75,8 +74,7 @@ internal abstract class NativeJobAdapter
 			return false;
 		}
 		ControlSystem.TrackCycle();
-		IControllerService service = ServiceLocator.Instance.GetService<IControllerService>();
-		return service.Put(id).Success;
+		return ServiceLocator.Instance.GetService<IControllerService>().Put(id).Success;
 	}
 
 	protected bool ContextSwitchRequested()

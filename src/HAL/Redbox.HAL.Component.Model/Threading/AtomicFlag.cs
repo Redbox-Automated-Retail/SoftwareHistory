@@ -4,15 +4,15 @@ namespace Redbox.HAL.Component.Model.Threading;
 
 public sealed class AtomicFlag
 {
-	private const int DefaultFlagged = 1;
-
-	private const int DefaultUnflagged = 0;
-
 	private int m_flagState;
 
 	private readonly int Flagged;
 
 	private readonly int Unflagged;
+
+	private const int DefaultFlagged = 1;
+
+	private const int DefaultUnflagged = 0;
 
 	public bool IsSet => Thread.VolatileRead(ref m_flagState) == Flagged;
 

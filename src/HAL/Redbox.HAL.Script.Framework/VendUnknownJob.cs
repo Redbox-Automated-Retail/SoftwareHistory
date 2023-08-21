@@ -36,11 +36,9 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 
 	protected override void ExecuteInner()
 	{
-		ApplicationLog applicationLog = ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Unknowns", flushOnWrite: false, "VendUnknown");
-		applicationLog.Write("Vend unknown start.");
+		ApplicationLog.ConfigureLog(base.Context, logAppends: true, "Unknowns", flushOnWrite: false, "VendUnknown").Write("Vend unknown start.");
 		base.Context.Send("VendStart");
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		service.SpinWait(30);
+		ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(30);
 		base.Context.Send("VendGraphicDisplay");
 		using (CheckPickerOperation checkPickerOperation = new CheckPickerOperation(base.Context))
 		{
@@ -52,19 +50,19 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 		}
 		int num = base.Context.PopTop<int>();
 		int num2 = base.Context.PopTop<int>();
-		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
-		ILocation location = service2.Get(num, num2);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		ILocation location = service.Get(num, num2);
 		LogHelper.Instance.Log("Move to {0} to pick requested item.", location.ToString());
-		IMotionControlService service3 = ServiceLocator.Instance.GetService<IMotionControlService>();
-		if (service3.MoveTo(num, num2, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
+		IMotionControlService service2 = ServiceLocator.Instance.GetService<IMotionControlService>();
+		if (service2.MoveTo(num, num2, MoveMode.Get, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.Send("MachineError");
 			base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 			AddError("MACHINE ERROR");
 			return;
 		}
-		IControllerService service4 = ServiceLocator.Instance.GetService<IControllerService>();
-		IGetResult getResult = service4.Get(this);
+		IControllerService service3 = ServiceLocator.Instance.GetService<IControllerService>();
+		IGetResult getResult = service3.Get(this);
 		if (getResult.IsSlotEmpty || getResult.ItemStuck)
 		{
 			if (!ControllerConfiguration.Instance.RotateDrumDuringUnknownRemoval2)
@@ -101,7 +99,7 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 			return;
 		}
 		base.Context.Send("PickupGraphicDisplay");
-		IVendItemResult vendItemResult = service4.VendItemInPicker();
+		IVendItemResult vendItemResult = service3.VendItemInPicker();
 		if (vendItemResult.Status == ErrorCodes.PickerEmpty)
 		{
 			base.Context.Send("ItemVended");
@@ -118,14 +116,14 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 			return;
 		}
 		LogHelper.Instance.Log("The item was not taken; pull it in and file it away.");
-		ErrorCodes errorCodes = service4.AcceptDiskAtDoor();
+		ErrorCodes errorCodes = service3.AcceptDiskAtDoor();
 		if (ErrorCodes.PickerFull != errorCodes)
 		{
 			base.Context.CreateResult("RollInToSensor3TimedOut", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 			AddError("MACHINE ERROR");
 			return;
 		}
-		if (service3.MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
+		if (service2.MoveTo(location, MoveMode.Put, base.Context.AppLog) != ErrorCodes.Success)
 		{
 			base.Context.Send("MachineError");
 			base.Context.CreateResult("MoveError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
@@ -133,14 +131,14 @@ internal sealed class VendUnknownJob : NativeJobAdapter, IGetObserver
 			return;
 		}
 		base.ControlSystem.TrackCycle();
-		if (!service4.Put("UNKNOWN").Success)
+		if (!service3.Put("UNKNOWN").Success)
 		{
 			base.Context.CreateResult("PutError", "Unable to remove unknown due to hardware errors. Inspect the slot after completing the process.", num, num2, null, null, null);
 			AddError("MACHINE ERROR");
 			return;
 		}
 		location.ReturnDate = getResult.ReturnTime;
-		service2.Save(location);
+		service.Save(location);
 		base.Context.CreateResult("UnclaimedVend", "The vend request failed because the item was not taken.  It has been returned.", num, num2, getResult.Previous, null, null);
 		VendEnd();
 	}
