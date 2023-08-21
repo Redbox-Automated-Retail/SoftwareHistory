@@ -4,10 +4,13 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
+using Redbox.Rental.Model.KioskClientService;
+using Redbox.Rental.Model.KioskClientService.Product;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Services.Configuration;
+using Redbox.Rental.Services.KioskClientService.Product;
 
 namespace Redbox.Rental.Services.KioskProduct;
 
@@ -247,7 +250,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return _titleRollupProductGroupId;
 			}
-			_profile?.ProductGroups?.Where((KeyValuePair<long, ProductGroup> pair) => pair.Value.ProductGroupTypeId == 1).ForEach(delegate(KeyValuePair<long, ProductGroup> pair)
+			_profile?.ProductGroups?.Where((KeyValuePair<long, Redbox.Rental.Model.Profile.ProductGroup> pair) => pair.Value.ProductGroupTypeId == 1).ForEach(delegate(KeyValuePair<long, Redbox.Rental.Model.Profile.ProductGroup> pair)
 			{
 				if (pair.Value.ProductIds.Contains(ProductId))
 				{
@@ -444,12 +447,20 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 	{
 		get
 		{
+			Product product = (ServiceLocator.Instance.GetService<IKioskClientService>()?.Product?.ProductsByTitleIds(new ProductByTitleIdsRequest
+			{
+				TitleIds = { _title.ProductId }
+			}))?.Products?.FirstOrDefault();
+			if (!string.IsNullOrEmpty(product?.ProductPage))
+			{
+				return product.ProductPage;
+			}
 			string text = _title.LongName.ToLower();
 			if (text.EndsWith(")"))
 			{
 				text = text.Remove(text.Length - 1, 1);
 			}
-			return text.Replace("\\s", "-").Replace("(", "-").Replace(")", "-")
+			text = text.Replace("\\s", "-").Replace("(", "-").Replace(")", "-")
 				.Replace("/", "-")
 				.Replace(":", "-")
 				.Replace(" ", "-")
@@ -468,6 +479,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 				.Replace("#", "number")
 				.Replace("@", "at")
 				.Replace("=", "equals");
+			return "https://www.redbox.com/movies/" + text;
 		}
 	}
 
@@ -521,7 +533,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 		if (_profile != null && _title != null && _profile.MultiDiscWorkaroundXREF.ContainsKey(_title.ProductId))
 		{
 			long productGroupId = _profile.MultiDiscWorkaroundXREF[_title.ProductId].ProductGroupId;
-			ProductGroup productGroup = _profile.ProductGroups[productGroupId];
+			Redbox.Rental.Model.Profile.ProductGroup productGroup = _profile.ProductGroups[productGroupId];
 			list.AddRange(productGroup.ProductIds.Where((long i) => i != _title.ProductId));
 		}
 		return list;

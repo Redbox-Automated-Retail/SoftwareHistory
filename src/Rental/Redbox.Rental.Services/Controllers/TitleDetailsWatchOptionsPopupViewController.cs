@@ -35,8 +35,8 @@ public class TitleDetailsWatchOptionsPopupViewController : BaseViewController
 			titleDetailsWatchOptionsPopupViewModel.Header = titleDetailsWatchOptionsPopupViewParameter.DisplayProductModel.Header;
 			titleDetailsWatchOptionsPopupViewModel.Description = titleDetailsWatchOptionsPopupViewParameter.DisplayProductModel.Description;
 			titleDetailsWatchOptionsPopupViewModel.Starring = titleDetailsWatchOptionsPopupViewParameter.DisplayProductModel.Starring;
-			string text = ((!string.IsNullOrEmpty(titleProduct.ProductWebPageUrl)) ? ("movies/" + titleProduct.ProductWebPageUrl) : string.Empty);
-			string url = "https://www.redbox.com/" + text + "?icamp=qrkiosk";
+			string productWebPageUrl = titleProduct.ProductWebPageUrl;
+			string url = ((!string.IsNullOrEmpty(productWebPageUrl)) ? (productWebPageUrl + "?icamp=qrkiosk") : "https://www.redbox.com/?icamp=qrkiosk");
 			titleDetailsWatchOptionsPopupViewModel.QRCodeImage = ServiceLocator.Instance.GetService<IKioskClientService>()?.QRCodeUtilities?.GetQRCodeImage(url, returnDefaultOnError: true);
 			List<DisplayProductMoreLikeThisModel> list = BrowseFunctions.CreateMoreLikeThis(titleProduct, DisplayProductMoreLikeThisModel_OnMoreLikeThisSelected).Take(8).ToList();
 			bool flag = list.Count > 0;

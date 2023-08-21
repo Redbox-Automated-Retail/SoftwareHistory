@@ -13,6 +13,7 @@ using Redbox.Rental.Model.KioskClientService.Loyalty;
 using Redbox.Rental.Model.KioskClientService.Marketing;
 using Redbox.Rental.Model.KioskClientService.Personalization;
 using Redbox.Rental.Model.KioskClientService.Planogram;
+using Redbox.Rental.Model.KioskClientService.Product;
 using Redbox.Rental.Model.KioskClientService.Products;
 using Redbox.Rental.Model.KioskClientService.Promotion;
 using Redbox.Rental.Model.KioskClientService.Session;
@@ -52,6 +53,8 @@ public interface IKioskClientService
 	IKioskClientServicePersonalization Personalization { get; }
 
 	IKioskClientServicePlanogram Planogram { get; }
+
+	IKioskClientServiceProduct Product { get; }
 
 	IKioskClientServiceProductGroups ProductGroups { get; }
 

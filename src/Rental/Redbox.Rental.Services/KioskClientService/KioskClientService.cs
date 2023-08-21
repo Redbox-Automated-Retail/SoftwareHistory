@@ -15,6 +15,7 @@ using Redbox.Rental.Model.KioskClientService.Loyalty;
 using Redbox.Rental.Model.KioskClientService.Marketing;
 using Redbox.Rental.Model.KioskClientService.Personalization;
 using Redbox.Rental.Model.KioskClientService.Planogram;
+using Redbox.Rental.Model.KioskClientService.Product;
 using Redbox.Rental.Model.KioskClientService.Products;
 using Redbox.Rental.Model.KioskClientService.Promotion;
 using Redbox.Rental.Model.KioskClientService.Session;
@@ -37,6 +38,7 @@ using Redbox.Rental.Services.KioskClientService.Loyalty;
 using Redbox.Rental.Services.KioskClientService.Marketing;
 using Redbox.Rental.Services.KioskClientService.Personalization;
 using Redbox.Rental.Services.KioskClientService.Planogram;
+using Redbox.Rental.Services.KioskClientService.Product;
 using Redbox.Rental.Services.KioskClientService.Products;
 using Redbox.Rental.Services.KioskClientService.Promotion;
 using Redbox.Rental.Services.KioskClientService.Session;
@@ -79,6 +81,8 @@ public class KioskClientService : IKioskClientService
 
 	public IKioskClientServicePlanogram Planogram { get; private set; }
 
+	public IKioskClientServiceProduct Product { get; private set; }
+
 	public IKioskClientServiceProductGroups ProductGroups { get; private set; }
 
 	public IKioskClientServicePromotion Promotion { get; private set; }
@@ -110,6 +114,7 @@ public class KioskClientService : IKioskClientService
 		Loyalty = new KioskClientServiceLoyalty();
 		Marketing = new KioskClientServiceMarketing();
 		Personalization = new KioskClientServicePersonalization();
+		Product = new KioskClientServiceProduct();
 		ProductGroups = new KioskClientServiceProductGroups();
 		Promotion = new KioskClientServicePromotion();
 		QRCodeUtilities = new KioskClientServiceQRCodeUtilities();
