@@ -143,7 +143,7 @@ public class HardwareService : IHardwareService
 			Redbox.HAL.Client.HardwareJob hardwareJob = m_activeJobs.FirstOrDefault((Redbox.HAL.Client.HardwareJob x) => x.ID == jobId);
 			if (hardwareJob != null)
 			{
-				Redbox.Core.LogHelper.Instance.Log($"Removing From Active Job List JobId: {jobId} - ProgramName: {hardwareJob.ProgramName} - Label: {hardwareJob.Label} - Status: {hardwareJob.Status.ToString()}");
+				Redbox.Core.LogHelper.Instance.Log("Removing From Active Job List JobId: " + jobId + " - ProgramName: " + hardwareJob.ProgramName + " - Label: " + hardwareJob.Label + " - Status: " + hardwareJob.Status);
 				m_activeJobs.Remove(hardwareJob);
 			}
 		}

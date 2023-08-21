@@ -14,7 +14,7 @@ public static class MaintenanceViewFunctions
 		Enum.TryParse<MaintenanceModeSource>(source, out var result);
 		if (result == MaintenanceModeSource.None)
 		{
-			LogHelper.Instance.Log($"Error in MaintenanceViewFunctions.AddMaintenanceModeReason.  Invalid source: {source}");
+			LogHelper.Instance.Log("Error in MaintenanceViewFunctions.AddMaintenanceModeReason.  Invalid source: " + source);
 		}
 		ServiceLocator.Instance.GetService<IApplicationState>()?.AddMaintenanceModeReason(result, errorCode);
 	}

@@ -30,7 +30,7 @@ public class AnalyticsShoppingCart
 			TaxAmount = ((sc.Totals == null) ? 0m : sc.Totals.TaxAmount),
 			GrandTotal = ((sc.Totals == null) ? 0m : sc.Totals.GrandTotal)
 		};
-		(sc?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.ToList().ForEach(delegate(IRentalShoppingCartTitleItem x)
+		(sc?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed == true))?.ToList().ForEach(delegate(IRentalShoppingCartTitleItem x)
 		{
 			cart.Discounts.Add(new AnalyticsDiscount
 			{

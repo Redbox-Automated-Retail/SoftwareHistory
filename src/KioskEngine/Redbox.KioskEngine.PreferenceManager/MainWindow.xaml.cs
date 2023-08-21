@@ -107,7 +107,7 @@ public partial class MainWindow : Window, IComponentConnector
 			}
 			else
 			{
-				SimpleMessageWindow.Show(this, "Invalid Environment", $"Error: Invalid Environment: {_environment}");
+				SimpleMessageWindow.Show(this, "Invalid Environment", "Error: Invalid Environment: " + _environment);
 				Close();
 			}
 		}, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.FromCurrentSynchronizationContext());

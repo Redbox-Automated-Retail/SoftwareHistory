@@ -324,7 +324,7 @@ public class PricingData : IPricingData
 		try
 		{
 			string text = (staged ? _pricingStagedPath : _pricingActivePath);
-			LogHelper.Instance.Log($"PricingData.LoadKioskPricingData file: {text}");
+			LogHelper.Instance.Log("PricingData.LoadKioskPricingData file: " + text);
 			if (!File.Exists(text))
 			{
 				LogHelper.Instance.Log($"PricingData.LoadKioskPricingData(staged={staged}) - Pricing file does not exist: {text}");
@@ -345,7 +345,7 @@ public class PricingData : IPricingData
 		try
 		{
 			string text = (staged ? _versionStagedPath : _versionActivePath);
-			LogHelper.Instance.Log($"PricingData.LoadVersionData file: {text}");
+			LogHelper.Instance.Log("PricingData.LoadVersionData file: " + text);
 			if (!File.Exists(text))
 			{
 				LogHelper.Instance.Log($"PricingData.LoadVersionData(staged={staged}) - Pricing file does not exist: {text}");

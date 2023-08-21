@@ -34,7 +34,7 @@ public class TitleDetailsController : BaseViewController
 
 	private static IViewService ViewService => ServiceLocator.Instance.GetService<IViewService>();
 
-	private static bool HasActiveRedboxPlusSubscription => (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession)?.RedboxPlusSession?.HasActiveSubscription ?? false;
+	private static bool HasActiveRedboxPlusSubscription => (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession)?.RedboxPlusSession?.HasActiveSubscription == true;
 
 	public static void ConfigureView()
 	{
@@ -265,7 +265,7 @@ public class TitleDetailsController : BaseViewController
 				IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(inStockFormat.ProductId);
 				new TitleRollupUtilities.TitleDetailFormatRentalButtonTextValues();
 				string displayDescription = inStockFormat.TitleType.GetDisplayDescription();
-				ButtonData item = new ButtonData((pricingRecord != null) ? string.Format("{0} ${1}", displayDescription, pricingRecord.InitialNight.ToString("0.00")) : displayDescription, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+				ButtonData item = new ButtonData((pricingRecord != null) ? (displayDescription + " $" + pricingRecord.InitialNight.ToString("0.00")) : displayDescription, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 				{
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsOutofStockAddFormat");
 					OnRentProduct(displayProductModel, commandType, inStockFormat.TitleType, fromOosSelection: true);
@@ -370,7 +370,7 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.TitleDetailPropertiesInitialized = true;
 		ITitleProduct titleProduct = displayProductModel.Data as ITitleProduct;
 		RatingsProperty value = null;
-		RatingsProperties.Properties.TryGetValue((Ratings)(titleProduct?.RatingId ?? 0), out value);
+		RatingsProperties.Properties.TryGetValue((Ratings)(titleProduct?.RatingId).GetValueOrDefault(), out value);
 		TitleTypeProperty value2 = null;
 		string format = null;
 		if (titleProduct != null)
@@ -404,7 +404,7 @@ public class TitleDetailsController : BaseViewController
 		{
 			ratingVisibility = Visibility.Collapsed;
 		}
-		Visibility showCollections = ((titleProduct == null || titleProduct.ComingSoon || !displayProductModel.DisplayProductModelConstants.ShowCollections || ((!(titleProduct?.Collections?.Any())) ?? true)) ? Visibility.Collapsed : Visibility.Visible);
+		Visibility showCollections = ((titleProduct == null || titleProduct.ComingSoon || !displayProductModel.DisplayProductModelConstants.ShowCollections || titleProduct?.Collections?.Any() != true) ? Visibility.Collapsed : Visibility.Visible);
 		IList<IPricingRecord> list = displayProductModel.DisplayProductModelConstants.PricingService?.GetProductPricingRecords(titleProduct.ProductId);
 		bool flag = list != null && list.Count > 1;
 		IRentalShoppingCart rentalShoppingCart = displayProductModel.DisplayProductModelConstants.RentalShoppingCartService?.CurrentRentalShoppingCart;
@@ -452,13 +452,13 @@ public class TitleDetailsController : BaseViewController
 				if (true)
 				{
 					releaseYearVisibility = 0;
-					goto IL_05e2;
+					goto IL_05c9;
 				}
 			}
 		}
 		releaseYearVisibility = 2;
-		goto IL_05e2;
-		IL_05e2:
+		goto IL_05c9;
+		IL_05c9:
 		displayProductModel.ReleaseYearVisibility = (Visibility)releaseYearVisibility;
 		displayProductModel.RatingBorderThickness = ((displayProductModel.RunningTimeVisibility == Visibility.Visible || displayProductModel.ReleaseYearVisibility == Visibility.Visible || displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 		displayProductModel.RunningTimeBorderThickness = ((displayProductModel.ReleaseYearVisibility == Visibility.Visible || displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
@@ -471,7 +471,7 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.MainHeight = displayProductModel.DisplayProductModelConstants.MainHeight;
 		displayProductModel.NotEmptyCaseVisibility = ((titleProduct != null && titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
 		displayProductModel.ShowCollections = showCollections;
-		displayProductModel.CollectionsEnabled = titleProduct?.Collections?.Any() ?? false;
+		displayProductModel.CollectionsEnabled = titleProduct?.Collections?.Any() == true;
 		displayProductModel.CollectionTextLine1 = displayProductModel.DisplayProductModelConstants.CollectionTextLine1;
 		displayProductModel.BuyText = displayProductModel.DisplayProductModelConstants.BuyText;
 		displayProductModel.BuyButtonBuyTextStyle = displayProductModel.DisplayProductModelConstants.FontMontserrat16Style;

@@ -40,14 +40,14 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 		_enableInCart = service?.Current?.CMS?.EnableInCart ?? true;
 		LogHelper.Instance.Log($"EnableInCart {_enableInCart}");
 		_inCart = (_enableInCart ? GetKCSInCart() : null);
-		LogHelper.Instance.Log(string.Format("InCart {0}", (_inCart != null) ? "loaded" : "null"));
+		LogHelper.Instance.Log("InCart " + ((_inCart != null) ? "loaded" : "null"));
 		PromotionService.Instance?.LoadInCartData(_inCart);
 		_showStartScreen = service?.Current?.CMS?.ShowStartScreen ?? true;
 		LogHelper.Instance.Log($"ShowStartScreen {_showStartScreen}");
 		_startScreen = (_showStartScreen ? GetKCSStartScreen() : null);
 		LogHelper instance = LogHelper.Instance;
 		KioskStartScreenDetails startScreen = _startScreen;
-		object arg;
+		object obj;
 		if (startScreen != null)
 		{
 			ControlList controls = startScreen.Controls;
@@ -56,15 +56,15 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 				_ = controls.Count;
 				if (true)
 				{
-					arg = $"loaded {_startScreen.Controls.Count}";
+					obj = $"loaded {_startScreen.Controls.Count}";
 					goto IL_01e0;
 				}
 			}
 		}
-		arg = "null";
+		obj = "null";
 		goto IL_01e0;
 		IL_01e0:
-		instance.Log($"StartScreen {arg}");
+		instance.Log("StartScreen " + (string)obj);
 		_loadCampaignTimerDuration = service?.Current?.CMS?.LoadCampaignTimerDuration ?? 2220000;
 		LogHelper.Instance.Log($"LoadCampaignTimerDuration {_loadCampaignTimerDuration}");
 	}
@@ -94,7 +94,7 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 	{
 		try
 		{
-			WebResult<GetInCartsResponse> webResult = ExecuteWebRequest<GetInCartsResponse>(new Uri(string.Format("{0}/{1}/incart", base.KioskClientServiceBaseUrl, "api/campaign")), null, "GET", 500);
+			WebResult<GetInCartsResponse> webResult = ExecuteWebRequest<GetInCartsResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/campaign/incart"), null, "GET", 500);
 			return (webResult == null || webResult.StatusCode != HttpStatusCode.OK) ? null : webResult?.Response?.InCart;
 		}
 		catch (Exception e)
@@ -108,7 +108,7 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 	{
 		try
 		{
-			WebResult<GetStartScreenResponse> webResult = ExecuteWebRequest<GetStartScreenResponse>(new Uri(string.Format("{0}/{1}/startscreen", base.KioskClientServiceBaseUrl, "api/campaign")), null, "GET", 500);
+			WebResult<GetStartScreenResponse> webResult = ExecuteWebRequest<GetStartScreenResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/campaign/startscreen"), null, "GET", 500);
 			return (webResult == null || webResult.StatusCode != HttpStatusCode.OK) ? null : webResult?.Response?.StartScreen;
 		}
 		catch (Exception e)

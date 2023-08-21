@@ -761,7 +761,7 @@ public static class HardwareFunctions
 		ReadOnlyCollection<IHardwareJob> hardwareJobs = null;
 		service?.GetHardwareJobs(out hardwareJobs);
 		bool flag = hardwareJobs?.Any((IHardwareJob x) => x.ID == jobId && (x.Status == "Pending" || x.Status == "Running" || x.Status == "Suspended")) ?? false;
-		LogHelper.Instance.Log(string.Format("IsActiveHardwareJob {0}: {1};  Job count: {2}, jobs: {3} ", jobId, flag, hardwareJobs?.Count, string.Join(", ", hardwareJobs.Select((IHardwareJob x) => $"{x.ID}:{x.Status}").ToArray())));
+		LogHelper.Instance.Log(string.Format("IsActiveHardwareJob {0}: {1};  Job count: {2}, jobs: {3} ", jobId, flag, hardwareJobs?.Count, string.Join(", ", hardwareJobs.Select((IHardwareJob x) => x.ID + ":" + x.Status).ToArray())));
 		return flag;
 	}
 
@@ -919,7 +919,7 @@ public static class HardwareFunctions
 			LogHelper.Instance.Log("Health Service was not found.");
 		}
 		LogHelper.Instance.Log("Enqueue Hardware State properties.", LogEntryType.Info);
-		LogHelper.Instance.Log($"Camera: {service.CurrentCameraGeneration.ToString()}, Decoder: {service.BarcodeDecoder.ToString()}");
+		LogHelper.Instance.Log("Camera: " + service.CurrentCameraGeneration + ", Decoder: " + service.BarcodeDecoder);
 		if (service.CurrentCameraGeneration >= 3)
 		{
 			service2.EnqueueProperty("CameraType", service.CurrentCameraGeneration.ToString());
@@ -929,14 +929,14 @@ public static class HardwareFunctions
 	[KernelFunction(Name = "kernel.sync_unknowns")]
 	internal static void SyncUnknowns(bool forceSync = false)
 	{
-		LogHelper.Instance.Log($"HardwareFunctions.SyncUnknowns called with forceSync = {forceSync.ToString()}");
+		LogHelper.Instance.Log("HardwareFunctions.SyncUnknowns called with forceSync = " + forceSync);
 		ServiceLocator.Instance.GetService<ISyncUnknownProcessor>().ScheduleJob(forceSync);
 	}
 
 	[KernelFunction(Name = "kernel.sync_unknowns_complete")]
 	internal static void SyncUnknownsComplete(string jobId)
 	{
-		LogHelper.Instance.Log($"HardwareFunctions.SyncUnknownsComplete called for jobId = {jobId}");
+		LogHelper.Instance.Log("HardwareFunctions.SyncUnknownsComplete called for jobId = " + jobId);
 		ServiceLocator.Instance.GetService<ISyncUnknownProcessor>().ProcessSyncLocationsComplete(jobId);
 	}
 
@@ -956,7 +956,7 @@ public static class HardwareFunctions
 		LuaTable luaTable2 = (LuaTable)service.NewTable();
 		foreach (Redbox.KioskEngine.ComponentModel.Error error in errors)
 		{
-			LogHelper.Instance.Log($"HardwareFunctions.CreateResultTable contains error {error.ToString()}");
+			LogHelper.Instance.Log("HardwareFunctions.CreateResultTable contains error " + error.ToString());
 			luaTable2[error.Code] = error.Description;
 		}
 		luaTable["errors"] = luaTable2;

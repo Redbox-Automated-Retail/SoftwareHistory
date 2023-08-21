@@ -23,10 +23,10 @@ public abstract class LocationSyncJobProcessorBase
 	protected void StartSync(string label = null, DateTime? startTime = null)
 	{
 		ErrorList errorList = _hardwareService.SoftSync(null, null, startTime, label, out var jobId);
-		LogErrors(errorList, $"SoftSync: {label}");
+		LogErrors(errorList, "SoftSync: " + label);
 		if (errorList.Count == 0)
 		{
-			LogHelper.Instance.Log($"Scheduled SoftSync job ID {jobId} with label {label}");
+			LogHelper.Instance.Log("Scheduled SoftSync job ID " + jobId + " with label " + label);
 		}
 	}
 
@@ -61,7 +61,7 @@ public abstract class LocationSyncJobProcessorBase
 		{
 			return;
 		}
-		LogHelper.Instance.Log($"{jobName} encountered the following errors:");
+		LogHelper.Instance.Log(jobName + " encountered the following errors:");
 		foreach (Redbox.KioskEngine.ComponentModel.Error error in errors)
 		{
 			LogHelper.Instance.LogError(error.Code, error.Description);
@@ -77,7 +77,7 @@ public abstract class LocationSyncJobProcessorBase
 		ErrorList hardwareJobs = _hardwareService.GetHardwareJobs(out var hardwareJobs2);
 		if (hardwareJobs.Any())
 		{
-			LogErrors(hardwareJobs, $"{labels[0]} - Unable to retrieve job list.");
+			LogErrors(hardwareJobs, labels[0] + " - Unable to retrieve job list.");
 			return false;
 		}
 		foreach (string label in labels)
@@ -99,7 +99,7 @@ public abstract class LocationSyncJobProcessorBase
 		ErrorList hardwareJobs = _hardwareService.GetHardwareJobs(out var hardwareJobs2);
 		if (hardwareJobs.Any())
 		{
-			LogErrors(hardwareJobs, $"{labels[0]} - Unable to retrieve job list.");
+			LogErrors(hardwareJobs, labels[0] + " - Unable to retrieve job list.");
 			return null;
 		}
 		foreach (string label in labels)

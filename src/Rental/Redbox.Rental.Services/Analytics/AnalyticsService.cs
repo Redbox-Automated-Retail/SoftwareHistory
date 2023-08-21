@@ -88,7 +88,7 @@ public class AnalyticsService : IAnalyticsService
 		{
 			return _analyticsSessions[id];
 		}
-		_logger.Log($"AnalyticsService.GetSession({id}) does not exist");
+		_logger.Log("AnalyticsService.GetSession(" + id + ") does not exist");
 		return null;
 	}
 
@@ -100,10 +100,10 @@ public class AnalyticsService : IAnalyticsService
 			IAnalyticsSession session = GetSession(id);
 			if (session != null)
 			{
-				_logger.Log($"Session {id} already exists");
+				_logger.Log("Session " + id + " already exists");
 				if (session != CurrentSession)
 				{
-					_logger.Log($"AnalyticsService.Start({id}) - a start session was requested that already exists and is not the current session", LogEntryType.Error);
+					_logger.Log("AnalyticsService.Start(" + id + ") - a start session was requested that already exists and is not the current session", LogEntryType.Error);
 				}
 				return session;
 			}
@@ -355,7 +355,7 @@ public class AnalyticsService : IAnalyticsService
 					_logger.Log("AnalyticsService.WriteToFile: {0} not found, creating directory.", text);
 					Directory.CreateDirectory(text);
 				}
-				string text2 = Path.Combine(text, $"{sessionId}.{extension}");
+				string text2 = Path.Combine(text, sessionId + "." + extension);
 				_logger.Log("AnalyticsService.WriteToFile: writing file {0}.", text2);
 				File.WriteAllText(text2, contents);
 			}

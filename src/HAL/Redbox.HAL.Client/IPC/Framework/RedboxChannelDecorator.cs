@@ -14,11 +14,11 @@ internal static class RedboxChannelDecorator
 			line = $"{line}{Environment.NewLine}";
 		}
 		byte[] bytes = Encoding.ASCII.GetBytes(line);
-		bool flag = channel.Write(bytes);
-		if (flag)
+		bool num = channel.Write(bytes);
+		if (num)
 		{
 			Interlocked.Add(ref Statistics.Instance.NumberOfBytesSent, bytes.Length);
 		}
-		return flag;
+		return num;
 	}
 }

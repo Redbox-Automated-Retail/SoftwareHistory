@@ -70,7 +70,7 @@ public class OptionSelectionDialogViewTextToSpeech
 					});
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"For {(string.IsNullOrEmpty(button.TtsText) ? button.Text : button.TtsText)}, press {num.ToString()}."
+						Text = "For " + (string.IsNullOrEmpty(button.TtsText) ? button.Text : button.TtsText) + ", press " + num + "."
 					});
 					num++;
 				}

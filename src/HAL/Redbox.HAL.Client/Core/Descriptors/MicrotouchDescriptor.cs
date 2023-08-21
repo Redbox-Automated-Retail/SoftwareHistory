@@ -7,8 +7,7 @@ internal sealed class MicrotouchDescriptor : AbstractTouchscreenDescriptor
 {
 	protected override bool OnSoftReset()
 	{
-		_3mSoftResetCommand _3mSoftResetCommand2 = new _3mSoftResetCommand();
-		return _3mSoftResetCommand2.Reset();
+		return new _3mSoftResetCommand().Reset();
 	}
 
 	protected override bool OnHardReset()
@@ -18,8 +17,7 @@ internal sealed class MicrotouchDescriptor : AbstractTouchscreenDescriptor
 
 	protected override string OnReadFirmware()
 	{
-		_3mFirmwareCommand _3mFirmwareCommand2 = new _3mFirmwareCommand();
-		return _3mFirmwareCommand2.GetFirmwareRevision();
+		return new _3mFirmwareCommand().GetFirmwareRevision();
 	}
 
 	protected override DeviceStatus OnGetStatus()

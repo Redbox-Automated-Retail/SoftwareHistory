@@ -304,7 +304,7 @@ public class PromotionService : IPromotionService
 				IPromoCodeValidationInfo promoCodeValidationInfo = ValidateFreeInCartOffer();
 				if (promoCodeValidationInfo != null && promoCodeValidationInfo.IsCartValid)
 				{
-					return !(service?.CurrentRentalShoppingCart?.InCartPromoOfferMade ?? false);
+					return service?.CurrentRentalShoppingCart?.InCartPromoOfferMade != true;
 				}
 			}
 			return false;
@@ -317,9 +317,9 @@ public class PromotionService : IPromotionService
 	{
 		get
 		{
-			int num = Instance.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0;
-			bool flag = num == 1 && !(RentalShoppingCart?.InCartPromoOfferMade ?? false);
-			bool flag2 = num > 1;
+			int valueOrDefault = (Instance.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count()).GetValueOrDefault();
+			bool flag = valueOrDefault == 1 && !(RentalShoppingCart?.InCartPromoOfferMade ?? false);
+			bool flag2 = valueOrDefault > 1;
 			if (IsRentTwoInCartOfferRunning)
 			{
 				IRentalShoppingCart rentalShoppingCart = RentalShoppingCart;
@@ -364,12 +364,12 @@ public class PromotionService : IPromotionService
 	{
 		get
 		{
-			bool num = RentalShoppingCart?.Promotion?.IsReturnVisit ?? false;
+			bool valueOrDefault = RentalShoppingCart?.Promotion?.IsReturnVisit == true;
 			IRentalShoppingCart rentalShoppingCart = RentalShoppingCart;
 			bool flag = rentalShoppingCart != null && rentalShoppingCart.Promotion?.Intent == PromotionIntentCode.FirstNightFreeItem;
-			bool flag2 = (RentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m;
+			bool flag2 = (RentalShoppingCart?.Totals?.DiscountAmountUsed).GetValueOrDefault() > 0m;
 			bool flag3 = BrowseState?.ReturnVisitIneligibleCartWarningShown ?? false;
-			if ((num & flag) && !flag2)
+			if ((valueOrDefault & flag) && !flag2)
 			{
 				return !flag3;
 			}
@@ -430,10 +430,10 @@ public class PromotionService : IPromotionService
 				string kioskClientServiceBaseUrl = ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl;
 				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 				{
-					LogHelper.Instance.Log($"Live call to remote IPromotionServices.ValidatePromotionCode, URL: {kioskClientServiceBaseUrl}");
+					LogHelper.Instance.Log("Live call to remote IPromotionServices.ValidatePromotionCode, URL: " + kioskClientServiceBaseUrl);
 					if (!int.TryParse(storeNumber, out var result2))
 					{
-						LogHelper.Instance.Log($"The passed storeNumber '{storeNumber}' cannot be converted into an Int32.", LogEntryType.Error);
+						LogHelper.Instance.Log("The passed storeNumber '" + storeNumber + "' cannot be converted into an Int32.", LogEntryType.Error);
 						result.Success = false;
 						result.Properties["response"] = PromotionValidationResponse.Error.ToString();
 					}
@@ -629,7 +629,7 @@ public class PromotionService : IPromotionService
 			foreach (Dictionary<string, object> inCartPromoRule in _inCartPromoRules)
 			{
 				PromotionRule promotionRule = new PromotionRule(inCartPromoRule);
-				if (promotionRule.OfferLanguage == OrchestrationService.GetCulture() && (!IsRentTwoInCartOfferRunning || ((Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) == 1 && promotionRule.OfferMessageVersion == "1") || ((Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) > 1 && promotionRule.OfferMessageVersion == "2")))
+				if (promotionRule.OfferLanguage == OrchestrationService.GetCulture() && (!IsRentTwoInCartOfferRunning || (Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() == 1 && promotionRule.OfferMessageVersion == "1") || ((Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count()).GetValueOrDefault() > 1 && promotionRule.OfferMessageVersion == "2")))
 				{
 					inCartOfferMessageText.Header = promotionRule.InCartPromoHeaderMessage;
 					inCartOfferMessageText.Message = promotionRule.InCartPromoBodyMessage;
@@ -902,7 +902,7 @@ public class PromotionService : IPromotionService
 		{
 			if (result.PromotionItems.Count() < num)
 			{
-				decimal promotionAmount = Math.Min(result2, item?.PricingRecord?.InitialNight ?? 0m);
+				decimal promotionAmount = Math.Min(result2, (item?.PricingRecord?.InitialNight).GetValueOrDefault());
 				result.PromotionItems.Add(new PromotionItem
 				{
 					RentalShoppingCartItem = item,
@@ -927,7 +927,7 @@ public class PromotionService : IPromotionService
 		{
 			if (num > 0m)
 			{
-				decimal num2 = Math.Min(num, item?.PricingRecord?.InitialNight ?? 0m);
+				decimal num2 = Math.Min(num, (item?.PricingRecord?.InitialNight).GetValueOrDefault());
 				result.PromotionItems.Add(new PromotionItem
 				{
 					RentalShoppingCartItem = item,
@@ -970,7 +970,7 @@ public class PromotionService : IPromotionService
 		{
 			if (num2 > 0m)
 			{
-				decimal num3 = Math.Min(num2, item?.PricingRecord?.InitialNight ?? 0m);
+				decimal num3 = Math.Min(num2, (item?.PricingRecord?.InitialNight).GetValueOrDefault());
 				result.PromotionItems.Add(new PromotionItem
 				{
 					RentalShoppingCartItem = item,
@@ -1267,10 +1267,10 @@ public class PromotionService : IPromotionService
 		if (service.CurrentRentalShoppingCart != null)
 		{
 			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = (from x in service.CurrentRentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, titleTypeFromInCartPromo, titleFamilyFromInCartPromo, null, excludeProducts, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: true, includeLoyaltyRedeemedItems: false, null, includeDiscountRestrictionItems: false)
-				orderby x?.PricingRecord?.InitialNight ?? 0m, x.ProductId
+				orderby (x?.PricingRecord?.InitialNight).GetValueOrDefault(), x.ProductId
 				select x).FirstOrDefault();
 			promoCodeValidationInfo.IsCartValid = rentalShoppingCartTitleItem != null;
-			promoCodeValidationInfo.Price = rentalShoppingCartTitleItem?.PricingRecord?.InitialNight ?? 0m;
+			promoCodeValidationInfo.Price = (rentalShoppingCartTitleItem?.PricingRecord?.InitialNight).GetValueOrDefault();
 			if (rentalShoppingCartTitleItem != null)
 			{
 				promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
@@ -1291,7 +1291,7 @@ public class PromotionService : IPromotionService
 		if (RentalShoppingCart != null)
 		{
 			List<IRentalShoppingCartTitleItem> list = (from x in RentalShoppingCart.GetTitleItemsByCriteria(RentalShoppingCartItemAction.rental, null, TitleType.All, TitleFamily.All, null, inCartExcludeTitleList, null, null, null, includeMultiNightPricedItems: false, includeFlashDeals: true, includeLoyaltyRedeemedItems: false, false, includeDiscountRestrictionItems: false)
-				orderby x?.PricingRecord?.InitialNight ?? 0m, x.ProductId
+				orderby (x?.PricingRecord?.InitialNight).GetValueOrDefault(), x.ProductId
 				select x).ToList();
 			promoCodeValidationInfo.IsCartValid = list.Count() > 1;
 			decimal redemptionAmountFromInCartPromo = GetRedemptionAmountFromInCartPromo();
@@ -1299,7 +1299,7 @@ public class PromotionService : IPromotionService
 			{
 				if (promoCodeValidationInfo.QualifyingItems.Count() < 2)
 				{
-					decimal num = Math.Min(redemptionAmountFromInCartPromo, item?.PricingRecord?.InitialNight ?? 0m);
+					decimal num = Math.Min(redemptionAmountFromInCartPromo, (item?.PricingRecord?.InitialNight).GetValueOrDefault());
 					promoCodeValidationInfo.PromotionItems.Add(new PromotionItem
 					{
 						RentalShoppingCartItem = item,
@@ -1507,7 +1507,7 @@ public class PromotionService : IPromotionService
 						},
 						{
 							"DISCOUNT_AMOUNT",
-							(inCart.Amount ?? 0m).ToString("N2")
+							inCart.Amount.GetValueOrDefault().ToString("N2")
 						},
 						{ "PROMO_CODE", inCart.PromoCode }
 					}

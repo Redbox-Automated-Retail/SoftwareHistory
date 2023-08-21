@@ -129,7 +129,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 		{
 			if (ProcessNames.CloseOnlyList.Any((string x) => string.Compare(processItem.Value.Name, x.RemoveString(".exe"), ignoreCase: true) == 0) || (string.Compare(processItem.Value.Name, "rundll32", ignoreCase: true) == 0 && !_priorExistingProcesses.ContainsKey(processItem.Key)))
 			{
-				LogHelper.Instance.Log($"Killing {processItem.Value.Name}");
+				LogHelper.Instance.Log("Killing " + processItem.Value.Name);
 				pidList.Add(processItem.Key);
 			}
 		}
@@ -501,7 +501,7 @@ public partial class ControlPanelViewUserControl : System.Windows.Controls.UserC
 			object servicePath = ProcessFunctions.GetServicePath("HalSvc$Default");
 			if (servicePath != null)
 			{
-				string fullPath = ProcessFunctions.GetFullPath(string.Concat(servicePath, "\\..\\video"));
+				string fullPath = ProcessFunctions.GetFullPath(servicePath?.ToString() + "\\..\\video");
 				if (!string.IsNullOrEmpty(fullPath))
 				{
 					LaunchProcess("explorer.exe", fullPath.ToString(), hiddenProcess: false);

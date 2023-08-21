@@ -127,14 +127,14 @@ public class KioskClientServiceLoyalty : BaseKioskClientService, IKioskClientSer
 	public async Task<IDictionary<string, object>> EstimateAccrual(CartMessage payload)
 	{
 		Dictionary<string, object> result = new Dictionary<string, object>();
-		string text = string.Format("{0}/estimateaccrual", "api/loyalty");
-		LogHelper.Instance.Log($"KioskClientServiceLoyalty.EstimateAccrual - POST'ing following estimate accrual payload to '{text}': {payload.ToJson().ToPrettyJson()}");
+		string text = "api/loyalty/estimateaccrual";
+		LogHelper.Instance.Log("KioskClientServiceLoyalty.EstimateAccrual - POST'ing following estimate accrual payload to '" + text + "': " + payload.ToJson().ToPrettyJson());
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(base.KioskClientServiceBaseUrl, text, payload, HttpMethod.Post);
-		APIResponse<LoyaltyResponse> aPIResponse = await service.SendRequestAsync<LoyaltyResponse>(request, ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceEstimateAccrualTimeout, "EstimateAccrual", "D:\\work\\55\\SC\\Redbox.Rental.Services\\KioskClientService\\Loyalty\\KioskClientServiceLoyalty.cs");
+		APIResponse<LoyaltyResponse> aPIResponse = await service.SendRequestAsync<LoyaltyResponse>(request, ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceEstimateAccrualTimeout, "EstimateAccrual", "c:\\build\\Redbox.Rental.Services\\KioskClientService\\Loyalty\\KioskClientServiceLoyalty.cs");
 		if (aPIResponse.IsSuccessStatusCode)
 		{
-			LogHelper.Instance.Log($"KioskClientServiceLoyalty.EstimateAccrual - received successful estimate accrual response: {aPIResponse.Response?.ToJson()}");
+			LogHelper.Instance.Log("KioskClientServiceLoyalty.EstimateAccrual - received successful estimate accrual response: " + aPIResponse.Response?.ToJson());
 			if (aPIResponse.Response == null)
 			{
 				aPIResponse.Response = new LoyaltyResponse();
@@ -164,14 +164,14 @@ public class KioskClientServiceLoyalty : BaseKioskClientService, IKioskClientSer
 	public async Task<IDictionary<string, object>> EstimateRedemption(CartMessage payload)
 	{
 		Dictionary<string, object> result = new Dictionary<string, object>();
-		string text = string.Format("{0}/estimateredemption", "api/loyalty");
-		LogHelper.Instance.Log($"KioskClientServiceLoyalty.EstimateRedemption - POST'ing following estimate redemption payload to '{text}': {payload.ToJson()}");
+		string text = "api/loyalty/estimateredemption";
+		LogHelper.Instance.Log("KioskClientServiceLoyalty.EstimateRedemption - POST'ing following estimate redemption payload to '" + text + "': " + payload.ToJson());
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(base.KioskClientServiceBaseUrl, text, payload, HttpMethod.Post);
-		APIResponse<LoyaltyResponse> aPIResponse = await service.SendRequestAsync<LoyaltyResponse>(request, ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceEstimateRedemptionTimeout, "EstimateRedemption", "D:\\work\\55\\SC\\Redbox.Rental.Services\\KioskClientService\\Loyalty\\KioskClientServiceLoyalty.cs");
+		APIResponse<LoyaltyResponse> aPIResponse = await service.SendRequestAsync<LoyaltyResponse>(request, ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceEstimateRedemptionTimeout, "EstimateRedemption", "c:\\build\\Redbox.Rental.Services\\KioskClientService\\Loyalty\\KioskClientServiceLoyalty.cs");
 		if (aPIResponse.IsSuccessStatusCode)
 		{
-			LogHelper.Instance.Log($"KioskClientServiceLoyalty.EstimateRedemption - received successful estimate redemption response: {aPIResponse.Response?.ToJson()}");
+			LogHelper.Instance.Log("KioskClientServiceLoyalty.EstimateRedemption - received successful estimate redemption response: " + aPIResponse.Response?.ToJson());
 			if (aPIResponse.Response == null)
 			{
 				aPIResponse.Response = new LoyaltyResponse();
@@ -200,7 +200,7 @@ public class KioskClientServiceLoyalty : BaseKioskClientService, IKioskClientSer
 
 	public async Task<IDictionary<string, object>> UpdateAccount(Guid messageId, long kioskId, string customerProfileNumber, string emailAddress, string phoneNumber, SecureString pin, bool punchcardOptIn, bool textClubOptIn, AccountSourceType source, bool replay)
 	{
-		string text = string.Format("{0}/updateaccount", "api/loyalty");
+		string text = "api/loyalty/updateaccount";
 		UpdateAccountPayload updateAccountPayload = new UpdateAccountPayload
 		{
 			MessageId = messageId,
@@ -217,8 +217,8 @@ public class KioskClientServiceLoyalty : BaseKioskClientService, IKioskClientSer
 		LogHelper.Instance.Log($"KioskClientServiceLoyalty.UpdateAccount - POST'ing following update account payload to '{text}': {updateAccountPayload}");
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
 		HttpRequestMessage request = service.GenerateRequest(base.KioskClientServiceBaseUrl, text, updateAccountPayload, HttpMethod.Post);
-		APIResponse<UpdateAccountResponse> aPIResponse = await service.SendRequestAsync<UpdateAccountResponse>(request, ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceUpdateAccountTimeout, "UpdateAccount", "D:\\work\\55\\SC\\Redbox.Rental.Services\\KioskClientService\\Loyalty\\KioskClientServiceLoyalty.cs", updateAccountPayload);
-		LogHelper.Instance.Log($"KioskClientServiceLoyalty.UpdateAccount - response: {aPIResponse.ResponseContent}");
+		APIResponse<UpdateAccountResponse> aPIResponse = await service.SendRequestAsync<UpdateAccountResponse>(request, ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceUpdateAccountTimeout, "UpdateAccount", "c:\\build\\Redbox.Rental.Services\\KioskClientService\\Loyalty\\KioskClientServiceLoyalty.cs", updateAccountPayload);
+		LogHelper.Instance.Log("KioskClientServiceLoyalty.UpdateAccount - response: " + aPIResponse.ResponseContent);
 		return aPIResponse.ToUpdateAccountDictionary();
 	}
 }

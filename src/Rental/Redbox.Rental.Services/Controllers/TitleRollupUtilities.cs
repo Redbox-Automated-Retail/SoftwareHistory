@@ -214,7 +214,7 @@ public class TitleRollupUtilities
 		{
 			titleRollupFormatButtonProperties.HideAndDisableButton();
 		}
-		else if (service?.CurrentRentalShoppingCart?.HasTitleItem(titleProduct.ProductId) ?? false)
+		else if (service?.CurrentRentalShoppingCart?.HasTitleItem(titleProduct.ProductId) == true)
 		{
 			titleRollupFormatButtonProperties.ButtonText = titleTypeText;
 			titleRollupFormatButtonProperties.ButtonTextLine2 = (string.IsNullOrEmpty(buttonTextValues.InCartText) ? buttonTextValues.InCartFormat : buttonTextValues.InCartText);

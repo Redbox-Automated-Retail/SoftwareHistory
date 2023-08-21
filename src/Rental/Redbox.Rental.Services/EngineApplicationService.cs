@@ -44,7 +44,7 @@ public class EngineApplicationService : IEngineApplicationService
 			LogHelper.Instance.LogException(text, ex);
 			return new PerformShutdownResponse
 			{
-				Error = $"{text}. Exception -> {ex.Message}"
+				Error = text + ". Exception -> " + ex.Message
 			};
 		}
 	}

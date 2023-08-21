@@ -10,6 +10,6 @@ public class SessionStartTriggerAction : ISessionStartTriggerAction
 
 	public override string ToString()
 	{
-		return $"{Name}";
+		return Name ?? "";
 	}
 }

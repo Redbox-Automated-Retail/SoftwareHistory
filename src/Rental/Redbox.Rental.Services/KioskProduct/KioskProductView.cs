@@ -225,7 +225,7 @@ public class KioskProductView
 		List<IBarcodeForProductResult> list = new List<IBarcodeForProductResult>();
 		if (searchProducts != null && searchProducts.Count > 0)
 		{
-			LogHelper.Instance.Log(string.Format("GetBarcodesForProducts Begin.  searching for products: {0}", searchProducts.Select((ISearchBarcodeForProduct x) => x.ProductId).ToList().Join(", ")));
+			LogHelper.Instance.Log("GetBarcodesForProducts Begin.  searching for products: " + searchProducts.Select((ISearchBarcodeForProduct x) => x.ProductId).ToList().Join(", "));
 			IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
 			foreach (ISearchBarcodeForProduct searchProduct in searchProducts)
 			{
@@ -290,7 +290,7 @@ public class KioskProductView
 					}
 					else
 					{
-						LogHelper.Instance.Log($">  Warning: Unable to find title product for barcode: {searchProduct.Barcode}");
+						LogHelper.Instance.Log(">  Warning: Unable to find title product for barcode: " + searchProduct.Barcode);
 					}
 				}
 				else
@@ -570,9 +570,15 @@ public class KioskProductView
 
 	public IKioskProduct GetTitleRollupProduct(long productGroupId)
 	{
-		return (from item in _titleRollupProducts
-			where item.Value.ProductGroupId == productGroupId
-			select item.Value).FirstOrDefault();
+		return _titleRollupProducts.Where(delegate(KeyValuePair<long, TitleRollupProduct> item)
+		{
+			KeyValuePair<long, TitleRollupProduct> keyValuePair = item;
+			return keyValuePair.Value.ProductGroupId == productGroupId;
+		}).Select(delegate(KeyValuePair<long, TitleRollupProduct> item)
+		{
+			KeyValuePair<long, TitleRollupProduct> keyValuePair = item;
+			return keyValuePair.Value;
+		}).FirstOrDefault();
 	}
 
 	public IKioskProduct GetProductByBarcode(string barcode)
@@ -868,9 +874,20 @@ public class KioskProductView
 		ProductGroup result = null;
 		if (ProfileDataInstance?.ProductGroups != null)
 		{
-			result = (from pair in ProfileDataInstance.ProductGroups
-				where pair.Value.ProductGroupTypeId == 3 && pair.Value.ProductIds.Contains(productId)
-				select pair.Value).FirstOrDefault();
+			result = ProfileDataInstance.ProductGroups.Where(delegate(KeyValuePair<long, ProductGroup> pair)
+			{
+				KeyValuePair<long, ProductGroup> keyValuePair = pair;
+				if (keyValuePair.Value.ProductGroupTypeId == 3)
+				{
+					keyValuePair = pair;
+					return keyValuePair.Value.ProductIds.Contains(productId);
+				}
+				return false;
+			}).Select(delegate(KeyValuePair<long, ProductGroup> pair)
+			{
+				KeyValuePair<long, ProductGroup> keyValuePair = pair;
+				return keyValuePair.Value;
+			}).FirstOrDefault();
 		}
 		return result;
 	}
@@ -988,9 +1005,20 @@ public class KioskProductView
 
 	private TitleRollupProduct AddTitleRollupProduct(TitleProduct titleProduct)
 	{
-		ProductGroup productGroup = (from pair in ProfileDataInstance.ProductGroups
-			where pair.Value.ProductGroupTypeId == 1 && pair.Value.ProductIds.Contains(titleProduct.ProductId)
-			select pair.Value).FirstOrDefault();
+		ProductGroup productGroup = ProfileDataInstance.ProductGroups.Where(delegate(KeyValuePair<long, ProductGroup> pair)
+		{
+			KeyValuePair<long, ProductGroup> keyValuePair = pair;
+			if (keyValuePair.Value.ProductGroupTypeId == 1)
+			{
+				keyValuePair = pair;
+				return keyValuePair.Value.ProductIds.Contains(titleProduct.ProductId);
+			}
+			return false;
+		}).Select(delegate(KeyValuePair<long, ProductGroup> pair)
+		{
+			KeyValuePair<long, ProductGroup> keyValuePair = pair;
+			return keyValuePair.Value;
+		}).FirstOrDefault();
 		if (productGroup == null)
 		{
 			return null;
@@ -1020,13 +1048,18 @@ public class KioskProductView
 	private void LoadTitlesWithNoRollupOrMDV()
 	{
 		_titlesWithNoRollup.Clear();
-		List<ITitleProduct> second = (from item in _titleRollupProducts
-			from title in item.Value.KioskProducts
-			where title != null
-			select title).ToList();
-		List<ITitleProduct> second2 = (from item in _mdvProducts
-			from title in item.Value.TitleProducts
-			select title).ToList();
+		List<ITitleProduct> second = (from _003C_003Eh__TransparentIdentifier0 in _titleRollupProducts.SelectMany(delegate(KeyValuePair<long, TitleRollupProduct> item)
+			{
+				KeyValuePair<long, TitleRollupProduct> keyValuePair = item;
+				return keyValuePair.Value.KioskProducts;
+			}, (KeyValuePair<long, TitleRollupProduct> item, ITitleProduct title) => new { item, title })
+			where _003C_003Eh__TransparentIdentifier0.title != null
+			select _003C_003Eh__TransparentIdentifier0.title).ToList();
+		List<ITitleProduct> second2 = _mdvProducts.SelectMany(delegate(KeyValuePair<long, MDVProduct> item)
+		{
+			KeyValuePair<long, MDVProduct> keyValuePair = item;
+			return keyValuePair.Value.TitleProducts;
+		}, (KeyValuePair<long, MDVProduct> item, ITitleProduct title) => title).ToList();
 		_titleProducts.Select((KeyValuePair<long, ITitleProduct> item) => item.Value).ToList().Except(second)
 			.Except(second2)
 			.ToList()
@@ -1043,10 +1076,13 @@ public class KioskProductView
 	private void LoadMDVTitlesWithNoRollup()
 	{
 		_mdvTitlesWithNoRollup.Clear();
-		List<MDVProduct> second = (from item in _titleRollupProducts
-			from title in item.Value.KioskProducts
-			where title is MDVProduct
-			select (MDVProduct)title).ToList();
+		List<MDVProduct> second = (from _003C_003Eh__TransparentIdentifier0 in _titleRollupProducts.SelectMany(delegate(KeyValuePair<long, TitleRollupProduct> item)
+			{
+				KeyValuePair<long, TitleRollupProduct> keyValuePair = item;
+				return keyValuePair.Value.KioskProducts;
+			}, (KeyValuePair<long, TitleRollupProduct> item, ITitleProduct title) => new { item, title })
+			where _003C_003Eh__TransparentIdentifier0.title is MDVProduct
+			select (MDVProduct)_003C_003Eh__TransparentIdentifier0.title).ToList();
 		_mdvProducts.Select((KeyValuePair<long, MDVProduct> item) => item.Value).ToList().Except(second)
 			.ToList()
 			.ForEach(delegate(MDVProduct item)

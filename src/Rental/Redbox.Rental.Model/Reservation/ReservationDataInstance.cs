@@ -281,7 +281,7 @@ public class ReservationDataInstance : IReservationDataInstance
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Unable to convert reservation data file {item.FileName}");
+					LogHelper.Instance.Log("Unable to convert reservation data file " + item.FileName);
 				}
 			}
 			else

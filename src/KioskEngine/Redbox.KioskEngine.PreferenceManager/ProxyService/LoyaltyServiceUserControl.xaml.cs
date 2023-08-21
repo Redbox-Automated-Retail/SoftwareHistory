@@ -251,7 +251,7 @@ public partial class LoyaltyServiceUserControl : UserControl, IPreferencePageHos
 
 		public override string ToString()
 		{
-			return $"{ResponseName} {Code}";
+			return ResponseName + " " + Code;
 		}
 	}
 
@@ -263,7 +263,7 @@ public partial class LoyaltyServiceUserControl : UserControl, IPreferencePageHos
 
 		public override string ToString()
 		{
-			return $"{ResponseName} {Code}";
+			return ResponseName + " " + Code;
 		}
 	}
 
@@ -489,7 +489,7 @@ public partial class LoyaltyServiceUserControl : UserControl, IPreferencePageHos
 	private List<LoyaltyTestAccrualRedemption> GetLoyaltyTestAccrualRedemptions()
 	{
 		List<LoyaltyTestAccrualRedemption> list = null;
-		if (_model?.ItemModels?.Any() ?? false)
+		if (_model?.ItemModels?.Any() == true)
 		{
 			list = new List<LoyaltyTestAccrualRedemption>();
 			foreach (LoyaltyTestAccrualRedemptionModel itemModel in _model.ItemModels)

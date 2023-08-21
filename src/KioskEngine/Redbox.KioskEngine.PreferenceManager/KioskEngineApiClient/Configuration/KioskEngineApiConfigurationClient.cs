@@ -13,7 +13,7 @@ public class KioskEngineApiConfigurationClient : KioskEngineApiBaseClient
 	public static async Task<APIResponse<GetConfigurationChangesResponse>> GetConfigurationChanges()
 	{
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
-		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, $"{_apiPath}/settingvalues/changes", null, HttpMethod.Get);
-		return await service.SendRequestAsync<GetConfigurationChangesResponse>(request, null, "GetConfigurationChanges", "D:\\work\\55\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Configuration\\KioskEngineApiConfigurationClient.cs");
+		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, _apiPath + "/settingvalues/changes", null, HttpMethod.Get);
+		return await service.SendRequestAsync<GetConfigurationChangesResponse>(request, null, "GetConfigurationChanges", "c:\\build\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Configuration\\KioskEngineApiConfigurationClient.cs");
 	}
 }

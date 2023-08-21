@@ -14,11 +14,13 @@ public class RemotingClientSink : BaseChannelSinkWithProperties, IClientChannelS
 		NextChannelSink = nextSink;
 		MethodInfo setMethod = NextChannelSink.GetType().GetProperty("Item").GetSetMethod();
 		setMethod.Invoke(NextChannelSink, new object[2] { "timeout", remoteChannelData });
-		setMethod.Invoke(NextChannelSink, new string[2]
+		IClientChannelSink nextChannelSink = NextChannelSink;
+		object[] parameters = new string[2]
 		{
 			"connectiongroupname",
 			remoteChannelData.ToString()
-		});
+		};
+		setMethod.Invoke(nextChannelSink, parameters);
 	}
 
 	public void ProcessMessage(IMessage msg, ITransportHeaders requestHeaders, Stream requestStream, out ITransportHeaders responseHeaders, out Stream responseStream)

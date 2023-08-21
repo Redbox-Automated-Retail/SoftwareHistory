@@ -64,7 +64,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		try
 		{
-			_logger?.LogInformation($"PersistentDataCacheService.Write({fileName})");
+			_logger?.LogInformation("PersistentDataCacheService.Write(" + fileName + ")");
 			string contents = JsonConvert.SerializeObject(new PersistentDataWrapper<T>
 			{
 				Data = data,
@@ -93,7 +93,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		try
 		{
-			_logger?.LogInformation($"PersistentDataCacheService.Delete({fileName}");
+			_logger?.LogInformation("PersistentDataCacheService.Delete(" + fileName);
 			string dataFilePath = GetDataFilePath(fileName);
 			if (File.Exists(dataFilePath))
 			{
@@ -112,7 +112,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 	{
 		try
 		{
-			_logger?.LogInformation($"PersistentDataCacheService.Exists({fileName})");
+			_logger?.LogInformation("PersistentDataCacheService.Exists(" + fileName + ")");
 			return File.Exists(GetDataFilePath(fileName));
 		}
 		catch (Exception e)

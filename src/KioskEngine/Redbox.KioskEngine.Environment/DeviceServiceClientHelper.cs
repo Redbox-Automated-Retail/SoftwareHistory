@@ -187,13 +187,13 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		IShoppingSession currentSession = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetCurrentSession();
 		IEnumerable<CardBrandAndSource> deactivatedCardBrandSources = GetDeactivatedCardBrandSources();
-		decimal d = service?.CurrentRentalShoppingCart?.Totals.GrandTotal ?? 0m;
-		d = Math.Round(d, 2);
+		decimal valueOrDefault = (service?.CurrentRentalShoppingCart?.Totals.GrandTotal).GetValueOrDefault();
+		valueOrDefault = Math.Round(valueOrDefault, 2);
 		CardReadRequest request = new CardReadRequest
 		{
 			InputType = deviceInputType,
 			VasMode = vasMode,
-			Amount = d,
+			Amount = valueOrDefault,
 			Timeout = commandTimeout + 5000,
 			ExcludeCardBrandBySource = deactivatedCardBrandSources,
 			SessionId = currentSession.Id,
@@ -453,7 +453,7 @@ public class DeviceServiceClientHelper : IDeviceServiceClientHelper
 		try
 		{
 			long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
-			ServiceLocator.Instance.GetService<IHealthServices>().SendAlert(num.ToString(), "ApplicationCrash", string.Format("mm:TamperedCardReaderError, {0}", "0099CDRR"), string.Format("<h2>Kiosk Engine Card Reader Tampered Error</h2><p>Card Reader Tampering detected on Kiosk: {0}!<br><br>Placing Kiosk into Maintenance Mode.<br>{1}</p>", num, "0099CDRR"), DateTime.Now, null, null, skipQueue: true);
+			ServiceLocator.Instance.GetService<IHealthServices>().SendAlert(num.ToString(), "ApplicationCrash", "mm:TamperedCardReaderError, 0099CDRR", string.Format("<h2>Kiosk Engine Card Reader Tampered Error</h2><p>Card Reader Tampering detected on Kiosk: {0}!<br><br>Placing Kiosk into Maintenance Mode.<br>{1}</p>", num, "0099CDRR"), DateTime.Now, null, null, skipQueue: true);
 		}
 		catch (Exception e)
 		{

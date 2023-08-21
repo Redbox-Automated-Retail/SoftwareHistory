@@ -35,7 +35,7 @@ public class StarzTermsAcceptanceViewController : BaseViewController
 		{
 			OrchestrationService.SetCurrentUICulture();
 			starzTermsAcceptanceViewModel.TitleText = Resources.starz_terms_acceptance_title_text;
-			starzTermsAcceptanceViewModel.SubtitleText = ((Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false) ? Resources.starz_terms_acceptance_subtitle_text_existing_account : Resources.starz_terms_acceptance_subtitle_text_new_account);
+			starzTermsAcceptanceViewModel.SubtitleText = ((Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn == true) ? Resources.starz_terms_acceptance_subtitle_text_existing_account : Resources.starz_terms_acceptance_subtitle_text_new_account);
 			starzTermsAcceptanceViewModel.EmailText = emailAddress;
 			starzTermsAcceptanceViewModel.TermsHeader = Resources.starz_terms_acceptance_terms_header;
 			starzTermsAcceptanceViewModel.TermsText = starzTermsAcceptanceViewModel.StarzSubscriptionProduct.AcceptanceTerms;

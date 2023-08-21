@@ -152,7 +152,7 @@ public static class KioskProductExtensions
 						}).ToList();
 					list.ForEach(item =>
 					{
-						item.p.SortOrderPosition = item.Position ?? 0;
+						item.p.SortOrderPosition = item.Position.GetValueOrDefault();
 						item.p.SortOrderType = sortOrder.SortOrderType;
 					});
 					List<long> outOfStockTitleRollupProductGroupIdsToShow = (from item in list

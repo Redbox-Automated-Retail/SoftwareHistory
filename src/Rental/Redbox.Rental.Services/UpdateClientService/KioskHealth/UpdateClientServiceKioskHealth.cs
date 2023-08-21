@@ -16,19 +16,19 @@ public class UpdateClientServiceKioskHealth : BaseUpdateClientService, IUpdateCl
 	{
 		LogHelper.Instance.Log("UpdateClientServiceKioskHealth.SendPing");
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
-		HttpRequestMessage request = service.GenerateRequest(base.UpdateClientServiceBaseUrl, string.Format("{0}/Ping", "api/Broker"), pingRequest, HttpMethod.Post, new List<Header>
+		HttpRequestMessage request = service.GenerateRequest(base.UpdateClientServiceBaseUrl, "api/Broker/Ping", pingRequest, HttpMethod.Post, new List<Header>
 		{
 			new Header("app-name", pingRequest?.AppName),
 			new Header("x-redbox-activityid", pingRequest?.MessageId.ToString())
 		});
-		APIResponse<HttpResponseMessage> aPIResponse = await service.SendRequestAsync<HttpResponseMessage>(request, null, "SendPing", "D:\\work\\55\\SC\\Redbox.Rental.Services\\UpdateClientService\\KioskHealth\\UpdateClientServiceKioskHealth.cs", pingRequest);
+		APIResponse<HttpResponseMessage> aPIResponse = await service.SendRequestAsync<HttpResponseMessage>(request, null, "SendPing", "c:\\build\\Redbox.Rental.Services\\UpdateClientService\\KioskHealth\\UpdateClientServiceKioskHealth.cs", pingRequest);
 		PingResponse pingResponse = new PingResponse
 		{
 			StatusCode = (int)aPIResponse.StatusCode,
 			Success = aPIResponse.IsSuccessStatusCode,
 			HostName = aPIResponse.HostName
 		};
-		LogHelper.Instance.Log($"UpdateClientServiceKioskHealth.SendPing response={JsonConvert.SerializeObject(pingResponse)}");
+		LogHelper.Instance.Log("UpdateClientServiceKioskHealth.SendPing response=" + JsonConvert.SerializeObject(pingResponse));
 		return pingResponse;
 	}
 }

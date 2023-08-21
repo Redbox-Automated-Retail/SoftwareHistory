@@ -30,13 +30,13 @@ public class KioskClientServiceProductGroups : BaseKioskClientService, IKioskCli
 
 	public void RefreshAllMLTData(List<long> productGroupIds)
 	{
-		Task.Run(() => ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/morelikethis/refresh", base.KioskClientServiceBaseUrl, "api/productgroups")), productGroupIds, "POST", 180000));
+		Task.Run(() => ExecuteWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/productgroups/morelikethis/refresh"), productGroupIds, "POST", 180000));
 	}
 
 	public ProductGroupSortOrder GetSortOrder()
 	{
 		LogHelper.Instance.Log("KCS ProductGroups.GetSortOrder");
-		WebResult<GetSortOrderResponse> webResult = ExecuteWebRequest<GetSortOrderResponse>(new Uri(string.Format("{0}/{1}/sortorder", base.KioskClientServiceBaseUrl, "api/productgroups")), null, "GET", 500);
+		WebResult<GetSortOrderResponse> webResult = ExecuteWebRequest<GetSortOrderResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/productgroups/sortorder"), null, "GET", 500);
 		LogResponse("KCS ProductGroups.GetSortOrder", webResult);
 		if (webResult == null || webResult.Response == null)
 		{

@@ -182,7 +182,7 @@ public class CardFunctions
 						}
 						else
 						{
-							LogHelper.Instance.Log($"CardFunctions.CardReadComplete: current view is not {cardReadViewName}.  Card read data will not be processed.");
+							LogHelper.Instance.Log("CardFunctions.CardReadComplete: current view is not " + cardReadViewName + ".  Card read data will not be processed.");
 						}
 					}
 					catch (Exception e2)

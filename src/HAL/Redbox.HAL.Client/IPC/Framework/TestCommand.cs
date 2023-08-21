@@ -10,9 +10,9 @@ namespace Redbox.HAL.IPC.Framework;
 [Command("ipctest")]
 public sealed class TestCommand
 {
-	[Description("")]
 	[CommandForm(Name = "test-ipc-xfer")]
 	[Usage("ipctest test-ipc-xfer size: payloadSize")]
+	[Description("")]
 	public void TestIPCTransfer(CommandContext context, [CommandKeyValue(IsRequired = true, KeyName = "size")] int payloadSize)
 	{
 		Random random = new Random((int)DateTime.Now.Ticks);

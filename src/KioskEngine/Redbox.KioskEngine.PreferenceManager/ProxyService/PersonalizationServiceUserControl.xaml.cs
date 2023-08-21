@@ -115,7 +115,7 @@ public partial class PersonalizationServiceUserControl : UserControl, IPreferenc
 
 		public override string ToString()
 		{
-			return $"{ResponseName} {Code}";
+			return ResponseName + " " + Code;
 		}
 	}
 

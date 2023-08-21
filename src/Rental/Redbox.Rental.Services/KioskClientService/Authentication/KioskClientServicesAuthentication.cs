@@ -9,6 +9,6 @@ public class KioskClientServicesAuthentication : BaseKioskClientService, IKioskC
 
 	public AuthenticateResponse Authenticate(AuthenticateRequest request)
 	{
-		return ExecuteWebRequest<AuthenticateResponse>(new Uri(string.Format("{0}/{1}/authenticate", base.KioskClientServiceBaseUrl, "api/kiosk")), request, "POST", 20000)?.Response;
+		return ExecuteWebRequest<AuthenticateResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/kiosk/authenticate"), request, "POST", 20000)?.Response;
 	}
 }

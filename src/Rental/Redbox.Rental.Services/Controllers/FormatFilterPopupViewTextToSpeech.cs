@@ -66,7 +66,7 @@ public class FormatFilterPopupViewTextToSpeech
 					});
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"For {button.Text}, press {num.ToString()}."
+						Text = "For " + button.Text + ", press " + num + "."
 					});
 					num++;
 				}

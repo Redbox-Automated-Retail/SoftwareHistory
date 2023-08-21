@@ -100,8 +100,8 @@ public class KioskClientServiceCustomerProfile : BaseKioskClientService, IKioskC
 			}
 			Task.Run(delegate
 			{
-				string arg = (IsLoginLiveCall ? "Live ProxyService" : "Test data");
-				LogHelper.Instance.Log($"Performing {arg} Login Call");
+				string text = (IsLoginLiveCall ? "Live ProxyService" : "Test data");
+				LogHelper.Instance.Log("Performing " + text + " Login Call");
 				LogHelper.Instance.Log($"Login Request: {customerProfileLoginRequest?.Scrub()}");
 				customerProfileKioskLoginResponse = LoginAsync(customerProfileLoginRequest).Result;
 			}).ContinueWith(delegate
@@ -156,7 +156,7 @@ public class KioskClientServiceCustomerProfile : BaseKioskClientService, IKioskC
 
 	private async Task<CustomerProfileKioskLoginResponse> CallLogineAsync(ICustomerProfileLoginRequest loginRequest)
 	{
-		WebResult<CustomerProfileKioskLoginResponse> webResult = await ExecuteAsyncWebRequest<CustomerProfileKioskLoginResponse>(new Uri(string.Format("{0}/{1}/login", base.KioskClientServiceBaseUrl, "api/customerprofile")), loginRequest, "POST", 100000);
+		WebResult<CustomerProfileKioskLoginResponse> webResult = await ExecuteAsyncWebRequest<CustomerProfileKioskLoginResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/customerprofile/login"), loginRequest, "POST", 100000);
 		LogResponse("KioskClientServiceCustomerProfile.Login", webResult);
 		return webResult?.Response;
 	}
@@ -177,7 +177,7 @@ public class KioskClientServiceCustomerProfile : BaseKioskClientService, IKioskC
 		}
 		else
 		{
-			string text = (((customerProfileKioskLoginResponse?.Errors?.Count() ?? 0) <= 0) ? null : customerProfileKioskLoginResponse?.Errors[0]?.Code);
+			string text = (((customerProfileKioskLoginResponse?.Errors?.Count()).GetValueOrDefault() <= 0) ? null : customerProfileKioskLoginResponse?.Errors[0]?.Code);
 			object fieldsForResponseCode = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), text);
 			switch (loginResult.KioskLoginResponseError = ((fieldsForResponseCode != null) ? ((KioskLoginResponseErrors)fieldsForResponseCode) : KioskLoginResponseErrors.None))
 			{
@@ -208,7 +208,7 @@ public class KioskClientServiceCustomerProfile : BaseKioskClientService, IKioskC
 				loginResult.ErrorMessage = Resources.personalization_service_error_KLI0004;
 				break;
 			default:
-				LogHelper.Instance.Log($"KioskClientServiceCustomerProfile.ProcessLoginResult - Warning: No specific error handler for error code: {text} ");
+				LogHelper.Instance.Log("KioskClientServiceCustomerProfile.ProcessLoginResult - Warning: No specific error handler for error code: " + text + " ");
 				loginResult.ErrorMessage = Resources.personalization_service_error_KLI0004;
 				break;
 			case KioskLoginResponseErrors.LoyaltyIsDown:
@@ -222,14 +222,13 @@ public class KioskClientServiceCustomerProfile : BaseKioskClientService, IKioskC
 			foreach (Redbox.Rental.Model.Error error in customerProfileKioskLoginResponse.Errors)
 			{
 				object fieldsForResponseCode2 = ResponseCodeAttribute.GetFieldsForResponseCode(typeof(KioskLoginResponseErrors?), error?.Code);
-				KioskLoginResponseErrors kioskLoginResponseErrors2 = ((fieldsForResponseCode2 != null) ? ((KioskLoginResponseErrors)fieldsForResponseCode2) : KioskLoginResponseErrors.None);
-				if (kioskLoginResponseErrors2 == KioskLoginResponseErrors.SubscriptionServiceIsDown && loginResult?.PersonalizationSession?.SubscriptionData != null)
+				if (((fieldsForResponseCode2 != null) ? ((KioskLoginResponseErrors)fieldsForResponseCode2) : KioskLoginResponseErrors.None) == KioskLoginResponseErrors.SubscriptionServiceIsDown && loginResult?.PersonalizationSession?.SubscriptionData != null)
 				{
 					loginResult.PersonalizationSession.SubscriptionData.SubscriptionServiceIsDown = true;
 				}
 			}
 		}
-		if (loginResult?.PersonalizationSession?.LoyaltySession?.SignInError ?? false)
+		if (loginResult?.PersonalizationSession?.LoyaltySession?.SignInError == true)
 		{
 			loginResult.ErrorMessage = Resources.personalization_service_error_KLI0005;
 		}

@@ -226,8 +226,8 @@ public class QueueServiceVistaDBData : IQueueServiceData, IDisposable
 
 	private void LogExceptionAndAddToErrors(ErrorList errors, string exceptionSourceMethodName, Exception e)
 	{
-		LogHelper.Instance.Log($"An unhandled exception was raised in {exceptionSourceMethodName}.", e);
-		errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", $"An unhandled exception was raised in QueueServiceVistaDBData.{exceptionSourceMethodName}.", e));
+		LogHelper.Instance.Log("An unhandled exception was raised in " + exceptionSourceMethodName + ".", e);
+		errors.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("Q999", "An unhandled exception was raised in QueueServiceVistaDBData." + exceptionSourceMethodName + ".", e));
 	}
 
 	private bool IsConnectionValid(ErrorList errors)

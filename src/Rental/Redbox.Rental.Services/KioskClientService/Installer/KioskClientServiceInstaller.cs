@@ -24,6 +24,6 @@ public class KioskClientServiceInstaller : BaseKioskClientService, IKioskClientS
 
 	public PendingStatesResponse GetPendingStates()
 	{
-		return ExecuteWebRequest<PendingStatesResponse>(new Uri(string.Format("{0}/{1}/getpendingstates", base.KioskClientServiceBaseUrl, "api/installer")), null, "GET", 20000).Response;
+		return ExecuteWebRequest<PendingStatesResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/installer/getpendingstates"), null, "GET", 20000).Response;
 	}
 }

@@ -81,7 +81,7 @@ public class VistarAdService : IVistarAdService, IAdService
 			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 			if (service != null && service.EnableVistarAds)
 			{
-				flag = ServiceLocator.Instance.GetService<IKioskClientService>()?.Ads?.SendProofOfPlay(adImpression) ?? false;
+				flag = ServiceLocator.Instance.GetService<IKioskClientService>()?.Ads?.SendProofOfPlay(adImpression) == true;
 			}
 		}
 		LogHelper.Instance.Log($"VistarAdService.CreateImpression: Advertisement Id: {vistarAd?.AdvertisementId}, Location: {adImpression?.AdLocation}, Result: {flag}");

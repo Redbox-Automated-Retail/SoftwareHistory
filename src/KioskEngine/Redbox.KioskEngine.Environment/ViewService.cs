@@ -386,7 +386,7 @@ public class ViewService : IViewService
 		}
 		else
 		{
-			LogHelper.Instance.Log($"View {viewName} not shown due to critical error view or maintenance mode.");
+			LogHelper.Instance.Log("View " + viewName + " not shown due to critical error view or maintenance mode.");
 		}
 	}
 
@@ -400,8 +400,8 @@ public class ViewService : IViewService
 			{
 				if (num < 10)
 				{
-					string arg = ((num > 0) ? ", " : null);
-					stringBuilder.Append($"{arg}{item?.ViewFrame?.ViewName}");
+					string text = ((num > 0) ? ", " : null);
+					stringBuilder.Append(text + item?.ViewFrame?.ViewName);
 				}
 				else if (num == 10)
 				{
@@ -488,7 +488,7 @@ public class ViewService : IViewService
 
 	public bool IsMaintenanceViewShowing()
 	{
-		return PeekViewFrame()?.ViewFrame?.IsMaintenanceModeView ?? false;
+		return PeekViewFrame()?.ViewFrame?.IsMaintenanceModeView == true;
 	}
 
 	public bool IsSafeToChangeView()
@@ -563,7 +563,7 @@ public class ViewService : IViewService
 		}
 		else
 		{
-			LogHelper.Instance.Log(string.Concat("UnwindToSafe( ", context, " ) denied."));
+			LogHelper.Instance.Log("UnwindToSafe( " + context?.ToString() + " ) denied.");
 		}
 	}
 

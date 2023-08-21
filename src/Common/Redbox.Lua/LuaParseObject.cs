@@ -55,12 +55,12 @@ public class LuaParseObject : IEnumerable
 
 	public static implicit operator int(LuaParseObject m)
 	{
-		return (m.m_instance as int?) ?? 0;
+		return (m.m_instance as int?).GetValueOrDefault();
 	}
 
 	public static implicit operator double(LuaParseObject m)
 	{
-		return (m.m_instance as double?) ?? 0.0;
+		return (m.m_instance as double?).GetValueOrDefault();
 	}
 
 	public static implicit operator Dictionary<string, object>(LuaParseObject m)

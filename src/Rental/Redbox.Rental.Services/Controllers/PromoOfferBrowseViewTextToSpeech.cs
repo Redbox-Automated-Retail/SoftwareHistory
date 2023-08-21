@@ -76,7 +76,7 @@ public class PromoOfferBrowseViewTextToSpeech
 		speechPart.Refresh = delegate
 		{
 			speechPart.Clear();
-			string text = ((RentalShoppingCartService?.CurrentRentalShoppingCart?.IsFull ?? false) ? "CartIsFull" : "CheckForItemsInCart");
+			string text = ((RentalShoppingCartService?.CurrentRentalShoppingCart?.IsFull == true) ? "CartIsFull" : "CheckForItemsInCart");
 			speechPart.RegularExpression = new RegularExpression
 			{
 				Expression = "Jump",
@@ -125,8 +125,7 @@ public class PromoOfferBrowseViewTextToSpeech
 		};
 		speechPart.Refresh = delegate
 		{
-			int? num = RentalShoppingCartService?.CurrentRentalShoppingCart?.Count;
-			string text = ((!num.HasValue || num.GetValueOrDefault() == 0) ? "MainMenu" : "ListCartItems");
+			string text = (((RentalShoppingCartService?.CurrentRentalShoppingCart?.Count).GetValueOrDefault() == 0) ? "MainMenu" : "ListCartItems");
 			speechPart.Clear();
 			speechPart.RegularExpression = new RegularExpression
 			{
@@ -159,10 +158,10 @@ public class PromoOfferBrowseViewTextToSpeech
 					Value = "AvailableTitles"
 				});
 				AddCheckOutEvent(speechPart, promoOfferBrowseViewModel);
-				int num = RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0;
+				int valueOrDefault = (RentalShoppingCartService?.CurrentRentalShoppingCart?.Count).GetValueOrDefault();
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"You have {num} {GetCartTitlePlurality()} in your cart."
+					Text = $"You have {valueOrDefault} {GetCartTitlePlurality()} in your cart."
 				});
 				if (Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.SelectedProduct != null)
 				{
@@ -204,7 +203,7 @@ public class PromoOfferBrowseViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"There are a total of {promoOfferBrowseViewModel?.BrowseProductControlModel?.BrowseItems?.Count ?? 0} titles available with up to {promoOfferBrowseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} titles per screen."
+					Text = $"There are a total of {(promoOfferBrowseViewModel?.BrowseProductControlModel?.BrowseItems?.Count).GetValueOrDefault()} titles available with up to {(promoOfferBrowseViewModel?.BrowseProductControlModel?.ItemsPerPage).GetValueOrDefault()} titles per screen."
 				});
 				speechPart.Texts.Add(new TextPart
 				{
@@ -265,16 +264,16 @@ public class PromoOfferBrowseViewTextToSpeech
 						}
 					}
 				});
-				int num = PromoOfferState?.TTSBrowseItemModelsShown?.Count((IBrowseItemModel x) => x is DisplayProductModel) ?? 0;
+				int valueOrDefault = (PromoOfferState?.TTSBrowseItemModelsShown?.Count((IBrowseItemModel x) => x is DisplayProductModel)).GetValueOrDefault();
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"You are currently browsing on page {browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0} of {browseViewModel?.BrowseProductControlModel?.TotalPages ?? 0} pages and there are {num} titles on this screen."
+					Text = $"You are currently browsing on page {(browseViewModel?.BrowseProductControlModel?.PageNumber).GetValueOrDefault()} of {(browseViewModel?.BrowseProductControlModel?.TotalPages).GetValueOrDefault()} pages and there are {valueOrDefault} titles on this screen."
 				});
-				if ((browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0) > 1)
+				if ((browseViewModel?.BrowseProductControlModel?.PageNumber).GetValueOrDefault() > 1)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"To hear the previous {browseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} titles, press the minus key."
+						Text = $"To hear the previous {(browseViewModel?.BrowseProductControlModel?.ItemsPerPage).GetValueOrDefault()} titles, press the minus key."
 					});
 				}
 				if (PromoOfferState?.TTSBrowseItemModelsShown != null)
@@ -312,11 +311,11 @@ public class PromoOfferBrowseViewTextToSpeech
 						}
 					}
 				}
-				if ((browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0) < (browseViewModel?.BrowseProductControlModel?.TotalPages ?? 0))
+				if ((browseViewModel?.BrowseProductControlModel?.PageNumber).GetValueOrDefault() < (browseViewModel?.BrowseProductControlModel?.TotalPages).GetValueOrDefault())
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"To hear {browseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} more titles, press the plus key."
+						Text = $"To hear {(browseViewModel?.BrowseProductControlModel?.ItemsPerPage).GetValueOrDefault()} more titles, press the plus key."
 					});
 				}
 				if (Redbox.Rental.Services.Session.Session.Instance.PromoOfferState.SelectedProduct != null)
@@ -425,7 +424,7 @@ public class PromoOfferBrowseViewTextToSpeech
 
 	private static string GetCartTitlePlurality()
 	{
-		if ((RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0) != 1)
+		if (RentalShoppingCartService?.CurrentRentalShoppingCart?.Count != 1)
 		{
 			return "Titles";
 		}

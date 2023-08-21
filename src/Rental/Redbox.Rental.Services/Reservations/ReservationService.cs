@@ -68,7 +68,7 @@ public class ReservationService : IReservationService
 					Message = ex?.ToString()
 				});
 			}
-			LogHelper.Instance.Log($"ReservationService.GetReservationServiceStatus result={JsonConvert.SerializeObject(response)}");
+			LogHelper.Instance.Log("ReservationService.GetReservationServiceStatus result=" + JsonConvert.SerializeObject(response));
 		}, CancellationToken.None, TaskCreationOptions.None, service?.UITaskScheduler);
 		return response;
 	}
@@ -87,7 +87,7 @@ public class ReservationService : IReservationService
 			response.StatusCode = ((response.Content != null && response.Content.Count > 0) ? HttpStatusCode.OK : HttpStatusCode.NotFound);
 			response.Success = true;
 		}, CancellationToken.None, TaskCreationOptions.None, service?.UITaskScheduler);
-		LogHelper.Instance.Log($"ReservationService.GetReservations result={JsonConvert.SerializeObject(response)}");
+		LogHelper.Instance.Log("ReservationService.GetReservations result=" + JsonConvert.SerializeObject(response));
 		return response;
 	}
 
@@ -118,14 +118,14 @@ public class ReservationService : IReservationService
 							LongName = titleProduct.LongName,
 							BarcodeCount = (titleProduct.BarCodeProducts?.Count ?? 0),
 							PurchasePrice = titleProduct.PurchasePrice,
-							OneNightRentalPrice = (titleProduct.RentalPriceRecords?.FirstOrDefault((IPricingRecord x) => !x.InitialDays.HasValue || x.InitialDays == 1)?.InitialNight ?? 0m)
+							OneNightRentalPrice = (titleProduct.RentalPriceRecords?.FirstOrDefault((IPricingRecord x) => !x.InitialDays.HasValue || x.InitialDays == 1)?.InitialNight).GetValueOrDefault()
 						});
 					}
 				}
 			}
 			response.StatusCode = ((response.Content != null && response.Content.Count > 0) ? HttpStatusCode.OK : HttpStatusCode.NotFound);
 			response.Success = true;
-			LogHelper.Instance.Log($"ReservationService.GetReservableTitles result={JsonConvert.SerializeObject(response)}");
+			LogHelper.Instance.Log("ReservationService.GetReservableTitles result=" + JsonConvert.SerializeObject(response));
 		}, CancellationToken.None, TaskCreationOptions.None, service?.UITaskScheduler);
 		return response;
 	}
@@ -137,7 +137,7 @@ public class ReservationService : IReservationService
 		CreateReservationResponse response = new CreateReservationResponse();
 		await Task.Factory.StartNew(delegate
 		{
-			LogHelper.Instance.Log($"ReservationService.CreateReservation request={JsonConvert.SerializeObject(reservationRequest)}");
+			LogHelper.Instance.Log("ReservationService.CreateReservation request=" + JsonConvert.SerializeObject(reservationRequest));
 			IReservationRequestResult reservationRequestResult = ReservationFunctions.CreateReservation(reservationRequest);
 			response.Success = reservationRequestResult != null && reservationRequestResult.Status == ReservationRequestStatus.ReservationCreated;
 			response.Content = reservationRequestResult;
@@ -175,7 +175,7 @@ public class ReservationService : IReservationService
 				});
 			}
 		}, CancellationToken.None, TaskCreationOptions.None, service?.UITaskScheduler);
-		LogHelper.Instance.Log($"ReservationService.CreateReservation result={JsonConvert.SerializeObject(response)}");
+		LogHelper.Instance.Log("ReservationService.CreateReservation result=" + JsonConvert.SerializeObject(response));
 		return response;
 	}
 
@@ -188,7 +188,7 @@ public class ReservationService : IReservationService
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		await Task.Factory.StartNew(delegate
 		{
-			LogHelper.Instance.Log($"ReservationService.CreateReservation referenceNumber={referenceNumber}");
+			LogHelper.Instance.Log("ReservationService.CreateReservation referenceNumber=" + referenceNumber);
 			if (string.IsNullOrEmpty(referenceNumber))
 			{
 				response.StatusCode = HttpStatusCode.BadRequest;
@@ -211,7 +211,7 @@ public class ReservationService : IReservationService
 					response.Errors.Add(new ResponseError
 					{
 						Code = HttpStatusCode.NotFound.ToString(),
-						Message = $"Reservation not found for reference number {referenceNumber}."
+						Message = "Reservation not found for reference number " + referenceNumber + "."
 					});
 					break;
 				case ReservationFunctions.ReservationCancelResult.Error:
@@ -224,7 +224,7 @@ public class ReservationService : IReservationService
 					break;
 				}
 			}
-			LogHelper.Instance.Log($"ReservationService.CancelReservation result={JsonConvert.SerializeObject(response)}");
+			LogHelper.Instance.Log("ReservationService.CancelReservation result=" + JsonConvert.SerializeObject(response));
 		}, CancellationToken.None, TaskCreationOptions.None, service?.UITaskScheduler);
 		return response;
 	}
@@ -248,7 +248,7 @@ public class ReservationService : IReservationService
 		LogHelper.Instance.Log("ReservationService.RegisterWithAWSBrokerServiceAsync");
 		if (!(ServiceLocator.Instance.GetService<IConfiguration>()?.UseAWSBrokerService ?? false))
 		{
-			LogHelper.Instance.Log(string.Format("RegisterWithAWSBrokerService aborted.  Config setting {0} not enabled.", "UseAWSBrokerService"));
+			LogHelper.Instance.Log("RegisterWithAWSBrokerService aborted.  Config setting UseAWSBrokerService not enabled.");
 			registerWithBrokerServiceResponse = new RegisterWithBrokerServiceResponse
 			{
 				StatusCode = 409,
@@ -258,7 +258,7 @@ public class ReservationService : IReservationService
 					new Redbox.Rental.Model.Error
 					{
 						Code = HttpStatusCode.Conflict.ToString(),
-						Message = string.Format("Config setting {0} not enabled.", "UseAWSBrokerService")
+						Message = "Config setting UseAWSBrokerService not enabled."
 					}
 				}
 			};
@@ -327,7 +327,7 @@ public class ReservationService : IReservationService
 		IUnregisterFromBrokerServiceResponse result = null;
 		if (!(ServiceLocator.Instance.GetService<IConfiguration>()?.UseAWSBrokerService ?? false))
 		{
-			LogHelper.Instance.Log(string.Format("UnRegisterFromAWSBrokerServiceAsync aborted.  Config setting {0} not enabled.", "UseAWSBrokerService"));
+			LogHelper.Instance.Log("UnRegisterFromAWSBrokerServiceAsync aborted.  Config setting UseAWSBrokerService not enabled.");
 			result = new UnregisterFromBrokerServiceResponse
 			{
 				StatusCode = 409,
@@ -337,7 +337,7 @@ public class ReservationService : IReservationService
 					new Redbox.Rental.Model.Error
 					{
 						Code = HttpStatusCode.Conflict.ToString(),
-						Message = string.Format("Config setting {0} not enabled.", "UseAWSBrokerService")
+						Message = "Config setting UseAWSBrokerService not enabled."
 					}
 				}
 			};

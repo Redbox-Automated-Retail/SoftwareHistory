@@ -151,7 +151,7 @@ public partial class CreateReservationUserControl : UserControl, Redbox.KioskEng
 				string text2 = null;
 				if (aPIResponse.Errors != null && aPIResponse.Errors.Count > 0)
 				{
-					text2 = string.Format("Errors: {0}", string.Join(", ", aPIResponse.Errors?.Select((Redbox.Rental.Services.App.Error x) => $"Code: {x.Code}, Message: {x.Message}").ToArray()));
+					text2 = "Errors: " + string.Join(", ", aPIResponse.Errors?.Select((Redbox.Rental.Services.App.Error x) => "Code: " + x.Code + ", Message: " + x.Message).ToArray());
 				}
 				text = ((aPIResponse != null && aPIResponse.IsSuccessStatusCode) ? string.Empty : $"Creation failed. {Environment.NewLine}Status code: {(int)aPIResponse.StatusCode} {aPIResponse.StatusCode} {text2}");
 				try
@@ -160,16 +160,16 @@ public partial class CreateReservationUserControl : UserControl, Redbox.KioskEng
 				}
 				catch
 				{
-					text = $"{text}{Environment.NewLine}Unable to deserialize reponse content CreateReservationResponse.";
+					text = text + Environment.NewLine + "Unable to deserialize reponse content CreateReservationResponse.";
 				}
 				if (aPIResponse?.Response?.Errors != null)
 				{
 					text2 = null;
 					if (aPIResponse.Response.Errors.Count > 0)
 					{
-						text2 = string.Format("{0}{1}", Environment.NewLine, string.Join(", ", aPIResponse.Response.Errors?.Select((ResponseError x) => $"Code: {x.Code}, Message: {x.Message}").ToArray()));
+						text2 = Environment.NewLine + string.Join(", ", aPIResponse.Response.Errors?.Select((ResponseError x) => "Code: " + x.Code + ", Message: " + x.Message).ToArray());
 					}
-					text = $"{text}{text2}";
+					text += text2;
 				}
 			}
 			SimpleMessageWindow.Show(ControlUtilities.GetParentWindow(this), "Reservation Creation Result", text);

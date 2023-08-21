@@ -274,12 +274,12 @@ public class HelpViewController : BaseViewController
 		viewModel.CloseButtonText = Resources.close_button;
 		ServiceLocator.Instance.GetService<IConfigurationService>();
 		BuildHelpDocInfoList(giftCardEnabled: false, viewModel);
-		HelpDocuments helpDocuments = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocument ?? HelpDocuments.Faq;
-		BuildHelpDocButtons(parameters, viewModel, helpDocuments);
-		viewModel.CurrentHelpDocument = helpDocuments;
-		viewModel.XpsDocument = LoadXpsDocument(viewModel.HelpDocumentInfoList[helpDocuments]);
+		HelpDocuments valueOrDefault = (Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocument).GetValueOrDefault();
+		BuildHelpDocButtons(parameters, viewModel, valueOrDefault);
+		viewModel.CurrentHelpDocument = valueOrDefault;
+		viewModel.XpsDocument = LoadXpsDocument(viewModel.HelpDocumentInfoList[valueOrDefault]);
 		SetTitle(viewModel);
-		viewModel.ShowContactText = helpDocuments == HelpDocuments.Faq || viewModel.CurrentHelpDocument == HelpDocuments.MobileFaq;
+		viewModel.ShowContactText = valueOrDefault == HelpDocuments.Faq || viewModel.CurrentHelpDocument == HelpDocuments.MobileFaq;
 		ConfigureTTS(viewModel);
 		helpViewUserControl.DataContext = viewModel;
 		viewModel.CurrentHelpDocumentPage = Redbox.Rental.Services.Session.Session.Instance?.HelpState?.CurrentHelpDocumentPage ?? 1;

@@ -35,7 +35,7 @@ public class RedboxPlusTermsAcceptanceViewController : BaseViewController
 		{
 			OrchestrationService.SetCurrentUICulture();
 			redboxPlusTermsAcceptanceViewModel.TitleText = Resources.redbox_plus_terms_acceptance_title_text;
-			redboxPlusTermsAcceptanceViewModel.SubtitleText = ((Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false) ? Resources.redbox_plus_terms_acceptance_subtitle_text_existing_account : Resources.redbox_plus_terms_acceptance_subtitle_text_new_account);
+			redboxPlusTermsAcceptanceViewModel.SubtitleText = ((Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn == true) ? Resources.redbox_plus_terms_acceptance_subtitle_text_existing_account : Resources.redbox_plus_terms_acceptance_subtitle_text_new_account);
 			redboxPlusTermsAcceptanceViewModel.EmailText = emailAddress;
 			redboxPlusTermsAcceptanceViewModel.TermsHeader = Resources.redbox_plus_terms_acceptance_terms_header;
 			redboxPlusTermsAcceptanceViewModel.TermsText = redboxPlusTermsAcceptanceViewModel.RedboxPlusSubscriptionProduct.AcceptanceTerms;

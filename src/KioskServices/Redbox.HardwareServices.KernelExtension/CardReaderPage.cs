@@ -94,7 +94,7 @@ public class CardReaderPage : UserControl, IPreferencePageHost
 		{
 			text = text.Split('.').Last();
 		}
-		labelRegisteredServiceValue.Text = $"{text}";
+		labelRegisteredServiceValue.Text = text ?? "";
 	}
 
 	private void buttonRefresh_Click(object sender, EventArgs e)

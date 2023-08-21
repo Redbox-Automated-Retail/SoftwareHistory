@@ -29,7 +29,7 @@ internal static class Windows10TouchScreen
 		Process process = null;
 		try
 		{
-			LogHelper.Instance.Log($"Windows10TouchScreen - Attempting to {wmiMethod} HID-compliant touch screen");
+			LogHelper.Instance.Log("Windows10TouchScreen - Attempting to " + wmiMethod + " HID-compliant touch screen");
 			string arguments = $"path Win32_PnPEntity where \"Name='HID-Compliant touch screen'\" call {wmiMethod}";
 			process = new Process
 			{

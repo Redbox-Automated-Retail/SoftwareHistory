@@ -67,11 +67,11 @@ public class MessagePopupViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"For {viewModel.Button1Text}, press the CANCEL key."
+					Text = "For " + viewModel.Button1Text + ", press the CANCEL key."
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"For {viewModel.Button2Text}, press the ENTER key."
+					Text = "For " + viewModel.Button2Text + ", press the ENTER key."
 				});
 			}
 		};

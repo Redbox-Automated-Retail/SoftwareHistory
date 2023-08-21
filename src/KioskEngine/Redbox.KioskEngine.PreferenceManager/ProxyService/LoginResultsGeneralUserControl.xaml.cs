@@ -576,7 +576,7 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 
 		public override string ToString()
 		{
-			return $"{ResponseName} {Code}";
+			return ResponseName + " " + Code;
 		}
 	}
 

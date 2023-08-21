@@ -43,7 +43,7 @@ public class LoyaltyService : ILoyaltyService
 				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 				{
 					string kioskClientServiceBaseUrl = ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl;
-					LogHelper.Instance.Log($"Live call to remote ILoyaltyServices.EstimatePointsAccrued, URL: {kioskClientServiceBaseUrl}");
+					LogHelper.Instance.Log("Live call to remote ILoyaltyServices.EstimatePointsAccrued, URL: " + kioskClientServiceBaseUrl);
 					CartMessage request = ShoppingCartMessageHelper.CreateCartMessage(customerProfileNumber, "EstimateAccrual");
 					IDictionary<string, object> dictionary = await ServiceLocator.Instance.GetService<IKioskClientService>().Loyalty.EstimateAccrual(request);
 					result.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
@@ -158,7 +158,7 @@ public class LoyaltyService : ILoyaltyService
 				if (!ServiceLocator.Instance.GetService<IStoreServices>().IsStandAlone)
 				{
 					string kioskClientServiceBaseUrl = ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl;
-					LogHelper.Instance.Log($"Live call to remote ILoyaltyServices.EstimateRedemptionPoints, URL: {kioskClientServiceBaseUrl}");
+					LogHelper.Instance.Log("Live call to remote ILoyaltyServices.EstimateRedemptionPoints, URL: " + kioskClientServiceBaseUrl);
 					CartMessage request = ShoppingCartMessageHelper.CreateCartMessage(customerProfileNumber, "EstimateRedemption");
 					IDictionary<string, object> dictionary = await ServiceLocator.Instance.GetService<IKioskClientService>().Loyalty.EstimateRedemption(request);
 					result.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];

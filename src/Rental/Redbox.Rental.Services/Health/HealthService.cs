@@ -139,7 +139,7 @@ public class HealthService : IHealthServices
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Call to KioskClientService.SendAlert failed, errors: {JsonConvert.SerializeObject(baseResponse.Errors)}");
+					LogHelper.Instance.Log("Call to KioskClientService.SendAlert failed, errors: " + JsonConvert.SerializeObject(baseResponse.Errors));
 					errors = baseResponse.Errors.ToKEComponentModelErrors();
 				}
 			}
@@ -205,7 +205,7 @@ public class HealthService : IHealthServices
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Call to KioskClientService.AuditEvent failed, errors: {JsonConvert.SerializeObject(baseResponse.Errors)}");
+					LogHelper.Instance.Log("Call to KioskClientService.AuditEvent failed, errors: " + JsonConvert.SerializeObject(baseResponse.Errors));
 					errors = baseResponse.Errors.ToKEComponentModelErrors();
 				}
 			}
@@ -266,7 +266,7 @@ public class HealthService : IHealthServices
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Call to KioskClientService.KioskFunctionCheck failed, errors: {JsonConvert.SerializeObject(baseResponse.Errors)}");
+					LogHelper.Instance.Log("Call to KioskClientService.KioskFunctionCheck failed, errors: " + JsonConvert.SerializeObject(baseResponse.Errors));
 					errors = baseResponse.Errors.ToKEComponentModelErrors();
 				}
 			}
@@ -329,7 +329,7 @@ public class HealthService : IHealthServices
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Call to KioskClientService.KioskEvents failed, errors: {JsonConvert.SerializeObject(baseResponse.Errors)}");
+					LogHelper.Instance.Log("Call to KioskClientService.KioskEvents failed, errors: " + JsonConvert.SerializeObject(baseResponse.Errors));
 				}
 			}
 			catch (Exception e)

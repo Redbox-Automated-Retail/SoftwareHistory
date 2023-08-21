@@ -133,7 +133,7 @@ public class ExpressionTokenizer
 					{
 						break;
 					}
-					empty += (char)ReadChar()/*cast due to constrained. prefix*/;
+					empty += (char)ReadChar();
 				}
 				TokenText = empty;
 				return;

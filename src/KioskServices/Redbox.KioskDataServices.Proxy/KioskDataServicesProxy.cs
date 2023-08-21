@@ -51,9 +51,9 @@ internal class KioskDataServicesProxy
 		{
 			string text = Encoding.ASCII.GetString(payload);
 			string text2 = text.ToPrettyJson();
-			LogHelper.Instance.Log($"KioskDataServicesProxy JSON request: type {messageType}; body: {((text2.Length <= 10000) ? text2 : text)}");
+			LogHelper.Instance.Log("KioskDataServicesProxy JSON request: type " + messageType + "; body: " + ((text2.Length <= 10000) ? text2 : text));
 			string text3 = PerformRemoteMessage(apiUri, text, KioskDataServicesKey);
-			LogHelper.Instance.Log($"KioskDataServicesProxy JSON response: type {messageType}; response: {text3.ToPrettyJson()}");
+			LogHelper.Instance.Log("KioskDataServicesProxy JSON response: type " + messageType + "; response: " + text3.ToPrettyJson());
 			LogHelper.Instance.Log($"KioskDataServicesProxy call execution time: {executionTimer.Elapsed}");
 			if (!string.IsNullOrEmpty(text3))
 			{
@@ -77,7 +77,7 @@ internal class KioskDataServicesProxy
 			webRequest.Method = "POST";
 			webRequest.ContentType = "application/json";
 			webRequest.ContentLength = jsonRequest.Length;
-			webRequest.Headers.Add($"Authorization: Bearer {authorizationKey}");
+			webRequest.Headers.Add("Authorization: Bearer " + authorizationKey);
 			IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
 			if (service != null)
 			{
@@ -86,7 +86,7 @@ internal class KioskDataServicesProxy
 			}
 			else
 			{
-				LogHelper.Instance.Log(string.Format("Could not add {0} header; Store Manager is null.", "x-redbox-kioskid"));
+				LogHelper.Instance.Log("Could not add x-redbox-kioskid header; Store Manager is null.");
 			}
 			string sessionIdFromBody = GetSessionIdFromBody(jsonRequest);
 			if (!string.IsNullOrWhiteSpace(sessionIdFromBody))
@@ -113,7 +113,7 @@ internal class KioskDataServicesProxy
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log($"Unable get sessionId from body: {body}", e);
+			LogHelper.Instance.Log("Unable get sessionId from body: " + body, e);
 			return null;
 		}
 	}

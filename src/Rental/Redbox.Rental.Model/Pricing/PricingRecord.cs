@@ -84,11 +84,7 @@ public class PricingRecord : IPricingRecord
 			if (!IsMultiNightPrice && DefaultInitialNightPrice.HasValue)
 			{
 				decimal? num = DefaultInitialNightPrice - (decimal?)InitialNight;
-				if (!(num.GetValueOrDefault() > 0m))
-				{
-					return false;
-				}
-				return num.HasValue;
+				return (num.GetValueOrDefault() > 0m) & num.HasValue;
 			}
 			return false;
 		}

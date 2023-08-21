@@ -100,7 +100,7 @@ public class NewCartConfirmADAActionUpdateViewTextToSpeech
 					{
 						speechPart.Texts.Add(new TextPart
 						{
-							Text = $"title {displayProductModel.Name} does not qualify for the discount."
+							Text = "title " + displayProductModel.Name + " does not qualify for the discount."
 						});
 					}
 					else

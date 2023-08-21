@@ -90,12 +90,13 @@ public abstract class ServerSession : ISession, IMessageSink
 			Stream = stream;
 			return;
 		}
-		SslStream sslStream = new SslStream(stream, leaveInnerStreamOpen: false);
-		sslStream.ReadTimeout = 30000;
-		sslStream.WriteTimeout = 30000;
-		SslStream sslStream2 = sslStream;
-		sslStream2.AuthenticateAsServer(ServiceHost.Certificate, clientCertificateRequired: false, SslProtocols.Tls, checkCertificateRevocation: true);
-		Stream = sslStream2;
+		SslStream sslStream = new SslStream(stream, leaveInnerStreamOpen: false)
+		{
+			ReadTimeout = 30000,
+			WriteTimeout = 30000
+		};
+		sslStream.AuthenticateAsServer(ServiceHost.Certificate, clientCertificateRequired: false, SslProtocols.Tls, checkCertificateRevocation: true);
+		Stream = sslStream;
 	}
 
 	private void RaiseDisconnect()

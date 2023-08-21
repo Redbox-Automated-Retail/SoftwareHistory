@@ -597,9 +597,15 @@ public class TitleRollupProduct : KioskProduct, ITitleRollupProduct, ITitleProdu
 				if (_allTitleProducts.ContainsKey(id))
 				{
 					ITitleProduct title = _allTitleProducts[id];
-					MDVProduct mDVProduct = (from item in _allMDVProducts
-						where item.Value.TitleProducts.Contains(title)
-						select item.Value).FirstOrDefault();
+					MDVProduct mDVProduct = _allMDVProducts.Where(delegate(KeyValuePair<long, MDVProduct> item)
+					{
+						KeyValuePair<long, MDVProduct> keyValuePair = item;
+						return keyValuePair.Value.TitleProducts.Contains(title);
+					}).Select(delegate(KeyValuePair<long, MDVProduct> item)
+					{
+						KeyValuePair<long, MDVProduct> keyValuePair = item;
+						return keyValuePair.Value;
+					}).FirstOrDefault();
 					if (mDVProduct != null)
 					{
 						if (!_kioskProducts.Contains(mDVProduct))

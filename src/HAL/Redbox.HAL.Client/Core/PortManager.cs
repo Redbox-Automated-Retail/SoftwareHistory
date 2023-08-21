@@ -115,8 +115,7 @@ public sealed class PortManager : IPortManagerService
 	private bool RegisterUnderLock(ICommPort port)
 	{
 		string key = port.PortName.ToUpper();
-		string text = InUsePorts.Find((string each) => each.Equals(key, StringComparison.CurrentCultureIgnoreCase));
-		if (text == null)
+		if (InUsePorts.Find((string each) => each.Equals(key, StringComparison.CurrentCultureIgnoreCase)) == null)
 		{
 			InUsePorts.Add(key);
 			return true;
@@ -130,19 +129,17 @@ public sealed class PortManager : IPortManagerService
 		switch (mode)
 		{
 		case CommPortReadModes.Async:
-		{
-			AsyncReadPort asyncReadPort = new AsyncReadPort(port);
-			asyncReadPort.Mode = CommPortReadModes.Async;
-			result = asyncReadPort;
+			result = new AsyncReadPort(port)
+			{
+				Mode = CommPortReadModes.Async
+			};
 			break;
-		}
 		case CommPortReadModes.Callback:
-		{
-			CallbackReadPort callbackReadPort = new CallbackReadPort(port);
-			callbackReadPort.Mode = CommPortReadModes.Callback;
-			result = callbackReadPort;
+			result = new CallbackReadPort(port)
+			{
+				Mode = CommPortReadModes.Callback
+			};
 			break;
-		}
 		}
 		return result;
 	}

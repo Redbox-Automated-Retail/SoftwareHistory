@@ -148,7 +148,7 @@ public class HelpViewTextToSpeech
 				});
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"Press {num.ToString()} to change the document to {viewModel.HelpDocumentInfoList[button.DocumentToShow].AbeTitle}."
+					Text = "Press " + num + " to change the document to " + viewModel.HelpDocumentInfoList[button.DocumentToShow].AbeTitle + "."
 				});
 			}
 			num++;

@@ -321,7 +321,7 @@ public class InventoryService : IInventoryService
 			Interlocked.Increment(ref m_working);
 			LogHelper.Instance.Log("InventoryService.Snapshot - Enqueue soft sync call to kiosk client service, URL: {0}", ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl);
 			List<RemovedQueueItem> removedItems = ServiceLocator.Instance.GetService<IDataService>().GetRemovedQueueItems();
-			LogHelper.Instance.Log(string.Format("InventoryService.Snapshot - appending the following removed barcodes: {0}", string.Join(",", removedItems.Select((RemovedQueueItem ri) => ri.Barcode))));
+			LogHelper.Instance.Log("InventoryService.Snapshot - appending the following removed barcodes: " + string.Join(",", removedItems.Select((RemovedQueueItem ri) => ri.Barcode)));
 			List<IInventoryItem> list = new List<IInventoryItem>(items);
 			list.AddRange(removedItems.ToInventoryItems());
 			IKioskClientServiceResult kioskClientServiceResult = await ServiceLocator.Instance.GetService<IKioskClientService>().Inventory.SnapshotAsync(storeNumber, list);
@@ -330,7 +330,7 @@ public class InventoryService : IInventoryService
 				LogHelper.Instance.Log("InventoryService.Snapshot - KCS call to snapshot failed!");
 				if (kioskClientServiceResult.Error != null)
 				{
-					LogHelper.Instance.Log($"InventoryService.Snapshot - error returned: {kioskClientServiceResult.Error.Code}, {kioskClientServiceResult.Error.Description}");
+					LogHelper.Instance.Log("InventoryService.Snapshot - error returned: " + kioskClientServiceResult.Error.Code + ", " + kioskClientServiceResult.Error.Description);
 				}
 				return;
 			}
@@ -383,16 +383,16 @@ public class InventoryService : IInventoryService
 		{
 			await Task.Run(delegate
 			{
-				LogHelper.Instance.Log($"SoftSyncMessageProcessorService.Delete - deleting removedqueue record for barcode: {item.Barcode} with hash: {item.HashId}");
+				LogHelper.Instance.Log("SoftSyncMessageProcessorService.Delete - deleting removedqueue record for barcode: " + item.Barcode + " with hash: " + item.HashId);
 				try
 				{
 					ServiceLocator.Instance.GetService<IDataService>().DeleteRemovedQueueItem(item);
 				}
 				catch (Exception e)
 				{
-					LogHelper.Instance.Log($"SoftSyncMessageProcessorService.Delete - exception trying to delete removedqueue record for barcode: {item.Barcode}!", e);
+					LogHelper.Instance.Log("SoftSyncMessageProcessorService.Delete - exception trying to delete removedqueue record for barcode: " + item.Barcode + "!", e);
 					string storeNumber2 = (ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0).ToString();
-					ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(storeNumber2, "TitleEmpty", "RemovedQueueDeleteFail", $"Unable to delete RemovedQueue record for hash: {item.HashId}, barcode: {item.Barcode}", DateTime.Now, null);
+					ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(storeNumber2, "TitleEmpty", "RemovedQueueDeleteFail", "Unable to delete RemovedQueue record for hash: " + item.HashId + ", barcode: " + item.Barcode, DateTime.Now, null);
 				}
 			});
 		}
@@ -429,7 +429,7 @@ public class InventoryService : IInventoryService
 				LogHelper.Instance.Log("InventoryService.KioskClientServiceDiscFraudStatus - KCS call to disc action failed!");
 				if (kioskClientServiceResult.Error != null)
 				{
-					LogHelper.Instance.Log($"InventoryService.KioskClientServiceDiscFraudStatus - error returned: {kioskClientServiceResult.Error.Code}, {kioskClientServiceResult.Error.Description}");
+					LogHelper.Instance.Log("InventoryService.KioskClientServiceDiscFraudStatus - error returned: " + kioskClientServiceResult.Error.Code + ", " + kioskClientServiceResult.Error.Description);
 				}
 			}
 			else
@@ -492,7 +492,7 @@ public class InventoryService : IInventoryService
 				LogHelper.Instance.Log("InventoryService.KioskClientServiceDiscAction - KCS call to disc action failed!");
 				if (kioskClientServiceResult.Error != null)
 				{
-					LogHelper.Instance.Log($"InventoryService.KioskClientServiceDiscAction - error returned: {kioskClientServiceResult.Error.Code}, {kioskClientServiceResult.Error.Description}");
+					LogHelper.Instance.Log("InventoryService.KioskClientServiceDiscAction - error returned: " + kioskClientServiceResult.Error.Code + ", " + kioskClientServiceResult.Error.Description);
 				}
 			}
 			else

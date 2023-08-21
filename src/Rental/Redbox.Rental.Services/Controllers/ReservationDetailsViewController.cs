@@ -52,7 +52,7 @@ public class ReservationDetailsViewController : BaseViewController
 			}
 			(ServiceLocator.Instance.GetService<ITimerService>()?.CreateTimer("reservation_details_view_timer", value, value, delegate
 			{
-				LogHelper.Instance.Log(string.Format("{0} executed", "reservation_details_view_timer"));
+				LogHelper.Instance.Log("reservation_details_view_timer executed");
 				ExecuteCallback(fromOkayButton: false);
 			}))?.Start();
 		}

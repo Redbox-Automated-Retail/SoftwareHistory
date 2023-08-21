@@ -131,12 +131,12 @@ public class BaseConfiguration
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Unable to instantiate configuration category class {categoryClassPropertyInfo?.PropertyType?.Name}");
+					LogHelper.Instance.Log("Unable to instantiate configuration category class " + categoryClassPropertyInfo?.PropertyType?.Name);
 				}
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.LogException($"Unable to instantiate configuration category class {categoryClassPropertyInfo?.PropertyType?.Name}", e);
+				LogHelper.Instance.LogException("Unable to instantiate configuration category class " + categoryClassPropertyInfo?.PropertyType?.Name, e);
 			}
 		}
 		return obj;

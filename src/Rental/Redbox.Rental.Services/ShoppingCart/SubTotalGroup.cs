@@ -13,7 +13,7 @@ public class SubTotalGroup : ISubTotalGroup
 
 	public RentalShoppingCartItemAction Action { get; set; }
 
-	public decimal Amount => Math.Max((_rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x.Action == Action && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled))?.Sum((IRentalShoppingCartTitleItem x) => x.ExtendedPrice) ?? 0m) + (_rentalShoppingCart?.SubscriptionItems?.Where((IRentalShoppingCartSubscriptionItem x) => x.Action == Action)?.Sum((IRentalShoppingCartSubscriptionItem x) => x.ExtendedPrice) ?? 0m), 0m);
+	public decimal Amount => Math.Max((_rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x.Action == Action && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled))?.Sum((IRentalShoppingCartTitleItem x) => x.ExtendedPrice)).GetValueOrDefault() + (_rentalShoppingCart?.SubscriptionItems?.Where((IRentalShoppingCartSubscriptionItem x) => x.Action == Action)?.Sum((IRentalShoppingCartSubscriptionItem x) => x.ExtendedPrice)).GetValueOrDefault(), 0m);
 
 	public decimal? DiscountedAmount
 	{
@@ -22,10 +22,10 @@ public class SubTotalGroup : ISubTotalGroup
 			decimal? result = null;
 			IPromotion promotion = _rentalShoppingCart.Promotion;
 			decimal num = ((promotion?.CartItemAction != Action) ? 0m : (promotion?.Price ?? 0m));
-			decimal num2 = _rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x.Action == Action && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled) && (x.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.Sum((IRentalShoppingCartTitleItem x) => x.ExtendedPrice) ?? 0m;
-			if (num2 > 0m || num > 0m)
+			decimal valueOrDefault = (_rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x.Action == Action && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled) && (x.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.Sum((IRentalShoppingCartTitleItem x) => x.ExtendedPrice)).GetValueOrDefault();
+			if (valueOrDefault > 0m || num > 0m)
 			{
-				result = Amount - num - num2;
+				result = Amount - num - valueOrDefault;
 			}
 			if (result.HasValue)
 			{
@@ -83,23 +83,23 @@ public class SubTotalGroup : ISubTotalGroup
 			}
 			if (Action == RentalShoppingCartItemAction.subscription)
 			{
-				return _rentalShoppingCart?.SubscriptionItems?.FirstOrDefault().TaxRate ?? 0m;
+				return (_rentalShoppingCart?.SubscriptionItems?.FirstOrDefault().TaxRate).GetValueOrDefault();
 			}
-			return _rentalShoppingCart?.TitleItems?.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.Action == Action)?.TaxRate ?? 0m;
+			return (_rentalShoppingCart?.TitleItems?.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.Action == Action)?.TaxRate).GetValueOrDefault();
 		}
 	}
 
-	private bool HasDigitalCodes => _rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType == TitleType.DigitalCode) ?? false;
+	private bool HasDigitalCodes => _rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType == TitleType.DigitalCode) == true;
 
-	private bool HasNonDigitalCodes => _rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType != TitleType.DigitalCode) ?? false;
+	private bool HasNonDigitalCodes => _rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType != TitleType.DigitalCode) == true;
 
-	public decimal DigitalTaxRate => _rentalShoppingCart?.TitleItems?.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType == TitleType.DigitalCode)?.TaxRate ?? 0m;
+	public decimal DigitalTaxRate => (_rentalShoppingCart?.TitleItems?.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType == TitleType.DigitalCode)?.TaxRate).GetValueOrDefault();
 
-	public decimal NonDigitalTaxRate => _rentalShoppingCart?.TitleItems?.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType != TitleType.DigitalCode)?.TaxRate ?? 0m;
+	public decimal NonDigitalTaxRate => (_rentalShoppingCart?.TitleItems?.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType != TitleType.DigitalCode)?.TaxRate).GetValueOrDefault();
 
-	private decimal DigitalPurchaseAmount => Math.Max(_rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType == TitleType.DigitalCode && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled))?.Sum((IRentalShoppingCartTitleItem x) => x.ExtendedPrice) ?? 0m, 0m);
+	private decimal DigitalPurchaseAmount => Math.Max((_rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType == TitleType.DigitalCode && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled))?.Sum((IRentalShoppingCartTitleItem x) => x.ExtendedPrice)).GetValueOrDefault(), 0m);
 
-	private decimal NonDigitalPurchaseAmount => Math.Max(_rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType != TitleType.DigitalCode && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled))?.Sum((IRentalShoppingCartTitleItem x) => x.ExtendedPrice) ?? 0m, 0m);
+	private decimal NonDigitalPurchaseAmount => Math.Max((_rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x.Action == Action && x.TitleType != TitleType.DigitalCode && (x.Status == LineItemStatus.Pending || x.Status == LineItemStatus.ProductSelected || x.Status == LineItemStatus.Fullfilled))?.Sum((IRentalShoppingCartTitleItem x) => x.ExtendedPrice)).GetValueOrDefault(), 0m);
 
 	public decimal SubTotal
 	{

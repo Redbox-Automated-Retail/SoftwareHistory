@@ -74,26 +74,106 @@ public static class PricingExtensions
 
 	public static T GetActiveDefaultRentalPricing<T>(this List<T> ppList, DateTime kioskDT, long titleId, PriceLevelType plt) where T : IRentalPricing
 	{
-		return (from p in ppList.GetActiveProductPricing(kioskDT)
-			where p.PriceLevelType == plt || (p.PriceLevelType == PriceLevelType.Title && Convert.ToInt32(p.PriceLevelTypeValue) == titleId)
-			orderby p.StartDate descending, p.LocationRank, p.InitialNight
-			select p).FirstOrDefault();
+		return ppList.GetActiveProductPricing(kioskDT).Where(delegate(T p)
+		{
+			T val = p;
+			if (val.PriceLevelType != plt)
+			{
+				val = p;
+				if (val.PriceLevelType == PriceLevelType.Title)
+				{
+					val = p;
+					return Convert.ToInt32(val.PriceLevelTypeValue) == titleId;
+				}
+				return false;
+			}
+			return true;
+		}).OrderByDescending(delegate(T p)
+		{
+			T val = p;
+			return val.StartDate;
+		})
+			.ThenBy(delegate(T p)
+			{
+				T val = p;
+				return val.LocationRank;
+			})
+			.ThenBy(delegate(T p)
+			{
+				T val = p;
+				return val.InitialNight;
+			})
+			.FirstOrDefault();
 	}
 
 	public static T GetActiveRentalPricing<T>(this List<T> ppList, DateTime kioskDT, long titleId, PriceLevelType plt) where T : IRentalPricing
 	{
-		return (from p in ppList.GetActiveProductPricing(kioskDT)
-			where (p.PriceLevelType == plt || (p.PriceLevelType == PriceLevelType.Title && Convert.ToInt32(p.PriceLevelTypeValue) == titleId)) && p.InitialDays == 1
-			orderby p.StartDate descending, p.InitialNight
-			select p).FirstOrDefault();
+		return ppList.GetActiveProductPricing(kioskDT).Where(delegate(T p)
+		{
+			T val = p;
+			if (val.PriceLevelType != plt)
+			{
+				val = p;
+				if (val.PriceLevelType == PriceLevelType.Title)
+				{
+					val = p;
+					if (Convert.ToInt32(val.PriceLevelTypeValue) == titleId)
+					{
+						goto IL_0046;
+					}
+				}
+				return false;
+			}
+			goto IL_0046;
+			IL_0046:
+			val = p;
+			return val.InitialDays == 1;
+		}).OrderByDescending(delegate(T p)
+		{
+			T val = p;
+			return val.StartDate;
+		})
+			.ThenBy(delegate(T p)
+			{
+				T val = p;
+				return val.InitialNight;
+			})
+			.FirstOrDefault();
 	}
 
 	public static List<T> GetActiveMNPRentalPricing<T>(this List<T> ppList, DateTime kioskDT, long titleId, PriceLevelType plt) where T : IRentalPricing
 	{
-		return (from p in ppList.GetActiveProductPricing(kioskDT)
-			where (p.PriceLevelType == plt || (p.PriceLevelType == PriceLevelType.Title && Convert.ToInt32(p.PriceLevelTypeValue) == titleId)) && p.InitialDays > 1
-			orderby p.StartDate descending, p.InitialNight
-			select p).ToList();
+		return ppList.GetActiveProductPricing(kioskDT).Where(delegate(T p)
+		{
+			T val = p;
+			if (val.PriceLevelType != plt)
+			{
+				val = p;
+				if (val.PriceLevelType == PriceLevelType.Title)
+				{
+					val = p;
+					if (Convert.ToInt32(val.PriceLevelTypeValue) == titleId)
+					{
+						goto IL_0046;
+					}
+				}
+				return false;
+			}
+			goto IL_0046;
+			IL_0046:
+			val = p;
+			return val.InitialDays > 1;
+		}).OrderByDescending(delegate(T p)
+		{
+			T val = p;
+			return val.StartDate;
+		})
+			.ThenBy(delegate(T p)
+			{
+				T val = p;
+				return val.InitialNight;
+			})
+			.ToList();
 	}
 
 	public static T GetActivePurchasePricing<T>(this List<T> ppList, DateTime kioskDT, long titleId, bool useLowestPriceSortOrder) where T : IPurchasePricing
@@ -101,14 +181,44 @@ public static class PricingExtensions
 		List<T> activeProductPricing = ppList.GetActiveProductPricing(kioskDT);
 		if (useLowestPriceSortOrder)
 		{
-			return (from p in activeProductPricing
-				where p.ProductId == titleId
-				orderby p.PricingId descending, p.PurchasePrice
-				select p).FirstOrDefault();
+			return activeProductPricing.Where(delegate(T p)
+			{
+				T val = p;
+				return val.ProductId == titleId;
+			}).OrderByDescending(delegate(T p)
+			{
+				T val = p;
+				return val.PricingId;
+			}).ThenBy(delegate(T p)
+			{
+				T val = p;
+				return val.PurchasePrice;
+			})
+				.FirstOrDefault();
 		}
-		return (from p in activeProductPricing
-			where p.ProductId == titleId
-			orderby p.PricingId descending, p.LocationRank, p.StartDate descending, p.PurchasePrice
-			select p).FirstOrDefault();
+		return activeProductPricing.Where(delegate(T p)
+		{
+			T val = p;
+			return val.ProductId == titleId;
+		}).OrderByDescending(delegate(T p)
+		{
+			T val = p;
+			return val.PricingId;
+		}).ThenBy(delegate(T p)
+		{
+			T val = p;
+			return val.LocationRank;
+		})
+			.ThenByDescending(delegate(T p)
+			{
+				T val = p;
+				return val.StartDate;
+			})
+			.ThenBy(delegate(T p)
+			{
+				T val = p;
+				return val.PurchasePrice;
+			})
+			.FirstOrDefault();
 	}
 }

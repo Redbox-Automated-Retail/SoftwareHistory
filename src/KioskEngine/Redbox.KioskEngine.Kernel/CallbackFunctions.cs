@@ -10,7 +10,7 @@ internal static class CallbackFunctions
 	[KernelFunction(Name = "kernel.callbackenqueue")]
 	internal static void EnqueueCallback(LuaFunction func, object parms, string name = "SimpleCallback")
 	{
-		EnqueueSimpleCallback(func, parms, enableDebugger: true, $"{name}");
+		EnqueueSimpleCallback(func, parms, enableDebugger: true, name ?? "");
 	}
 
 	[KernelFunction(Name = "kernel.callbackenqueuenobreak")]

@@ -119,7 +119,7 @@ public class QueueService : IQueueService, IDisposable
 			{
 				if (_queueMessageProcessorServices.Any((IQueueMessageProcessorService x) => x.Name == queueMessageProcessorService?.Name))
 				{
-					LogHelper.Instance.Log($"Error in RegisterMessageProcessorService.  Duplicate name {queueMessageProcessorService?.Name}");
+					LogHelper.Instance.Log("Error in RegisterMessageProcessorService.  Duplicate name " + queueMessageProcessorService?.Name);
 				}
 				else if (queueMessageProcessorService.IsDefault && _queueMessageProcessorServices.Count((IQueueMessageProcessorService x) => x.IsDefault) >= 1)
 				{
@@ -128,14 +128,14 @@ public class QueueService : IQueueService, IDisposable
 				else
 				{
 					_queueMessageProcessorServices.Add(queueMessageProcessorService);
-					LogHelper.Instance.Log($"QueueService registerd Queue Message Processor Service {queueMessageProcessorService?.Name}");
+					LogHelper.Instance.Log("QueueService registerd Queue Message Processor Service " + queueMessageProcessorService?.Name);
 					flag = true;
 				}
 			}
 		}
 		if (!flag)
 		{
-			LogHelper.Instance.Log($"Error in RegisterMessageProcessorService. {queueMessageProcessorService?.Name} not registered.");
+			LogHelper.Instance.Log("Error in RegisterMessageProcessorService. " + queueMessageProcessorService?.Name + " not registered.");
 		}
 		return flag;
 	}
@@ -148,7 +148,7 @@ public class QueueService : IQueueService, IDisposable
 			if (_queueMessageProcessorServices.Contains(queueMessageProcessorService))
 			{
 				_queueMessageProcessorServices.Remove(queueMessageProcessorService);
-				LogHelper.Instance.Log($"QueueService Unregistered Queue Message Processor Service {queueMessageProcessorService?.Name}");
+				LogHelper.Instance.Log("QueueService Unregistered Queue Message Processor Service " + queueMessageProcessorService?.Name);
 				result = true;
 			}
 		}
@@ -230,14 +230,14 @@ public class QueueService : IQueueService, IDisposable
 							lock (_queueMessageProcessorServices)
 							{
 								string[] array = _queueMessageProcessorServices.Select((IQueueMessageProcessorService x) => x.Name).ToArray();
-								LogHelper.Instance.Log(string.Format("Error in QueueService. Unable to find QueueMessageProcessorService for message type {0}.  QueueMessageProcessorServices registered are: {1}", message?.Type, array?.Join(", ")));
+								LogHelper.Instance.Log("Error in QueueService. Unable to find QueueMessageProcessorService for message type " + message?.Type + ".  QueueMessageProcessorServices registered are: " + array?.Join(", "));
 							}
 							errored = true;
 						}
 					}
 					catch (Exception e)
 					{
-						LogHelper.Instance.Log($"Exception in Dequeue predicate processing message type {message?.Type}!", e);
+						LogHelper.Instance.Log("Exception in Dequeue predicate processing message type " + message?.Type + "!", e);
 						errored = true;
 					}
 					return !errored && result;
@@ -552,8 +552,8 @@ public class QueueService : IQueueService, IDisposable
 				KioskId = int.Parse(service2.Filter["store_number"]),
 				EngineVersion = service["EngineVersion"],
 				BundleVersion = service["ProductVersion"],
-				SubType = string.Format("mm:DataStoreError, {0}", "SOFT-FILE01"),
-				Detail = string.Format("<h2>Kiosk Engine Data File Error</h2><p>There was an error accessing or updating the database: [ message.data ] <br><br>Placing Kiosk into Maintenance Mode.<br>{0}</p>", "SOFT-FILE01"),
+				SubType = "mm:DataStoreError, SOFT-FILE01",
+				Detail = "<h2>Kiosk Engine Data File Error</h2><p>There was an error accessing or updating the database: [ message.data ] <br><br>Placing Kiosk into Maintenance Mode.<br>SOFT-FILE01</p>",
 				Type = "ApplicationCrash",
 				Time = DateTime.Now
 			};

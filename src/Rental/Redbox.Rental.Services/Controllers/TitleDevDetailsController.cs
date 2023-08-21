@@ -126,7 +126,7 @@ public class TitleDevDetailsController : BaseViewController
 		titleProductDetailDevModel.GenreIds = TitleProductObj.Genres;
 		foreach (long genre in TitleProductObj.Genres)
 		{
-			titleProductDetailDevModel.GenreList.Add((genre.ToString() + " " + Enum.Parse(typeof(Genres), genre.ToString())).ToUpper());
+			titleProductDetailDevModel.GenreList.Add((genre + " " + Enum.Parse(typeof(Genres), genre.ToString())).ToUpper());
 		}
 		titleProductDetailDevModel.IsComingSoon = TitleProductObj.ComingSoon;
 		titleProductDetailDevModel.InStock = TitleProductObj.InStock;

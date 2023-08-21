@@ -124,7 +124,7 @@ public class KioskClientServiceMarketing : BaseKioskClientService, IKioskClientS
 	public IRemoteServiceResult EmailConfirmation(long kioskId, string emailAddress, string accountNumber)
 	{
 		RemoteServiceResult remoteServiceResult = new RemoteServiceResult();
-		Uri uri = new Uri(string.Format("{0}/{1}/emailconfirmation", base.KioskClientServiceBaseUrl, "api/marketing"));
+		Uri uri = new Uri(base.KioskClientServiceBaseUrl + "/api/marketing/emailconfirmation");
 		EmailConfirmationPayload emailConfirmationPayload = new EmailConfirmationPayload
 		{
 			MessageId = Guid.NewGuid(),
@@ -133,11 +133,11 @@ public class KioskClientServiceMarketing : BaseKioskClientService, IKioskClientS
 			AccountNumber = accountNumber,
 			TransactionDate = DateTime.Now
 		};
-		LogHelper.Instance.Log($"KioskClientServiceMarketing.EmailConfirmation - POST'ing following email confirmation payload to '{uri.AbsoluteUri}': {emailConfirmationPayload.Obfuscate()}");
+		LogHelper.Instance.Log("KioskClientServiceMarketing.EmailConfirmation - POST'ing following email confirmation payload to '" + uri.AbsoluteUri + "': " + emailConfirmationPayload.Obfuscate());
 		WebResult<EmailConfirmationResponse> webResult = ExecuteWebRequest<EmailConfirmationResponse>(uri, emailConfirmationPayload, "POST", 20000);
 		if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 		{
-			LogHelper.Instance.Log($"KioskClientServiceMarketing.EmailConfirmation - received successful email confimration response: {webResult.Response.Obfuscate()}");
+			LogHelper.Instance.Log("KioskClientServiceMarketing.EmailConfirmation - received successful email confimration response: " + webResult.Response.Obfuscate());
 			remoteServiceResult.Success = webResult.Response.Success;
 			remoteServiceResult.Properties["confirmation_status"] = webResult.Response.ConfirmationStatus.ToString();
 			remoteServiceResult.Properties["customer_profile_number"] = webResult.Response.CustomerProfileNumber;
@@ -163,7 +163,7 @@ public class KioskClientServiceMarketing : BaseKioskClientService, IKioskClientS
 	public ErrorList KioskOptIn(long kioskId, IEnumerable<IOptInItem> optInItems)
 	{
 		ErrorList errorList = new ErrorList();
-		Uri uri = new Uri(string.Format("{0}/{1}/kioskoptin", base.KioskClientServiceBaseUrl, "api/marketing"));
+		Uri uri = new Uri(base.KioskClientServiceBaseUrl + "/api/marketing/kioskoptin");
 		KioskOptInPayload kioskOptInPayload = new KioskOptInPayload
 		{
 			MessageId = Guid.NewGuid(),
@@ -171,7 +171,7 @@ public class KioskClientServiceMarketing : BaseKioskClientService, IKioskClientS
 			RequestDate = DateTime.Now
 		};
 		kioskOptInPayload.OptInItems.AddRange(optInItems);
-		LogHelper.Instance.Log($"KioskClientServiceMarketing.KioskOptIn - POST'ing following kiosk opt in payload to '{uri.AbsoluteUri}': {kioskOptInPayload.Obfuscate()}");
+		LogHelper.Instance.Log("KioskClientServiceMarketing.KioskOptIn - POST'ing following kiosk opt in payload to '" + uri.AbsoluteUri + "': " + kioskOptInPayload.Obfuscate());
 		WebResult<Dictionary<string, object>> webResult = ExecuteWebRequest<Dictionary<string, object>>(uri, kioskOptInPayload, "POST", 20000);
 		if (webResult.ExceptionStatus != WebExceptionStatus.Success)
 		{

@@ -65,12 +65,12 @@ public class SyncEmptiesProcessor : LocationSyncJobProcessorBase, ISyncEmptiesPr
 			bool flag = true;
 			if (IsJobAlreadyScheduled(new List<string> { "SyncEmpty", "SyncEmptyLocations" }))
 			{
-				LogHelper.Instance.Log($"HardwareFunctions.SyncEmpties: Sync Empty Locations already scheduled. This run would have been scheduled for {value.ToString()}.");
+				LogHelper.Instance.Log("HardwareFunctions.SyncEmpties: Sync Empty Locations already scheduled. This run would have been scheduled for " + value.ToString() + ".");
 				flag = false;
 			}
 			if (flag)
 			{
-				LogHelper.Instance.Log($"Scheduling Sync Empty job for {value.ToString()}");
+				LogHelper.Instance.Log("Scheduling Sync Empty job for " + value.ToString());
 				StartSync("SyncEmpty", value);
 			}
 		}

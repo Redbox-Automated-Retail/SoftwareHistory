@@ -183,7 +183,7 @@ public class NewCartConfirmViewController : BaseViewController
 			OfferProduct offerProduct = _selectedOffer.OfferProducts.FirstOrDefault((OfferProduct o) => o.ProductId == titleProduct.ProductId);
 			bool num2 = offerProduct != null;
 			bool flag2 = num2 && eachRentalShoppingCartItem.PricingRecord.InitialDays == offerProduct.NumberOfNights;
-			decimal? num3 = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers) ? new decimal?(0m) : ((decimal?)(eachRentalShoppingCartItem.PricingRecord.InitialDays - 1) * (decimal?)eachRentalShoppingCartItem.PricingRecord.ExtraNight - (decimal?)(offerProduct?.DiscountedPrice ?? 0m)));
+			decimal? num3 = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers) ? new decimal?(0m) : ((decimal?)(eachRentalShoppingCartItem.PricingRecord.InitialDays - 1) * (decimal?)eachRentalShoppingCartItem.PricingRecord.ExtraNight - (decimal?)(offerProduct?.DiscountedPrice).GetValueOrDefault()));
 			displayCheckoutProductModel.OfferActionVisibility = Visibility.Visible;
 			decimal price = eachRentalShoppingCartItem.Price;
 			decimal? obj = (flag2 ? num3 : new decimal?(0m));
@@ -361,16 +361,16 @@ public class NewCartConfirmViewController : BaseViewController
 			viewModel.PricingModel.TaxLineVisibility = ((text == "SC" || text == "MD") ? Visibility.Collapsed : Visibility.Visible);
 			viewModel.PricingModel.TaxValueText = $"{newCart?.Totals?.TaxAmount:C}";
 			viewModel.PricingModel.TotalValueText = $"{newCart?.Totals?.GrandTotal:f2}";
-			LogHelper.Instance.Log($"NewCartConfirmViewController: cart discount amount: {newCart?.Totals?.DiscountAmountUsed ?? 0m} ");
-			string text2 = $"{((!((newCart?.Totals?.DiscountAmountUsed ?? 0m) != 0m)) ? ((decimal?)null) : newCart?.Totals?.DiscountAmountUsed):C}";
+			LogHelper.Instance.Log($"NewCartConfirmViewController: cart discount amount: {(newCart?.Totals?.DiscountAmountUsed).GetValueOrDefault()} ");
+			string text2 = $"{((!((newCart?.Totals?.DiscountAmountUsed).GetValueOrDefault() != 0m)) ? ((decimal?)null) : newCart?.Totals?.DiscountAmountUsed):C}";
 			if (!string.IsNullOrEmpty(text2))
 			{
 				text2 = $"-{text2}";
 			}
 			viewModel.PricingModel.DiscountValueText = text2;
-			viewModel.PricingModel.DiscountLineVisibility = ((!((newCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
+			viewModel.PricingModel.DiscountLineVisibility = ((!((newCart?.Totals?.DiscountAmountUsed).GetValueOrDefault() > 0m)) ? Visibility.Collapsed : Visibility.Visible);
 			viewModel.PricingModel.ServiceFeeValueText = $"{newCart?.Totals?.ServiceFee:C}";
-			viewModel.PricingModel.ServiceFeeLineVisibility = ((!((newCart?.Totals?.ServiceFee ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
+			viewModel.PricingModel.ServiceFeeLineVisibility = ((!((newCart?.Totals?.ServiceFee).GetValueOrDefault() > 0m)) ? Visibility.Collapsed : Visibility.Visible);
 			viewModel.SubmitButtonText = Resources.submit_button;
 			viewModel.SkipOfferButtonVisibility = ((!BaseViewController.IsADAMode && (parameters.promoProduct != null || _isMultiNightOffer || _isPerksOffer)) ? Visibility.Collapsed : Visibility.Visible);
 		}

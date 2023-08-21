@@ -73,7 +73,7 @@ public class RedboxPlusOfferSelectionViewController : BaseViewController
 		}
 		else
 		{
-			LogHelper.Instance.Log($"Error: unable to find Redbox+ product with id = {redboxPlusSubscriptionId}");
+			LogHelper.Instance.Log("Error: unable to find Redbox+ product with id = " + redboxPlusSubscriptionId);
 		}
 	}
 

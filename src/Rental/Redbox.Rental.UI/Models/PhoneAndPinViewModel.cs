@@ -449,8 +449,8 @@ public class PhoneAndPinViewModel : DependencyObject
 	{
 		if (!(value == Resources.phone_and_pin_default_pin_display) && !string.IsNullOrWhiteSpace(value) && value.Length != 1)
 		{
-			return string.Format("{0}{1}{2}", string.Concat(Enumerable.Repeat("* ", value.Length - 1)), value.Substring(value.Length - 1), string.Concat(Enumerable.Repeat(" _", PinRequiredLength - ValidPinCharacters(value))));
+			return string.Concat(string.Concat(Enumerable.Repeat("* ", value.Length - 1)), value.Substring(value.Length - 1), string.Concat(Enumerable.Repeat(" _", PinRequiredLength - ValidPinCharacters(value))));
 		}
-		return string.Format("{0}{1}", value, string.Concat(Enumerable.Repeat(" _", PinRequiredLength - ValidPinCharacters(value))));
+		return string.Concat(value, string.Concat(Enumerable.Repeat(" _", PinRequiredLength - ValidPinCharacters(value))));
 	}
 }

@@ -180,13 +180,13 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		IShoppingSession currentSession = ServiceLocator.Instance.GetService<IShoppingSessionService>().GetCurrentSession();
 		IEnumerable<CardBrandAndSource> deactivatedCardBrandSources = GetDeactivatedCardBrandSources();
-		decimal d = service?.CurrentRentalShoppingCart?.Totals.GrandTotal ?? 0m;
-		d = Math.Round(d, 2);
+		decimal valueOrDefault = (service?.CurrentRentalShoppingCart?.Totals.GrandTotal).GetValueOrDefault();
+		valueOrDefault = Math.Round(valueOrDefault, 2);
 		CardReadRequest cardReadRequest = new CardReadRequest
 		{
 			InputType = deviceInputType,
 			VasMode = vasMode,
-			Amount = d,
+			Amount = valueOrDefault,
 			Timeout = commandTimeout + 5000,
 			ExcludeCardBrandBySource = deactivatedCardBrandSources,
 			SessionId = currentSession.Id
@@ -295,7 +295,7 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 		try
 		{
 			long num = ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0;
-			ServiceLocator.Instance.GetService<IHealthServices>().SendAlert((ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0).ToString(), "ApplicationCrash", string.Format("mm:TamperedCardReaderError, {0}", "0099CDRR"), string.Format("<h2>Kiosk Engine Card Reader Tampered Error</h2><p>Card Reader Tampering detected on Kiosk: {0}!<br><br>Placing Kiosk into Maintenance Mode.<br>{1}</p>", num, "0099CDRR"), DateTime.Now, null, null, skipQueue: true);
+			ServiceLocator.Instance.GetService<IHealthServices>().SendAlert((ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0).ToString(), "ApplicationCrash", "mm:TamperedCardReaderError, 0099CDRR", string.Format("<h2>Kiosk Engine Card Reader Tampered Error</h2><p>Card Reader Tampering detected on Kiosk: {0}!<br><br>Placing Kiosk into Maintenance Mode.<br>{1}</p>", num, "0099CDRR"), DateTime.Now, null, null, skipQueue: true);
 		}
 		catch (Exception e)
 		{
@@ -336,34 +336,45 @@ public class DeviceServiceClientHelperSimulator : IDeviceServiceClientHelper
 
 	private CardSourceType ParseCardSourceType(string sourceType)
 	{
-		switch (sourceType)
+		if (sourceType != null)
 		{
-		case "M":
-		case "1":
-			return CardSourceType.Swipe;
-		case "E":
-		case "5":
-			return CardSourceType.EMVContactless;
-		case "C":
-		case "4":
-			return CardSourceType.MSDContactless;
-		case "S":
-		case "2":
-			return CardSourceType.EMVContact;
-		case "Q":
-		case "3":
-			return CardSourceType.QuickChip;
-		case "m":
-		case "6":
-			return CardSourceType.Mobile;
-		case "c":
-		case "7":
-			return CardSourceType.VASOnly;
-		case "cq":
-			return CardSourceType.VASOnly;
-		default:
-			return CardSourceType.Unknown;
+			switch (sourceType.Length)
+			{
+			case 1:
+				switch (sourceType[0])
+				{
+				case '1':
+				case 'M':
+					return CardSourceType.Swipe;
+				case '5':
+				case 'E':
+					return CardSourceType.EMVContactless;
+				case '4':
+				case 'C':
+					return CardSourceType.MSDContactless;
+				case '2':
+				case 'S':
+					return CardSourceType.EMVContact;
+				case '3':
+				case 'Q':
+					return CardSourceType.QuickChip;
+				case '6':
+				case 'm':
+					return CardSourceType.Mobile;
+				case '7':
+				case 'c':
+					return CardSourceType.VASOnly;
+				}
+				break;
+			case 2:
+				if (!(sourceType == "cq"))
+				{
+					break;
+				}
+				return CardSourceType.VASOnly;
+			}
 		}
+		return CardSourceType.Unknown;
 	}
 
 	private Base87CardReadModel ParseCardData(CardData cardData, CardSourceType sourceType)

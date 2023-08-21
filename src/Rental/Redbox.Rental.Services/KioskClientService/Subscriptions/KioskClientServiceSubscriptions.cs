@@ -11,12 +11,12 @@ public class KioskClientServiceSubscriptions : BaseKioskClientService, IKioskCli
 	public ISubscriptionPlans GetSubscriptionPlans()
 	{
 		ISubscriptionPlans subscriptionPlans = null;
-		WebResult<GetSubscriptionPlanResponse> webResult = ExecuteWebRequest<GetSubscriptionPlanResponse>(new Uri(string.Format("{0}/{1}/plans", base.KioskClientServiceBaseUrl, "api/subscription")), null, "GET", 20000);
+		WebResult<GetSubscriptionPlanResponse> webResult = ExecuteWebRequest<GetSubscriptionPlanResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/subscription/plans"), null, "GET", 20000);
 		LogResponse("KioskClientServiceSubscriptions.GetSubscriptionPlans", webResult);
-		if (webResult?.Response?.Success ?? false)
+		if (webResult?.Response?.Success == true)
 		{
 			subscriptionPlans = new SubscriptionPlans(webResult.Response);
-			LogHelper.Instance.Log($"GetSubscriptionPlanResponse: {webResult.Response.ToJson()}");
+			LogHelper.Instance.Log("GetSubscriptionPlanResponse: " + webResult.Response.ToJson());
 			if (subscriptionPlans != null && subscriptionPlans.RedboxPlusPromoCampaigns != null && subscriptionPlans.RedboxPlusPromoCampaigns.Count == 0)
 			{
 				subscriptionPlans.RedboxPlusPromoCampaigns.Add(new RedboxPlusPromoCampaign
@@ -39,7 +39,7 @@ public class KioskClientServiceSubscriptions : BaseKioskClientService, IKioskCli
 					PromoCampaignId = 16378,
 					Tier = RedboxPlusSubscriptionTier.Tier2
 				});
-				LogHelper.Instance.Log($"RedboxPlusPromoCampaigns.Count=0, added: {subscriptionPlans.RedboxPlusPromoCampaigns.ToJson()}");
+				LogHelper.Instance.Log("RedboxPlusPromoCampaigns.Count=0, added: " + subscriptionPlans.RedboxPlusPromoCampaigns.ToJson());
 			}
 		}
 		return subscriptionPlans;

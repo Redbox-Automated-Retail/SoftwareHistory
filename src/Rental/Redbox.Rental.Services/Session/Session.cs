@@ -60,7 +60,7 @@ public class Session : ISession
 			ICardReadAttempt cardReadAttempt = CardReadAttemptCollection?.GetMostRecent();
 			if (cardReadAttempt != null)
 			{
-				result = cardReadAttempt?.AuthorizeResult?.Success ?? false;
+				result = cardReadAttempt?.AuthorizeResult?.Success == true;
 			}
 			return result;
 		}

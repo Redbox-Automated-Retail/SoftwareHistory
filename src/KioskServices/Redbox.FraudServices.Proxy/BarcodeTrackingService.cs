@@ -190,7 +190,7 @@ public class BarcodeTrackingService : IBarcodeTrackingService
 					}
 					if (barcodeTrackingInfo != null)
 					{
-						LogHelper.Instance.Log($"Adding barcode tracking info to queue: barcode: {barcodeTrackingInfo?.Barcode}");
+						LogHelper.Instance.Log("Adding barcode tracking info to queue: barcode: " + barcodeTrackingInfo?.Barcode);
 						_barcodeTrackingInfoCacheList.Add(barcodeTrackingInfo);
 					}
 					if (((_barcodeTrackingInfoCacheList.Count >= MaxBatchSize) | forceMessageSend) && _barcodeTrackingInfoCacheList.Count > 0)

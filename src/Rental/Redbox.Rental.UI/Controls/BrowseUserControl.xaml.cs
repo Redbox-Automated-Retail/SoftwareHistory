@@ -86,7 +86,7 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 
 	public int VisibleItemCount => RowCount * ColumnCount;
 
-	public int PageCount => Convert.ToInt32(Math.Ceiling(Convert.ToDouble(_browseControlModel?.BrowseItems?.Count ?? 0) / (double)VisibleItemCount));
+	public int PageCount => Convert.ToInt32(Math.Ceiling(Convert.ToDouble((_browseControlModel?.BrowseItems?.Count).GetValueOrDefault()) / (double)VisibleItemCount));
 
 	public int CurrentPage
 	{
@@ -225,7 +225,7 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 	{
 		Grid noResultsGrid = NoResultsGrid;
 		BrowseControlModel browseControlModel = _browseControlModel;
-		noResultsGrid.Visibility = ((browseControlModel == null || !browseControlModel.ShowNoResultsMessage || (_browseControlModel?.BrowseItems?.Count ?? 0) != 0) ? Visibility.Collapsed : Visibility.Visible);
+		noResultsGrid.Visibility = ((browseControlModel == null || !browseControlModel.ShowNoResultsMessage || (_browseControlModel?.BrowseItems?.Count).GetValueOrDefault() != 0) ? Visibility.Collapsed : Visibility.Visible);
 	}
 
 	private List<IBrowseItemModel> RenderPage(List<Control> pageControls, int indexOffset, bool isBorderPage)
@@ -264,7 +264,7 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 			if (ShowPaddles)
 			{
 				LeftPaddleVisibility = ((_browseItemIndex <= 0) ? Visibility.Collapsed : Visibility.Visible);
-				RightPaddleVisibility = ((_browseItemIndex + VisibleItemCount >= (_browseControlModel?.BrowseItems?.Count ?? 0)) ? Visibility.Collapsed : Visibility.Visible);
+				RightPaddleVisibility = ((_browseItemIndex + VisibleItemCount >= (_browseControlModel?.BrowseItems?.Count).GetValueOrDefault()) ? Visibility.Collapsed : Visibility.Visible);
 			}
 			else
 			{
@@ -459,13 +459,13 @@ public partial class BrowseUserControl : UserControl, IComponentConnector
 			BrowseControlModel browseControlModel = _browseControlModel;
 			if (browseControlModel == null || !browseControlModel.UseFullPageWidth)
 			{
-				num2 = Math.Max((num - _browseControlModel?.PaddleOverlapWidth) ?? 0.0, 0.0);
-				goto IL_00e3;
+				num2 = Math.Max((num - _browseControlModel?.PaddleOverlapWidth).GetValueOrDefault(), 0.0);
+				goto IL_00ca;
 			}
 		}
 		num2 = 0.0;
-		goto IL_00e3;
-		IL_00e3:
+		goto IL_00ca;
+		IL_00ca:
 		PageGridWidth = Math.Max(0.0, actualWidth - num2);
 	}
 

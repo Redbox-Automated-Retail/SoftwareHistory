@@ -79,7 +79,7 @@ public class DataStoreCache
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log($"Unhandled exception in DataStoreCache.GetStore; file :{Path.GetFileName(path)}.", e);
+			LogHelper.Instance.Log("Unhandled exception in DataStoreCache.GetStore; file :" + Path.GetFileName(path) + ".", e);
 			ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RaiseCorruptDb();
 			throw;
 		}

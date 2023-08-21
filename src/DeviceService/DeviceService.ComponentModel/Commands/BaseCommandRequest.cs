@@ -37,6 +37,8 @@ public class BaseCommandRequest : IMessageScrub
 		}
 	}
 
+	public virtual bool IsQueuedCommand => true;
+
 	public int? CommandTimeout { get; set; }
 
 	public Version DeviceServiceClientVersion { get; set; }

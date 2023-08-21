@@ -131,13 +131,22 @@ public sealed class ClientHelper : IDisposable
 		{
 			return default(T);
 		}
-		string[] stackEntriesInner = GetStackEntriesInner(job, 1);
-		return ConversionHelper.ChangeType<T>(stackEntriesInner[0]);
+		return ConversionHelper.ChangeType<T>(GetStackEntriesInner(job, 1)[0]);
 	}
 
 	public ClientHelper(IClientOutputSink sink, HardwareService service)
 	{
-		Sink = ((sink == null) ? NullInstance : sink);
+		IClientOutputSink sink2;
+		if (sink != null)
+		{
+			sink2 = sink;
+		}
+		else
+		{
+			IClientOutputSink nullInstance = NullInstance;
+			sink2 = nullInstance;
+		}
+		Sink = sink2;
 		Service = service;
 	}
 
@@ -148,11 +157,9 @@ public sealed class ClientHelper : IDisposable
 
 	private HardwareService ConnectInner(string ipcUrl)
 	{
-		IPCProtocol iPCProtocol = null;
 		try
 		{
-			iPCProtocol = IPCProtocol.Parse(ipcUrl);
-			HardwareService hardwareService = new HardwareService(iPCProtocol);
+			HardwareService hardwareService = new HardwareService(IPCProtocol.Parse(ipcUrl));
 			return TestServiceConnection(hardwareService) ? hardwareService : null;
 		}
 		catch (UriFormatException)
@@ -177,8 +184,7 @@ public sealed class ClientHelper : IDisposable
 
 	private string FindLocalIP()
 	{
-		IPHostEntry hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-		IPAddress[] addressList = hostEntry.AddressList;
+		IPAddress[] addressList = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
 		foreach (IPAddress iPAddress in addressList)
 		{
 			if (iPAddress.AddressFamily == AddressFamily.InterNetwork)
@@ -196,12 +202,11 @@ public sealed class ClientHelper : IDisposable
 		{
 			array[i] = string.Empty;
 		}
-		HardwareCommandResult stack = job.GetStack(out var stack2);
-		if (stack.Success && stack2.Count >= depth)
+		if (job.GetStack(out var stack).Success && stack.Count >= depth)
 		{
 			for (int j = 0; j < depth; j++)
 			{
-				array[j] = stack2.Pop();
+				array[j] = stack.Pop();
 			}
 		}
 		return array;
@@ -209,8 +214,7 @@ public sealed class ClientHelper : IDisposable
 
 	private bool BootstrapInitRunningChecked()
 	{
-		HardwareCommandResult initStatus = Service.GetInitStatus(out var status);
-		if (!initStatus.Success)
+		if (!Service.GetInitStatus(out var status).Success)
 		{
 			Sink.WriteMessage("Unable to determine init status.");
 			return false;

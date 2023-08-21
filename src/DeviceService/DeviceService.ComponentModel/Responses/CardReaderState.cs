@@ -15,4 +15,6 @@ public class CardReaderState
 	public bool SupportsVas { get; set; }
 
 	public Version Version { get; set; }
+
+	public ErrorState ErrorState { get; set; }
 }

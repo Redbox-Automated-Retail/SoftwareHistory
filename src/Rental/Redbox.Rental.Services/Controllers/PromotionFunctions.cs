@@ -111,7 +111,7 @@ public class PromotionFunctions
 						doneAction();
 					}
 				}
-				else if (newPromotion.Intent == PromotionIntentCode.FirstNightFreeItem && (newPromotion.CampaignTitles?.Titles?.Count ?? 0) <= 0)
+				else if (newPromotion.Intent == PromotionIntentCode.FirstNightFreeItem && (newPromotion.CampaignTitles?.Titles?.Count).GetValueOrDefault() <= 0)
 				{
 					if (!promoCodeValidationInfo.IsCartValid)
 					{
@@ -135,7 +135,7 @@ public class PromotionFunctions
 						doneAction();
 					}
 				}
-				else if ((newPromotion.CampaignTitles?.Titles?.Count ?? 0) > 0)
+				else if ((newPromotion.CampaignTitles?.Titles?.Count).GetValueOrDefault() > 0)
 				{
 					if (!promoCodeValidationInfo.IsCartValid)
 					{

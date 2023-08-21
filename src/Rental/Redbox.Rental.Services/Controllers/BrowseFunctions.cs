@@ -78,7 +78,7 @@ public class BrowseFunctions
 		}
 	}
 
-	public static bool IsShoppingCartFull => RentalShoppingCartService?.CurrentRentalShoppingCart?.IsFull ?? false;
+	public static bool IsShoppingCartFull => RentalShoppingCartService?.CurrentRentalShoppingCart?.IsFull == true;
 
 	public static bool CanAddProductToCart
 	{
@@ -99,9 +99,7 @@ public class BrowseFunctions
 		{
 			return;
 		}
-		int? redboxPlusBenefitId = addProductToCartParameters.RedboxPlusBenefitId;
-		int num = 2;
-		if (redboxPlusBenefitId.GetValueOrDefault() == num && redboxPlusBenefitId.HasValue && rentalShoppingCart != null && rentalShoppingCart.HasTitleItem(addProductToCartParameters.TitleProduct.ProductId))
+		if (addProductToCartParameters.RedboxPlusBenefitId == 2 && rentalShoppingCart != null && rentalShoppingCart.HasTitleItem(addProductToCartParameters.TitleProduct.ProductId))
 		{
 			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = rentalShoppingCart?.GetTitleItemsByCriteria(new RentalShoppingCartFilterCriteria
 			{
@@ -349,9 +347,9 @@ public class BrowseFunctions
 			List<string> list = new List<string>
 			{
 				text,
-				$"({text})",
+				"(" + text + ")",
 				text.Replace(" ", null),
-				string.Format("({0})", text.Replace(" ", null))
+				"(" + text.Replace(" ", null) + ")"
 			};
 			string text2 = value?.GetAlternateNames(Resources.ResourceManager);
 			if (!string.IsNullOrEmpty(text2))
@@ -362,7 +360,7 @@ public class BrowseFunctions
 					foreach (string item in list2)
 					{
 						list.Add(item);
-						list.Add($"({item})");
+						list.Add("(" + item + ")");
 					}
 				}
 			}

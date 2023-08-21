@@ -33,13 +33,13 @@ internal abstract class BaseMessageProcessorService : IQueueMessageProcessorServ
 		IApplicationState service = ServiceLocator.Instance.GetService<IApplicationState>();
 		if (service == null || service.IsStandAlone)
 		{
-			LogHelper.Instance.Log($"Unable to process message for {message.Type} because application is in stand alone mode");
+			LogHelper.Instance.Log("Unable to process message for " + message.Type + " because application is in stand alone mode");
 		}
 		else
 		{
 			try
 			{
-				LogHelper.Instance.Log($"Delivering message using message processor service: {GetType().Name}");
+				LogHelper.Instance.Log("Delivering message using message processor service: " + GetType().Name);
 				response = ProxyMethod(message.Data);
 				result = response != null && response.ContainsKey("success") && (bool)response["success"];
 			}

@@ -36,8 +36,8 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				CreatedOnLocal = now.ToString(),
 				Versions = versions
 			};
-			LogHelper.Instance.Log($"KioskClientServiceData.KioskVersions - sending request: {ToPrettyJson(anon)}");
-			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(string.Format("{0}/{1}/kioskversions", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
+			LogHelper.Instance.Log("KioskClientServiceData.KioskVersions - sending request: " + ToPrettyJson(anon));
+			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/data/kioskversions"), anon, "POST", 10000);
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskVersions - response: {webResult.Response}");
 			LogResponse("KioskClientServiceData.KioskVersions", webResult);
 		}
@@ -68,8 +68,8 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				CreatedOnLocal = now.ToString(),
 				Statistics = dictionary
 			};
-			LogHelper.Instance.Log($"KioskClientServiceData.KioskStatistics - sending request: {ToPrettyJson(anon)}");
-			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(string.Format("{0}/{1}/kioskstatistics", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
+			LogHelper.Instance.Log("KioskClientServiceData.KioskStatistics - sending request: " + ToPrettyJson(anon));
+			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/data/kioskstatistics"), anon, "POST", 10000);
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskStatistics - response: {webResult.Response}");
 			LogResponse("KioskClientServiceData.KioskStatistics", webResult);
 		}
@@ -92,8 +92,8 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				CreatedOnLocal = now.ToString(),
 				Properties = properties
 			};
-			LogHelper.Instance.Log($"KioskClientServiceData.KioskProperties - sending request: {ToPrettyJson(anon)}");
-			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(string.Format("{0}/{1}/kioskproperties", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
+			LogHelper.Instance.Log("KioskClientServiceData.KioskProperties - sending request: " + ToPrettyJson(anon));
+			WebResult<PingDataResponse> webResult = await ExecuteAsyncWebRequest<PingDataResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/data/kioskproperties"), anon, "POST", 10000);
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskProperties - response: {webResult.Response}");
 			LogResponse("KioskClientServiceData.KioskProperties", webResult);
 		}
@@ -121,8 +121,8 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				SubAlertType = subAlertType,
 				AlertMessage = message
 			};
-			LogHelper.Instance.Log($"KioskClientServiceData.KioskAlert - sending request: {ToPrettyJson(anon)}");
-			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/kioskalert", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
+			LogHelper.Instance.Log("KioskClientServiceData.KioskAlert - sending request: " + ToPrettyJson(anon));
+			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/data/kioskalert"), anon, "POST", 10000);
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskAlert - response: {webResult.Response}");
 			LogResponse("KioskClientServiceData.KioskAlert", webResult);
 			if (webResult.Response == null)
@@ -164,8 +164,8 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				Source = source,
 				SendToTable = true
 			};
-			LogHelper.Instance.Log($"KioskClientServiceData.AuditEvent - sending request: {ToPrettyJson(anon)}");
-			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/auditevent", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
+			LogHelper.Instance.Log("KioskClientServiceData.AuditEvent - sending request: " + ToPrettyJson(anon));
+			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/data/auditevent"), anon, "POST", 10000);
 			LogHelper.Instance.Log($"KioskClientServiceData.AuditEvent - response: {webResult.Response}");
 			LogResponse("KioskClientServiceData.AuditEvent", webResult);
 			if (webResult.Response == null)
@@ -218,8 +218,8 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				CreatedOnLocal = createdOn.ToString(),
 				KioskEventsData = JsonConvert.SerializeObject(kdsEvents).CompressString()
 			};
-			LogHelper.Instance.Log($"KioskClientServiceData.KioskEvents - sending request: {ToPrettyJson(anon)}");
-			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/kioskevents", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
+			LogHelper.Instance.Log("KioskClientServiceData.KioskEvents - sending request: " + ToPrettyJson(anon));
+			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/data/kioskevents"), anon, "POST", 10000);
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskEvents - response: {webResult.Response}");
 			LogResponse("KioskClientServiceData.KioskEvents", webResult);
 			if (webResult.Response == null)
@@ -266,8 +266,8 @@ internal class KioskClientServiceData : BaseKioskClientService, IKioskClientServ
 				SnapDecode = snapDecode,
 				TouchScreenDriver = touchScreenDriver
 			};
-			LogHelper.Instance.Log($"KioskClientServiceData.KioskFunctionCheck - sending request: {ToPrettyJson(anon)}");
-			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/kioskfunctioncheck", base.KioskClientServiceBaseUrl, "api/data")), anon, "POST", 10000);
+			LogHelper.Instance.Log("KioskClientServiceData.KioskFunctionCheck - sending request: " + ToPrettyJson(anon));
+			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/data/kioskfunctioncheck"), anon, "POST", 10000);
 			LogHelper.Instance.Log($"KioskClientServiceData.KioskFunctionCheck - response: {webResult.Response}");
 			LogResponse("KioskClientServiceData.KioskFunctionCheck", webResult);
 			if (webResult.Response == null)

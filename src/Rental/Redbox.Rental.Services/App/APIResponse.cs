@@ -121,11 +121,11 @@ public class APIResponse<T>
 			_logger?.LogInformation($"Request: {HttpRequest.Method},Uri: {HttpRequest.RequestUri}, Status: {StatusCode}({(int)StatusCode}), Time:{ResponseTime}, Length:{ResponseLength}");
 			if (logRequest && RequestContent != null)
 			{
-				_logger?.LogInformation($"Request Content: {RequestContent}");
+				_logger?.LogInformation("Request Content: " + RequestContent);
 			}
 			if (logResponse && ResponseContent != null)
 			{
-				_logger?.LogInformation($"Response Content: {ResponseContent}");
+				_logger?.LogInformation("Response Content: " + ResponseContent);
 			}
 		}
 	}

@@ -8,6 +8,8 @@ public class SetCommandQueueStateCommand : BaseCommandRequest
 
 	public bool CommandQueuePaused { get; set; }
 
+	public override bool IsQueuedCommand => false;
+
 	public SetCommandQueueStateCommand(Version deviceServiceClientVersion)
 		: base("SetCommandQueueState", deviceServiceClientVersion)
 	{

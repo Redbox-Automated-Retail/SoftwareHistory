@@ -16,7 +16,7 @@ public static class LuaExceptionExtensions
 			rawMessage = ex.Source;
 		}
 		LuaError luaError = LuaError.FromString(rawMessage);
-		LogHelper.Instance.Log($"An unhandled error was raised from script resource '{luaError.ChunkName ?? resourceName}' at line {luaError.LineNumber ?? 0}: {luaError.Message ?? luaError.RawMessage}", LogEntryType.Error);
+		LogHelper.Instance.Log($"An unhandled error was raised from script resource '{luaError.ChunkName ?? resourceName}' at line {luaError.LineNumber.GetValueOrDefault()}: {luaError.Message ?? luaError.RawMessage}", LogEntryType.Error);
 		LogException(e);
 		IDebugService service = ServiceLocator.Instance.GetService<IDebugService>();
 		if (!service.IsEnabled)

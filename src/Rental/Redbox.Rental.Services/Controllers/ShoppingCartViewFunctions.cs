@@ -87,13 +87,13 @@ public class ShoppingCartViewFunctions
 				rentalShoppingCart?.ValidateAndUpdatePromoCode();
 				GetViewService()?.GoBackSafe("ShowInCartOfferMessage Timed out.", popOnly: false);
 			}
-			else if (PromotionService.Instance.IsRentTwoInCartOfferRunning && (PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) == 1)
+			else if (PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() == 1)
 			{
 				rentalShoppingCart.InCartPromoOfferCancel = true;
 				rentalShoppingCart.InCartTitleMarketing = false;
 				GetViewService()?.GoBackSafe("ShowInCartOfferMessage Timed out.", popOnly: false);
 			}
-			else if (PromotionService.Instance.IsRentTwoInCartOfferRunning && (PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) > 1)
+			else if (PromotionService.Instance.IsRentTwoInCartOfferRunning && (PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count()).GetValueOrDefault() > 1)
 			{
 				rentalShoppingCart.InCartPromoOfferCancel = false;
 				PromotionService.Instance.SetRentTwoInCartPromo(rentalShoppingCart);
@@ -109,7 +109,7 @@ public class ShoppingCartViewFunctions
 		}, delegate
 		{
 			AnalyticsService?.AddButtonPressEvent("ShoppingCartViewFunctionsInCartPromoDecline");
-			if (PromotionService.Instance.IsRentTwoInCartOfferRunning && (PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) == 1)
+			if (PromotionService.Instance.IsRentTwoInCartOfferRunning && PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() == 1)
 			{
 				rentalShoppingCart.InCartPromoOfferCancel = true;
 				rentalShoppingCart.InCartTitleMarketing = false;
@@ -131,7 +131,7 @@ public class ShoppingCartViewFunctions
 				rentalShoppingCart?.ValidateAndUpdatePromoCode();
 				GetViewService()?.GoBackSafe("ShowInCartOfferMessage yes button.", popOnly: false);
 			}
-			else if (PromotionService.Instance.IsRentTwoInCartOfferRunning && (PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count() ?? 0) > 1)
+			else if (PromotionService.Instance.IsRentTwoInCartOfferRunning && (PromotionService.Instance?.ValidateRentTwoInCartPromo()?.QualifyingItems?.Count()).GetValueOrDefault() > 1)
 			{
 				rentalShoppingCart.InCartPromoOfferCancel = false;
 				PromotionService.Instance.SetRentTwoInCartPromo(rentalShoppingCart);

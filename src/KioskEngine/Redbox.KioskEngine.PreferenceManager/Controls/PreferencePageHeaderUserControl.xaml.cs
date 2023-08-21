@@ -133,7 +133,7 @@ public partial class PreferencePageHeaderUserControl : UserControl, IComponentCo
 		string arg = null;
 		if (response.Errors != null && response.Errors.Count > 0)
 		{
-			arg = string.Format("Errors: {0}", string.Join(", ", response.Errors?.Select((Error x) => $"Code: {x.Code}, Message: {x.Message}").ToArray()));
+			arg = "Errors: " + string.Join(", ", response.Errors?.Select((Error x) => "Code: " + x.Code + ", Message: " + x.Message).ToArray());
 		}
 		StatusText.Text = ((response != null && response.IsSuccessStatusCode) ? string.Empty : $"Status code: {(int)response.StatusCode} {response.StatusCode} {arg}");
 	}

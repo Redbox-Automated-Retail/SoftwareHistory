@@ -189,7 +189,7 @@ public class CheckoutFunctions
 		}
 		foreach (VendResult eachVendResult in vendResultList)
 		{
-			LogHelper.Instance.Log($"Vend results barcode: {eachVendResult.barcode}, status: {eachVendResult.status}");
+			LogHelper.Instance.Log("Vend results barcode: " + eachVendResult.barcode + ", status: " + eachVendResult.status);
 			IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = rentalShoppingCart.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.Barcode == eachVendResult.barcode);
 			if (rentalShoppingCartTitleItem != null)
 			{
@@ -199,7 +199,7 @@ public class CheckoutFunctions
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Error in CheckoutFunctions.RegularCheckoutPrepositionVendComplete.  Unable to parse status value {eachVendResult.status}");
+					LogHelper.Instance.Log("Error in CheckoutFunctions.RegularCheckoutPrepositionVendComplete.  Unable to parse status value " + eachVendResult.status);
 				}
 			}
 		}
@@ -642,9 +642,9 @@ public class CheckoutFunctions
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 		ISession session = ServiceLocator.Instance.GetService<IRentalSessionService>()?.GetCurrentSession();
 		IRentalShoppingCart rentalShoppingCart = service?.CurrentRentalShoppingCart;
-		int num = rentalShoppingCart?.SubscriptionItems?.Count ?? 0;
-		int num2 = rentalShoppingCart.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.Action == RentalShoppingCartItemAction.rental && x.TitleFamily == TitleFamily.Games);
-		int num3 = rentalShoppingCart.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.Action == RentalShoppingCartItemAction.purchase && x.TitleFamily == TitleFamily.Games);
+		int valueOrDefault = (rentalShoppingCart?.SubscriptionItems?.Count).GetValueOrDefault();
+		int num = rentalShoppingCart.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.Action == RentalShoppingCartItemAction.rental && x.TitleFamily == TitleFamily.Games);
+		int num2 = rentalShoppingCart.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.Action == RentalShoppingCartItemAction.purchase && x.TitleFamily == TitleFamily.Games);
 		rentalShoppingCart.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.Action == RentalShoppingCartItemAction.rental && x.TitleFamily == TitleFamily.Movies);
 		rentalShoppingCart.TitleItems.Count((IRentalShoppingCartTitleItem x) => x.Action == RentalShoppingCartItemAction.purchase && x.TitleFamily == TitleFamily.Movies);
 		int count = rentalShoppingCart.Count;
@@ -664,23 +664,23 @@ public class CheckoutFunctions
 		{
 			response = "OfflineItemsLimitZero";
 		}
-		else if (instance.OfflineGameRentalLimit == 0 && instance.OfflineGamePurchaseLimit == 0 && pendingCounts.GameRentalCount + num2 + pendingCounts.GamePurchaseCount + num3 > 0)
+		else if (instance.OfflineGameRentalLimit == 0 && instance.OfflineGamePurchaseLimit == 0 && pendingCounts.GameRentalCount + num + pendingCounts.GamePurchaseCount + num2 > 0)
 		{
 			response = "OfflineGameRentalAndPurchaseLimitZero";
 		}
-		else if (instance.OfflineGameRentalLimit == 0 && pendingCounts.GameRentalCount + num2 > 0)
+		else if (instance.OfflineGameRentalLimit == 0 && pendingCounts.GameRentalCount + num > 0)
 		{
 			response = "OfflineGameRentalLimitZero";
 		}
-		else if (instance.OfflineGamePurchaseLimit == 0 && pendingCounts.GamePurchaseCount + num3 > 0)
+		else if (instance.OfflineGamePurchaseLimit == 0 && pendingCounts.GamePurchaseCount + num2 > 0)
 		{
 			response = "OfflineGamePurchaseLimitZero";
 		}
-		else if (pendingCounts.GameRentalCount + num2 > instance.OfflineGameRentalLimit)
+		else if (pendingCounts.GameRentalCount + num > instance.OfflineGameRentalLimit)
 		{
 			response = "OfflineGameRentalLimitExceeded";
 		}
-		else if (pendingCounts.GamePurchaseCount + num3 > instance.OfflineGamePurchaseLimit)
+		else if (pendingCounts.GamePurchaseCount + num2 > instance.OfflineGamePurchaseLimit)
 		{
 			response = "OfflineGamePurchaseLimitExceeded";
 		}
@@ -688,7 +688,7 @@ public class CheckoutFunctions
 		{
 			response = "OfflineItemsLimitExceeded";
 		}
-		else if (num > 0)
+		else if (valueOrDefault > 0)
 		{
 			response = "OfflineSubscriptionDeclined";
 		}
@@ -736,7 +736,7 @@ public class CheckoutFunctions
 		IViewService service = ServiceLocator.Instance.GetService<IViewService>();
 		Task.Factory.StartNew(delegate
 		{
-			LogHelper.Instance.Log(string.Format("Showing {0} while waiting for card reader reconnection.", "please_wait_view"));
+			LogHelper.Instance.Log("Showing please_wait_view while waiting for card reader reconnection.");
 			if (Redbox.Rental.Services.Session.Session.Instance != null)
 			{
 				Redbox.Rental.Services.Session.Session.Instance.WaitingForCardReaderConnection = true;
@@ -746,7 +746,7 @@ public class CheckoutFunctions
 			ServiceLocator.Instance.GetService<ITimerService>()?.CreateTimer("PleaseWaitTimer", value, value, delegate
 			{
 				RemovePleaseWaitTimer();
-				LogHelper.Instance.Log(string.Format("{0} timed out.  Attempt to enter maintenance mode", "please_wait_view"));
+				LogHelper.Instance.Log("please_wait_view timed out.  Attempt to enter maintenance mode");
 				IRedboxRental service2 = ServiceLocator.Instance.GetService<IRedboxRental>();
 				Redbox.Rental.Services.Session.Session.Instance.WaitingForCardReaderConnection = false;
 				service2?.EnterMaintenanceModeBecauseOfDisconnectedCardReader();
@@ -872,7 +872,7 @@ public class CheckoutFunctions
 			});
 			if (flag && rentalShoppingCart.Promotion != null && rentalShoppingCart.Promotion.Name == PromotionService.Instance.GetInCartPromoCode())
 			{
-				LogHelper.Instance.Log($"> Inventory Error: In-Cart promo code {rentalShoppingCart?.Promotion?.Name} cleared.");
+				LogHelper.Instance.Log("> Inventory Error: In-Cart promo code " + rentalShoppingCart?.Promotion?.Name + " cleared.");
 				rentalShoppingCart.ClearPromoCode();
 			}
 			string customerProfileNumber = instance?.PersonalizationSession?.CustomerProfileNumber;
@@ -916,7 +916,7 @@ public class CheckoutFunctions
 						}
 						else if (remoteServiceResult?.Errors != null && remoteServiceResult.Errors.ContainsCode("(D003)"))
 						{
-							LogHelper.Instance.Log($"> Invalid Promo code {rentalShoppingCart?.Promotion?.Name} cleared.");
+							LogHelper.Instance.Log("> Invalid Promo code " + rentalShoppingCart?.Promotion?.Name + " cleared.");
 							rentalShoppingCart.ClearPromoCode();
 						}
 						AddEventAuthorization(rentalShoppingCart.ShoppingSessionId, GetAuthorizeTypeText(authorizeResult.AuthorizeType), authorizeResult.IsOnline, flag2, null);
@@ -968,8 +968,8 @@ public class CheckoutFunctions
 			Redbox.Rental.Services.Session.Session.Instance.UserInfo.CustomerProfileNumber = authorizeResult?.CustomerProfileNumber;
 			Redbox.Rental.Services.Session.Session.Instance.UserInfo.AccountNumber = authorizeResult?.AccountNumber;
 		}
-		LogHelper.Instance.Log($"setting UserInfo.CustomerProfileNumber to {authorizeResult?.CustomerProfileNumber}");
-		LogHelper.Instance.Log($"setting UserInfo.AccountNumber to {authorizeResult?.AccountNumber}");
+		LogHelper.Instance.Log("setting UserInfo.CustomerProfileNumber to " + authorizeResult?.CustomerProfileNumber);
+		LogHelper.Instance.Log("setting UserInfo.AccountNumber to " + authorizeResult?.AccountNumber);
 		IViewService viewService = ServiceLocator.Instance.GetService<IViewService>();
 		Task.Factory.StartNew(delegate
 		{
@@ -1052,8 +1052,8 @@ public class CheckoutFunctions
 			authorizeResult.HasProfile = true;
 		}
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		bool num = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.EnableSonySweepstakes && (rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.TitleProduct.Studio.ToLower() == "sony") ?? false);
-		bool flag = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxSweepstakes && (rentalShoppingCart?.TitleItems?.Count ?? 0) > 0;
+		bool num = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.EnableSonySweepstakes && rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.TitleProduct.Studio.ToLower() == "sony") == true;
+		bool flag = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxSweepstakes && (rentalShoppingCart?.TitleItems?.Count).GetValueOrDefault() > 0;
 		if (num | flag)
 		{
 			PersonalizationFunctions.ShowSonySweepstakesConfirmationView(authorizeResult, text, flag);
@@ -1208,7 +1208,7 @@ public class CheckoutFunctions
 			OrchestrationService.ViewShow("redbox_plus_lead_generation_offer_view", new RedboxPlusLeadGenerationOfferViewParameters
 			{
 				EmailAddress = Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email,
-				OptInConfirmationStatus = (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus ?? OptInConfirmationStatus.DoNotShow),
+				OptInConfirmationStatus = (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus).GetValueOrDefault(),
 				ContinueAction = ContinueCheckoutFlow
 			});
 			return;
@@ -1218,7 +1218,7 @@ public class CheckoutFunctions
 			OrchestrationService.ViewShow("avod_lead_generation_offer_view", new AvodLeadGenerationOfferViewParameters
 			{
 				EmailAddress = Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email,
-				OptInConfirmationStatus = (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus ?? OptInConfirmationStatus.DoNotShow),
+				OptInConfirmationStatus = (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus).GetValueOrDefault(),
 				ContinueAction = ContinueCheckoutFlow
 			});
 			return;
@@ -1266,10 +1266,9 @@ public class CheckoutFunctions
 	private static bool PromptNewRedboxPlusCustomerForSignups()
 	{
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		bool? flag = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsCPNewInThisSession;
-		if (flag.HasValue && flag == true && rentalShoppingCart != null && rentalShoppingCart.HasSubscriptionItem(SubscriptionType.RedboxPlus))
+		if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsCPNewInThisSession == true && rentalShoppingCart != null && rentalShoppingCart.HasSubscriptionItem(SubscriptionType.RedboxPlus))
 		{
-			return !(Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.WasEarlyIdSignupPresented ?? false);
+			return Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.WasEarlyIdSignupPresented != true;
 		}
 		return false;
 	}
@@ -1339,7 +1338,7 @@ public class CheckoutFunctions
 		{
 			authorizeResult.Success = false;
 			authorizeResult.Response = response;
-			LogHelper.Instance.Log($"processing offline validation results.Setting sucees = false; response = {response}");
+			LogHelper.Instance.Log("processing offline validation results.Setting sucees = false; response = " + response);
 		}
 		else
 		{

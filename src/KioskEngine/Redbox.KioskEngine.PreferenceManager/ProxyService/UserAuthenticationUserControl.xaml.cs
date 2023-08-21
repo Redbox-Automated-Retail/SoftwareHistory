@@ -83,7 +83,7 @@ public partial class UserAuthenticationUserControl : UserControl, IPreferencePag
 
 		public override string ToString()
 		{
-			return $"{ResponseName} {Code}";
+			return ResponseName + " " + Code;
 		}
 	}
 

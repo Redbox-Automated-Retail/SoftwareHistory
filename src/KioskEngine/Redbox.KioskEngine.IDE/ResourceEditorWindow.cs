@@ -166,7 +166,7 @@ public class ResourceEditorWindow : DockContent
 						textEditor3.SetSyntaxResource("XML");
 						IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
 						object obj = m_resource["product_name"];
-						textEditor3.Name = string.Concat("text_editor_", obj, m_resource.Name);
+						textEditor3.Name = "text_editor_" + obj?.ToString() + m_resource.Name;
 						foreach (IBundleSpecifier bundle2 in service2.ActiveBundleSet.GetBundles())
 						{
 							if (bundle2.Name == (string)obj)

@@ -129,9 +129,9 @@ public partial class ConfigureKioskViewUserControl : UserControl, IComponentConn
 	{
 		try
 		{
-			string text = string.Concat("C:\\Program Files\\Redbox\\Reds\\Installers\\", result.Properties["kaseya_server"], "Install.exe");
-			LogHelper.Instance.Log($"Configuring Kiosk, Kaseya Path: {text}");
-			string arguments = string.Concat("/s /w /r /v /g=redbox.", result.Properties["ops_market"], " /m=redbox-", _selectedStoreId.ToString());
+			string text = "C:\\Program Files\\Redbox\\Reds\\Installers\\" + result.Properties["kaseya_server"]?.ToString() + "Install.exe";
+			LogHelper.Instance.Log("Configuring Kiosk, Kaseya Path: " + text);
+			string arguments = "/s /w /r /v /g=redbox." + result.Properties["ops_market"]?.ToString() + " /m=redbox-" + _selectedStoreId;
 			ProcessFunctions.StartProcessWaitForExit(text, arguments, 20000);
 			Spinner.Visibility = Visibility.Hidden;
 			if (MessageBox.Show("Do you want to reboot the kiosk now?", "Redbox Control Panel", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)

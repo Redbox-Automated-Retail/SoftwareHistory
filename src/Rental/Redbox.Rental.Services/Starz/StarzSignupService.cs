@@ -41,12 +41,12 @@ public class StarzSignupService
 		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
 		if (personalizationSession != null)
 		{
-			if (personalizationSession?.SubscriptionData?.SubscriptionServiceIsDown ?? false)
+			if (personalizationSession?.SubscriptionData?.SubscriptionServiceIsDown == true)
 			{
 				flag = false;
 				MessagePopupViewController.ShowStarzGenericErrorMessage(continueAction);
 			}
-			else if (personalizationSession?.SubscriptionData?.HasActiveStarzSubscription ?? false)
+			else if (personalizationSession?.SubscriptionData?.HasActiveStarzSubscription == true)
 			{
 				flag = false;
 				MessagePopupViewController.ShowStarzExistingSubscriptionErrorMessage(continueAction);
@@ -80,7 +80,7 @@ public class StarzSignupService
 	{
 		OrchestrationService.ViewShow("please_wait_view");
 		SignupFunctions.UpdateMarketingOptInConfirmationStatus(_emailAddress);
-		if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession == null || !((!(Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.PromptForPerks)) ?? true))
+		if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession == null || Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.PromptForPerks == true)
 		{
 			Action<IUpdateAccountResult> callback = delegate(IUpdateAccountResult updateAccountResult)
 			{

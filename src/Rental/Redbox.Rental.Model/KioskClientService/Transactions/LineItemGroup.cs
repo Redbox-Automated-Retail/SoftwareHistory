@@ -17,7 +17,7 @@ public class LineItemGroup
 		stringBuilder.Append($"GroupType: {GroupType}, ");
 		if (Items != null)
 		{
-			stringBuilder.Append(string.Format("Items: [({0})], ", string.Join("), (", Items)));
+			stringBuilder.Append("Items: [(" + string.Join("), (", Items) + ")], ");
 		}
 		stringBuilder.Append($"Totals: ({Totals})");
 		return stringBuilder.ToString();

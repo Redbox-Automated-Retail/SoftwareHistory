@@ -245,7 +245,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 				if (baseResponseEvent?.EventName != null)
 				{
 					string eventName = baseResponseEvent.EventName;
-					if (eventName == "CardProcessingStartedResponseEvent")
+					if (eventName == "CardRemovedResponseEvent" || eventName == "CardProcessingStartedResponseEvent")
 					{
 						commandData?.EventCallback?.Invoke(baseResponseEvent);
 					}
@@ -543,7 +543,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 		}
 		else
 		{
-			Log($"Response Event Handler error - unable to find active command: {JsonConvert.SerializeObject(getUnitHealthResponseEvent)}");
+			Log("Response Event Handler error - unable to find active command: " + JsonConvert.SerializeObject(getUnitHealthResponseEvent));
 		}
 	}
 
@@ -561,7 +561,7 @@ public class DeviceServiceClient : IDeviceServiceClient
 		}
 		else
 		{
-			Log($"Response Event Handler error - unable to find active command: {JsonConvert.SerializeObject(baseResponseEvent)}");
+			Log("Response Event Handler error - unable to find active command: " + JsonConvert.SerializeObject(baseResponseEvent));
 		}
 	}
 
@@ -594,12 +594,12 @@ public class DeviceServiceClient : IDeviceServiceClient
 
 	private void LogResponseEvent(BaseResponseEvent responseEvent)
 	{
-		Log(string.Format(arg1: (!(responseEvent is EMVCardReadResponseEvent responseEvent2)) ? ((!(responseEvent is EncryptedCardReadResponseEvent responseEvent3)) ? ((!(responseEvent is UnencryptedCardReadResponseEvent responseEvent4)) ? JsonConvert.SerializeObject(responseEvent) : ObfuscateUnencryptedCardReadResponseEvent(responseEvent4)) : ObfuscateEncryptedCardReadResponseEvent(responseEvent3)) : ObfuscateEMVCardReadResponseEvent(responseEvent2), format: "<<< {0}: {1}", arg0: responseEvent.EventName));
+		Log(string.Concat(str3: (!(responseEvent is EMVCardReadResponseEvent responseEvent2)) ? ((!(responseEvent is EncryptedCardReadResponseEvent responseEvent3)) ? ((!(responseEvent is UnencryptedCardReadResponseEvent responseEvent4)) ? JsonConvert.SerializeObject(responseEvent) : ObfuscateUnencryptedCardReadResponseEvent(responseEvent4)) : ObfuscateEncryptedCardReadResponseEvent(responseEvent3)) : ObfuscateEMVCardReadResponseEvent(responseEvent2), str0: "<<< ", str1: responseEvent.EventName, str2: ": "));
 	}
 
 	private void LogEvent(BaseEvent baseEvent)
 	{
-		Log($"<<< {baseEvent?.EventName}: {JsonConvert.SerializeObject(baseEvent)}");
+		Log("<<< " + baseEvent?.EventName + ": " + JsonConvert.SerializeObject(baseEvent));
 	}
 
 	private string ObfuscateEMVCardReadResponseEvent(EMVCardReadResponseEvent responseEvent)
@@ -801,7 +801,8 @@ public class DeviceServiceClient : IDeviceServiceClient
 						{
 							removedCommandData?.CommandCompleteCallback(timeoutResponseEvent);
 						});
-						Log($"DeviceServiceClient removing timed out aync command {JsonConvert.SerializeObject(removedCommandData.CommandRequest)}");
+						CancelCommand(removedCommandData.CommandRequest.RequestId, null);
+						Log("DeviceServiceClient removing timed out aync command " + JsonConvert.SerializeObject(removedCommandData.CommandRequest));
 					}
 				}
 				else

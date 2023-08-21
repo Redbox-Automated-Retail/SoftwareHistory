@@ -172,8 +172,8 @@ public class KeyboardTTSController : BaseTTSController<KeyboardTTSController, Ke
 							keyboardLogic.SetControlTextMode(mode: true);
 							commandKey = true;
 							break;
-						case "@yahoo.com":
 						case "@gmail.com":
+						case "@yahoo.com":
 						case "@hotmail.com":
 						case "@aol.com":
 							keyboardLogic.DomainButtonCommand_Execute(alphaCharacter);

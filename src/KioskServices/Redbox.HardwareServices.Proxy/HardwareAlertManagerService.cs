@@ -84,7 +84,7 @@ public class HardwareAlertManagerService : IHardwareAlertManagerService
 		string jobErrors = null;
 		if (jobId != null)
 		{
-			description = $"HAL Job {jobId} <br>{description}";
+			description = "HAL Job " + jobId + " <br>" + description;
 			jobResults = FormatJobResults(jobId);
 			jobErrors = FormatErrors(jobId);
 		}
@@ -99,8 +99,8 @@ public class HardwareAlertManagerService : IHardwareAlertManagerService
 		Validate(jobResults, "Jobresults", IsNullOrValidString);
 		Validate(jobErrors, "Errors", IsNullOrValidString);
 		Validate(subType, "Sub-Type", IsNullOrValidString);
-		string text = $"<h2>{source}</h2><p>{description}</p>{jobResults}{jobErrors}";
-		LogHelper.Instance.Log($"AlertManager.send_alert: {text}");
+		string text = "<h2>" + source + "</h2><p>" + description + "</p>" + jobResults + jobErrors;
+		LogHelper.Instance.Log("AlertManager.send_alert: " + text);
 		string storeNumber = (ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0).ToString();
 		ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(storeNumber, alertType, subType, text, DateTime.Now, null);
 	}
@@ -121,7 +121,7 @@ public class HardwareAlertManagerService : IHardwareAlertManagerService
 		ErrorList errors = new ErrorList();
 		ErrorList jobErrors = service.GetJobErrors(jobId, out errors);
 		LogHelper.Instance.Log(FormatErrors(jobId));
-		StringBuilder stringBuilder = new StringBuilder($"<h2>{typeOfSync}");
+		StringBuilder stringBuilder = new StringBuilder("<h2>" + typeOfSync);
 		if ((jobErrors != null && jobErrors.Count != 0) || !flag)
 		{
 			LogHelper.Instance.Log("Errored");
@@ -131,7 +131,7 @@ public class HardwareAlertManagerService : IHardwareAlertManagerService
 		{
 			stringBuilder.Append(" Successful</h2>");
 		}
-		stringBuilder.Append($"<br> HAL Job: {jobId}<br>");
+		stringBuilder.Append("<br> HAL Job: " + jobId + "<br>");
 		stringBuilder.Append("<br> Results:<br>");
 		LogHelper.Instance.Log($"Result Count: {hardwareResults?.Count ?? 0}");
 		LogHelper.Instance.Log($"Error Count: {jobErrors?.Count ?? 0}");
@@ -146,13 +146,13 @@ public class HardwareAlertManagerService : IHardwareAlertManagerService
 			stringBuilder.Append($"<tr><td>Slots Successfully Synced</td><td>:</td><td>{jobResultSummary.SuccessCount}</td></tr>");
 			stringBuilder.Append($"<tr><td><b>Total slots covered in Sync</b></td><td><b>:</b></td><td><b>{jobResultSummary.TotalCount}</b></td></tr>");
 			stringBuilder.Append("</table>");
-			stringBuilder.Append($"<br>Extended Results of {typeOfSync}<br>Starting Inventory Sync");
+			stringBuilder.Append("<br>Extended Results of " + typeOfSync + "<br>Starting Inventory Sync");
 			int onlyOneServiceNotConfigured = 0;
 			foreach (IHardwareResult item in hardwareResults)
 			{
 				stringBuilder.Append(FormatSyncJobResult(item, ref onlyOneServiceNotConfigured));
 			}
-			stringBuilder.Append($"<br>The {typeOfSync} Completed.");
+			stringBuilder.Append("<br>The " + typeOfSync + " Completed.");
 		}
 		if (jobErrors != null)
 		{
@@ -166,7 +166,7 @@ public class HardwareAlertManagerService : IHardwareAlertManagerService
 
 	private string FormatError(Redbox.KioskEngine.ComponentModel.Error error)
 	{
-		return $"<p>{error?.Code} {error?.Description}<br>Details: {error?.Details}</p>";
+		return "<p>" + error?.Code + " " + error?.Description + "<br>Details: " + error?.Details + "</p>";
 	}
 
 	private string FormatJobResults(string jobId)
@@ -198,40 +198,40 @@ public class HardwareAlertManagerService : IHardwareAlertManagerService
 			case "UNDEFINED":
 				break;
 			case "UNKNOWN":
-				goto IL_00df;
+				goto IL_00fe;
 			case "EMPTY":
-				goto IL_018e;
+				goto IL_01d2;
 			default:
-				goto IL_019c;
+				goto IL_01e0;
 			}
 		}
 		stringBuilder.Append(" UNDEFINED");
-		stringBuilder.Append($"<b> | Error - {jobResult?.Code} - {jobResult.Message}</b>");
-		goto IL_01ef;
-		IL_018e:
+		stringBuilder.Append("<b> | Error - " + jobResult?.Code + " - " + jobResult.Message + "</b>");
+		goto IL_0252;
+		IL_01d2:
 		stringBuilder.Append(" EMPTY");
-		goto IL_01ef;
-		IL_01ef:
+		goto IL_0252;
+		IL_0252:
 		stringBuilder.Append("</p>");
 		return stringBuilder.ToString();
-		IL_019c:
-		stringBuilder.Append($" Barcode:{jobResultItem}");
+		IL_01e0:
+		stringBuilder.Append(" Barcode:" + jobResultItem);
 		if (jobResult?.Code == "ItemReturned")
 		{
-			stringBuilder.Append($"<b> | {jobResult?.Code} - {jobResult?.Message}</b>");
+			stringBuilder.Append("<b> | " + jobResult?.Code + " - " + jobResult?.Message + "</b>");
 		}
-		goto IL_01ef;
-		IL_00df:
+		goto IL_0252;
+		IL_00fe:
 		stringBuilder.Append(" UNKNOWN");
 		if ((jobResult?.Code != "InventoryState" && jobResult.Code != "ItemReturned") || (jobResult?.Code == "ServiceNotConfigured" && onlyOneServiceNotConfigured < 1))
 		{
-			stringBuilder.Append($"<b> | Error - {jobResult?.Code} - {jobResult?.Message}</b>");
+			stringBuilder.Append("<b> | Error - " + jobResult?.Code + " - " + jobResult?.Message + "</b>");
 			if (jobResult?.Code == "ServiceNotConfigured")
 			{
 				onlyOneServiceNotConfigured++;
 			}
 		}
-		goto IL_01ef;
+		goto IL_0252;
 	}
 
 	private JobResultSummary GetJobResultSummary(ReadOnlyCollection<IHardwareResult> hardwareResults)
@@ -244,7 +244,7 @@ public class HardwareAlertManagerService : IHardwareAlertManagerService
 				string jobResultItem = GetJobResultItem(hardwareResult);
 				if (jobResultItem != null)
 				{
-					LogHelper.Instance.Log($"Found Item: {jobResultItem} with code: {hardwareResult?.Code}");
+					LogHelper.Instance.Log("Found Item: " + jobResultItem + " with code: " + hardwareResult?.Code);
 				}
 				if (hardwareResult.Code == "ExcludedSlotSkipped")
 				{

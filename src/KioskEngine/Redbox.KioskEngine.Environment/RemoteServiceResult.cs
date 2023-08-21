@@ -40,13 +40,13 @@ public class RemoteServiceResult : IRemoteServiceResult
 	{
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.Append("{");
-		stringBuilder.Append($"\"Success\":{Success.ToJson()},");
-		stringBuilder.Append($"\"Errors\":{Errors?.ToJson()},");
-		stringBuilder.Append($"\"ExecutionTime\":{ExecutionTime.ToJson()},");
+		stringBuilder.Append("\"Success\":" + Success.ToJson() + ",");
+		stringBuilder.Append("\"Errors\":" + Errors?.ToJson() + ",");
+		stringBuilder.Append("\"ExecutionTime\":" + ExecutionTime.ToJson() + ",");
 		Dictionary<string, object> dictionary = new Dictionary<string, object>(Properties);
 		ServiceLocator.Instance.GetService<IObfuscationService>()?.ObfuscateDictionary(dictionary);
-		stringBuilder.Append($"\"Properties\":{dictionary.ToJson()},");
-		stringBuilder.Append($"\"Instructions\":{Instructions?.ToJson()}");
+		stringBuilder.Append("\"Properties\":" + dictionary.ToJson() + ",");
+		stringBuilder.Append("\"Instructions\":" + Instructions?.ToJson());
 		stringBuilder.Append("}");
 		return stringBuilder.ToString();
 	}

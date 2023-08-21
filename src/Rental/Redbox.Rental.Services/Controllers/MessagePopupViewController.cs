@@ -61,7 +61,7 @@ public class MessagePopupViewController : BaseViewController
 
 	private static void ShowModal(ModalParameters modalParameters)
 	{
-		LogHelper.Instance.Log($"Showing Modal {modalParameters?.TitleText}");
+		LogHelper.Instance.Log("Showing Modal " + modalParameters?.TitleText);
 		ShowMessagePopupView(new ShowMessagePopupViewParameter(modalParameters?.TitleText, (!string.IsNullOrWhiteSpace(modalParameters?.TitleText)) ? ((modalParameters != null && modalParameters.ModalType == ModalType.Error) ? "error_modal_title_title_style" : "modal_title_title_style") : ((modalParameters != null && modalParameters.ModalType == ModalType.Error) ? "error_modal_no_title_title_style" : "modal_no_title_title_style"), modalParameters?.MessageText, string.IsNullOrWhiteSpace(modalParameters?.MessageText) ? "modal_no_message_message_style" : "modal_message_message_style", modalParameters?.Button1Text, "button_text_large_style", (!string.IsNullOrWhiteSpace(modalParameters?.Button2Text)) ? "modal_two_buttons_button1_style" : "modal_one_button_button1_style", modalParameters?.Button2Text, "button_text_large_style", "modal_two_buttons_button2_style", "modal_button_grid_style", "modal_button_inner_grid_style", null, (modalParameters?.ContentUserControl != null) ? "modal_content_user_control_message_dock_panel_style" : "modal_no_content_user_control_message_dock_panel_style", (modalParameters != null && modalParameters.TimeOut.HasValue) ? modalParameters.TimeOut.Value : GetDefaultMessageTimeOut(), modalParameters?.Button1Action, modalParameters?.Button2Action, modalParameters?.TimeOutAction, modalParameters?.ActorTag, modalParameters?.ContentUserControl, "Transparent", new Thickness(0.0, 0.0, 0.0, 0.0), modalParameters?.AnalyticsContextList, modalParameters?.ViewName, Visibility.Visible, isAutoSized: true));
 	}
 
@@ -78,7 +78,7 @@ public class MessagePopupViewController : BaseViewController
 		{
 			TitleText = Resources.reco_need_more_time,
 			Button1Text = Resources.pickup.ToUpper(),
-			Button2Text = $"{Resources.keep_browsing_1.ToUpper()} {Resources.keep_browsing_2.ToUpper()}",
+			Button2Text = Resources.keep_browsing_1.ToUpper() + " " + Resources.keep_browsing_2.ToUpper(),
 			TimeOut = GetDefaultMessageTimeOut(),
 			Button1Action = pickupAction,
 			Button2Action = continueBrowsingAction,

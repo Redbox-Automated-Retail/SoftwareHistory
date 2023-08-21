@@ -293,7 +293,7 @@ public partial class PromotionServiceUserControl : UserControl, IPreferencePageH
 		}
 		if (_model.TestPromoCodes.Any((TestPromoCode x) => x.PromoCode == _model.PromoCode))
 		{
-			MessageBox.Show($"Test Promo Code {_model.PromoCode} already exists.");
+			MessageBox.Show("Test Promo Code " + _model.PromoCode + " already exists.");
 			return;
 		}
 		TestPromoCode item = new TestPromoCode

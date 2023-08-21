@@ -58,7 +58,7 @@ public class BrowseViewController : BaseViewController
 
 	private static ITimerService TimerService => ServiceLocator.Instance.GetService<ITimerService>();
 
-	private static bool InTitleMarketingMode => BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.InCartTitleMarketing ?? false;
+	private static bool InTitleMarketingMode => BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.InCartTitleMarketing == true;
 
 	private static bool IsForSaleButtonEnabled
 	{
@@ -190,7 +190,7 @@ public class BrowseViewController : BaseViewController
 				if (BrowseFunctions.IsRedboxPlusBrowseMode)
 				{
 					string text = ((RedboxPlusFunctions.RedboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier1) ? Resources.redbox_plus_ada_cart_unavailable_tier1_message_text : Resources.redbox_plus_ada_cart_unavailable_tier2_message_text);
-					topMenuModel.MenuBackgroundText = ((!RedboxPlusFunctions.IsFreeOneNightRentalAvailable) ? text : ((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.HasRedboxPlusFreeOneNightRentalSelected ?? false) ? Resources.redbox_plus_mini_cart_title_selected : (BrowseFunctions.CanAddProductToCart ? Resources.redbox_plus_ada_cart_empty_message_text : Resources.redbox_plus_ada_cart_full_message_text)));
+					topMenuModel.MenuBackgroundText = ((!RedboxPlusFunctions.IsFreeOneNightRentalAvailable) ? text : ((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.HasRedboxPlusFreeOneNightRentalSelected == true) ? Resources.redbox_plus_mini_cart_title_selected : (BrowseFunctions.CanAddProductToCart ? Resources.redbox_plus_ada_cart_empty_message_text : Resources.redbox_plus_ada_cart_full_message_text)));
 				}
 				else
 				{
@@ -234,12 +234,10 @@ public class BrowseViewController : BaseViewController
 				}
 			}
 			BrowseState.PageNumber = 1;
-			Genres? filterValue = browseGenreMenuButton.FilterValue;
-			Genres? genre = BrowseState.Genre;
-			if (filterValue.GetValueOrDefault() == genre.GetValueOrDefault() && filterValue.HasValue == genre.HasValue && browseGenreMenuButton.IsDeselectable)
+			if (browseGenreMenuButton.FilterValue == BrowseState.Genre && browseGenreMenuButton.IsDeselectable)
 			{
 				BrowseState.Genre = null;
-				BaseViewController.AnalyticsService?.AddButtonPressEvent("browse-filter-change", string.Format($"{browseGenreMenuButton.Text},DESELECT"));
+				BaseViewController.AnalyticsService?.AddButtonPressEvent("browse-filter-change", string.Format(browseGenreMenuButton.Text + ",DESELECT"));
 			}
 			else
 			{
@@ -527,7 +525,7 @@ public class BrowseViewController : BaseViewController
 		string text = null;
 		Style style = null;
 		string checkOutButtonCountText = null;
-		int num = BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0;
+		int valueOrDefault = (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.Count).GetValueOrDefault();
 		if (ShowNoThanks())
 		{
 			style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "classic_gray_button_style");
@@ -541,7 +539,7 @@ public class BrowseViewController : BaseViewController
 			string check_out_button_count = Resources.check_out_button_count;
 			if (check_out_button_count.Contains("{0}"))
 			{
-				checkOutButtonCountText = string.Format(check_out_button_count, num);
+				checkOutButtonCountText = string.Format(check_out_button_count, valueOrDefault);
 			}
 		}
 		browseViewModel.IsADAAccessible = BaseViewController.IsADAMode;
@@ -576,12 +574,12 @@ public class BrowseViewController : BaseViewController
 			if ((browseState == null || !browseState.BrowseCollections) && BrowseState?.BrowseCollectionProduct == null)
 			{
 				viewRedboxPlusMoviesButtonVisibility = 0;
-				goto IL_0363;
+				goto IL_0357;
 			}
 		}
 		viewRedboxPlusMoviesButtonVisibility = 2;
-		goto IL_0363;
-		IL_0363:
+		goto IL_0357;
+		IL_0357:
 		browseViewModel.ViewRedboxPlusMoviesButtonVisibility = (Visibility)viewRedboxPlusMoviesButtonVisibility;
 	}
 
@@ -936,7 +934,7 @@ public class BrowseViewController : BaseViewController
 			}
 		};
 		browseFilter.Text = string.Format(Resources.price_range_mid_button, 4.99m.ToString("0.00"), 5.99m.ToString("0.00"));
-		optionSelectionDialogInfo.ButtonData.Add(new ButtonData(browseFilter.Text, command, browseFilter, isEnabled: true, string.Format("${0} to ${1}", 4.99m.ToString("0.00"), 5.99m.ToString("0.00"))));
+		optionSelectionDialogInfo.ButtonData.Add(new ButtonData(browseFilter.Text, command, browseFilter, isEnabled: true, "$" + 4.99m.ToString("0.00") + " to $" + 5.99m.ToString("0.00")));
 		buttonText = string.Format(Resources.price_range_high_button_short, 6.99m.ToString("0.00"));
 		browseFilter = new BrowseFilter
 		{
@@ -1133,7 +1131,7 @@ public class BrowseViewController : BaseViewController
 			decimal num = 3.99m;
 			int num2;
 			decimal? priceRangeHigh2;
-			if (priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue)
+			if ((priceRangeHigh.GetValueOrDefault() == num) & priceRangeHigh.HasValue)
 			{
 				BrowsePriceRangeParameter browsePriceRangeFilter = BrowseState.BrowsePriceRangeFilter;
 				if (browsePriceRangeFilter == null)
@@ -1144,7 +1142,7 @@ public class BrowseViewController : BaseViewController
 				{
 					priceRangeHigh2 = browsePriceRangeFilter.PriceRangeHigh;
 					num = 3.99m;
-					num2 = ((priceRangeHigh2.GetValueOrDefault() == num && priceRangeHigh2.HasValue) ? 1 : 0);
+					num2 = (((priceRangeHigh2.GetValueOrDefault() == num) & priceRangeHigh2.HasValue) ? 1 : 0);
 				}
 			}
 			else
@@ -1154,7 +1152,7 @@ public class BrowseViewController : BaseViewController
 			priceRangeHigh2 = browsePriceRangeParameter.PriceRangeHigh;
 			num = 5.99m;
 			int num3;
-			if (priceRangeHigh2.GetValueOrDefault() == num && priceRangeHigh2.HasValue)
+			if ((priceRangeHigh2.GetValueOrDefault() == num) & priceRangeHigh2.HasValue)
 			{
 				BrowsePriceRangeParameter browsePriceRangeFilter2 = BrowseState.BrowsePriceRangeFilter;
 				if (browsePriceRangeFilter2 == null)
@@ -1165,7 +1163,7 @@ public class BrowseViewController : BaseViewController
 				{
 					priceRangeHigh2 = browsePriceRangeFilter2.PriceRangeHigh;
 					num = 5.99m;
-					num3 = ((priceRangeHigh2.GetValueOrDefault() == num && priceRangeHigh2.HasValue) ? 1 : 0);
+					num3 = (((priceRangeHigh2.GetValueOrDefault() == num) & priceRangeHigh2.HasValue) ? 1 : 0);
 				}
 			}
 			else
@@ -1176,7 +1174,7 @@ public class BrowseViewController : BaseViewController
 			priceRangeHigh2 = browsePriceRangeParameter.PriceRangeLow;
 			num = 6.99m;
 			int num4;
-			if (priceRangeHigh2.GetValueOrDefault() == num && priceRangeHigh2.HasValue)
+			if ((priceRangeHigh2.GetValueOrDefault() == num) & priceRangeHigh2.HasValue)
 			{
 				BrowsePriceRangeParameter browsePriceRangeFilter3 = BrowseState.BrowsePriceRangeFilter;
 				if (browsePriceRangeFilter3 == null)
@@ -1187,7 +1185,7 @@ public class BrowseViewController : BaseViewController
 				{
 					priceRangeHigh2 = browsePriceRangeFilter3.PriceRangeLow;
 					num = 6.99m;
-					num4 = ((priceRangeHigh2.GetValueOrDefault() == num && priceRangeHigh2.HasValue) ? 1 : 0);
+					num4 = (((priceRangeHigh2.GetValueOrDefault() == num) & priceRangeHigh2.HasValue) ? 1 : 0);
 				}
 			}
 			else
@@ -1254,7 +1252,7 @@ public class BrowseViewController : BaseViewController
 				BrowseState.PageNumber = 1;
 				if (!string.IsNullOrEmpty(analyticAttributeValue))
 				{
-					BaseViewController.AnalyticsService?.AddButtonPressEvent("browse-filter-change", string.Format($"{analyticAttributeValue},deselect"));
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("browse-filter-change", string.Format(analyticAttributeValue + ",deselect"));
 				}
 				if (viewModel != null)
 				{
@@ -1271,7 +1269,7 @@ public class BrowseViewController : BaseViewController
 				BrowseState.BrowseStudio = null;
 				if (!string.IsNullOrEmpty(analyticAttributeValue))
 				{
-					BaseViewController.AnalyticsService?.AddButtonPressEvent("browse-filter-change", string.Format($"{analyticAttributeValue},deselect"));
+					BaseViewController.AnalyticsService?.AddButtonPressEvent("browse-filter-change", string.Format(analyticAttributeValue + ",deselect"));
 				}
 				if (viewModel != null)
 				{
@@ -1332,12 +1330,12 @@ public class BrowseViewController : BaseViewController
 			if (browseState == null || browseState.BrowseSelectedSort != BrowseSelectedSort.Alpha)
 			{
 				pageTitleTextVisibility = 0;
-				goto IL_00e8;
+				goto IL_00d6;
 			}
 		}
 		pageTitleTextVisibility = 2;
-		goto IL_00e8;
-		IL_00e8:
+		goto IL_00d6;
+		IL_00d6:
 		browseControlModel.PageTitleTextVisibility = (Visibility)pageTitleTextVisibility;
 		browseProductControl.NoResultsText = Resources.filter_games_empty;
 		IBrowseState browseState2 = BrowseState;
@@ -1692,7 +1690,7 @@ public class BrowseViewController : BaseViewController
 			}
 			else
 			{
-				LogHelper.Instance.Log(string.Format("Not opening view {0} because the {1} is not the current view.", "product_detail_view", "browse_view"));
+				LogHelper.Instance.Log("Not opening view product_detail_view because the browse_view is not the current view.");
 			}
 			break;
 		}
@@ -1925,9 +1923,9 @@ public class BrowseViewController : BaseViewController
 			browseViewModel.MiniCartControlModel = browseControlModel;
 			browseViewModel.MiniCartVisibility = Visibility.Visible;
 			browseViewModel.EmptyCartSpacesVisibility = (BaseViewController.IsADAMode ? Visibility.Collapsed : Visibility.Visible);
-			browseViewModel.EmptyCartAddItemMessageVisibility = ((BaseViewController.IsADAMode || BrowseFunctions.IsRedboxPlusBrowseMode || (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0) != 0) ? Visibility.Collapsed : Visibility.Visible);
+			browseViewModel.EmptyCartAddItemMessageVisibility = ((BaseViewController.IsADAMode || BrowseFunctions.IsRedboxPlusBrowseMode || (BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.Count).GetValueOrDefault() != 0) ? Visibility.Collapsed : Visibility.Visible);
 			string text = ((RedboxPlusFunctions.RedboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier1) ? Resources.redbox_plus_mini_cart_unavailable_tier1_message_text : Resources.redbox_plus_mini_cart_unavailable_tier2_message_text);
-			browseViewModel.RedboxPlusMiniCartMessageText = ((!RedboxPlusFunctions.IsFreeOneNightRentalAvailable) ? text : ((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.HasRedboxPlusFreeOneNightRentalSelected ?? false) ? Resources.redbox_plus_mini_cart_title_selected : (BrowseFunctions.CanAddProductToCart ? Resources.redbox_plus_mini_cart_empty_message_text : Resources.redbox_plus_mini_cart_full_message_text)));
+			browseViewModel.RedboxPlusMiniCartMessageText = ((!RedboxPlusFunctions.IsFreeOneNightRentalAvailable) ? text : ((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart?.HasRedboxPlusFreeOneNightRentalSelected == true) ? Resources.redbox_plus_mini_cart_title_selected : (BrowseFunctions.CanAddProductToCart ? Resources.redbox_plus_mini_cart_empty_message_text : Resources.redbox_plus_mini_cart_full_message_text)));
 			browseViewModel.RedboxPlusMiniCartVisiblity = ((!BrowseFunctions.IsRedboxPlusBrowseMode || BaseViewController.IsADAMode) ? Visibility.Collapsed : Visibility.Visible);
 			browseViewModel.RedboxPlusEmptyCartSpaceVisiblity = ((!BrowseFunctions.IsRedboxPlusBrowseMode || !RedboxPlusFunctions.IsFreeOneNightRentalAvailable) ? Visibility.Collapsed : Visibility.Visible);
 			browseViewModel.AddToCartLabel1Text = Resources.add_to_cart_label1;
@@ -2174,20 +2172,20 @@ public class BrowseViewController : BaseViewController
 			{
 				ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 				string productDisplayName = BrowseFunctions.GetProductDisplayName(titleProduct);
-				string arg = null;
+				string text = null;
 				if (titleProduct.IsGame)
 				{
 					TitleTypeProperty value = null;
 					TitleTypeProperties.Properties.TryGetValue(titleProduct.TitleType, out value);
-					arg = $" {value?.GetName(Resources.ResourceManager)}";
+					text = " " + value?.GetName(Resources.ResourceManager);
 				}
-				string arg2 = ((titleProduct is MDVProduct mDVProduct) ? $" ({mDVProduct.TitleProducts.Count} {Resources.multi_disc_vend_discs_text})" : null);
-				string header = $"{productDisplayName}{arg}{arg2}";
+				string text2 = ((titleProduct is MDVProduct mDVProduct) ? $" ({mDVProduct.TitleProducts.Count} {Resources.multi_disc_vend_discs_text})" : null);
+				string header = productDisplayName + text + text2;
 				DisplayProductModel displayProductModel;
 				if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
 				{
 					string purchasePriceText = BrowseFunctions.GetPurchasePriceText(titleProduct);
-					purchasePriceText = (string.IsNullOrEmpty(purchasePriceText) ? "" : $"{Resources.browse_view_rent_and_buy_purchase_text}: {purchasePriceText}");
+					purchasePriceText = (string.IsNullOrEmpty(purchasePriceText) ? "" : (Resources.browse_view_rent_and_buy_purchase_text + ": " + purchasePriceText));
 					displayProductModel = new DisplayProductWithPriceModel
 					{
 						Name = kioskProduct.ProductName,
@@ -2196,7 +2194,7 @@ public class BrowseViewController : BaseViewController
 						LockAspectRatio = true,
 						Header = header,
 						DisplayProductModelConstants = displayProductModelConstants,
-						PriceText = $"{purchasePriceText}"
+						PriceText = (purchasePriceText ?? "")
 					};
 				}
 				else
@@ -2384,11 +2382,11 @@ public class BrowseViewController : BaseViewController
 		browseItemModel.OutOfStockTextAZVisibility = Visibility.Collapsed;
 		bool flag = !titleProduct.InStock && BrowseState.BrowseMode != BrowseViewFilter.ComingSoon && !BaseViewController.IsADAMode && !titleProduct.IsEmptyCase;
 		bool flag2 = displayProductModelConstants.ShowWatchOptions & flag;
-		bool num = displayProductModelConstants.KioskClientService?.Kiosk?.HasDual ?? false;
+		bool valueOrDefault = displayProductModelConstants.KioskClientService?.Kiosk?.HasDual == true;
 		bool flag3 = false;
-		if (num)
+		if (valueOrDefault)
 		{
-			flag3 = ((!(titleProduct is TitleRollupProduct titleRollupProduct)) ? (displayProductModelConstants.KioskClientService?.Dual?.IsInStockInOther(titleProduct.ProductId) ?? false) : (titleRollupProduct.KioskProducts?.Any((ITitleProduct tp) => displayProductModelConstants.KioskClientService?.Dual?.IsInStockInOther(tp.ProductId) ?? false) ?? false));
+			flag3 = ((!(titleProduct is TitleRollupProduct titleRollupProduct)) ? (displayProductModelConstants.KioskClientService?.Dual?.IsInStockInOther(titleProduct.ProductId) == true) : (titleRollupProduct.KioskProducts?.Any((ITitleProduct tp) => displayProductModelConstants.KioskClientService?.Dual?.IsInStockInOther(tp.ProductId) == true) ?? false));
 		}
 		bool flag4 = displayProductModelConstants.ShowDualInStock & flag & flag3;
 		if (flag4)
@@ -2645,126 +2643,10 @@ public class BrowseViewController : BaseViewController
 				{
 					break;
 				}
-				BrowseFilter obj3 = new BrowseFilter
-				{
-					ButtonType = BrowseFilterType.PriceRange,
-					Name = "price_range_low_button",
-					Height = height,
-					Width = 136
-				};
-				int isSelected3;
-				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
-				{
-					BrowsePriceRangeParameter browsePriceRangeFilter3 = browseState.BrowsePriceRangeFilter;
-					if (browsePriceRangeFilter3 == null)
-					{
-						isSelected3 = 0;
-					}
-					else
-					{
-						decimal? priceRangeHigh = browsePriceRangeFilter3.PriceRangeHigh;
-						decimal num = 3.99m;
-						isSelected3 = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
-					}
-				}
-				else
-				{
-					isSelected3 = 0;
-				}
-				obj3.IsSelected = (byte)isSelected3 != 0;
-				obj3.IsVisible = isVisible2;
-				obj3.Parameter = new BrowsePriceRangeParameter
-				{
-					PriceRangeHigh = 3.99m,
-					analtyicsString = "buy399range"
-				};
-				obj3.IsDeselectable = isDeselectable;
-				BrowseFilter browseFilter3 = obj3;
-				browseFilter3.Text = string.Format(Resources.price_range_low_button, 3.99m.ToString("0.00"));
-				list.Add(browseFilter3);
-				BrowseFilter obj4 = new BrowseFilter
-				{
-					ButtonType = BrowseFilterType.PriceRange,
-					Name = "price_range_mid_button",
-					Height = height,
-					Width = 127
-				};
-				int isSelected4;
-				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
-				{
-					BrowsePriceRangeParameter browsePriceRangeFilter4 = browseState.BrowsePriceRangeFilter;
-					if (browsePriceRangeFilter4 == null)
-					{
-						isSelected4 = 0;
-					}
-					else
-					{
-						decimal? priceRangeHigh = browsePriceRangeFilter4.PriceRangeHigh;
-						decimal num = 5.99m;
-						isSelected4 = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
-					}
-				}
-				else
-				{
-					isSelected4 = 0;
-				}
-				obj4.IsSelected = (byte)isSelected4 != 0;
-				obj4.IsVisible = isVisible2;
-				obj4.Parameter = new BrowsePriceRangeParameter
-				{
-					PriceRangeLow = 4.99m,
-					PriceRangeHigh = 5.99m,
-					analtyicsString = "buymidrange"
-				};
-				obj4.IsDeselectable = isDeselectable;
-				browseFilter3 = obj4;
-				browseFilter3.Text = string.Format(Resources.price_range_mid_button, 4.99m.ToString("0.00"), 5.99m.ToString("0.00"));
-				list.Add(browseFilter3);
-				BrowseFilter obj5 = new BrowseFilter
-				{
-					ButtonType = BrowseFilterType.PriceRange,
-					Name = "price_range_high_button",
-					Height = height,
-					Width = width
-				};
-				int isSelected5;
-				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
-				{
-					BrowsePriceRangeParameter browsePriceRangeFilter5 = browseState.BrowsePriceRangeFilter;
-					if (browsePriceRangeFilter5 == null)
-					{
-						isSelected5 = 0;
-					}
-					else
-					{
-						decimal? priceRangeHigh = browsePriceRangeFilter5.PriceRangeLow;
-						decimal num = 6.99m;
-						isSelected5 = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
-					}
-				}
-				else
-				{
-					isSelected5 = 0;
-				}
-				obj5.IsSelected = (byte)isSelected5 != 0;
-				obj5.IsVisible = isVisible2;
-				obj5.Parameter = new BrowsePriceRangeParameter
-				{
-					PriceRangeLow = 6.99m,
-					analtyicsString = "buy699range"
-				};
-				obj5.IsDeselectable = isDeselectable;
-				browseFilter3 = obj5;
-				browseFilter3.Text = string.Format(Resources.price_range_high_button, 6.99m.ToString("0.00"));
-				list.Add(browseFilter3);
-				break;
-			}
-			case "C":
-			{
 				BrowseFilter obj2 = new BrowseFilter
 				{
 					ButtonType = BrowseFilterType.PriceRange,
-					Name = "price_cutoff_low_button",
+					Name = "price_range_low_button",
 					Height = height,
 					Width = 136
 				};
@@ -2780,7 +2662,7 @@ public class BrowseViewController : BaseViewController
 					{
 						decimal? priceRangeHigh = browsePriceRangeFilter2.PriceRangeHigh;
 						decimal num = 3.99m;
-						isSelected2 = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
+						isSelected2 = (((priceRangeHigh.GetValueOrDefault() == num) & priceRangeHigh.HasValue) ? 1 : 0);
 					}
 				}
 				else
@@ -2792,11 +2674,127 @@ public class BrowseViewController : BaseViewController
 				obj2.Parameter = new BrowsePriceRangeParameter
 				{
 					PriceRangeHigh = 3.99m,
-					analtyicsString = "buy399"
+					analtyicsString = "buy399range"
 				};
+				obj2.IsDeselectable = isDeselectable;
 				BrowseFilter browseFilter2 = obj2;
 				browseFilter2.Text = string.Format(Resources.price_range_low_button, 3.99m.ToString("0.00"));
 				list.Add(browseFilter2);
+				BrowseFilter obj3 = new BrowseFilter
+				{
+					ButtonType = BrowseFilterType.PriceRange,
+					Name = "price_range_mid_button",
+					Height = height,
+					Width = 127
+				};
+				int isSelected3;
+				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				{
+					BrowsePriceRangeParameter browsePriceRangeFilter3 = browseState.BrowsePriceRangeFilter;
+					if (browsePriceRangeFilter3 == null)
+					{
+						isSelected3 = 0;
+					}
+					else
+					{
+						decimal? priceRangeHigh = browsePriceRangeFilter3.PriceRangeHigh;
+						decimal num = 5.99m;
+						isSelected3 = (((priceRangeHigh.GetValueOrDefault() == num) & priceRangeHigh.HasValue) ? 1 : 0);
+					}
+				}
+				else
+				{
+					isSelected3 = 0;
+				}
+				obj3.IsSelected = (byte)isSelected3 != 0;
+				obj3.IsVisible = isVisible2;
+				obj3.Parameter = new BrowsePriceRangeParameter
+				{
+					PriceRangeLow = 4.99m,
+					PriceRangeHigh = 5.99m,
+					analtyicsString = "buymidrange"
+				};
+				obj3.IsDeselectable = isDeselectable;
+				browseFilter2 = obj3;
+				browseFilter2.Text = string.Format(Resources.price_range_mid_button, 4.99m.ToString("0.00"), 5.99m.ToString("0.00"));
+				list.Add(browseFilter2);
+				BrowseFilter obj4 = new BrowseFilter
+				{
+					ButtonType = BrowseFilterType.PriceRange,
+					Name = "price_range_high_button",
+					Height = height,
+					Width = width
+				};
+				int isSelected4;
+				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				{
+					BrowsePriceRangeParameter browsePriceRangeFilter4 = browseState.BrowsePriceRangeFilter;
+					if (browsePriceRangeFilter4 == null)
+					{
+						isSelected4 = 0;
+					}
+					else
+					{
+						decimal? priceRangeHigh = browsePriceRangeFilter4.PriceRangeLow;
+						decimal num = 6.99m;
+						isSelected4 = (((priceRangeHigh.GetValueOrDefault() == num) & priceRangeHigh.HasValue) ? 1 : 0);
+					}
+				}
+				else
+				{
+					isSelected4 = 0;
+				}
+				obj4.IsSelected = (byte)isSelected4 != 0;
+				obj4.IsVisible = isVisible2;
+				obj4.Parameter = new BrowsePriceRangeParameter
+				{
+					PriceRangeLow = 6.99m,
+					analtyicsString = "buy699range"
+				};
+				obj4.IsDeselectable = isDeselectable;
+				browseFilter2 = obj4;
+				browseFilter2.Text = string.Format(Resources.price_range_high_button, 6.99m.ToString("0.00"));
+				list.Add(browseFilter2);
+				break;
+			}
+			case "C":
+			{
+				BrowseFilter obj5 = new BrowseFilter
+				{
+					ButtonType = BrowseFilterType.PriceRange,
+					Name = "price_cutoff_low_button",
+					Height = height,
+					Width = 136
+				};
+				int isSelected5;
+				if (browseState.BrowseSelectedSort == BrowseSelectedSort.ForSale)
+				{
+					BrowsePriceRangeParameter browsePriceRangeFilter5 = browseState.BrowsePriceRangeFilter;
+					if (browsePriceRangeFilter5 == null)
+					{
+						isSelected5 = 0;
+					}
+					else
+					{
+						decimal? priceRangeHigh = browsePriceRangeFilter5.PriceRangeHigh;
+						decimal num = 3.99m;
+						isSelected5 = (((priceRangeHigh.GetValueOrDefault() == num) & priceRangeHigh.HasValue) ? 1 : 0);
+					}
+				}
+				else
+				{
+					isSelected5 = 0;
+				}
+				obj5.IsSelected = (byte)isSelected5 != 0;
+				obj5.IsVisible = isVisible2;
+				obj5.Parameter = new BrowsePriceRangeParameter
+				{
+					PriceRangeHigh = 3.99m,
+					analtyicsString = "buy399"
+				};
+				BrowseFilter browseFilter3 = obj5;
+				browseFilter3.Text = string.Format(Resources.price_range_low_button, 3.99m.ToString("0.00"));
+				list.Add(browseFilter3);
 				break;
 			}
 			case "D":
@@ -2820,7 +2818,7 @@ public class BrowseViewController : BaseViewController
 					{
 						decimal? priceRangeHigh = browsePriceRangeFilter.PriceRangeHigh;
 						decimal num = 5.99m;
-						isSelected = ((priceRangeHigh.GetValueOrDefault() == num && priceRangeHigh.HasValue) ? 1 : 0);
+						isSelected = (((priceRangeHigh.GetValueOrDefault() == num) & priceRangeHigh.HasValue) ? 1 : 0);
 					}
 				}
 				else
@@ -2984,7 +2982,7 @@ public class BrowseViewController : BaseViewController
 			}
 			decimal initialNight = obj.InitialNight;
 			decimal? num = price;
-			return initialNight == num.GetValueOrDefault() && num.HasValue;
+			return (initialNight == num.GetValueOrDefault()) & num.HasValue;
 		});
 		return string.Format("${0:F2}{1}", price, flag ? "" : "+");
 	}

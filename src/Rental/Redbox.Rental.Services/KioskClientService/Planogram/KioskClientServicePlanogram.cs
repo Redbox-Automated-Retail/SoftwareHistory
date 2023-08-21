@@ -15,14 +15,14 @@ public class KioskClientServicePlanogram : BaseKioskClientService, IKioskClientS
 	{
 		List<Redbox.Rental.Model.Planogram.Planogram> result = new List<Redbox.Rental.Model.Planogram.Planogram>();
 		LogHelper.Instance.Log("Getting active planograms.");
-		WebResult<List<Redbox.Rental.Model.Planogram.Planogram>> webResult = ExecuteWebRequest<List<Redbox.Rental.Model.Planogram.Planogram>>(new Uri(string.Format("{0}/{1}", base.KioskClientServiceBaseUrl, "api/planogram")), null, "GET", 2000);
+		WebResult<List<Redbox.Rental.Model.Planogram.Planogram>> webResult = ExecuteWebRequest<List<Redbox.Rental.Model.Planogram.Planogram>>(new Uri(base.KioskClientServiceBaseUrl + "/api/planogram"), null, "GET", 2000);
 		if (webResult != null && webResult.IsSuccessStatusCode && webResult.Response.Count > 0)
 		{
 			result = webResult.Response;
 		}
 		else
 		{
-			LogHelper.Instance.Log(string.Format("KCS Get Planograms returned {0}", webResult?.StatusCode.ToString() ?? "null"));
+			LogHelper.Instance.Log("KCS Get Planograms returned " + (webResult?.StatusCode.ToString() ?? "null"));
 		}
 		return result;
 	}
@@ -31,22 +31,22 @@ public class KioskClientServicePlanogram : BaseKioskClientService, IKioskClientS
 	{
 		Redbox.Rental.Model.Planogram.Planogram result = null;
 		LogHelper.Instance.Log("Getting selected planogram.");
-		WebResult<Redbox.Rental.Model.Planogram.Planogram> webResult = ExecuteWebRequest<Redbox.Rental.Model.Planogram.Planogram>(new Uri(string.Format("{0}/{1}/selected", base.KioskClientServiceBaseUrl, "api/planogram")), null, "GET", 2000);
+		WebResult<Redbox.Rental.Model.Planogram.Planogram> webResult = ExecuteWebRequest<Redbox.Rental.Model.Planogram.Planogram>(new Uri(base.KioskClientServiceBaseUrl + "/api/planogram/selected"), null, "GET", 2000);
 		if (webResult != null && webResult.IsSuccessStatusCode && webResult.Response != null)
 		{
 			result = webResult.Response;
 		}
 		else
 		{
-			LogHelper.Instance.Log(string.Format("KCS Get Selected Planogram returned {0}", webResult?.StatusCode.ToString() ?? "null"));
+			LogHelper.Instance.Log("KCS Get Selected Planogram returned " + (webResult?.StatusCode.ToString() ?? "null"));
 		}
 		return result;
 	}
 
 	public void SaveSelectedPlanogram(Redbox.Rental.Model.Planogram.Planogram planogram)
 	{
-		LogHelper.Instance.Log($"Saving selected planogram {planogram.Name}.");
-		ExecuteWebRequest<Redbox.Rental.Model.Planogram.Planogram>(new Uri(string.Format("{0}/{1}/selected?planogramName={2}", base.KioskClientServiceBaseUrl, "api/planogram", planogram.Name)), null, "POST", 2000);
+		LogHelper.Instance.Log("Saving selected planogram " + planogram.Name + ".");
+		ExecuteWebRequest<Redbox.Rental.Model.Planogram.Planogram>(new Uri(base.KioskClientServiceBaseUrl + "/api/planogram/selected?planogramName=" + planogram.Name), null, "POST", 2000);
 	}
 
 	public bool SyncPlanograms(bool forceRefresh)

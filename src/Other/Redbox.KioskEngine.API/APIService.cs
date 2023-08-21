@@ -15,7 +15,7 @@ public class APIService : IApiService
 	public void Initialize()
 	{
 		string text = ServiceLocator.Instance?.GetService<IConfiguration>()?.KioskEngineApiServiceBaseUrl;
-		LogHelper.Instance.Log($"Starting APIService: {text}");
+		LogHelper.Instance.Log("Starting APIService: " + text);
 		HttpSelfHostConfiguration config = new HttpSelfHostConfiguration(text);
 		config.MapHttpAttributeRoutes();
 		config.EnableSwagger(delegate(SwaggerDocsConfig c)

@@ -57,9 +57,9 @@ public class KioskClientServiceKiosk : BaseKioskClientService, IKioskClientServi
 				MessageId = kioskClientServiceNearbyKiosksResponse.MessageId,
 				KioskId = kioskId
 			};
-			LogHelper.Instance.Log($"KioskClientServiceKiosk.GetNearbyKiosks - sending request of {anon.ToJson()}");
-			WebResult<KioskClientServiceNearbyKiosksResponse> webResult = ExecuteWebRequest<KioskClientServiceNearbyKiosksResponse>(new Uri(string.Format("{0}/{1}/nearby", base.KioskClientServiceBaseUrl, "api/kiosk")), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Kiosk.NearbyKiosksTimeout);
-			LogHelper.Instance.Log($"KioskClientServiceKiosk.GetNearbyKiosks - response: {webResult.ToJson()}");
+			LogHelper.Instance.Log("KioskClientServiceKiosk.GetNearbyKiosks - sending request of " + anon.ToJson());
+			WebResult<KioskClientServiceNearbyKiosksResponse> webResult = ExecuteWebRequest<KioskClientServiceNearbyKiosksResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/kiosk/nearby"), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Kiosk.NearbyKiosksTimeout);
+			LogHelper.Instance.Log("KioskClientServiceKiosk.GetNearbyKiosks - response: " + webResult.ToJson());
 			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 			{
 				LogHelper.Instance.Log("KioskClientServiceKiosk.GetNearbyKiosk - api call successful");
@@ -68,7 +68,7 @@ public class KioskClientServiceKiosk : BaseKioskClientService, IKioskClientServi
 			else
 			{
 				string text = $"api call returned result code: {webResult.ExceptionStatus}";
-				LogHelper.Instance.Log($"KioskClientServiceKiosk.GetNearbyKiosks - {text}");
+				LogHelper.Instance.Log("KioskClientServiceKiosk.GetNearbyKiosks - " + text);
 				kioskClientServiceNearbyKiosksResponse.Error = text;
 			}
 		}

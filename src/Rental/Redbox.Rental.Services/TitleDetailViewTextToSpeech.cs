@@ -249,7 +249,7 @@ public class TitleDetailViewTextToSpeech
 	private static IEnumerable<ISpeechPartEvent> SharedEvents(TitleDetailModel model, IBrowseItemModel item)
 	{
 		List<ISpeechPartEvent> list = new List<ISpeechPartEvent>();
-		if ((model?.BrowseProductControlModel?.PageNumber ?? 0) < (model?.BrowseProductControlModel?.TotalPages ?? 0))
+		if ((model?.BrowseProductControlModel?.PageNumber).GetValueOrDefault() < (model?.BrowseProductControlModel?.TotalPages).GetValueOrDefault())
 		{
 			list.Add(new MapKeyPressToAction
 			{
@@ -262,7 +262,7 @@ public class TitleDetailViewTextToSpeech
 				}
 			});
 		}
-		if ((model?.BrowseProductControlModel?.PageNumber ?? 0) > 1)
+		if ((model?.BrowseProductControlModel?.PageNumber).GetValueOrDefault() > 1)
 		{
 			list.Add(new MapKeyPressToAction
 			{

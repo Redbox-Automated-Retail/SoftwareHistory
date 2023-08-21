@@ -300,7 +300,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 			{
 				foreach (Redbox.KioskEngine.ComponentModel.Error error in result.Errors)
 				{
-					LogHelper.Instance.Log($"{error.Code}: {error.Description} - {error.Details}");
+					LogHelper.Instance.Log(error.Code + ": " + error.Description + " - " + error.Details);
 				}
 			}
 		}
@@ -315,7 +315,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 			SetPromoForSelectedOffer(null, service, customerOffer);
 			IPromotion promotion = service.CurrentRentalShoppingCart.Promotion;
-			if ((promotion?.PromotionItems?.Count ?? 0) == 1)
+			if (promotion?.PromotionItems?.Count == 1)
 			{
 				result = promotion.PromotionItems[0].RentalShoppingCartItem.TitleProduct;
 			}
@@ -550,7 +550,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 		{
 			exclude = offer.TitleIds;
 		}
-		ErrorList errorList = service.GetProductsForCustomerOffer(titleTypes: CustomerOfferFunctions.GetTitleTypesFromFormatIds(offer.FormatIds), titleFamily: offer.TitleFamily ?? TitleFamily.All, includeTitleTypes: offer.IncludeFormats, include: include, exclude: exclude, includeOlderThan: offer.IncludeOlderThan, isAdaView: ApplicationState.Instance.IsADAAccessible, isPurchase: offer.ActionCode == ActionCode.Purchase, products: out products);
+		ErrorList errorList = service.GetProductsForCustomerOffer(titleTypes: CustomerOfferFunctions.GetTitleTypesFromFormatIds(offer.FormatIds), titleFamily: offer.TitleFamily.GetValueOrDefault(), includeTitleTypes: offer.IncludeFormats, include: include, exclude: exclude, includeOlderThan: offer.IncludeOlderThan, isAdaView: ApplicationState.Instance.IsADAAccessible, isPurchase: offer.ActionCode == ActionCode.Purchase, products: out products);
 		if (errorList.Count > 0)
 		{
 			errorList.ToLogHelper();

@@ -170,7 +170,7 @@ public class MemberPerksViewController : BaseViewController
 		promoConfirmationInfo.promoCodeModel = promoCodeModel;
 		promoConfirmationInfo.ApplyPromoCodeAction = delegate
 		{
-			if (((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart)?.Items?.Count ?? 0) > 0)
+			if (((BaseViewController.RentalShoppingCartService?.CurrentRentalShoppingCart)?.Items?.Count).GetValueOrDefault() > 0)
 			{
 				ValidatePromoCode(promoCodeModel, model);
 			}
@@ -270,7 +270,7 @@ public class MemberPerksViewController : BaseViewController
 	{
 		bool flag = EnableRedboxPlusRedemption && (RedboxPlusSession?.HasActiveSubscription ?? false);
 		RedboxPlusSubscriptionTier redboxPlusSubscriptionTier = RedboxPlusSession?.RedboxPlusPlanInfo?.SubscriptionTier ?? RedboxPlusSubscriptionTier.Tier1;
-		bool flag2 = RedboxPlusSession?.RedboxPlusPlanInfo?.IsEarnPointsFor1ExtraNightAvailable ?? false;
+		bool valueOrDefault = RedboxPlusSession?.RedboxPlusPlanInfo?.IsEarnPointsFor1ExtraNightAvailable == true;
 		IRedboxPlusSession redboxPlusSession = RedboxPlusSession;
 		string text = ((redboxPlusSession != null && (redboxPlusSession.RedboxPlusPlanInfo?.SubscriptionEndDate).HasValue) ? RedboxPlusSession.RedboxPlusPlanInfo.SubscriptionEndDate.Value.ToShortDateString() : null);
 		if (flag)
@@ -291,11 +291,10 @@ public class MemberPerksViewController : BaseViewController
 		model.RedboxPlusExtendedText = Resources.redbox_plus_extended_text;
 		model.RedboxPlusKeepText = Resources.redbox_plus_keep_text;
 		model.RedboxPlusExtraNightText = Resources.redbox_plus_extra_night_text;
-		model.RedboxPlusExtraThisMonthText = string.Format(Resources.redbox_plus_this_month_text, flag2 ? Resources.redbox_plus_ready_to_use_text : Resources.redbox_plus_used_text);
+		model.RedboxPlusExtraThisMonthText = string.Format(Resources.redbox_plus_this_month_text, valueOrDefault ? Resources.redbox_plus_ready_to_use_text : Resources.redbox_plus_used_text);
 		model.RedboxPlusNeedAnotherText = Resources.redbox_plus_need_another_text;
 		model.RedboxPlusAwardedText = Resources.redbox_plus_awarded_text;
-		SubscriptionPlanStatus? subscriptionPlanStatus = RedboxPlusSession?.RedboxPlusPlanInfo?.SubscriptionStatus;
-		if (!subscriptionPlanStatus.HasValue || subscriptionPlanStatus.GetValueOrDefault() == SubscriptionPlanStatus.Active)
+		if ((RedboxPlusSession?.RedboxPlusPlanInfo?.SubscriptionStatus).GetValueOrDefault() == SubscriptionPlanStatus.Active)
 		{
 			model.RedboxPlusPlanRenewsText = ((text != null) ? string.Format((redboxPlusSubscriptionTier == RedboxPlusSubscriptionTier.Tier2) ? Resources.redbox_plus_tier2_plan_renews_text : Resources.redbox_plus_tier1_plan_renews_text, text) : string.Empty);
 		}

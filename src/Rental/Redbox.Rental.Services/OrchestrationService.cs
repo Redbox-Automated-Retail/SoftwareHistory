@@ -223,7 +223,7 @@ public static class OrchestrationService
 			num = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>()?.CollectionsPopUpTimer ?? 0;
 			num = Math.Min(Math.Max(num, 16000), 60000);
 		}
-		else if (Redbox.Rental.Services.Configuration.Configuration.Instance != null && Redbox.Rental.Services.Configuration.Configuration.Instance.EarlyIdEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout > 0 && (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false))
+		else if (Redbox.Rental.Services.Configuration.Configuration.Instance != null && Redbox.Rental.Services.Configuration.Configuration.Instance.EarlyIdEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout > 0 && Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn == true)
 		{
 			num = Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout;
 		}
@@ -263,7 +263,7 @@ public static class OrchestrationService
 		if (service != null)
 		{
 			IIdleTimer idleTimer = service.GetIdleTimer("idle_timer");
-			if (idleTimer != null && (idleTimer.Timeout ?? 0) != GetIdleTimerTimeout())
+			if (idleTimer != null && idleTimer.Timeout.GetValueOrDefault() != GetIdleTimerTimeout())
 			{
 				idleTimer.Timeout = GetIdleTimerTimeout();
 			}
@@ -438,7 +438,7 @@ public static class OrchestrationService
 			ServiceLocator.Instance.GetService<IPricingService>().UpdatePricingInstance();
 			ServiceLocator.Instance.GetService<IProductGroupService>()?.StartSession();
 			IKioskClientService kioskClientService = ServiceLocator.Instance.GetService<IKioskClientService>();
-			if (kioskClientService?.Kiosk?.HasDual ?? false)
+			if (kioskClientService?.Kiosk?.HasDual == true)
 			{
 				kioskClientService?.Dual?.LoadInStockInOther();
 				IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
@@ -538,7 +538,7 @@ public static class OrchestrationService
 		}
 		else
 		{
-			LogHelper.Instance.Log($"ViewShowSafe {viewName} denied.");
+			LogHelper.Instance.Log("ViewShowSafe " + viewName + " denied.");
 		}
 	}
 
@@ -613,7 +613,7 @@ public static class OrchestrationService
 		bool num = text == expectedViewName;
 		if (!num & logError)
 		{
-			LogHelper.Instance.Log($"Invalid view.  Expected {expectedViewName} but found {text}");
+			LogHelper.Instance.Log("Invalid view.  Expected " + expectedViewName + " but found " + text);
 		}
 		return num;
 	}
@@ -889,7 +889,7 @@ public static class OrchestrationService
 				if (!rentalShoppingCart.TitleItems.Any((IRentalShoppingCartTitleItem x) => x.Barcode == eachBarcode))
 				{
 					result = false;
-					LogHelper.Instance.Log($"Error: reserved barcode {eachBarcode} not found in shopping cart.");
+					LogHelper.Instance.Log("Error: reserved barcode " + eachBarcode + " not found in shopping cart.");
 				}
 			}
 		}

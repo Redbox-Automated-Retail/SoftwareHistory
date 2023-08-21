@@ -58,7 +58,7 @@ public class KioskEventService : IKioskEventService
 			_kioskEvents.Add(kioskEvent);
 			try
 			{
-				LogHelper.Instance.Log($"KioskEventService.AddEvent - {kioskEvent.ToJson().ToPrettyJson()}");
+				LogHelper.Instance.Log("KioskEventService.AddEvent - " + kioskEvent.ToJson().ToPrettyJson());
 			}
 			catch
 			{

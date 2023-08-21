@@ -44,6 +44,6 @@ internal struct ConsoleBrush
 
 	public override string ToString()
 	{
-		return string.Concat(Foreground, " on ", Background);
+		return Foreground.ToString() + " on " + Background;
 	}
 }

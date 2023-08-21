@@ -73,7 +73,7 @@ public class PersonalizationService : IPersonalizationService
 				{
 					Guid messageId = Guid.NewGuid();
 					string kioskClientServiceBaseUrl = ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl;
-					LogHelper.Instance.Log($"Live call to remote IPersonalization.UpdateAccount, URL: {kioskClientServiceBaseUrl}");
+					LogHelper.Instance.Log("Live call to remote IPersonalization.UpdateAccount, URL: " + kioskClientServiceBaseUrl);
 					ServiceLocator.Instance.GetService<IMacroService>();
 					IDictionary<string, object> dictionary = await ServiceLocator.Instance.GetService<IKioskClientService>().Loyalty.UpdateAccount(messageId, kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, source, replay: false);
 					result.Success = dictionary.ContainsKey("Success") && (bool)dictionary["Success"];
@@ -148,7 +148,7 @@ public class PersonalizationService : IPersonalizationService
 				Interlocked.Increment(ref m_working);
 				Guid messageId = Guid.NewGuid();
 				string kioskClientServiceBaseUrl = ServiceLocator.Instance.GetService<IConfiguration>().KioskClientServiceBaseUrl;
-				LogHelper.Instance.Log($"Enqueue call to remote IPersonalizationServices.QueueAccountUpdate, URL: {kioskClientServiceBaseUrl}");
+				LogHelper.Instance.Log("Enqueue call to remote IPersonalizationServices.QueueAccountUpdate, URL: " + kioskClientServiceBaseUrl);
 				await ServiceLocator.Instance.GetService<IKioskClientService>().Loyalty.UpdateAccount(messageId, kioskId, customerProfileNumber, emailAddress, phoneNumber, pin, punchcardOptIn, textClubOptIn, source, replay: true);
 			}
 			catch (Exception e)

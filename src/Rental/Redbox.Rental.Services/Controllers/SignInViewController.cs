@@ -48,8 +48,8 @@ public class SignInViewController : BaseViewController
 		{
 			OrchestrationService.SetCurrentUICulture();
 			SignInViewModel signInViewModel = new SignInViewModel();
-			string arg = ((signInViewParameters.SignUpType == SignUpType.Perks) ? "perks-white-logo.png" : "logoWhite2_icon.png");
-			signInViewModel.HeaderImage = new BitmapImage(new Uri($"pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{arg}"));
+			string text = ((signInViewParameters.SignUpType == SignUpType.Perks) ? "perks-white-logo.png" : "logoWhite2_icon.png");
+			signInViewModel.HeaderImage = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/" + text));
 			string styleName = ((signInViewParameters.SignUpType == SignUpType.Perks) ? "sign_in_up_perks_header_image" : "sign_in_up_redbox_header_image");
 			signInViewModel.HeaderImageStyle = WPFFunctions.GetStyle(viewUserControl, styleName);
 			signInViewModel.HeaderLabelText = ((signInViewParameters.SignUpType == SignUpType.Perks) ? Resources.sign_in_header_text : ((signInViewParameters.SignUpType == SignUpType.RedboxPlus) ? Resources.sign_in_redbox_plus_header_text : Resources.sign_in_starz_header_text));
@@ -266,11 +266,11 @@ public class SignInViewController : BaseViewController
 	{
 		CardReadEvent cardReadEvent = new CardReadEvent(details?.TrackData);
 		bool flag = details?.Success ?? false;
-		cardReadEvent.CardReadValid = flag && (details?.TrackData?.HasVas ?? false);
+		cardReadEvent.CardReadValid = flag && details?.TrackData?.HasVas == true;
 		bool flag2 = details?.TrackData != null && details.TrackData.ReadStatus == ResponseStatus.Cancelled;
 		cardReadEvent.Action = (cardReadEvent.CardReadValid ? "continue" : (flag2 ? "read_cancelled" : "bad_swipe_action"));
 		ServiceLocator.Instance?.GetService<IAnalyticsService>()?.AddViewEvent(cardReadEvent);
-		if (flag && (details?.TrackData?.HasVas ?? false))
+		if (flag && details?.TrackData?.HasVas == true)
 		{
 			Task.Factory.StartNew(delegate
 			{

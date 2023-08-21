@@ -40,7 +40,7 @@ public class PersonalizationFunctions
 
 	public const string EARLY_ID_GOOGLE = "EarlyIdGoogle";
 
-	public static bool IsSignedIn => Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false;
+	public static bool IsSignedIn => Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn == true;
 
 	public static bool IsSignInEnabled
 	{
@@ -75,7 +75,7 @@ public class PersonalizationFunctions
 		{
 			if (IsSignedIn && IsLoyaltyEnabled)
 			{
-				return Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.SignInError ?? false;
+				return Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.SignInError == true;
 			}
 			return false;
 		}
@@ -122,7 +122,7 @@ public class PersonalizationFunctions
 				}
 			}
 		}
-		return !(personalizationSession?.RedboxPlusSession?.HasActiveSubscription ?? false) & flag;
+		return (personalizationSession?.RedboxPlusSession?.HasActiveSubscription != true) & flag;
 	}
 
 	public static void ShowRedboxPlusSignInSignUpDialog(IRedboxPlusSubscriptionProduct redboxPlusSubscriptionProduct)
@@ -468,7 +468,7 @@ public class PersonalizationFunctions
 					{
 						Email = loginResult.PersonalizationSession.LoginEmailAddress
 					};
-					if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.RedboxPlusSession?.HasActiveSubscription ?? false)
+					if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.RedboxPlusSession?.HasActiveSubscription == true)
 					{
 						Redbox.Rental.Services.Session.Session.Instance.RentalReturnTime = Redbox.Rental.Services.Session.Session.Instance.PersonalizationSession.RedboxPlusSession.RentalReturnTime;
 					}
@@ -830,7 +830,7 @@ public class PersonalizationFunctions
 	public static void ShowUseMemberPoints()
 	{
 		IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
-		if (!IsLoyaltySignedIn || !(service?.CurrentRentalShoppingCart?.TitleItems?.Any() ?? false))
+		if (!IsLoyaltySignedIn || service?.CurrentRentalShoppingCart?.TitleItems?.Any() != true)
 		{
 			return;
 		}

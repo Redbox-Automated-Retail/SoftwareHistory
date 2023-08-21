@@ -327,7 +327,7 @@ public class PromoOfferBrowseViewController : BaseViewController
 						DisplayProductModelConstants = displayProductModelConstants,
 						StrikethroughPriceText = purchasePriceText,
 						PriceText = purchasePriceText2,
-						PriceTypeText = (string.IsNullOrEmpty(purchasePriceText) ? "" : $"{Resources.browse_view_rent_and_buy_purchase_text}:")
+						PriceTypeText = (string.IsNullOrEmpty(purchasePriceText) ? "" : (Resources.browse_view_rent_and_buy_purchase_text + ":"))
 					};
 				}
 				else

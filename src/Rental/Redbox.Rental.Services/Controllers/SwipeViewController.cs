@@ -152,7 +152,7 @@ public class SwipeViewController : BaseViewController
 			{
 				if (ContactlessEnabled)
 				{
-					if (service?.KioskSession?.DeviceService?.HideMobilePayOption ?? false)
+					if (service?.KioskSession?.DeviceService?.HideMobilePayOption == true)
 					{
 						_swipeViewType = SwipeViewType.EMVInsertTapHideMobileRegularCheckout;
 					}
@@ -216,7 +216,7 @@ public class SwipeViewController : BaseViewController
 		}
 		if (service2 == null)
 		{
-			LogHelper.Instance.Log(string.Format("Error in ConfigureSwipeView.  TrackDataService is null.  Showing {0}.", "please_wait_view"));
+			LogHelper.Instance.Log("Error in ConfigureSwipeView.  TrackDataService is null.  Showing please_wait_view.");
 			Task.Run(delegate
 			{
 				CheckoutFunctions.ShowPleaseWaitBecauseOfDisconnectedCardReader();
@@ -299,15 +299,15 @@ public class SwipeViewController : BaseViewController
 				if (instance != null && !instance.IsInReservationFlow && (deviceInputType == DeviceInputType.C || deviceInputType == DeviceInputType.MC || deviceInputType == DeviceInputType.MCS))
 				{
 					num2 = 2;
-					goto IL_02e2;
+					goto IL_02d8;
 				}
 			}
 			num2 = 0;
-			goto IL_02e2;
+			goto IL_02d8;
 		}
 		LogHelper.Instance.Log("Error in SwipeViewController.ConfigiureSwipeView. TrackDataService is null.");
 		return;
-		IL_02e2:
+		IL_02d8:
 		VasMode vasMode = (VasMode)num2;
 		if (_swipeViewType == SwipeViewType.EMVTapToLogin)
 		{
@@ -364,8 +364,8 @@ public class SwipeViewController : BaseViewController
 		}
 		swipeViewModel.GridBackground = WPFFunctions.GetBrush(BaseViewController.GetViewUserControl(), (_swipeViewType == SwipeViewType.EMVInsertTapRegularCheckout || _swipeViewType == SwipeViewType.EncryptedSwipeRegularCheckOut || _swipeViewType == SwipeViewType.EMVInsertTapReservationPickup || _swipeViewType == SwipeViewType.EMVTapToLogin) ? "RubineToDarkPurpleGradientBrush" : "RubineRedBrush");
 		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-		swipeViewModel.ApplePayImageVisibility = ((service?.KioskSession?.DeviceService?.HideApplePayImage ?? false) ? Visibility.Collapsed : Visibility.Visible);
-		swipeViewModel.GooglePayImageVisibility = ((service?.KioskSession?.DeviceService?.HideGooglePayImage ?? false) ? Visibility.Collapsed : Visibility.Visible);
+		swipeViewModel.ApplePayImageVisibility = ((service?.KioskSession?.DeviceService?.HideApplePayImage == true) ? Visibility.Collapsed : Visibility.Visible);
+		swipeViewModel.GooglePayImageVisibility = ((service?.KioskSession?.DeviceService?.HideGooglePayImage == true) ? Visibility.Collapsed : Visibility.Visible);
 		IDeviceServiceTrackDataService deviceServiceTrackDataService = ServiceLocator.Instance.GetService<ITrackDataService>() as IDeviceServiceTrackDataService;
 		swipeViewModel.ChipNotEnabledText = Resources.chip_not_enabled_text;
 		swipeViewModel.BackButtonText = Resources.back_button.ToUpper();
@@ -587,7 +587,7 @@ public class SwipeViewController : BaseViewController
 			ITrackData trackData = item.TrackData;
 			if (trackData != null)
 			{
-				stringBuilder.Append($" Track Data Type: {trackData.GetType().Name}, ");
+				stringBuilder.Append(" Track Data Type: " + trackData.GetType().Name + ", ");
 				stringBuilder.Append($" Card Source Type: {trackData.CardSourceType}, ");
 				if (trackData is IEncryptedTrackData encryptedTrackData)
 				{
@@ -599,7 +599,7 @@ public class SwipeViewController : BaseViewController
 				}
 				if (trackData.Errors.IsNotNullOrEmpty())
 				{
-					stringBuilder.Append(string.Format(" Error Codes: {0},", string.Join(",", trackData.Errors.Select((Redbox.KioskEngine.ComponentModel.Error x) => $"{x.Code} - {x.Description}"))));
+					stringBuilder.Append(" Error Codes: " + string.Join(",", trackData.Errors.Select((Redbox.KioskEngine.ComponentModel.Error x) => x.Code + " - " + x.Description)) + ",");
 				}
 			}
 			if (item?.AuthorizeResult != null)

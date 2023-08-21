@@ -96,10 +96,10 @@ public class MultiDiscVendViewController : BaseViewController
 					string productDisplayName = BrowseFunctions.GetProductDisplayName(item.TitleProduct);
 					TitleTypeProperty value = null;
 					TitleTypeProperties.Properties.TryGetValue(item.TitleProduct.TitleType, out value);
-					string arg = $" {value?.GetName(Resources.ResourceManager)}";
+					string text = " " + value?.GetName(Resources.ResourceManager);
 					MDVProduct mDVProduct = item.TitleProduct as MDVProduct;
-					string arg2 = $" ({mDVProduct?.TitleProducts?.Count ?? 1} {Resources.multi_disc_vend_discs_text})";
-					list.Add($"{productDisplayName} {arg} {arg2}");
+					string text2 = $" ({mDVProduct?.TitleProducts?.Count ?? 1} {Resources.multi_disc_vend_discs_text})";
+					list.Add(productDisplayName + " " + text + " " + text2);
 					num = mDVProduct?.TitleProducts?.Count ?? 2;
 				}
 			}

@@ -455,6 +455,6 @@ public class PricingService : IPricingService
 
 	public decimal GetEmptyCasePrice()
 	{
-		return GetPriceSetting(TitleFamily.Movies, TitleType.DVD, "initial_night", RentalShoppingCartItemAction.purchase) ?? 0m;
+		return GetPriceSetting(TitleFamily.Movies, TitleType.DVD, "initial_night", RentalShoppingCartItemAction.purchase).GetValueOrDefault();
 	}
 }

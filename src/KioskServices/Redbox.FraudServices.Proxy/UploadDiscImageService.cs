@@ -107,7 +107,7 @@ public class UploadDiscImageService : IUploadDiscImageService
 				errorList = AddDiscImageToMessageQueue(kioskId, barcode, imageType, transactionId, image, hardwareSupportsIRScan, cpAccountNumber);
 				if (!errorList.ContainsError())
 				{
-					LogHelper.Instance.Log($"Added barcode {barcode} image to the message queue.");
+					LogHelper.Instance.Log("Added barcode " + barcode + " image to the message queue.");
 				}
 				else
 				{
@@ -142,7 +142,7 @@ public class UploadDiscImageService : IUploadDiscImageService
 		ErrorList result = new ErrorList();
 		try
 		{
-			LogHelper.Instance.Log($"Adding barcode {barcode} image to message queue.");
+			LogHelper.Instance.Log("Adding barcode " + barcode + " image to message queue.");
 			IQueueService service = ServiceLocator.Instance.GetService<IQueueService>();
 			ServiceLocator.Instance.GetService<IMacroService>();
 			IConfiguration service2 = ServiceLocator.Instance.GetService<IConfiguration>();

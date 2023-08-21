@@ -11,7 +11,7 @@ public class KioskClientServiceConfiguration : BaseKioskClientService, IKioskCli
 
 	public KioskConfiguration GetCurrentKioskConfiguration(string kioskClientServiceBaseUrl)
 	{
-		WebResult<KioskConfigurationResponse> webResult = ExecuteWebRequest<KioskConfigurationResponse>(new Uri(string.Format("{0}/{1}/current", kioskClientServiceBaseUrl, "api/configuration")), null, "GET");
+		WebResult<KioskConfigurationResponse> webResult = ExecuteWebRequest<KioskConfigurationResponse>(new Uri(kioskClientServiceBaseUrl + "/api/configuration/current"), null, "GET");
 		if (webResult == null || webResult.StatusCode != HttpStatusCode.OK || webResult?.Response?.Kioskconfiguration == null)
 		{
 			LogHelper.Instance.Log($"Error: GetCurrentKioskConfiguration failed. StatusCode: {webResult?.StatusCode}");
@@ -21,7 +21,7 @@ public class KioskClientServiceConfiguration : BaseKioskClientService, IKioskCli
 
 	public KioskConfiguration GetKioskSessionKioskConfiguration(string kioskClientServiceBaseUrl)
 	{
-		WebResult<KioskConfigurationResponse> webResult = ExecuteWebRequest<KioskConfigurationResponse>(new Uri(string.Format("{0}/{1}/kiosksession", kioskClientServiceBaseUrl, "api/configuration")), null, "GET");
+		WebResult<KioskConfigurationResponse> webResult = ExecuteWebRequest<KioskConfigurationResponse>(new Uri(kioskClientServiceBaseUrl + "/api/configuration/kiosksession"), null, "GET");
 		if (webResult == null || webResult.StatusCode != HttpStatusCode.OK || webResult?.Response?.Kioskconfiguration == null)
 		{
 			LogHelper.Instance.Log($"Error: GetKioskSessionKioskConfiguration failed. StatusCode: {webResult?.StatusCode}");

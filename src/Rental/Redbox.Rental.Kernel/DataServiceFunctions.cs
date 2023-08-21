@@ -278,7 +278,7 @@ public static class DataServiceFunctions
 
 	private static void SendAlert(string dataStore, string tableName, string keyName)
 	{
-		ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId.ToString(), "ApplicationCrash", "mm:DataStoreError, SOFT-FILE03", $"<h2>Kiosk Engine Data File Error</h2><p>Could not find key [ {keyName} ] in table [ {tableName} ] for data store [ {dataStore} ]</p>", DateTime.Now, null);
+		ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId.ToString(), "ApplicationCrash", "mm:DataStoreError, SOFT-FILE03", "<h2>Kiosk Engine Data File Error</h2><p>Could not find key [ " + keyName + " ] in table [ " + tableName + " ] for data store [ " + dataStore + " ]</p>", DateTime.Now, null);
 	}
 
 	private static void StartCacheAlertTimer()

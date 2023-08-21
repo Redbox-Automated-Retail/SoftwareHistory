@@ -55,13 +55,13 @@ public class Promotion : IPromotion
 					ICampaignTitles campaignTitles = CampaignTitles;
 					if (campaignTitles != null && campaignTitles.Titles?.Count > 0)
 					{
-						goto IL_006a;
+						goto IL_0068;
 					}
 				}
 				return Intent == PromotionIntentCode.MultiNightItem;
 			}
-			goto IL_006a;
-			IL_006a:
+			goto IL_0068;
+			IL_0068:
 			return true;
 		}
 	}

@@ -236,14 +236,9 @@ public class PromoListLogic : BaseLogic
 			{
 				result = Resources.promo_expires_tomorrow;
 			}
-			else
+			else if (promo.DaysUntilExpiration > 1 && promo.DaysUntilExpiration <= 3)
 			{
-				int? daysUntilExpiration = promo.DaysUntilExpiration;
-				int num = 1;
-				if (daysUntilExpiration.GetValueOrDefault() > num && daysUntilExpiration.HasValue && promo.DaysUntilExpiration <= 3)
-				{
-					result = string.Format(Resources.promo_expires_in_days, promo.DaysUntilExpiration.Value);
-				}
+				result = string.Format(Resources.promo_expires_in_days, promo.DaysUntilExpiration.Value);
 			}
 		}
 		return result;

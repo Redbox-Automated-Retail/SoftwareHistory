@@ -246,7 +246,7 @@ public class SignupFunctions
 
 	private static void ProcessConfirmEmailResult(IEmailConfirmResult result, EmailEntryInfo emailEntryInfo)
 	{
-		if (result.Success && (!string.IsNullOrEmpty(result.CustomerProfileNumber) || (result.EmailVerified ?? false)))
+		if (result.Success && (!string.IsNullOrEmpty(result.CustomerProfileNumber) || result.EmailVerified == true))
 		{
 			emailEntryInfo?.ProcessSuccessfulConfirmEmailResult(result);
 			return;
@@ -255,7 +255,7 @@ public class SignupFunctions
 		{
 			string empty = string.Empty;
 			empty = GetErrorsAsString(result.Errors, empty);
-			LogHelper.Instance.Log($"ProcessConfirmEmailResult ConfirmEmail unsuccessful. {empty}");
+			LogHelper.Instance.Log("ProcessConfirmEmailResult ConfirmEmail unsuccessful. " + empty);
 		}
 		else
 		{
@@ -285,7 +285,7 @@ public class SignupFunctions
 		{
 			foreach (Redbox.KioskEngine.ComponentModel.Error error in errors)
 			{
-				errorMessages += $" [{error.Code}] {error.Description}.";
+				errorMessages = errorMessages + " [" + error.Code + "] " + error.Description + ".";
 			}
 		}
 		return errorMessages;

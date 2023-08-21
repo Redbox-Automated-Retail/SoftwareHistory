@@ -176,7 +176,7 @@ public class DataFileStoreService : IDataFileStoreService
 		List<T> list = new List<T>();
 		if (Directory.Exists(_root))
 		{
-			string[] files = Directory.GetFiles(_root, $"*.{_extension}");
+			string[] files = Directory.GetFiles(_root, "*." + _extension);
 			foreach (string fileName in files)
 			{
 				if (Get<T>(fileName, out var deserializedObject))
@@ -216,18 +216,18 @@ public class DataFileStoreService : IDataFileStoreService
 					}
 					else
 					{
-						LogHelper.Instance.Log($"DataFileStoreService.Get<T> - error - unable to get type {jsonWrapper?.SerializedType} from file {fileName}");
+						LogHelper.Instance.Log("DataFileStoreService.Get<T> - error - unable to get type " + jsonWrapper?.SerializedType + " from file " + fileName);
 					}
 				}
 				else
 				{
-					LogHelper.Instance.Log($"DataFileStoreService.Get<T> - error - deserialized object was not of type JsonWrapper from file {fileName}");
+					LogHelper.Instance.Log("DataFileStoreService.Get<T> - error - deserialized object was not of type JsonWrapper from file " + fileName);
 				}
 			}
 			catch (Exception e)
 			{
-				LogHelper.Instance.LogException($"DataFileStoreService.Get<T> - An exception occurred deserializing an object from file {fileName}", e);
-				ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId.ToString() ?? null, "ApplicationCrash", $"{_dataStoreName}, Read-Error-01", $"There was an error in {_dataStoreName} deserializing file {fileName}", DateTime.Now, null);
+				LogHelper.Instance.LogException("DataFileStoreService.Get<T> - An exception occurred deserializing an object from file " + fileName, e);
+				ServiceLocator.Instance.GetService<IHealthServices>()?.SendAlert(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId.ToString() ?? null, "ApplicationCrash", _dataStoreName + ", Read-Error-01", "There was an error in " + _dataStoreName + " deserializing file " + fileName, DateTime.Now, null);
 			}
 		}
 		if (!flag)
@@ -247,7 +247,7 @@ public class DataFileStoreService : IDataFileStoreService
 		try
 		{
 			string text = Path.ChangeExtension(fileName, _corruptFileExtension);
-			LogHelper.Instance.Log($"Renaming corrupted json file {fileName} to {text}");
+			LogHelper.Instance.Log("Renaming corrupted json file " + fileName + " to " + text);
 			lock (m_writeLock)
 			{
 				File.Move(fileName, text);
@@ -304,7 +304,7 @@ public class DataFileStoreService : IDataFileStoreService
 	private string FormatFilePath(string fileName)
 	{
 		string result = null;
-		string text = (Path.HasExtension(fileName) ? fileName : $"{fileName}.{_extension}");
+		string text = (Path.HasExtension(fileName) ? fileName : (fileName + "." + _extension));
 		if (!string.IsNullOrEmpty(_root) && !string.IsNullOrEmpty(text))
 		{
 			result = Path.Combine(_root, text);

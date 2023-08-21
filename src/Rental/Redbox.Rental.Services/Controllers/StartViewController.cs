@@ -246,13 +246,13 @@ public class StartViewController : BaseViewController
 		string text = OrchestrationService.PeekView();
 		if (text != "start_view")
 		{
-			BaseViewController.Log($"ZeroTouch Skipped - Current View is Not Start View: {text}");
+			BaseViewController.Log("ZeroTouch Skipped - Current View is Not Start View: " + text);
 			return;
 		}
 		ISession instance = Redbox.Rental.Services.Session.Session.Instance;
 		if (instance != null && instance.HasReceivedUserInteractionThatStartsTimedSession)
 		{
-			BaseViewController.Log($"ZeroTouch Skipped - Current session already has user interaction {Redbox.Rental.Services.Session.Session.Instance?.SessionStartTriggerAction}");
+			BaseViewController.Log("ZeroTouch Skipped - Current session already has user interaction " + Redbox.Rental.Services.Session.Session.Instance?.SessionStartTriggerAction);
 			return;
 		}
 		ISession instance2 = Redbox.Rental.Services.Session.Session.Instance;
@@ -372,35 +372,30 @@ public class StartViewController : BaseViewController
 		BaseViewController.Log($"StartViewController.OnCardReadComplete - RequestId {readDetails?.RequestId}");
 		_cardReadComplete.Set();
 		ITrackData trackData = readDetails?.TrackData;
-		if (trackData != null && trackData.ReadStatus != ResponseStatus.Timeout)
+		if (trackData == null || trackData.ReadStatus == ResponseStatus.Timeout || (trackData.ReadStatus == ResponseStatus.Errored && (trackData.Errors.Any((Redbox.KioskEngine.ComponentModel.Error x) => string.Compare(x.Description, "TimeOut", ignoreCase: true) == 0) || trackData.Errors.Any((Redbox.KioskEngine.ComponentModel.Error x) => string.Compare(x.Description, "READERDISCONNECT", ignoreCase: true) == 0))))
 		{
-			ResponseStatus? readStatus = trackData.ReadStatus;
-			ResponseStatus responseStatus = ResponseStatus.Errored;
-			if (readStatus.GetValueOrDefault() != responseStatus || !readStatus.HasValue || (!trackData.Errors.Any((Redbox.KioskEngine.ComponentModel.Error x) => string.Compare(x.Description, "TimeOut", ignoreCase: true) == 0) && !trackData.Errors.Any((Redbox.KioskEngine.ComponentModel.Error x) => string.Compare(x.Description, "READERDISCONNECT", ignoreCase: true) == 0)))
-			{
-				if (trackData != null && trackData.ReadStatus == ResponseStatus.Cancelled)
-				{
-					BaseViewController.Log("ZeroTouch Card Read Was Cancelled");
-					return;
-				}
-				Redbox.Rental.Services.Session.Session.Instance.TrackData = trackData;
-				Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = true;
-				OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ZeroTouch));
-				BaseViewController.AnalyticsService?.AddSessionProperty("IsZeroTouch", Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode);
-				CardFunctions.CardReadComplete(SwipeViewType.ZeroTouchReservationPickup, trackData, readDetails?.CardRemoved ?? false, readDetails?.RequestId, delegate
-				{
-					LogHelper.Instance.Log("CONTINUE");
-					OnContinueCardReadComplete(trackData);
-				}, delegate
-				{
-					LogHelper.Instance.Log("ERROR");
-					OnErrorCardReadComplete(trackData);
-				});
-				return;
-			}
+			BaseViewController.Log($"OnCardReadComplete Start New Read - TrackData.ReadStatus: {trackData?.ReadStatus}");
+			ZeroTouchCardRead();
+			return;
 		}
-		BaseViewController.Log($"OnCardReadComplete Start New Read - TrackData.ReadStatus: {trackData?.ReadStatus}");
-		ZeroTouchCardRead();
+		if (trackData != null && trackData.ReadStatus == ResponseStatus.Cancelled)
+		{
+			BaseViewController.Log("ZeroTouch Card Read Was Cancelled");
+			return;
+		}
+		Redbox.Rental.Services.Session.Session.Instance.TrackData = trackData;
+		Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode = true;
+		OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.ZeroTouch));
+		BaseViewController.AnalyticsService?.AddSessionProperty("IsZeroTouch", Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode);
+		CardFunctions.CardReadComplete(SwipeViewType.ZeroTouchReservationPickup, trackData, readDetails?.CardRemoved ?? false, readDetails?.RequestId, delegate
+		{
+			LogHelper.Instance.Log("CONTINUE");
+			OnContinueCardReadComplete(trackData);
+		}, delegate
+		{
+			LogHelper.Instance.Log("ERROR");
+			OnErrorCardReadComplete(trackData);
+		});
 	}
 
 	private static void ContinueAfterLogin()
@@ -1327,7 +1322,7 @@ public class StartViewController : BaseViewController
 		startViewModel.CarouselModel = carouselModel;
 		startViewModel.CarouselTestModel = carouselTestModel;
 		startViewModel.CarouselGridRowHeight = 438;
-		bool flag = (startViewModel.CarouselModel?.CarouselDisplayProductModels?.Count ?? 0) >= Constants.MinimumCarouselItems;
+		bool flag = (startViewModel.CarouselModel?.CarouselDisplayProductModels?.Count).GetValueOrDefault() >= Constants.MinimumCarouselItems;
 		startViewModel.LoadingTitlesImageVisibility = ((startViewModel.IsReturnOnlyMode | flag) ? Visibility.Collapsed : Visibility.Visible);
 	}
 
@@ -1547,7 +1542,7 @@ public class StartViewController : BaseViewController
 		ServiceLocator.Instance.GetService<IStoreManager>();
 		bool flag = false;
 		startViewModel.ExtraLargeButtonTextStyle = WPFFunctions.GetStyle(startViewUserControl, OrchestrationService.IsCultureSpanish() ? "button_text_medium_style" : "button_text_large_style");
-		startViewModel.AllMoviesButtonTextLine1 = string.Format($"{Resources.movie_button_rent_label} {Resources.Alt_StartView_Movies}");
+		startViewModel.AllMoviesButtonTextLine1 = string.Format(Resources.movie_button_rent_label + " " + Resources.Alt_StartView_Movies);
 		startViewModel.AllMoviesButtonTextLine2 = (flag ? Resources.start_view_rent_and_buy_button : Resources.Alt_StartView_Movies);
 		startViewModel.PickUpButtonText = Resources.start_view_pickup_button_text.ToUpper();
 		startViewModel.ReturnButtonText = Resources.return_button_label;

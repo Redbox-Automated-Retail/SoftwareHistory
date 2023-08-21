@@ -13,7 +13,7 @@ public class HardwareEventCallback : ICallbackEntry
 
 	public string Message { get; set; }
 
-	public string Name => $"HardwareEventCallback - {JobId ?? string.Empty}";
+	public string Name => "HardwareEventCallback - " + (JobId ?? string.Empty);
 
 	public string TimeStamp { get; set; }
 

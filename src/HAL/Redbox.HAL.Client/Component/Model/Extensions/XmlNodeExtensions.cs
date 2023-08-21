@@ -21,8 +21,7 @@ public static class XmlNodeExtensions
 		{
 			if (node != null && !string.IsNullOrEmpty(node.InnerText))
 			{
-				IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-				return ConversionHelper.ChangeType<T>(service.ExpandConstantMacros(node.InnerText));
+				return ConversionHelper.ChangeType<T>(ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(node.InnerText));
 			}
 		}
 		catch (ArgumentException)
@@ -42,8 +41,7 @@ public static class XmlNodeExtensions
 		{
 			if (node != null && node.Attributes[attributeName] != null)
 			{
-				IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-				return ConversionHelper.ChangeType<T>(service.ExpandConstantMacros(node.Attributes[attributeName].Value));
+				return ConversionHelper.ChangeType<T>(ServiceLocator.Instance.GetService<IRuntimeService>().ExpandConstantMacros(node.Attributes[attributeName].Value));
 			}
 		}
 		catch (ArgumentException)

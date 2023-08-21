@@ -13,5 +13,5 @@ using System.Runtime.Versioning;
 [assembly: AssemblyTrademark("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("c4a58c14-8229-4d1e-8710-d80b80937126")]
-[assembly: AssemblyFileVersion("1.84.0.25")]
-[assembly: AssemblyVersion("1.84.0.25")]
+[assembly: AssemblyFileVersion("1.84.1.2")]
+[assembly: AssemblyVersion("1.84.1.2")]

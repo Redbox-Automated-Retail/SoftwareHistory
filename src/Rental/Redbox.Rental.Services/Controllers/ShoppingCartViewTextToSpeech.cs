@@ -291,7 +291,7 @@ public class ShoppingCartViewTextToSpeech
 				{
 					speechPart2.Texts.Add(new TextPart
 					{
-						Text = string.Format($"You'll earn {shoppingCartViewModel?.PointsEstimateText} for the stuff in your bag.")
+						Text = string.Format("You'll earn " + shoppingCartViewModel?.PointsEstimateText + " for the stuff in your bag.")
 					});
 				}
 			}
@@ -327,7 +327,7 @@ public class ShoppingCartViewTextToSpeech
 				{
 					IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
 					string text;
-					if ((personalizationSession?.StoredPromoCodes?.Count ?? 0) > 0)
+					if ((personalizationSession?.StoredPromoCodes?.Count).GetValueOrDefault() > 0)
 					{
 						int count = personalizationSession.StoredPromoCodes.Count;
 						text = string.Format("You have {0} promo{1} available. If you would like to use {2} now, ", count, (count > 1) ? "s" : "", (count > 1) ? "one" : "it");

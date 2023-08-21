@@ -94,11 +94,11 @@ public class IdleTimeoutMessageViewController : BaseViewController
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = $"Press cancel for {idleTimeoutMessageViewModel.ButtonNoText}"
+				Text = "Press cancel for " + idleTimeoutMessageViewModel.ButtonNoText
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = $"Press enter for {idleTimeoutMessageViewModel.ButtonYesText}"
+				Text = "Press enter for " + idleTimeoutMessageViewModel.ButtonYesText
 			});
 			speechPart.Events.Add(new MapKeyPress
 			{

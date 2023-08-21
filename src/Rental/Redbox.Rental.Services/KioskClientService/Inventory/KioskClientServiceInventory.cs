@@ -41,7 +41,7 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 
 	public IGetMerchandizingOrdersResponse GetCurrentMerchandizingOrders()
 	{
-		WebResult<GetMerchandizingOrdersResponse> webResult = ExecuteWebRequest<GetMerchandizingOrdersResponse>(new Uri(string.Format("{0}/{1}/MerchandizingOrders", base.KioskClientServiceBaseUrl, "api/inventory")), null, "GET", ServiceLocator.Instance.GetService<IConfiguration>()?.KioskClientServiceGetMerchandizingOrdersTimeout ?? 60000);
+		WebResult<GetMerchandizingOrdersResponse> webResult = ExecuteWebRequest<GetMerchandizingOrdersResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/inventory/MerchandizingOrders"), null, "GET", ServiceLocator.Instance.GetService<IConfiguration>()?.KioskClientServiceGetMerchandizingOrdersTimeout ?? 60000);
 		LogResponse("KioskClientServiceInventory.GetCurrentMerchandizingOrders", webResult);
 		return webResult?.Response;
 	}
@@ -50,7 +50,7 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 	{
 		if (updates != null && updates.Count > 0)
 		{
-			WebResult<UpdateMerchandizingStatusResponse> webResult = ExecuteWebRequest<UpdateMerchandizingStatusResponse>(new Uri(string.Format("{0}/{1}/updatemerchandizingstatus", base.KioskClientServiceBaseUrl, "api/inventory")), updates, "POST", ServiceLocator.Instance.GetService<IConfiguration>()?.KioskClientServiceGetMerchandizingOrdersTimeout ?? 60000);
+			WebResult<UpdateMerchandizingStatusResponse> webResult = ExecuteWebRequest<UpdateMerchandizingStatusResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/inventory/updatemerchandizingstatus"), updates, "POST", ServiceLocator.Instance.GetService<IConfiguration>()?.KioskClientServiceGetMerchandizingOrdersTimeout ?? 60000);
 			LogResponse("KioskClientServiceInventory.SendMerchandizingStatusUpdates", webResult);
 			return webResult?.Response;
 		}
@@ -100,9 +100,9 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 				KioskId = int.Parse(storeNumber),
 				Discs = items
 			};
-			LogHelper.Instance.Log($"KioskClientServiceInventory.Snapshot - sending inventory snapshot request of {anon.ToJson()}");
+			LogHelper.Instance.Log("KioskClientServiceInventory.Snapshot - sending inventory snapshot request of " + anon.ToJson());
 			int timeout = ServiceLocator.Instance.GetService<IConfiguration>()?.KioskClientServiceInventorySnapshotTimeout ?? 60000;
-			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/sync", base.KioskClientServiceBaseUrl, "api/inventory")), anon, "POST", timeout);
+			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/inventory/sync"), anon, "POST", timeout);
 			LogResponse("KioskClientServiceInventory.Snapshot", webResult);
 			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 			{
@@ -118,7 +118,7 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 					Redbox.Rental.Model.Error error = webResult.Response.Errors.FirstOrDefault();
 					if (error != null)
 					{
-						text += $", error: {error.Code}, {error.Message}";
+						text = text + ", error: " + error.Code + ", " + error.Message;
 						kioskClientServiceResult.Error = Redbox.KioskEngine.ComponentModel.Error.NewError(error.Code, text, string.Empty);
 					}
 					LogHelper.Instance.Log(text);
@@ -161,9 +161,9 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 				ActionDate = jobTimestamp,
 				Actions = actionList
 			};
-			LogHelper.Instance.Log($"KioskClientServiceInventory.DiscAction - sending disc action request of {anon.ToJson()}");
+			LogHelper.Instance.Log("KioskClientServiceInventory.DiscAction - sending disc action request of " + anon.ToJson());
 			int timeout = ServiceLocator.Instance.GetService<IConfiguration>()?.KioskClientServiceDiscActionTimeout ?? 10000;
-			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/discaction", base.KioskClientServiceBaseUrl, "api/inventory")), anon, "POST", timeout);
+			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/inventory/discaction"), anon, "POST", timeout);
 			LogResponse("KioskClientServiceInventory.DiscAction", webResult);
 			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 			{
@@ -179,7 +179,7 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 					Redbox.Rental.Model.Error error = webResult.Response.Errors.FirstOrDefault();
 					if (error != null)
 					{
-						text += $", error: {error.Code}, {error.Message}";
+						text = text + ", error: " + error.Code + ", " + error.Message;
 						kioskClientServiceResult.Error = Redbox.KioskEngine.ComponentModel.Error.NewError(error.Code, text, string.Empty);
 					}
 					LogHelper.Instance.Log(text);
@@ -221,9 +221,9 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 				TransactionDate = readTime,
 				Properties = properties
 			};
-			LogHelper.Instance.Log($"KioskClientServiceInventory.DiscFraud - sending disc fraud request of {anon.ToJson()}");
+			LogHelper.Instance.Log("KioskClientServiceInventory.DiscFraud - sending disc fraud request of " + anon.ToJson());
 			int timeout = ServiceLocator.Instance.GetService<IConfiguration>()?.KioskClientServiceDiscFraudTimeout ?? 10000;
-			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/discfraud", base.KioskClientServiceBaseUrl, "api/inventory")), anon, "POST", timeout);
+			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/inventory/discfraud"), anon, "POST", timeout);
 			LogResponse("KioskClientServiceInventory.DiscFraud", webResult);
 			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 			{
@@ -239,7 +239,7 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 					Redbox.Rental.Model.Error error = webResult.Response.Errors.FirstOrDefault();
 					if (error != null)
 					{
-						text += $", error: {error.Code}, {error.Message}";
+						text = text + ", error: " + error.Code + ", " + error.Message;
 						kioskClientServiceResult.Error = Redbox.KioskEngine.ComponentModel.Error.NewError(error.Code, text, string.Empty);
 					}
 					LogHelper.Instance.Log(text);
@@ -280,8 +280,8 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 				KioskIds = kioskIds,
 				Titles = titleIds
 			};
-			LogHelper.Instance.Log($"KioskClientServiceInventory.KioskTitlesCount - sending request of {anon.ToJson()}");
-			WebResult<KioskTitlesCountResponse> webResult = ExecuteWebRequest<KioskTitlesCountResponse>(new Uri(string.Format("{0}/{1}/kiosktitlescount", base.KioskClientServiceBaseUrl, "api/inventory")), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Inventory.KioskTitlesCountTimeout);
+			LogHelper.Instance.Log("KioskClientServiceInventory.KioskTitlesCount - sending request of " + anon.ToJson());
+			WebResult<KioskTitlesCountResponse> webResult = ExecuteWebRequest<KioskTitlesCountResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/inventory/kiosktitlescount"), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Inventory.KioskTitlesCountTimeout);
 			LogHelper.Instance.Log($"KioskClientServiceInventory.KioskTitlesCount - api response: {webResult}");
 			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 			{
@@ -291,7 +291,7 @@ public class KioskClientServiceInventory : BaseKioskClientService, IKioskClientS
 			else
 			{
 				string text = $"api call returned result code: {webResult.ExceptionStatus}";
-				LogHelper.Instance.Log($"KioskClientServiceInventory.KioskTitlesCount - {text}");
+				LogHelper.Instance.Log("KioskClientServiceInventory.KioskTitlesCount - " + text);
 				kioskTitlesCountResponse.Error = text;
 			}
 		}

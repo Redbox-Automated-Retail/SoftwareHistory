@@ -113,7 +113,7 @@ internal class PerksThanksViewController : BaseViewController
 				{
 					part.Texts.Add(new TextPart
 					{
-						Text = $"Your benefits include: {viewModel.PerksFreeRentalText}, {viewModel.PerksDealsText}, and {viewModel.PerksBdayGiftText}"
+						Text = "Your benefits include: " + viewModel.PerksFreeRentalText + ", " + viewModel.PerksDealsText + ", and " + viewModel.PerksBdayGiftText
 					});
 				}
 				part.Texts.Add(new TextPart

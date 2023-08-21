@@ -13,7 +13,7 @@ public class HardwareStatusChangeCallback : ICallbackEntry
 
 	public string Status { get; set; }
 
-	public string Name => $"HardwareStatusChangeCallback - {JobId ?? string.Empty}";
+	public string Name => "HardwareStatusChangeCallback - " + (JobId ?? string.Empty);
 
 	public void Invoke()
 	{
@@ -28,7 +28,7 @@ public class HardwareStatusChangeCallback : ICallbackEntry
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.LogEntireException($"An unhandled exception was raised in HardwareStatusChangeCallback handler for Job: {JobId}.", e, "Invoke");
+			LogHelper.Instance.LogEntireException("An unhandled exception was raised in HardwareStatusChangeCallback handler for Job: " + JobId + ".", e, "Invoke");
 		}
 	}
 }

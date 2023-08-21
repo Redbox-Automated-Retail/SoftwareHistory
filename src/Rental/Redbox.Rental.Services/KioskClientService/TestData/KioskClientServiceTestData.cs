@@ -9,21 +9,21 @@ public class KioskClientServiceTestData : BaseKioskClientService, IKioskClientSe
 
 	public IIsTestDataEnabledResult GetIsTestDataEnabled()
 	{
-		WebResult<IsTestDataEnabledResponse> webResult = ExecuteWebRequest<IsTestDataEnabledResponse>(new Uri(string.Format("{0}/{1}/istestdataenabled", base.KioskClientServiceBaseUrl, "api/testdata")), null, "GET", 500);
+		WebResult<IsTestDataEnabledResponse> webResult = ExecuteWebRequest<IsTestDataEnabledResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/testdata/istestdataenabled"), null, "GET", 500);
 		LogResponse("KioskClientServiceTestData", webResult);
 		return IsTestDataEnabledResult.CreateFromIsTestDataEnabledResponse(webResult.Response);
 	}
 
 	public IReadTestDataValueResult ReadPropertyValue(string category, string propertyName)
 	{
-		WebResult<ReadTestDataResponse> webResult = ExecuteWebRequest<ReadTestDataResponse>(new Uri(string.Format("{0}/{1}/readpropertyvalue?category={2}&propertyName={3}", base.KioskClientServiceBaseUrl, "api/testdata", category, propertyName)), null, "GET", 500);
+		WebResult<ReadTestDataResponse> webResult = ExecuteWebRequest<ReadTestDataResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/testdata/readpropertyvalue?category=" + category + "&propertyName=" + propertyName), null, "GET", 500);
 		LogResponse("KioskClientServiceTestData", webResult);
 		return ReadTestDataValueResult.CreateFromReadTestDataResponse(webResult?.Response);
 	}
 
 	public IWriteTestDataValueResult WritePropertyValue(string category, string propertyName, string propertyValue)
 	{
-		WebResult<WriteTestDataResponse> webResult = ExecuteWebRequest<WriteTestDataResponse>(new Uri(string.Format("{0}/{1}/writepropertyvalue?category={2}&propertyName={3}&propertyValue={4}", base.KioskClientServiceBaseUrl, "api/testdata", category, propertyName, propertyValue)), null, "POST", 500);
+		WebResult<WriteTestDataResponse> webResult = ExecuteWebRequest<WriteTestDataResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/testdata/writepropertyvalue?category=" + category + "&propertyName=" + propertyName + "&propertyValue=" + propertyValue), null, "POST", 500);
 		LogResponse("KioskClientServiceTestData", webResult);
 		return WriteTestDataValueResult.CreateFromWriteTestDataResponse(webResult?.Response);
 	}

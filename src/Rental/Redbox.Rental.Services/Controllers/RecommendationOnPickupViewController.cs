@@ -588,7 +588,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 			format = Resources.pickup_games;
 		}
 		recommendationOnPickupViewModel.TitleText = string.Format(format, num4);
-		bool flag = (RentalShoppingCart?.ServiceFee?.ActualAmount ?? 0m) > 0m;
+		bool flag = (RentalShoppingCart?.ServiceFee?.ActualAmount).GetValueOrDefault() > 0m;
 		recommendationOnPickupViewModel.ServiceFeeMessage = (flag ? string.Format(Resources.service_fee_text, $"{(RentalShoppingCart?.ServiceFee.DefaultAmount ?? 0m) * 100m:f0}") : null);
 		recommendationOnPickupViewModel.PricingModel.PricingLineMargin = new Thickness(0.0, 2.0, 0.0, 2.0);
 		recommendationOnPickupViewModel.PricingModel.ReservedDiscsLabelText = Resources.totals_reserved_discs;
@@ -600,18 +600,18 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 		recommendationOnPickupViewModel.PricingModel.SubtotalLineVisibility = Visibility.Collapsed;
 		recommendationOnPickupViewModel.PricingModel.ServiceFeeLineVisibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
 		string text = (ServiceLocator.Instance.GetService<IDataService>()?.GetStore())?.State;
-		string text2 = $"{((!((RentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) != 0m)) ? ((decimal?)null) : RentalShoppingCart?.Totals?.DiscountAmountUsed):C}";
+		string text2 = $"{((!((RentalShoppingCart?.Totals?.DiscountAmountUsed).GetValueOrDefault() != 0m)) ? ((decimal?)null) : RentalShoppingCart?.Totals?.DiscountAmountUsed):C}";
 		if (!string.IsNullOrEmpty(text2))
 		{
 			text2 = $"-{text2}";
 		}
 		recommendationOnPickupViewModel.PricingModel.DiscountValueText = text2;
-		recommendationOnPickupViewModel.PricingModel.DiscountLineVisibility = ((!((RentalShoppingCart?.Totals?.DiscountAmountUsed ?? 0m) > 0m)) ? Visibility.Collapsed : Visibility.Visible);
+		recommendationOnPickupViewModel.PricingModel.DiscountLineVisibility = ((!((RentalShoppingCart?.Totals?.DiscountAmountUsed).GetValueOrDefault() > 0m)) ? Visibility.Collapsed : Visibility.Visible);
 		decimal num5 = RentalShoppingCart.TitleItems.Where((IRentalShoppingCartTitleItem x) => x.SourceType == ItemSourceType.Reservation).Sum((IRentalShoppingCartTitleItem x) => x.Price);
 		recommendationOnPickupViewModel.PricingModel.ReservedDiscsValueText = $"{num5:C}";
 		decimal num6 = RentalShoppingCart.TitleItems.Where((IRentalShoppingCartTitleItem x) => x.SourceType != ItemSourceType.Reservation).Sum((IRentalShoppingCartTitleItem x) => x.Price);
 		recommendationOnPickupViewModel.PricingModel.AddedDiscsValueText = $"{num6:C}";
-		recommendationOnPickupViewModel.PricingModel.ServiceFeeValueText = $"{RentalShoppingCart?.ServiceFee?.ActualAmount ?? 0m:C}";
+		recommendationOnPickupViewModel.PricingModel.ServiceFeeValueText = $"{(RentalShoppingCart?.ServiceFee?.ActualAmount).GetValueOrDefault():C}";
 		recommendationOnPickupViewModel.PricingModel.TaxLineVisibility = ((text == "SC" || text == "MD") ? Visibility.Collapsed : Visibility.Visible);
 		recommendationOnPickupViewModel.PricingModel.TaxValueText = $"{RentalShoppingCart?.Totals?.TaxAmount:C}";
 		recommendationOnPickupViewModel.PricingModel.TotalValueText = $"{RentalShoppingCart?.Totals?.GrandTotal:f2}";

@@ -18,9 +18,7 @@ public class LoyaltyPointsRecord : ILoyaltyPointsRecord
 		get
 		{
 			bool result = false;
-			int? pointsToRedeem = PointsToRedeem;
-			int num = 0;
-			if (pointsToRedeem.GetValueOrDefault() > num && pointsToRedeem.HasValue && _rentalShoppingCartItem != null && _rentalShoppingCartItem.Action == RentalShoppingCartItemAction.rental)
+			if (PointsToRedeem > 0 && _rentalShoppingCartItem != null && _rentalShoppingCartItem.Action == RentalShoppingCartItemAction.rental)
 			{
 				result = true;
 			}

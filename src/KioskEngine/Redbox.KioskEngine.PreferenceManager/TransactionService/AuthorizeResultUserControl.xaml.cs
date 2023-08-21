@@ -218,7 +218,7 @@ public partial class AuthorizeResultUserControl : UserControl, IPreferencePageHo
 
 		public override string ToString()
 		{
-			return $"{ResponseName} {Code}";
+			return ResponseName + " " + Code;
 		}
 	}
 

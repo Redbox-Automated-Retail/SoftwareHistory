@@ -39,11 +39,11 @@ public class ReturnVisitPromoOfferViewController : BaseViewController
 			_amount = returnVisitPromoOfferViewParameters.Amount;
 			returnVisitPromoOfferViewModel.MessageText = ((returnVisitPromoOfferViewParameters.PromoType == ReturnPromoType.FirstNightFree) ? Resources.return_visit_promo_offer_free_message_text : Resources.return_visit_promo_offer_message_text);
 			returnVisitPromoOfferViewModel.EligibleText = ((returnVisitPromoOfferViewParameters.PromoType == ReturnPromoType.FirstNightFree) ? Resources.return_visit_promo_offer_free_eligible_text : string.Empty);
-			string arg = string.Format(Resources.return_visit_promo_offer_promo_code_text, returnVisitPromoOfferViewParameters.PromoCode);
+			string text = string.Format(Resources.return_visit_promo_offer_promo_code_text, returnVisitPromoOfferViewParameters.PromoCode);
 			returnVisitPromoOfferViewModel.PromoCodeText = string.Empty;
 			_promoCode = returnVisitPromoOfferViewParameters.PromoCode;
-			string arg2 = string.Format(Resources.return_visit_promo_offer_expiration_text, returnVisitPromoOfferViewParameters.ExpirationDate);
-			returnVisitPromoOfferViewModel.ExpirationText = string.Format($"{arg} - {arg2}");
+			string text2 = string.Format(Resources.return_visit_promo_offer_expiration_text, returnVisitPromoOfferViewParameters.ExpirationDate);
+			returnVisitPromoOfferViewModel.ExpirationText = string.Format(text + " - " + text2);
 			returnVisitPromoOfferViewModel.LegalText = ((returnVisitPromoOfferViewParameters.PromoType == ReturnPromoType.FirstNightFree) ? Resources.return_visit_promo_offer_first_night_free_legal_text : Resources.return_visit_promo_offer_legal_text);
 			returnVisitPromoOfferViewModel.CloseButtonText = Resources.close_button.ToUpper();
 			returnVisitPromoOfferViewModel.UseNowButtonText = Resources.use_now_button_text.ToUpper();
@@ -109,23 +109,23 @@ public class ReturnVisitPromoOfferViewController : BaseViewController
 			if (promoType == ReturnPromoType.AmountOff)
 			{
 				decimal? num = amount;
-				if (num.GetValueOrDefault() > 0m && num.HasValue)
+				if ((num.GetValueOrDefault() > 0m) & num.HasValue)
 				{
-					goto IL_003a;
+					goto IL_0036;
 				}
 			}
 			if (promoType == ReturnPromoType.FirstNightFree)
 			{
-				goto IL_003a;
+				goto IL_0036;
 			}
 		}
 		return null;
-		IL_003a:
+		IL_0036:
 		return new Redbox.Rental.Services.Promotion.Promotion
 		{
 			Name = promoCode,
-			OriginalPrice = ((promoType == ReturnPromoType.FirstNightFree) ? 0m : (amount ?? 0m)),
-			Price = ((promoType == ReturnPromoType.FirstNightFree) ? 0m : (amount ?? 0m)),
+			OriginalPrice = ((promoType == ReturnPromoType.FirstNightFree) ? 0m : amount.GetValueOrDefault()),
+			Price = ((promoType == ReturnPromoType.FirstNightFree) ? 0m : amount.GetValueOrDefault()),
 			Quantity = 1,
 			Intent = ((promoType == ReturnPromoType.FirstNightFree) ? PromotionIntentCode.FirstNightFreeItem : PromotionIntentCode.FixedValue),
 			OriginalPercent = 0m,

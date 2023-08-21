@@ -12,10 +12,10 @@ public static class LogExtensions
 		Type type = e.GetType();
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.AppendLine($"Exception Details - Type: {type} Caller Member Name: {memberName}");
-		stringBuilder.AppendLine($" Message: {message}");
+		stringBuilder.AppendLine(" Message: " + message);
 		while (e != null)
 		{
-			stringBuilder.AppendLine($"Exception Message {e.Message}");
+			stringBuilder.AppendLine("Exception Message " + e.Message);
 			if (e.StackTrace != null)
 			{
 				stringBuilder.AppendLine("Stack Trace");

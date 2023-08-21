@@ -69,7 +69,7 @@ public class MachineSettingsStore : IMachineSettingsStore
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.LogException($"Failed to remove value {key} at path {path}.", e);
+			LogHelper.Instance.LogException("Failed to remove value " + key + " at path " + path + ".", e);
 		}
 	}
 

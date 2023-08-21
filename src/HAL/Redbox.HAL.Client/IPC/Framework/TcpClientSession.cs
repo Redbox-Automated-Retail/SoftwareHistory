@@ -28,12 +28,13 @@ public sealed class TcpClientSession : ClientSession
 				}
 				else
 				{
-					SslStream sslStream = new SslStream(TransportClient.GetStream(), leaveInnerStreamOpen: false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true);
-					sslStream.ReadTimeout = base.Timeout;
-					sslStream.WriteTimeout = base.Timeout;
-					SslStream sslStream2 = sslStream;
-					sslStream2.AuthenticateAsClient(base.Protocol.Host);
-					m_stream = sslStream2;
+					SslStream sslStream = new SslStream(TransportClient.GetStream(), leaveInnerStreamOpen: false, (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true)
+					{
+						ReadTimeout = base.Timeout,
+						WriteTimeout = base.Timeout
+					};
+					sslStream.AuthenticateAsClient(base.Protocol.Host);
+					m_stream = sslStream;
 				}
 			}
 			return m_stream;

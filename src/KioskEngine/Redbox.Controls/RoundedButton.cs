@@ -459,20 +459,20 @@ public class RoundedButton : Button, IThemedControl
 				text = window?.GetType()?.ToString();
 			}
 		}
-		string arg = "";
+		string text2 = "";
 		if (!string.IsNullOrEmpty(base.Name))
 		{
-			arg = $"Button Name: {base.Name}";
+			text2 = "Button Name: " + base.Name;
 		}
 		else
 		{
-			string text2 = base.Tag?.ToString();
-			if (!string.IsNullOrEmpty(text2))
+			string text3 = base.Tag?.ToString();
+			if (!string.IsNullOrEmpty(text3))
 			{
-				arg = $"Tag: {text2.Substring(0, Math.Min(text2.Length, 50))}";
+				text2 = "Tag: " + text3.Substring(0, Math.Min(text3.Length, 50));
 			}
 		}
-		LogHelper.Instance.Log($"RoundedButton click: Parent: {text}, {arg}");
+		LogHelper.Instance.Log("RoundedButton click: Parent: " + text + ", " + text2);
 	}
 
 	private static void OnCornerRadiusPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

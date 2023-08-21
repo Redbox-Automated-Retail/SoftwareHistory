@@ -46,7 +46,7 @@ public class BaseClientService
 
 	protected void LogResponse<T>(string description, WebResult<T> webResult) where T : BaseResponse
 	{
-		LogHelper.Instance.Log(string.Format("{0} {1}. Service Call Duration: {2}", description, (webResult?.Response?.Success ?? false) ? "successful" : "failed", webResult?.Duration));
+		LogHelper.Instance.Log(string.Format("{0} {1}. Service Call Duration: {2}", description, (webResult?.Response?.Success == true) ? "successful" : "failed", webResult?.Duration));
 		if (webResult?.Response?.Errors == null || webResult.Response.Errors.Count <= 0)
 		{
 			return;
@@ -54,7 +54,7 @@ public class BaseClientService
 		StringBuilder stringBuilder = new StringBuilder();
 		foreach (Redbox.Rental.Model.Error error in webResult.Response.Errors)
 		{
-			stringBuilder.AppendLine($"Error code {error.Code}, Message {error.Message}");
+			stringBuilder.AppendLine("Error code " + error.Code + ", Message " + error.Message);
 		}
 		LogHelper.Instance.Log(stringBuilder.ToString());
 	}

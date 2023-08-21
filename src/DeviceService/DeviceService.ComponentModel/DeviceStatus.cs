@@ -23,4 +23,10 @@ public class DeviceStatus
 	public string EMVContactVersion { get; set; }
 
 	public string EMVClessVersion { get; set; }
+
+	public bool SupportsVas { get; set; }
+
+	public string InjectedKeys { get; set; }
+
+	public ErrorState ErrorState { get; set; }
 }

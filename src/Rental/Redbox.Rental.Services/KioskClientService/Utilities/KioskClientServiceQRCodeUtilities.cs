@@ -16,8 +16,8 @@ public class KioskClientServiceQRCodeUtilities : BaseKioskClientService, IKioskC
 
 	public IGetQRCodeResponse GetQRCode(string valueToEncode)
 	{
-		WebResult<GetQRCodeResponse> webResult = ExecuteWebRequest<GetQRCodeResponse>(new Uri(string.Format("{0}/{1}/getqrcode?valueToEncode={2}", base.KioskClientServiceBaseUrl, "api/utilities", valueToEncode)), null, "GET", 500);
-		LogResponse($"KioskClientServiceQRCodeUtilities.GetQRCode for value: {valueToEncode}", webResult);
+		WebResult<GetQRCodeResponse> webResult = ExecuteWebRequest<GetQRCodeResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/utilities/getqrcode?valueToEncode=" + valueToEncode), null, "GET", 500);
+		LogResponse("KioskClientServiceQRCodeUtilities.GetQRCode for value: " + valueToEncode, webResult);
 		return webResult?.Response;
 	}
 

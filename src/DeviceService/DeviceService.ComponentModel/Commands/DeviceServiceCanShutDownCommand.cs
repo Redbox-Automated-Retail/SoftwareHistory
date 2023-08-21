@@ -8,6 +8,8 @@ public class DeviceServiceCanShutDownCommand : BaseCommandRequest
 
 	public bool CanShutDown { get; set; }
 
+	public override bool IsQueuedCommand => false;
+
 	public DeviceServiceCanShutDownCommand(Version deviceServiceClientVersion)
 		: base("DeviceServiceCanShutDown", deviceServiceClientVersion)
 	{

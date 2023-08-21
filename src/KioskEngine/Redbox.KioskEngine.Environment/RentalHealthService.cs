@@ -65,7 +65,7 @@ public class RentalHealthService : IRentalHealthService
 		{
 			kioskFunctionCheckData.ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error x)
 			{
-				LogHelper.Instance.LogError(x.Code, x.Description ?? (string.Empty + System.Environment.NewLine + x.Details) ?? string.Empty);
+				LogHelper.Instance.LogError(x.Code, x.Description ?? (string.Empty + System.Environment.NewLine + x.Details));
 			});
 		}
 		else if (data != null)

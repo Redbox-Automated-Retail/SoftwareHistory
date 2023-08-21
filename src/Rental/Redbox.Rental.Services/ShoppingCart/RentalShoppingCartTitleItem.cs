@@ -21,7 +21,7 @@ public class RentalShoppingCartTitleItem : BaseRentalShoppingCartItem, IRentalSh
 
 	public TitleType TitleType => _titleProduct.TitleType;
 
-	public Ratings Rating => (Ratings)(_titleProduct.RatingId ?? 0);
+	public Ratings Rating => (Ratings)_titleProduct.RatingId.GetValueOrDefault();
 
 	public DateTime MerchandiseDate => _titleProduct.MerchandiseDate;
 

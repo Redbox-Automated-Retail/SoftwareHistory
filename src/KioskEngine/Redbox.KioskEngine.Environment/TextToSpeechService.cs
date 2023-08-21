@@ -205,7 +205,7 @@ public class TextToSpeechService : ITextToSpeechService
 			if (textToSpeechControl != null)
 			{
 				_speechControl = textToSpeechControl.GetSpeechControl();
-				LogHelper.Instance.Log("TTS((> Loaded Speech Control for {0} from the view. {1} speech parts loaded", resourceName, _speechControl?.SpeechParts?.Count ?? 0);
+				LogHelper.Instance.Log("TTS((> Loaded Speech Control for {0} from the view. {1} speech parts loaded", resourceName, (_speechControl?.SpeechParts?.Count).GetValueOrDefault());
 			}
 		}
 		if (_speechControl == null)

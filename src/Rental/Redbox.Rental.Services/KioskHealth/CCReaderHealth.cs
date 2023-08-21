@@ -160,10 +160,11 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 				{
 					_readErrorCount++;
 					_inactivityOccurred = true;
-					KioskEvent kioskEvent = KioskEvent.NewEvent(6, 601, success: false, null, null, new
+					string data = new
 					{
 						ReadErrors = _readErrorCount
-					}.ToJson());
+					}.ToJson();
+					KioskEvent kioskEvent = KioskEvent.NewEvent(6, 601, success: false, null, null, data);
 					if (!_relatedId.HasValue)
 					{
 						_relatedId = kioskEvent.Id;
@@ -180,7 +181,9 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 				{
 					if (_inactivityOccurred && _CCReaderSendNoDataEvents)
 					{
-						_kioskEvents.AddEvent(KioskEvent.NewEvent(6, 602, success: true, null, _relatedId));
+						IKioskEventService kioskEvents = _kioskEvents;
+						Guid? relatedId = _relatedId;
+						kioskEvents.AddEvent(KioskEvent.NewEvent(6, 602, success: true, null, relatedId));
 					}
 					Reset();
 				}
@@ -190,10 +193,11 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 			_inactivityOccurred = true;
 			if (_CCReaderSendNoDataEvents)
 			{
-				KioskEvent kioskEvent2 = KioskEvent.NewEvent(6, 600, success: true, null, null, new
+				string data = new
 				{
 					FailedReadAttempts = _failedAttemptCount
-				}.ToJson());
+				}.ToJson();
+				KioskEvent kioskEvent2 = KioskEvent.NewEvent(6, 600, success: true, null, null, data);
 				if (!_relatedId.HasValue)
 				{
 					_relatedId = kioskEvent2.Id;

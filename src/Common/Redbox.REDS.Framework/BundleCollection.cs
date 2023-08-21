@@ -87,8 +87,7 @@ public sealed class BundleCollection
 		}
 		if (bundle != null)
 		{
-			IResourceBundle obj = bundle;
-			if (obj.GetManifest(obj.CreateFilter(), out manifestInfo) == null || manifestInfo == null)
+			if (bundle.GetManifest(bundle.CreateFilter(), out manifestInfo) == null || manifestInfo == null)
 			{
 				errorList.Add(Error.NewError("B120", $"No manifest resource was found for the bundle: {bundle.Storage.BundlePath}.", "The bundle may not be compiled correctly or the manifest.resource file was moved or deleted after the bundle was scanned."));
 			}

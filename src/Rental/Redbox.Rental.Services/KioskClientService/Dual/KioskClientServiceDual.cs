@@ -82,9 +82,9 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 			{
 				DualKioskId = dualKioskId
 			};
-			LogHelper.Instance.Log($"KioskClientServiceDual.Refresh - sending request of {anon.ToJson()}");
-			WebResult<RefreshResponse> webResult = ExecuteWebRequest<RefreshResponse>(new Uri(string.Format("{0}/{1}/refresh", base.KioskClientServiceBaseUrl, "api/dual")), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Dual.RefreshTimeout);
-			LogHelper.Instance.Log($"KioskClientServiceDual.Refresh - response: {webResult.ToJson()}");
+			LogHelper.Instance.Log("KioskClientServiceDual.Refresh - sending request of " + anon.ToJson());
+			WebResult<RefreshResponse> webResult = ExecuteWebRequest<RefreshResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/dual/refresh"), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Dual.RefreshTimeout);
+			LogHelper.Instance.Log("KioskClientServiceDual.Refresh - response: " + webResult.ToJson());
 			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 			{
 				LogHelper.Instance.Log("KioskClientServiceDual.Refresh - api call successful");
@@ -92,7 +92,7 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 			else
 			{
 				string text = $"api call returned result code: {webResult.ExceptionStatus}";
-				LogHelper.Instance.Log($"KioskClientServiceDual.Refresh - {text}");
+				LogHelper.Instance.Log("KioskClientServiceDual.Refresh - " + text);
 				refreshResponse.Error = text;
 			}
 		}
@@ -116,8 +116,8 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 		try
 		{
 			var anon = new { dualKioskId, titleIds };
-			LogHelper.Instance.Log($"KioskClientServiceDual.UpdateTitle - sending request of {anon.ToJson()}");
-			WebResult<UpdateTitlesResponse> webResult = ExecuteWebRequest<UpdateTitlesResponse>(new Uri(string.Format("{0}/{1}/updatetitles", base.KioskClientServiceBaseUrl, "api/dual")), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Dual.UpdateTitlesTimeout);
+			LogHelper.Instance.Log("KioskClientServiceDual.UpdateTitle - sending request of " + anon.ToJson());
+			WebResult<UpdateTitlesResponse> webResult = ExecuteWebRequest<UpdateTitlesResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/dual/updatetitles"), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Dual.UpdateTitlesTimeout);
 			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 			{
 				LogHelper.Instance.Log("KioskClientServiceDual.UpdateTitles - api call successful");
@@ -126,7 +126,7 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 			else
 			{
 				string text = $"api call returned result code: {webResult.ExceptionStatus}";
-				LogHelper.Instance.Log($"KioskClientServiceDual.UpdateTitles - {text}");
+				LogHelper.Instance.Log("KioskClientServiceDual.UpdateTitles - " + text);
 				updateTitlesResponse.Error = text;
 			}
 		}
@@ -150,9 +150,9 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 		try
 		{
 			var anon = new { titleIds };
-			LogHelper.Instance.Log($"KioskClientServiceDual.InStockInOther - sending request of {anon.ToJson()}");
-			WebResult<InStockInOtherResponse> webResult = ExecuteWebRequest<InStockInOtherResponse>(new Uri(string.Format("{0}/{1}/instockinother", base.KioskClientServiceBaseUrl, "api/dual")), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Dual.InStockInOtherTimeout);
-			LogHelper.Instance.Log($"KioskClientServiceDual.InStockInOther - response: {webResult.ToJson()}");
+			LogHelper.Instance.Log("KioskClientServiceDual.InStockInOther - sending request of " + anon.ToJson());
+			WebResult<InStockInOtherResponse> webResult = ExecuteWebRequest<InStockInOtherResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/dual/instockinother"), anon, "POST", Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Dual.InStockInOtherTimeout);
+			LogHelper.Instance.Log("KioskClientServiceDual.InStockInOther - response: " + webResult.ToJson());
 			if (webResult.ExceptionStatus == WebExceptionStatus.Success)
 			{
 				LogHelper.Instance.Log("KioskClientServiceDual.InStockInOther - api call successful");
@@ -161,7 +161,7 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 			else
 			{
 				string text = $"api call returned result code: {webResult.ExceptionStatus}";
-				LogHelper.Instance.Log($"KioskClientServiceDual.InStockInOther - {text}");
+				LogHelper.Instance.Log("KioskClientServiceDual.InStockInOther - " + text);
 				inStockInOtherResponse.Error = text;
 			}
 		}

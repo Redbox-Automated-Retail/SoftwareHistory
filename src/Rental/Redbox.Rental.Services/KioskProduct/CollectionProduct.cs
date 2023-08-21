@@ -118,9 +118,15 @@ public class CollectionProduct : KioskProduct, ICollectionProduct, IKioskProduct
 			if (_allTitleProducts.ContainsKey(id))
 			{
 				ITitleProduct title = _allTitleProducts[id];
-				TitleRollupProduct titleRollupProduct = (from item in _allTitleRollupProducts
-					where item.Value.KioskProducts.Contains(title)
-					select item.Value).FirstOrDefault();
+				TitleRollupProduct titleRollupProduct = _allTitleRollupProducts.Where(delegate(KeyValuePair<long, TitleRollupProduct> item)
+				{
+					KeyValuePair<long, TitleRollupProduct> keyValuePair = item;
+					return keyValuePair.Value.KioskProducts.Contains(title);
+				}).Select(delegate(KeyValuePair<long, TitleRollupProduct> item)
+				{
+					KeyValuePair<long, TitleRollupProduct> keyValuePair = item;
+					return keyValuePair.Value;
+				}).FirstOrDefault();
 				if (titleRollupProduct != null)
 				{
 					if (!_kioskProducts.Contains(titleRollupProduct))
@@ -131,9 +137,15 @@ public class CollectionProduct : KioskProduct, ICollectionProduct, IKioskProduct
 				}
 				else
 				{
-					MDVProduct mDVProduct = (from item in _allMDVProducts
-						where item.Value.TitleProducts.Contains(title)
-						select item.Value).FirstOrDefault();
+					MDVProduct mDVProduct = _allMDVProducts.Where(delegate(KeyValuePair<long, MDVProduct> item)
+					{
+						KeyValuePair<long, MDVProduct> keyValuePair = item;
+						return keyValuePair.Value.TitleProducts.Contains(title);
+					}).Select(delegate(KeyValuePair<long, MDVProduct> item)
+					{
+						KeyValuePair<long, MDVProduct> keyValuePair = item;
+						return keyValuePair.Value;
+					}).FirstOrDefault();
 					if (mDVProduct != null)
 					{
 						if (!_kioskProducts.Contains(mDVProduct))

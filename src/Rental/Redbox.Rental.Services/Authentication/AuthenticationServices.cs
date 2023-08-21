@@ -194,7 +194,7 @@ public class AuthenticationServices : IAuthenticationServices
 
 	private void SendLockoutResponse(string userName, RemoteServiceCallback completeCallback)
 	{
-		LogHelper.Instance.Log($"AuthenticationServicesProxy ignoring request from locked accout: UserName {userName}");
+		LogHelper.Instance.Log("AuthenticationServicesProxy ignoring request from locked accout: UserName " + userName);
 		RemoteServiceResult remoteServiceResult = new RemoteServiceResult
 		{
 			Success = false

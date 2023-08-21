@@ -32,7 +32,7 @@ public abstract class BaseMessageProcessorService : IQueueMessageProcessorServic
 		IApplicationState service = ServiceLocator.Instance.GetService<IApplicationState>();
 		if (service == null || service.IsStandAlone)
 		{
-			LogHelper.Instance.Log($"Unable to process message type {message.Type} because application is in stand alone mode");
+			LogHelper.Instance.Log("Unable to process message type " + message.Type + " because application is in stand alone mode");
 		}
 		else
 		{

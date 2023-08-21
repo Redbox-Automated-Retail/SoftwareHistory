@@ -61,11 +61,11 @@ public partial class GetReservationsUserControl : UserControl, IPreferencePageHo
 
 	private async void CancelReservationButton_Click(object sender, RoutedEventArgs e)
 	{
-		if (ReservationsDataGrid.SelectedItem is Redbox.KioskEngine.PreferenceManager.KioskEngineApiClient.Reservation.Reservation reservation && MessageBox.Show($"Are you sure you want to cancel reservation {reservation?.ReferenceNumber}?", "Cancel Reservation Confirmation", MessageBoxButton.OKCancel, MessageBoxImage.Exclamation) == MessageBoxResult.OK)
+		if (ReservationsDataGrid.SelectedItem is Redbox.KioskEngine.PreferenceManager.KioskEngineApiClient.Reservation.Reservation reservation && MessageBox.Show("Are you sure you want to cancel reservation " + reservation?.ReferenceNumber + "?", "Cancel Reservation Confirmation", MessageBoxButton.OKCancel, MessageBoxImage.Exclamation) == MessageBoxResult.OK)
 		{
 			APIResponse<CancelReservationResponse> aPIResponse = await KioskEngineApiReservationClient.CancelReservations(reservation.ReferenceNumber);
-			string arg = (aPIResponse.IsSuccessStatusCode ? "Succeeded." : $"failed.  StatusCode: {(int)aPIResponse.StatusCode} {aPIResponse.StatusCode}");
-			SimpleMessageWindow.Show(ControlUtilities.GetParentWindow(this), "Cancel Reservation Confirmation", $"Cancel {arg}");
+			string text = (aPIResponse.IsSuccessStatusCode ? "Succeeded." : $"failed.  StatusCode: {(int)aPIResponse.StatusCode} {aPIResponse.StatusCode}");
+			SimpleMessageWindow.Show(ControlUtilities.GetParentWindow(this), "Cancel Reservation Confirmation", "Cancel " + text);
 			if (aPIResponse.IsSuccessStatusCode)
 			{
 				RefreshData();

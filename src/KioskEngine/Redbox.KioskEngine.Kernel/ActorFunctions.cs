@@ -746,7 +746,7 @@ public static class ActorFunctions
 			return "0, 0, 0, 0";
 		}
 		Rectangle value = actor.TextRegion.Value;
-		return (value.X + ", " + value.Y + ", " + value.Width + ", " + value.Height) ?? "";
+		return value.X + ", " + value.Y + ", " + value.Width + ", " + value.Height;
 	}
 
 	[KernelFunction(Name = "kernel.getactoropacity")]

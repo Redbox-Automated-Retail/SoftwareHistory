@@ -270,11 +270,14 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 				KioskEvent kioskEvent;
 				if (_firstTechnicalFallbackEventId.HasValue)
 				{
-					kioskEvent = KioskEvent.NewEvent(7, 700, success: true, null, data: TechnicalFallbackSessionEventData, relatedId: _firstTechnicalFallbackEventId);
+					string technicalFallbackSessionEventData = TechnicalFallbackSessionEventData;
+					Guid? firstTechnicalFallbackEventId = _firstTechnicalFallbackEventId;
+					kioskEvent = KioskEvent.NewEvent(7, 700, success: true, null, firstTechnicalFallbackEventId, technicalFallbackSessionEventData);
 				}
 				else
 				{
-					kioskEvent = KioskEvent.NewEvent(7, 700, success: true, null, null, TechnicalFallbackSessionEventData);
+					string technicalFallbackSessionEventData = TechnicalFallbackSessionEventData;
+					kioskEvent = KioskEvent.NewEvent(7, 700, success: true, null, null, technicalFallbackSessionEventData);
 					kioskEvent.RelatedId = kioskEvent.Id;
 					_firstTechnicalFallbackEventId = kioskEvent.Id;
 				}
@@ -289,7 +292,10 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 			{
 				if (_technicalFallbackSessionCount > 0)
 				{
-					_kioskEvents.AddEvent(KioskEvent.NewEvent(7, 701, success: true, null, data: TechnicalFallbackSessionResetEventData, relatedId: _firstTechnicalFallbackEventId));
+					IKioskEventService kioskEvents = _kioskEvents;
+					string technicalFallbackSessionEventData = TechnicalFallbackSessionResetEventData;
+					Guid? firstTechnicalFallbackEventId = _firstTechnicalFallbackEventId;
+					kioskEvents.AddEvent(KioskEvent.NewEvent(7, 701, success: true, null, firstTechnicalFallbackEventId, technicalFallbackSessionEventData));
 				}
 				Reset();
 			}

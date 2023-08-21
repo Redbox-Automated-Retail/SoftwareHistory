@@ -79,17 +79,14 @@ public static class StringExtensions
 		Match match = Regex.Match(part, "\\[\"(?<indexer>.*?)\"\\]", RegexOptions.Singleline);
 		Match match2 = Regex.Match(part, "\\[(?<indexer>[0-9]*?)\\]", RegexOptions.Singleline);
 		object result = null;
+		int result2;
 		if (match.Success)
 		{
 			result = match.Groups["indexer"].Captures[0].Value;
 		}
-		else if (match2.Success)
+		else if (match2.Success && int.TryParse(match2.Groups["indexer"].Captures[0].Value, out result2))
 		{
-			string value = match2.Groups["indexer"].Captures[0].Value;
-			if (int.TryParse(value, out var result2))
-			{
-				result = result2;
-			}
+			result = result2;
 		}
 		return result;
 	}
@@ -168,8 +165,7 @@ public static class StringExtensions
 			}
 			try
 			{
-				object obj3 = obj.GetType().InvokeMember(text, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.GetField | BindingFlags.GetProperty, null, obj, args);
-				obj = obj3;
+				obj = obj.GetType().InvokeMember(text, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.InvokeMethod | BindingFlags.GetField | BindingFlags.GetProperty, null, obj, args);
 				if (obj == null)
 				{
 					break;

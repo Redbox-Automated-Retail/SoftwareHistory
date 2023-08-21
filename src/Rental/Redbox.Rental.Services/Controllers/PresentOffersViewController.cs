@@ -552,20 +552,20 @@ public class PresentOffersViewController : BaseViewController
 					StringBuilder stringBuilder = new StringBuilder();
 					if (count > 1)
 					{
-						string arg = "next";
+						string text = "next";
 						switch (num)
 						{
 						case 1:
-							arg = "first";
+							text = "first";
 							break;
 						case 2:
-							arg = "2nd";
+							text = "2nd";
 							break;
 						case 3:
-							arg = "third";
+							text = "third";
 							break;
 						}
-						stringBuilder.Append($"The {arg} offer is ");
+						stringBuilder.Append("The " + text + " offer is ");
 					}
 					foreach (StyledTextModel styledTextLine in offer.StyledTextLines)
 					{
@@ -612,7 +612,7 @@ public class PresentOffersViewController : BaseViewController
 					{
 						part.Texts.Add(new TextPart
 						{
-							Text = $"This offer {viewModel.ExpirationText}."
+							Text = "This offer " + viewModel.ExpirationText + "."
 						});
 					}
 				}

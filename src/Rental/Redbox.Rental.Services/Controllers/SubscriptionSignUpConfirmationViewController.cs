@@ -42,13 +42,13 @@ public class SubscriptionSignUpConfirmationViewController : BaseViewController
 	private static void ConfigureText(SubscriptionSignUpConfirmationViewModel subscriptionSignUpConfirmationViewModel)
 	{
 		OrchestrationService.SetCurrentUICulture();
-		bool flag = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsCPNewInThisSession ?? false;
+		bool valueOrDefault = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsCPNewInThisSession == true;
 		if (subscriptionSignUpConfirmationViewModel?.SubscriptionProduct is IStarzSubscriptionProduct starzSubscriptionProduct)
 		{
 			subscriptionSignUpConfirmationViewModel.RedboxPlusExistingCustomerTextVisibility = Visibility.Collapsed;
 			subscriptionSignUpConfirmationViewModel.RedboxPlusNewCustomerTextVisibility = Visibility.Collapsed;
 			subscriptionSignUpConfirmationViewModel.StazTextVisibility = Visibility.Visible;
-			if (flag)
+			if (valueOrDefault)
 			{
 				subscriptionSignUpConfirmationViewModel.RegisteredTrademarkSymbol = starzSubscriptionProduct.RegisteredTrademarkSymbolNewCP;
 				subscriptionSignUpConfirmationViewModel.RegisteredTrademarkSymbolMessage = starzSubscriptionProduct.RegisteredTrademarkSymbolNewCPMessage;
@@ -72,11 +72,11 @@ public class SubscriptionSignUpConfirmationViewController : BaseViewController
 		else
 		{
 			subscriptionSignUpConfirmationViewModel.StazTextVisibility = Visibility.Collapsed;
-			subscriptionSignUpConfirmationViewModel.RedboxPlusExistingCustomerTextVisibility = (flag ? Visibility.Collapsed : Visibility.Visible);
-			subscriptionSignUpConfirmationViewModel.RedboxPlusNewCustomerTextVisibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
+			subscriptionSignUpConfirmationViewModel.RedboxPlusExistingCustomerTextVisibility = (valueOrDefault ? Visibility.Collapsed : Visibility.Visible);
+			subscriptionSignUpConfirmationViewModel.RedboxPlusNewCustomerTextVisibility = ((!valueOrDefault) ? Visibility.Collapsed : Visibility.Visible);
 			if (subscriptionSignUpConfirmationViewModel?.SubscriptionProduct is IRedboxPlusSubscriptionProduct)
 			{
-				if (flag)
+				if (valueOrDefault)
 				{
 					subscriptionSignUpConfirmationViewModel.TitleText1 = Resources.redbox_plus_signup_confirmation_new_customer_title;
 					subscriptionSignUpConfirmationViewModel.MessageText1 = Resources.redbox_plus_signup_confirmation_new_customer_message_1;
@@ -92,7 +92,7 @@ public class SubscriptionSignUpConfirmationViewController : BaseViewController
 			}
 			else
 			{
-				LogHelper.Instance.Log(string.Format("Error in {0}: Unable to find subscription product.", "subscription_sign_up_confirmation_view"));
+				LogHelper.Instance.Log("Error in subscription_sign_up_confirmation_view: Unable to find subscription product.");
 			}
 		}
 		subscriptionSignUpConfirmationViewModel.ContinueButtonText = Resources.got_it_button.ToUpper();

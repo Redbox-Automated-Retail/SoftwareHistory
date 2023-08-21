@@ -191,7 +191,7 @@ public partial class GetSubscriptionPlansUserControl : UserControl, IPreferenceP
 		MyBagSubscriptionPlanComboBox.Items.Clear();
 		MyBagSubscriptionPlanComboBox.Items.Add(string.Empty);
 		APIResponse<GetSubscriptionPlanResponse> aPIResponse = await Redbox.KioskEngine.PreferenceManager.KioskClientServiceClient.Subscriptions.KioskClientServiceSubscriptions.GetSubscriptionPlans();
-		if (aPIResponse?.Response?.Success ?? false)
+		if (aPIResponse?.Response?.Success == true)
 		{
 			result = true;
 			ISubscriptionPlans subscriptionPlans = new SubscriptionPlans(aPIResponse?.Response);

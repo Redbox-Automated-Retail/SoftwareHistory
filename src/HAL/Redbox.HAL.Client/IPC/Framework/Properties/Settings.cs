@@ -13,8 +13,8 @@ internal sealed class Settings : ApplicationSettingsBase
 
 	public static Settings Default => defaultInstance;
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("HALService7001")]
-	[ApplicationScopedSetting]
 	public string PipeName => (string)this["PipeName"];
 }

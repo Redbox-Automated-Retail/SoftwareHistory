@@ -97,7 +97,7 @@ public class BrowseViewTextToSpeech
 		speechPart.Refresh = delegate
 		{
 			speechPart.Clear();
-			string text = ((RentalShoppingCartService?.CurrentRentalShoppingCart?.IsFull ?? false) ? "CartIsFull" : "CheckForItemsInCart");
+			string text = ((RentalShoppingCartService?.CurrentRentalShoppingCart?.IsFull == true) ? "CartIsFull" : "CheckForItemsInCart");
 			speechPart.RegularExpression = new RegularExpression
 			{
 				Expression = "Jump",
@@ -147,8 +147,7 @@ public class BrowseViewTextToSpeech
 		};
 		speechPart.Refresh = delegate
 		{
-			int? num = RentalShoppingCartService?.CurrentRentalShoppingCart?.Count;
-			string text = ((!num.HasValue || num.GetValueOrDefault() == 0) ? "MainMenu" : "ListCartItems");
+			string text = (((RentalShoppingCartService?.CurrentRentalShoppingCart?.Count).GetValueOrDefault() == 0) ? "MainMenu" : "ListCartItems");
 			speechPart.Clear();
 			speechPart.RegularExpression = new RegularExpression
 			{
@@ -181,10 +180,10 @@ public class BrowseViewTextToSpeech
 					Value = "AvailableTitles"
 				});
 				AddCheckOutEvent(speechPart, browseViewModel);
-				int num = RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0;
+				int valueOrDefault = (RentalShoppingCartService?.CurrentRentalShoppingCart?.Count).GetValueOrDefault();
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"You have {num} {GetCartTitlePlurality()} in your cart."
+					Text = $"You have {valueOrDefault} {GetCartTitlePlurality()} in your cart."
 				});
 				speechPart.Texts.Add(new TextPart
 				{
@@ -218,37 +217,40 @@ public class BrowseViewTextToSpeech
 					Value = "MainMenu"
 				});
 				AddCheckOutEvent(speechPart, browseViewModel);
-				string arg = (BrowseFunctions.IsRedboxPlusBrowseMode ? "Redbox plus movies" : null);
+				string text = (BrowseFunctions.IsRedboxPlusBrowseMode ? "Redbox plus movies" : null);
 				List<ITextPart> texts = speechPart.Texts;
 				TextPart textPart = new TextPart();
+				string[] obj = new string[5] { "You are now browsing ", text, " by ", null, null };
 				IBrowseState browseState = BrowseState;
-				textPart.Text = $"You are now browsing {arg} by {((browseState != null) ? browseState.BrowseSelectedSort.GetDisplayName() : null)} ";
+				obj[3] = ((browseState != null) ? browseState.BrowseSelectedSort.GetDisplayName() : null);
+				obj[4] = " ";
+				textPart.Text = string.Concat(obj);
 				texts.Add(textPart);
 				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.ForSale && BrowseState.BrowsePriceRangeFilter != null)
 				{
-					string text = "filtered by items with prices";
+					string text2 = "filtered by items with prices";
 					BrowsePriceRangeParameter browsePriceRangeFilter = BrowseState.BrowsePriceRangeFilter;
 					if (!browsePriceRangeFilter.PriceRangeLow.HasValue)
 					{
-						text = text + " of $" + browsePriceRangeFilter.PriceRangeHigh.Value.ToString("0.00") + " and under.";
+						text2 = text2 + " of $" + browsePriceRangeFilter.PriceRangeHigh.Value.ToString("0.00") + " and under.";
 					}
 					else if (!browsePriceRangeFilter.PriceRangeHigh.HasValue)
 					{
-						text = text + " of $" + browsePriceRangeFilter.PriceRangeLow.Value.ToString("0.00") + " plus.";
+						text2 = text2 + " of $" + browsePriceRangeFilter.PriceRangeLow.Value.ToString("0.00") + " plus.";
 					}
 					else
 					{
-						text = text + " between $" + browsePriceRangeFilter.PriceRangeLow.Value.ToString("0.00");
-						text = text + " and $" + browsePriceRangeFilter.PriceRangeHigh.Value.ToString("0.00");
+						text2 = text2 + " between $" + browsePriceRangeFilter.PriceRangeLow.Value.ToString("0.00");
+						text2 = text2 + " and $" + browsePriceRangeFilter.PriceRangeHigh.Value.ToString("0.00");
 					}
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = text
+						Text = text2
 					});
 				}
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"There are a total of {browseViewModel?.BrowseProductControlModel?.BrowseItems?.Count ?? 0} titles available with up to {browseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} titles per screen."
+					Text = $"There are a total of {(browseViewModel?.BrowseProductControlModel?.BrowseItems?.Count).GetValueOrDefault()} titles available with up to {(browseViewModel?.BrowseProductControlModel?.ItemsPerPage).GetValueOrDefault()} titles per screen."
 				});
 				speechPart.Texts.Add(new TextPart
 				{
@@ -310,17 +312,17 @@ public class BrowseViewTextToSpeech
 						}
 					}
 				});
-				int num = BrowseState?.TTSBrowseItemModelsShown?.Count((IBrowseItemModel x) => x is DisplayProductModel) ?? 0;
+				int valueOrDefault = (BrowseState?.TTSBrowseItemModelsShown?.Count((IBrowseItemModel x) => x is DisplayProductModel)).GetValueOrDefault();
 				string text = (BrowseFunctions.IsRedboxPlusBrowseMode ? "Redbox plus" : null);
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"You are currently browsing on page {browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0} of {browseViewModel?.BrowseProductControlModel?.TotalPages ?? 0} pages and there are {num} {text} titles on this screen."
+					Text = $"You are currently browsing on page {(browseViewModel?.BrowseProductControlModel?.PageNumber).GetValueOrDefault()} of {(browseViewModel?.BrowseProductControlModel?.TotalPages).GetValueOrDefault()} pages and there are {valueOrDefault} {text} titles on this screen."
 				});
-				if ((browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0) > 1)
+				if ((browseViewModel?.BrowseProductControlModel?.PageNumber).GetValueOrDefault() > 1)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"To hear the previous {browseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} titles, press the minus key."
+						Text = $"To hear the previous {(browseViewModel?.BrowseProductControlModel?.ItemsPerPage).GetValueOrDefault()} titles, press the minus key."
 					});
 				}
 				if (BrowseState?.TTSBrowseItemModelsShown != null)
@@ -357,24 +359,24 @@ public class BrowseViewTextToSpeech
 										CommandManager.InvalidateRequerySuggested();
 									}
 								});
-								string arg = (BrowseFunctions.IsRedboxPlusBrowseMode ? $"For {titleProduct.ProductName}, " : null);
+								string text3 = (BrowseFunctions.IsRedboxPlusBrowseMode ? ("For " + titleProduct.ProductName + ", ") : null);
 								speechPart.Texts.Add(new TextPart
 								{
-									Text = $"{arg} Press PLUS and {text2} to add to cart."
+									Text = text3 + " Press PLUS and " + text2 + " to add to cart."
 								});
 							}
 						}
 					}
 				}
-				if ((browseViewModel?.BrowseProductControlModel?.PageNumber ?? 0) < (browseViewModel?.BrowseProductControlModel?.TotalPages ?? 0))
+				if ((browseViewModel?.BrowseProductControlModel?.PageNumber).GetValueOrDefault() < (browseViewModel?.BrowseProductControlModel?.TotalPages).GetValueOrDefault())
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"To hear {browseViewModel?.BrowseProductControlModel?.ItemsPerPage ?? 0} more titles, press the plus key."
+						Text = $"To hear {(browseViewModel?.BrowseProductControlModel?.ItemsPerPage).GetValueOrDefault()} more titles, press the plus key."
 					});
 				}
 				AddStartOverOrHomeEventAndText(speechPart, browseViewModel);
-				if ((RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0) > 0)
+				if ((RentalShoppingCartService?.CurrentRentalShoppingCart?.Count).GetValueOrDefault() > 0)
 				{
 					speechPart.Texts.Add(new TextPart
 					{
@@ -440,7 +442,7 @@ public class BrowseViewTextToSpeech
 				AddCheckOutEvent(speechPart, browseViewModel);
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"To browse all {(BrowseFunctions.IsRedboxPlusBrowseMode ? $"Redbox plus {BrowsingFamily}" : BrowsingFamily)}, press 1."
+					Text = string.Format("To browse all {0}, press 1.", BrowseFunctions.IsRedboxPlusBrowseMode ? ("Redbox plus " + BrowsingFamily) : BrowsingFamily)
 				});
 				if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 				{
@@ -879,7 +881,7 @@ public class BrowseViewTextToSpeech
 
 	private static string GetCartTitlePlurality()
 	{
-		if ((RentalShoppingCartService?.CurrentRentalShoppingCart?.Count ?? 0) != 1)
+		if (RentalShoppingCartService?.CurrentRentalShoppingCart?.Count != 1)
 		{
 			return "Titles";
 		}

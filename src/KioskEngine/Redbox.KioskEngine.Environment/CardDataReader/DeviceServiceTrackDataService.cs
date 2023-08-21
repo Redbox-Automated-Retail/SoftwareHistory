@@ -593,8 +593,8 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		}
 		if (!trackData.CardType.HasValue && baseCardReadModel != null && baseCardReadModel.FirstSix != null && baseCardReadModel != null && baseCardReadModel.LastFour != null)
 		{
-			string arg = string.Empty.PadRight(Math.Max(baseCardReadModel.PANLength - 10, 0), 'X');
-			string cardNumber = $"{baseCardReadModel.FirstSix}{arg}{baseCardReadModel.LastFour}";
+			string text = string.Empty.PadRight(Math.Max(baseCardReadModel.PANLength - 10, 0), 'X');
+			string cardNumber = baseCardReadModel.FirstSix + text + baseCardReadModel.LastFour;
 			CardHelper.AssignCardType(trackData, cardNumber);
 			if (trackData.CardType == Redbox.Core.CardType.RedboxGiftCard)
 			{
@@ -637,7 +637,7 @@ public class DeviceServiceTrackDataService : IDeviceServiceTrackDataService, ITr
 		if (track1 != null || track2 != null)
 		{
 			SecureString secureString = new SecureString();
-			string text = $"{track1};{track2}?";
+			string text = track1 + ";" + track2 + "?";
 			foreach (char c in text)
 			{
 				secureString.AppendChar(c);

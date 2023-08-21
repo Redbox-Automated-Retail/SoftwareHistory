@@ -766,7 +766,7 @@ public class DataService : IDataService
 			GetReservation(referenceNumber);
 			if (_dataServiceInstance.ReservationDataInstance.DataFiles.TryGetValue(referenceNumber, out var value) && value != null)
 			{
-				LogHelper.Instance.Log($"Deleting Reservation data file {value.FileName}");
+				LogHelper.Instance.Log("Deleting Reservation data file " + value.FileName);
 				_dataServiceInstance.ReservationDataInstance.DataFiles.Remove(referenceNumber);
 				_dataServiceInstance.ReservationDataInstance.Delete(value);
 			}

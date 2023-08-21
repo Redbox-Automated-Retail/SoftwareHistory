@@ -39,9 +39,9 @@ public class RedboxPlusFunctions
 
 	public static RedboxPlusSubscriptionTier? RedboxPlusSubscriptionTier => Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.RedboxPlusSession?.RedboxPlusPlanInfo?.SubscriptionTier;
 
-	public static bool IsFreeOneNightRentalAvailable => Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.StoredPromoCodes?.GetRedboxPlusPromos()?.Any() ?? false;
+	public static bool IsFreeOneNightRentalAvailable => Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.StoredPromoCodes?.GetRedboxPlusPromos()?.Any() == true;
 
-	public static int NumberOfFreeOneNightRentalsAvailable => Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.StoredPromoCodes?.GetRedboxPlusPromos()?.Count() ?? 0;
+	public static int NumberOfFreeOneNightRentalsAvailable => (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.StoredPromoCodes?.GetRedboxPlusPromos()?.Count()).GetValueOrDefault();
 
 	private static IRedboxPlusSession RedboxPlusSession => Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.RedboxPlusSession;
 
@@ -74,7 +74,7 @@ public class RedboxPlusFunctions
 		if (eligibleFreeOneNightRentalItems != null && eligibleFreeOneNightRentalItems.Count > 0)
 		{
 			List<IRentalShoppingCartTitleItem> itemsToSelectFrom = eligibleFreeOneNightRentalItems;
-			List<IRentalShoppingCartTitleItem> list = eligibleFreeOneNightRentalItems.Where((IRentalShoppingCartTitleItem x) => ((!(x?.LoyaltyPointsRecord?.ToBeRedeemed)) ?? true) && !(x.PricingRecord?.IsMultiNightPrice ?? false))?.ToList();
+			List<IRentalShoppingCartTitleItem> list = eligibleFreeOneNightRentalItems.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed != true && !(x.PricingRecord?.IsMultiNightPrice ?? false))?.ToList();
 			if (list != null && list.Count > 0)
 			{
 				itemsToSelectFrom = list;
@@ -105,7 +105,7 @@ public class RedboxPlusFunctions
 	public static void ValidateAndSetFreeOneNightRental(IRentalShoppingCartTitleItem bestFreeOneNightRentalEligibleItem, bool showConfirmationMessage, string afterSuccessUnwindToViewName)
 	{
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		if (bestFreeOneNightRentalEligibleItem?.PricingRecord?.IsMultiNightPrice ?? false)
+		if (bestFreeOneNightRentalEligibleItem?.PricingRecord?.IsMultiNightPrice == true)
 		{
 			string contextMessage = "Failed to add Redbox+ Free 1 night rental discount.  Eligible item is using mulit-night pricing.";
 			LogHelper.Instance.Log(contextMessage);
@@ -116,7 +116,7 @@ public class RedboxPlusFunctions
 			MessagePopupViewController.ShowRedboxPlusMultiNightPriceErrorMessage(action, action);
 			return;
 		}
-		if (bestFreeOneNightRentalEligibleItem?.LoyaltyPointsRecord?.ToBeRedeemed ?? false)
+		if (bestFreeOneNightRentalEligibleItem?.LoyaltyPointsRecord?.ToBeRedeemed == true)
 		{
 			string contextMessage2 = "Failed to add Redbox+ Free 1 night rental discount.  Eligible item already being redeemed with perks points.";
 			LogHelper.Instance.Log(contextMessage2);
@@ -169,7 +169,7 @@ public class RedboxPlusFunctions
 	public static void SwapPromoForRedboxPlusFreeOneNightRental(IRentalShoppingCartTitleItem freeOneNightRentalShoppingCartItem)
 	{
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
-		if (rentalShoppingCart != null && (freeOneNightRentalShoppingCartItem?.TitleProduct?.IsRedboxPlusEligible ?? false))
+		if (rentalShoppingCart != null && freeOneNightRentalShoppingCartItem?.TitleProduct?.IsRedboxPlusEligible == true)
 		{
 			LogHelper.Instance.Log($"Swapping cart promo for Redbox+ Free 1 night rental on product id {freeOneNightRentalShoppingCartItem?.ProductId}");
 			rentalShoppingCart.ClearPromoCode();
@@ -306,7 +306,7 @@ public class RedboxPlusFunctions
 			}
 			else
 			{
-				LogHelper.Instance.Log($"Unable to get Redbox+ offer QR code image for url {redbox_plus_qr_code_url}");
+				LogHelper.Instance.Log("Unable to get Redbox+ offer QR code image for url " + redbox_plus_qr_code_url);
 			}
 		}
 		else

@@ -53,7 +53,7 @@ public class RedboxPlusOfferDetailViewController : BaseViewController
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("RedboxPlusOfferDetailAcceptButton");
 		if (viewModel?.RedboxPlusSubscriptionProduct != null)
 		{
-			if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false)
+			if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn == true)
 			{
 				RedboxPlusSignupService.StartRedboxPlusSignup(viewModel?.RedboxPlusSubscriptionProduct);
 			}

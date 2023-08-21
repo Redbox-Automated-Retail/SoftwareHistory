@@ -37,43 +37,43 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 		{
 			_shownFromView = recommendedTitlesPopupInfo.ShownFromView;
 			RecommendedTitlesPopupViewModel recommendedTitlesPopupViewModel = new RecommendedTitlesPopupViewModel();
-			int num = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.PointsBalance ?? 0;
+			int valueOrDefault = (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.PointsBalance).GetValueOrDefault();
 			ISession instance = Redbox.Rental.Services.Session.Session.Instance;
 			bool flag = instance != null && instance.PersonalizationSession?.StoredPromoCodes?.Count > 0;
 			bool displayUpdatedPerksPoints = Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints;
-			int num2 = ((!displayUpdatedPerksPoints) ? 1 : 0);
-			int num3 = (displayUpdatedPerksPoints ? 1550 : 1000);
-			int num4 = (displayUpdatedPerksPoints ? 2000 : 1500);
-			bool flag2 = (num >= num2) | flag;
+			int num = ((!displayUpdatedPerksPoints) ? 1 : 0);
+			int num2 = (displayUpdatedPerksPoints ? 1550 : 1000);
+			int num3 = (displayUpdatedPerksPoints ? 2000 : 1500);
+			bool flag2 = (valueOrDefault >= num) | flag;
 			recommendedTitlesPopupViewModel.PerksInfoBorderVisibility = ((!flag2) ? Visibility.Collapsed : Visibility.Visible);
 			recommendedTitlesPopupViewModel.RecommendationsBorderCornerRadius = (flag2 ? new CornerRadius(0.0, 0.0, 16.0, 16.0) : new CornerRadius(16.0, 16.0, 16.0, 16.0));
 			recommendedTitlesPopupViewModel.PerksHeadingText = Resources.recommended_titles_perks_heading_text;
-			recommendedTitlesPopupViewModel.PerksMessageText = string.Format(Resources.recommended_titles_perks_message_text_points_1_to_999_no_promo, num);
+			recommendedTitlesPopupViewModel.PerksMessageText = string.Format(Resources.recommended_titles_perks_message_text_points_1_to_999_no_promo, valueOrDefault);
 			recommendedTitlesPopupViewModel.HowPointsWorkButtonText = Resources.recommended_titles_how_points_work_button_text;
 			recommendedTitlesPopupViewModel.OnHowPointsWorkButtonClicked = (Action)Delegate.Combine(recommendedTitlesPopupViewModel.OnHowPointsWorkButtonClicked, new Action(RecommendedTitlesPopupViewModel_OnHowPointsWorkButtonClicked));
 			recommendedTitlesPopupViewModel.HowPointsWorkButtonVisibility = Visibility.Visible;
-			if (flag2 && num >= num3 && num <= num4 - 1 && !flag)
+			if (flag2 && valueOrDefault >= num2 && valueOrDefault <= num3 - 1 && !flag)
 			{
-				recommendedTitlesPopupViewModel.PerksMessageText = string.Format(Resources.recommended_titles_perks_message_text_points_1000_to_1499_no_promo, num4 - num);
+				recommendedTitlesPopupViewModel.PerksMessageText = string.Format(Resources.recommended_titles_perks_message_text_points_1000_to_1499_no_promo, num3 - valueOrDefault);
 			}
-			if (flag2 && num >= num4 && !flag)
+			if (flag2 && valueOrDefault >= num3 && !flag)
 			{
 				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_1500_no_promo;
 			}
-			if ((flag2 && num < num4) & flag)
+			if ((flag2 && valueOrDefault < num3) & flag)
 			{
 				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_0_to_1499_yes_promo;
 				recommendedTitlesPopupViewModel.HowPointsWorkButtonVisibility = Visibility.Collapsed;
 			}
-			if ((flag2 && num >= num4) & flag)
+			if ((flag2 && valueOrDefault >= num3) & flag)
 			{
 				recommendedTitlesPopupViewModel.PerksMessageText = Resources.recommended_titles_perks_message_text_points_1500_yes_promo;
 			}
 			recommendedTitlesPopupViewModel.HeaderText = ((recommendedTitlesPopupInfo.ShownFromView == "option_selection_dialog_view") ? Resources.related_movies_popup_header : Resources.recommended_titles_popup_header);
 			ConfigureRecommendedTitlesBrowse(recommendedTitlesPopupViewModel, recommendedTitlesPopupInfo.RecommendedTitles, recommendedTitlesPopupInfo.NumberOfTitlesToShow);
-			bool flag3 = ServiceLocator.Instance.GetService<IViewService>()?.Stack?.Any((IViewFrameInstance vfi) => vfi?.ViewFrame?.ViewName == "shopping_cart_view") ?? false;
+			bool valueOrDefault2 = ServiceLocator.Instance.GetService<IViewService>()?.Stack?.Any((IViewFrameInstance vfi) => vfi?.ViewFrame?.ViewName == "shopping_cart_view") == true;
 			recommendedTitlesPopupViewModel.PickupButtonText = Resources.recommended_titles_pickup_button_text;
-			recommendedTitlesPopupViewModel.PickupButtonVisibility = (flag3 ? Visibility.Collapsed : Visibility.Visible);
+			recommendedTitlesPopupViewModel.PickupButtonVisibility = (valueOrDefault2 ? Visibility.Collapsed : Visibility.Visible);
 			recommendedTitlesPopupViewModel.OnPickupButtonClicked = (Action)Delegate.Combine(recommendedTitlesPopupViewModel.OnPickupButtonClicked, new Action(RecommendedTitlesPopupViewModel_OnPickupButtonClicked));
 			recommendedTitlesPopupViewModel.CancelButtonText = Resources.close_button.ToUpper();
 			recommendedTitlesPopupViewModel.OnCancelButtonClicked = (Action)Delegate.Combine(recommendedTitlesPopupViewModel.OnCancelButtonClicked, new Action(RecommendedTitlesPopupViewModel_OnCancelButtonClicked));

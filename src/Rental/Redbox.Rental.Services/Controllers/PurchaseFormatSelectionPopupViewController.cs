@@ -50,7 +50,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 		}
 		TitleRollupProduct rollupProduct = parameter.RollupProduct;
 		bool isPurchase = parameter.IsPurchase;
-		bool flag = parameter.RedboxPlusBenefitId == 2 && (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.HasAnyTitleRollupTitle(parameter.RollupProduct) ?? false);
+		bool flag = parameter.RedboxPlusBenefitId == 2 && ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.HasAnyTitleRollupTitle(parameter.RollupProduct) == true;
 		formatSelectionPopupViewModel.HeaderText = rollupProduct.LongName;
 		if (isPurchase)
 		{
@@ -160,7 +160,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 	private static void ProcessButtonClick(TitleRollupProduct rollupProduct, TitleType type, string analysisText, bool isPurchase, bool showMnp, int? redboxPlusBenefitId)
 	{
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupAnalysisText", analysisText);
-		OrchestrationService.ViewGoBackSafe($"RentalFormatSelectionPopupViewController {analysisText}", popOnly: false);
+		OrchestrationService.ViewGoBackSafe("RentalFormatSelectionPopupViewController " + analysisText, popOnly: false);
 		if (rollupProduct == null)
 		{
 			return;
@@ -240,7 +240,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 				IPricingRecord pricingRecord = ServiceLocator.Instance.GetService<IPricingService>()?.GetOneDayProductPricingRecord(inStockFormat.ProductId);
 				new TitleRollupUtilities.TitleDetailFormatRentalButtonTextValues();
 				string displayDescription = inStockFormat.TitleType.GetDisplayDescription();
-				ButtonData item = new ButtonData((pricingRecord != null) ? string.Format("{0} ${1}", displayDescription, pricingRecord.InitialNight.ToString("0.00")) : displayDescription, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
+				ButtonData item = new ButtonData((pricingRecord != null) ? (displayDescription + " $" + pricingRecord.InitialNight.ToString("0.00")) : displayDescription, DynamicRouting.RegisterRoutedCommand(new DynamicRoutedCommand(), (Action)delegate
 				{
 					BaseViewController.AnalyticsService?.AddButtonPressEvent("PurchaseFormatSelectionPopupOutOfStockAddFormat");
 					ProcessButtonClick((TitleRollupProduct)kioskProduct, inStockFormat.TitleType, inStockFormat.TitleType.GetDisplayName(), isPurchase: false, showMnp, redboxPlusBenefitId);

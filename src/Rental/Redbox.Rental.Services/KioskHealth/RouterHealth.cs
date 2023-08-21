@@ -207,10 +207,12 @@ public class RouterHealth : IRouterHealth, IKioskHealthItem
 			LogHelper.Instance.Log("RouterHealth.NoActivity - Resetting - OfflineFor: {0} minutes, NoActivitycount: {1}, ResetAttempts {2}", (DateTime.Now - _firstNoActivity.Value).TotalMinutes, _noActivityCount, _resetAttempts);
 			if (_routerReporting)
 			{
-				KioskEvent kioskEvent = KioskEvent.NewEvent(3, 300, success: true, (int)(DateTime.Now - _firstNoActivity.Value).TotalMilliseconds, null, new
+				int? elapsed = (int)(DateTime.Now - _firstNoActivity.Value).TotalMilliseconds;
+				string data = new
 				{
 					NoActivityCount = _noActivityCount
-				}.ToJson());
+				}.ToJson();
+				KioskEvent kioskEvent = KioskEvent.NewEvent(3, 300, success: true, elapsed, null, data);
 				if (!_relatedId.HasValue)
 				{
 					_relatedId = kioskEvent.Id;

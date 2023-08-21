@@ -39,7 +39,7 @@ public class ZipCodeViewController : BaseViewController
 		zipCodeViewModel.Header2LabelText = Resources.zip_code_header_text2;
 		zipCodeViewModel.Note1LabelText = Resources.zip_code_note_text;
 		string note2LabelText = null;
-		if (Redbox.Rental.Services.Session.Session.Instance?.PreauthorizeResult?.PromptRequired ?? false)
+		if (Redbox.Rental.Services.Session.Session.Instance?.PreauthorizeResult?.PromptRequired == true)
 		{
 			note2LabelText = string.Format(Resources.zip_code_auth_text, ConvertAuthorizeDays(Redbox.Rental.Services.Session.Session.Instance.PreauthorizeResult.AuthDays));
 		}

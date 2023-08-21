@@ -20,7 +20,7 @@ internal sealed class ChannelResponse : IChannelResponse, IDisposable
 
 	private static int IDCount;
 
-	public bool CommOk => ErrorCodes.Success == Error;
+	public bool CommOk => Error == ErrorCodes.Success;
 
 	public ErrorCodes Error { get; internal set; }
 

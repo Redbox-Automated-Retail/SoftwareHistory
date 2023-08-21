@@ -28,25 +28,25 @@ public class KioskClientServiceApplication : BaseKioskClientService, IKioskClien
 
 	public async Task<bool> Start()
 	{
-		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/start", base.KioskClientServiceBaseUrl, "api/application")), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
+		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/application/start"), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
 		LogResponse("KioskClientServiceApplication.Start", webResult);
-		return webResult?.Response?.Success ?? false;
+		return webResult?.Response?.Success == true;
 	}
 
 	public async Task<bool> End()
 	{
-		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/end", base.KioskClientServiceBaseUrl, "api/application")), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
+		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/application/end"), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
 		LogResponse("KioskClientServiceApplication.End", webResult);
-		return webResult?.Response?.Success ?? false;
+		return webResult?.Response?.Success == true;
 	}
 
 	private async Task<bool> PostViewChangeAsync(ViewStateChangedArgs e)
 	{
 		if (e.ToView != null && (e.Type == ViewStateChangedType.Pop || e.Type == ViewStateChangedType.Push))
 		{
-			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/viewchangedevent", base.KioskClientServiceBaseUrl, "api/application")), e, "POST").ConfigureAwait(continueOnCapturedContext: false);
+			WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/application/viewchangedevent"), e, "POST").ConfigureAwait(continueOnCapturedContext: false);
 			LogResponse("KioskClientServiceApplication.PostViewChangedEventAsync", webResult);
-			return webResult?.Response?.Success ?? false;
+			return webResult?.Response?.Success == true;
 		}
 		return false;
 	}
@@ -55,9 +55,9 @@ public class KioskClientServiceApplication : BaseKioskClientService, IKioskClien
 	{
 		if (e.ToView != null && (e.Type == ViewStateChangedType.Pop || e.Type == ViewStateChangedType.Push))
 		{
-			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/viewchangedevent", base.KioskClientServiceBaseUrl, "api/application")), e, "POST");
+			WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/application/viewchangedevent"), e, "POST");
 			LogResponse("KioskClientServiceApplication.PostViewChangedEvent", webResult);
-			return webResult?.Response?.Success ?? false;
+			return webResult?.Response?.Success == true;
 		}
 		return false;
 	}

@@ -96,13 +96,13 @@ public class PerksSignupService : IPerksSignupService
 		}
 	}
 
-	private bool WasPerksSignupOfferPresented => Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.WasPerksSignupOfferPresented ?? false;
+	private bool WasPerksSignupOfferPresented => Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.WasPerksSignupOfferPresented == true;
 
 	private bool WasEarlyIdSignupPresented
 	{
 		get
 		{
-			return Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.WasEarlyIdSignupPresented ?? false;
+			return Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.WasEarlyIdSignupPresented == true;
 		}
 		set
 		{
@@ -189,8 +189,8 @@ public class PerksSignupService : IPerksSignupService
 		_optinForTextClub = false;
 		_emailAddress = string.Empty;
 		_accountNumber = string.Empty;
-		OptInConfirmationStatus confirmationStatus = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus ?? OptInConfirmationStatus.DoNotShow;
-		_confirmationStatus = (ConfirmationStatus)confirmationStatus;
+		OptInConfirmationStatus valueOrDefault = (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus).GetValueOrDefault();
+		_confirmationStatus = (ConfirmationStatus)valueOrDefault;
 		switch (signUpFlowContext)
 		{
 		case SignUpFlowContext.AfterSwipeAndRedboxPlusSignup:
@@ -286,7 +286,7 @@ public class PerksSignupService : IPerksSignupService
 		{
 			ProcessEmailConfirmResult(result);
 		}
-		if (result.Success && ((result.EmailVerified ?? false) || !string.IsNullOrWhiteSpace(_customerProfileNumber)))
+		if (result.Success && (result.EmailVerified == true || !string.IsNullOrWhiteSpace(_customerProfileNumber)))
 		{
 			SignUpFlow_StartSignUpDialogs();
 			return;
@@ -295,7 +295,7 @@ public class PerksSignupService : IPerksSignupService
 		{
 			string empty = string.Empty;
 			empty = GetErrorsAsString(result.Errors, empty);
-			LogHelper.Instance.Log($"ProcessConfirmEmailResult ConfirmEmail unsuccessful. {empty}");
+			LogHelper.Instance.Log("ProcessConfirmEmailResult ConfirmEmail unsuccessful. " + empty);
 		}
 		else
 		{
@@ -467,7 +467,7 @@ public class PerksSignupService : IPerksSignupService
 
 	private void SignUpFlow_ShowMarketingEmailOptInIfNeeded()
 	{
-		if (((!(Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.MarketingOptInShown)) ?? true) && !_signupFlowResult.AcceptedPerksSignup)
+		if (Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState?.MarketingOptInShown != true && !_signupFlowResult.AcceptedPerksSignup)
 		{
 			IConfiguration instance = Redbox.Rental.Services.Configuration.Configuration.Instance;
 			if (instance != null && instance.MarketingOptInEnabled && (_confirmationStatus == ConfirmationStatus.NotSubscribedConfirmed || _confirmationStatus == ConfirmationStatus.NotSubscribedNotConfirmed || _confirmationStatus == ConfirmationStatus.SubscribedNotConfirmed) && ((_signUpFlowContext == SignUpFlowContext.AfterSwipe && _signupFlowResult.PerksSignupResult == SignupResult.NotShown) || _signUpFlowContext == SignUpFlowContext.AfterPerksEquivalentOffer || _signUpFlowContext == SignUpFlowContext.SignUp))
@@ -899,7 +899,7 @@ public class PerksSignupService : IPerksSignupService
 		{
 			foreach (Redbox.KioskEngine.ComponentModel.Error error in errors)
 			{
-				errorMessages += $" [{error.Code}] {error.Description}.";
+				errorMessages = errorMessages + " [" + error.Code + "] " + error.Description + ".";
 			}
 		}
 		return errorMessages;

@@ -18,7 +18,7 @@ public static class StoredPromoListTTSFunctions
 	{
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = $"You have a total of {model.StoredPromoCodes.Count.ToString()} offers available."
+			Text = "You have a total of " + model.StoredPromoCodes.Count + " offers available."
 		});
 		string activePromoCode = string.Empty;
 		if (RentalShoppingCartService?.CurrentRentalShoppingCart != null)
@@ -42,11 +42,11 @@ public static class StoredPromoListTTSFunctions
 		{
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = $"There {model.NumberOfPages.ToString()} pages with up to {model.PromosPerPage.ToString()} offers on each page."
+				Text = "There " + model.NumberOfPages + " pages with up to " + model.PromosPerPage + " offers on each page."
 			});
 			speechPart.Texts.Add(new TextPart
 			{
-				Text = $"You are currently viewing page {model.CurrentPageNumber.ToString()}"
+				Text = "You are currently viewing page " + model.CurrentPageNumber
 			});
 			if (model.CurrentPageNumber < model.NumberOfPages)
 			{
@@ -86,14 +86,14 @@ public static class StoredPromoListTTSFunctions
 			{
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"There is {model.CurrentPagePromos.Count.ToString()} offer on this page."
+					Text = "There is " + model.CurrentPagePromos.Count + " offer on this page."
 				});
 			}
 			else
 			{
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"There are {model.CurrentPagePromos.Count.ToString()} offers on this page."
+					Text = "There are " + model.CurrentPagePromos.Count + " offers on this page."
 				});
 			}
 		}
@@ -102,20 +102,20 @@ public static class StoredPromoListTTSFunctions
 			if (currentPagePromo is StoredPromoCodeModel)
 			{
 				StoredPromoCodeModel promoInfo = (StoredPromoCodeModel)currentPagePromo;
-				string arg = (promoInfo.IsAdded ? "remove" : "add");
-				string text = (promoInfo.IsAdded ? "MINUS" : "PLUS");
+				string text = (promoInfo.IsAdded ? "remove" : "add");
+				string text2 = (promoInfo.IsAdded ? "MINUS" : "PLUS");
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"To {arg} the promo "
+					Text = "To " + text + " the promo "
 				});
 				SayPromoInfo(speechPart, promoInfo);
 				speechPart.Texts.Add(new TextPart
 				{
-					Text = $"Press {text} then {promoInfo.AdaButtonNumber.ToString()}."
+					Text = "Press " + text2 + " then " + promoInfo.AdaButtonNumber + "."
 				});
 				speechPart.Events.Add(new MapKeyPressToAction
 				{
-					KeyCode = text + promoInfo.AdaButtonNumber,
+					KeyCode = text2 + promoInfo.AdaButtonNumber,
 					Action = delegate
 					{
 						model.AddOrRemovePromoCommand.Execute(promoInfo);
@@ -139,7 +139,7 @@ public static class StoredPromoListTTSFunctions
 					SayPointsOfferInfo(speechPart, offerInfo);
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"Press Plus then {offerInfo.AdaButtonNumber.ToString()}."
+						Text = "Press Plus then " + offerInfo.AdaButtonNumber + "."
 					});
 					speechPart.Events.Add(new MapKeyPressToAction
 					{
@@ -155,7 +155,7 @@ public static class StoredPromoListTTSFunctions
 				{
 					speechPart.Texts.Add(new TextPart
 					{
-						Text = $"Congrats! you earned {offerInfo.OfferValueText} points for completing {offerInfo.Name}"
+						Text = "Congrats! you earned " + offerInfo.OfferValueText + " points for completing " + offerInfo.Name
 					});
 				}
 			}
@@ -166,7 +166,7 @@ public static class StoredPromoListTTSFunctions
 	{
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = offerInfo.OfferValueText + " points " + $"{offerInfo.Name} " + $"{offerInfo.TimeToComplete} " + $"{offerInfo.Description} "
+			Text = offerInfo.OfferValueText + " points " + offerInfo.Name + " " + offerInfo.TimeToComplete + " " + offerInfo.Description + " "
 		});
 	}
 
@@ -175,7 +175,7 @@ public static class StoredPromoListTTSFunctions
 		GetMaskedPromoCodeEndCharacters(promoInfo.MaskedPromoCode);
 		speechPart.Texts.Add(new TextPart
 		{
-			Text = $"{promoInfo.PromoCodeDescription}, " + $"{promoInfo.PromoCodeExpirationText},"
+			Text = promoInfo.PromoCodeDescription + ", " + promoInfo.PromoCodeExpirationText + ","
 		});
 	}
 

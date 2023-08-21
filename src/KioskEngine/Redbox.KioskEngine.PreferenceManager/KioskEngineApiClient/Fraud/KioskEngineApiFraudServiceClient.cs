@@ -14,8 +14,8 @@ public class KioskEngineApiFraudServiceClient : KioskEngineApiBaseClient
 	{
 		FraudServiceInfo response = null;
 		IHttpService service = ServiceLocator.Instance.GetService<IHttpService>();
-		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, $"{_apiPath}/info", null, HttpMethod.Get);
-		APIResponse<FraudServiceInfoResponse> aPIResponse = await service.SendRequestAsync<FraudServiceInfoResponse>(request, null, "GetFraudServiceInfoResponse", "D:\\work\\55\\SC\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Fraud\\KioskEngineApiFraudServiceClient.cs");
+		HttpRequestMessage request = service.GenerateRequest(KioskEngineApiBaseClient.KioskEngineApiBaseUrl, _apiPath + "/info", null, HttpMethod.Get);
+		APIResponse<FraudServiceInfoResponse> aPIResponse = await service.SendRequestAsync<FraudServiceInfoResponse>(request, null, "GetFraudServiceInfoResponse", "c:\\build\\Redbox.KioskEngine.PreferenceManager\\KioskEngineApiClient\\Fraud\\KioskEngineApiFraudServiceClient.cs");
 		if (aPIResponse != null && aPIResponse.IsSuccessStatusCode && aPIResponse.Response != null)
 		{
 			response = aPIResponse.Response.Content;

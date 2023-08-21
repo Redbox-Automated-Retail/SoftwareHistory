@@ -14,35 +14,29 @@ public class PerksOfferDetailsViewController : BaseViewController
 		BaseViewController.StopIdleTimer();
 		CreateAndStartTimer();
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
-		if (viewUserControl == null)
+		if (viewUserControl != null)
 		{
-			return;
-		}
-		PerksOfferDetailsViewModel perksOfferDetailsViewModel = new PerksOfferDetailsViewModel();
-		perksOfferDetailsViewModel.OfferValueText = perksOfferModel.OfferValueText;
-		perksOfferDetailsViewModel.OfferUnitsText = perksOfferModel.OfferUnitsText;
-		if (perksOfferModel.CurrentValue.HasValue && perksOfferModel.RemainderValue.HasValue && perksOfferModel.MaxValue.HasValue && perksOfferModel.MaxValue > 0)
-		{
-			int? remainderValue = perksOfferModel.RemainderValue;
-			int num = 0;
-			if (remainderValue.GetValueOrDefault() > num && remainderValue.HasValue && perksOfferModel.RemainderValue <= perksOfferModel.MaxValue)
+			PerksOfferDetailsViewModel perksOfferDetailsViewModel = new PerksOfferDetailsViewModel();
+			perksOfferDetailsViewModel.OfferValueText = perksOfferModel.OfferValueText;
+			perksOfferDetailsViewModel.OfferUnitsText = perksOfferModel.OfferUnitsText;
+			if (perksOfferModel.CurrentValue.HasValue && perksOfferModel.RemainderValue.HasValue && perksOfferModel.MaxValue.HasValue && perksOfferModel.MaxValue > 0 && perksOfferModel.RemainderValue > 0 && perksOfferModel.RemainderValue <= perksOfferModel.MaxValue)
 			{
 				perksOfferDetailsViewModel.ProgressText = $"{perksOfferModel.CurrentValue.Value} down, {perksOfferModel.RemainderValue.Value} more to go";
 			}
+			perksOfferDetailsViewModel.CurrentValue = perksOfferModel.CurrentValue;
+			perksOfferDetailsViewModel.MaxValue = perksOfferModel.MaxValue;
+			perksOfferDetailsViewModel.NameText = perksOfferModel.Name;
+			perksOfferDetailsViewModel.DescriptionText = perksOfferModel.Description;
+			if (perksOfferModel.StartDate.HasValue && perksOfferModel.EndDate.HasValue)
+			{
+				perksOfferDetailsViewModel.DateRangeText = $"From {perksOfferModel.StartDate.Value:MM/dd/yyyy} to {perksOfferModel.EndDate.Value:MM/dd/yyyy}";
+			}
+			perksOfferDetailsViewModel.LegalInformationText = perksOfferModel.LegalInformation;
+			perksOfferDetailsViewModel.CancelButtonText = Resources.cancel_button;
+			perksOfferDetailsViewModel.OnCancelButtonClicked = (Action)Delegate.Combine(perksOfferDetailsViewModel.OnCancelButtonClicked, new Action(PerksOfferDetailsViewModel_OnCancelButtonClicked));
+			ConfigureTTS(perksOfferDetailsViewModel);
+			viewUserControl.DataContext = perksOfferDetailsViewModel;
 		}
-		perksOfferDetailsViewModel.CurrentValue = perksOfferModel.CurrentValue;
-		perksOfferDetailsViewModel.MaxValue = perksOfferModel.MaxValue;
-		perksOfferDetailsViewModel.NameText = perksOfferModel.Name;
-		perksOfferDetailsViewModel.DescriptionText = perksOfferModel.Description;
-		if (perksOfferModel.StartDate.HasValue && perksOfferModel.EndDate.HasValue)
-		{
-			perksOfferDetailsViewModel.DateRangeText = $"From {perksOfferModel.StartDate.Value:MM/dd/yyyy} to {perksOfferModel.EndDate.Value:MM/dd/yyyy}";
-		}
-		perksOfferDetailsViewModel.LegalInformationText = perksOfferModel.LegalInformation;
-		perksOfferDetailsViewModel.CancelButtonText = Resources.cancel_button;
-		perksOfferDetailsViewModel.OnCancelButtonClicked = (Action)Delegate.Combine(perksOfferDetailsViewModel.OnCancelButtonClicked, new Action(PerksOfferDetailsViewModel_OnCancelButtonClicked));
-		ConfigureTTS(perksOfferDetailsViewModel);
-		viewUserControl.DataContext = perksOfferDetailsViewModel;
 	}
 
 	public static void LeavePerksOfferDetailsView()

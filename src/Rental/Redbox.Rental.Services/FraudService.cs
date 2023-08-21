@@ -49,7 +49,7 @@ public class FraudService : IFraudService
 			}
 			_halSupportsIR = ServiceLocator.Instance.GetService<IHardwareService>()?.SupportsCameraFraudScan;
 			_lastHalCheck = DateTime.Now;
-			return _halSupportsIR ?? false;
+			return _halSupportsIR == true;
 		}
 	}
 
@@ -208,14 +208,12 @@ public class FraudService : IFraudService
 		int? num = (int.TryParse(barcode, out var result) ? new int?(result) : ((int?)null));
 		if (!num.HasValue)
 		{
-			LogHelper.Instance.Log($"FraudService.IsPaperFraud barcode failed to parse into an int: {barcode}", LogEntryType.Info);
+			LogHelper.Instance.Log("FraudService.IsPaperFraud barcode failed to parse into an int: " + barcode, LogEntryType.Info);
 			return false;
 		}
 		foreach (Tuple<int, int> excludedBarcodeRange in GetExcludedBarcodeRanges())
 		{
-			int? num2 = num;
-			int item = excludedBarcodeRange.Item1;
-			if (num2.GetValueOrDefault() >= item && num2.HasValue && num <= excludedBarcodeRange.Item2)
+			if (num >= excludedBarcodeRange.Item1 && num <= excludedBarcodeRange.Item2)
 			{
 				LogHelper.Instance.Log($"FraudService.IsPaperFraud barcode: {barcode} is within exclusion range: {excludedBarcodeRange.Item1} and {excludedBarcodeRange.Item2}", LogEntryType.Info);
 				return false;
@@ -235,7 +233,7 @@ public class FraudService : IFraudService
 		int? titleId;
 		if (kioskProduct == null)
 		{
-			LogHelper.Instance.Log($"FraudService.IsPaperFraud - unable to find kiosk product for barcode {barcode}.  Looking up title id and title type in inventory.data and profile.data");
+			LogHelper.Instance.Log("FraudService.IsPaperFraud - unable to find kiosk product for barcode " + barcode + ".  Looking up title id and title type in inventory.data and profile.data");
 			GetTitleTypeByBarcode(barcode, out titleType, out titleId);
 		}
 		else
@@ -281,24 +279,28 @@ public class FraudService : IFraudService
 				}
 				else
 				{
-					LogHelper.Instance.Log($"FraudService.GetProductByBarcode - unable to find title type for barcode: {barcode}", LogEntryType.Info);
+					LogHelper.Instance.Log("FraudService.GetProductByBarcode - unable to find title type for barcode: " + barcode, LogEntryType.Info);
 				}
 			}
 			else
 			{
-				LogHelper.Instance.Log($"FraudService.GetProductByBarcode - unable to find inventory record for barcode: {barcode}", LogEntryType.Info);
+				LogHelper.Instance.Log("FraudService.GetProductByBarcode - unable to find inventory record for barcode: " + barcode, LogEntryType.Info);
 			}
 		}
 		if (!flag)
 		{
-			LogHelper.Instance.Log($"FraudService.GetProductByBarcode - unable to find product by barcode: {barcode}", LogEntryType.Info);
+			LogHelper.Instance.Log("FraudService.GetProductByBarcode - unable to find product by barcode: " + barcode, LogEntryType.Info);
 		}
 		return flag;
 	}
 
 	public void SendFraudAlert(string barcode, bool isFraud, string readTime, DateTime? returnDate = null)
 	{
-		ServiceLocator.Instance.GetService<IInventoryService>()?.UpdateFraudStatus(KioskId.ToString(), barcode, isFraud.ToString(), readTime, null, null, null, returnDate);
+		IInventoryService service = ServiceLocator.Instance.GetService<IInventoryService>();
+		if (service != null)
+		{
+			service.UpdateFraudStatus(KioskId.ToString(), barcode, isFraud.ToString(), readTime, null, null, null, returnDate);
+		}
 	}
 
 	public void AddToFraudStatistics(string fraudBarcodes)
@@ -314,7 +316,7 @@ public class FraudService : IFraudService
 			LogHelper.Instance.Log("Enqueuing Statistic FraudCleanSync Failed.", LogEntryType.Info);
 			return;
 		}
-		LogHelper.Instance.Log($"Enqueuing Statistic FraudCleanSync with value: {fraudBarcodes}", LogEntryType.Info);
+		LogHelper.Instance.Log("Enqueuing Statistic FraudCleanSync with value: " + fraudBarcodes, LogEntryType.Info);
 		service.EnqueueStatistic("FraudCleanSync", fraudBarcodes);
 	}
 
@@ -328,7 +330,7 @@ public class FraudService : IFraudService
 		byte[] imageBytes = GetImageBytes(imageName);
 		if (((imageBytes != null && imageBytes.Length != 0) ? 1 : 0) <= (false ? 1 : 0))
 		{
-			LogHelper.Instance.Log($"FraudService.UploadDiscImage - image {imageName} didn't have enough bytes.");
+			LogHelper.Instance.Log("FraudService.UploadDiscImage - image " + imageName + " didn't have enough bytes.");
 			return;
 		}
 		RemoteServiceCallback completeCallback = ((callback != null) ? new RemoteServiceCallback(callback.Invoke) : null);
@@ -350,7 +352,7 @@ public class FraudService : IFraudService
 			}
 			else
 			{
-				LogHelper.Instance.Log(string.Format("FraudService.UploadDiscImageFromSync - product of type {0} not in include list {1}", titleType?.ToString() ?? "Unknown", string.Join(",", FraudPeelIncludeFormats)), LogEntryType.Info);
+				LogHelper.Instance.Log("FraudService.UploadDiscImageFromSync - product of type " + (titleType?.ToString() ?? "Unknown") + " not in include list " + string.Join(",", FraudPeelIncludeFormats), LogEntryType.Info);
 			}
 		}
 	}
@@ -362,7 +364,7 @@ public class FraudService : IFraudService
 			LogHelper.Instance.Log("FraudService.ProcessJobResultsForFraud - no jobId provided.");
 			return;
 		}
-		LogHelper.Instance.Log($"FraudService.ProcessJobResultsForFraud - JobId: {jobId}", LogEntryType.Info);
+		LogHelper.Instance.Log("FraudService.ProcessJobResultsForFraud - JobId: " + jobId, LogEntryType.Info);
 		try
 		{
 			IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
@@ -378,7 +380,7 @@ public class FraudService : IFraudService
 			}
 			if (hardwareResults == null || !hardwareResults.Any())
 			{
-				LogHelper.Instance.Log($"FraudService.ProcessJobResultsForFraud - JobId: {jobId}, had no results.", LogEntryType.Info);
+				LogHelper.Instance.Log("FraudService.ProcessJobResultsForFraud - JobId: " + jobId + ", had no results.", LogEntryType.Info);
 				return;
 			}
 			List<string> list = new List<string>();
@@ -399,7 +401,7 @@ public class FraudService : IFraudService
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.LogException($"Unhandled Exception in FraudService.ProcessJobResultsForFraud - JobId: {jobId}", e);
+			LogHelper.Instance.LogException("Unhandled Exception in FraudService.ProcessJobResultsForFraud - JobId: " + jobId, e);
 		}
 	}
 
@@ -418,8 +420,8 @@ public class FraudService : IFraudService
 		IHardwareService service = ServiceLocator.Instance.GetService<IHardwareService>();
 		try
 		{
-			string arg = (IsPaperFraudCandidate(barcode) ? "reject" : "continue");
-			ErrorList errorList = service?.ExecuteServiceCommand($"JOB SIGNAL JOB: {jobId} value: {arg}");
+			string text = (IsPaperFraudCandidate(barcode) ? "reject" : "continue");
+			ErrorList errorList = service?.ExecuteServiceCommand("JOB SIGNAL JOB: " + jobId + " value: " + text);
 			if (errorList != null && errorList.Any())
 			{
 				LogHelper.Instance.Log("FraudService.ProcessReturnUnknownEvent - HardwareService ExecuteServiceCommand had errors.", LogEntryType.Info);
@@ -431,7 +433,7 @@ public class FraudService : IFraudService
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.LogException($"Unhandled Exception in FraudService.ProcessReturnUnknownEvent - Barcode: {barcode}, JobId: {jobId}", e);
+			LogHelper.Instance.LogException("Unhandled Exception in FraudService.ProcessReturnUnknownEvent - Barcode: " + barcode + ", JobId: " + jobId, e);
 		}
 	}
 
@@ -440,7 +442,7 @@ public class FraudService : IFraudService
 		clientData = null;
 		if (message != null && message.Type == "Return")
 		{
-			LogHelper.Instance.Log($"Executing queue service pre-message processing for message type {message?.Type}");
+			LogHelper.Instance.Log("Executing queue service pre-message processing for message type " + message?.Type);
 			ReturnMessageWithClientData returnMessageWithClientData = ServiceLocator.Instance.GetService<IQueueService>()?.GetObjectFromMessageData<ReturnMessageWithClientData>(message);
 			if (returnMessageWithClientData.ClientData != null && returnMessageWithClientData.ReturnMessage != null)
 			{
@@ -487,7 +489,7 @@ public class FraudService : IFraudService
 		}
 		else
 		{
-			LogHelper.Instance.Log(string.Format("FraudService.ProcessReturnResponse - product of type {0} not in include list {1}", titleType?.ToString() ?? "Unknown", string.Join(",", FraudPeelIncludeFormats)), LogEntryType.Info);
+			LogHelper.Instance.Log("FraudService.ProcessReturnResponse - product of type " + (titleType?.ToString() ?? "Unknown") + " not in include list " + string.Join(",", FraudPeelIncludeFormats), LogEntryType.Info);
 		}
 	}
 
@@ -504,7 +506,7 @@ public class FraudService : IFraudService
 			ITitleProduct product = x as ITitleProduct;
 			if (product == null)
 			{
-				LogHelper.Instance.Log($"ScheduleFraudSync > Product {x.ProductName} is not an ITitleProduct.");
+				LogHelper.Instance.Log("ScheduleFraudSync > Product " + x.ProductName + " is not an ITitleProduct.");
 			}
 			if (!product.IsEmptyCase && !fraudExcludeList.Contains(product.TitleType))
 			{
@@ -543,7 +545,7 @@ public class FraudService : IFraudService
 			return false;
 		}
 		string jobId = null;
-		string text = string.Format("Fraud Sync by {0}", userName ?? "Unknown");
+		string text = "Fraud Sync by " + (userName ?? "Unknown");
 		ErrorList source = service?.SyncLocations(null, null, text, startTime, halStackLocations.ToList(), out jobId);
 		bool flag = !string.IsNullOrEmpty(jobId) && !source.Any();
 		string text2 = (flag ? "Successfully" : "Unsuccessfully");
@@ -588,17 +590,17 @@ public class FraudService : IFraudService
 		string path = Path.Combine("c:\\program files\\redbox\\halservice\\video", imageName);
 		if (!File.Exists(path))
 		{
-			LogHelper.Instance.Log($"Image {imageName} doesn't exist.", LogEntryType.Info);
+			LogHelper.Instance.Log("Image " + imageName + " doesn't exist.", LogEntryType.Info);
 			return null;
 		}
 		try
 		{
-			LogHelper.Instance.Log($"Get Image {imageName}", LogEntryType.Info);
+			LogHelper.Instance.Log("Get Image " + imageName, LogEntryType.Info);
 			return File.ReadAllBytes(path);
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log($"Failed to get image {imageName}", e);
+			LogHelper.Instance.Log("Failed to get image " + imageName, e);
 			return null;
 		}
 	}
@@ -613,17 +615,17 @@ public class FraudService : IFraudService
 		string path = Path.Combine("c:\\program files\\redbox\\halservice\\video", imageName);
 		if (!File.Exists(path))
 		{
-			LogHelper.Instance.Log($"Image {imageName} doesn't exist.", LogEntryType.Info);
+			LogHelper.Instance.Log("Image " + imageName + " doesn't exist.", LogEntryType.Info);
 			return;
 		}
 		try
 		{
-			LogHelper.Instance.Log($"Delete Image {imageName}", LogEntryType.Info);
+			LogHelper.Instance.Log("Delete Image " + imageName, LogEntryType.Info);
 			File.Delete(path);
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log($"Failed to delete image {imageName}", e);
+			LogHelper.Instance.Log("Failed to delete image " + imageName, e);
 		}
 	}
 
@@ -642,7 +644,7 @@ public class FraudService : IFraudService
 		{
 			if (!Directory.Exists("c:\\program files\\redbox\\halservice\\video"))
 			{
-				LogHelper.Instance.Log(string.Format("FraudService.CleanImageFolder did not find the image folder path: {0} - bailing", "c:\\program files\\redbox\\halservice\\video"), LogEntryType.Info);
+				LogHelper.Instance.Log("FraudService.CleanImageFolder did not find the image folder path: c:\\program files\\redbox\\halservice\\video - bailing", LogEntryType.Info);
 				return;
 			}
 			FileInfo[] files = new DirectoryInfo("c:\\program files\\redbox\\halservice\\video").GetFiles();

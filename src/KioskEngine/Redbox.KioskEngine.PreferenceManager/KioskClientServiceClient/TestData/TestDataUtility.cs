@@ -46,7 +46,7 @@ public class TestDataUtility
 				continue;
 			}
 			readPropertyItem.ReadFailAction();
-			SetErrorMessage($"Error in KCS reading property {readPropertyItem.PropertyName}: ", readPropertyItem.ReadResult?.Errors, $"Unable to read property {readPropertyItem.PropertyName}");
+			SetErrorMessage("Error in KCS reading property " + readPropertyItem.PropertyName + ": ", readPropertyItem.ReadResult?.Errors, "Unable to read property " + readPropertyItem.PropertyName);
 		}
 	}
 
@@ -58,15 +58,13 @@ public class TestDataUtility
 			if (writeTestDataValueResult != null && writeTestDataValueResult.Success)
 			{
 				UpdateUIErrorMessage?.Invoke(null);
+				return;
 			}
-			else
-			{
-				SetErrorMessage($"Error in KCS saving property {propertyName} with value '{propertyValue}': ", writeTestDataValueResult?.Errors, $"Unable to save property {propertyName}");
-			}
+			SetErrorMessage("Error in KCS saving property " + propertyName + " with value '" + propertyValue + "': ", writeTestDataValueResult?.Errors, "Unable to save property " + propertyName);
 		}
 		else
 		{
-			UpdateUIErrorMessage?.Invoke($"Save of property {propertyName} aborted because prior read failed.  Exit F4 screen and re-enter to attempt data reload.");
+			UpdateUIErrorMessage?.Invoke("Save of property " + propertyName + " aborted because prior read failed.  Exit F4 screen and re-enter to attempt data reload.");
 		}
 	}
 
@@ -75,11 +73,11 @@ public class TestDataUtility
 		if (errors != null)
 		{
 			StringBuilder stringBuilder = new StringBuilder(messageHeader);
-			string arg = null;
+			string text = null;
 			foreach (IError error in errors)
 			{
-				stringBuilder.Append($"({error.Code}) {error.Message}{arg}");
-				arg = ", ";
+				stringBuilder.Append("(" + error.Code + ") " + error.Message + text);
+				text = ", ";
 			}
 			UpdateUIErrorMessage?.Invoke(stringBuilder.ToString());
 		}

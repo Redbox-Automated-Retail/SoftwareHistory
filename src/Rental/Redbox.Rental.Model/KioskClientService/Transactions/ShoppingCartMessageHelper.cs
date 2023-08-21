@@ -45,39 +45,9 @@ public class ShoppingCartMessageHelper
 	public static MessageShoppingCart CreateShoppingCart(IRentalShoppingCart rentalShoppingCart, IPromotion promo, bool titleItemsOnly = false)
 	{
 		MessageShoppingCart shoppingCart = new MessageShoppingCart();
-		bool valueOrDefault;
-		if (!titleItemsOnly)
+		if (titleItemsOnly ? (rentalShoppingCart?.TitleItems?.Any() == true) : (rentalShoppingCart?.Items?.Any() == true))
 		{
-			bool? flag = rentalShoppingCart?.Items?.Any();
-			if (flag.HasValue)
-			{
-				valueOrDefault = flag == true;
-				goto IL_00b2;
-			}
-		}
-		else
-		{
-			bool? flag = rentalShoppingCart?.TitleItems?.Any();
-			if (flag.HasValue)
-			{
-				valueOrDefault = flag == true;
-				goto IL_00b2;
-			}
-		}
-		goto IL_0605;
-		IL_0605:
-		if (rentalShoppingCart.ServiceFee != null && shoppingCart.ServiceFee != null)
-		{
-			shoppingCart.ServiceFee.DefaultAmount = rentalShoppingCart.ServiceFee.DefaultAmount;
-			shoppingCart.ServiceFee.ActualAmount = rentalShoppingCart.ServiceFee.ActualAmount;
-			shoppingCart.ServiceFee.TaxRate = rentalShoppingCart.ServiceFee.TaxRate;
-			shoppingCart.ServiceFee.TaxAmount = rentalShoppingCart.ServiceFee.TaxAmount;
-		}
-		return shoppingCart;
-		IL_00b2:
-		if (valueOrDefault)
-		{
-			(rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed ?? false))?.ForEach(delegate(IRentalShoppingCartTitleItem x)
+			(rentalShoppingCart?.TitleItems?.Where((IRentalShoppingCartTitleItem x) => x?.LoyaltyPointsRecord?.ToBeRedeemed == true))?.ForEach(delegate(IRentalShoppingCartTitleItem x)
 			{
 				shoppingCart.Discounts.Add(new Discount
 				{
@@ -166,8 +136,8 @@ public class ShoppingCartMessageHelper
 							InitialNight = (pricingRecord?.InitialNight ?? 0m),
 							NonReturn = (pricingRecord?.NonReturn ?? 0m),
 							NonReturnDays = (int)(pricingRecord?.NonReturnDays ?? 0m),
-							PriceSetId = (pricingRecord?.PriceSetId ?? 0),
-							ProductPriceId = (int)(pricingRecord?.ProductPricingId ?? 0),
+							PriceSetId = (pricingRecord?.PriceSetId).GetValueOrDefault(),
+							ProductPriceId = (int)(pricingRecord?.ProductPricingId).GetValueOrDefault(),
 							Purchase = (pricingRecord?.Purchase ?? 0m)
 						},
 						VendStatus = ConvertToVendStatus(item3.Status),
@@ -191,13 +161,20 @@ public class ShoppingCartMessageHelper
 				});
 			}
 		}
-		goto IL_0605;
+		if (rentalShoppingCart.ServiceFee != null && shoppingCart.ServiceFee != null)
+		{
+			shoppingCart.ServiceFee.DefaultAmount = rentalShoppingCart.ServiceFee.DefaultAmount;
+			shoppingCart.ServiceFee.ActualAmount = rentalShoppingCart.ServiceFee.ActualAmount;
+			shoppingCart.ServiceFee.TaxRate = rentalShoppingCart.ServiceFee.TaxRate;
+			shoppingCart.ServiceFee.TaxAmount = rentalShoppingCart.ServiceFee.TaxAmount;
+		}
+		return shoppingCart;
 	}
 
 	public static string CalcUtcOffset(DateTime now)
 	{
 		TimeSpan utcOffset = TimeZone.CurrentTimeZone.GetUtcOffset(now);
-		return string.Format("{0}:{1}", utcOffset.TotalHours.ToString("00"), utcOffset.Minutes.ToString("00"));
+		return utcOffset.TotalHours.ToString("00") + ":" + utcOffset.Minutes.ToString("00");
 	}
 
 	private static VendStatus ConvertToVendStatus(LineItemStatus status)

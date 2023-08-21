@@ -64,9 +64,10 @@ public class ImmediateCommand
 			}
 			return value;
 		}
-		ExecuteStatementImmediateCommand executeStatementImmediateCommand = new ExecuteStatementImmediateCommand();
-		executeStatementImmediateCommand.Arguments.Add(statement);
-		return executeStatementImmediateCommand;
+		return new ExecuteStatementImmediateCommand
+		{
+			Arguments = { statement }
+		};
 	}
 
 	public ImmediateCommandResult Execute()

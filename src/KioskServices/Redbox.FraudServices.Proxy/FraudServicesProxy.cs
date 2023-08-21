@@ -60,9 +60,9 @@ public class FraudServicesProxy
 			}
 			string text3 = dictionary2.ToJson();
 			string text4 = text3.ToPrettyJson();
-			LogHelper.Instance.Log($"FraudServicesProxy JSON request: type {messageType}; body: {((text4.Length <= 10000) ? text4 : text3)}");
+			LogHelper.Instance.Log("FraudServicesProxy JSON request: type " + messageType + "; body: " + ((text4.Length <= 10000) ? text4 : text3));
 			string text5 = caller(apiUri, text);
-			LogHelper.Instance.Log($"FraudServicesProxy JSON response: type {messageType}; response: {text5.ToPrettyJson()}");
+			LogHelper.Instance.Log("FraudServicesProxy JSON response: type " + messageType + "; response: " + text5.ToPrettyJson());
 			LogHelper.Instance.Log($"FraudServicesProxy call execution time: {executionTimer.Elapsed}");
 			if (!string.IsNullOrEmpty(text5))
 			{
@@ -86,7 +86,7 @@ public class FraudServicesProxy
 			webRequest.Method = "POST";
 			webRequest.ContentType = "application/json";
 			webRequest.ContentLength = body.Length;
-			webRequest.Headers.Add($"Authorization: Bearer {OldAuthorizationKey}");
+			webRequest.Headers.Add("Authorization: Bearer " + OldAuthorizationKey);
 			return MakeCall(webRequest, body);
 		}
 		LogHelper.Instance.Log($"Unable to create Uri from {OldFraudServicesBaseUri} and {apiUri}");

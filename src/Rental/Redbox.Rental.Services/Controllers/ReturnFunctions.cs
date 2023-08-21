@@ -67,14 +67,14 @@ public class ReturnFunctions
 				if (promoInfo.Promo.PromoType == ReturnPromoType.AmountOff)
 				{
 					decimal? amount = promoInfo.Promo.Amount;
-					if (amount.GetValueOrDefault() > 0m && amount.HasValue)
+					if ((amount.GetValueOrDefault() > 0m) & amount.HasValue)
 					{
-						goto IL_00cd;
+						goto IL_00c9;
 					}
 				}
 				if (promoInfo.Promo.PromoType == ReturnPromoType.FirstNightFree)
 				{
-					goto IL_00cd;
+					goto IL_00c9;
 				}
 			}
 			if (promoInfo != null && promoInfo.Success && promoInfo.IsLastDisc)
@@ -100,7 +100,7 @@ public class ReturnFunctions
 				MessagePopupViewController.ShowMessagePopupViewReturnSuccess(closeAction);
 			}
 			return;
-			IL_00cd:
+			IL_00c9:
 			OrchestrationService.ViewShow("return_visit_promo_offer_view", new ReturnVisitPromoOfferViewParameters
 			{
 				PromoCode = promoInfo.Promo.PromoCode,

@@ -53,20 +53,20 @@ public class PerksSignUpInfoPopupViewController : BaseViewController
 		}
 		else
 		{
-			viewModel.EarnOption1Desc = string.Format($"{Resources.perks_signup_info_earn_desc_1} = {Resources.perks_signup_info_earn_points_1}");
-			viewModel.EarnOption2Desc = string.Format($"{Resources.perks_signup_info_earn_desc_2} = {Resources.perks_signup_info_earn_points_2}");
-			viewModel.EarnOption3Desc = string.Format($"{Resources.perks_signup_info_earn_desc_3} = {Resources.perks_signup_info_earn_points_3}");
-			viewModel.EarnOption4Desc = string.Format($"{Resources.perks_signup_info_earn_desc_4} = {Resources.perks_signup_info_earn_points_4}");
+			viewModel.EarnOption1Desc = string.Format(Resources.perks_signup_info_earn_desc_1 + " = " + Resources.perks_signup_info_earn_points_1);
+			viewModel.EarnOption2Desc = string.Format(Resources.perks_signup_info_earn_desc_2 + " = " + Resources.perks_signup_info_earn_points_2);
+			viewModel.EarnOption3Desc = string.Format(Resources.perks_signup_info_earn_desc_3 + " = " + Resources.perks_signup_info_earn_points_3);
+			viewModel.EarnOption4Desc = string.Format(Resources.perks_signup_info_earn_desc_4 + " = " + Resources.perks_signup_info_earn_points_4);
 			viewModel.EarnOption4DescVisibility = Visibility.Visible;
-			viewModel.UseOption1Desc = string.Format($"{Resources.perks_signup_info_use_desc_1} = {Resources.perks_signup_info_use_points_1}");
-			viewModel.UseOption2Desc = string.Format($"{Resources.perks_signup_info_use_desc_2} = {Resources.perks_signup_info_use_points_2}");
+			viewModel.UseOption1Desc = string.Format(Resources.perks_signup_info_use_desc_1 + " = " + Resources.perks_signup_info_use_points_1);
+			viewModel.UseOption2Desc = string.Format(Resources.perks_signup_info_use_desc_2 + " = " + Resources.perks_signup_info_use_points_2);
 			viewModel.VisitHeading = Resources.perks_signup_info_visit_header;
 		}
 		int? num = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.PointsBalance;
 		viewModel.BalanceHeading = (num.HasValue ? string.Format(Resources.perks_signup_info_balance_header, num) : string.Empty);
-		bool flag = ServiceLocator.Instance.GetService<IViewService>()?.Stack?.Any((IViewFrameInstance vfi) => vfi?.ViewFrame?.ViewName == "recommended_titles_popup_view") ?? false;
-		viewModel.OKButtonText = (flag ? Resources.back_button.ToUpper() : Resources.okay.ToUpper());
-		viewModel.OKButtonHorizontalAlignment = ((!flag) ? HorizontalAlignment.Center : HorizontalAlignment.Left);
+		bool valueOrDefault = ServiceLocator.Instance.GetService<IViewService>()?.Stack?.Any((IViewFrameInstance vfi) => vfi?.ViewFrame?.ViewName == "recommended_titles_popup_view") == true;
+		viewModel.OKButtonText = (valueOrDefault ? Resources.back_button.ToUpper() : Resources.okay.ToUpper());
+		viewModel.OKButtonHorizontalAlignment = ((!valueOrDefault) ? HorizontalAlignment.Center : HorizontalAlignment.Left);
 	}
 
 	private static void OKButtonClickedAction()

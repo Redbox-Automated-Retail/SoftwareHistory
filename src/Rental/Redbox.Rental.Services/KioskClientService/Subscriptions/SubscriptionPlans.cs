@@ -45,7 +45,7 @@ public class SubscriptionPlans : ISubscriptionPlans
 				}
 				else
 				{
-					LogHelper.Instance.Log($"SubscriptionPlans - unexpected SubscriptionId value {subscriptionPlan.SubscriptionId}");
+					LogHelper.Instance.Log("SubscriptionPlans - unexpected SubscriptionId value " + subscriptionPlan.SubscriptionId);
 				}
 			}
 		}
@@ -67,7 +67,7 @@ public class SubscriptionPlans : ISubscriptionPlans
 			ProductName = eachSubscriptionPlan.Name,
 			ProductDescription = eachSubscriptionPlan.Description,
 			IsPromotional = eachSubscriptionPlan.IsPromotional,
-			TaxRate = ((dataService?.GetStore().PurchaseTaxRate / (decimal?)100) ?? 0m)
+			TaxRate = (dataService?.GetStore().PurchaseTaxRate / (decimal?)100).GetValueOrDefault()
 		};
 		StarzSubscriptionConstructorHelper.PopulateHardCodedFields(starzSubscriptionProduct);
 		foreach (SubscriptionPlanItem planItem in eachSubscriptionPlan.PlanItems)
@@ -91,7 +91,7 @@ public class SubscriptionPlans : ISubscriptionPlans
 					{
 						Id = benefit.Id,
 						Description = benefit.Description,
-						Quantity = (benefit.Quantity ?? 0)
+						Quantity = benefit.Quantity.GetValueOrDefault()
 					};
 					Enum.TryParse<StarzBenefitType>(benefit.Type.ToString(), out var result3);
 					starzBenefit.StarzBenefitType = result3;
@@ -117,7 +117,7 @@ public class SubscriptionPlans : ISubscriptionPlans
 			ProductName = subscriptionPlan.Name,
 			ProductDescription = subscriptionPlan.Description,
 			IsPromotional = subscriptionPlan.IsPromotional,
-			TaxRate = ((dataService?.GetStore().RentalTaxRate / (decimal?)100) ?? 0m)
+			TaxRate = (dataService?.GetStore().RentalTaxRate / (decimal?)100).GetValueOrDefault()
 		};
 		RedboxPlusSubscriptionConstructorHelper.PopulateHardCodedFields(redboxPlusSubscriptionProduct);
 		foreach (SubscriptionPlanItem planItem in subscriptionPlan.PlanItems)
@@ -139,7 +139,7 @@ public class SubscriptionPlans : ISubscriptionPlans
 					{
 						Id = benefit.Id,
 						Description = benefit.Description,
-						Quantity = (benefit.Quantity ?? 0)
+						Quantity = benefit.Quantity.GetValueOrDefault()
 					};
 					Enum.TryParse<RedboxPlusBenefitType>(benefit.Type.ToString(), out var result2);
 					redboxPlusBenefit.RedboxPlusBenefitType = result2;

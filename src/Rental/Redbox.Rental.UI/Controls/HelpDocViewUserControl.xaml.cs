@@ -126,7 +126,7 @@ public partial class HelpDocViewUserControl : BaseUserControl, IComponentConnect
 	private void UpdateXpsDocument()
 	{
 		m_fixedDocumentSequence = ((XpsDocument != null) ? XpsDocument.GetFixedDocumentSequence() : null);
-		TotalPageCount = m_fixedDocumentSequence?.DocumentPaginator?.PageCount ?? 0;
+		TotalPageCount = (m_fixedDocumentSequence?.DocumentPaginator?.PageCount).GetValueOrDefault();
 		ChangePage(0);
 	}
 

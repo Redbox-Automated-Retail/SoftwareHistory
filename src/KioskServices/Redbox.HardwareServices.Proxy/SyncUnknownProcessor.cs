@@ -237,7 +237,7 @@ public class SyncUnknownProcessor : LocationSyncJobProcessorBase, ISyncUnknownPr
 	private static void UpdateLastUnknownSyncDate()
 	{
 		string text = DateTime.Now.ToString();
-		LogHelper.Instance.Log($"SyncUnknownProcessor: Setting LastUnknownSyncDate to {text}");
+		LogHelper.Instance.Log("SyncUnknownProcessor: Setting LastUnknownSyncDate to " + text);
 		ServiceLocator.Instance.GetService<IMachineSettingsStore>().SetValue("Local Services\\Hardware Services", "LastUknownSyncDate", text);
 	}
 

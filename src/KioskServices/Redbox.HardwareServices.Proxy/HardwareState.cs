@@ -242,7 +242,7 @@ public class HardwareState : IHardwareState
 			_exchangerFanStatus = mc.AirExchangerFanStatus;
 			Redbox.Core.LogHelper.Instance.Log($"Air Exchanger Fan Status: {_exchangerFanStatus}");
 			_doorSensorStatus = mc.DoorSensorStatus;
-			Redbox.Core.LogHelper.Instance.Log($"Door Sensor Status: {_doorSensorStatus}");
+			Redbox.Core.LogHelper.Instance.Log("Door Sensor Status: " + _doorSensorStatus);
 			_excludedSlots = ((mc.ExcludedSlots == null) ? new List<Location>() : mc.ExcludedSlots.ToList());
 			Redbox.Core.LogHelper.Instance.Log($"Excluded Slots Count: {_excludedSlots.Count()}");
 			_maxDeck = mc.MaxDeck;
@@ -259,7 +259,7 @@ public class HardwareState : IHardwareState
 			_qlmDeckAsString = (_qlmDeckAsNumber.HasValue ? _qlmDeckAsNumber.ToString() : null);
 			Redbox.Core.LogHelper.Instance.Log($"QLM Deck: {_qlmDeckAsNumber}, {_qlmDeckAsString}");
 			_merchType = (_vmzConfigured ? "VMZ2" : "QLM");
-			Redbox.Core.LogHelper.Instance.Log($"Merchandize Type: {_merchType}");
+			Redbox.Core.LogHelper.Instance.Log("Merchandize Type: " + _merchType);
 			Redbox.Core.LogHelper.Instance.Log("End Processing Refresh Hardware State.  Setting initialized flag to true.");
 			IsInitialized = true;
 		}

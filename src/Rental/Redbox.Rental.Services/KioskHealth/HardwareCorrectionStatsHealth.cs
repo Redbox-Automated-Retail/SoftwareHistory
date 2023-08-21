@@ -91,7 +91,11 @@ public class HardwareCorrectionStatsHealth : IKioskHealthItem
 			{
 				stats.ForEach(delegate(IHardwareCorrectionStatistic s)
 				{
-					KioskEvent kioskEvent = KioskEvent.NewEvent(4, ToSubType(s.StatisticType), s.CorrectionOk, null, relatedId, new { s.ProgramName }.ToJson());
+					int kioskEventSubType = ToSubType(s.StatisticType);
+					bool correctionOk = s.CorrectionOk;
+					Guid? relatedId2 = relatedId;
+					string data = new { s.ProgramName }.ToJson();
+					KioskEvent kioskEvent = KioskEvent.NewEvent(4, kioskEventSubType, correctionOk, null, relatedId2, data);
 					kioskEvent.EventTime = s.CorrectionTime.ToUniversalTime();
 					_kioskEvents.AddEvent(kioskEvent);
 				});

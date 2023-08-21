@@ -54,7 +54,7 @@ public class StarzOfferDetailViewController : BaseViewController
 			offerUserControl = new StarzOfferDetailTwoColumnsUserControl();
 			break;
 		default:
-			LogHelper.Instance.Log($"Error: Unable to find user control for Starz Offer: {starzOfferDetailViewModel?.StarzSubscriptionProduct?.SubscriptionId}");
+			LogHelper.Instance.Log("Error: Unable to find user control for Starz Offer: " + starzOfferDetailViewModel?.StarzSubscriptionProduct?.SubscriptionId);
 			break;
 		}
 		starzOfferDetailViewModel.OfferUserControl = offerUserControl;
@@ -126,7 +126,7 @@ public class StarzOfferDetailViewController : BaseViewController
 		else
 		{
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("StarzOfferDetailAcceptButton").AddData(ProductData.ToProductData(viewModel.StarzSubscriptionProduct));
-			if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn ?? false)
+			if (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn == true)
 			{
 				StarzSignupService.StartStarzSignup(viewModel.StarzSubscriptionProduct);
 			}
@@ -157,7 +157,7 @@ public class StarzOfferDetailViewController : BaseViewController
 			}
 			else
 			{
-				LogHelper.Instance.Log($"Unable to get Starz offer QR code image for url {text2}");
+				LogHelper.Instance.Log("Unable to get Starz offer QR code image for url " + text2);
 			}
 		}
 		else
@@ -189,7 +189,7 @@ public class StarzOfferDetailViewController : BaseViewController
 		{
 			SpeechControl obj = new SpeechControl
 			{
-				Name = $"tts_{OrchestrationService.PeekView()}"
+				Name = "tts_" + OrchestrationService.PeekView()
 			};
 			SpeechPart part = new SpeechPart
 			{
@@ -204,7 +204,7 @@ public class StarzOfferDetailViewController : BaseViewController
 				part.Clear();
 				part.Texts.Add(new TextPart
 				{
-					Text = $"Starz Subscription offer: {makeTextSpeakable(starzOfferDetailViewModel.TitleText)}"
+					Text = "Starz Subscription offer: " + makeTextSpeakable(starzOfferDetailViewModel.TitleText)
 				});
 				part.Texts.Add(new TextPart
 				{
@@ -216,7 +216,7 @@ public class StarzOfferDetailViewController : BaseViewController
 				});
 				part.Texts.Add(new TextPart
 				{
-					Text = $"Subscription details: {makeTextSpeakable(starzOfferDetailViewModel.Bullet1Text1)}"
+					Text = "Subscription details: " + makeTextSpeakable(starzOfferDetailViewModel.Bullet1Text1)
 				});
 				part.Texts.Add(new TextPart
 				{
@@ -252,7 +252,7 @@ public class StarzOfferDetailViewController : BaseViewController
 				});
 				part.Texts.Add(new TextPart
 				{
-					Text = $"Legal footnote: {makeTextSpeakable(starzOfferDetailViewModel.LegalText)}"
+					Text = "Legal footnote: " + makeTextSpeakable(starzOfferDetailViewModel.LegalText)
 				});
 				part.Events.Add(new MapKeyPressToAction
 				{

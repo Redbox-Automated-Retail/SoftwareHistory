@@ -24,6 +24,6 @@ public static class TitleFamilyEnumExtensions
 
 	public static TitleFamily GetTitleFamily(this Enum val)
 	{
-		return val.GetType().GetMember(val.ToString()).FirstOrDefault()?.GetCustomAttribute<TitleFamilyAttribute>(inherit: false)?.TitleFamily ?? TitleFamily.All;
+		return (val.GetType().GetMember(val.ToString()).FirstOrDefault()?.GetCustomAttribute<TitleFamilyAttribute>(inherit: false)?.TitleFamily).GetValueOrDefault();
 	}
 }

@@ -626,12 +626,12 @@ public class Configuration : IConfiguration
 			}
 			else
 			{
-				LogHelper.Instance.Log($"Invalid time span format used for {configSetting}. Value read was {timeSpan}");
+				LogHelper.Instance.Log("Invalid time span format used for " + configSetting + ". Value read was " + timeSpan);
 			}
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log($"Unable to parse time span for {configSetting}. Value read was {timeSpan}", e);
+			LogHelper.Instance.Log("Unable to parse time span for " + configSetting + ". Value read was " + timeSpan, e);
 			startTime = TimeSpan.MinValue;
 			endTime = TimeSpan.MinValue;
 		}
@@ -680,13 +680,13 @@ public class Configuration : IConfiguration
 				}
 				else
 				{
-					LogHelper.Instance.Log(string.Format("Invalid value specified in {0}: '{1}'", "SendReturnImageTypes", text));
+					LogHelper.Instance.Log("Invalid value specified in SendReturnImageTypes: '" + text + "'");
 				}
 			}
 		}
 		catch (Exception e)
 		{
-			LogHelper.Instance.Log(string.Format("Unable to parse {0}. Value read was {1}", "SendReturnImageTypes", sendImageTypes), e);
+			LogHelper.Instance.Log("Unable to parse SendReturnImageTypes. Value read was " + sendImageTypes, e);
 		}
 	}
 

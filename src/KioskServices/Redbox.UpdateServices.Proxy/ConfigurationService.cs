@@ -173,12 +173,12 @@ public class ConfigurationService : IConfigurationService
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Error in ConfigurationService.TryGetTimeSpanRangeValue: end time is less than start time : {value} for key: {key}, category: {category}, setting: {setting}");
+					LogHelper.Instance.Log("Error in ConfigurationService.TryGetTimeSpanRangeValue: end time is less than start time : " + value + " for key: " + key + ", category: " + category + ", setting: " + setting);
 				}
 			}
 			if (!flag)
 			{
-				LogHelper.Instance.Log($"Error in ConfigurationService.TryGetTimeSpanRangeValue: invalid time span range value : {value} for key: {key}, category: {category}, setting: {setting}");
+				LogHelper.Instance.Log("Error in ConfigurationService.TryGetTimeSpanRangeValue: invalid time span range value : " + value + " for key: " + key + ", category: " + category + ", setting: " + setting);
 			}
 		}
 		return flag;

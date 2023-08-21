@@ -32,7 +32,7 @@ public partial class PingUserControl : UserControl, IPreferencePageHost, ICompon
 		SendPingButton.IsEnabled = false;
 		APIResponse<PingServiceInfo> aPIResponse = await KioskEngineApiKioskHealthClient.GetPingServerInfo();
 		PreferencePageHeaderUserControl.SetStatusText(aPIResponse);
-		SendPingButton.IsEnabled = aPIResponse?.Response?.Enabled ?? false;
+		SendPingButton.IsEnabled = aPIResponse?.Response?.Enabled == true;
 		base.DataContext = aPIResponse?.Response;
 	}
 
@@ -44,7 +44,7 @@ public partial class PingUserControl : UserControl, IPreferencePageHost, ICompon
 		string message = "Ping sent successfully.";
 		if (!aPIResponse.IsSuccessStatusCode)
 		{
-			message = $"Ping failed.  Error sending message to KioskEngine API.  StatusCode={aPIResponse?.StatusCode.ToString()}";
+			message = "Ping failed.  Error sending message to KioskEngine API.  StatusCode=" + aPIResponse?.StatusCode.ToString();
 		}
 		else if ((aPIResponse?.Response?.StatusCode ?? 500) != 200)
 		{

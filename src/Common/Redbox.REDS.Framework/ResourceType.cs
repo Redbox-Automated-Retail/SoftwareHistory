@@ -122,16 +122,9 @@ public class ResourceType : IResourceType
 
 	public IAspectType GetAspectType(string name)
 	{
-		Predicate<IAspectType> predicate2 = default(Predicate<IAspectType>);
 		for (ResourceType resourceType = this; resourceType != null; resourceType = (ResourceType)resourceType.SuperType)
 		{
-			List<IAspectType> innerAspects = resourceType.InnerAspects;
-			Predicate<IAspectType> predicate = predicate2;
-			if (predicate == null)
-			{
-				predicate = (predicate2 = (IAspectType each) => each.Name == name);
-			}
-			IAspectType aspectType = innerAspects.Find(predicate);
+			IAspectType aspectType = resourceType.InnerAspects.Find((IAspectType each) => each.Name == name);
 			if (aspectType != null)
 			{
 				return aspectType;
@@ -142,16 +135,9 @@ public class ResourceType : IResourceType
 
 	public IPropertyType GetPropertyType(string name)
 	{
-		Predicate<IPropertyType> predicate2 = default(Predicate<IPropertyType>);
 		for (ResourceType resourceType = this; resourceType != null; resourceType = (ResourceType)resourceType.SuperType)
 		{
-			List<IPropertyType> innerProperties = resourceType.InnerProperties;
-			Predicate<IPropertyType> predicate = predicate2;
-			if (predicate == null)
-			{
-				predicate = (predicate2 = (IPropertyType each) => each.Name == name);
-			}
-			IPropertyType propertyType = innerProperties.Find(predicate);
+			IPropertyType propertyType = resourceType.InnerProperties.Find((IPropertyType each) => each.Name == name);
 			if (propertyType != null)
 			{
 				return propertyType;

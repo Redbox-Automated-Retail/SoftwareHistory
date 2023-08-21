@@ -118,9 +118,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 					}
 					foreach (ITitleProduct titleProduct in mDVProduct.TitleProducts)
 					{
-						int? discNumber = titleProduct.DiscNumber;
-						int num = 1;
-						if (discNumber.GetValueOrDefault() > num && discNumber.HasValue && !rentalShoppingCart.HasTitleItem(titleProduct.ProductId))
+						if (titleProduct.DiscNumber > 1 && !rentalShoppingCart.HasTitleItem(titleProduct.ProductId))
 						{
 							IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = CreateRentalShoppingCartItemFromTitleProduct(titleProduct);
 							rentalShoppingCartTitleItem.SourceType = ItemSourceType.Browse;
@@ -253,7 +251,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 		RentalShoppingCartTitleItem result = null;
 		if (titleProduct != null)
 		{
-			_ = titleProduct.RatingId ?? 0;
+			titleProduct.RatingId.GetValueOrDefault();
 			_ = titleProduct is MDVProduct;
 			result = new RentalShoppingCartTitleItem(titleProduct);
 			titleProduct?.Genres.ForEach(delegate(long x)

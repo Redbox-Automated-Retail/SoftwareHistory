@@ -242,7 +242,9 @@ public class ViewHealth : IViewHealth, IKioskHealthItem
 			{
 				if (_viewReporting)
 				{
-					_kioskEvents.AddEvent(KioskEvent.NewEvent(5, 502, success: true, null, _relatedId));
+					IKioskEventService kioskEvents = _kioskEvents;
+					Guid? relatedId = _relatedId;
+					kioskEvents.AddEvent(KioskEvent.NewEvent(5, 502, success: true, null, relatedId));
 				}
 				Reset();
 			}
@@ -318,14 +320,15 @@ public class ViewHealth : IViewHealth, IKioskHealthItem
 			KioskEvent kioskEvent = null;
 			if (_viewReporting)
 			{
-				kioskEvent = KioskEvent.NewEvent(5, 500, success: true, null, null, new
+				string data = new
 				{
 					InactivitySeconds = InActivitySeconds,
 					ViewName = _viewName,
 					ViewEventType = _viewEventType,
 					ViewEventValue = _viewEventValue,
 					SessionId = _sessionId
-				}.ToJson());
+				}.ToJson();
+				kioskEvent = KioskEvent.NewEvent(5, 500, success: true, null, null, data);
 				if (!_relatedId.HasValue)
 				{
 					_relatedId = kioskEvent.Id;

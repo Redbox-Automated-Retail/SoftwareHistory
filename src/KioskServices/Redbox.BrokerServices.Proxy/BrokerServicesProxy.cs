@@ -107,7 +107,7 @@ public class BrokerServicesProxy : MarshalByRefObject, IKioskOperations
 			m_allowReconnect = true;
 			return ConnectToBroker();
 		}
-		LogHelper.Instance.Log(string.Format("BrokerServiceProxy.Register aborted.  Config setting {0} not enabled.", "UseLegacyBrokerService"));
+		LogHelper.Instance.Log("BrokerServiceProxy.Register aborted.  Config setting UseLegacyBrokerService not enabled.");
 		return false;
 	}
 

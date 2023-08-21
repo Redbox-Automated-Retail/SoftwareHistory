@@ -99,9 +99,10 @@ public sealed class HardwareService
 
 	public HardwareCommandResult CleanZone(out HardwareJob job)
 	{
-		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-		hardwareJobSchedule.Priority = HardwareJobPriority.Low;
-		HardwareJobSchedule schedule = hardwareJobSchedule;
+		HardwareJobSchedule schedule = new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.Low
+		};
 		return ScheduleJob("clean-vmz", schedule, out job);
 	}
 
@@ -595,9 +596,9 @@ public sealed class HardwareService
 	public HardwareCommandResult ResumeJobs(HardwareJob[] jobs)
 	{
 		HardwareCommandResult hardwareCommandResult = new HardwareCommandResult();
-		foreach (HardwareJob hardwareJob in jobs)
+		for (int i = 0; i < jobs.Length; i++)
 		{
-			HardwareCommandResult hardwareCommandResult2 = hardwareJob.Resume();
+			HardwareCommandResult hardwareCommandResult2 = jobs[i].Resume();
 			if (!hardwareCommandResult2.Success && hardwareCommandResult2.Errors.Count > 0)
 			{
 				hardwareCommandResult.Errors.AddRange(hardwareCommandResult2.Errors);

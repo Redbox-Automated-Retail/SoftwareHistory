@@ -35,7 +35,7 @@ public class LockHelper
 			}
 			else
 			{
-				LogHelper.Instance.Log($"{logMethodName} lock prevented.  Only one action may execute.");
+				LogHelper.Instance.Log(logMethodName + " lock prevented.  Only one action may execute.");
 			}
 		}
 		finally

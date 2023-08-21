@@ -809,7 +809,7 @@ public class InventoryData : IInventoryData
 					Redbox.KioskEngine.ComponentModel.InventoryStatusCode.Rebalancing
 				};
 			}
-			LogHelper.Instance.Log(string.Format("GetBarcodesForMerchOrders Begin.  searching for products: {0}", searchOrders.Select((MerchandizingOrder x) => x.TitleId).ToList().Join(", ")));
+			LogHelper.Instance.Log("GetBarcodesForMerchOrders Begin.  searching for products: " + searchOrders.Select((MerchandizingOrder x) => x.TitleId).ToList().Join(", "));
 			foreach (MerchandizingOrder searchOrder in searchOrders)
 			{
 				Dictionary<Redbox.KioskEngine.ComponentModel.InventoryStatusCode, List<BarcodeAndTotalRents>> dictionary = new Dictionary<Redbox.KioskEngine.ComponentModel.InventoryStatusCode, List<BarcodeAndTotalRents>>();

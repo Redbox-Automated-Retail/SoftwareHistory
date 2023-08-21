@@ -182,7 +182,7 @@ public class ReservationFunctions
 			}
 			if (reservation.ReservationDetails.TransactionDate < dateTime)
 			{
-				LogHelper.Instance.Log($"Expiring Reference Number {reservation.ReservationDetails?.ReferenceNumber}");
+				LogHelper.Instance.Log("Expiring Reference Number " + reservation.ReservationDetails?.ReferenceNumber);
 				ServiceLocator.Instance.GetService<IReservationServices>();
 				if (long.TryParse(reservation.ReservationDetails?.ReferenceNumber, out var result))
 				{
@@ -192,7 +192,7 @@ public class ReservationFunctions
 			}
 			else
 			{
-				LogHelper.Instance.Log($"Reservation has not expired. Reference Number: {reservation.ReservationDetails?.ReferenceNumber}");
+				LogHelper.Instance.Log("Reservation has not expired. Reference Number: " + reservation.ReservationDetails?.ReferenceNumber);
 			}
 		}
 		DeleteReservationDetails(list, reservations);
@@ -394,7 +394,7 @@ public class ReservationFunctions
 			}
 			else
 			{
-				LogHelper.Instance.Log($"ReservationFunctions.GetRecommendedProducts unable to find product using barcode: {item}", LogEntryType.Info);
+				LogHelper.Instance.Log("ReservationFunctions.GetRecommendedProducts unable to find product using barcode: " + item, LogEntryType.Info);
 			}
 		}
 		LogHelper.Instance.Log(string.Format("ReservationFunctions.GetRecommendedProducts GenerateRecommendations({0}, {1})", flag, string.Join(",", excludeProducts)), LogEntryType.Info);
@@ -434,7 +434,7 @@ public class ReservationFunctions
 			if (!list.Contains(reservationDetails2.ReferenceNumber))
 			{
 				string text = reservationDetails?.ReservedTitles.Select((IReservedTitle x) => x.TitleId).ToList().Join(", ");
-				LogHelper.Instance.Log($"ReservationFunctions.CheckForDuplicateReservations found duplicate reservations {item?.ReferenceNumber} and {reservationDetails?.ReferenceNumber} with titles {text}.  Removing duplicate reservation {reservationDetails2?.ReferenceNumber}.", LogEntryType.Info);
+				LogHelper.Instance.Log("ReservationFunctions.CheckForDuplicateReservations found duplicate reservations " + item?.ReferenceNumber + " and " + reservationDetails?.ReferenceNumber + " with titles " + text + ".  Removing duplicate reservation " + reservationDetails2?.ReferenceNumber + ".", LogEntryType.Info);
 				list.Add(reservationDetails2.ReferenceNumber);
 			}
 		}
@@ -457,7 +457,7 @@ public class ReservationFunctions
 
 	public static bool UpdateReservation(IReservation reservation)
 	{
-		LogHelper.Instance.Log($"ReservationFunctions.UpdateReservation {ObfuscateHashedCardId(reservation?.HashedCardId)}");
+		LogHelper.Instance.Log("ReservationFunctions.UpdateReservation " + ObfuscateHashedCardId(reservation?.HashedCardId));
 		return ServiceLocator.Instance.GetService<IDataService>()?.SaveReservation(reservation) ?? false;
 	}
 
@@ -502,7 +502,7 @@ public class ReservationFunctions
 					{
 						if (kioskProduct == null)
 						{
-							LogHelper.Instance.Log($"Unable to find kiosk product using dataService.GetProductByBarcode( {barcode} )");
+							LogHelper.Instance.Log("Unable to find kiosk product using dataService.GetProductByBarcode( " + barcode + " )");
 							Inventory inventory = ServiceLocator.Instance.GetService<IInventoryService>()?.GetInventory(barcode);
 							if (inventory != null)
 							{
@@ -518,11 +518,11 @@ public class ReservationFunctions
 						ITitleProduct titleProduct = kioskProduct as ITitleProduct;
 						if (titleProduct != null)
 						{
-							LogHelper.Instance.Log($"Found titleProduct for barcode {barcode}");
+							LogHelper.Instance.Log("Found titleProduct for barcode " + barcode);
 							IReservedTitle reservedTitle = reservationDetails.ReservedTitles.FirstOrDefault((IReservedTitle x) => x.TitleId == titleProduct.ProductId);
 							if (reservedTitle != null)
 							{
-								LogHelper.Instance.Log($"Found reserved title for barcode {barcode}");
+								LogHelper.Instance.Log("Found reserved title for barcode " + barcode);
 								IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = service?.CreateRentalShoppingCartItemFromTitleProduct(titleProduct);
 								rentalShoppingCartTitleItem.SourceType = ItemSourceType.Reservation;
 								rentalShoppingCartTitleItem.Barcode = barcode;
@@ -568,7 +568,7 @@ public class ReservationFunctions
 								}
 								else
 								{
-									LogHelper.Instance.Log($"ReservationFunctions.PopulateShoppingCartWithReservationItems - barcode {barcode} couldn't find a pricing record.", LogEntryType.Info);
+									LogHelper.Instance.Log("ReservationFunctions.PopulateShoppingCartWithReservationItems - barcode " + barcode + " couldn't find a pricing record.", LogEntryType.Info);
 								}
 								if (reservationDetails.AppliedTitleMarketing && reservedTitle.DiscountType == ReservationDiscountType.Promotion)
 								{
@@ -582,12 +582,12 @@ public class ReservationFunctions
 							}
 							else
 							{
-								LogHelper.Instance.Log($"ReservationFunctions.PopulateShoppingCartWithReservationItems - reservation title barcode {barcode} couldn't find a product.", LogEntryType.Info);
+								LogHelper.Instance.Log("ReservationFunctions.PopulateShoppingCartWithReservationItems - reservation title barcode " + barcode + " couldn't find a product.", LogEntryType.Info);
 							}
 						}
 						else
 						{
-							LogHelper.Instance.Log($"ReservationFunctions.PopulateShoppingCartWithReservationItems - barcode {barcode} couldn't find a product.", LogEntryType.Info);
+							LogHelper.Instance.Log("ReservationFunctions.PopulateShoppingCartWithReservationItems - barcode " + barcode + " couldn't find a product.", LogEntryType.Info);
 						}
 					}
 					else
@@ -701,7 +701,7 @@ public class ReservationFunctions
 				reservation.ReservationDetails.ReservedTitles.ForEach(delegate(IReservedTitle x)
 				{
 					result.Add(x.Barcode);
-					LogHelper.Instance.Log($"ReservationFunctions.GetBarcodesToVend - Barcode: {x.Barcode}");
+					LogHelper.Instance.Log("ReservationFunctions.GetBarcodesToVend - Barcode: " + x.Barcode);
 				});
 			}
 		}
@@ -743,7 +743,7 @@ public class ReservationFunctions
 	public static ReservationCancelResult CancelLocalReservation(string referenceNumber)
 	{
 		ReservationCancelResult result = ReservationCancelResult.ReservationCancelled;
-		LogHelper.Instance.Log($"ReservationFunctions:CancelReservation called for Reference Number: {referenceNumber}");
+		LogHelper.Instance.Log("ReservationFunctions:CancelReservation called for Reference Number: " + referenceNumber);
 		lock (_reservationSyncObject)
 		{
 			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
@@ -751,13 +751,13 @@ public class ReservationFunctions
 			IReservation reservation = service?.GetReservation(referenceNumber);
 			if (reservation != null)
 			{
-				LogHelper.Instance.Log($"ReservationFunctions.CancelReservation removed reservation for Reference Number {referenceNumber}:");
+				LogHelper.Instance.Log("ReservationFunctions.CancelReservation removed reservation for Reference Number " + referenceNumber + ":");
 				list.Add(reservation.ReservationDetails);
 			}
 			if (list.Count == 0)
 			{
 				result = ReservationCancelResult.ReservationNotFound;
-				LogHelper.Instance.Log($"ReservationFunctions.CancelReservation - reservation not found for Reference Number: {referenceNumber}");
+				LogHelper.Instance.Log("ReservationFunctions.CancelReservation - reservation not found for Reference Number: " + referenceNumber);
 			}
 			else
 			{
@@ -779,7 +779,7 @@ public class ReservationFunctions
 
 	private static void ProcessReservation(string logHeaderText, LineItemStatus defaultLineItemStatus, List<VendResult> vendResultList, bool isFromReservationPrepositionVendComplete, bool commitShoppingCart, string commitReason)
 	{
-		LogHelper.Instance.Log($"{logHeaderText} Begin");
+		LogHelper.Instance.Log(logHeaderText + " Begin");
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		IInventoryService service2 = ServiceLocator.Instance.GetService<IInventoryService>();
@@ -811,7 +811,7 @@ public class ReservationFunctions
 				};
 				if (productItem.Status != LineItemStatus.Fullfilled)
 				{
-					LogHelper.Instance.Log($"Adding {productItem.Barcode} to reset barcode list");
+					LogHelper.Instance.Log("Adding " + productItem.Barcode + " to reset barcode list");
 					list.Add(productItem.Barcode);
 					if (productItem.Status == LineItemStatus.Pending || productItem.Status == LineItemStatus.ProductSelected)
 					{
@@ -825,10 +825,10 @@ public class ReservationFunctions
 				}
 				value.Add(productItem);
 			}
-			LogHelper.Instance.Log($"{logHeaderText} results for reservation {accountReservation?.ReferenceNumber}");
+			LogHelper.Instance.Log(logHeaderText + " results for reservation " + accountReservation?.ReferenceNumber);
 			foreach (string key2 in dictionary.Keys)
 			{
-				LogHelper.Instance.Log($"{logHeaderText} results for group {key2}");
+				LogHelper.Instance.Log(logHeaderText + " results for group " + key2);
 				foreach (IProductItem item in dictionary[key2])
 				{
 					LogHelper.Instance.Log($"{logHeaderText} group_result  barcode: {item?.Barcode}  multi_disc: {item?.MultiDisc}  status: {item?.Status}");
@@ -836,7 +836,7 @@ public class ReservationFunctions
 			}
 			if (dictionary.Count == 0)
 			{
-				LogHelper.Instance.Log($"Reservation {accountReservation?.ReferenceNumber} had 0 barcodes, skipping Pickup()/PickupReconcile() call");
+				LogHelper.Instance.Log("Reservation " + accountReservation?.ReferenceNumber + " had 0 barcodes, skipping Pickup()/PickupReconcile() call");
 				continue;
 			}
 			long.TryParse(accountReservation?.ReferenceNumber, out var result2);
@@ -847,13 +847,13 @@ public class ReservationFunctions
 			}
 			if (rentalShoppingCart != null && !rentalShoppingCart.PickupRecommendationsShown)
 			{
-				LogHelper.Instance.Log($"{logHeaderText}: Calling PopulateShoppingCartWithReservationItems() for ref# {accountReservation?.ReferenceNumber}");
+				LogHelper.Instance.Log(logHeaderText + ": Calling PopulateShoppingCartWithReservationItems() for ref# " + accountReservation?.ReferenceNumber);
 				PopulateShoppingCartWithReservationItems(rentalShoppingCart, accountReservation?.ReferenceNumber);
 			}
 			IKioskClientService service3 = ServiceLocator.Instance.GetService<IKioskClientService>();
-			LogHelper.Instance.Log($"{logHeaderText}: Calling KioskClientService.Transaction.ReservationPickup()");
+			LogHelper.Instance.Log(logHeaderText + ": Calling KioskClientService.Transaction.ReservationPickup()");
 			service3.Transaction.ReservationPickup(rentalShoppingCart.ShoppingSessionId.ToString(), Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.CustomerProfileNumber, accountReservation.ReservationDetails?.EmailAddress, result2, dictionary2, null);
-			LogHelper.Instance.Log($"{logHeaderText}: Removing reservation for reference nuber... {accountReservation.ReferenceNumber}");
+			LogHelper.Instance.Log(logHeaderText + ": Removing reservation for reference nuber... " + accountReservation.ReferenceNumber);
 			DeleteReservation(accountReservation.ReferenceNumber);
 		}
 		if (list.Count > 0)
@@ -865,7 +865,7 @@ public class ReservationFunctions
 		{
 			OrchestrationService.CloseAnalytics(rentalShoppingCart.ShoppingSessionId, isSessionAbandoned: false);
 		}
-		LogHelper.Instance.Log($"{logHeaderText} COMPLETE");
+		LogHelper.Instance.Log(logHeaderText + " COMPLETE");
 	}
 
 	public static void RecommendationOnPickupPrepositionVendComplete(List<VendResult> vendResultList, string referenceNumber, bool modifiedCart)
@@ -881,7 +881,7 @@ public class ReservationFunctions
 				ProcessRentalShoppingCartItems(rentalShoppingCart, list);
 				List<IReservation> accountReservations = GetAccountReservations();
 				CallMerchantService(referenceNumber, modifiedCart, rentalShoppingCart, shoppingSession, accountReservations);
-				LogHelper.Instance.Log($"ReservationFunctions.ReservationPrepositionVend: Removing reservations for reference number...{referenceNumber}");
+				LogHelper.Instance.Log("ReservationFunctions.ReservationPrepositionVend: Removing reservations for reference number..." + referenceNumber);
 				DeleteReservation(referenceNumber);
 				if (list.Count > 0)
 				{
@@ -893,7 +893,7 @@ public class ReservationFunctions
 			}
 			else
 			{
-				LogHelper.Instance.Log($"Unable find shopping cart session for {rentalShoppingCart.ShoppingSessionId.ToString()}");
+				LogHelper.Instance.Log("Unable find shopping cart session for " + rentalShoppingCart.ShoppingSessionId.ToString());
 			}
 		}
 		else
@@ -1044,10 +1044,10 @@ public class ReservationFunctions
 				else
 				{
 					LogHelper.Instance.Log("ReservationFunctions.CreateReservation: Could not satisfy reservation request; unable to reserve requested inventory.");
-					string arg = string.Join(", ", (from y in barcodesForNewReservation
+					string text = string.Join(", ", (from y in barcodesForNewReservation
 						where !y.BarcodeAssigned
 						select y.ProductId)?.ToList());
-					reservationRequestResult.ErrorMessage = $"Title(s) unavailable: {arg}";
+					reservationRequestResult.ErrorMessage = "Title(s) unavailable: " + text;
 					reservationRequestResult.Status = ReservationRequestStatus.TitleNotAvailable;
 				}
 			}
@@ -1391,7 +1391,7 @@ public class ReservationFunctions
 		}
 		else
 		{
-			LogHelper.Instance.Log($"Error in ReservationFunctions.CancelLocalAndServerReservation. Unable to parse reference number to long: {referenceNumber}");
+			LogHelper.Instance.Log("Error in ReservationFunctions.CancelLocalAndServerReservation. Unable to parse reference number to long: " + referenceNumber);
 		}
 		return CancelLocalReservation(referenceNumber);
 	}
@@ -1487,15 +1487,15 @@ public class ReservationFunctions
 	{
 		foreach (IRentalShoppingCartTitleItem titleItem in rentalShoppingCart.TitleItems)
 		{
-			LogHelper.Instance.Log($"> local cart item: {titleItem.Barcode}");
+			LogHelper.Instance.Log("> local cart item: " + titleItem.Barcode);
 			if (titleItem.Status == LineItemStatus.Pending || titleItem.Status == LineItemStatus.ProductSelected)
 			{
-				LogHelper.Instance.Log($"Item not fullfilled: {titleItem.Barcode}");
+				LogHelper.Instance.Log("Item not fullfilled: " + titleItem.Barcode);
 				titleItem.Status = LineItemStatus.NotFullfilled;
 			}
 			if (titleItem.Status != LineItemStatus.Fullfilled)
 			{
-				LogHelper.Instance.Log($"> Adding {titleItem.Barcode} to reset barcode list");
+				LogHelper.Instance.Log("> Adding " + titleItem.Barcode + " to reset barcode list");
 				barcodesToReset.Add(titleItem.Barcode);
 			}
 			LogHelper.Instance.Log($"Session update Line Item: {titleItem.Barcode} for {titleItem.Action} Price:" + $" {titleItem.Price} {titleItem.TitleFamily} - {titleItem.TitleType} source type: {titleItem.SourceType}");
@@ -1508,7 +1508,7 @@ public class ReservationFunctions
 		{
 			foreach (VendResult eachVendResult in vendResultList)
 			{
-				LogHelper.Instance.Log($"> vend_results barcode: {eachVendResult?.barcode}, status: {eachVendResult?.status}");
+				LogHelper.Instance.Log("> vend_results barcode: " + eachVendResult?.barcode + ", status: " + eachVendResult?.status);
 				IRentalShoppingCartTitleItem rentalShoppingCartTitleItem = rentalShoppingCart.TitleItems.FirstOrDefault((IRentalShoppingCartTitleItem x) => x.Barcode == eachVendResult.barcode);
 				if (rentalShoppingCartTitleItem != null)
 				{
@@ -1518,12 +1518,12 @@ public class ReservationFunctions
 					}
 					else
 					{
-						LogHelper.Instance.Log($"Error in RentalShoppingCartFunctions.UpdateItemStatus.  Unable to parse status value {eachVendResult.status} for barcode {rentalShoppingCartTitleItem.Barcode}");
+						LogHelper.Instance.Log("Error in RentalShoppingCartFunctions.UpdateItemStatus.  Unable to parse status value " + eachVendResult.status + " for barcode " + rentalShoppingCartTitleItem.Barcode);
 					}
 				}
 				else
 				{
-					LogHelper.Instance.Log($"Unable to find rental shopping cart item with barcode: {eachVendResult?.barcode}");
+					LogHelper.Instance.Log("Unable to find rental shopping cart item with barcode: " + eachVendResult?.barcode);
 				}
 			}
 			return;
@@ -1550,20 +1550,20 @@ public class ReservationFunctions
 				{
 					if (allReservation.ReservationDetails.CreditCardIds.Contains(swipedhashedCardId))
 					{
-						LogHelper.Instance.Log($"swiped card ...{ObfuscateHashedCardId(swipedhashedCardId)} matches associated credit card");
+						LogHelper.Instance.Log("swiped card ..." + ObfuscateHashedCardId(swipedhashedCardId) + " matches associated credit card");
 						list.Add(allReservation);
 						break;
 					}
 					if (allReservation.ReservationDetails.GiftCardIds.Contains(swipedhashedCardId))
 					{
-						LogHelper.Instance.Log($"swiped card ...{ObfuscateHashedCardId(swipedhashedCardId)} matches associated gift card");
+						LogHelper.Instance.Log("swiped card ..." + ObfuscateHashedCardId(swipedhashedCardId) + " matches associated gift card");
 						list.Add(allReservation);
 						break;
 					}
 				}
 				if (!string.IsNullOrEmpty(newHashedCardId) && newHashedCardId != swipedhashedCardId && allReservation.ReservationDetails.CreditCardIds.Contains(newHashedCardId))
 				{
-					LogHelper.Instance.Log($"swiped card ...{ObfuscateHashedCardId(newHashedCardId)} matches associated credit card");
+					LogHelper.Instance.Log("swiped card ..." + ObfuscateHashedCardId(newHashedCardId) + " matches associated credit card");
 					list.Add(allReservation);
 					break;
 				}

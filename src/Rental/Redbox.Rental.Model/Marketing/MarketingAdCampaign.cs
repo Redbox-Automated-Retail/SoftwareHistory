@@ -187,7 +187,7 @@ public class MarketingAdCampaign
 					startTime = EndTime;
 					if (!(timeOfDay > startTime))
 					{
-						goto IL_0180;
+						goto IL_017b;
 					}
 				}
 				return false;
@@ -204,8 +204,8 @@ public class MarketingAdCampaign
 				}
 			}
 		}
-		goto IL_0180;
-		IL_0180:
+		goto IL_017b;
+		IL_017b:
 		return true;
 	}
 

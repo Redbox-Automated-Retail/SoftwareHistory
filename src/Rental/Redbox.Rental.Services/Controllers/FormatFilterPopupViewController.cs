@@ -134,7 +134,7 @@ public class FormatFilterPopupViewController : BaseViewController
 			BrowseState.BrowsePriceRangeFilter = null;
 			BrowseState.BrowseStudio = null;
 		}
-		OrchestrationService.ViewGoBackSafe($"FormatFilterPopupViewController {analysisText}", popOnly: false);
+		OrchestrationService.ViewGoBackSafe("FormatFilterPopupViewController " + analysisText, popOnly: false);
 	}
 
 	private static BrowseSelectedSort TitleTypeToSelectedSort(TitleType filterType)

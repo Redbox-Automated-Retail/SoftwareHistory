@@ -45,7 +45,7 @@ public partial class ReservationServiceStatusUserControl : UserControl, IPrefere
 	{
 		PreferencePageHeaderUserControl.SetStatusText("Registering with broker service...");
 		APIResponse<RegisterWithBrokerServiceResponse> aPIResponse = await KioskEngineApiReservationClient.RegisterWithBrokerService();
-		string arg = ((aPIResponse != null && aPIResponse.StatusCode != HttpStatusCode.OK && aPIResponse.StatusCode != HttpStatusCode.Conflict) ? " Retry timer started." : null);
+		string text = ((aPIResponse != null && aPIResponse.StatusCode != HttpStatusCode.OK && aPIResponse.StatusCode != HttpStatusCode.Conflict) ? " Retry timer started." : null);
 		RegisterWithBrokerServiceResponse registerWithBrokerServiceResponse = null;
 		if (aPIResponse.StatusCode != HttpStatusCode.OK)
 		{
@@ -57,7 +57,7 @@ public partial class ReservationServiceStatusUserControl : UserControl, IPrefere
 			{
 			}
 		}
-		string message = (((aPIResponse?.StatusCode ?? HttpStatusCode.InternalServerError) == HttpStatusCode.OK) ? "Register successful" : $"register failed.  Status code: {aPIResponse?.StatusCode.ToString()}. {arg}{GetErrorMessage(registerWithBrokerServiceResponse?.Errors)}");
+		string message = (((aPIResponse?.StatusCode ?? HttpStatusCode.InternalServerError) == HttpStatusCode.OK) ? "Register successful" : ("register failed.  Status code: " + aPIResponse?.StatusCode.ToString() + ". " + text + GetErrorMessage(registerWithBrokerServiceResponse?.Errors)));
 		SimpleMessageWindow.Show(ControlUtilities.GetParentWindow(this), "Register with broker service.", message);
 		LoadValues(null);
 	}
@@ -77,7 +77,7 @@ public partial class ReservationServiceStatusUserControl : UserControl, IPrefere
 			{
 			}
 		}
-		string message = ((aPIResponse.StatusCode == HttpStatusCode.OK) ? "Unregister successful" : $"Unregister failed.  Status code: {aPIResponse?.StatusCode.ToString()}{GetErrorMessage(unregisterFromBrokerServiceResponse?.Errors)}");
+		string message = ((aPIResponse.StatusCode == HttpStatusCode.OK) ? "Unregister successful" : ("Unregister failed.  Status code: " + aPIResponse?.StatusCode.ToString() + GetErrorMessage(unregisterFromBrokerServiceResponse?.Errors)));
 		SimpleMessageWindow.Show(ControlUtilities.GetParentWindow(this), "Unregister from broker service", message);
 		LoadValues(null);
 	}
@@ -87,8 +87,8 @@ public partial class ReservationServiceStatusUserControl : UserControl, IPrefere
 		string result = null;
 		if (errorList != null && errorList.Count > 0)
 		{
-			string[] value = errorList.Select((Redbox.Rental.Model.Error x) => $"{x.Code} {x.Message}").ToArray();
-			result = string.Format(" Errors: {0}", string.Join(", ", value));
+			string[] value = errorList.Select((Redbox.Rental.Model.Error x) => x.Code + " " + x.Message).ToArray();
+			result = " Errors: " + string.Join(", ", value);
 		}
 		return result;
 	}

@@ -18,14 +18,14 @@ public class KioskClientServiceSession : BaseKioskClientService, IKioskClientSer
 	{
 		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/start?sessionType={2}", base.KioskClientServiceBaseUrl, "api/session", sessionType)), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
 		LogResponse("KioskClientServiceSession.Start", webResult);
-		return webResult?.Response?.Success ?? false;
+		return webResult?.Response?.Success == true;
 	}
 
 	public async Task<bool> End()
 	{
-		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}/end", base.KioskClientServiceBaseUrl, "api/session")), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
+		WebResult<BaseResponse> webResult = await ExecuteAsyncWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/session/end"), null, "POST").ConfigureAwait(continueOnCapturedContext: false);
 		LogResponse("KioskClientServiceSession.End", webResult);
-		return webResult?.Response?.Success ?? false;
+		return webResult?.Response?.Success == true;
 	}
 
 	public bool Create(Guid kioskSessionId)
@@ -34,8 +34,8 @@ public class KioskClientServiceSession : BaseKioskClientService, IKioskClientSer
 		{
 			KioskSessionId = kioskSessionId
 		};
-		WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(string.Format("{0}/{1}", base.KioskClientServiceBaseUrl, "api/session")), requestPayload, "POST");
+		WebResult<BaseResponse> webResult = ExecuteWebRequest<BaseResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/session"), requestPayload, "POST");
 		LogResponse("KioskClientServiceSession.Create", webResult);
-		return webResult?.Response?.Success ?? false;
+		return webResult?.Response?.Success == true;
 	}
 }

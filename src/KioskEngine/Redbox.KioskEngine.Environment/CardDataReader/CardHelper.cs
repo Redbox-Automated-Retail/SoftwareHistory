@@ -228,17 +228,14 @@ public static class CardHelper
 				unencryptedTrackData.AccountNumber.Clear();
 				AddErrorMessageIfNotDuplicate(unencryptedTrackData, ErrorCodes.NewInvalidPANError());
 			}
-			CardType? cardType = unencryptedTrackData.CardType;
-			CardType cardType2 = CardType.RedboxGiftCard;
-			if (cardType.GetValueOrDefault() == cardType2 && cardType.HasValue && ExtractFromSecure(unencryptedTrackData.Track2).Split('=')[1].Length < 20)
+			if (unencryptedTrackData.CardType == CardType.RedboxGiftCard && ExtractFromSecure(unencryptedTrackData.Track2).Split('=')[1].Length < 20)
 			{
 				AddErrorMessageIfNotDuplicate(unencryptedTrackData, ErrorCodes.NewInvalidInvalidFirstDataAccountNumberError());
 			}
 		}
-		if (trackData is IEncryptedTrackData { CardType: var cardType3 } encryptedTrackData)
+		if (trackData is IEncryptedTrackData { CardType: var cardType } encryptedTrackData)
 		{
-			CardType cardType2 = CardType.RedboxGiftCard;
-			if (cardType3.GetValueOrDefault() == cardType2 && cardType3.HasValue && encryptedTrackData.EncryptedFlag)
+			if (cardType == CardType.RedboxGiftCard && encryptedTrackData.EncryptedFlag)
 			{
 				AddErrorMessageIfNotDuplicate(encryptedTrackData, ErrorCodes.NewInvalidInvalidRedboxCardNameError());
 			}
@@ -284,9 +281,7 @@ public static class CardHelper
 
 	public static void AssignRedboxGiftCardAccountNumber(ITrackData trackData)
 	{
-		CardType? cardType = trackData.CardType;
-		CardType cardType2 = CardType.RedboxGiftCard;
-		if (cardType.GetValueOrDefault() == cardType2 && cardType.HasValue && trackData is IUnencryptedTrackData unencryptedTrackData)
+		if (trackData.CardType == CardType.RedboxGiftCard && trackData is IUnencryptedTrackData unencryptedTrackData)
 		{
 			string[] array = ExtractFromSecure(unencryptedTrackData.Track2).Split('=');
 			LogHelper.Instance.Log("Using First Data account number parsing.");

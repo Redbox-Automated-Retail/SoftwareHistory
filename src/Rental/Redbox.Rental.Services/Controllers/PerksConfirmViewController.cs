@@ -133,7 +133,7 @@ public class PerksConfirmViewController : BaseViewController
 				});
 				part.Texts.Add(new TextPart
 				{
-					Text = $"Sign up using {email}"
+					Text = "Sign up using " + email
 				});
 				part.Texts.Add(new TextPart
 				{

@@ -75,7 +75,7 @@ public class SymbolsToolWindow : ToolWindow
 
 	protected override string GetPersistString()
 	{
-		return string.Concat(GetType(), ",", Text);
+		return GetType()?.ToString() + "," + Text;
 	}
 
 	private void OnRefresh(object sender, EventArgs e)

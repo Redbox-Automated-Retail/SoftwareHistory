@@ -228,7 +228,7 @@ public class LocalData : ILocalData
 			{
 				if (service.Get("Local", tableName, keyName) == null)
 				{
-					LogHelper.Instance.Log($"LocalData.RemoveIfExists{tableName} - keyName {keyName} does not exist");
+					LogHelper.Instance.Log("LocalData.RemoveIfExists" + tableName + " - keyName " + keyName + " does not exist");
 				}
 				else
 				{
