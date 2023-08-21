@@ -1,17 +1,17 @@
-# Yugo (2023-08-01)
+# Yugo SR (2023-08-20)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-08-01
-- Store labels: kop-rental-bundles-Yugo
+- Date (first download in the snapshots): 2023-08-20
+- Store labels: kop-rental-bundles-YugoSR
 - Package revisions:
-  - `kop-rental-bundles` revision 176 (`39CC51700357BD42C7D6268DB2976BE403245627`)
+  - `kop-rental-bundles` revision 177 (`27A28034B63599E575142FF4884C459A88AB813E`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `98EDB259A35034636CD090294321F068CD63E9C4` | exact |
-| `fm.bundle` |  |  | `65CCE642EE5B94E16391C97177133375F22942E6` | exact |
-| `library-rental-common.bundle` |  |  | `36438C118FDF7FBAB9E330E16B4FC27B98833FE7` | exact |
-| `ra-2.x.bundle` |  |  | `39C68A6F1C088DAECAB50A9DD31610C90CEE7765` | exact |
+| `cp.bundle` |  |  | `D7CB2016564DE4E057218384D51A535F397F4295` | exact |
+| `fm.bundle` |  |  | `DBCDB87149373A007F11FBD7AA9604EE7BE4ED10` | exact |
+| `library-rental-common.bundle` |  |  | `6C7E662788B09156AD5120C625E8144F8A3E46DF` | exact |
+| `ra-2.x.bundle` |  |  | `1EF38A31D64A9B6EE0B87A8BF6F38DD4AFD39228` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
