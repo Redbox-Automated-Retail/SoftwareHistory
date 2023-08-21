@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Models;
@@ -50,4 +51,8 @@ public interface IProxyApi
 	Task<APIResponse<NearbyKiosksResponse>> GetNearbyKiosks(NearbyKiosksRequest request);
 
 	Task<APIResponse<KioskTitlesCountResponse>> KioskTitlesCount(KiosksAndTitlesPayload payload);
+
+	Task<APIResponse<ProductByTitleIdsResponse>> PostProductsByTitleIds(long kioskId, Guid messageId, ProductByTitleIdsRequest request);
+
+	Task<APIResponse<ProductByTitleIdsResponse>> PostProductsByTitleIds(long kioskId, Guid messageId, List<long> titleIds);
 }

@@ -33,6 +33,7 @@ using KioskClientService.API.Services.Marketing;
 using KioskClientService.API.Services.Personalization;
 using KioskClientService.API.Services.Planograms;
 using KioskClientService.API.Services.Pricing;
+using KioskClientService.API.Services.ProductCatalog;
 using KioskClientService.API.Services.ProductGroup;
 using KioskClientService.API.Services.Products.MoreLikeThis;
 using KioskClientService.API.Services.Products.ProductReelsApi;
@@ -170,6 +171,7 @@ public class Startup
 		services.AddMemoryCache();
 		services.AddKioskService();
 		services.AddDualService();
+		services.AddProductCatalogService();
 	}
 
 	public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger, IApplicationSettings applicationSettings, IOptionsSnapshotKioskConfiguration kioskConfigiuration)

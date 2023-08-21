@@ -47,6 +47,8 @@ internal class ProxyApi : IProxyApi
 
 	private const string _subscription = "api/subscription";
 
+	private const string _product = "api/product";
+
 	private const string _proxyAuthHeader = "x-api-key";
 
 	private string ProxyApiUrl
@@ -205,6 +207,19 @@ internal class ProxyApi : IProxyApi
 	public async Task<APIResponse<KioskTitlesCountResponse>> KioskTitlesCount(KiosksAndTitlesPayload payload)
 	{
 		return await _httpService.SendRequest<KioskTitlesCountResponse>(ProxyApiUrl, "api/inventory/kiosktitlescount", payload, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(payload.MessageId, payload.SourceKioskId).AddCompression());
+	}
+
+	public async Task<APIResponse<ProductByTitleIdsResponse>> PostProductsByTitleIds(long kioskId, Guid messageId, ProductByTitleIdsRequest request)
+	{
+		return await _httpService.SendRequest<ProductByTitleIdsResponse>(ProxyApiUrl, "api/product/bytitleids", request, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(messageId, kioskId));
+	}
+
+	public async Task<APIResponse<ProductByTitleIdsResponse>> PostProductsByTitleIds(long kioskId, Guid messageId, List<long> titleIds)
+	{
+		return await _httpService.SendRequest<ProductByTitleIdsResponse>(ProxyApiUrl, "api/product/bytitleids", new
+		{
+			TitleIds = titleIds
+		}, HttpMethod.Post, _kioskCloudClientConfiguration.GetKioskCloudHeaders(messageId, kioskId));
 	}
 
 	private List<Header> GetHeaders(long kioskId)
