@@ -22,12 +22,13 @@ internal sealed class HWCorrectionStat : IHardwareCorrectionStatistic
 			int num = int.Parse(stack.Pop());
 			for (int i = 0; i < num; i++)
 			{
-				HWCorrectionStat hWCorrectionStat = new HWCorrectionStat();
-				hWCorrectionStat.Statistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(stack.Pop(), HardwareCorrectionStatistic.None);
-				hWCorrectionStat.CorrectionOk = stack.Pop().Equals("SUCCESS", StringComparison.CurrentCultureIgnoreCase);
-				hWCorrectionStat.ProgramName = stack.Pop();
-				hWCorrectionStat.CorrectionTime = DateTime.Parse(stack.Pop());
-				HWCorrectionStat item = hWCorrectionStat;
+				HWCorrectionStat item = new HWCorrectionStat
+				{
+					Statistic = Enum<HardwareCorrectionStatistic>.ParseIgnoringCase(stack.Pop(), HardwareCorrectionStatistic.None),
+					CorrectionOk = stack.Pop().Equals("SUCCESS", StringComparison.CurrentCultureIgnoreCase),
+					ProgramName = stack.Pop(),
+					CorrectionTime = DateTime.Parse(stack.Pop())
+				};
 				stats.Add(item);
 			}
 		}

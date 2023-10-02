@@ -92,7 +92,7 @@ public class PickerSensorsBar : UserControl
 			{
 				IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
 				IPickerSensorReadResult result = service.ReadPickerSensors(forceTrackClose: false);
-				flag = ErrorCodes.Success != result.Error;
+				flag = result.Error != ErrorCodes.Success;
 				if (!flag)
 				{
 					int i = 0;

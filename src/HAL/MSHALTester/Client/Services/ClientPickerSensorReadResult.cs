@@ -22,7 +22,7 @@ internal sealed class ClientPickerSensorReadResult : IPickerSensorReadResult, IR
 
 	public ErrorCodes Error { get; private set; }
 
-	public bool Success => ErrorCodes.Success == Error;
+	public bool Success => Error == ErrorCodes.Success;
 
 	public int InputCount => 6;
 
@@ -79,7 +79,8 @@ internal sealed class ClientPickerSensorReadResult : IPickerSensorReadResult, IR
 			m_sensors[num] = (text.Contains("BLOCKED") ? true : false);
 			if (m_sensors[num])
 			{
-				BlockedCount++;
+				int blockedCount = BlockedCount + 1;
+				BlockedCount = blockedCount;
 			}
 		}
 		Error = ErrorCodes.Success;

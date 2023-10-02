@@ -44,9 +44,9 @@ public class EditSlotData : Form
 
 	private int m_changes;
 
-	private int? m_preferredDeck = null;
+	private int? m_preferredDeck;
 
-	private int? m_qlmDeckNumber = null;
+	private int? m_qlmDeckNumber;
 
 	private readonly XmlNode DeckNode;
 
@@ -221,8 +221,7 @@ public class EditSlotData : Form
 			}
 			bool flag = direction == Direction.Up || direction == Direction.Down;
 			int num = (flag ? (CurrentEY + result) : (CurrentEX + result));
-			MoveHelper moveHelper = new MoveHelper(Service);
-			ErrorCodes errorCodes = moveHelper.MoveAbs(flag ? Axis.Y : Axis.X, num);
+			ErrorCodes errorCodes = new MoveHelper(Service).MoveAbs(flag ? Axis.Y : Axis.X, num);
 			OutputBox.Write("MOVE {0} {1} UNITS - New Location {2} ...", direction.ToString().ToUpper(), text, num);
 			OutputBox.Write(errorCodes.ToString());
 			if (errorCodes != ErrorCodes.Success)
@@ -394,7 +393,7 @@ public class EditSlotData : Form
 				controlResponse = service.SetFinger(GripperFingerState.Closed);
 			}
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.Append(string.Concat(button.Tag, " ... "));
+			stringBuilder.Append(button.Tag?.ToString() + " ... ");
 			if (controlResponse.CommError)
 			{
 				stringBuilder.Append(controlResponse.Diagnostic);

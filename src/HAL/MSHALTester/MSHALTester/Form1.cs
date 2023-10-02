@@ -31,10 +31,6 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		Down
 	}
 
-	private const int MaxMoveXUnits = 10;
-
-	private const int MaxMoveYUnits = 200;
-
 	private ImageViewer ImageViewer;
 
 	private bool RinglightOn;
@@ -70,6 +66,10 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	private readonly MoveHelper MoveHelper;
 
 	private readonly Button[] FormButtons;
+
+	private const int MaxMoveXUnits = 10;
+
+	private const int MaxMoveYUnits = 200;
 
 	private IContainer components;
 
@@ -514,19 +514,16 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private void CompileScripts()
 	{
-		IRuntimeService service = ServiceLocator.Instance.GetService<IRuntimeService>();
-		string path = service.RuntimePath("Scripts");
+		string path = ServiceLocator.Instance.GetService<IRuntimeService>().RuntimePath("Scripts");
 		if (!Directory.Exists(path))
 		{
 			return;
 		}
 		string[] files = Directory.GetFiles(path, "*.hs");
-		string[] array = files;
-		foreach (string path2 in array)
+		foreach (string path2 in files)
 		{
 			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(path2);
-			HardwareCommandResult hardwareCommandResult = HardwareService.CompileProgram(path2, fileNameWithoutExtension, requiresClientConnection: false);
-			if (!hardwareCommandResult.Success)
+			if (!HardwareService.CompileProgram(path2, fileNameWithoutExtension, requiresClientConnection: false).Success)
 			{
 				LogHelper.Instance.Log("Failed to compile script {0} ", fileNameWithoutExtension);
 			}
@@ -594,9 +591,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 			if (CameraHelper.LegacyCamera)
 			{
 				bool flag = !RinglightOn;
-				IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-				IControlResponse controlResponse = service.ToggleRingLight(flag, null);
-				if (controlResponse.Success)
+				if (ServiceLocator.Instance.GetService<IControlSystem>().ToggleRingLight(flag, null).Success)
 				{
 					RinglightOn = flag;
 					buttonAspects.Button.Text = (RinglightOn ? "Turn Ringlight Off" : "Turn Ringlight On");
@@ -714,22 +709,24 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		if (!VMZConfigured)
 		{
 			OnExecuteResponseInstruction(aspect);
-			return;
-		}
-		ConfirmationDialog confirmationDialog = new ConfirmationDialog();
-		if (confirmationDialog.ShowDialog() != DialogResult.OK)
-		{
-			return;
-		}
-		using TestRetrofitDeck testRetrofitDeck = new TestRetrofitDeck(HardwareService);
-		testRetrofitDeck.Run();
-		if (HardwareJobStatus.Completed == testRetrofitDeck.EndStatus)
-		{
-			OutputBox.Write("Test succeeded.");
 		}
 		else
 		{
-			OutputBox.Write("The test failed.");
+			if (new ConfirmationDialog().ShowDialog() != DialogResult.OK)
+			{
+				return;
+			}
+			using TestRetrofitDeck testRetrofitDeck = new TestRetrofitDeck(HardwareService);
+			testRetrofitDeck.Run();
+			if (HardwareJobStatus.Completed == testRetrofitDeck.EndStatus)
+			{
+				OutputBox.Write("Test succeeded.");
+			}
+			else
+			{
+				OutputBox.Write("The test failed.");
+			}
+			return;
 		}
 	}
 
@@ -851,7 +848,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 				int value2 = position.YCoordinate.Value;
 				Axis axis = ((direction == Direction.Up || direction == Direction.Down) ? Axis.Y : Axis.X);
 				int units = ((Axis.Y == axis) ? (value2 + result) : (value + result));
-				ErrorCodes errorCodes = MoveHelper.MoveAbs(axis, units, !m_secure || !flag);
+				ErrorCodes errorCodes = MoveHelper.MoveAbs(axis, units, !(m_secure & flag));
 				OutputBox.Write(errorCodes.ToString().ToUpper());
 			}
 			else
@@ -887,13 +884,12 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 	private void StopJobs()
 	{
 		int num = 0;
-		HardwareCommandResult jobs = HardwareService.GetJobs(out var jobs2);
-		if (!jobs.Success)
+		if (!HardwareService.GetJobs(out var jobs).Success)
 		{
 			OutputBox.Write("Unable to read job list - JOBS MAY BE ACTIVE!");
 			return;
 		}
-		HardwareJob[] array = jobs2;
+		HardwareJob[] array = jobs;
 		foreach (HardwareJob hardwareJob in array)
 		{
 			if ((hardwareJob.Status == HardwareJobStatus.Pending || hardwareJob.Status == HardwareJobStatus.Running) && !hardwareJob.ProgramName.Equals("job-watchdog"))
@@ -1040,24 +1036,24 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 				OutputBox.Write(Resources.SourceDeckSlotInvalid);
 				return;
 			}
-			List<Location> list = new List<Location>();
-			list.Add(new Location
+			List<Location> locations = new List<Location>
 			{
-				Deck = sourceDeck,
-				Slot = sourceSlot
-			});
-			List<Location> locations = list;
-			HardwareCommandResult hardwareCommandResult = HardwareService.HardSync(locations, "Tester Location Sync", new HardwareJobSchedule
+				new Location
+				{
+					Deck = sourceDeck,
+					Slot = sourceSlot
+				}
+			};
+			if (!HardwareService.HardSync(locations, "Tester Location Sync", new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.Highest
-			}, out var job);
-			if (!hardwareCommandResult.Success)
+			}, out var job).Success)
 			{
 				OutputBox.Write("Unable to communicate with HAL.");
 				return;
 			}
 			job.Pend();
-			hardwareCommandResult = job.WaitForCompletion(300000);
+			job.WaitForCompletion(300000);
 			if (!job.GetSymbols(out var symbols).Success)
 			{
 				return;
@@ -1130,8 +1126,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 			}
 			TransferLocation source = new TransferLocation(sourceDeck, sourceSlot);
 			TransferLocation target = new TransferLocation(integer, integer2);
-			TransferDisk transferDisk = new TransferDisk(HardwareService);
-			topOfStack = transferDisk.Transfer(source, target);
+			topOfStack = new TransferDisk(HardwareService).Transfer(source, target);
 			OutputBox.Write("Transfer " + topOfStack);
 			m_destinationDeckText.Text = string.Empty;
 			m_destinationSlotText.Text = string.Empty;
@@ -1191,8 +1186,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		{
 			if (buttonAspects.Button != null)
 			{
-				IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-				IReadInputsResult<PickerInputs> inputs = service.ReadPickerInputs();
+				IReadInputsResult<PickerInputs> inputs = ServiceLocator.Instance.GetService<IControlSystem>().ReadPickerInputs();
 				WriteInputs(inputs, "PICKER CONTROLLER");
 			}
 		}
@@ -1209,8 +1203,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 		{
 			if (buttonAspects.Button != null)
 			{
-				IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-				IReadInputsResult<AuxInputs> inputs = service.ReadAuxInputs();
+				IReadInputsResult<AuxInputs> inputs = ServiceLocator.Instance.GetService<IControlSystem>().ReadAuxInputs();
 				WriteInputs(inputs, "AUX-QLM");
 			}
 		}
@@ -1242,16 +1235,14 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private void button15_Click(object sender, EventArgs e)
 	{
-		AdvancedMode advancedMode = new AdvancedMode(HardwareService);
-		advancedMode.ShowDialog();
+		new AdvancedMode(HardwareService).ShowDialog();
 	}
 
 	private void button58_Click(object sender, EventArgs e)
 	{
 		try
 		{
-			DeckConfigurationForm deckConfigurationForm = new DeckConfigurationForm(HardwareService);
-			deckConfigurationForm.ShowDialog();
+			new DeckConfigurationForm(HardwareService).ShowDialog();
 		}
 		catch (Exception ex)
 		{
@@ -1263,10 +1254,9 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private void button59_Click(object sender, EventArgs e)
 	{
-		Process process = null;
 		try
 		{
-			process = new Process();
+			Process process = new Process();
 			process.StartInfo.Arguments = "c:\\Program Files\\Redbox\\KioskLogs\\ErrorLogs";
 			process.StartInfo.FileName = "explorer.exe";
 			process.Start();
@@ -1340,8 +1330,7 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 			configuredDevicesForm.AllowSessionDisplay = Settings.Default.AllowSessionDisplay;
 			configuredDevicesForm.RouterPowerCyclePause = Settings.Default.RouterRelayPause;
 			configuredDevicesForm.DisplayEngineeringTab = Settings.Default.DisplayEngineeringTab;
-			ConfiguredDevicesForm configuredDevicesForm2 = configuredDevicesForm;
-			configuredDevicesForm2.ShowDialog();
+			configuredDevicesForm.ShowDialog();
 			ChangeUIAfterconfig();
 		}
 	}
@@ -1741,11 +1730,11 @@ public class Form1 : Form, IDisposable, IClientOutputSink, ILogger
 
 	private void ToggleFormButtons(bool enable)
 	{
-		m_configureDevicesButton.Enabled = m_secure && enable;
-		m_deckConfigurationButton.Enabled = m_secure && enable;
-		m_updateConfigurationButton.Enabled = m_secure && enable;
-		m_sensorCheckBox.Enabled = m_secure && enable;
-		m_openLogsButton.Enabled = m_secure && enable;
+		m_configureDevicesButton.Enabled = m_secure & enable;
+		m_deckConfigurationButton.Enabled = m_secure & enable;
+		m_updateConfigurationButton.Enabled = m_secure & enable;
+		m_sensorCheckBox.Enabled = m_secure & enable;
+		m_openLogsButton.Enabled = m_secure & enable;
 		Array.ForEach(FormButtons, delegate(Button each)
 		{
 			each.Enabled = enable;

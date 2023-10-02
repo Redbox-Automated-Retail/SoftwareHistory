@@ -82,11 +82,10 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 		SnapDecodeStatus = TestState.Failure;
 		List<Location> list = new List<Location>();
 		list.Add(loc);
-		HardwareCommandResult hardwareCommandResult = Service.HardSync(list, "KFC Test Sync", new HardwareJobSchedule
+		if (!Service.HardSync(list, "KFC Test Sync", new HardwareJobSchedule
 		{
 			Priority = HardwareJobPriority.Highest
-		}, out var job);
-		if (!hardwareCommandResult.Success)
+		}, out var job).Success)
 		{
 			Box.Write("Unable to communicate with HAL.");
 		}
@@ -109,9 +108,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 							text = text.Substring(num2 + 1);
 							string[] array = text.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 							_ = array[0];
-							string text2 = array[2];
-							text2 = text2.Substring(1, 1);
-							int num3 = Convert.ToInt32(text2);
+							int num3 = Convert.ToInt32(array[2].Substring(1, 1));
 							TimeSpan timeSpan = TimeSpan.Parse(array[5]);
 							SnapDecodeStatus = ((num3 >= num && timeSpan.Seconds <= 0) ? TestState.Success : TestState.Failure);
 							break;
@@ -131,8 +128,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 	{
 		VendDoorStatus = TestState.Failure;
 		IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-		IControlResponse controlResponse = service.VendDoorRent();
-		if (controlResponse.Success)
+		if (service.VendDoorRent().Success)
 		{
 			Thread.Sleep(500);
 			VendDoorStatus = (service.VendDoorClose().Success ? TestState.Success : TestState.Failure);
@@ -222,8 +218,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	private TestState MatchCamera()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		IDeviceDescriptor deviceDescriptor = service.FindActiveCamera(matchDriver: true);
+		IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindActiveCamera(matchDriver: true);
 		if (deviceDescriptor != null)
 		{
 			CameraDriverStatus = TestState.Success;
@@ -239,8 +234,7 @@ internal sealed class KioskFunctionTest : JobExecutor, IKioskFunctionCheckData
 
 	private TestState MatchTS()
 	{
-		IUsbDeviceService service = ServiceLocator.Instance.GetService<IUsbDeviceService>();
-		IDeviceDescriptor deviceDescriptor = service.FindTouchScreen(matchDriver: true);
+		IDeviceDescriptor deviceDescriptor = ServiceLocator.Instance.GetService<IUsbDeviceService>().FindTouchScreen(matchDriver: true);
 		if (deviceDescriptor != null)
 		{
 			TSDriverStatus = TestState.Success;

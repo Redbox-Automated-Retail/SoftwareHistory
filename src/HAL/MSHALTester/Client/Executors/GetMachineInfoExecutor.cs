@@ -37,21 +37,18 @@ public sealed class GetMachineInfoExecutor : JobExecutor
 			bool flag = false;
 			foreach (ProgramResult result in base.Results)
 			{
-				switch (result.Code)
+				string code = result.Code;
+				if (!(code == "QlmInfo"))
 				{
-				case "QlmInfo":
+					if (code == "DeckInfo")
+					{
+						LocateOrCreate(result.Deck, list).SlotCount = result.Slot;
+					}
+				}
+				else
 				{
 					flag = true;
-					DeckConfiguration deckConfiguration2 = LocateOrCreate(result.Deck, list);
-					deckConfiguration2.IsQlm = true;
-					break;
-				}
-				case "DeckInfo":
-				{
-					DeckConfiguration deckConfiguration = LocateOrCreate(result.Deck, list);
-					deckConfiguration.SlotCount = result.Slot;
-					break;
-				}
+					LocateOrCreate(result.Deck, list).IsQlm = true;
 				}
 			}
 			list.Sort((DeckConfiguration x, DeckConfiguration y) => x.Number.CompareTo(y.Number));
@@ -61,8 +58,8 @@ public sealed class GetMachineInfoExecutor : JobExecutor
 			}
 			else
 			{
-				DeckConfiguration deckConfiguration3 = list[0];
-				Info.Configuration = ((deckConfiguration3.SlotCount != 90) ? KioskConfiguration.R504 : KioskConfiguration.R630);
+				DeckConfiguration deckConfiguration = list[0];
+				Info.Configuration = ((deckConfiguration.SlotCount != 90) ? KioskConfiguration.R504 : KioskConfiguration.R630);
 			}
 			list.ForEach(delegate(DeckConfiguration each)
 			{
@@ -80,9 +77,10 @@ public sealed class GetMachineInfoExecutor : JobExecutor
 		DeckConfiguration deckConfiguration = list.Find((DeckConfiguration each) => each.Number == deck);
 		if (deckConfiguration == null)
 		{
-			DeckConfiguration deckConfiguration2 = new DeckConfiguration();
-			deckConfiguration2.Number = deck;
-			deckConfiguration = deckConfiguration2;
+			deckConfiguration = new DeckConfiguration
+			{
+				Number = deck
+			};
 			list.Add(deckConfiguration);
 		}
 		return deckConfiguration;

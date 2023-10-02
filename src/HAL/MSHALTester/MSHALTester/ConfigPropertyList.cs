@@ -124,8 +124,7 @@ public class ConfigPropertyList : UserControl, IDisposable
 		{
 			if (m_cameraConfig != null)
 			{
-				HardwareCommandResult hardwareCommandResult = Service.SetConfiguration("camera", m_camera.InnerXml);
-				if (!hardwareCommandResult.Success)
+				if (!Service.SetConfiguration("camera", m_camera.InnerXml).Success)
 				{
 					SaveFailed();
 					return;
@@ -137,8 +136,7 @@ public class ConfigPropertyList : UserControl, IDisposable
 			}
 			if (m_controllerConfig != null)
 			{
-				HardwareCommandResult hardwareCommandResult2 = Service.SetConfiguration("controller", m_controller.InnerXml);
-				if (!hardwareCommandResult2.Success)
+				if (!Service.SetConfiguration("controller", m_controller.InnerXml).Success)
 				{
 					SaveFailed();
 					return;
@@ -167,12 +165,12 @@ public class ConfigPropertyList : UserControl, IDisposable
 		int num = (toolTip3.AutoPopDelay = 5000);
 		int autoPopDelay = (toolTip2.AutoPopDelay = num);
 		toolTip.AutoPopDelay = autoPopDelay;
-		int num4 = (toolTip3.InitialDelay = 1000);
-		int initialDelay = (toolTip2.InitialDelay = num4);
-		toolTip.InitialDelay = initialDelay;
-		int num7 = (toolTip3.ReshowDelay = 500);
-		int reshowDelay = (toolTip2.ReshowDelay = num7);
-		toolTip.ReshowDelay = reshowDelay;
+		num = (toolTip3.InitialDelay = 1000);
+		autoPopDelay = (toolTip2.InitialDelay = num);
+		toolTip.InitialDelay = autoPopDelay;
+		num = (toolTip3.ReshowDelay = 500);
+		autoPopDelay = (toolTip2.ReshowDelay = num);
+		toolTip.ReshowDelay = autoPopDelay;
 		bool flag = (toolTip3.ShowAlways = true);
 		bool showAlways = (toolTip2.ShowAlways = flag);
 		toolTip.ShowAlways = showAlways;
@@ -383,7 +381,7 @@ public class ConfigPropertyList : UserControl, IDisposable
 	{
 		if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && e.RowIndex <= m_propertyDataGridView.Rows.Count - 1 && e.ColumnIndex <= 1)
 		{
-			DataGridViewButtonCell dataGridViewButtonCell = m_propertyDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex] as DataGridViewButtonCell;
+			_ = m_propertyDataGridView.Rows[e.RowIndex].Cells[e.ColumnIndex] is DataGridViewButtonCell;
 		}
 	}
 

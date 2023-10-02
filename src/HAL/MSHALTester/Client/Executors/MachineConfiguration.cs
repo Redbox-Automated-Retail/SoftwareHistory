@@ -87,125 +87,234 @@ public sealed class MachineConfiguration : JobExecutor
 		ExcludedSlots = new List<Location>();
 		base.Results.ForEach(delegate(ProgramResult result)
 		{
-			switch (result.Code)
+			string code = result.Code;
+			if (code != null)
 			{
-			case "AuxRelayBoard":
-				HasAuxRelayBoard = result.Message == "Configured";
-				break;
-			case "MachineConfig":
-				IsDenseMachine = result.Message == "Dense";
-				break;
-			case "CameraConfig":
-				LegacyCamera = result.Message == "Legacy";
-				ConfiguredCamera = Enum<ScannerServices>.ParseIgnoringCase(result.Message, ScannerServices.Legacy);
-				break;
-			case "CurrentCameraGeneration":
-				CurrentCameraGeneration = Enum<CameraGeneration>.ParseIgnoringCase(result.Message, CameraGeneration.Unknown);
-				break;
-			case "BarcodeDecoder":
-				BarcodeDecoder = Enum<BarcodeServices>.ParseIgnoringCase(result.Message, BarcodeServices.None);
-				break;
-			case "MerchMode":
-				VMZConfigured = result.Message == "VMZ";
-				break;
-			case "DoorSensors":
-				DoorSensorsConfigured = result.Message == "On";
-				break;
-			case "DoorSensorStatus":
-				DoorSensorStatus = result.Message;
-				break;
-			case "AirExchangerConfigured":
-				AirExchangerConfigured = result.Message == "Configured";
-				break;
-			case "FraudSensorEnabled":
-				HasFraudDevice = result.Message == "Enabled";
-				break;
-			case "AbeDeviceStatus":
-				HasABEDevice = result.Message.Equals("ATTACHED", StringComparison.CurrentCultureIgnoreCase);
-				break;
-			case "AirExchangerStatus":
-				AirExchangerStatus = Enum<AirExchangerStatus>.ParseIgnoringCase(result.Message, AirExchangerStatus.NotConfigured);
-				break;
-			case "AirExchangerFanStatus":
-				AirExchangerFanStatus = Enum<ExchangerFanStatus>.ParseIgnoringCase(result.Message, ExchangerFanStatus.On);
-				break;
-			case "RouterPowerRelay":
-				HasRouterPowerRelay = result.Message == "Configured";
-				break;
-			case "SupportsArcusReset":
-				ArcusResetConfigured = result.Message == "Configured";
-				break;
-			case "IRCameraHardwareInstall":
-				if (result.Message != "NONE")
+				switch (code.Length)
 				{
-					try
+				case 13:
+					switch (code[0])
 					{
-						IRHardwareInstall = DateTime.Parse(result.Message);
+					case 'A':
+						if (code == "AuxRelayBoard")
+						{
+							HasAuxRelayBoard = result.Message == "Configured";
+						}
+						break;
+					case 'M':
+						if (code == "MachineConfig")
+						{
+							IsDenseMachine = result.Message == "Dense";
+						}
 						break;
 					}
-					catch
+					break;
+				case 12:
+					switch (code[0])
 					{
-						IRHardwareInstall = null;
+					case 'C':
+						if (code == "CameraConfig")
+						{
+							LegacyCamera = result.Message == "Legacy";
+							ConfiguredCamera = Enum<ScannerServices>.ParseIgnoringCase(result.Message, ScannerServices.Legacy);
+						}
+						break;
+					case 'E':
+						if (code == "ExcludedSlot")
+						{
+							ExcludedSlots.Add(new Location
+							{
+								Deck = result.Deck,
+								Slot = result.Slot
+							});
+						}
 						break;
 					}
+					break;
+				case 23:
+					switch (code[0])
+					{
+					case 'C':
+						if (code == "CurrentCameraGeneration")
+						{
+							CurrentCameraGeneration = Enum<CameraGeneration>.ParseIgnoringCase(result.Message, CameraGeneration.Unknown);
+						}
+						break;
+					case 'I':
+						if (code == "IRCameraHardwareInstall" && result.Message != "NONE")
+						{
+							try
+							{
+								IRHardwareInstall = DateTime.Parse(result.Message);
+								break;
+							}
+							catch
+							{
+								IRHardwareInstall = null;
+								break;
+							}
+						}
+						break;
+					}
+					break;
+				case 14:
+					switch (code[0])
+					{
+					case 'B':
+						if (code == "BarcodeDecoder")
+						{
+							BarcodeDecoder = Enum<BarcodeServices>.ParseIgnoringCase(result.Message, BarcodeServices.None);
+						}
+						break;
+					case 'D':
+						if (code == "DisableKFCInit")
+						{
+							bool result3 = false;
+							KFCDisableInit = bool.TryParse(result.Message, out result3) && result3;
+						}
+						break;
+					}
+					break;
+				case 11:
+					switch (code[0])
+					{
+					case 'D':
+						if (code == "DoorSensors")
+						{
+							DoorSensorsConfigured = result.Message == "On";
+						}
+						break;
+					case 'M':
+						if (code == "MaxDeckInfo")
+						{
+							MaxDeck = result.Deck;
+							MaxSlot = result.Slot;
+						}
+						break;
+					}
+					break;
+				case 16:
+					switch (code[0])
+					{
+					case 'D':
+						if (code == "DoorSensorStatus")
+						{
+							DoorSensorStatus = result.Message;
+						}
+						break;
+					case 'R':
+						if (code == "RouterPowerRelay")
+						{
+							HasRouterPowerRelay = result.Message == "Configured";
+						}
+						break;
+					}
+					break;
+				case 22:
+					switch (code[10])
+					{
+					case 'e':
+						if (code == "AirExchangerConfigured")
+						{
+							AirExchangerConfigured = result.Message == "Configured";
+						}
+						break;
+					case 'C':
+						if (code == "DisableKFCCheckDrivers")
+						{
+							bool result8 = false;
+							KFCDisableCheckDrivers = bool.TryParse(result.Message, out result8) && result8;
+						}
+						break;
+					case 'T':
+						if (code == "DisableKFCTestVendDoor")
+						{
+							bool result7 = false;
+							KFCDisableVendDoorTest = bool.TryParse(result.Message, out result7) && result7;
+						}
+						break;
+					case 'U':
+						if (code == "DisableKFCUnknownCount")
+						{
+							bool result6 = false;
+							KFCDisableUnknownCount = bool.TryParse(result.Message, out result6) && result6;
+						}
+						break;
+					}
+					break;
+				case 18:
+					switch (code[0])
+					{
+					case 'F':
+						if (code == "FraudSensorEnabled")
+						{
+							HasFraudDevice = result.Message == "Enabled";
+						}
+						break;
+					case 'A':
+						if (code == "AirExchangerStatus")
+						{
+							AirExchangerStatus = Enum<AirExchangerStatus>.ParseIgnoringCase(result.Message, AirExchangerStatus.NotConfigured);
+						}
+						break;
+					case 'S':
+						if (code == "SupportsArcusReset")
+						{
+							ArcusResetConfigured = result.Message == "Configured";
+						}
+						break;
+					}
+					break;
+				case 9:
+					if (code == "MerchMode")
+					{
+						VMZConfigured = result.Message == "VMZ";
+					}
+					break;
+				case 15:
+					if (code == "AbeDeviceStatus")
+					{
+						HasABEDevice = result.Message.Equals("ATTACHED", StringComparison.CurrentCultureIgnoreCase);
+					}
+					break;
+				case 21:
+					if (code == "AirExchangerFanStatus")
+					{
+						AirExchangerFanStatus = Enum<ExchangerFanStatus>.ParseIgnoringCase(result.Message, ExchangerFanStatus.On);
+					}
+					break;
+				case 17:
+					if (code == "SupportsFraudScan")
+					{
+						SupportsFraudScan = result.Message == "Configured";
+					}
+					break;
+				case 10:
+					if (code == "BufferSlot")
+					{
+						int result5 = 1;
+						BufferSlot = ((!int.TryParse(result.Message, out result5)) ? 1 : result5);
+					}
+					break;
+				case 20:
+					if (code == "DisableKFCDecodeTest")
+					{
+						bool result4 = false;
+						KFCDisableDecodeTest = bool.TryParse(result.Message, out result4) && result4;
+					}
+					break;
+				case 26:
+					if (code == "DisableKFCVerticalSlotTest")
+					{
+						bool result2 = false;
+						KFCDisableVerticalSlotTest = bool.TryParse(result.Message, out result2) && result2;
+					}
+					break;
+				case 19:
+				case 24:
+				case 25:
+					break;
 				}
-				break;
-			case "SupportsFraudScan":
-				SupportsFraudScan = result.Message == "Configured";
-				break;
-			case "ExcludedSlot":
-				ExcludedSlots.Add(new Location
-				{
-					Deck = result.Deck,
-					Slot = result.Slot
-				});
-				break;
-			case "MaxDeckInfo":
-				MaxDeck = result.Deck;
-				MaxSlot = result.Slot;
-				break;
-			case "BufferSlot":
-			{
-				int result8 = 1;
-				BufferSlot = ((!int.TryParse(result.Message, out result8)) ? 1 : result8);
-				break;
-			}
-			case "DisableKFCCheckDrivers":
-			{
-				bool result7 = false;
-				KFCDisableCheckDrivers = bool.TryParse(result.Message, out result7) && result7;
-				break;
-			}
-			case "DisableKFCDecodeTest":
-			{
-				bool result6 = false;
-				KFCDisableDecodeTest = bool.TryParse(result.Message, out result6) && result6;
-				break;
-			}
-			case "DisableKFCTestVendDoor":
-			{
-				bool result5 = false;
-				KFCDisableVendDoorTest = bool.TryParse(result.Message, out result5) && result5;
-				break;
-			}
-			case "DisableKFCInit":
-			{
-				bool result4 = false;
-				KFCDisableInit = bool.TryParse(result.Message, out result4) && result4;
-				break;
-			}
-			case "DisableKFCVerticalSlotTest":
-			{
-				bool result3 = false;
-				KFCDisableVerticalSlotTest = bool.TryParse(result.Message, out result3) && result3;
-				break;
-			}
-			case "DisableKFCUnknownCount":
-			{
-				bool result2 = false;
-				KFCDisableUnknownCount = bool.TryParse(result.Message, out result2) && result2;
-				break;
-			}
 			}
 		});
 	}

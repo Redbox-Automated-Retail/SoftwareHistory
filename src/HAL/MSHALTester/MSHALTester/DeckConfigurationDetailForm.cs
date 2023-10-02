@@ -116,8 +116,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? YOffset
 	{
 		get
@@ -160,8 +160,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public decimal? SlotWidth
 	{
 		get
@@ -204,8 +204,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? SellThruOffset
 	{
 		get
@@ -248,8 +248,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? SlotsPerQuadrant
 	{
 		get
@@ -285,8 +285,8 @@ public class DeckConfigurationDetailForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public bool HasDumpSlot
 	{
 		get
@@ -451,16 +451,17 @@ public class DeckConfigurationDetailForm : Form
 		if (SlotWidth.HasValue)
 		{
 			decimal? slotWidth = SlotWidth;
-			if (!(slotWidth.GetValueOrDefault() <= 0m) || !slotWidth.HasValue)
+			if (!((slotWidth.GetValueOrDefault() <= 0m) & slotWidth.HasValue))
 			{
 				m_errorProvider.SetError(m_slotWidthTextBox, string.Empty);
-				ComputeQuadrantsForm computeQuadrantsForm = new ComputeQuadrantsForm();
-				computeQuadrantsForm.NumberOfQuadrants = ((NumberOfSlots == 90) ? 6 : 12);
-				computeQuadrantsForm.SlotsPerQuadrant = ((NumberOfSlots == 90) ? 15 : 6);
-				ComputeQuadrantsForm computeQuadrantsForm2 = computeQuadrantsForm;
-				if (DialogResult.Cancel != computeQuadrantsForm2.ShowDialog())
+				ComputeQuadrantsForm computeQuadrantsForm = new ComputeQuadrantsForm
 				{
-					CommonFunctions.ComputeQuadrants(computeQuadrantsForm2.StartOffset, computeQuadrantsForm2.NumberOfQuadrants, SellThruSlots, SellThruOffset, computeQuadrantsForm2.SlotsPerQuadrant, SlotWidth, WorkingNode);
+					NumberOfQuadrants = ((NumberOfSlots == 90) ? 6 : 12),
+					SlotsPerQuadrant = ((NumberOfSlots == 90) ? 15 : 6)
+				};
+				if (DialogResult.Cancel != computeQuadrantsForm.ShowDialog())
+				{
+					CommonFunctions.ComputeQuadrants(computeQuadrantsForm.StartOffset, computeQuadrantsForm.NumberOfQuadrants, SellThruSlots, SellThruOffset, computeQuadrantsForm.SlotsPerQuadrant, SlotWidth, WorkingNode);
 					RefreshView();
 				}
 				return;
@@ -473,8 +474,7 @@ public class DeckConfigurationDetailForm : Form
 	{
 		if (m_allowSlotDataEdit)
 		{
-			EditSlotData editSlotData = new EditSlotData(Service, Number.Value, Manager);
-			editSlotData.ShowDialog();
+			new EditSlotData(Service, Number.Value, Manager).ShowDialog();
 			WorkingNode = Manager.FindDeckNode(Number.Value).CloneNode(deep: true);
 			RefreshView();
 		}
@@ -484,12 +484,13 @@ public class DeckConfigurationDetailForm : Form
 	{
 		if (e.ColumnIndex == DeckConfigurationDetailColumns.Offset && e.RowIndex != -1)
 		{
-			NumberPadForm numberPadForm = new NumberPadForm();
-			numberPadForm.Text = "Offset";
-			NumberPadForm numberPadForm2 = numberPadForm;
-			if (numberPadForm2.ShowDialog() == DialogResult.OK && !string.IsNullOrEmpty(numberPadForm2.Number))
+			NumberPadForm numberPadForm = new NumberPadForm
 			{
-				m_quadrantDataGridView.EditingControl.Text = numberPadForm2.Number;
+				Text = "Offset"
+			};
+			if (numberPadForm.ShowDialog() == DialogResult.OK && !string.IsNullOrEmpty(numberPadForm.Number))
+			{
+				m_quadrantDataGridView.EditingControl.Text = numberPadForm.Number;
 			}
 		}
 	}
@@ -520,8 +521,7 @@ public class DeckConfigurationDetailForm : Form
 	private bool IsQuadrantExcluded(int quadrant)
 	{
 		DataGridViewCheckBoxCell dataGridViewCheckBoxCell = m_quadrantDataGridView.Rows[quadrant].Cells[DeckConfigurationDetailColumns.Excluded] as DataGridViewCheckBoxCell;
-		string text = dataGridViewCheckBoxCell.Value.ToString();
-		return text.Equals((string)dataGridViewCheckBoxCell.TrueValue, StringComparison.CurrentCultureIgnoreCase);
+		return dataGridViewCheckBoxCell.Value.ToString().Equals((string)dataGridViewCheckBoxCell.TrueValue, StringComparison.CurrentCultureIgnoreCase);
 	}
 
 	private void OnEditControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)

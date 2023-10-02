@@ -32,8 +32,7 @@ public sealed class DecksConfigurationManager
 	{
 		foreach (XmlNode childNode in DecksNode.ChildNodes)
 		{
-			int attributeValue = childNode.GetAttributeValue<int>("Number");
-			if (attributeValue == deckNumber)
+			if (childNode.GetAttributeValue<int>("Number") == deckNumber)
 			{
 				return childNode;
 			}
@@ -44,7 +43,7 @@ public sealed class DecksConfigurationManager
 	public bool FlushChanges(bool refresh)
 	{
 		HardwareCommandResult hardwareCommandResult = Service.SetConfiguration("controller", Document.OuterXml);
-		if (hardwareCommandResult.Success && refresh)
+		if (hardwareCommandResult.Success & refresh)
 		{
 			LoadConfiguration();
 		}

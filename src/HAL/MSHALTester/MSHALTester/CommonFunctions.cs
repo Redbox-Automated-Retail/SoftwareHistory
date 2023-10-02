@@ -12,10 +12,9 @@ public static class CommonFunctions
 		decimal? num = startOffset;
 		for (int i = 0; i < numberOfQuadrants; i++)
 		{
-			XmlNode node = deckNode.ChildNodes[i];
-			node.SetAttributeValue("Offset", (int)num.Value);
+			deckNode.ChildNodes[i].SetAttributeValue("Offset", (int)num.Value);
 			decimal? num2 = 0m;
-			num2 = ((!sellThruSlots.HasValue || !sellThruOffset.HasValue) ? ((decimal?)slotsPerQuadrant.Value * slotWidth + slotWidth) : ((decimal?)(slotsPerQuadrant - 1).Value * slotWidth + (decimal?)0.5m + (decimal?)466m));
+			num2 = ((!sellThruSlots.HasValue || !sellThruOffset.HasValue) ? ((decimal?)slotsPerQuadrant.Value * slotWidth + slotWidth) : ((decimal?)(slotsPerQuadrant - 1).Value * slotWidth + (decimal?)0.5m + (decimal?)466));
 			num += num2;
 		}
 		return true;

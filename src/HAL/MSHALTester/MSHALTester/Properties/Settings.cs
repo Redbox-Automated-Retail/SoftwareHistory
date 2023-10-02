@@ -6,22 +6,22 @@ using System.Runtime.CompilerServices;
 
 namespace Redbox.HAL.MSHALTester.Properties;
 
-[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
 [CompilerGenerated]
+[GeneratedCode("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "12.0.0.0")]
 public sealed class Settings : ApplicationSettingsBase
 {
 	private static Settings defaultInstance = (Settings)SettingsBase.Synchronized(new Settings());
 
 	public static Settings Default => defaultInstance;
 
-	[DefaultSettingValue("rcp://127.0.0.1:7001")]
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
+	[DefaultSettingValue("rcp://127.0.0.1:7001")]
 	public string CommunicationURL => (string)this["CommunicationURL"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("70000")]
-	[ApplicationScopedSetting]
 	public int ImmediateMoveTimeout => (int)this["ImmediateMoveTimeout"];
 
 	[ApplicationScopedSetting]
@@ -29,24 +29,24 @@ public sealed class Settings : ApplicationSettingsBase
 	[DefaultSettingValue("True")]
 	public bool CheckForRunningHAL => (bool)this["CheckForRunningHAL"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("False")]
-	[ApplicationScopedSetting]
 	public bool AllowSessionDisplay => (bool)this["AllowSessionDisplay"];
 
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
 	[DefaultSettingValue("True")]
 	public bool UsbServiceDebug => (bool)this["UsbServiceDebug"];
 
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
 	[DefaultSettingValue("True")]
 	public bool TestCommOnStartup => (bool)this["TestCommOnStartup"];
 
 	[UserScopedSetting]
-	[DefaultSettingValue("c:\\Program Files\\Redbox\\KioskLogs\\ErrorLogs\\Timeouts.log")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("c:\\Program Files\\Redbox\\KioskLogs\\ErrorLogs\\Timeouts.log")]
 	public string CountersFile
 	{
 		get
@@ -59,19 +59,19 @@ public sealed class Settings : ApplicationSettingsBase
 		}
 	}
 
-	[DebuggerNonUserCode]
 	[ApplicationScopedSetting]
+	[DebuggerNonUserCode]
 	[DefaultSettingValue("5000")]
 	public int RouterRelayPause => (int)this["RouterRelayPause"];
 
 	[ApplicationScopedSetting]
-	[DefaultSettingValue("False")]
 	[DebuggerNonUserCode]
+	[DefaultSettingValue("False")]
 	public bool DisplayEngineeringTab => (bool)this["DisplayEngineeringTab"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("c:\\Program Files\\Redbox\\HALService\\video")]
-	[ApplicationScopedSetting]
 	public string ImageDirectory => (string)this["ImageDirectory"];
 
 	[ApplicationScopedSetting]
@@ -79,9 +79,9 @@ public sealed class Settings : ApplicationSettingsBase
 	[DefaultSettingValue("c:\\Program Files\\Redbox\\halservice\\bin\\CameraTuner.exe")]
 	public string TunerApplication => (string)this["TunerApplication"];
 
+	[ApplicationScopedSetting]
 	[DebuggerNonUserCode]
 	[DefaultSettingValue("2500")]
-	[ApplicationScopedSetting]
 	public int TunerStartPause => (int)this["TunerStartPause"];
 
 	private void SettingChangingEventHandler(object sender, SettingChangingEventArgs e)

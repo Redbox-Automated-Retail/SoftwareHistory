@@ -18,13 +18,11 @@ internal static class TunerLaunchService
 	internal static void LaunchTunerAndWait(HardwareService service, ButtonAspectsManager manager)
 	{
 		service.ExecuteImmediateProgram(ShutdownCommand, out var job);
-		IRuntimeService service2 = ServiceLocator.Instance.GetService<IRuntimeService>();
-		service2.SpinWait(Settings.Default.TunerStartPause);
+		ServiceLocator.Instance.GetService<IRuntimeService>().SpinWait(Settings.Default.TunerStartPause);
 		string tunerApplication = Settings.Default.TunerApplication;
 		if (File.Exists(tunerApplication))
 		{
-			Process process = Process.Start(tunerApplication, string.Empty);
-			process.WaitForExit();
+			Process.Start(tunerApplication, string.Empty).WaitForExit();
 		}
 		else
 		{

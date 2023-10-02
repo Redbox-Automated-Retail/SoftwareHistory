@@ -27,8 +27,8 @@ public class ComputeQuadrantsForm : Form
 
 	private Label label3;
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public decimal? StartOffset
 	{
 		get
@@ -71,8 +71,8 @@ public class ComputeQuadrantsForm : Form
 		}
 	}
 
-	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	[Browsable(false)]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 	public int? SlotsPerQuadrant
 	{
 		get
@@ -118,7 +118,7 @@ public class ComputeQuadrantsForm : Form
 			return;
 		}
 		decimal? startOffset = StartOffset;
-		if (startOffset.GetValueOrDefault() < 0m && startOffset.HasValue)
+		if ((startOffset.GetValueOrDefault() < 0m) & startOffset.HasValue)
 		{
 			m_errorProvider.SetError(m_startOffsetTextBox, "Start Offset must be a positive value.");
 			return;

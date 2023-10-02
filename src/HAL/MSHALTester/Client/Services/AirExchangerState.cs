@@ -14,7 +14,7 @@ public sealed class AirExchangerState
 
 	public ExchangerFanStatus Configure(AirExchangerStatus exchgrStatus, ExchangerFanStatus fanStatus)
 	{
-		Configured = AirExchangerStatus.NotConfigured != exchgrStatus;
+		Configured = exchgrStatus != AirExchangerStatus.NotConfigured;
 		FanStatus = fanStatus;
 		return FanStatus;
 	}
@@ -22,8 +22,7 @@ public sealed class AirExchangerState
 	public ExchangerFanStatus ToggleFan()
 	{
 		string statement = string.Format("{0} {1}", "AIRXCHGR", (ExchangerFanStatus.On == FanStatus) ? "FANOFF" : "FANON");
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, out var _);
-		if (hardwareCommandResult.Success)
+		if (Service.ExecuteImmediate(statement, out var _).Success)
 		{
 			if (ExchangerFanStatus.On == FanStatus)
 			{
@@ -40,8 +39,7 @@ public sealed class AirExchangerState
 	public bool ToggleConfiguration()
 	{
 		bool configured = !Configured;
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate($"SETCFG \"EnableIceQubePolling\" \"{configured.ToString()}\" TYPE=CONTROLLER", out var _);
-		if (hardwareCommandResult.Success)
+		if (Service.ExecuteImmediate($"SETCFG \"EnableIceQubePolling\" \"{configured.ToString()}\" TYPE=CONTROLLER", out var _).Success)
 		{
 			Configured = configured;
 			return true;

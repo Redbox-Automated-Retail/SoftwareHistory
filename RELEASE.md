@@ -1,12 +1,12 @@
 # Z (1.13.0.27)
 
-- Product: HAL 1.13.0.27
-- Date (first download in the snapshots): 2023-08-20
-- Store labels: kop-hal-install-Z
+- Product: MS HAL Tester 1.13.0.27
+- Date (first download in the snapshots): 2023-10-01
+- Store labels: kop-ms-hal-tester-Z
 - Package revisions:
   - `kop-tools` revision 53 (`2B7B649EEB1A549EF695FE099CE347A46383F3D5`)
   - `kop-hal-install` revision 73 (`88719D25F5482A6CB6197BF416243911E2EA82E9`)
-  - `kop-ms-hal-tester` revision 56 (`A5F1A443160AF6F81A04FB5CC58C8909B03686C0`)
+  - `kop-ms-hal-tester` revision 57 (`750AAC5796B12F9ACF29D79D2C637E4BA9DA2F52`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -43,7 +43,7 @@
 | `thin.hs` |  |  | `FF58C0584EFC280788D7D3C631DFB3DFF11B647F` | exact |
 | `unload-thin.hs` |  |  | `A9B4D227BCB0C3EBDE075D5A8141F6A9CED09F2C` | exact |
 | `vend-unknown.hs` |  |  | `7E4CB2D3ADC5BC712E65E928D699F78595B877E8` | exact |
-| `MSHALTester.exe` | MSHALTester | 1.12.1.71 | `9FFE42668102B88C16843D67E94426E4ED032201` | exact |
+| `MSHALTester.exe` | MSHALTester | 1.13.0.27 | `1D89854F215A4F8533FE85FA12CB2F53262F626D` | exact |
 | `ms-pull-in-dvd.hs` |  |  | `AD098EF8CEC405C953ADEB8E4F0AC56152238251` | exact |
 | `ms-vend-disk-in-picker.hs` |  |  | `3C99EE3C3C172D8ED687C45BFF133EEACD50E087` | exact |
 | `afteractivate.lua` |  |  | `9ABCA1B521CB1DBF18571543AE2A73904CE11FE8` | exact |

@@ -98,8 +98,7 @@ public class AdvancedMode : Form
 	{
 		try
 		{
-			DeckConfigurationForm deckConfigurationForm = new DeckConfigurationForm(Service);
-			deckConfigurationForm.ShowDialog();
+			new DeckConfigurationForm(Service).ShowDialog();
 		}
 		catch (Exception e2)
 		{
@@ -118,9 +117,7 @@ public class AdvancedMode : Form
 			HardwareJob[] array = jobs;
 			foreach (HardwareJob nj in array)
 			{
-				List<HardwareJobAdapter> jobList = JobList;
-				Predicate<HardwareJobAdapter> match = (HardwareJobAdapter each) => each.ID == nj.ID;
-				HardwareJobAdapter hardwareJobAdapter = jobList.Find(match);
+				HardwareJobAdapter hardwareJobAdapter = JobList.Find((HardwareJobAdapter each) => each.ID == nj.ID);
 				if (hardwareJobAdapter == null)
 				{
 					BindingSource.Add(new HardwareJobAdapter(nj));
@@ -130,8 +127,7 @@ public class AdvancedMode : Form
 				hardwareJobAdapter.Removable = false;
 			}
 		}
-		List<HardwareJobAdapter> list = JobList.FindAll((HardwareJobAdapter each) => each.Removable);
-		foreach (HardwareJobAdapter item in list)
+		foreach (HardwareJobAdapter item in JobList.FindAll((HardwareJobAdapter each) => each.Removable))
 		{
 			BindingSource.Remove(item);
 		}

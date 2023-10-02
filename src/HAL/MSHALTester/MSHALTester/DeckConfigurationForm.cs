@@ -66,20 +66,20 @@ public class DeckConfigurationForm : Form
 		if (dataGridViewRow != null && dataGridViewRow.Tag is XmlNode node)
 		{
 			bool attributeValue = node.GetAttributeValue<bool>("IsQlm");
-			DeckConfigurationDetailForm deckConfigurationDetailForm = new DeckConfigurationDetailForm(allowExcludeUpdates: true, Manager);
-			deckConfigurationDetailForm.Number = node.GetAttributeValue<int?>("Number");
-			deckConfigurationDetailForm.YOffset = node.GetAttributeValue<int?>("Offset");
-			deckConfigurationDetailForm.NumberOfSlots = node.GetAttributeValue<int?>("NumberOfSlots");
-			deckConfigurationDetailForm.SlotWidth = node.GetAttributeValue<decimal?>("SlotWidth");
-			deckConfigurationDetailForm.SellThruSlots = node.GetAttributeValue<int?>("SellThruSlots");
-			deckConfigurationDetailForm.SellThruOffset = node.GetAttributeValue<int?>("SellThruOffset");
-			deckConfigurationDetailForm.ApproachOffset = node.GetAttributeValue<int?>("ApproachOffset");
-			deckConfigurationDetailForm.SlotsPerQuadrant = node.GetAttributeValue<int?>("SlotsPerQuadrant");
-			deckConfigurationDetailForm.IsQlmDeck = attributeValue;
-			deckConfigurationDetailForm.Service = m_hardwareService;
-			deckConfigurationDetailForm.ShowDumpSlot = false;
-			DeckConfigurationDetailForm deckConfigurationDetailForm2 = deckConfigurationDetailForm;
-			if (deckConfigurationDetailForm2.ShowDialog() == DialogResult.OK)
+			if (new DeckConfigurationDetailForm(allowExcludeUpdates: true, Manager)
+			{
+				Number = node.GetAttributeValue<int?>("Number"),
+				YOffset = node.GetAttributeValue<int?>("Offset"),
+				NumberOfSlots = node.GetAttributeValue<int?>("NumberOfSlots"),
+				SlotWidth = node.GetAttributeValue<decimal?>("SlotWidth"),
+				SellThruSlots = node.GetAttributeValue<int?>("SellThruSlots"),
+				SellThruOffset = node.GetAttributeValue<int?>("SellThruOffset"),
+				ApproachOffset = node.GetAttributeValue<int?>("ApproachOffset"),
+				SlotsPerQuadrant = node.GetAttributeValue<int?>("SlotsPerQuadrant"),
+				IsQlmDeck = attributeValue,
+				Service = m_hardwareService,
+				ShowDumpSlot = false
+			}.ShowDialog() == DialogResult.OK)
 			{
 				RefreshList();
 				m_okButton.Enabled = true;
@@ -103,11 +103,21 @@ public class DeckConfigurationForm : Form
 			bool attributeValue3 = item.GetAttributeValue<bool>("IsQlm");
 			int attributeValue4 = item.GetAttributeValue<int>("NumberOfSlots");
 			decimal attributeValue5 = item.GetAttributeValue<decimal>("SlotWidth");
-			DataGridViewRow dataGridViewRow = new DataGridViewRow();
-			dataGridViewRow.Tag = item;
-			DataGridViewRow dataGridViewRow2 = dataGridViewRow;
-			dataGridViewRow2.Cells.AddRange(new DataGridViewTextBoxCell(), new DataGridViewTextBoxCell(), new DataGridViewTextBoxCell(), new DataGridViewTextBoxCell(), new DataGridViewTextBoxCell());
-			int index = m_sandGrid.Rows.Add(dataGridViewRow2);
+			DataGridViewRow dataGridViewRow = new DataGridViewRow
+			{
+				Tag = item
+			};
+			DataGridViewCellCollection cells = dataGridViewRow.Cells;
+			DataGridViewCell[] dataGridViewCells = new DataGridViewTextBoxCell[5]
+			{
+				new DataGridViewTextBoxCell(),
+				new DataGridViewTextBoxCell(),
+				new DataGridViewTextBoxCell(),
+				new DataGridViewTextBoxCell(),
+				new DataGridViewTextBoxCell()
+			};
+			cells.AddRange(dataGridViewCells);
+			int index = m_sandGrid.Rows.Add(dataGridViewRow);
 			m_sandGrid.Rows[index].Cells[0].Value = attributeValue2;
 			m_sandGrid.Rows[index].Cells[1].Value = attributeValue;
 			m_sandGrid.Rows[index].Cells[2].Value = attributeValue5;
@@ -119,8 +129,7 @@ public class DeckConfigurationForm : Form
 
 	private void button1_Click(object sender, EventArgs e)
 	{
-		EditSlotData editSlotData = new EditSlotData(m_hardwareService, Manager);
-		if (editSlotData.ShowDialog() == DialogResult.OK)
+		if (new EditSlotData(m_hardwareService, Manager).ShowDialog() == DialogResult.OK)
 		{
 			RefreshList();
 		}

@@ -36,12 +36,13 @@ public static class CompositeFunctions
 		{
 			if (result.Code == "ErrorMessage")
 			{
-				errors++;
+				int num = errors + 1;
+				errors = num;
 			}
 			box.Write(result.Message);
 		});
 		box.Write("GetDVD ended with status {0}", getAndCenterResult.EndStatus.ToString());
-		return 0 == errors;
+		return errors == 0;
 	}
 
 	public static bool PutItem(HardwareService service, int deck, int slot, OutputBox box)

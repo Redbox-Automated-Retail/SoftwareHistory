@@ -571,21 +571,20 @@ public class ConfiguredDevicesForm : Form
 		Button button4 = button42;
 		Button button5 = button43;
 		Button button6 = button46;
-		bool flag7 = (button47.Enabled = !flag);
-		bool flag9 = (button6.Enabled = flag7);
-		bool enabled2 = (button5.Enabled = flag9);
-		button4.Enabled = enabled2;
+		flag2 = (button47.Enabled = !flag);
+		flag4 = (button6.Enabled = flag2);
+		enabled = (button5.Enabled = flag4);
+		button4.Enabled = enabled;
 		Button button7 = button44;
 		Button button8 = button45;
-		bool flag12 = (button37.Enabled = !flag);
-		bool enabled3 = (button8.Enabled = flag12);
-		button7.Enabled = enabled3;
+		flag4 = (button37.Enabled = !flag);
+		enabled = (button8.Enabled = flag4);
+		button7.Enabled = enabled;
 	}
 
 	private void OnConfigureKioskTest()
 	{
-		ISessionUserService service = ServiceLocator.Instance.GetService<ISessionUserService>();
-		ISessionUser currentSession = service.GetCurrentSession();
+		ISessionUser currentSession = ServiceLocator.Instance.GetService<ISessionUserService>().GetCurrentSession();
 		FunctionTest = new KioskFunctionTest(Service, KioskTestOutput, ScannerServices.Cortex == ScannerService, currentSession.User);
 		TextBox testVendDoorTB = m_testVendDoorTB;
 		TextBox checkDriversStatusTB = m_checkDriversStatusTB;
@@ -609,20 +608,19 @@ public class ConfiguredDevicesForm : Form
 		bool enabled = (m_resetFraudButton.Enabled = HasFraudSensor);
 		fraudPOSTButton.Enabled = enabled;
 		Button powerOnFraudSensor = m_powerOnFraudSensor;
-		bool enabled2 = (m_powerOffFraudSensor.Enabled = HasFraudSensor);
-		powerOnFraudSensor.Enabled = enabled2;
+		enabled = (m_powerOffFraudSensor.Enabled = HasFraudSensor);
+		powerOnFraudSensor.Enabled = enabled;
 		Button startFraudScan = m_startFraudScan;
-		bool enabled3 = (m_stopFraudScan.Enabled = HasFraudSensor);
-		startFraudScan.Enabled = enabled3;
+		enabled = (m_stopFraudScan.Enabled = HasFraudSensor);
+		startFraudScan.Enabled = enabled;
 		Button testDiskForMarkers = m_testDiskForMarkers;
-		bool enabled4 = (m_testFraudButton.Enabled = HasFraudSensor);
-		testDiskForMarkers.Enabled = enabled4;
+		enabled = (m_testFraudButton.Enabled = HasFraudSensor);
+		testDiskForMarkers.Enabled = enabled;
 	}
 
 	private void WriteToOutput(string msg)
 	{
-		ILogger service = ServiceLocator.Instance.GetService<ILogger>();
-		service.Log(msg, LogEntryType.Info);
+		ServiceLocator.Instance.GetService<ILogger>().Log(msg, LogEntryType.Info);
 	}
 
 	private void m_configureQubeButton_Click(object sender, EventArgs e)
@@ -934,8 +932,7 @@ public class ConfiguredDevicesForm : Form
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			IControlSystem service = ServiceLocator.Instance.GetService<IControlSystem>();
-			service.Center(CenterDiskMethod.VendDoorAndBack);
+			ServiceLocator.Instance.GetService<IControlSystem>().Center(CenterDiskMethod.VendDoorAndBack);
 		}
 	}
 
@@ -1059,8 +1056,7 @@ public class ConfiguredDevicesForm : Form
 
 	private void button16_Click_1(object sender, EventArgs e)
 	{
-		HardwareCommandResult kioskFunctionCheckData = Service.GetKioskFunctionCheckData(out var sessions);
-		if (!kioskFunctionCheckData.Success)
+		if (!Service.GetKioskFunctionCheckData(out var sessions).Success)
 		{
 			return;
 		}
@@ -1125,8 +1121,7 @@ public class ConfiguredDevicesForm : Form
 
 	private void AddItem(string col1, string col2)
 	{
-		string[] items = new string[2] { col1, col2 };
-		ListViewItem value = new ListViewItem(items);
+		ListViewItem value = new ListViewItem(new string[2] { col1, col2 });
 		listView1.Items.Add(value);
 	}
 
@@ -1275,11 +1270,10 @@ public class ConfiguredDevicesForm : Form
 	{
 		using (Manager.MakeAspect(sender))
 		{
-			HardwareCommandResult hardwareCommandResult = Service.ScheduleJob("ms-take-disk-at-door", string.Empty, enableDebugging: false, new HardwareJobSchedule
+			if (!Service.ScheduleJob("ms-take-disk-at-door", string.Empty, enableDebugging: false, new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.High
-			}, out var job);
-			if (!hardwareCommandResult.Success)
+			}, out var job).Success)
 			{
 				EngineeringOutput.Write("Failed to schedule job");
 				return;
@@ -1328,17 +1322,16 @@ public class ConfiguredDevicesForm : Form
 				return;
 			}
 			SyncRange range = new SyncRange(sourceDeck, destinationDeck, new SlotRange(sourceSlot, destinationSlot));
-			HardwareCommandResult hardwareCommandResult = Service.HardSync(range, new HardwareJobSchedule
+			if (!Service.HardSync(range, new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.Highest
-			}, out var job);
-			if (!hardwareCommandResult.Success)
+			}, out var job).Success)
 			{
 				EngineeringOutput.Write("Unable to communicate with HAL.");
 				return;
 			}
 			job.Pend();
-			hardwareCommandResult = job.WaitForCompletion(300000);
+			job.WaitForCompletion(300000);
 			if (job.GetSymbols(out var symbols).Success)
 			{
 				foreach (string key in symbols.Keys)
@@ -1393,24 +1386,24 @@ public class ConfiguredDevicesForm : Form
 				EngineeringOutput.Write("Please specify deck/slot properly");
 				return;
 			}
-			List<Location> list = new List<Location>();
-			list.Add(new Location
+			List<Location> locations = new List<Location>
 			{
-				Deck = sourceDeck,
-				Slot = sourceSlot
-			});
-			List<Location> locations = list;
-			HardwareCommandResult hardwareCommandResult = Service.HardSync(locations, "Engineering Location Sync", new HardwareJobSchedule
+				new Location
+				{
+					Deck = sourceDeck,
+					Slot = sourceSlot
+				}
+			};
+			if (!Service.HardSync(locations, "Engineering Location Sync", new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.Highest
-			}, out var job);
-			if (!hardwareCommandResult.Success)
+			}, out var job).Success)
 			{
 				EngineeringOutput.Write("Unable to communicate with HAL.");
 				return;
 			}
 			job.Pend();
-			hardwareCommandResult = job.WaitForCompletion(300000);
+			job.WaitForCompletion(300000);
 			if (job.GetSymbols(out var symbols).Success)
 			{
 				foreach (string key in symbols.Keys)
@@ -1470,11 +1463,10 @@ public class ConfiguredDevicesForm : Form
 
 	private void m_restartTouchscreen_Click(object sender, EventArgs e)
 	{
-		HardwareCommandResult hardwareCommandResult = Service.ResetTouchscreenController(new HardwareJobSchedule
+		if (Service.ResetTouchscreenController(new HardwareJobSchedule
 		{
 			Priority = HardwareJobPriority.High
-		}, out var job);
-		if (hardwareCommandResult.Success)
+		}, out var job).Success)
 		{
 			using (ClientHelper clientHelper = new ClientHelper(Service))
 			{
