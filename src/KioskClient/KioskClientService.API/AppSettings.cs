@@ -23,4 +23,6 @@ public class AppSettings
 	public string PlanogramFolder { get; set; }
 
 	public string DefaultProxyServiceUrl { get; set; }
+
+	public string UpdateClientServiceUrl { get; set; }
 }

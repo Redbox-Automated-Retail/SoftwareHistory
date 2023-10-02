@@ -37,6 +37,7 @@ using KioskClientService.API.Services.ProductCatalog;
 using KioskClientService.API.Services.ProductGroup;
 using KioskClientService.API.Services.Products.MoreLikeThis;
 using KioskClientService.API.Services.Products.ProductReelsApi;
+using KioskClientService.API.Services.ProfileData;
 using KioskClientService.API.Services.Promotion;
 using KioskClientService.API.Services.ProxyApi;
 using KioskClientService.API.Services.Session;
@@ -44,6 +45,7 @@ using KioskClientService.API.Services.Subscription;
 using KioskClientService.API.Services.TestData;
 using KioskClientService.API.Services.Transaction;
 using KioskClientService.API.Services.Transaction.API;
+using KioskClientService.API.Services.UpdateClientServiceApi;
 using KioskClientService.API.Services.Utilities;
 using KioskClientService.API.Vistar;
 using Microsoft.AspNetCore.Builder;
@@ -140,6 +142,7 @@ public class Startup
 		services.AddScoped<IAdServerAnalyticsClient, AdServerAnalyticsClient>();
 		services.AddScoped<IKioskDataServiceClient, KioskDataServiceClient>();
 		services.AddScoped<IProductReelsApiClient, ProductReelsApiClient>();
+		services.AddScoped<IUpdateClientServiceClient, UpdateClientServiceClient>();
 		services.AddScoped<IMoreLikeThisService, MoreLikeThisService>();
 		services.AddScoped<IPersonalizationService, PersonalizationService>();
 		services.AddScoped<ITestDataService, TestDataService>();
@@ -172,6 +175,7 @@ public class Startup
 		services.AddKioskService();
 		services.AddDualService();
 		services.AddProductCatalogService();
+		services.AddProfileDataService();
 	}
 
 	public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger, IApplicationSettings applicationSettings, IOptionsSnapshotKioskConfiguration kioskConfigiuration)

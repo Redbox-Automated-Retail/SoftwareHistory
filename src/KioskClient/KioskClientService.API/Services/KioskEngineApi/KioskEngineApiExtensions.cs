@@ -6,6 +6,6 @@ public static class KioskEngineApiExtensions
 {
 	public static IServiceCollection AddKioskEngineApiService(this IServiceCollection services)
 	{
-		return services.AddScoped<IKioskEngineApiShoppingCartClient, KioskEngineApiShoppingCartClient>();
+		return services.AddScoped<IKioskEngineApiShoppingCartClient, KioskEngineApiShoppingCartClient>().AddScoped<IKioskEngineApiProfileDataClient, KioskEngineApiProfileDataClient>();
 	}
 }
