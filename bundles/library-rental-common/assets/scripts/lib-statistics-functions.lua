@@ -155,41 +155,11 @@ get_inventory_statistics = function()
 		unmatched )
 end
 
-UpdateVSMImpression = function( vsm_program_name )
-	local campaign_row = VendScreenImpressions[ vsm_program_name ]
-	if campaign_row == nil then
-		campaign_row = {}
-		campaign_row.program_name = vsm_program_name
-		campaign_row.impressions = 0
-		campaign_row.last_reported_value = 0
-	end
-	campaign_row.impressions = campaign_row.impressions + 1
-	campaign_row.last_update = get_current_date_string( "%4d%02d%02d" )
-	VendScreenImpressions[ vsm_program_name ] = campaign_row --forces update to commit
-end
-
-get_vsm_statistics = function()
-	for program_name, v in VendScreenImpressions:pairs() do
-		if v.last_reported_value ~= v.impressions then
-
-			--kernel.healthsvcs_enqueuestatistic( --What I WANTED to do
-			--	"VSMImpression",
-			--	v.impressions,
-			--	program_name )
-			kernel.healthsvcs_enqueuestatistic( "VSMImpression", v ) --what server table ALLOWS
-
-			v.last_reported_value = v.impressions
-			VendScreenImpressions[ program_name ] = v --forces update to commit
-		end
-	end
-end
-
 update_profile_inventory_stats = function()
 	-- Send up the data file dates
-	if ProfileVersion ~= nil
-	and ProfileVersion.origin_machine ~= nil
-	and ProfileVersion.generated_on ~= nil then
-		local gen_date = ProfileVersion.generated_on.date
+	local profile_data_version = kernel.get_profile_version()
+	if profile_data_version ~= nil and profile_data_version.origin_machine ~= nil and profile_data_version.generated_on ~= nil then
+		local gen_date = tostring(profile_data_version.generated_on)
 		kernel.healthsvcs_enqueuestatistic(
 			"ProfileData",
 			string.sub(gen_date, 1, 4) .. "/" ..

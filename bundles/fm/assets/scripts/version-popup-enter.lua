@@ -23,12 +23,11 @@ kernel.setactortext( "store_id", store_id_text )
 local timezone = kernel.gettimezone()
 
 --inventory and profile dates
-if ProfileVersion ~= nil
-and ProfileVersion.origin_machine ~= nil
-and ProfileVersion.generated_on ~= nil then
+local profile_data_version = kernel.get_profile_version()
+if profile_data_version ~= nil and profile_data_version.origin_machine ~= nil and profile_data_version.generated_on ~= nil then
     kernel.setmacro(
         "ProfileVersion",
-        string.format( "%s %s %s", ProfileVersion.origin_machine.name, kernel.tolocaltime( ProfileVersion.generated_on.date, "MMMM d h:mm tt" ), timezone ) )
+        string.format( "%s %s %s", profile_data_version.origin_machine, kernel.tolocaltime( profile_data_version.generated_on, "MMMM d h:mm tt" ), timezone ) )
 else
     kernel.setmacro( "ProfileVersion", "N/A" )
 end

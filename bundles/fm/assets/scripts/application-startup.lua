@@ -79,7 +79,6 @@ local function start_the_application()
 
 	-- Attempt to open one (small) table from each .data file, so that if they fail the app won't be in the middle of endless loop later
 	InventoryVersion:prime_cache_keys()
-	Stores:prime_cache_keys()
 	BadCardList:prime_cache_keys()
 	ProductHistory:prime_cache_keys()
 

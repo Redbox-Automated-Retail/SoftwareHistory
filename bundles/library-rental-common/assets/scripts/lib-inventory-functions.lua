@@ -54,81 +54,22 @@ local function create_or_update_product_to_barcode_entry( product_id, barcode, s
 	return barcodes
 end
 
-function update_game_has_content_registry_keys( product_type )
-	if product_type ~= nil 
-	and product_type.product_type_name ~= nil then
-		if product_type.product_type_name == 'PS3' and GameEnablePS3 == true and GameHasContentPS3 == false then
-			kernel.log( "Found Content PS3" )
-			kernel.setmachinevalue( "Store", "GameHasContentPS3", "true" )
-			GameHasContentPS3 = true
-		elseif  product_type.product_type_name == 'PS4' and GameEnablePS4 == true and GameHasContentPS4 == false then
-			kernel.log( "Found Content PS4" )
-			kernel.setmachinevalue( "Store", "GameHasContentPS4", "true" )
-			GameHasContentPS4 = true
-		elseif product_type.product_type_name == 'Wii' and GameEnableWii == true and GameHasContentWii == false then
-			kernel.log( "Found Content Wii" )
-			kernel.setmachinevalue( "Store", "GameHasContentWii", "true" )
-			GameHasContentWii = true
-		elseif product_type.product_type_name == 'Wii U' and GameEnableWiiU == true and GameHasContentWiiU == false then
-			kernel.log( "Found Content Wii U" )
-			kernel.setmachinevalue( "Store", "GameHasContentWiiU", "true" )
-			GameHasContentWiiU = true
-		elseif product_type.product_type_name == 'Xbox 360' and GameEnableXbox360 == true and GameHasContentXbox360 == false then 
-			kernel.log( "Found Content Xbox 360" )
-			kernel.setmachinevalue( "Store", "GameHasContentXbox360", "true" )
-			GameHasContentXbox360 = true
-		elseif product_type.product_type_name == 'Xbox One' and GameEnableXboxOne == true and GameHasContentXboxOne == false then
-			kernel.log( "Found Content Xbox One" )
-			kernel.setmachinevalue( "Store", "GameHasContentXboxOne", "true" )
-			GameHasContentXboxOne = true
-		elseif product_type.product_type_name == 'Nintendo Switch' and GameEnableNintendoSwitch == true and GameHasContentNintendoSwitch == false then
-			kernel.log( "Found Content Nintendo Switch" )
-			kernel.setmachinevalue( "Store", "GameHasContentNintendoSwitch", "true" )
-			GameHasContentNintendoSwitch = true
-		end
-	end 
-end
-
 function create_or_update_product_catalog_entry( product_id, history )
-	local master = MasterProductCatalog[product_id]
+	local master = kernel.get_product_catalog_title(product_id)
 	
 	local function in_stock( product_id, history )
-		if kernel.is_multi_disc( product_id ) == true then
-			for k, v in pairs( ProductGroup[MultiDiscXREF[product_id].product_group_id].product_id_list ) do
-				local current_history = ProductHistory[v]
-				if current_history == nil or current_history.on_hand_count == nil or current_history.on_hand_count <= 0 then
-					return false
-				end
-			end
-			return true
-		else
-			return history.on_hand_count > 0
-		end
+		return history.on_hand_count > 0
 	end
 	local function product_is_available()
 		if master == nil then return false end
 		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > master.merchandise_date
 	end
-	local function get_type_name()
-		if master == nil then return nil end
-		local master_type = ProductTypes[ master.product_type_id ]
-		if master_type == nil then return nil end
-		return master_type.product_type_name
-	end
-	local function get_family_name()
-		if master == nil then return nil end
-		local master_type = ProductTypes[ master.product_type_id ]
-		if master_type == nil or master_type.product_family_id == nil then return nil end
-		local master_family = ProductFamilies[ master_type.product_family_id ]
-		if master_family == nil then return nil end
-		return master_family.product_family_name
-	end
 
 	local product_catalog = ProductCatalog[product_id] or { product_id = product_id }
 	product_catalog.in_stock = in_stock( product_id, history )
 	product_catalog.is_available = product_is_available()
-	product_catalog.product_type_name = get_type_name()
-	product_catalog.product_family_name = get_family_name()
+	product_catalog.product_type_name = nil  -- product_type_name is never used
+	product_catalog.product_family_name = nil  -- product_family_name is never used
 	
 	ProductCatalog[product_id] = product_catalog
 end
@@ -155,7 +96,7 @@ local function item_status_based_on_barcode_to_product_and_barcode( barcode_to_p
 	elseif barcode_to_product == nil then
 		status = "Unknown Title"
 	else
-		if barcode_to_product.product_id ~= nil and MasterProductCatalog[barcode_to_product.product_id] ~= nil then
+		if barcode_to_product.product_id ~= nil and kernel.get_product_catalog_title(barcode_to_product.product_id) ~= nil then
 			status = get_rapid_status( barcode, nil )
             if status == nil then
                 if barcode_to_product.status ~= nil  and ( barcode_to_product.status == "Rebalancing" or barcode_to_product.status == "Redeployment" or barcode_to_product.status == "Thinned")   then		

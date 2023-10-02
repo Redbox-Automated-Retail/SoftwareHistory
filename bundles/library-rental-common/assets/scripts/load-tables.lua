@@ -6,33 +6,6 @@
 
 -- Read-Only tables distributed from Corporate
 
--- PROFILE.DATA
-Stores = getprofiletable( "profile", "Store" )
-if DataAccessAlreadySent ~= true then
-	Genres = getcacheprofiletable( "profile", "Genres" )
-	ProfileVersion = getprofiletable( "profile", "Version" )
-	ProductTypes = getcacheprofiletable( "profile", "ProductType" )
-	ProductFamilies = getcacheprofiletable( "profile", "ProductFamily" )
-	SubPlatform = getcacheprofiletable("profile","SubPlatform")
-	MasterProductCatalog = getprofiletable( "profile", "ProductCatalog" )
-	ProductRatings=getcacheprofiletable( "profile", "ProductRating" )
-	MasterProductCatalog:prime_cache_keys()
-	ProductGroup = getprofiletable( "profile", "ProductGroup" )
-	TitleRollupXREF = getprofiletable( "profile", "TitleRollupXREF" )
-	MultiDiscXREF = getcacheprofiletable( "profile", "MultiDiscXREF" )
-else
-	Genres = {}
-	ProfileVersion = {}
-	ProductTypes = {}
-	ProductFamilies = {}
-	SubPlatform = {}
-	MasterProductCatalog = {}
-	ProductRatings = {}
-	ProductGroup = {}
-	TitleRollupXREF = {}
-	MultiDiscXREF = {}
-end
-
 -- INVENTORY.DATA
 if DataAccessAlreadySent ~= true then
 	InventoryVersion = getinventorytable( "inventory", "Version" )
@@ -80,14 +53,12 @@ if DataAccessAlreadySent ~= true then
 		ProductToBarcode = getcachedataservicetable( "cache", "ProductToBarcode" )
 		
 		FilteredProductList = getworktable( "cache", "FilteredProductList" )
-		VendScreenImpressions = getworktable( "cache", "VendScreenImpressions" )
 		DuplicateSlotFixes = getworktable( "cache", "DuplicateSlotFixes" )
 	else
 		ProductCatalog = {}
 		BarcodePosition = {}
 		ProductToBarcode = {}
 		FilteredProductList = {}
-		VendScreenImpressions = {}
 		DuplicateSlotFixes = {}
 	end
 else
@@ -96,6 +67,5 @@ else
 	BarcodePosition = {}
 	ProductToBarcode = {}
 	FilteredProductList = {}
-	VendScreenImpressions = {}
 	DuplicateSlotFixes = {}
 end

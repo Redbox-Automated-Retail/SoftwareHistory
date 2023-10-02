@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<resource type="bitmap">
-    <property name="name" value="image_game_banner" />
-    <aspect name="content" file="assets/images/game-banner.png" />
-</resource>

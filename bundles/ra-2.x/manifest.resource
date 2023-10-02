@@ -2,19 +2,12 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Rental Application" />
-  <property name="product_version" value="3.51.1.3" />
+  <property name="product_version" value="3.52.0.19" />
   <property name="startup_script" value="application_startup" />
   <property name="requires">
-    <value>Content Pricing,*</value>
-    <value>Content Promotion,*</value>
-    <value>Content Vend Screen Marketing,*</value>
     <value>Content Legal,*</value>
     <value>Library Rental Common,*</value>
-    <value>Content In-Cart Run Data,*</value>
-    <value>Content Email Opt-In,*</value>
     <value>Content Speech,*</value>
-    <value>Content Banner Marketing,*</value>
-    <value>Content Marketing Ads,*</value>
   </property>
   <property name="public_key" value="public_key" />
   <aspect name="schema">

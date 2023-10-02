@@ -71,8 +71,14 @@ local close_view = function()
 --helper function for painting items on the panel
 local display_items = function( x, y )
   local function get_disc_number( barcode )
-     if barcode ~= nil and BarcodeToProduct[barcode] ~= nil and BarcodeToProduct[barcode].product_id ~= nil and MasterProductCatalog[BarcodeToProduct[barcode].product_id] ~= nil and MasterProductCatalog[BarcodeToProduct[barcode].product_id].disc_number ~= nil then
-       return MasterProductCatalog[BarcodeToProduct[barcode].product_id].disc_number
+	 if barcode ~= nil then
+		local barcode_product = BarcodeToProduct[barcode]
+		if barcode_product ~= nil and barcode_product.product_id ~= nil then 
+			local master_product = kernel.get_product_catalog_title(barcode_product.product_id)
+			if master_product ~= nil and master_product.disc_number ~= nil then
+				return master_product.disc_number
+			end
+		end
      end
      return 1
   end
@@ -158,7 +164,7 @@ end
 
 local function create_or_update_product_catalog_entry( product_id, history )
 	local function is_available( product_id )
-		local product = MasterProductCatalog[product_id]
+		local product = kernel.get_product_catalog_title(product_id)
 		if product == nil then return false end
 		return get_current_date_string( "%4d%02d%02d%02d%02d" ) > product.merchandise_date
 	end

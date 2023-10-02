@@ -345,7 +345,7 @@ function newreturnmanager( shopping_cart )
 				local function is_digital_code( barcode )
                     local product = BarcodeToProduct[barcode]
                     if product ~= nil and product.product_id ~= nil then
-                        local master_product = MasterProductCatalog[product.product_id]
+                        local master_product = kernel.get_product_catalog_title(product.product_id)
                         if master_product ~= nil and master_product.product_type_id == 17 then
                             return true
                         end

@@ -352,8 +352,9 @@ get_thin_barcodes = function()
 			local do_not_rent_date = nil
 			if BarcodeToProduct[barcode] ~= nil and BarcodeToProduct[barcode].product_id ~= nil then
 				local product_id = BarcodeToProduct[barcode].product_id
-				if MasterProductCatalog[product_id] ~= nil and MasterProductCatalog[product_id].do_not_rent_date ~= nil then
-					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
+				local master_product = kernel.get_product_catalog_title(product_id)
+				if master_product ~= nil and master_product.do_not_rent_date ~= nil then
+					do_not_rent_date = master_product.do_not_rent_date
 				end
 			end
             row.status = get_rapid_status( barcode, row.status )
@@ -395,8 +396,9 @@ get_thin_barcodes2 = function()
 			local do_not_rent_date = nil
 			if BarcodeToProduct[barcode] ~= nil and BarcodeToProduct[barcode].product_id ~= nil then
 				local product_id = BarcodeToProduct[barcode].product_id
-				if MasterProductCatalog[product_id] ~= nil and MasterProductCatalog[product_id].do_not_rent_date ~= nil then
-					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
+				local master_product = kernel.get_product_catalog_title(product_id)
+				if master_product ~= nil and master_product.do_not_rent_date ~= nil then
+					do_not_rent_date = master_product.do_not_rent_date
 				end
 			end
             row.status = get_rapid_status( barcode, row.status )
@@ -460,8 +462,9 @@ get_vmz_thin_barcodes = function()
 			local do_not_rent_date = nil
 			if BarcodeToProduct[barcode] ~= nil and BarcodeToProduct[barcode].product_id ~= nil then
 				local product_id = BarcodeToProduct[barcode].product_id
-				if MasterProductCatalog[product_id] ~= nil and MasterProductCatalog[product_id].do_not_rent_date ~= nil then
-					do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
+				local master_product = kernel.get_product_catalog_title(product_id)
+				if master_product ~= nil and master_product.do_not_rent_date ~= nil then
+					do_not_rent_date = master_product.do_not_rent_date
 				end
 			end
             row.status = get_rapid_status( barcode, row.status )			
@@ -957,7 +960,7 @@ function newhardwaremanager()
         local delete_product_history_list = {}
 		for _, v in ProductCatalog:pairs() do
 			local history = ProductHistory[ v.product_id ]
-			local product = MasterProductCatalog[ v.product_id ]
+			local product = kernel.get_product_catalog_title(v.product_id)
 
 			if ( v.in_stock ~= nil and v.in_stock == true) or (history ~= nil and history.on_hand_count > 0 ) then
 				local on_hand_count = 0

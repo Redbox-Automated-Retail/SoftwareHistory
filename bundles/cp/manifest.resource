@@ -2,11 +2,8 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Control Panel Application" />
-  <property name="product_version" value="3.51.1.3" />
+  <property name="product_version" value="3.52.0.19" />
   <property name="startup_script" value="application_startup" />
-  <property name="requires">
-    <value>Content In-Cart Run Data,*</value>
-  </property>
   <aspect name="schema">
     <resourceType name="root">
       <propertyType name="name" type="System.String" label="Name" category="Common" />

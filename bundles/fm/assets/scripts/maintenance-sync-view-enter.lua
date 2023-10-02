@@ -5,7 +5,7 @@
 --
 
 local store_id = kernel.getmachinevalueordefault( "Store", "ID", "Not Configured" )
-local zip = split(Stores[store_id].zip, "-", 1)
+local zip = split(kernel.get_store(store_id).zip, "-", 1)
 kernel.setmacro("StoreNumber", store_id)
 kernel.setmacro("MaintenanceView:ZipCode", tostring(zip[1]))
 kernel.setmacro( "MaintenanceView:ErrorCode", "0016SYNC" )

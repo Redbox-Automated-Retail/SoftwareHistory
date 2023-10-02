@@ -4,17 +4,6 @@
 -- All Rights Reserved
 --
 
-function getprofiletable( store, name )
-	--return getworktable( store, name, true )
-	return getdataservicetable( store, name, true )
-end
-
-function getcacheprofiletable( store, name )
-	local table = getcachedataservicetable( store, name )
-	table:getall()
-	return table
-end
-
 function getcachedataservicetable(store, name)
   return getdataservicetable( store, name, false ) 
 end

@@ -162,9 +162,9 @@ local result = hardware_manager:return_unknown(
                     local product_name = "UNKNOWN"
                     local product = BarcodeToProduct[v.item_id]
                     if product ~= nil then
-						local master_product = MasterProductCatalog[product.product_id]
+						local master_product = kernel.get_product_catalog_title(product.product_id)
 						if master_product ~= nil then 
-							product_name = MasterProductCatalog[product.product_id].long_name 
+							product_name = master_product.long_name 
 						end
                     end
 

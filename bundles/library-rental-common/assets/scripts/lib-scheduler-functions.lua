@@ -110,10 +110,6 @@ stats_run_daily_timer = function()
 	get_kiosk_capacity()
 	kernel.log("Got Kiosk Capacity")
 	
-	--VSMImpressions
-	get_vsm_statistics()
-	kernel.log("Got VSM stats")
-	
 	--Versions
 	get_version_statistics()
 	kernel.log( "Got Versions" )

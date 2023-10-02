@@ -119,9 +119,7 @@ local function start_the_application()
             kernel.close_open_session_and_start_new_rental_session()
 			kernel.handle_disconnected_usb_card_reader()
 		else
-			if not in_maintenance_mode() then
-                kernel.close_open_session_and_start_new_rental_session()
-			end
+            kernel.close_open_session_and_start_new_rental_session()
 		end
 	end
 
@@ -219,62 +217,6 @@ local function load_registry_key_values()
 		"system",
 		"General",
 		"MakeRoomBuffer" ) or 5 )
-	GameEnableXbox360 = kernel.config_getvalue(
-		"system",
-		"Games",
-		"GameEnableXbox360" ) == true
-	GameHasContentXbox360 = kernel.getmachinevalueordefault(
-		"Store",
-		"GameHasContentXbox360",
-		"false" ) == "true"
-	GameEnableXboxOne = kernel.config_getvalue(
-		"system",
-		"Games",
-		"GameEnableXboxOne" ) == true
-	GameHasContentXboxOne = kernel.getmachinevalueordefault(
-		"Store",
-		"GameHasContentXboxOne",
-		"false" ) == "true"
-	GameEnablePS3 = kernel.config_getvalue(
-		"system",
-		"Games",
-		"GameEnablePS3" ) == true
-	GameHasContentPS3 = kernel.getmachinevalueordefault(
-		"Store",
-		"GameHasContentPS3",
-		"false" ) == "true"
-	GameEnablePS4 = kernel.config_getvalue(
-		"system",
-		"Games",
-		"GameEnablePS4" ) == true
-	GameHasContentPS4 = kernel.getmachinevalueordefault(
-		"Store",
-		"GameHasContentPS4",
-		"false" ) == "true"
-	GameEnableWii = kernel.config_getvalue(
-		"system",
-		"Games",
-		"GameEnableWii" ) == true
-	GameHasContentWii = kernel.getmachinevalueordefault(
-		"Store",
-		"GameHasContentWii",
-		"false" ) == "true"
-	GameEnableWiiU = kernel.config_getvalue(
-		"system",
-		"Games",
-		"GameEnableWiiU" ) == true
-	GameHasContentWiiU = kernel.getmachinevalueordefault(
-		"Store",
-		"GameHasContentWiiU",
-		"false" ) == "true"
-	GameEnableNintendoSwitch = kernel.config_getvalue(
-		"system",
-		"Games",
-		"GameEnableNintendoSwitch" ) == true
-	GameHasContentNintendoSwitch = kernel.getmachinevalueordefault(
-		"Store",
-		"GameHasContentNintendoSwitch",
-		"false" ) == "true"
 	ForcedAirExchangerConfigured = kernel.config_getvalue(
 		"system",
 		"General",
@@ -287,8 +229,9 @@ end
 
 local function create_coming_soon_cache_tables()
 	local coming_soon_updated = FilteredProductList["last_updated"]
+	local profile_data_version = kernel.get_profile_version()
 	if coming_soon_updated == nil
-	or ( ProfileVersion.generated_on ~= nil and tostring( coming_soon_updated ) < ProfileVersion.generated_on.date )
+	or ( profile_data_version ~= nil and profile_data_version.generated_on ~= nil and tostring( coming_soon_updated ) < tostring(profile_data_version.generated_on) )
 	then
 		local coming_soon_generator = newcomingsoongenerator()
 		-- Create browsable products in the local ProductCatalog
@@ -399,11 +342,10 @@ local function start_new_rental_session_callback()
     -- Reload pricing in case the date has changed since last session
     if StoreManager ~= nil then
 	    StoreManager:reload_pricing_data( "_v2" )
-	    StoreManager:check_product_catalog_for_games_platforms()
     end
     kernel.log( "start-view-enter - started updating cache table")
     for k,v in _ProductCatalog:pairs() do
-	    local product = MasterProductCatalog[v.product_id]
+	    local product = kernel.get_product_catalog_title(v.product_id)
 	    if product ~= nil then
 			    local product_catalog = ProductCatalog[v.product_id]
 			    local current_date = get_current_date_string( "%4d%02d%02d%02d%02d" )
@@ -501,7 +443,6 @@ kernel.register_pricing_service(
     end )
 StoreManager:init()
 StoreManager:reload_pricing_data( "_v2" )
-StoreManager:check_product_catalog_for_games_platforms()
 ShoppingCartList = {}
 HardwareManager = newhardwaremanager()
 kernel.create_idle_timer( "idle_timer" )
@@ -632,7 +573,6 @@ kernel.timercreate(
 		and kernel.is_rental_session_active() == false then
 			kernel.log( "Reloading Pricing information..." )
 			StoreManager:reload_pricing_data( "_v2" )
-			StoreManager:check_product_catalog_for_games_platforms()
             kernel.reload_carousel(false)
 		else
 			kernel.log( "Cannot Reload Pricing since User is on the Flip View or the bundle is Not on Start View." )

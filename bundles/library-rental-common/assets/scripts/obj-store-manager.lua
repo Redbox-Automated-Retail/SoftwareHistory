@@ -80,19 +80,6 @@ function newstoremanager()
         return kernel.get_can_sell_used()
 	end
 
-	t.has_sell_thru_new_in_stock = function()
-		for _, v in ProductCatalog:pairs() do
-			local check_product = MasterProductCatalog[v.product_id]
-			if check_product ~= nil
-			and check_product.sell_thru_new == true
-			and check_product.product_type_id == 1
-			and v.in_stock == true then
-				return true
-			end
-		end
-		return false
-	end
-
 	t.set_number = function( self, value )
 		self.store_number = value
 		self:update_store()
@@ -101,7 +88,7 @@ function newstoremanager()
 	end
 
 	t.update_store = function( self )
-		self.store = Stores[self.store_number]
+		self.store = kernel.get_store(self.store_number)
 		if self.store ~= nil then
 			kernel.setmacro( "Store:ReturnTime", self.store.return_time )
 			kernel.setfilter( "state", self.store.state )
@@ -118,20 +105,6 @@ function newstoremanager()
 	t.reload_pricing_data = function( self, ui_version )
 		-- Product Pricing
 		kernel.reload_pricing_service()
-		-- Email Opt In Campaign
-		kernel.load_email_optin_campaign()
-		kernel.log( "EmailOptin loaded: " .. tostring( kernel.getresourceproperty( "opt_in_campaign", "program_name" )))
-	end
-	
-	t.check_product_catalog_for_games_platforms = function( self )
-		local _ProductCatalog = ProductCatalog
-		for _, v in _ProductCatalog:pairs() do
-			local product = MasterProductCatalog[ v.product_id ]
-			local product_type = product ~= nil and ProductTypes[product.product_type_id] or nil
-			if product ~= nil and product_type ~= nil and product_type.product_family_id == 2 and v.in_stock == true then
-				update_game_has_content_registry_keys( product_type )
-			end
-		end
 	end
 	
 	t.refresh_rapid_statuses = function( self )
@@ -175,8 +148,9 @@ function newstoremanager()
 				local do_not_rent_date = nil
 				if BarcodeToProduct[position_info.barcode] ~= nil and BarcodeToProduct[position_info.barcode].product_id ~= nil then
 					local product_id = BarcodeToProduct[position_info.barcode].product_id
-					if MasterProductCatalog[product_id] ~= nil and MasterProductCatalog[product_id].do_not_rent_date ~= nil then
-						do_not_rent_date = MasterProductCatalog[product_id].do_not_rent_date
+					local master_product = kernel.get_product_catalog_title(product_id)
+					if master_product ~= nil and master_product.do_not_rent_date ~= nil then
+						do_not_rent_date = master_product.do_not_rent_date
 					end
 				end
 				if do_not_rent_date ~= nil and do_not_rent_date <= get_current_date_string( "%4d%02d%02d%02d%02d" ) then

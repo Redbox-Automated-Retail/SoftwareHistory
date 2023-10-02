@@ -6,7 +6,6 @@
 	localization_functions, 
 	vend_functions, 
 	shopping_cart_functions, 
-	lib_product_functions, 
 	lib_browse_functions, 
 	lib_sync_functions, 
 	lib_statistics_functions, 

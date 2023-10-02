@@ -36,9 +36,8 @@ local titles = ( vmz_merch_flow_functions or {} ).rebalance_in_data or {}
 local total_rebalance_in_titles = 0
 
 local function calculate_rebalance_ins()
-	local _master_product_catalaog = MasterProductCatalog
 	for _, v in ipairs( titles ) do
-		local product = _master_product_catalaog[v.TitleId]
+		local product = kernel.get_product_catalog_title(v.TitleId)
 		if v.Quantity ~= nil and v.Quantity > 0 and product ~= nil then
 			total_rebalance_in_titles = total_rebalance_in_titles + v.Quantity
 		end
@@ -46,7 +45,6 @@ local function calculate_rebalance_ins()
 end
 
 local function display_rebalances()
-	local _master_product_catalaog = MasterProductCatalog
 	local quantity_text = ""
 	local title_text = ""
 	local format_text = ""
@@ -56,11 +54,15 @@ local function display_rebalances()
 	for i = start_index, start_index + titles_per_page do
 		local current_index = i - start_index + 1
 		if i <= #titles then
-			local product = _master_product_catalaog[titles[i].TitleId]
+			local product = kernel.get_product_catalog_title(titles[i].TitleId)
 			if titles[i].Quantity ~= nil and titles[i].Quantity > 0 then
 				kernel.setactortext( "rebalance_quantity_text_line" .. tostring( current_index ), tostring( product ~= nil and titles[i].Quantity or "0" ) )
 				kernel.setactortext( "rebalance_title_text_line" .. tostring( current_index ), tostring( product ~= nil and product.long_name or "*Title Information Not Found*" ) )
-				kernel.setactortext( "rebalance_format_text_line" .. tostring( current_index ), tostring( product ~= nil and ProductTypes[product.product_type_id] ~= nil and ProductTypes[product.product_type_id].product_type_name or "*NA*" ) )
+				local product_type = nil
+				if product ~= nil then 
+					_product_type = kernel.get_product_type(tonumber(product.product_type_id))
+				end
+				kernel.setactortext( "rebalance_format_text_line" .. tostring( current_index ), tostring( _product_type ~= nil and _product_type.product_type_name or "*NA*" ) )
 			end
 		else 
 			--clear text

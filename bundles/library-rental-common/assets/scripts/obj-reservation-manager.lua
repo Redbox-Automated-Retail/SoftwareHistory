@@ -78,7 +78,7 @@ function newreservationmanager()
 				
 				if barcode_to_product ~= nil
 				and barcode_to_product.product_id ~= nil
-				and MasterProductCatalog[ barcode_to_product.product_id ] ~= nil then
+				and kernel.get_product_catalog_title(barcode_to_product.product_id) ~= nil then
                     v.status = get_rapid_status( v.barcode, "Known" )
 					if barcode_to_product.product_id ~= nil then
 						local barcodes = ProductToBarcode[ barcode_to_product.product_id ]

@@ -23,13 +23,6 @@ function newvendmanager()
 		end
 	)
 
-	kernel.register_update_vsm_impression_callback(
-		function(vsm_program_name)
-			kernel.log("Calling UpdateVSMImpression with program name: " .. tostring(vsm_program_name))
-			UpdateVSMImpression( vsm_program_name )
-		end
-	)
-
 	t.init = function( self )
 		self.vending = false
 		self.vend_job_completed = false
@@ -51,9 +44,7 @@ function newvendmanager()
             -- would close the current session and start a new one.  If so we don't want to show VSM, coming  soon or vend animiation
             kernel.callbackflush()
             if self.vend_job_completed == false then
-			    if (kernel.is_vsm_ad_available() == true or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil )
-                    and t.show_wait_screen == false
-                then
+			    if kernel.is_vsm_ad_available() == true and t.show_wait_screen == false then
                     if kernel.peekview() ~= "vsm_view"  then
                         kernel.log( "Show VSM" )
                         t.show_vsm_view()
@@ -321,10 +312,7 @@ function newvendmanager()
 
 			kernel.analyticsaddnode( "session", "vendingMovie", ShoppingCart.session_id )
 
-			if ( kernel.is_vsm_ad_available() == true) 
-                or kernel.getresourceproperty( "vsm_image", "program_name" ) ~= nil
-			    or ( kernel.current_rental_shopping_cart_item_count == 0 and (barcodes_to_vend == nil or #barcodes_to_vend == 0 ))
-			then
+			if kernel.is_vsm_ad_available() == true or (kernel.current_rental_shopping_cart_item_count == 0 and (barcodes_to_vend == nil or #barcodes_to_vend == 0)) then
                 t.show_vsm_view()
 			else
 				kernel.timercreate(

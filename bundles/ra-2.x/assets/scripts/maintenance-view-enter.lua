@@ -13,11 +13,9 @@ if DataAccessAlreadySent ~= true or AllowEntry ~= nil and AllowEntry == true the
 	local store_id = kernel.getmachinevalueordefault( "Store", "ID", "Not Configured" )
 	kernel.setmacro( "KIOSK_ID", store_id )
 
-	if Stores ~= nil
-	and Stores[store_id] ~= nil
-	and Stores[store_id].zip ~= nil
-	then
-		local zip = string.split(Stores[store_id].zip, "-", 1)
+	local store = kernel.get_store(store_id)
+	if store ~= nil	and store.zip ~= nil then
+		local zip = string.split(store.zip, "-", 1)
 		kernel.setmacro("MaintenanceView:ZipCode", tostring(zip[1]))
 	end
 end

@@ -350,13 +350,18 @@ reload_inventory = function()
 	Inventory_Table = {}
 	Inventory_All_Table = {}
 	sort = {}
-    local product_type_lookup = {}
-    local product_family_lookup = {}
-	local product_type = getprofiletable( "profile", "ProductType" )
+	local product_types = {}
 
-	for _, v in product_type:pairs() do
-		product_type_lookup[v["product_type_id"]] = v["product_type_name"]
-		product_family_lookup[v["product_type_id"]] = v["product_family_id"]
+	local function get_product_type(product_type_id)
+		local _product_type = product_types[product_type_id]
+	    if _product_type == nil then
+		    kernel.log( "> kernel.get_product_type id: " .. tostring(product_type_id))
+			_product_type = kernel.get_product_type(tonumber(product_type_id))
+			if _product_type ~= nil then
+				product_types[product_type_id] = _product_type
+			end
+		end
+		return _product_type
 	end
 
 	EmptySlots = 0
@@ -421,41 +426,45 @@ reload_inventory = function()
 								end
 							end
 						end
-						
-						local catalog_item = MasterProductCatalog[product["product_id"]]
+						local catalog_item = kernel.get_product_catalog_title(product["product_id"])
 						if catalog_item ~= nil
-						and catalog_item["do_not_rent_date"] ~= nil
-						and catalog_item["do_not_rent_date"] ~= "" then
-							local DoNotRentDate = string.sub(catalog_item["do_not_rent_date"], 1, 8)
+						and catalog_item.do_not_rent_date ~= nil
+						and catalog_item.do_not_rent_date ~= "" then
+							local DoNotRentDate = string.sub(catalog_item.do_not_rent_date, 1, 8)
 							local days = tonumber(kernel.getelapseddays( DoNotRentDate, get_current_date_string( "%4d%02d%02d" ) ))
 							if days >= 0 then
 								row.status = "DNR"
 							end
 						end
 						if catalog_item ~= nil then
-							row.title = tostring(catalog_item["sort_name"])
-							local product_type_id = catalog_item["product_type_id"]
+							row.title = tostring(catalog_item.sort_name)
+							local product_type_id = catalog_item.product_type_id
 							if row.status == "Unknown Title" and product_type_id ~= 17 then
 								row.status = "Known" --Override the display while sync catches up, saying unknown title while showing the title makes us look bad
 							end
 							if product_type_id ~= nil then
+								local _product_type = get_product_type(tonumber(product_type_id))
 								if product_type_id == 17 then
 									row.media = "DC"
 								elseif product_type_id == 18 then
 									row.media = "Switch"
 								else
-									row.media = product_type_lookup[tonumber(product_type_id)]
+									if _product_type ~= nil then
+										row.media = _product_type.product_type_name
+									end
 								end
-								row.rating = get_rating(product_family_lookup[tonumber(product_type_id)], catalog_item.rating_id)
+								if _product_type ~= nil then
+									row.rating = get_rating(_product_type.product_family_id, catalog_item.rating_id)
+								end
 							else
 								row.media = ""
 								row.rating = ""
 							end
-							local year = string.sub(catalog_item["merchandise_date"], 1, 4)
-							local month = string.sub(catalog_item["merchandise_date"], 5, 6)
-							local day = string.sub(catalog_item["merchandise_date"], 7, 8)
+							local year = string.sub(catalog_item.merchandise_date, 1, 4)
+							local month = string.sub(catalog_item.merchandise_date, 5, 6)
+							local day = string.sub(catalog_item.merchandise_date, 7, 8)
 							row.released = string.format("%s-%s-%s", month, day, year)
-							row.merchandise_date = catalog_item["merchandise_date"]
+							row.merchandise_date = catalog_item.merchandise_date
 						end
 					else
 						if row.barcode == nil or trim( row.barcode ) == "" then
@@ -586,8 +595,14 @@ show_table = function(
 	kernel.enableactor("status_label", "white")
 	
 	local function get_disc_number( barcode )
-		if barcode ~= nil and BarcodeToProduct[barcode] ~= nil and BarcodeToProduct[barcode].product_id ~= nil and MasterProductCatalog[BarcodeToProduct[barcode].product_id] ~= nil and MasterProductCatalog[BarcodeToProduct[barcode].product_id].disc_number ~= nil then
-			return MasterProductCatalog[BarcodeToProduct[barcode].product_id].disc_number
+		if barcode ~= nil then
+		    local barcode_product = BarcodeToProduct[barcode]
+			if barcode_product ~= nil then 
+				local master_product = kernel.get_product_catalog_title(barcode_product.product_id)
+				if master_product ~= nil and master_product.disc_number ~= nil then
+					return master_product.disc_number
+				end
+			end
 		end
 		return 1
 	end
