@@ -12,8 +12,7 @@ public sealed class MoveHelper
 	public ErrorCodes MoveTo(int deck, int slot, string mode)
 	{
 		string statement = $"MOVE DECK={deck} SLOT={slot} MODE={mode}";
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, Timeout, out var job);
-		if (!hardwareCommandResult.Success)
+		if (!Service.ExecuteImmediate(statement, Timeout, out var job).Success)
 		{
 			return ErrorCodes.ServiceChannelError;
 		}
@@ -40,8 +39,7 @@ public sealed class MoveHelper
 	public ErrorCodes MoveAbs(Axis axis, int units, bool checkSensors)
 	{
 		string statement = $"MOVEABS AXIS={axis.ToString().ToUpper()} UNITS={units.ToString()} SENSOR-CHECK={checkSensors.ToString().ToUpper()}";
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, Timeout, out var job);
-		if (!hardwareCommandResult.Success)
+		if (!Service.ExecuteImmediate(statement, Timeout, out var job).Success)
 		{
 			return ErrorCodes.ServiceChannelError;
 		}

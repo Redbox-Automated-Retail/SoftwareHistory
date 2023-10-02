@@ -66,8 +66,7 @@ internal class ScriptMode : IDisposable
 			m_console.Write("> ");
 			string statement = Console.ReadLine();
 			flag = ExecuteStatement(statement);
-			HardwareCommandResult job = Service.GetJob(Constants.ExecutionContexts.ImmediateModeContext, out var job2);
-			if (job.Success && job2.GetStack(out var stack).Success)
+			if (Service.GetJob(Constants.ExecutionContexts.ImmediateModeContext, out var job).Success && job.GetStack(out var stack).Success)
 			{
 				FormatStack(stack, m_console);
 			}
@@ -174,12 +173,11 @@ internal class ScriptMode : IDisposable
 		while (true)
 		{
 			string text = textReader.ReadLine();
-			if (text != null)
+			if (text == null)
 			{
-				ExecuteStatement(text);
-				continue;
+				break;
 			}
-			break;
+			ExecuteStatement(text);
 		}
 	}
 

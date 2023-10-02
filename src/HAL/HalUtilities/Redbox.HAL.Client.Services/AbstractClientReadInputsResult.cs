@@ -12,7 +12,7 @@ internal abstract class AbstractClientReadInputsResult<T> : IReadInputsResult<T>
 
 	public ErrorCodes Error { get; private set; }
 
-	public bool Success => ErrorCodes.Success == Error;
+	public bool Success => Error == ErrorCodes.Success;
 
 	public int InputCount => Inputs.Length;
 
@@ -30,7 +30,8 @@ internal abstract class AbstractClientReadInputsResult<T> : IReadInputsResult<T>
 		Array.ForEach(Inputs, delegate
 		{
 			LogHelper.Instance.Log(" input {0} = {1}", input, Inputs[input]);
-			input++;
+			int num = input + 1;
+			input = num;
 		});
 	}
 
@@ -59,8 +60,7 @@ internal abstract class AbstractClientReadInputsResult<T> : IReadInputsResult<T>
 
 	protected AbstractClientReadInputsResult(HardwareService service, string instruction)
 	{
-		HardwareCommandResult hardwareCommandResult = service.ExecuteImmediate(instruction, out var job);
-		if (!hardwareCommandResult.Success)
+		if (!service.ExecuteImmediate(instruction, out var job).Success)
 		{
 			Error = ErrorCodes.ServiceChannelError;
 			return;

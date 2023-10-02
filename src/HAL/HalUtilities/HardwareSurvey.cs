@@ -8,9 +8,9 @@ namespace HALUtilities;
 
 internal sealed class HardwareSurvey
 {
-	private const string SurveyFile = "HardwareSurvey.txt";
-
 	private readonly SurveyModes Mode;
+
+	private const string SurveyFile = "HardwareSurvey.txt";
 
 	internal void Run(HardwareService service)
 	{

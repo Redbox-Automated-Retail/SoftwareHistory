@@ -27,11 +27,10 @@ internal sealed class PrepositionTest : IDisposable
 			}
 			list.Add(inventoryLocation.Matrix);
 		}
-		HardwareCommandResult hardwareCommandResult = s.PreposVend(new HardwareJobSchedule
+		if (!s.PreposVend(new HardwareJobSchedule
 		{
 			Priority = HardwareJobPriority.High
-		}, list.ToArray(), out m_preposJob);
-		if (!hardwareCommandResult.Success)
+		}, list.ToArray(), out m_preposJob).Success)
 		{
 			throw new Exception("Can't schedule job.");
 		}

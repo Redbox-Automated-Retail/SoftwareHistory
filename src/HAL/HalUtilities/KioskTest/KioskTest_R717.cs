@@ -91,11 +91,10 @@ internal sealed class KioskTest_R717 : AbstractKioskTest
 		HardwareJob job = null;
 		try
 		{
-			HardwareCommandResult hardwareCommandResult = Service.LoadBin(locs, new HardwareJobSchedule
+			if (!Service.LoadBin(locs, new HardwareJobSchedule
 			{
 				Priority = HardwareJobPriority.High
-			}, out job);
-			if (!hardwareCommandResult.Success)
+			}, out job).Success)
 			{
 				LogHelper.Instance.Log("**ERROR** Failed to create bin job");
 				return false;

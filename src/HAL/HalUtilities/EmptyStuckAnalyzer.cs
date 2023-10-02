@@ -89,6 +89,7 @@ internal class EmptyStuckAnalyzer
 						{
 							break;
 						}
+						int num2;
 						if (text3.IndexOf("ITEMSTUCK") != -1)
 						{
 							type = StuckType.Stuck;
@@ -104,14 +105,14 @@ internal class EmptyStuckAnalyzer
 						else if (text3.IndexOf("LOOKUP") != -1)
 						{
 							type = StuckType.LookupFail;
-							sampleCount++;
-							TypeStat typeStat = list.Find((TypeStat each) => each.Type == type);
-							typeStat.Increment();
+							num2 = sampleCount + 1;
+							sampleCount = num2;
+							list.Find((TypeStat each) => each.Type == type).Increment();
 							if (type == StuckType.LookupFail)
 							{
-								int num2 = text3.IndexOf("item") + 5;
-								int num3 = text3.IndexOf("returned") - 1;
-								string _bc = text3.Substring(num2, num3 - num2);
+								int num3 = text3.IndexOf("item") + 5;
+								int num4 = text3.IndexOf("returned") - 1;
+								string _bc = text3.Substring(num3, num4 - num3);
 								LookupFailStat lookupFailStat = list2.Find((LookupFailStat each) => each.Matrix == _bc);
 								if (lookupFailStat == null)
 								{
@@ -126,24 +127,24 @@ internal class EmptyStuckAnalyzer
 						{
 							continue;
 						}
-						int num4 = text3.IndexOf(text);
-						if (-1 == num4)
+						int num5 = text3.IndexOf(text);
+						if (-1 == num5)
 						{
 							continue;
 						}
-						sampleCount++;
-						TypeStat typeStat2 = list.Find((TypeStat each) => each.Type == type);
-						typeStat2.Increment();
-						string s = text3.Substring(num4 + text.Length, 1);
+						num2 = sampleCount + 1;
+						sampleCount = num2;
+						list.Find((TypeStat each) => each.Type == type).Increment();
+						string s = text3.Substring(num5 + text.Length, 1);
 						int deck = int.Parse(s);
-						num4 = text3.IndexOf(text2);
-						string text4 = text3.Substring(num4 + text2.Length);
+						num5 = text3.IndexOf(text2);
+						string text4 = text3.Substring(num5 + text2.Length);
 						char[] array = text4.ToCharArray();
-						for (int num5 = 0; num5 < array.Length; num5++)
+						for (int num6 = 0; num6 < array.Length; num6++)
 						{
-							if (char.IsWhiteSpace(array[num5]))
+							if (char.IsWhiteSpace(array[num6]))
 							{
-								string text5 = text4.Substring(0, num5 + 1);
+								string text5 = text4.Substring(0, num6 + 1);
 								if (!int.TryParse(text5, out var _targetSlot))
 								{
 									log.WriteLine("Unable to parse {0}", text5);

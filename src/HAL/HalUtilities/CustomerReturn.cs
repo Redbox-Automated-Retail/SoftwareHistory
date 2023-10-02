@@ -10,8 +10,7 @@ internal sealed class CustomerReturn : JobExecutor
 
 	internal static void RunExecutor(object o)
 	{
-		HardwareService service = o as HardwareService;
-		RunExecutor(service);
+		RunExecutor(o as HardwareService);
 	}
 
 	internal static void RunExecutor(HardwareService service)

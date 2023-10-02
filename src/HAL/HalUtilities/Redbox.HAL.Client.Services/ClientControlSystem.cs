@@ -35,8 +35,7 @@ public sealed class ClientControlSystem : IControlSystem
 	public bool Shutdown()
 	{
 		using InstructionHelper instructionHelper = new InstructionHelper(Service);
-		string text = instructionHelper.ExecuteGeneric("SERIALBOARD CLOSEPORT");
-		return text.Equals("SUCCESS", StringComparison.CurrentCultureIgnoreCase);
+		return instructionHelper.ExecuteGeneric("SERIALBOARD CLOSEPORT").Equals("SUCCESS", StringComparison.CurrentCultureIgnoreCase);
 	}
 
 	public IControlResponse SetAudio(AudioChannelState newState)
@@ -166,8 +165,7 @@ public sealed class ClientControlSystem : IControlSystem
 	public IPickerSensorReadResult ReadPickerSensors(bool f)
 	{
 		string statement = "SENSOR READ PICKER-SENSOR=1..6";
-		HardwareCommandResult hardwareCommandResult = Service.ExecuteImmediate(statement, out var job);
-		if (!hardwareCommandResult.Success)
+		if (!Service.ExecuteImmediate(statement, out var job).Success)
 		{
 			return new ClientPickerSensorReadResult(ErrorCodes.ServiceChannelError);
 		}
@@ -179,8 +177,7 @@ public sealed class ClientControlSystem : IControlSystem
 		{
 			return new ClientPickerSensorReadResult(ErrorCodes.CommunicationError);
 		}
-		int num = int.Parse(stack.Pop());
-		if (num >= 6)
+		if (int.Parse(stack.Pop()) >= 6)
 		{
 			return new ClientPickerSensorReadResult(stack);
 		}

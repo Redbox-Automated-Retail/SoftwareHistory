@@ -94,14 +94,13 @@ internal class InventoryChecker
 			}
 		}
 		log.WriteLine("There were {0} comparison errors.", num);
-		return 0 == num;
+		return num == 0;
 	}
 
 	private List<InventoryLocation> GetLocations(XmlDocument document)
 	{
 		List<InventoryLocation> list = new List<InventoryLocation>();
-		XmlNodeList xmlNodeList = document.SelectNodes("inventory-items/item");
-		foreach (XmlNode item in xmlNodeList)
+		foreach (XmlNode item in document.SelectNodes("inventory-items/item"))
 		{
 			int deck = Convert.ToInt32(item.Attributes["deck"].Value);
 			int slot = Convert.ToInt32(item.Attributes["slot"].Value);

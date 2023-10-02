@@ -172,9 +172,9 @@ internal sealed class IpcClientTester : IDisposable
 		Thread[] array = new Thread[iterations];
 		for (int i = 0; i < iterations; i++)
 		{
-			Thread thread = (array[i] = new Thread(RunDataTest));
-			thread.Name = $"Clientthread-{i}";
-			thread.Start(size);
+			Thread obj = (array[i] = new Thread(RunDataTest));
+			obj.Name = $"Clientthread-{i}";
+			obj.Start(size);
 		}
 		Array.ForEach(array, delegate(Thread t)
 		{

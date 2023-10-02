@@ -74,7 +74,7 @@ public sealed class HardwareJob
 
 	public TimeSpan? ExecutionTime { get; internal set; }
 
-	public bool IsLocallyConnected => null != Connection;
+	public bool IsLocallyConnected => Connection != null;
 
 	public HardwareJobStatus Status { get; internal set; }
 
@@ -140,8 +140,7 @@ public sealed class HardwareJob
 			string text = ((array.Length > 1) ? array[1] : array[0]);
 			if (text.StartsWith(">STATUS CHANGE<"))
 			{
-				string value = text.Substring(text.IndexOf("<") + 1).Trim();
-				HardwareJobStatus status = Enum<HardwareJobStatus>.ParseIgnoringCase(value, HardwareJobStatus.Completed);
+				HardwareJobStatus status = Enum<HardwareJobStatus>.ParseIgnoringCase(text.Substring(text.IndexOf("<") + 1).Trim(), HardwareJobStatus.Completed);
 				if (StatusChanged != null)
 				{
 					StatusChanged(this, status);
@@ -280,11 +279,12 @@ public sealed class HardwareJob
 	{
 		if (values == null)
 		{
-			HardwareCommandResult hardwareCommandResult = new HardwareCommandResult();
-			hardwareCommandResult.Success = false;
-			return hardwareCommandResult;
+			return new HardwareCommandResult
+			{
+				Success = false
+			};
 		}
-		HardwareCommandResult hardwareCommandResult2 = null;
+		HardwareCommandResult hardwareCommandResult = null;
 		foreach (object obj in values)
 		{
 			object obj2 = obj;
@@ -292,13 +292,13 @@ public sealed class HardwareJob
 			{
 				obj2 = $"\"{obj}\"";
 			}
-			hardwareCommandResult2 = ExecuteCommand($"STACK push value: '{obj2}' job: '{ID}'");
-			if (!hardwareCommandResult2.Success)
+			hardwareCommandResult = ExecuteCommand($"STACK push value: '{obj2}' job: '{ID}'");
+			if (!hardwareCommandResult.Success)
 			{
-				return hardwareCommandResult2;
+				return hardwareCommandResult;
 			}
 		}
-		return hardwareCommandResult2;
+		return hardwareCommandResult;
 	}
 
 	public HardwareCommandResult SetDebugState(bool enabled)
@@ -452,28 +452,29 @@ public sealed class HardwareJob
 		{
 			return null;
 		}
-		HardwareJob hardwareJob = new HardwareJob(service);
-		hardwareJob.ID = readOnlyCollection[0];
-		hardwareJob.Label = readOnlyCollection[1];
-		hardwareJob.ProgramName = readOnlyCollection[2];
-		hardwareJob.Priority = Enum<HardwareJobPriority>.ParseIgnoringCase(readOnlyCollection[3], HardwareJobPriority.Normal);
-		hardwareJob.Status = Enum<HardwareJobStatus>.ParseIgnoringCase(readOnlyCollection[5], HardwareJobStatus.Suspended);
-		hardwareJob.ConnectionState = Enum<HardwareJobConnectionState>.ParseIgnoringCase(readOnlyCollection[7], HardwareJobConnectionState.Disconnected);
-		HardwareJob hardwareJob2 = hardwareJob;
+		HardwareJob hardwareJob = new HardwareJob(service)
+		{
+			ID = readOnlyCollection[0],
+			Label = readOnlyCollection[1],
+			ProgramName = readOnlyCollection[2],
+			Priority = Enum<HardwareJobPriority>.ParseIgnoringCase(readOnlyCollection[3], HardwareJobPriority.Normal),
+			Status = Enum<HardwareJobStatus>.ParseIgnoringCase(readOnlyCollection[5], HardwareJobStatus.Suspended),
+			ConnectionState = Enum<HardwareJobConnectionState>.ParseIgnoringCase(readOnlyCollection[7], HardwareJobConnectionState.Disconnected)
+		};
 		if (readOnlyCollection.Count == 10)
 		{
-			hardwareJob2.EnableDebugging = readOnlyCollection[8] == "1";
-			hardwareJob2.TraceExecution = readOnlyCollection[9] == "1";
+			hardwareJob.EnableDebugging = readOnlyCollection[8] == "1";
+			hardwareJob.TraceExecution = readOnlyCollection[9] == "1";
 		}
 		if (DateTime.TryParse(readOnlyCollection[4], out var result))
 		{
-			hardwareJob2.StartTime = result;
+			hardwareJob.StartTime = result;
 		}
 		if (TimeSpan.TryParse(readOnlyCollection[6], out var result2))
 		{
-			hardwareJob2.ExecutionTime = result2;
+			hardwareJob.ExecutionTime = result2;
 		}
-		return hardwareJob2;
+		return hardwareJob;
 	}
 
 	internal void EventPoll(object o)
@@ -482,8 +483,7 @@ public sealed class HardwareJob
 		{
 			do
 			{
-				HardwareCommandResult hardwareCommandResult = ClientCommand<HardwareCommandResult>.ExecuteCommand(connectionInfo.Session, "JOB scheduler-status");
-				if (!hardwareCommandResult.Success && EventRaised != null)
+				if (!ClientCommand<HardwareCommandResult>.ExecuteCommand(connectionInfo.Session, "JOB scheduler-status").Success && EventRaised != null)
 				{
 					EventRaised(this, DateTime.Now, ">IPC EXCEPTION<");
 				}

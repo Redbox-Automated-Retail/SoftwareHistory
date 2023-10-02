@@ -12,7 +12,7 @@ internal sealed class KioskTestRunner : IDisposable
 {
 	private bool Disposed;
 
-	private readonly double? RunTime = null;
+	private readonly double? RunTime;
 
 	private readonly KioskTestLogger Logger;
 
@@ -74,7 +74,7 @@ internal sealed class KioskTestRunner : IDisposable
 			Test = new QlmKioskTest(config.Configuration, service);
 			break;
 		}
-		if (args.Length > 0)
+		if (args.Length != 0)
 		{
 			for (int i = 0; i < args.Length; i++)
 			{

@@ -1,16 +1,16 @@
 # Z (1.13.0.27)
 
-- Product: MS HAL Tester 1.13.0.27
+- Product: HAL Utilities 1.13.0.27
 - Date (first download in the snapshots): 2023-10-01
-- Store labels: kop-ms-hal-tester-Z
+- Store labels: kop-tools-Z
 - Package revisions:
-  - `kop-tools` revision 53 (`2B7B649EEB1A549EF695FE099CE347A46383F3D5`)
+  - `kop-tools` revision 54 (`42DB7283C4B5675C6FE2B416EEEC2F927999E13E`)
   - `kop-hal-install` revision 73 (`88719D25F5482A6CB6197BF416243911E2EA82E9`)
   - `kop-ms-hal-tester` revision 57 (`750AAC5796B12F9ACF29D79D2C637E4BA9DA2F52`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `HalUtilities.exe` | HalUtilities | 1.12.1.65 | `AA2B0AAB091014D1590D8BEA955FCC3398B44BB5` | exact |
+| `HalUtilities.exe` | HalUtilities | 1.13.0.27 | `8F8199CFD0A837317E51D280A57C1301EFAE9E9D` | exact |
 | `beforeactivate.lua` |  |  | `C82CE7CEC1353205286FE664F99249430FF08AF3` | exact |
 | `Redbox.HAL.DirectShow.Frame.Plugin.dll` | Redbox.HAL.DirectShow.Frame.Plugin | 1.13.0.27 | `AACF1B3BAC165A968D356617D5B3D97FBCD90B6B` | exact |
 | `Redbox.HAL.DirectShow.Plugin.dll` | Redbox.HAL.DirectShow.Plugin | 1.3.0.119 | `72EC318466F366153B8F23E03D0465F4B77664C2` | exact |

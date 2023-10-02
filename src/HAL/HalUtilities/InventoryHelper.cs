@@ -75,11 +75,13 @@ internal sealed class InventoryHelper : IDisposable
 			{
 				if (InventoryItemsEqual(_r, outputSuccessfulCompare))
 				{
-					inventoryMatches++;
+					int num = inventoryMatches + 1;
+					inventoryMatches = num;
 				}
 				else
 				{
-					inventoryMismatches++;
+					int num = inventoryMismatches + 1;
+					inventoryMismatches = num;
 				}
 			}
 		});
@@ -137,8 +139,7 @@ internal sealed class InventoryHelper : IDisposable
 		}
 		if ((options & SyncOptions.Attach) != SyncOptions.None)
 		{
-			string text = hardwareCommandResult.CommandMessages[0];
-			string[] array = text.Split('|');
+			string[] array = hardwareCommandResult.CommandMessages[0].Split('|');
 			if (Service.GetJob(array[0], out var job).Success)
 			{
 				job.EventRaised += delegate(HardwareJob hardwareJob, DateTime eventTime, string eventMessage)
@@ -199,7 +200,7 @@ internal sealed class InventoryHelper : IDisposable
 		using (HardwareStatusExecutor hardwareStatusExecutor = new HardwareStatusExecutor(Service))
 		{
 			hardwareStatusExecutor.Run();
-			if (hardwareStatusExecutor.InventoryError || force)
+			if (hardwareStatusExecutor.InventoryError | force)
 			{
 				using RebuildInventoryExecutor rebuildInventoryExecutor = new RebuildInventoryExecutor(Service);
 				rebuildInventoryExecutor.Run();
@@ -223,9 +224,10 @@ internal sealed class InventoryHelper : IDisposable
 
 	private void RunSoftSync()
 	{
-		HardwareJobSchedule hardwareJobSchedule = new HardwareJobSchedule();
-		hardwareJobSchedule.Priority = HardwareJobPriority.High;
-		HardwareJobSchedule schedule = hardwareJobSchedule;
+		HardwareJobSchedule schedule = new HardwareJobSchedule
+		{
+			Priority = HardwareJobPriority.High
+		};
 		using ClientHelper clientHelper = new ClientHelper(Service);
 		while (!Event.WaitOne(30000))
 		{

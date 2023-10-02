@@ -19,8 +19,7 @@ internal sealed class RandomInventorySelector : IDisposable
 		{
 			return null;
 		}
-		Random random = new Random(DateTime.Now.Millisecond);
-		int index = random.Next(0, m_locs.Count - 1);
+		int index = new Random(DateTime.Now.Millisecond).Next(0, m_locs.Count - 1);
 		IInventoryLocation result = m_locs[index];
 		m_locs.RemoveAt(index);
 		return result;
