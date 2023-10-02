@@ -366,7 +366,7 @@ public class SwipeViewController : BaseViewController
 		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
 		swipeViewModel.ApplePayImageVisibility = ((service?.KioskSession?.DeviceService?.HideApplePayImage == true) ? Visibility.Collapsed : Visibility.Visible);
 		swipeViewModel.GooglePayImageVisibility = ((service?.KioskSession?.DeviceService?.HideGooglePayImage == true) ? Visibility.Collapsed : Visibility.Visible);
-		IDeviceServiceTrackDataService deviceServiceTrackDataService = ServiceLocator.Instance.GetService<ITrackDataService>() as IDeviceServiceTrackDataService;
+		ServiceLocator.Instance.GetService<ITrackDataService>();
 		swipeViewModel.ChipNotEnabledText = Resources.chip_not_enabled_text;
 		swipeViewModel.BackButtonText = Resources.back_button.ToUpper();
 		swipeViewModel.BackButtonVisibility = Visibility.Visible;
@@ -383,24 +383,17 @@ public class SwipeViewController : BaseViewController
 			break;
 		case SwipeViewType.EncryptedSwipeReservationPickup:
 			swipeViewModel.TitleText = Resources.reservation_emv_swipe_title;
-			if (deviceServiceTrackDataService == null || deviceServiceTrackDataService.IsInTechnicalFallback)
-			{
-				swipeViewModel.MessageText = null;
-				swipeViewModel.ImageStackPanelVisibility = Visibility.Collapsed;
-			}
-			else
-			{
-				swipeViewModel.MessageText = Resources.reservation_checkout_emv_swipe_message;
-			}
+			swipeViewModel.MessageText = Resources.reservation_emv_message;
 			flag = true;
 			break;
 		case SwipeViewType.EMVInsertReservationPickup:
 			swipeViewModel.TitleText = Resources.reservation_emv_insert_title;
-			swipeViewModel.MessageText = null;
+			swipeViewModel.MessageText = Resources.reservation_emv_message;
 			flag = true;
 			break;
 		case SwipeViewType.EMVInsertTapReservationPickup:
 			swipeViewModel.TitleText = Resources.reservation_emv_insert_tap_title;
+			swipeViewModel.TitleNoteText = Resources.reservation_emv_message;
 			swipeViewModel.MessageText = Resources.reservation_emv_insert_tap_hide_mobile_message;
 			swipeViewModel.ImageStackPanelVisibility = Visibility.Visible;
 			flag = true;

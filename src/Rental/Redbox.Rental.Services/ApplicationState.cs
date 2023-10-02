@@ -3,7 +3,6 @@ using System.Linq;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
-using Redbox.Rental.Model.EmailOptInCampaign;
 using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.Services;
@@ -82,8 +81,6 @@ public class ApplicationState : IApplicationState
 			_inCartTemplateName = value;
 		}
 	}
-
-	public IEmailOptInCampaign EmailOptInCampaign { get; set; }
 
 	public bool VerboseLogging
 	{

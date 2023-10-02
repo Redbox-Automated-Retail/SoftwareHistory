@@ -48,7 +48,6 @@ using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.Loyalty;
-using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Reservation;
@@ -565,7 +564,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		CommandHelper.Initialize();
 		UserSettingsStore.Instance.RootPath = "SOFTWARE\\Redbox\\REDS\\Kiosk Engine";
 		MachineSettingsStore.Instance.RootPath = "SOFTWARE\\Redbox\\REDS\\Kiosk Engine";
-		ServiceLocator.Instance.AddService(typeof(IEngineApplication), this);
+		AddService(typeof(IEngineApplication), this);
 		errorList.AddRange(KernelExtensionService.Instance.Initialize(new List<Type>
 		{
 			typeof(BrokerServicesHost),
@@ -573,48 +572,48 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			typeof(UpdateServicesHost)
 		}));
 		errorList.AddRange(InitializeConfiguration());
-		ServiceLocator.Instance.AddService(typeof(IObfuscationService), new ObfuscationHelper());
-		ServiceLocator.Instance.AddService(typeof(IObjectCacheService), ObjectCacheService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IIdeService), IdeService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IInputService), this);
-		ServiceLocator.Instance.AddService(typeof(IFileCacheService), this);
-		ServiceLocator.Instance.AddService(typeof(IViewService), ViewService.Instance);
-		ServiceLocator.Instance.AddService(typeof(ITimerService), TimerService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IIdleTimerService), IdleTimerService.Instance);
-		ServiceLocator.Instance.AddService(typeof(ISoundService), SoundService.Instance);
-		ServiceLocator.Instance.AddService(typeof(ITweenService), TweenService.Instance);
-		ServiceLocator.Instance.AddService(typeof(ICallbackService), CallbackService.Instance);
-		ServiceLocator.Instance.AddService(typeof(ISecurityService), SecurityService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IDataCacheService), DataCacheService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IUserSettingsStore), UserSettingsStore.Instance);
-		ServiceLocator.Instance.AddService(typeof(IMachineSettingsStore), MachineSettingsStore.Instance);
-		ServiceLocator.Instance.AddService(typeof(IPreferenceService), PreferenceService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IScreenSaverService), ScreenSaverService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IStyleSheetService), StyleSheetService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IKernelFunctionRegistryService), KernelFunctionRegistryService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IProductLookupCatalogService), new ProductLookupCatalogService());
-		ServiceLocator.Instance.AddService(typeof(IThemeService), ThemeService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IFraudService), FraudService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IPromotionService), PromotionService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IConfiguration), Configuration.Instance);
-		ServiceLocator.Instance.AddService(typeof(IDeviceServiceClientHelper), DeviceServiceClientHelperFactory.Create());
-		ServiceLocator.Instance.AddService(typeof(IClassicTrackDataService), new ClassicTrackDataService());
-		ServiceLocator.Instance.AddService(typeof(IDeviceServiceTrackDataService), new DeviceServiceTrackDataService());
-		ServiceLocator.Instance.AddService(typeof(ITrackDataEncryptionService), new TrackDataEncryptionService());
-		ServiceLocator.Instance.AddService(typeof(IAfterSwipeOfferService), AfterSwipeOfferService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IPerksSignupService), PerksSignupService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IReservationService), new ReservationService());
-		ServiceLocator.Instance.AddService(typeof(IHttpService), new HttpService(LogHelper.Instance, new HttpClient()));
-		ServiceLocator.Instance.AddService(typeof(IUpdateClientService), new UpdateClientService());
-		ServiceLocator.Instance.AddService(typeof(IApiService), new APIService());
-		ServiceLocator.Instance.AddService(typeof(IEngineApplicationService), new EngineApplicationService());
+		AddService(typeof(IObfuscationService), new ObfuscationHelper());
+		AddService(typeof(IObjectCacheService), ObjectCacheService.Instance);
+		AddService(typeof(IIdeService), IdeService.Instance);
+		AddService(typeof(IInputService), this);
+		AddService(typeof(IFileCacheService), this);
+		AddService(typeof(IViewService), ViewService.Instance);
+		AddService(typeof(ITimerService), TimerService.Instance);
+		AddService(typeof(IIdleTimerService), IdleTimerService.Instance);
+		AddService(typeof(ISoundService), SoundService.Instance);
+		AddService(typeof(ITweenService), TweenService.Instance);
+		AddService(typeof(ICallbackService), CallbackService.Instance);
+		AddService(typeof(ISecurityService), SecurityService.Instance);
+		AddService(typeof(IDataCacheService), DataCacheService.Instance);
+		AddService(typeof(IUserSettingsStore), UserSettingsStore.Instance);
+		AddService(typeof(IMachineSettingsStore), MachineSettingsStore.Instance);
+		AddService(typeof(IPreferenceService), PreferenceService.Instance);
+		AddService(typeof(IScreenSaverService), ScreenSaverService.Instance);
+		AddService(typeof(IStyleSheetService), StyleSheetService.Instance);
+		AddService(typeof(IKernelFunctionRegistryService), KernelFunctionRegistryService.Instance);
+		AddService(typeof(IProductLookupCatalogService), new ProductLookupCatalogService());
+		AddService(typeof(IThemeService), ThemeService.Instance);
+		AddService(typeof(IFraudService), FraudService.Instance);
+		AddService(typeof(IPromotionService), PromotionService.Instance);
+		AddService(typeof(IConfiguration), Configuration.Instance);
+		AddService(typeof(IDeviceServiceClientHelper), DeviceServiceClientHelperFactory.Create());
+		AddService(typeof(IClassicTrackDataService), new ClassicTrackDataService());
+		AddService(typeof(IDeviceServiceTrackDataService), new DeviceServiceTrackDataService());
+		AddService(typeof(ITrackDataEncryptionService), new TrackDataEncryptionService());
+		AddService(typeof(IAfterSwipeOfferService), AfterSwipeOfferService.Instance);
+		AddService(typeof(IPerksSignupService), PerksSignupService.Instance);
+		AddService(typeof(IReservationService), new ReservationService());
+		AddService(typeof(IHttpService), new HttpService(LogHelper.Instance, new HttpClient()));
+		AddService(typeof(IUpdateClientService), new UpdateClientService());
+		AddService(typeof(IApiService), new APIService());
+		AddService(typeof(IEngineApplicationService), new EngineApplicationService());
 		IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
 		if (service2 != null && (service2.TryGetValue<bool>("system", "General", "TextToSpeechEnabled", out var value) & value))
 		{
-			ServiceLocator.Instance.AddService(typeof(ITextToSpeechService), TextToSpeechService.Instance);
+			AddService(typeof(ITextToSpeechService), TextToSpeechService.Instance);
 		}
 		AnalyticsService instance = new AnalyticsService(LogHelper.Instance, service2, this);
-		ServiceLocator.Instance.AddService(typeof(IAnalyticsService), instance);
+		AddService(typeof(IAnalyticsService), instance);
 		InitializePreferencePages();
 		errorList.AddRange(SchedulerService.Instance.Initialize());
 		errorList.AddRange(DataStoreService.Instance.Initialize());
@@ -624,21 +623,21 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		errorList.AddRange(KernelService.Instance.Initialize());
 		errorList.AddRange(EnvironmentManager.Instance.Initialize());
 		errorList.AddRange(QueueService.Instance.Initialize(Path.Combine(RunningPath, "message.data"), new QueueServiceVistaDBData()));
-		ServiceLocator.Instance.AddService(typeof(IKioskClientService), KioskClientService.Instance);
+		AddService(typeof(IKioskClientService), KioskClientService.Instance);
 		ProductGroupService instance2 = new ProductGroupService(LogHelper.Instance, KioskClientService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IProductGroupService), instance2);
+		AddService(typeof(IProductGroupService), instance2);
 		ServiceLocator.Instance.GetService<IConfiguration>();
-		ServiceLocator.Instance.AddService(typeof(IKioskSessionJsonAnalyticsService), KioskSessionJsonAnalyticsService.Instance);
-		ServiceLocator.Instance.AddService(typeof(IBarcodeTrackingService), BarcodeTrackingService.Instance);
+		AddService(typeof(IKioskSessionJsonAnalyticsService), KioskSessionJsonAnalyticsService.Instance);
+		AddService(typeof(IBarcodeTrackingService), BarcodeTrackingService.Instance);
 		InitializeBarcodeTrackingService();
-		ServiceLocator.Instance.AddService(typeof(IUploadDiscImageService), UploadDiscImageService.Instance);
+		AddService(typeof(IUploadDiscImageService), UploadDiscImageService.Instance);
 		InitializeUploadDiscImageService();
 		errorList.AddRange(ShoppingSessionService.Instance.Initialize(Path.Combine(RunningPath, "session.data")));
 		errorList.AddRange(DebugService.Instance.Initialize());
 		_ = ApplicationState.Instance.IsStandAlone;
 		ServiceLocator.Instance.AddAuthenticationServices();
 		ServiceLocator.Instance.AddStoreServices();
-		ServiceLocator.Instance.AddService(typeof(IHealthServices), HealthService.Instance);
+		AddService(typeof(IHealthServices), HealthService.Instance);
 		ServiceLocator.Instance.AddMarketingServices();
 		errorList.AddRange(KernelExtensionService.Instance.LoadAllExtensions());
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList2 = ResourceBundleService.Instance.Initialize(System.Windows.Forms.Application.ExecutablePath, Settings.Default.DevBundlePath);
@@ -646,9 +645,9 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		{
 			errorList.AddRange(errorList2);
 		}
-		ServiceLocator.Instance.AddService(typeof(ISyncUnknownProcessor), SyncUnknownProcessor.Instance);
+		AddService(typeof(ISyncUnknownProcessor), SyncUnknownProcessor.Instance);
 		ServiceLocator.Instance.GetService<ISyncUnknownProcessor>()?.Initialize();
-		ServiceLocator.Instance.AddService(typeof(ISyncEmptiesProcessor), SyncEmptiesProcessor.Instance);
+		AddService(typeof(ISyncEmptiesProcessor), SyncEmptiesProcessor.Instance);
 		ServiceLocator.Instance.GetService<ISyncEmptiesProcessor>()?.Initialize();
 		errorList.AddRange(InitializeRedboxRental());
 		errorList2 = ResourceBundleService.Instance.LoadBundles();
@@ -700,99 +699,99 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		UploadDiscImageService.Instance.IsActive = true;
 	}
 
+	private void AddService(Type serviceType, object instance)
+	{
+		LogHelper.Instance.Log("ServiceLocator adding service: " + serviceType?.Name);
+		ServiceLocator.Instance.AddService(serviceType, instance);
+	}
+
 	public Redbox.KioskEngine.ComponentModel.ErrorList InitializeRedboxRental()
 	{
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		try
 		{
-			ServiceLocator.Instance.AddService(typeof(IRentalSessionService), new RentalSessionService());
+			AddService(typeof(IRentalSessionService), new RentalSessionService());
 			IKernelService service = ServiceLocator.Instance.GetService<IKernelService>();
 			IConfigurationService service2 = ServiceLocator.Instance.GetService<IConfigurationService>();
 			IKioskClientService service3 = ServiceLocator.Instance.GetService<IKioskClientService>();
-			ControlPanelService instance = new ControlPanelService();
-			ServiceLocator.Instance.AddService(typeof(IControlPanelService), instance);
-			FieldMaintenanceService instance2 = new FieldMaintenanceService();
-			ServiceLocator.Instance.AddService(typeof(IFieldMaintenanceService), instance2);
-			MarketingConfigurationManager marketingConfigurationManager = new MarketingConfigurationManager(service2);
-			ServiceLocator.Instance.AddService(typeof(IMarketingConfigurationManager), marketingConfigurationManager);
+			AddService(instance: new ControlPanelService(), serviceType: typeof(IControlPanelService));
+			AddService(instance: new FieldMaintenanceService(), serviceType: typeof(IFieldMaintenanceService));
+			AddService(instance: new MarketingConfigurationManager(service2), serviceType: typeof(IMarketingConfigurationManager));
 			StoreManagerService storeManagerService = new StoreManagerService(Country.US, service2);
-			ServiceLocator.Instance.AddService(typeof(IStoreManager), storeManagerService);
+			AddService(typeof(IStoreManager), storeManagerService);
 			service3?.Kiosk?.LoadNearbyKiosks();
 			service3?.Dual?.Refresh();
 			KioskHealthConfiguration kioskHealthConfiguration = new KioskHealthConfiguration(service2);
-			ServiceLocator.Instance.AddService(typeof(IKioskHealthConfiguration), kioskHealthConfiguration);
+			AddService(typeof(IKioskHealthConfiguration), kioskHealthConfiguration);
 			KioskEventService kioskEventService = new KioskEventService(storeManagerService, kioskHealthConfiguration);
 			kioskEventService.Start();
-			ServiceLocator.Instance.AddService(typeof(IKioskEventService), kioskEventService);
-			RentalHealthService instance3 = new RentalHealthService();
-			ServiceLocator.Instance.AddService(typeof(IRentalHealthService), instance3);
+			AddService(typeof(IKioskEventService), kioskEventService);
+			RentalHealthService instance = new RentalHealthService();
+			AddService(typeof(IRentalHealthService), instance);
 			KernelHelperService kernelHelperService = new KernelHelperService();
-			ServiceLocator.Instance.AddService(typeof(IKernelHelperService), kernelHelperService);
+			AddService(typeof(IKernelHelperService), kernelHelperService);
 			InventoryData inventoryData = new InventoryData(kernelHelperService);
 			inventoryData.Initialize();
-			ServiceLocator.Instance.AddService(typeof(IInventoryData), inventoryData);
-			InventoryService instance4 = new InventoryService(inventoryData);
-			ServiceLocator.Instance.AddService(typeof(IInventoryService), instance4);
+			AddService(typeof(IInventoryData), inventoryData);
+			InventoryService instance2 = new InventoryService(inventoryData);
+			AddService(typeof(IInventoryService), instance2);
+			RentalShoppingCartService.Instance.Initialize();
+			RedboxRentalService redboxRentalService = new RedboxRentalService();
+			AddService(typeof(IRedboxRental), redboxRentalService);
+			errorList.AddRange(redboxRentalService.Initialize());
 			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(DataPath, "ProfileImages\\"), new CacheData(), new LocalData(), new ReservationData(DataPath), new KioskData(service), this);
-			ServiceLocator.Instance.AddService(typeof(IDataService), dataService);
+			AddService(typeof(IDataService), dataService);
 			dataService.Initialize();
 			dataService.Start();
 			dataService.RefreshIfNeeded();
-			KioskClientServicePricing instance5 = new KioskClientServicePricing();
-			ServiceLocator.Instance.AddService(typeof(IKioskClientServicePricing), instance5);
+			KioskClientServicePricing instance3 = new KioskClientServicePricing();
+			AddService(typeof(IKioskClientServicePricing), instance3);
 			PricingService pricingService = new PricingService(service, storeManagerService);
-			ServiceLocator.Instance.AddService(typeof(IPricingService), pricingService);
+			AddService(typeof(IPricingService), pricingService);
 			pricingService.Start();
-			IResourceBundleService service4 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-			service4.RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
-			MarketingAdService marketingAdService = new MarketingAdService(marketingConfigurationManager, storeManagerService, service4);
-			ServiceLocator.Instance.AddService(typeof(IMarketingAdService), marketingAdService);
+			ServiceLocator.Instance.GetService<IResourceBundleService>().RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
 			VistarAdService vistarAdService = new VistarAdService();
-			ServiceLocator.Instance.AddService(typeof(IVistarAdService), vistarAdService);
-			AdService instance6 = new AdService(marketingAdService, vistarAdService);
-			ServiceLocator.Instance.AddService(typeof(IAdService), instance6);
-			RentalShoppingCartService.Instance.Initialize();
-			ServiceLocator.Instance.AddService(typeof(IPersonalizationService), new PersonalizationService());
-			ServiceLocator.Instance.AddService(typeof(ILoyaltyService), new LoyaltyService());
-			RedboxRentalService redboxRentalService = new RedboxRentalService();
-			ServiceLocator.Instance.AddService(typeof(IRedboxRental), redboxRentalService);
-			errorList.AddRange(redboxRentalService.Initialize());
-			ServiceLocator.Instance.AddService(typeof(IPersistentDataCacheService), new PersistentDataCacheService());
+			AddService(typeof(IVistarAdService), vistarAdService);
+			AdService instance4 = new AdService(vistarAdService);
+			AddService(typeof(IAdService), instance4);
+			AddService(typeof(IPersonalizationService), new PersonalizationService());
+			AddService(typeof(ILoyaltyService), new LoyaltyService());
+			AddService(typeof(IPersistentDataCacheService), new PersistentDataCacheService());
 			KioskHealthService kioskHealthService = new KioskHealthService(kioskHealthConfiguration, kioskEventService);
-			ServiceLocator.Instance.AddService(typeof(IKioskHealthService), kioskHealthService);
+			AddService(typeof(IKioskHealthService), kioskHealthService);
 			TouchScreenHealth touchScreenHealth = new TouchScreenHealth(kioskHealthConfiguration, kioskEventService);
-			ServiceLocator.Instance.AddService(typeof(ITouchScreenHealth), touchScreenHealth);
+			AddService(typeof(ITouchScreenHealth), touchScreenHealth);
 			kioskHealthService.AddHealthItem(touchScreenHealth);
 			RouterHealth routerHealth = new RouterHealth(kioskHealthConfiguration, kioskEventService);
-			ServiceLocator.Instance.AddService(typeof(IRouterHealth), routerHealth);
+			AddService(typeof(IRouterHealth), routerHealth);
 			kioskHealthService.AddHealthItem(routerHealth);
 			ArcusHealth arcusHealth = new ArcusHealth(kioskHealthConfiguration, kioskEventService);
-			ServiceLocator.Instance.AddService(typeof(IArcusHealth), arcusHealth);
+			AddService(typeof(IArcusHealth), arcusHealth);
 			kioskHealthService.AddHealthItem(arcusHealth);
 			HardwareCorrectionStatsHealth healthItem = new HardwareCorrectionStatsHealth(kioskHealthConfiguration, kioskEventService);
 			kioskHealthService.AddHealthItem(healthItem);
 			ViewHealth viewHealth = new ViewHealth(kioskHealthConfiguration, kioskEventService);
-			ServiceLocator.Instance.AddService(typeof(IViewHealth), viewHealth);
+			AddService(typeof(IViewHealth), viewHealth);
 			kioskHealthService.AddHealthItem(viewHealth);
 			CCReaderHealth cCReaderHealth = new CCReaderHealth(kioskHealthConfiguration, kioskEventService);
-			ServiceLocator.Instance.AddService(typeof(ICCReaderHealth), cCReaderHealth);
+			AddService(typeof(ICCReaderHealth), cCReaderHealth);
 			kioskHealthService.AddHealthItem(cCReaderHealth);
 			EMVReaderHealth eMVReaderHealth = new EMVReaderHealth(kioskHealthConfiguration, kioskEventService);
-			ServiceLocator.Instance.AddService(typeof(IEMVReaderHealth), eMVReaderHealth);
+			AddService(typeof(IEMVReaderHealth), eMVReaderHealth);
 			kioskHealthService.AddHealthItem(eMVReaderHealth);
-			ServiceLocator.Instance.AddService(typeof(IPingService), new PingService());
+			AddService(typeof(IPingService), new PingService());
 			kioskHealthService.Start();
 		}
-		catch (Exception ex)
+		catch (Exception e)
 		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("EngineApplication.InitializeRedboxRental", ex.Message, ""));
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("E007", "Exception in EngineApplication.InitializeRedboxRental", e));
 		}
 		return errorList;
 	}
 
 	public void ThreadSafeHostUpdate(MethodInvoker invoker)
 	{
-		if (base.MainForm.InvokeRequired)
+		if (base.MainForm != null && base.MainForm.InvokeRequired)
 		{
 			base.MainForm.Invoke(invoker);
 		}
@@ -925,26 +924,41 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		IKernelExtensionService kernelExtensionService;
 		if (ResourceBundleService.Instance.IsPendingBundleSwitch())
 		{
+			LogHelper.Instance.Log("Attempting bundle switch...");
 			ServiceLocator.Instance.GetService<IPricingService>()?.ClearOnPricingSetChange();
 			kernelExtensionService = ServiceLocator.Instance.GetService<IKernelExtensionService>();
-			ThreadSafeHostUpdate(invoker);
-		}
-		void invoker()
-		{
-			base.MainForm.TopMost = true;
-			base.MainForm.TopMost = false;
-			Redbox.KioskEngine.ComponentModel.ErrorList errorList = ResourceBundleService.Instance.Switch(out var previousBundle);
-			if (!errorList.ContainsError())
+			if (kernelExtensionService == null)
 			{
-				kernelExtensionService.ActivateAllExtensions();
-				ServiceLocator.Instance.GetService<IQueueService>()?.StartQueueWorker();
+				LogHelper.Instance.Log("Skippng bundle switch because kernelExtensionService is not initialized");
 			}
 			else
 			{
-				ErrorForm errorForm = new ErrorForm();
-				errorForm.Errors = errorList;
-				errorForm.ShowDialog();
-				ResourceBundleService.Instance.SetSwitchToBundle(previousBundle);
+				ThreadSafeHostUpdate(invoker);
+			}
+		}
+		void invoker()
+		{
+			if (base.MainForm == null)
+			{
+				LogHelper.Instance.Log("Skippng bundle switch because MainForm is not initialized");
+			}
+			else
+			{
+				base.MainForm.TopMost = true;
+				base.MainForm.TopMost = false;
+				Redbox.KioskEngine.ComponentModel.ErrorList errorList = ResourceBundleService.Instance.Switch(out var previousBundle);
+				if (!errorList.ContainsError())
+				{
+					kernelExtensionService.ActivateAllExtensions();
+					ServiceLocator.Instance.GetService<IQueueService>()?.StartQueueWorker();
+				}
+				else
+				{
+					ErrorForm errorForm = new ErrorForm();
+					errorForm.Errors = errorList;
+					errorForm.ShowDialog();
+					ResourceBundleService.Instance.SetSwitchToBundle(previousBundle);
+				}
 			}
 		}
 	}
@@ -952,7 +966,7 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 	internal void ConfigureDefaultMacros()
 	{
 		MacroService macroService = new MacroService();
-		ServiceLocator.Instance.AddService(typeof(IMacroService), macroService);
+		AddService(typeof(IMacroService), macroService);
 		macroService["EngineVersion"] = AssemblyInfoHelper.GetVersion(typeof(Program).Assembly);
 		macroService["RunningPath"] = RunningPath;
 		macroService["ProductName"] = "Redbox Kiosk Engine";

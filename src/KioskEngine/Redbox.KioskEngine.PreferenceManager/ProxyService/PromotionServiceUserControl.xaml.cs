@@ -177,7 +177,7 @@ public partial class PromotionServiceUserControl : UserControl, IPreferencePageH
 		{
 			_model.CommunicationFailure = false;
 		}));
-		_testDataReadPropertyItems.Add(new TestDataReadPropertyItem("PromotionService.TestPromoCodes", async delegate(ReadTestDataValueResult result)
+		_testDataReadPropertyItems.Add(new TestDataReadPropertyItem("PromotionService.TestPromoCodes", delegate(ReadTestDataValueResult result)
 		{
 			PopulateTestPromoCodeModels(result);
 		}, delegate

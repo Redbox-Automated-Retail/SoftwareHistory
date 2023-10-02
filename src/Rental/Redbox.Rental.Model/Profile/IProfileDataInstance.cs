@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Redbox.Rental.Model.Profile;
@@ -6,10 +5,6 @@ namespace Redbox.Rental.Model.Profile;
 public interface IProfileDataInstance
 {
 	string ImagesPath { get; set; }
-
-	Dictionary<long, Banner> Banners { get; set; }
-
-	Dictionary<long, Genre> Genres { get; set; }
 
 	Dictionary<long, Market> Markets { get; set; }
 
@@ -25,21 +20,11 @@ public interface IProfileDataInstance
 
 	Dictionary<long, ProductGroupXREF> MultiDiscWorkaroundXREF { get; set; }
 
-	Dictionary<long, ProductRating> ProductRatings { get; set; }
-
 	Dictionary<long, ProductType> ProductTypes { get; set; }
 
 	Dictionary<long, Store> Stores { get; set; }
 
 	Dictionary<long, SubPlatform> SubPlatforms { get; set; }
 
-	Dictionary<long, Vendor> Vendors { get; set; }
-
-	List<ProfileVersion> ProfileVersion { get; set; }
-
-	string OriginMachine { get; set; }
-
-	DateTime GeneratedOn { get; set; }
-
-	IProfileLuaView ProfileLuaView { get; set; }
+	ProfileDataVersion ProfileDataVersion { get; set; }
 }

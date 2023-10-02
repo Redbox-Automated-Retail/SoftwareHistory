@@ -11,13 +11,13 @@ namespace Redbox.Rental.Model.DataService;
 
 public interface IDataService
 {
+	ProfileDataVersion ProfileDataVersion { get; }
+
 	ErrorList Initialize();
 
 	ErrorList Stop();
 
 	ErrorList Start();
-
-	ErrorList GetLuaTableData(string tableName, out IProfileLuaTable data);
 
 	byte[] GetImage(string name);
 
@@ -55,9 +55,15 @@ public interface IDataService
 
 	Store GetStore();
 
+	Store GetStore(long kioskId);
+
 	List<SubPlatform> GetSubPlatforms();
 
 	List<ProductType> GetProductTypes();
+
+	Title GetProductCatalogTitle(long productId);
+
+	Dictionary<long, Title> GetProductCatalogTitles();
 
 	bool IsAccountOnOfflineBadCardList(string hashId);
 
@@ -100,4 +106,6 @@ public interface IDataService
 	List<RemovedQueueItem> GetRemovedQueueItems();
 
 	void DeleteRemovedQueueItem(RemovedQueueItem item);
+
+	List<long> GetCachedTitleIds();
 }

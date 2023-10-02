@@ -90,8 +90,6 @@ public partial class HealthServiceUserControl : UserControl, IPreferencePageHost
 
 	private KioskDataServiceHealthServiceModel _model = new KioskDataServiceHealthServiceModel();
 
-	private TestDataUtility _testDataUtility;
-
 	private List<TestDataReadPropertyItem> _testDataReadPropertyItems = new List<TestDataReadPropertyItem>();
 
 	private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);

@@ -53,8 +53,6 @@ public interface IConfiguration
 
 	bool EndGames { get; }
 
-	bool ShowBrowse10Titles { get; }
-
 	bool EnableBrowseMessagePopup { get; }
 
 	int BrowseMessagePopupDuration { get; }
@@ -138,8 +136,6 @@ public interface IConfiguration
 	bool EnableRedboxPlusRedemption { get; }
 
 	bool ShowKioskClosingVSM { get; }
-
-	bool ShowOptinForNormalCheckout { get; }
 
 	bool ReturnVisitPromoOfferEnabled { get; }
 

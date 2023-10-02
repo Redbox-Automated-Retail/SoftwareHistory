@@ -30,8 +30,6 @@ public static class ConfigSetting
 
 	public const string RecommendationOnPickup = "RecommendationOnPickup";
 
-	public const string ShowOptinForNormalCheckout = "ShowOptinForNormalCheckout";
-
 	public const string ServiceFeeEnabled = "ServiceFeeEnabled";
 
 	public const string BlurayUpsellEnabled = "BluRayUpsellEnabled";
@@ -106,13 +104,9 @@ public static class ConfigSetting
 
 	public const string AlternateCulture = "AlternateCulture";
 
-	public const string ShowGameBanner = "ShowGameBanner";
-
 	public const string ShowBlurayBrowse = "ShowBlurayBrowse";
 
 	public const string ShowCollections = "ShowCollections";
-
-	public const string ShowCollectionsBanner = "ShowCollectionsBanner";
 
 	public const string ShowCollectionsPopUp = "ShowCollectionsPopUp";
 
@@ -124,13 +118,9 @@ public static class ConfigSetting
 
 	public const string EndGames = "EndGames";
 
-	public const string EnableMarketingAds = "EnableMarketingAds";
-
 	public const string EnableVistarAds = "EnableVistarAds";
 
 	public const string VistarGetAdTimeout = "VistarGetAdTimeout";
-
-	public const string ShowBrowse10Titles = "ShowBrowse10Titles";
 
 	public const string EnableBrowseMessagePopup = "EnableBrowseMessagePopup";
 

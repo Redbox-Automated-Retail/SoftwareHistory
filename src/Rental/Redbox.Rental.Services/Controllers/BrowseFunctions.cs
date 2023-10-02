@@ -238,29 +238,31 @@ public class BrowseFunctions
 	public static void ConfigureProductFlag(DisplayProductModel displayProductModel, ProductFlags productFlags, bool hideFlag, FrameworkElement frameworkElementToGetStyleFrom, ITitleProduct titleProduct, DisplayProductModelConstants displayProductModelConstants)
 	{
 		ProductFlag productFlag = ProductFlagCollection.Instance.FirstOrDefault((ProductFlag x) => x.Flag == productFlags);
-		if (displayProductModel != null)
+		if (displayProductModel == null)
 		{
-			displayProductModel.FlagVisibility = ((hideFlag || productFlag == null || productFlag.Flag == ProductFlags.None) ? Visibility.Collapsed : Visibility.Visible);
-			displayProductModel.FlagStyle = WPFFunctions.GetStyle(frameworkElementToGetStyleFrom, productFlag?.FlagStyleName);
-			if (displayProductModelConstants?.OutOfStockTitleDetailsABTestVersion == "B" && productFlag != null && productFlag.Flag == ProductFlags.OutOfStock && titleProduct.TitleFamily == TitleFamily.Movies)
-			{
-				displayProductModel.FlagVisibility = Visibility.Collapsed;
-				displayProductModel.FlagStyle = null;
-			}
-			if (productFlag != null && productFlag.Flag == ProductFlags.FlashDeal)
-			{
-				decimal num = ((titleProduct?.RentalPriceRecords != null && titleProduct.RentalPriceRecords.Count > 0 && titleProduct.RentalPriceRecords[0] != null) ? titleProduct.RentalPriceRecords[0].InitialNight : 0m);
-				string flagText = ((num < 1m) ? string.Format(Resources.flag_flash_deal_price_cents, num * 100m) : string.Format(Resources.flag_flash_deal_price_dollar, num));
-				displayProductModel.FlagText = flagText;
-			}
-			else
-			{
-				displayProductModel.FlagText = ((!string.IsNullOrEmpty(productFlag?.TextKeyName)) ? Resources.ResourceManager.GetString(productFlag?.TextKeyName) : null);
-			}
-			if (displayProductModel.FlagVisibility == Visibility.Visible)
-			{
-				displayProductModel.FlagMargin = new Thickness(0.0, 31.0, 0.0, 0.0);
-			}
+			return;
+		}
+		displayProductModel.FlagVisibility = ((hideFlag || productFlag == null || productFlag.Flag == ProductFlags.None) ? Visibility.Collapsed : Visibility.Visible);
+		displayProductModel.FlagStyle = WPFFunctions.GetStyle(frameworkElementToGetStyleFrom, productFlag?.FlagStyleName);
+		if (displayProductModelConstants?.OutOfStockTitleDetailsABTestVersion == "B" && productFlag != null && productFlag.Flag == ProductFlags.OutOfStock && titleProduct.TitleFamily == TitleFamily.Movies)
+		{
+			displayProductModel.FlagVisibility = Visibility.Collapsed;
+			displayProductModel.FlagStyle = null;
+		}
+		if (productFlag != null && productFlag.Flag == ProductFlags.FlashDeal)
+		{
+			IPricingRecord pricingRecord = null;
+			decimal num = ((!(titleProduct is TitleRollupProduct titleRollupProduct)) ? titleProduct?.RentalPriceRecords?.FirstOrDefault() : (titleRollupProduct.KioskProducts?.Where((ITitleProduct kp) => kp.HasDeal).FirstOrDefault())?.RentalPriceRecords?.FirstOrDefault())?.InitialNight ?? 0m;
+			string flagText = ((num < 1m) ? string.Format(Resources.flag_flash_deal_price_cents, num * 100m) : string.Format(Resources.flag_flash_deal_price_dollar, num));
+			displayProductModel.FlagText = flagText;
+		}
+		else
+		{
+			displayProductModel.FlagText = ((!string.IsNullOrEmpty(productFlag?.TextKeyName)) ? Resources.ResourceManager.GetString(productFlag?.TextKeyName) : null);
+		}
+		if (displayProductModel.FlagVisibility == Visibility.Visible)
+		{
+			displayProductModel.FlagMargin = new Thickness(0.0, 31.0, 0.0, 0.0);
 		}
 	}
 
@@ -392,7 +394,7 @@ public class BrowseFunctions
 		{
 			return;
 		}
-		Redbox.Rental.Model.Browse.Banner banner = (displayProductModel.Banner = BannerCollection.Instance.Find((Redbox.Rental.Model.Browse.Banner x) => x.BannerType == bannerType));
+		Banner banner = (displayProductModel.Banner = BannerCollection.Instance.Find((Banner x) => x.BannerType == bannerType));
 		if (banner.BannerType == BannerType.ComingSoon)
 		{
 			if (titleProduct != null)

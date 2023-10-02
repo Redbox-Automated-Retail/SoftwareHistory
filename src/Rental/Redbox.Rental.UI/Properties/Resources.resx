@@ -1291,7 +1291,6 @@ rentals, you'll need to complete your enrollment</value></data>
   <data name="perks_level0_message3" xml:space="preserve"><value>Extra promos just for you</value></data>
   <data name="perks_level0_message2" xml:space="preserve"><value>$2 off reward code for b-day gift</value></data>
   <data name="perks_level0_message1" xml:space="preserve"><value>FREE 1-night DVD rental welcome offer</value></data>
-  <data name="reservation_checkout_emv_swipe_message" xml:space="preserve"><value /></data>
   <data name="redbox_plus_info_description_line3" xml:space="preserve"><value>Tap "USE REDBOX+ OR PROMO"</value></data>
   <data name="redbox_plus_info_description_line2" xml:space="preserve"><value>Go to checkout</value></data>
   <data name="redbox_plus_info_description_line1" xml:space="preserve"><value>Add Redbox+ movie</value></data>
@@ -1349,6 +1348,7 @@ Terms &amp; Conditions</value></data>
   <data name="sony_sweepstakes_confirmation_email_comment_text" xml:space="preserve"><value>You will be entered into the Redbox $15k Summer Sweepstakes for a chance to win $15,000 and you agree to the Official Rules at redbox.com/15k-sweeps. NO PURCHASE NECESSARY. PURCHASE WILL NOT INCREASE ODDS OF WINNING. Open to 18+; 50 U.S.&amp;DC only. Ends 8/24/20 CT. Limit 3 entries per day; Free email entry available; see rules for more details.</value></data>
   <data name="recommended_titles_perks_message_text_points_0_to_1499_yes_promo" xml:space="preserve"><value>You have a promo (Apply at checkout)</value></data>
   <data name="totals_credit" xml:space="preserve"><value>Credit:</value></data>
+  <data name="reservation_emv_message" xml:space="preserve"><value>Use the same credit card you used to reserve</value></data>
   <data name="perks_redbox_plus_btn_text" xml:space="preserve"><value>Redbox+</value></data>
   <data name="offline_game_rental_limit_exceeded_message" xml:space="preserve"><value>You can have up to {0} discs, and only {1} can be {2}.
 

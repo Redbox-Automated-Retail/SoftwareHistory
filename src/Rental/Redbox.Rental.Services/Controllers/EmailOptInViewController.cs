@@ -6,7 +6,6 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.KioskServices;
 using Redbox.KioskEngine.Environment;
 using Redbox.Rental.Model;
-using Redbox.Rental.Model.EmailOptInCampaign;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
@@ -95,8 +94,6 @@ public class EmailOptInViewController : BaseViewController
 		optInItem.ItemId = 0L;
 		optInItem.OptInMethodData = Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email;
 		optInItem.OptInMethodType = OptInMethodType.EmailAddress;
-		optInItem.TemplateName = Redbox.Rental.Services.ApplicationState.Instance?.EmailOptInCampaign?.TemplateName;
-		optInItem.CampaignName = Redbox.Rental.Services.ApplicationState.Instance?.EmailOptInCampaign?.CampaignId;
 		service.KioskOptIn(optInItems: new List<IOptInItem> { optInItem }, kioskId: service2.KioskId, callback: null);
 	}
 
@@ -106,11 +103,6 @@ public class EmailOptInViewController : BaseViewController
 		emailOptInViewModel.YesButtonText = Resources.yes_button;
 		emailOptInViewModel.NoThanksButtonText = Resources.no_thanks_button;
 		emailOptInViewModel.MessageText = Resources.email_optin_offer_message;
-		IEmailOptInCampaign emailOptInCampaign = Redbox.Rental.Services.ApplicationState.Instance?.EmailOptInCampaign;
-		if (emailOptInCampaign != null && emailOptInCampaign.ImageName != null)
-		{
-			emailOptInViewModel.Image = BaseViewController.GetBundleBitmapImage(emailOptInCampaign?.ImageName);
-		}
 	}
 
 	public static void LeaveView()

@@ -4,12 +4,8 @@ using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.Model.Profile;
 
-public class Title : ILuaKeyValue
+public class Title
 {
-	public string Key { get; set; }
-
-	public string Value { get; set; }
-
 	public long ProductId { get; set; }
 
 	public string RunningTime { get; set; }

@@ -1,48 +1,30 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Redbox.Core;
 using Redbox.Rental.Model.Ads;
-using Redbox.Rental.Model.Marketing;
 
 namespace Redbox.Rental.Services.Ads;
 
 public class AdService : IAdService
 {
-	private List<IAdService> _adServices = new List<IAdService>();
-
-	private IMarketingAdService _marketingAdService;
-
 	private IVistarAdService _vistarAdService;
 
-	public AdService(IMarketingAdService marketingAdService, IVistarAdService vistarAdService)
+	public AdService(IVistarAdService vistarAdService)
 	{
-		_marketingAdService = marketingAdService;
 		_vistarAdService = vistarAdService;
-		_adServices.Add(_marketingAdService);
-		_adServices.Add(_vistarAdService);
 	}
 
 	public IAd GetScreenAd(AdLocation adLocation)
 	{
 		LogHelper.Instance.Log("AdService.GetScreenAd - started");
-		IAd ad = _vistarAdService?.GetScreenAd(adLocation);
-		if (ad == null)
-		{
-			ad = _marketingAdService?.GetScreenAd(adLocation);
-		}
-		bool flag = ad != null;
+		IAd obj = _vistarAdService?.GetScreenAd(adLocation);
+		bool flag = obj != null;
 		LogHelper.Instance.Log($"AdService.GetScreenAd - finished HasResult: {flag}");
-		return ad;
+		return obj;
 	}
 
 	public async Task<IAd> GetScreenAdAsync(AdLocation adLocation)
 	{
-		IAd ad = await (_vistarAdService?.GetScreenAdAsync(adLocation)).ConfigureAwait(continueOnCapturedContext: false);
-		if (ad == null)
-		{
-			ad = await (_marketingAdService?.GetScreenAdAsync(adLocation)).ConfigureAwait(continueOnCapturedContext: false);
-		}
-		return ad;
+		return await (_vistarAdService?.GetScreenAdAsync(adLocation)).ConfigureAwait(continueOnCapturedContext: false);
 	}
 
 	public bool RecordAdImpression(IAdImpression adImpression)

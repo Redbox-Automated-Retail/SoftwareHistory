@@ -227,24 +227,4 @@ public class BundleBasedPricingService : IBundleBasedPricingService
 		});
 		return obj;
 	}
-
-	private string GetStringValue(Dictionary<string, object> values, string key)
-	{
-		string result = null;
-		if (values.TryGetValue(key, out var value))
-		{
-			result = value?.ToString() ?? null;
-		}
-		return result;
-	}
-
-	private decimal GetDecimalValue(Dictionary<string, object> values, string key)
-	{
-		decimal result = 0m;
-		if (values.TryGetValue(key, out var value) && value != null)
-		{
-			decimal.TryParse(value.ToString(), out result);
-		}
-		return result;
-	}
 }

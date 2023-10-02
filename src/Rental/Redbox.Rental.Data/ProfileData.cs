@@ -80,17 +80,13 @@ public class ProfileData : IProfileData
 		{
 			if (vistaDBDatabaseProvider.Open())
 			{
-				LoadBanners(vistaDBDatabaseProvider, profileDataInstance);
-				LoadGenres(vistaDBDatabaseProvider, profileDataInstance);
 				LoadMarkets(vistaDBDatabaseProvider, profileDataInstance);
 				LoadTitles(vistaDBDatabaseProvider, profileDataInstance);
 				LoadProductFamily(vistaDBDatabaseProvider, profileDataInstance);
 				LoadProductGroup(vistaDBDatabaseProvider, profileDataInstance);
-				LoadProductRating(vistaDBDatabaseProvider, profileDataInstance);
 				LoadProductType(vistaDBDatabaseProvider, profileDataInstance);
 				LoadStore(vistaDBDatabaseProvider, profileDataInstance);
 				LoadSubPlatform(vistaDBDatabaseProvider, profileDataInstance);
-				LoadVendors(vistaDBDatabaseProvider, profileDataInstance);
 				LoadVersion(vistaDBDatabaseProvider, profileDataInstance);
 				ExtractImages(vistaDBDatabaseProvider, profileDataInstance);
 				vistaDBDatabaseProvider.Close();
@@ -100,42 +96,7 @@ public class ProfileData : IProfileData
 				ServiceLocator.Instance.GetService<IEnvironmentNotificationService>()?.RaiseCorruptDb();
 			}
 		}
-		profileDataInstance.ProfileLuaView = new ProfileLuaView(profileDataInstance);
 		return profileDataInstance;
-	}
-
-	private void LoadBanners(VistaDBDatabaseProvider db, ProfileDataInstance instance)
-	{
-		DataTable sqlData = db.GetSqlData(string.Format(_keyValueSql, "Banner"));
-		ConvertToList(sqlData, "LoadBanners", delegate(string key, string value)
-		{
-			Dictionary<string, object> dictionary = value.ParseLuaValue();
-			Banner banner = new Banner
-			{
-				Key = key,
-				Value = value,
-				BannerId = dictionary.ToInt64("banner_id"),
-				BannerName = dictionary.ToString("banner_name")
-			};
-			instance.Banners[banner.BannerId] = banner;
-		});
-	}
-
-	private void LoadGenres(VistaDBDatabaseProvider db, ProfileDataInstance instance)
-	{
-		DataTable sqlData = db.GetSqlData(string.Format(_keyValueSql, "Genres"));
-		ConvertToList(sqlData, "LoadGenres", delegate(string key, string value)
-		{
-			Dictionary<string, object> dictionary = value.ParseLuaValue();
-			Genre genre = new Genre
-			{
-				Key = key,
-				Value = value,
-				GenreId = dictionary.ToInt64("genre_id"),
-				GenreName = dictionary.ToString("genre_name")
-			};
-			instance.Genres[genre.GenreId] = genre;
-		});
 	}
 
 	private void LoadMarkets(VistaDBDatabaseProvider db, ProfileDataInstance instance)
@@ -146,8 +107,6 @@ public class ProfileData : IProfileData
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			Market market = new Market
 			{
-				Key = key,
-				Value = value,
 				MarketId = dictionary.ToInt64("market_id"),
 				MarketName = dictionary.ToString("market_name")
 			};
@@ -163,8 +122,6 @@ public class ProfileData : IProfileData
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			Title item = new Title
 			{
-				Key = key,
-				Value = value,
 				ProductId = dictionary.ToInt64("product_id"),
 				RunningTime = dictionary.ToString("running_time"),
 				Starring = dictionary.ToListString("starring"),
@@ -220,8 +177,6 @@ public class ProfileData : IProfileData
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			ProductFamily item = new ProductFamily
 			{
-				Key = key,
-				Value = value,
 				ProductFamilyId = dictionary.ToInt64("product_family_id"),
 				ProductFamilyName = dictionary.ToString("product_family_name")
 			};
@@ -245,8 +200,6 @@ public class ProfileData : IProfileData
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			ProductGroup productGroup = new ProductGroup
 			{
-				Key = key,
-				Value = value,
 				ProductGroupId = dictionary.ToInt64("product_group_id"),
 				ProductGroupName = dictionary.ToString("product_group_name"),
 				ProductGroupTypeId = dictionary.ToInt32("product_group_type_id"),
@@ -260,8 +213,6 @@ public class ProfileData : IProfileData
 			{
 				instance.TitleRollupXREF[pn] = new ProductGroupXREF
 				{
-					Key = Convert.ToString(pn),
-					Value = string.Format("{0} product_id = {1} , product_group_id = {2} {3}", "{", pn, pair.Value.ProductGroupId, "}"),
 					ProductId = pn,
 					ProductGroupId = pair.Value.ProductGroupId
 				};
@@ -273,8 +224,6 @@ public class ProfileData : IProfileData
 			{
 				instance.MultiDiscXREF[pn] = new ProductGroupXREF
 				{
-					Key = Convert.ToString(pn),
-					Value = string.Format("{0} product_id = {1} , product_group_id = {2} {3}", "{", pn, pair.Value.ProductGroupId, "}"),
 					ProductId = pn,
 					ProductGroupId = pair.Value.ProductGroupId
 				};
@@ -286,31 +235,10 @@ public class ProfileData : IProfileData
 			{
 				instance.MultiDiscWorkaroundXREF[pn] = new ProductGroupXREF
 				{
-					Key = Convert.ToString(pn),
-					Value = string.Format("{0} product_id = {1} , product_group_id = {2} {3}", "{", pn, pair.Value.ProductGroupId, "}"),
 					ProductId = pn,
 					ProductGroupId = pair.Value.ProductGroupId
 				};
 			});
-		});
-	}
-
-	private void LoadProductRating(VistaDBDatabaseProvider db, ProfileDataInstance instance)
-	{
-		DataTable sqlData = db.GetSqlData(string.Format(_keyValueSql, "ProductRating"));
-		ConvertToList(sqlData, "LoadProductRating", delegate(string key, string value)
-		{
-			Dictionary<string, object> dictionary = value.ParseLuaValue();
-			ProductRating productRating = new ProductRating
-			{
-				Key = key,
-				Value = value,
-				RatingId = dictionary.ToInt64("rating_id"),
-				Name = dictionary.ToString("name"),
-				RatingDescription = dictionary.ToString("rating_description"),
-				ProductFamilyId = dictionary.ToInt64("product_family_id")
-			};
-			instance.ProductRatings[productRating.RatingId] = productRating;
 		});
 	}
 
@@ -322,8 +250,6 @@ public class ProfileData : IProfileData
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			ProductType productType = new ProductType
 			{
-				Key = key,
-				Value = value,
 				ProductTypeId = dictionary.ToInt64("product_type_id"),
 				ProductTypeName = dictionary.ToString("product_type_name"),
 				ProductFamilyId = dictionary.ToInt64("product_family_id")
@@ -341,8 +267,6 @@ public class ProfileData : IProfileData
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			Store store = new Store
 			{
-				Key = key,
-				Value = value,
 				StoreId = dictionary.ToInt64("store_id"),
 				Address = dictionary.ToString("address"),
 				ReturnTime = dictionary.ToString("return_time", "09:00PM"),
@@ -387,8 +311,6 @@ public class ProfileData : IProfileData
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			SubPlatform subPlatform = new SubPlatform
 			{
-				Key = key,
-				Value = value,
 				SubPlatformId = dictionary.ToInt64("subplatform_id"),
 				SubPlatformName = dictionary.ToString("subplatform_name")
 			};
@@ -396,45 +318,21 @@ public class ProfileData : IProfileData
 		});
 	}
 
-	private void LoadVendors(VistaDBDatabaseProvider db, ProfileDataInstance instance)
-	{
-		DataTable sqlData = db.GetSqlData(string.Format(_keyValueSql, "Vendor"));
-		ConvertToList(sqlData, "LoadVendors", delegate(string key, string value)
-		{
-			Dictionary<string, object> dictionary = value.ParseLuaValue();
-			Vendor vendor = new Vendor
-			{
-				Key = key,
-				Value = value,
-				VendorId = dictionary.ToInt64("vendor_id"),
-				VendorName = dictionary.ToString("vendor_name")
-			};
-			instance.Vendors[vendor.VendorId] = vendor;
-		});
-	}
-
 	private void LoadVersion(VistaDBDatabaseProvider db, ProfileDataInstance instance)
 	{
 		DataTable sqlData = db.GetSqlData(string.Format(_keyValueSql, "Version"));
+		instance.ProfileDataVersion = new ProfileDataVersion();
 		ConvertToList(sqlData, "LoadVersion", delegate(string key, string value)
 		{
-			ProfileVersion profileVersion = new ProfileVersion
-			{
-				Key = key,
-				Value = value
-			};
 			Dictionary<string, object> dictionary = value.ParseLuaValue();
 			if (key.Equals("origin_machine", StringComparison.CurrentCultureIgnoreCase))
 			{
-				instance.OriginMachine = dictionary.ToString("name");
-				profileVersion.VersionValue = instance.OriginMachine;
+				instance.ProfileDataVersion.OriginMachine = dictionary.ToString("name");
 			}
 			if (key.Equals("generated_on", StringComparison.CurrentCultureIgnoreCase))
 			{
-				instance.GeneratedOn = dictionary.ToDateTime("date", null).Value;
-				profileVersion.VersionValue = dictionary.ToString("date");
+				instance.ProfileDataVersion.GeneratedOn = dictionary.ToDateTime("date", null).Value;
 			}
-			instance.ProfileVersion.Add(profileVersion);
 		});
 	}
 

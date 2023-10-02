@@ -1354,13 +1354,13 @@ public class BrowseViewController : BaseViewController
 		browseProductControl.OnPageChanged += delegate(int prevPageNumber, int newPageNumber, PageChangeSource pageChangeSource)
 		{
 			BaseViewController.AnalyticsService?.AddButtonPressEvent((newPageNumber < prevPageNumber) ? "BrowsePageBack" : "BrowsePageNext");
-			bool num2 = newPageNumber != prevPageNumber;
+			bool num3 = newPageNumber != prevPageNumber;
 			BrowseState.PageNumber = newPageNumber;
 			if (BaseViewController.IsADAMode)
 			{
 				browseViewModel.MiniCartControlModel.SetPageNumber(newPageNumber, PageChangeSource.None);
 			}
-			if (num2 && pageChangeSource == PageChangeSource.PaddleButton)
+			if (num3 && pageChangeSource == PageChangeSource.PaddleButton)
 			{
 				IncrementPaddleClickCount();
 			}
@@ -1407,11 +1407,37 @@ public class BrowseViewController : BaseViewController
 			}
 			else
 			{
-				browseProductControl.PaddleOverlapWidth = 24.0;
-				browseProductControl.Margin = (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? new Thickness(0.0, 0.0, 0.0, 0.0) : new Thickness(0.0, 24.0, 0.0, 5.0));
-				browseProductControl.BrowseItemMargin = (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? new Thickness(6.0, 42.0, 6.0, 0.0) : new Thickness(6.0, 28.0, 6.0, 28.0));
+				bool show10Titles = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles;
+				bool flag = (BrowseState.BrowseMode == BrowseViewFilter.ForSale && BrowseState.TitleFamily == TitleFamily.Movies) || Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.ShowTitleText;
+				int num = -8;
+				Thickness margin = new Thickness(0.0, 15.0, 0.0, 33.0);
+				Thickness browseItemMargin = new Thickness(0.0, 40.0, 0.0, 0.0);
+				if (show10Titles)
+				{
+					if (flag)
+					{
+						num = 24;
+						margin = new Thickness(0.0, 26.0, 0.0, 0.0);
+						browseItemMargin = new Thickness(0.0, 26.0, 0.0, 0.0);
+					}
+					else
+					{
+						num = 10;
+						margin = new Thickness(0.0, 21.0, 0.0, 7.0);
+						browseItemMargin = new Thickness(0.0, 36.0, 0.0, 0.0);
+					}
+				}
+				else if (flag)
+				{
+					num = 12;
+					margin = new Thickness(0.0, 19.0, 0.0, 37.0);
+					browseItemMargin = new Thickness(0.0, 32.0, 0.0, 0.0);
+				}
+				browseProductControl.PaddleOverlapWidth = num;
+				browseProductControl.Margin = margin;
+				browseProductControl.BrowseItemMargin = browseItemMargin;
 				browseProductControl.RowCount = 2;
-				browseProductControl.ColumnCount = (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? 5 : 6);
+				browseProductControl.ColumnCount = (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles ? 5 : 6);
 			}
 		}
 		if (BrowseState.BrowseCollections)
@@ -1463,27 +1489,27 @@ public class BrowseViewController : BaseViewController
 		{
 			BrowseState.BrowseItemModels = browseProductControl.BrowseItems;
 		}
-		for (int num = 0; num < browseProductControl.RowCount * browseProductControl.ColumnCount * 3; num++)
+		for (int num2 = 0; num2 < browseProductControl.RowCount * browseProductControl.ColumnCount * 3; num2++)
 		{
 			if (BrowseState.BrowseCollections)
 			{
 				browseProductControl.BrowseControls.Add(new DisplayCollectionUserControl
 				{
-					Name = $"product_{num + 1}"
+					Name = $"product_{num2 + 1}"
 				});
 			}
 			else if (BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
 			{
 				browseProductControl.BrowseControls.Add(new DisplayProductAToZUserControl
 				{
-					Name = $"product_{num + 1}"
+					Name = $"product_{num2 + 1}"
 				});
 			}
-			else if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
+			else if ((BrowseState.BrowseMode == BrowseViewFilter.ForSale && BrowseState.TitleFamily == TitleFamily.Movies) || Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.ShowTitleText)
 			{
 				browseProductControl.BrowseControls.Add(new DisplayProductWithPriceBrowseUserControl
 				{
-					Name = $"product_{num + 1}",
+					Name = $"product_{num2 + 1}",
 					HorizontalAlignment = HorizontalAlignment.Center,
 					VerticalAlignment = VerticalAlignment.Center
 				});
@@ -1492,7 +1518,7 @@ public class BrowseViewController : BaseViewController
 			{
 				browseProductControl.BrowseControls.Add(new DisplayProductBrowseUserControl
 				{
-					Name = $"product_{num + 1}",
+					Name = $"product_{num2 + 1}",
 					HorizontalAlignment = HorizontalAlignment.Center,
 					VerticalAlignment = VerticalAlignment.Center
 				});
@@ -1897,8 +1923,8 @@ public class BrowseViewController : BaseViewController
 			browseControlModel.Margin = (BaseViewController.IsADAMode ? new Thickness(0.0, 0.0, 0.0, 20.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 			browseControlModel.BrowseItemMargin = new Thickness(0.0, 12.0, 0.0, 0.0);
 			browseControlModel.RowCount = ((!BaseViewController.IsADAMode) ? 1 : 2);
-			browseControlModel.ColumnCount = ((BrowseFunctions.IsRedboxPlusBrowseMode && !BaseViewController.IsADAMode) ? 4 : ((!Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles && BaseViewController.IsADAMode) ? 6 : 5));
-			int num = ((!BaseViewController.IsADAMode) ? 5 : (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? 10 : 12));
+			browseControlModel.ColumnCount = ((BrowseFunctions.IsRedboxPlusBrowseMode && !BaseViewController.IsADAMode) ? 4 : ((!Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles && BaseViewController.IsADAMode) ? 6 : 5));
+			int num = ((!BaseViewController.IsADAMode) ? 5 : (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles ? 10 : 12));
 			for (int i = 0; i < num; i++)
 			{
 				browseControlModel.BrowseControls.Add(new DisplayProductWithCommandsUserControl
@@ -2182,7 +2208,29 @@ public class BrowseViewController : BaseViewController
 				string text2 = ((titleProduct is MDVProduct mDVProduct) ? $" ({mDVProduct.TitleProducts.Count} {Resources.multi_disc_vend_discs_text})" : null);
 				string header = productDisplayName + text + text2;
 				DisplayProductModel displayProductModel;
-				if (BrowseState.BrowseMode == BrowseViewFilter.ForSale && (BrowseState.TitleFamily == TitleFamily.Movies || BrowseState.TitleFamily == TitleFamily.Games))
+				if (BrowseState.BrowseMode != BrowseViewFilter.ForSale || BrowseState.TitleFamily != TitleFamily.Movies)
+				{
+					displayProductModel = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.ShowTitleText) ? new DisplayProductModel
+					{
+						Name = kioskProduct.ProductName,
+						Data = kioskProduct,
+						Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
+						LockAspectRatio = true,
+						Header = header,
+						DisplayProductModelConstants = displayProductModelConstants
+					} : new DisplayProductWithPriceModel
+					{
+						Name = kioskProduct.ProductName,
+						Data = kioskProduct,
+						Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
+						LockAspectRatio = true,
+						Header = header,
+						DisplayProductModelConstants = displayProductModelConstants,
+						TitleText = kioskProduct.ProductName,
+						TitleTextWidth = (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles ? 114 : 103)
+					});
+				}
+				else
 				{
 					string purchasePriceText = BrowseFunctions.GetPurchasePriceText(titleProduct);
 					purchasePriceText = (string.IsNullOrEmpty(purchasePriceText) ? "" : (Resources.browse_view_rent_and_buy_purchase_text + ": " + purchasePriceText));
@@ -2195,18 +2243,6 @@ public class BrowseViewController : BaseViewController
 						Header = header,
 						DisplayProductModelConstants = displayProductModelConstants,
 						PriceText = (purchasePriceText ?? "")
-					};
-				}
-				else
-				{
-					displayProductModel = new DisplayProductModel
-					{
-						Name = kioskProduct.ProductName,
-						Data = kioskProduct,
-						Image = OrchestrationService.GetProductBitmapImage(kioskProduct),
-						LockAspectRatio = true,
-						Header = header,
-						DisplayProductModelConstants = displayProductModelConstants
 					};
 				}
 				if (num3 >= num && num3 < num2)

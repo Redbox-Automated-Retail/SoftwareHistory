@@ -15,7 +15,6 @@ using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.KioskProduct;
-using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
@@ -48,9 +47,9 @@ public class RedboxRentalService : IRedboxRental
 		{
 			InitializeDesktop();
 		}
-		catch (Exception ex)
+		catch (Exception e)
 		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("EngineApplication.InitializeRedboxRental", ex.Message, ""));
+			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("E008", "Exception in EngineApplication.InitializeRedboxRental", e));
 		}
 		return errorList;
 	}
@@ -64,7 +63,6 @@ public class RedboxRentalService : IRedboxRental
 	{
 		HardwareHelper.TurnOnAirExchangerFanIfConfigured(ServiceLocator.Instance.GetService<IConfiguration>()?.ForcedAirExchangerConfigured ?? true, ServiceLocator.Instance.GetService<IResourceBundleService>()?.CurrentBundleName);
 		ServiceLocator.Instance.GetService<IRentalHealthService>()?.KioskFunctionCheck();
-		ServiceLocator.Instance.GetService<IMarketingAdService>()?.LoadCampaigns();
 		BrowseViewController.CacheProductImages();
 		ServiceLocator.Instance.GetService<IFraudService>()?.CreateFraudSyncTimer();
 		CheckReaderValidation();
@@ -123,6 +121,7 @@ public class RedboxRentalService : IRedboxRental
 		if (viewService == null || !viewService.IsSafeToChangeView())
 		{
 			LogHelper.Instance.Log("Unable to start new session. view cannot be changed. Current view: " + ViewService?.Peek());
+			ShowMaintenanceModeIfNeeded();
 			return;
 		}
 		bool flag = true;
@@ -170,7 +169,6 @@ public class RedboxRentalService : IRedboxRental
 				browseState.TitleFamily = TitleFamily.Movies;
 			}
 			OrchestrationService.InvokeStartNewRentalSessionCallback();
-			ServiceLocator.Instance.GetService<IMarketingAdService>()?.ActivateCampaigns();
 			ServiceLocator.Instance.GetService<IKioskClientService>()?.Campaign?.LoadCampaign();
 			OrchestrationService.ViewShow(ViewService.GetStartOverViewName());
 		}
@@ -297,6 +295,20 @@ public class RedboxRentalService : IRedboxRental
 			IManifestInfo manifestInfo = null;
 			service?.GetManifest(out manifestInfo);
 			LogHelper.Instance.Log("Not showing maintenance view because the rental application is not running.  Current application: " + manifestInfo?.ProductName);
+		}
+	}
+
+	private void ShowMaintenanceModeIfNeeded()
+	{
+		List<IMaintenanceModeReason> maintenanceModeReasons = ApplicationState.Instance.GetMaintenanceModeReasons();
+		IMaintenanceModeReason maintenanceModeReason = ((maintenanceModeReasons != null && maintenanceModeReasons.Any()) ? maintenanceModeReasons.Last() : null);
+		if (maintenanceModeReason != null)
+		{
+			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
+			if (service != null && !service.IsMaintenanceViewShowing())
+			{
+				HandleOnAddMaintenanceModeReason(maintenanceModeReason);
+			}
 		}
 	}
 

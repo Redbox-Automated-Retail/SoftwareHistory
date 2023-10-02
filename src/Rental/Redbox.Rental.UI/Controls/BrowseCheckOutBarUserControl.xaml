@@ -16,7 +16,7 @@
           </Redbox:RoundedButton>
         </Grid>
         <StackPanel Orientation="Vertical" Width="280">
-          <TextBlock Name="DontMissYourPerksText" Style="{StaticResource font_montserrat_semibold_16}" Foreground="#FF000000" VerticalAlignment="Center" TextAlignment="Center" Margin="0,30,0,8" Text="{Binding Path=DontMissYourPerksText, FallbackValue=Earn FREE 1-night rentals}" Visibility="{Binding Path=SignInButtonVisibility, FallbackValue=Visible}" />
+          <TextBlock Name="DontMissYourPerksText" Style="{StaticResource font_montserrat_semibold_16_correct}" Foreground="#FF000000" VerticalAlignment="Center" TextAlignment="Center" Margin="0,30,0,8" Text="{Binding Path=DontMissYourPerksText, FallbackValue=Earn FREE 1-night rentals}" Visibility="{Binding Path=SignInButtonVisibility, FallbackValue=Visible}" />
           <Redbox:RoundedButton Name="SignInButton" Style="{StaticResource button_light_medium_secondary_style}" Width="0" MinWidth="247" Command="{x:Static localbase:Commands.SignInCommand}" Visibility="{Binding Path=SignInButtonVisibility, FallbackValue=Visible}">
             <StackPanel Orientation="Horizontal" Margin="0,0" Width="Auto">
               <TextBlock Name="SignInButtonText" Style="{StaticResource font_montserrat_extrabold_16}" Text="{Binding Path=SignInButtonText, FallbackValue=SIGN IN}" />

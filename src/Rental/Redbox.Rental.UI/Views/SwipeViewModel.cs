@@ -34,6 +34,8 @@ public class SwipeViewModel : DependencyObject
 
 	public string TitleText { get; set; }
 
+	public string TitleNoteText { get; set; }
+
 	public string MessageText { get; set; }
 
 	public string MessageButtonText { get; set; }

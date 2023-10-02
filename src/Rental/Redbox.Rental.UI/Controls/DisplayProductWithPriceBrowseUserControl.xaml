@@ -24,9 +24,10 @@
     <Redbox:GridExt Row="2" Column="0" ColumnSpan="2" RowHeights="3,*">
       <Viewbox Grid.Row="1" Stretch="None">
         <StackPanel Orientation="Horizontal">
-          <TextBlock Name="PriceTypeText" Style="{StaticResource font_montserrat_bold_13}" Foreground="#535353" Margin="0,0,5,0" Text="{Binding Path=PriceTypeText, FallbackValue=Buy:}" Visibility="{Binding PriceTypeText, Converter={StaticResource TextToVisibility}}" />
-          <TextBlock Name="StrikethroughPriceText" Style="{StaticResource font_montserrat_regular_13}" TextDecorations="Strikethrough" Foreground="#737373" Margin="0,0,5,0" Text="{Binding Path=StrikethroughPriceText, FallbackValue=$9.99}" Visibility="{Binding StrikethroughPriceText, Converter={StaticResource TextToVisibility}}" />
-          <TextBlock Name="PriceText" Style="{StaticResource font_montserrat_bold_13}" Foreground="#535353" Text="{Binding Path=PriceText, FallbackValue=$9.99}" />
+          <TextBlock Name="PriceTypeText" Style="{StaticResource font_montserrat_semibold_13}" Foreground="#FF000000" Margin="0,0,5,0" Text="{Binding Path=PriceTypeText, FallbackValue=Buy:}" Visibility="{Binding PriceTypeText, Converter={StaticResource TextToVisibility}}" />
+          <TextBlock Name="StrikethroughPriceText" Style="{StaticResource font_montserrat_semibold_13}" TextDecorations="Strikethrough" Foreground="#FF000000" Margin="0,0,5,0" Text="{Binding Path=StrikethroughPriceText, FallbackValue=$9.99}" Visibility="{Binding StrikethroughPriceText, Converter={StaticResource TextToVisibility}}" />
+          <TextBlock Name="PriceText" Style="{StaticResource font_montserrat_semibold_13}" Foreground="#FF000000" Text="{Binding Path=PriceText, FallbackValue=$9.99}" Visibility="{Binding PriceText, Converter={StaticResource TextToVisibility}}" />
+          <TextBlock Name="TitleText" Style="{StaticResource font_montserrat_semibold_13}" Foreground="#FF000000" TextTrimming="CharacterEllipsis" Width="{Binding Path=TitleTextWidth, FallbackValue=103}" Text="{Binding Path=TitleText, FallbackValue=Product Name}" Visibility="{Binding TitleText, Converter={StaticResource TextToVisibility}}" />
         </StackPanel>
       </Viewbox>
     </Redbox:GridExt>

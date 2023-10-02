@@ -1,10 +1,10 @@
-# Yugo SR2 (1.84.1.14)
+# Z (1.85.0.27)
 
-- Product: Kiosk Engine 1.84.1.14
-- Date (first download in the snapshots): 2023-08-20
-- Store labels: kop-v2-engine-YugoSR2
+- Product: Kiosk Engine 1.85.0.27
+- Date (first download in the snapshots): 2023-10-01
+- Store labels: kop-v2-engine-Z
 - Package revisions:
-  - `kop-v2-engine` revision 347 (`5E3F7E8CBCFE06895561924800B4CF14392B7220`)
+  - `kop-v2-engine` revision 348 (`15FC7C953FA2B49E5CBFCF65B41A4C0122D08D18`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
@@ -12,36 +12,36 @@
 | `beforeactivate.lua` |  |  | `8E41E91CF8469874639907FCC1807E83D0D8D4C7` | exact |
 | `DeviceService.Client.dll` | DeviceService.Client | 1.10.0.4 | `D7748A191FF8360930456F7086C7C3E921216A58` | exact |
 | `DeviceService.ComponentModel.dll` | DeviceService.ComponentModel | 1.0.0.0 | `671E227479EA97F4531B7847D249EC4D9C575293` | exact |
-| `kioskengine.exe` | kioskengine | 1.84.1.14 | `B766F15652184EFE4F572F501F87E0D517B3B004` | exact |
-| `Redbox.BrokerServices.Kernel.dll` | Redbox.BrokerServices.Kernel | 1.84.1.14 | `C5A5312B04C71CF784CB750312F6A1B5DD4831E6` | exact |
-| `Redbox.BrokerServices.KernelExtension.dll` | Redbox.BrokerServices.KernelExtension | 1.84.1.14 | `D0D36167861B42FCA593EBEE40DF9EFEB666B51C` | exact |
-| `Redbox.BrokerServices.Proxy.ComponentModel.dll` | Redbox.BrokerServices.Proxy.ComponentModel | 1.84.1.14 | `C21FDBAB97626A926496AAF4DB47BDA7310471E4` | exact |
-| `Redbox.BrokerServices.Proxy.dll` | Redbox.BrokerServices.Proxy | 1.84.1.14 | `2F34F69C5D8867AFDF5E450061582DC582F3FA28` | exact |
+| `kioskengine.exe` | kioskengine | 1.85.0.27 | `DD62DC5C3E586AD62A24D29567DFA1946D7A4B42` | exact |
+| `Redbox.BrokerServices.Kernel.dll` | Redbox.BrokerServices.Kernel | 1.85.0.27 | `D348946053435112ECC66C33604A36AACFCCF0C6` | exact |
+| `Redbox.BrokerServices.KernelExtension.dll` | Redbox.BrokerServices.KernelExtension | 1.85.0.27 | `40D284C397BE638F9DC2E407B3A7CD9703E8003E` | exact |
+| `Redbox.BrokerServices.Proxy.ComponentModel.dll` | Redbox.BrokerServices.Proxy.ComponentModel | 1.85.0.27 | `4EB5C4C2EA44178C34D82265DF78993CDC779B48` | exact |
+| `Redbox.BrokerServices.Proxy.dll` | Redbox.BrokerServices.Proxy | 1.85.0.27 | `CB3370651F1F69136F6B9D7B5CF8B232F3AF563C` | exact |
 | `Redbox.Command.Tokenizer.dll` | Redbox.Command.Tokenizer | 1.0.1.3 | `56F86A90F8420DB7963A875BD6413A64E69F20F2` | exact |
 | `Redbox.Compression.dll` | Redbox.Compression | 1.0.1.11 | `05A1D5AB64E36F5B7FC2D245FA1963A0C96D5EF5` | exact |
-| `Redbox.ControlPanel.UI.exe` | Redbox.ControlPanel.UI | 1.84.1.14 | `7477C49A0FC73AE144142B1A1F1AAC95BC96326B` | exact |
-| `Redbox.Controls.dll` | Redbox.Controls | 1.84.1.14 | `E8E25E359AF500774E02FD6F0BF062F3AE58776A` | exact |
+| `Redbox.ControlPanel.UI.exe` | Redbox.ControlPanel.UI | 1.85.0.27 | `46785A1AB78FCC651CBD18807A616AC406A8E2CF` | exact |
+| `Redbox.Controls.dll` | Redbox.Controls | 1.85.0.27 | `B000D4BE428B2A560B50BA67E0820398401C23A8` | exact |
 | `Redbox.Core.dll` | Redbox.Core | 1.2.0.1 | `5884064740556D5DEDEE49EAF2CE92CAE4741921` | exact |
 | `Redbox.FMA.UI.dll` | Redbox.FMA.UI | 1.72.0.5 | `3F095334130CA91C670BA78AD77D8B085D53BD26` | exact |
-| `Redbox.FraudServices.Proxy.ComponentModel.dll` | Redbox.FraudServices.Proxy.ComponentModel | 1.84.1.14 | `A56BC1104E648E3DCF1FB0C11B121D9ABB2C35F7` | exact |
-| `Redbox.FraudServices.Proxy.dll` | Redbox.FraudServices.Proxy | 1.84.1.14 | `0353ED0492C610073B02B43FC21F48F539E4DC87` | exact |
+| `Redbox.FraudServices.Proxy.ComponentModel.dll` | Redbox.FraudServices.Proxy.ComponentModel | 1.85.0.27 | `DEF67D82E9CC44F8F77AED41EF55FB81E1370D29` | exact |
+| `Redbox.FraudServices.Proxy.dll` | Redbox.FraudServices.Proxy | 1.85.0.27 | `C54718F05DFEBC65F159B9C3227AF4389194B074` | exact |
 | `Redbox.GetOpts.dll` | Redbox.GetOpts | 1.2.0.1 | `39B203EC796E5992A16D45FA58733B940729CB99` | exact |
 | `Redbox.HAL.Client.dll` | Redbox.HAL.Client | 1.13.0.27 | `FECD1A73BB18E424C4776B8FE9B4BA316B719B84` | exact |
-| `Redbox.HardwareServices.Kernel.dll` | Redbox.HardwareServices.Kernel | 1.84.1.14 | `1F67373F91652F7546AE7D2B0AF80868C5AE4F44` | exact |
-| `Redbox.HardwareServices.KernelExtension.dll` | Redbox.HardwareServices.KernelExtension | 1.84.1.14 | `07710E65D0483B60943C1921019DF9A60E597B04` | exact |
-| `Redbox.HardwareServices.Proxy.ComponentModel.dll` | Redbox.HardwareServices.Proxy.ComponentModel | 1.84.1.14 | `07689898DBEBB0974BED8B7943BF3292F32201B1` | exact |
-| `Redbox.HardwareServices.Proxy.dll` | Redbox.HardwareServices.Proxy | 1.84.1.14 | `A36D315941AD9F927F0D5D139DADCEC55E197505` | exact |
+| `Redbox.HardwareServices.Kernel.dll` | Redbox.HardwareServices.Kernel | 1.85.0.27 | `37C32A345711E13F37D120FB5216CDF574FC5118` | exact |
+| `Redbox.HardwareServices.KernelExtension.dll` | Redbox.HardwareServices.KernelExtension | 1.85.0.27 | `BB85B1CDD7E6FB1F8A7EAB35D998D604083CCCFB` | exact |
+| `Redbox.HardwareServices.Proxy.ComponentModel.dll` | Redbox.HardwareServices.Proxy.ComponentModel | 1.85.0.27 | `CC5C582BCBEE7EE2630F335BAF867F66458C5A9B` | exact |
+| `Redbox.HardwareServices.Proxy.dll` | Redbox.HardwareServices.Proxy | 1.85.0.27 | `BEF5652125451CF5DC2BCF9F55D838B55DEA74D6` | exact |
 | `Redbox.IPC.Framework.dll` | Redbox.IPC.Framework | 1.3.0.1 | `7849F6DCDD5234ABDFFF3B3F9395A2E81FE0C91F` | exact |
 | `Redbox.JSONPrettyPrinter.dll` | Redbox.JSONPrettyPrinter | 1.2.0.3 | `4F68A4F0542FCFF291D3D045F8303BA4887CF8B2` | exact |
-| `Redbox.KioskDataServices.Proxy.ComponentModel.dll` | Redbox.KioskDataServices.Proxy.ComponentModel | 1.84.1.14 | `FB0E296CC9FF23637791EBC7FE123A9243B9A4D9` | exact |
-| `Redbox.KioskDataServices.Proxy.dll` | Redbox.KioskDataServices.Proxy | 1.84.1.14 | `A9D0692824635653E0983FAFDB044D42340D48E8` | exact |
-| `Redbox.KioskEngine.API.dll` | Redbox.KioskEngine.API | 1.84.1.14 | `85E797366FF46847085F2DC230ED01CDDC9DECB0` | exact |
-| `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.84.1.14 | `0758C8755F9FA7426136BF81EAC4988412790696` | exact |
-| `Redbox.KioskEngine.Drawing.dll` | Redbox.KioskEngine.Drawing | 1.84.1.14 | `A32DA873D87A8EEF12A0036D012BF5033C9E3F63` | exact |
-| `Redbox.KioskEngine.Environment.dll` | Redbox.KioskEngine.Environment | 1.84.1.14 | `5B3C6D5CE088656F4A2FE956185F437FC2ED9B4D` | exact |
-| `Redbox.KioskEngine.IDE.dll` | Redbox.KioskEngine.IDE | 1.84.1.14 | `90095A849DBE4CC51E142D1462F0AD05FA6B0880` | exact |
-| `Redbox.KioskEngine.Kernel.dll` | Redbox.KioskEngine.Kernel | 1.84.1.14 | `DBAE14BCBAA3A94BE99AECF018531DF007C1152F` | exact |
-| `Redbox.KioskEngine.PreferenceManager.exe` | Redbox.KioskEngine.PreferenceManager | 1.84.1.14 | `CF75131FF2ADFE1C71ED839E634C72088E544572` | exact |
+| `Redbox.KioskDataServices.Proxy.ComponentModel.dll` | Redbox.KioskDataServices.Proxy.ComponentModel | 1.85.0.27 | `DDE979A32916EE07F90104ED94976E1D3BD91B86` | exact |
+| `Redbox.KioskDataServices.Proxy.dll` | Redbox.KioskDataServices.Proxy | 1.85.0.27 | `B99B40BD574A75EA39ECF9D9E4B63C4A2382BD61` | exact |
+| `Redbox.KioskEngine.API.dll` | Redbox.KioskEngine.API | 1.85.0.27 | `2E3812323922102BA7D8E21F28565D3ED1A99B58` | exact |
+| `Redbox.KioskEngine.ComponentModel.dll` | Redbox.KioskEngine.ComponentModel | 1.85.0.27 | `6FB542BC3DA15AA3C096B762BEB5F6CA942DADB1` | exact |
+| `Redbox.KioskEngine.Drawing.dll` | Redbox.KioskEngine.Drawing | 1.85.0.27 | `A937690653424E30FD58F4611A2FD301B7CE2B90` | exact |
+| `Redbox.KioskEngine.Environment.dll` | Redbox.KioskEngine.Environment | 1.85.0.27 | `065C6A6DC08ED0D7F0ABE2DE4A7EFE067D035859` | exact |
+| `Redbox.KioskEngine.IDE.dll` | Redbox.KioskEngine.IDE | 1.85.0.27 | `CDFBBE1D47B68688CFFCCEFE42A32E5746DB7B38` | exact |
+| `Redbox.KioskEngine.Kernel.dll` | Redbox.KioskEngine.Kernel | 1.85.0.27 | `EDCBD5864624293BAA56BE39BF5BF9D9E0EEDC7D` | exact |
+| `Redbox.KioskEngine.PreferenceManager.exe` | Redbox.KioskEngine.PreferenceManager | 1.85.0.27 | `16E48AD6BA30C77C326059D9304E3A10E0CA7F1B` | exact |
 | `Redbox.KioskServices.ComponentModel.dll` | Redbox.KioskServices.ComponentModel | 2.6.0.11 | `3BEF42F146AEECED4373B24098D689C1F9FE8E02` | exact |
 | `Redbox.KioskServices.Kernel.dll` | Redbox.KioskServices.Kernel | 1.81.0.27 | `FE6189A34C285A8409853EA0037E67AEA9AFC8EF` | exact |
 | `Redbox.KioskServices.KernelExtension.dll` | Redbox.KioskServices.KernelExtension | 1.81.0.27 | `31724E3EF73211E75DA23235B244311A20AE80C9` | exact |
@@ -53,20 +53,20 @@
 | `Redbox.Macros.Functions.dll` | Redbox.Macros.Functions | 1.2.0.1 | `F7CA5EAD6D4B6B3AA72D30FCD7A1240B29D1A804` | exact |
 | `Redbox.ProductLookupCatalog.dll` | Redbox.ProductLookupCatalog | 1.3.0.2 | `0C5B69B8BCD5D399D762573BD763A77D6E499D33` | exact |
 | `Redbox.REDS.Framework.dll` | Redbox.REDS.Framework | 1.4.0.1 | `29F659A15841DF2EAB01844C6607B8CB51E34A8A` | exact |
-| `Redbox.Rental.Data.dll` | Redbox.Rental.Data | 1.84.1.14 | `E6CD9153E4B001F058B3A9A91F7F97A2CDDE5F00` | exact |
-| `Redbox.Rental.Kernel.dll` | Redbox.Rental.Kernel | 1.84.1.14 | `F779CF7DC6B261BD5D037425BD1D082BFAE13D56` | exact |
-| `Redbox.Rental.Model.dll` | Redbox.Rental.Model | 1.84.1.14 | `ADC6EB93AB049ADD8DAC7D194B75810EF812AF5C` | exact |
-| `Redbox.Rental.Services.dll` | Redbox.Rental.Services | 1.84.1.14 | `6B79DC5CD101E4D76BD24D527D3DACB047BCF5F9` | exact |
-| `Redbox.Rental.UI.exe` | Redbox.Rental.UI | 1.84.1.14 | `698837A4CD4AF6BE7D70FE5F58965AA7F2CE14A5` | exact |
+| `Redbox.Rental.Data.dll` | Redbox.Rental.Data | 1.85.0.27 | `1EB59882149D803039695CBBE924E0725BEDB96C` | exact |
+| `Redbox.Rental.Kernel.dll` | Redbox.Rental.Kernel | 1.85.0.27 | `43B3B427721F8A43288EA715062AD9D9B0022868` | exact |
+| `Redbox.Rental.Model.dll` | Redbox.Rental.Model | 1.85.0.27 | `B3763CF39EE624A68BC9070038ED7E192B0C8B7E` | exact |
+| `Redbox.Rental.Services.dll` | Redbox.Rental.Services | 1.85.0.27 | `F3B5FB786766F76EABF2063C08F86C1896A8CFA0` | exact |
+| `Redbox.Rental.UI.exe` | Redbox.Rental.UI | 1.85.0.27 | `D55B2C4CCE72756205F4C6A7567A829574476332` | exact |
 | `Redbox.Tokenizer.Framework.dll` | Redbox.Tokenizer.Framework | 1.1.0.1 | `18616BA09A9991E287E87A029D3A6FFC10F81BDC` | exact |
 | `Redbox.UpdateManager.Client.dll` | Redbox.UpdateManager.Client | 3.2.0.2 | `7A2D0E0220CD68E65472CE8F920C5C7B1FE4C11A` | exact |
 | `Redbox.UpdateManager.ComponentModel.dll` | Redbox.UpdateManager.ComponentModel | 3.2.0.2 | `45408A2D4B2229E6B8B9290A7DD673C4A7C63B15` | exact |
 | `Redbox.UpdateService.Client.dll` | Redbox.UpdateService.Client | 3.0.0.5 | `C43F2936E06F0723DFACE43E788249BC1A4A2F20` | exact |
 | `Redbox.UpdateService.Model.dll` | Redbox.UpdateService.Model | 3.0.0.5 | `98B0A16F8412B29125AB425F4A2CB124E312D9F0` | exact |
-| `Redbox.UpdateServices.Kernel.dll` | Redbox.UpdateServices.Kernel | 1.84.1.14 | `37521BA9523CAB147BAB65C7794A7E3C70ABFB10` | exact |
-| `Redbox.UpdateServices.KernelExtension.dll` | Redbox.UpdateServices.KernelExtension | 1.84.1.14 | `BF68D075DC8E5956B99F7D6FFF9165CF1AA522B6` | exact |
-| `Redbox.UpdateServices.Proxy.ComponentModel.dll` | Redbox.UpdateServices.Proxy.ComponentModel | 1.84.1.14 | `C46FE3E3A2B480DBD0776F4967191641CD9B6515` | exact |
-| `Redbox.UpdateServices.Proxy.dll` | Redbox.UpdateServices.Proxy | 1.84.1.14 | `E58FB38BB3529496A194322D72FBDE45592EF3BF` | exact |
+| `Redbox.UpdateServices.Kernel.dll` | Redbox.UpdateServices.Kernel | 1.85.0.27 | `EE6D776F1DB86B1A4FBA49AB0D4D5B6BB276EB89` | exact |
+| `Redbox.UpdateServices.KernelExtension.dll` | Redbox.UpdateServices.KernelExtension | 1.85.0.27 | `117F60C5E9EF998AD7CA76E9EAA24DECAEC9550F` | exact |
+| `Redbox.UpdateServices.Proxy.ComponentModel.dll` | Redbox.UpdateServices.Proxy.ComponentModel | 1.85.0.27 | `0CCC0B47993EF28102F9883A3DEFCBB74B077183` | exact |
+| `Redbox.UpdateServices.Proxy.dll` | Redbox.UpdateServices.Proxy | 1.85.0.27 | `98676EF5F3D5D6C278740A1E9C6189265F3955D4` | exact |
 | `Redbox.USB.dll` | Redbox.USB | 1.3.0.1 | `76576076EE0828C9F2A8579A917957EB24903E36` | exact |
 | `redscc.exe` | redscc | 1.1.4.1 | `39F8E9824CADDB59F103D56F7F123380DF95F37B` | exact |
 | `Redbox.DVD.BrokerServices.dll` | Redbox.DVD.BrokerServices | 1.14.0.2 | `9F9E78B99A7729F4B6DDD552235BFDBB8BF858A5` | exact |

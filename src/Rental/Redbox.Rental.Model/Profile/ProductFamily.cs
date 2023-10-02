@@ -2,12 +2,8 @@ using System.Collections.Generic;
 
 namespace Redbox.Rental.Model.Profile;
 
-public class ProductFamily : ILuaKeyValue
+public class ProductFamily
 {
-	public string Key { get; set; }
-
-	public string Value { get; set; }
-
 	public long ProductFamilyId { get; set; }
 
 	public string ProductFamilyName { get; set; }

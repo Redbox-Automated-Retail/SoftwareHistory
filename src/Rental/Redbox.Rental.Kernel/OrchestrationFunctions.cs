@@ -85,10 +85,4 @@ public static class OrchestrationFunctions
 		bool.TryParse(shouldEndAndSave, out result);
 		OrchestrationService.ShoppingCartCommit(sessionId, reason, result);
 	}
-
-	[KernelFunction(Name = "kernel.load_email_optin_campaign")]
-	internal static void LoadEmailOptInCampaign()
-	{
-		OrchestrationService.LoadEmailOptInCampaign();
-	}
 }

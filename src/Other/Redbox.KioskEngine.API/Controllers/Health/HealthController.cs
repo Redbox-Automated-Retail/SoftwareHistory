@@ -20,7 +20,7 @@ public class HealthController : ApiController
 	{
 		Stopwatch.StartNew();
 		HealthPingResponse response = new HealthPingResponse();
-		await Task.Run(async delegate
+		await Task.Run(delegate
 		{
 			IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
 			IStoreServices service2 = ServiceLocator.Instance.GetService<IStoreServices>();
@@ -49,7 +49,7 @@ public class HealthController : ApiController
 	{
 		Stopwatch.StartNew();
 		HealthAlertResponse response = new HealthAlertResponse();
-		await Task.Run(async delegate
+		await Task.Run(delegate
 		{
 			IHealthServices service = ServiceLocator.Instance.GetService<IHealthServices>();
 			IStoreServices service2 = ServiceLocator.Instance.GetService<IStoreServices>();

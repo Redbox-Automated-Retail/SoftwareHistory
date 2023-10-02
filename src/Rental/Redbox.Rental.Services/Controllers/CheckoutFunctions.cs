@@ -110,25 +110,6 @@ public class CheckoutFunctions
 		}
 	}
 
-	public static bool NeedToShowEmailOptInCampaign
-	{
-		get
-		{
-			bool flag = false;
-			if (!string.IsNullOrEmpty(Redbox.Rental.Services.Session.Session.Instance?.UserInfo?.Email) && !OrchestrationService.TTSEnabled && ApplicationState.Instance?.EmailOptInCampaign != null)
-			{
-				bool flag2 = ServiceLocator.Instance.GetService<IConfiguration>()?.ShowOptinForNormalCheckout ?? false;
-				LogHelper.Instance.Log($"ShowOptinForNormalCheckout: {flag2}");
-				if (flag2)
-				{
-					flag = true;
-				}
-			}
-			LogHelper.Instance.Log($"NeedToShowEmailOptInCampaign: {flag}");
-			return flag;
-		}
-	}
-
 	public static void BeginCheckout()
 	{
 		LogHelper.Instance.Log("BeginCheckout");
@@ -1211,9 +1192,8 @@ public class CheckoutFunctions
 				OptInConfirmationStatus = (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus).GetValueOrDefault(),
 				ContinueAction = ContinueCheckoutFlow
 			});
-			return;
 		}
-		if (flag && !flag2 && !flag3)
+		else if (flag && !flag2 && !flag3)
 		{
 			OrchestrationService.ViewShow("avod_lead_generation_offer_view", new AvodLeadGenerationOfferViewParameters
 			{
@@ -1221,19 +1201,16 @@ public class CheckoutFunctions
 				OptInConfirmationStatus = (ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart?.MarketingOptInConfirmationStatus).GetValueOrDefault(),
 				ContinueAction = ContinueCheckoutFlow
 			});
-			return;
 		}
-		Action continueCheckoutFlowAction = ShowSubscriptionSignUpConfirmationViewIfNeeded;
-		Action emailCampaignSignupAction = delegate
+		else
 		{
-			PromptForEmailCampaignOptIn(continueCheckoutFlowAction);
-		};
-		IPerksSignupService service = ServiceLocator.Instance.GetService<IPerksSignupService>();
-		Action<ISignupFlowResult> action = delegate
-		{
-			emailCampaignSignupAction();
-		};
-		service.StartSignupFlow(action, SignUpFlowContext.AfterSwipe, action);
+			IPerksSignupService service = ServiceLocator.Instance.GetService<IPerksSignupService>();
+			Action<ISignupFlowResult> action = delegate
+			{
+				ShowSubscriptionSignUpConfirmationViewIfNeeded();
+			};
+			service.StartSignupFlow(action, SignUpFlowContext.AfterSwipe, action);
+		}
 	}
 
 	private static bool ShowSubscriptionSignUpConfirmationView()
@@ -1315,19 +1292,6 @@ public class CheckoutFunctions
 		optInItem.CampaignName = "MarketingOptInCampaign";
 		List<IOptInItem> optInItems = new List<IOptInItem> { optInItem };
 		service?.KioskOptIn(service2.KioskId, optInItems, null);
-	}
-
-	public static void PromptForEmailCampaignOptIn(Action continueFlowAction)
-	{
-		if (NeedToShowEmailOptInCampaign && Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.SignupFlowState != null && !Redbox.Rental.Services.Session.Session.Instance.BrowseState.SignupFlowState.EmailOptInCampaignShown)
-		{
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.SignupFlowState.EmailOptInCampaignShown = true;
-			OrchestrationService.ViewShowSafe("email_optin_view", continueFlowAction);
-		}
-		else
-		{
-			continueFlowAction?.Invoke();
-		}
 	}
 
 	private static void PrcoessOfflineOrStandAloneAuthorizeResult(IAuthorizeResult authorizeResult)

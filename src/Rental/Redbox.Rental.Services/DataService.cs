@@ -61,6 +61,8 @@ public class DataService : IDataService
 
 	public string RunningPath => _runningPath;
 
+	public ProfileDataVersion ProfileDataVersion => _dataServiceInstance?.ProfileDataInstance?.ProfileDataVersion;
+
 	private bool HasProfileStagedInstance => _profileStagedInstance != null;
 
 	private bool HasKioskDataStagedInstance => _kioskDataStagedInstance != null;
@@ -160,30 +162,6 @@ public class DataService : IDataService
 		}
 		errorList.ToLogHelper();
 		return result;
-	}
-
-	public ErrorList GetLuaTableData(string tableName, out IProfileLuaTable data)
-	{
-		WaitForFirstLoad();
-		data = null;
-		ErrorList errorList = new ErrorList();
-		try
-		{
-			lock (_lock)
-			{
-				if (!_dataServiceInstance.ProfileDataInstance.ProfileLuaView.Tables.ContainsKey(tableName))
-				{
-					errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetLuaTableData", "Unhandled exception", $"Table: {tableName} does not exist in collection."));
-				}
-				data = _dataServiceInstance.ProfileDataInstance.ProfileLuaView.Tables[tableName];
-			}
-		}
-		catch (Exception e)
-		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetLuaTableData", "Unhandled exception occurred", e));
-		}
-		errorList.ToLogHelper();
-		return errorList;
 	}
 
 	public byte[] GetImage(string name)
@@ -670,6 +648,22 @@ public class DataService : IDataService
 		return result;
 	}
 
+	public List<long> GetCachedTitleIds()
+	{
+		List<long> result = new List<long>();
+		PerformActionWhileLocked(delegate
+		{
+			if (_dataServiceInstance?.CacheDataInstance?.Titles != null)
+			{
+				foreach (KeyValuePair<long, TitleCache> title in _dataServiceInstance.CacheDataInstance.Titles)
+				{
+					result.Add(title.Value.ProductId);
+				}
+			}
+		});
+		return result;
+	}
+
 	public int GetInStockGameCount()
 	{
 		return _kioskProductView?.GetInStockGameCount() ?? 0;
@@ -683,6 +677,18 @@ public class DataService : IDataService
 			result = TitleProduct.GetTitleTypeFromProductTypeId(value.ProductTypeId);
 		}
 		return result;
+	}
+
+	public Title GetProductCatalogTitle(long productId)
+	{
+		Title value = null;
+		_dataServiceInstance?.ProfileDataInstance?.Titles?.TryGetValue(productId, out value);
+		return value;
+	}
+
+	public Dictionary<long, Title> GetProductCatalogTitles()
+	{
+		return _dataServiceInstance?.ProfileDataInstance?.Titles;
 	}
 
 	public List<SubPlatform> GetSubPlatforms()
@@ -791,6 +797,11 @@ public class DataService : IDataService
 	public Store GetStore()
 	{
 		long kioskId = ServiceLocator.Instance.GetService<IStoreManager>().KioskId;
+		return GetStore(kioskId);
+	}
+
+	public Store GetStore(long kioskId)
+	{
 		Store store;
 		if (_dataServiceInstance.ProfileDataInstance.Stores.ContainsKey(kioskId))
 		{

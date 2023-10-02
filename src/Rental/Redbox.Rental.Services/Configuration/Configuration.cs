@@ -234,8 +234,6 @@ public class Configuration : IConfiguration
 
 	public int VistarGetAdTimeout { get; private set; }
 
-	public bool ShowBrowse10Titles { get; private set; }
-
 	public bool EnableBrowseMessagePopup { get; private set; }
 
 	public int BrowseMessagePopupDuration { get; private set; }
@@ -463,7 +461,6 @@ public class Configuration : IConfiguration
 		ComingSoonOptInEnabled = ConfigGetValue(service, "system", "General", "ComingSoonOptIn", defaultValue: true);
 		MarketingOptInEnabled = ConfigGetValue(service, "system", "General", "MarketingOptInEnabled", defaultValue: true);
 		RecommendationOnPickup = ConfigGetValue(service, "system", "General", "RecommendationOnPickup", defaultValue: true);
-		ShowOptinForNormalCheckout = ConfigGetValue(service, "system", "General", "ShowOptinForNormalCheckout", defaultValue: true);
 		ServiceFeeEnabled = ConfigGetValue(service, "system", "General", "ServiceFeeEnabled", defaultValue: false);
 		BlurayUpsellEnabled = ConfigGetValue(service, "system", "General", "BluRayUpsellEnabled", defaultValue: false);
 		_4KUpsellEnabled = ConfigGetValue(service, "system", "General", "4KUpsellEnabled", defaultValue: false);
@@ -481,7 +478,6 @@ public class Configuration : IConfiguration
 		EndGames = ConfigGetValue(service, "marketing", "MarketingGeneral", "EndGames", defaultValue: true);
 		EnableVistarAds = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableVistarAds", defaultValue: false);
 		VistarGetAdTimeout = ConfigGetValue(service, "marketing", "MarketingGeneral", "VistarGetAdTimeout", 500);
-		ShowBrowse10Titles = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowBrowse10Titles", defaultValue: false);
 		ShowAfterSwipePersonalizedOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowAfterSwipePersonalizedOffers", defaultValue: false);
 		UseDiscountsForPmnpOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "UseDiscountsForPmnpOffers", defaultValue: false);
 		EnableBrowseMessagePopup = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableBrowseMessagePopup", defaultValue: false);

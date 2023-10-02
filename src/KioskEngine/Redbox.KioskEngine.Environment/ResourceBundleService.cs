@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Packaging;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -30,6 +31,8 @@ public class ResourceBundleService : IResourceBundleService
 	private BundleCollection m_innerBundles;
 
 	private Dictionary<string, Assembly> _asseblies = new Dictionary<string, Assembly>();
+
+	private string[] _removedBundles = new string[7] { "content-banner-marketing.bundle", "content-incart-rundata.bundle", "content-pricing.bundle", "content-promo.bundle", "content-vend-screen.bundle", "content-marketing-rundata.bundle", "content-email-opt-in.bundle" };
 
 	public static ResourceBundleService Instance => Singleton<ResourceBundleService>.Instance;
 
@@ -153,6 +156,7 @@ public class ResourceBundleService : IResourceBundleService
 
 	public Redbox.KioskEngine.ComponentModel.ErrorList Switch(out IResourceBundle previousBundle)
 	{
+		LogHelper.Instance.Log("Beginning ResourceBundleService.Switch");
 		previousBundle = ActiveBundle;
 		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
 		if (SwitchToBundle == null)
@@ -170,6 +174,7 @@ public class ResourceBundleService : IResourceBundleService
 		IKernelExtensionService service = ServiceLocator.Instance.GetService<IKernelExtensionService>();
 		try
 		{
+			LogHelper.Instance.Log("Checking kernelExtensionService.CanSwitch before bundle switch");
 			DateTime now = DateTime.Now;
 			Redbox.KioskEngine.ComponentModel.ErrorList errors;
 			while (!service.CanSwitch(out errors))
@@ -345,27 +350,30 @@ public class ResourceBundleService : IResourceBundleService
 				}
 			}
 		}
-		foreach (string item in adjustedPaths)
+		foreach (string eachPath in adjustedPaths)
 		{
-			LogHelper.Instance.Log("...Search path: {0}", item);
-			if (!Directory.Exists(item))
+			LogHelper.Instance.Log("...Search path: {0}", eachPath);
+			if (!Directory.Exists(eachPath))
 			{
-				errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewWarning("B001", $"Bundle directory does not exist: {item}", "Correct the bundle search path and try again."));
+				errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewWarning("B001", $"Bundle directory does not exist: {eachPath}", "Correct the bundle search path and try again."));
 				return errorList;
 			}
-			string[] files2 = Directory.GetFiles(item, "*.bundle");
-			if (files2.Length != 0)
+			string[] removedBundlesFullPath = _removedBundles.Select((string removedBundle) => Path.Combine(eachPath, removedBundle)).ToArray();
+			string[] array = (from bundleFile in Directory.GetFiles(eachPath, "*.bundle")
+				where !removedBundlesFullPath.Contains(bundleFile)
+				select bundleFile).ToArray();
+			if (array.Length != 0)
 			{
-				string[] searchPath = files2;
+				string[] searchPath = array;
 				foreach (string text2 in searchPath)
 				{
 					ResourceBundle resourceBundle = new ResourceBundle(text2, ResourceBundleStorageType.Zipped);
 					Redbox.REDS.Framework.ErrorList errorList2 = resourceBundle.LoadResources();
 					if (errorList2.ContainsError())
 					{
-						foreach (Redbox.REDS.Framework.Error item2 in errorList2)
+						foreach (Redbox.REDS.Framework.Error item in errorList2)
 						{
-							errorList.Add(item2.IsWarning ? Redbox.KioskEngine.ComponentModel.Error.NewWarning(item2.Code, item2.Description, item2.Details) : Redbox.KioskEngine.ComponentModel.Error.NewError(item2.Code, item2.Description, item2.Details));
+							errorList.Add(item.IsWarning ? Redbox.KioskEngine.ComponentModel.Error.NewWarning(item.Code, item.Description, item.Details) : Redbox.KioskEngine.ComponentModel.Error.NewError(item.Code, item.Description, item.Details));
 						}
 						continue;
 					}
@@ -376,14 +384,14 @@ public class ResourceBundleService : IResourceBundleService
 					}
 				}
 			}
-			else if (Directory.GetFiles(item, "manifest.resource").Length == 1)
+			else if (Directory.GetFiles(eachPath, "manifest.resource").Length == 1)
 			{
-				ResourceBundle resourceBundle2 = new ResourceBundle(item, ResourceBundleStorageType.FileSystem);
+				ResourceBundle resourceBundle2 = new ResourceBundle(eachPath, ResourceBundleStorageType.FileSystem);
 				resourceBundle2.LoadResources();
 				InnerBundles.AddBundleVersion(resourceBundle2).CopyToLocalCollection(errorList);
 				if (!errorList.ContainsError())
 				{
-					LogHelper.Instance.Log("......Loaded loose bundle '{0}'.", item);
+					LogHelper.Instance.Log("......Loaded loose bundle '{0}'.", eachPath);
 				}
 			}
 		}

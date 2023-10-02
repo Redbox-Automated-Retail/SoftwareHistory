@@ -4,9 +4,7 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
-using Redbox.Rental.Model;
 using Redbox.Rental.Model.Ads;
-using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskClientService.Ads;
 using Redbox.Rental.UI.Models;
@@ -17,8 +15,6 @@ namespace Redbox.Rental.Services.Controllers;
 public class VsmViewController : BaseViewController
 {
 	private static IAd _cachedAd;
-
-	private static Action<string> _updateVsmImpressionCallback;
 
 	public static void ConfigureVsmView()
 	{
@@ -86,10 +82,6 @@ public class VsmViewController : BaseViewController
 			Ad = ad,
 			AdLocation = AdLocation.VSM
 		} : null);
-		if (ad is MarketingAd)
-		{
-			UpdateVSMImpression();
-		}
 	}
 
 	public static void LeaveVsmView(IViewFrameInstance viewFrameInstance)
@@ -129,16 +121,6 @@ public class VsmViewController : BaseViewController
 		}
 	}
 
-	public static void RegisterUpdateVsmImpressionCallback(Action<string> updateVsmImpressionCallback)
-	{
-		_updateVsmImpressionCallback = updateVsmImpressionCallback;
-	}
-
-	public static void InvokeUpdateVsmImpressionCallback(string vsmProgramName)
-	{
-		_updateVsmImpressionCallback?.Invoke(vsmProgramName);
-	}
-
 	public static bool IsVsmAdAvailable()
 	{
 		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKioskClosingVSM)
@@ -147,24 +129,5 @@ public class VsmViewController : BaseViewController
 		}
 		_cachedAd = BaseViewController.GetAd(AdLocation.VSM);
 		return _cachedAd != null;
-	}
-
-	public static string GetVsmProgram()
-	{
-		return ServiceLocator.Instance.GetService<IResourceBundleService>().GetResource("vsm_image")?["program_name"]?.ToString();
-	}
-
-	public static void UpdateVSMImpression()
-	{
-		string vsmProgram = GetVsmProgram();
-		if (!string.IsNullOrEmpty(vsmProgram))
-		{
-			InvokeUpdateVsmImpressionCallback(vsmProgram);
-		}
-	}
-
-	private static MeijerVsmKiosk GetMeijerVsmKiosk()
-	{
-		return MeijerVsmKioskCollection.GetMeijerVsmKiosk(ServiceLocator.Instance.GetService<IStoreManager>()?.KioskId ?? 0);
 	}
 }

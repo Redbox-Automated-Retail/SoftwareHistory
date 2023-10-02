@@ -186,7 +186,7 @@ public class ReservationFunctions
 				ServiceLocator.Instance.GetService<IReservationServices>();
 				if (long.TryParse(reservation.ReservationDetails?.ReferenceNumber, out var result))
 				{
-					ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.ExpireReservation(service?.GetStore()?.Key, result, null);
+					ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.ExpireReservation(service?.GetStore()?.StoreId.ToString(), result, null);
 				}
 				list.Add(reservation.ReservationDetails);
 			}

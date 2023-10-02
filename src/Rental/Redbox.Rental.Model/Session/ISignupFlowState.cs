@@ -4,8 +4,6 @@ public interface ISignupFlowState
 {
 	bool MarketingOptInShown { get; set; }
 
-	bool EmailOptInCampaignShown { get; set; }
-
 	bool WasPerksSignupOfferPresented { get; set; }
 
 	bool WasEarlyIdSignupPresented { get; set; }

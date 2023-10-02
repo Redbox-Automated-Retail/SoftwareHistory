@@ -24,7 +24,7 @@ public class ShoppingCartController : ApiController
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
 		GetLoyaltyTestShoppingCartItemsResponse response = new GetLoyaltyTestShoppingCartItemsResponse();
-		await Task.Run(async delegate
+		await Task.Run(delegate
 		{
 			IRentalShoppingCartService service = ServiceLocator.Instance.GetService<IRentalShoppingCartService>();
 			if (service != null)

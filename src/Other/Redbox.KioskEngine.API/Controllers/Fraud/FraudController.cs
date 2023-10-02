@@ -24,7 +24,7 @@ public class FraudController : ApiController
 		{
 			Content = fraudServiceInfo
 		};
-		await Task.Run(async delegate
+		await Task.Run(delegate
 		{
 			IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
 			if (service != null)

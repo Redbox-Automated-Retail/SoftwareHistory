@@ -242,7 +242,6 @@ public class PersonalizationFunctions
 		}
 		if (IsSignedIn && loginType == LoginType.Email)
 		{
-			OrchestrationService.StopIdleTimer("idle_timer");
 			Action<ISignupFlowResult> action = delegate
 			{
 				IViewFrameInstance afterSignInUnwindToView2 = GetAfterSignInUnwindToView();

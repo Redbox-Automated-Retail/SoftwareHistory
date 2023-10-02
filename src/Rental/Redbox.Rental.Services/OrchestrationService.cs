@@ -26,7 +26,6 @@ using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Controllers;
-using Redbox.Rental.Services.EmailOptinCampaign;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Views;
@@ -921,11 +920,6 @@ public static class OrchestrationService
 			}
 			session.End();
 		}
-	}
-
-	public static void LoadEmailOptInCampaign()
-	{
-		ApplicationState.Instance.EmailOptInCampaign = EmailOptInCampaignService.LoadEmailOptInCampaign();
 	}
 
 	public static void SendHealthServicesMinutesInMaintenanceModeStatistics(int minutesInMaintenanceMode)

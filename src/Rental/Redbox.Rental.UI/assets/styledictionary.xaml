@@ -1103,6 +1103,12 @@
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
+  <Style x:Key="font_montserrat_semibold_13" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
   <Style x:Key="font_montserrat_bold_14" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat" />
     <Setter Property="FontSize" Value="14" />
@@ -1309,6 +1315,12 @@
     <Setter Property="FontSize" Value="16" />
     <Setter Property="FontStyle" Value="Normal" />
     <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style x:Key="font_montserrat_semibold_16_correct" TargetType="{x:Type TextBlock}">
+    <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontStyle" Value="Normal" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
   <Style x:Key="font_montserrat_semibold_18" TargetType="{x:Type TextBlock}">
     <Setter Property="FontFamily" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Fonts/#Montserrat SemiBold" />
@@ -1951,10 +1963,10 @@
       </Setter.Value>
     </Setter>
   </Style>
-  <Style x:Key="browse_centered_page_number_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_16}">
+  <Style x:Key="browse_centered_page_number_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_16_correct}">
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
-  <Style x:Key="browse_right_justified_page_number_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_16}">
+  <Style x:Key="browse_right_justified_page_number_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_16_correct}">
     <Setter Property="HorizontalAlignment" Value="Right" />
     <Setter Property="Margin" Value="0,0,90,0" />
   </Style>

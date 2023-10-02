@@ -16,4 +16,8 @@ public class BrowseConfiguration : BaseCategorySetting
 	public bool ShowWatchOptions { get; set; }
 
 	public bool ShowDualInStock { get; set; }
+
+	public bool Show10Titles { get; set; }
+
+	public bool ShowTitleText { get; set; }
 }

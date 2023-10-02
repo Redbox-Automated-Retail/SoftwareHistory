@@ -138,8 +138,8 @@ public class PromoOfferBrowseViewController : BaseViewController
 	{
 		BrowseControlModel browseControlModel = new BrowseControlModel();
 		browseControlModel.RowCount = 2;
-		browseControlModel.ColumnCount = (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? 5 : 6);
-		browseControlModel.BrowseItemMargin = (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? new Thickness(0.0, 32.0, 0.0, 10.0) : new Thickness(0.0, 48.0, 0.0, 15.0));
+		browseControlModel.ColumnCount = (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles ? 5 : 6);
+		browseControlModel.BrowseItemMargin = (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles ? new Thickness(0.0, 32.0, 0.0, 10.0) : new Thickness(0.0, 48.0, 0.0, 15.0));
 		browseControlModel.ShowBorderItems = true;
 		browseControlModel.BorderShadowVisibility = Visibility.Collapsed;
 		browseControlModel.PageNumberVisibility = Visibility.Collapsed;
@@ -454,8 +454,8 @@ public class PromoOfferBrowseViewController : BaseViewController
 			browseControlModel.Margin = (BaseViewController.IsADAMode ? new Thickness(0.0, 0.0, 0.0, 20.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 			browseControlModel.BrowseItemMargin = new Thickness(10.0, 10.0, 10.0, 10.0);
 			browseControlModel.RowCount = ((!BaseViewController.IsADAMode) ? 1 : 2);
-			browseControlModel.ColumnCount = ((!BaseViewController.IsADAMode) ? 1 : (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? 5 : 6));
-			int num = ((!BaseViewController.IsADAMode) ? 1 : (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowBrowse10Titles ? 10 : 12));
+			browseControlModel.ColumnCount = ((!BaseViewController.IsADAMode) ? 1 : (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles ? 5 : 6));
+			int num = ((!BaseViewController.IsADAMode) ? 1 : (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.Show10Titles ? 10 : 12));
 			for (int i = 0; i < num; i++)
 			{
 				browseControlModel.BrowseControls.Add(new DisplayProductWithCommandsUserControl

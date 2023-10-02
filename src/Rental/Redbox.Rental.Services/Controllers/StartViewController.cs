@@ -17,7 +17,6 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.KioskEngine.ComponentModel.TrackData;
 using Redbox.KioskEngine.Environment;
 using Redbox.KioskEngine.Environment.CardDataReader;
-using Redbox.REDS.Framework;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
@@ -27,7 +26,6 @@ using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.Campaign;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.KioskProduct;
-using Redbox.Rental.Model.Marketing;
 using Redbox.Rental.Model.Personalization;
 using Redbox.Rental.Model.Reservation;
 using Redbox.Rental.Model.Session;
@@ -59,11 +57,7 @@ public class StartViewController : BaseViewController
 
 		public static int AdaIdleTimerDuration = 15000;
 
-		public static string MarketingAdTimerName = "marketing_ad_check_for_new_active_campaign";
-
 		public static string ZeroTouchDisconnectedCardReaderTimerName = "ZeroTouchDisconnectedCardReaderTimer";
-
-		public static int MarketingAdTimerDuration = 60000;
 
 		public static int DefaultCarouselItems = 11;
 
@@ -187,7 +181,6 @@ public class StartViewController : BaseViewController
 			ConfigureStartViewIdleTimer();
 			ConfigureAdaIdleTimer();
 			ConfigureBanner(startViewModel);
-			ConfigureMarketingAdTimer();
 			ConfigureTTS(startViewModel);
 			if (BaseViewController.ApplicationState.IsABEOn)
 			{
@@ -580,7 +573,7 @@ public class StartViewController : BaseViewController
 			startViewModel.SecondaryButtonsMargin = ((startViewModel.BuyMoviesOrGamesButtonVisibility != Visibility.Visible && startViewModel.BuyGamesButtonVisibility != Visibility.Visible) ? new Thickness(0.0, 0.0, 115.0, 0.0) : new Thickness(0.0, 0.0, 15.0, 0.0));
 			startViewModel.KioskClosingMessageVisibility = ((!flag2) ? Visibility.Collapsed : Visibility.Visible);
 			List<IKioskProduct> products = null;
-			Redbox.KioskEngine.ComponentModel.ErrorList source = service?.GetProducts(BrowseViewFilter.ForSale, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
+			ErrorList source = service?.GetProducts(BrowseViewFilter.ForSale, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
 			bool buyGamesEnabled = !source.Any() && products.Any((IKioskProduct x) => ((ITitleProduct)x).TitleFamily == TitleFamily.Games);
 			bool buyMoviesEnabled = !source.Any() && products.Any((IKioskProduct x) => ((ITitleProduct)x).TitleFamily == TitleFamily.Movies);
 			startViewModel.RentGamesEnabled = flag;
@@ -870,24 +863,6 @@ public class StartViewController : BaseViewController
 		StopZeroTouchDisconnectedCardReaderTimer();
 	}
 
-	private static void ConfigureMarketingAdTimer()
-	{
-		(TimerService?.CreateTimer(Constants.MarketingAdTimerName, Constants.MarketingAdTimerDuration, Constants.MarketingAdTimerDuration, delegate
-		{
-			IViewService service = ServiceLocator.Instance.GetService<IViewService>();
-			if (service.Peek() == service.GetStartOverViewName())
-			{
-				IMarketingAdService service2 = ServiceLocator.Instance.GetService<IMarketingAdService>();
-				if (service2 != null && service2.CheckForNewActiveCampaign())
-				{
-					LogHelper.Instance.Log("activating new marketing ads campaign");
-					service2?.ActivateCampaigns();
-					ConfigureBanner(GetStartViewModelFromView());
-				}
-			}
-		}))?.Start();
-	}
-
 	private static void ConfigureLoadCampaignTimer()
 	{
 		if (TimerService?.GetTimer(Constants.LoadCampaignTimerName) != null)
@@ -990,18 +965,11 @@ public class StartViewController : BaseViewController
 	private static void ConfigureBanner(StartViewModel startViewModel)
 	{
 		BaseViewController.RecordAdImpression(startViewModel?.AdImpression);
-		IMarketingConfigurationManager service = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>();
-		bool flag = service?.ShowBlurayBrowse ?? false;
-		bool flag2 = service?.ShowGameBanner ?? false;
-		IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		string text = null;
+		bool flag = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>()?.ShowBlurayBrowse ?? false;
+		IResourceBundleService service = ServiceLocator.Instance.GetService<IResourceBundleService>();
 		StartViewBannerType startViewBannerType = StartViewBannerType.none;
 		BitmapImage bitmapImage = null;
-		bool flag3 = true;
-		bool flag4 = false;
-		bool flag5 = true;
-		bool flag6 = flag3 | flag4 | flag5;
-		if ((!BaseViewController.ApplicationState.IsADAAccessible && AdService != null) & flag6)
+		if (!BaseViewController.ApplicationState.IsADAAccessible && AdService != null)
 		{
 			AdLocation adLocation = AdLocation.Welcome;
 			IAd ad = AdService?.GetScreenAd(adLocation);
@@ -1018,43 +986,11 @@ public class StartViewController : BaseViewController
 		}
 		if (bitmapImage == null)
 		{
-			Image image = service2.GetBitmap("banner_image");
-			if (image != null)
+			Image image = null;
+			if (startViewBannerType == StartViewBannerType.none && flag)
 			{
-				IResource resource = service2.GetResource("banner_image");
-				if (resource != null)
-				{
-					IAspect aspect = resource.GetAspect("content");
-					if (aspect != null)
-					{
-						text = (aspect.Properties.ContainsKey("collectionid") ? aspect.Properties["collectionid"].ToUpper() : null);
-						if (text == string.Empty)
-						{
-							text = null;
-						}
-					}
-				}
-				if (string.IsNullOrEmpty(text) || OrchestrationService.RentalIsCollectionsEnabled())
-				{
-					startViewBannerType = StartViewBannerType.collections;
-				}
-			}
-			if (startViewBannerType == StartViewBannerType.none)
-			{
-				if (flag)
-				{
-					startViewBannerType = StartViewBannerType.bluray;
-					image = service2.GetBitmap("image_bluray_banner");
-				}
-				else if (flag2)
-				{
-					startViewBannerType = StartViewBannerType.game;
-					image = service2.GetBitmap("image_game_banner");
-				}
-				else
-				{
-					image = null;
-				}
+				startViewBannerType = StartViewBannerType.bluray;
+				image = service.GetBitmap("image_bluray_banner");
 			}
 			if (image != null)
 			{
@@ -1063,10 +999,10 @@ public class StartViewController : BaseViewController
 		}
 		if (startViewModel != null)
 		{
-			startViewModel.BannerCollectionId = text;
+			startViewModel.BannerCollectionId = null;
 			startViewModel.BannerType = startViewBannerType;
 			startViewModel.BannerImage = bitmapImage;
-			startViewModel.BannerVisibility = ((!(((bitmapImage != null) & flag3) | flag4 | flag5)) ? Visibility.Collapsed : Visibility.Visible);
+			startViewModel.BannerVisibility = ((bitmapImage == null) ? Visibility.Collapsed : Visibility.Visible);
 		}
 	}
 

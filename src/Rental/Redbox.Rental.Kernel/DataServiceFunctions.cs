@@ -8,7 +8,6 @@ using Redbox.Lua;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.Health;
-using Redbox.Rental.Model.Profile;
 
 namespace Redbox.Rental.Kernel;
 
@@ -23,8 +22,6 @@ public static class DataServiceFunctions
 
 	public static string CacheTableName = "cache";
 
-	public static string ProfileTableName = "profile";
-
 	[KernelFunction(Name = "kernel.dataserviceget")]
 	internal static object DataServiceGet(string dataStore, string tableName, string keyName)
 	{
@@ -33,20 +30,6 @@ public static class DataServiceFunctions
 			if (dataStore.Equals(CacheTableName))
 			{
 				return ServiceLocator.Instance.GetService<IDataStoreService>()?.Get(dataStore, tableName, keyName);
-			}
-			if (dataStore.Equals(ProfileTableName))
-			{
-				ErrorList luaTableData = ServiceLocator.Instance.GetService<IDataService>().GetLuaTableData(tableName, out var data);
-				if (luaTableData.Count > 0)
-				{
-					luaTableData.ToLogHelper();
-					return null;
-				}
-				if (!data.Data.TryGetValue(keyName, out var value))
-				{
-					return null;
-				}
-				return value.Value;
 			}
 			return null;
 		}
@@ -87,30 +70,6 @@ public static class DataServiceFunctions
 				cacheTable["keys"] = keysTable;
 				return cacheTable;
 			}
-			if (dataStore.Equals(ProfileTableName))
-			{
-				ErrorList luaTableData = ServiceLocator.Instance.GetService<IDataService>().GetLuaTableData(tableName, out var data);
-				if (luaTableData.Count > 0)
-				{
-					luaTableData.ToLogHelper();
-					return null;
-				}
-				IKernelService service3 = ServiceLocator.Instance.GetService<IKernelService>();
-				LuaTable keysTable2 = (LuaTable)service3.NewTable();
-				LuaTable cacheTable2 = (LuaTable)service3.NewTable();
-				int i2 = 1;
-				data.Data.ForEach(delegate(KeyValuePair<string, ILuaKeyValue> row)
-				{
-					if (!string.IsNullOrEmpty(row.Key) && !string.IsNullOrEmpty(row.Value.Value))
-					{
-						keysTable2[i2] = row.Key;
-						cacheTable2[row.Key] = row.Value.Value;
-						i2++;
-					}
-				});
-				cacheTable2["keys"] = keysTable2;
-				return cacheTable2;
-			}
 			return null;
 		}
 		catch (Exception e)
@@ -141,26 +100,6 @@ public static class DataServiceFunctions
 				}
 				return luaTable;
 			}
-			if (dataStore.Equals(ProfileTableName))
-			{
-				IKernelService service2 = ServiceLocator.Instance.GetService<IKernelService>();
-				LuaTable luaTable2 = (LuaTable)service2.NewTable();
-				ErrorList luaTableData = ServiceLocator.Instance.GetService<IDataService>().GetLuaTableData(tableName, out var data);
-				if (luaTableData.Count > 0)
-				{
-					luaTableData.ToLogHelper();
-					return null;
-				}
-				int index = 1;
-				data.Data.ForEach(delegate(KeyValuePair<string, ILuaKeyValue> row)
-				{
-					if (!string.IsNullOrEmpty(row.Key))
-					{
-						luaTable2[index++] = row.Key;
-					}
-				});
-				return luaTable2;
-			}
 			return null;
 		}
 		catch (Exception e)
@@ -179,16 +118,6 @@ public static class DataServiceFunctions
 			if (dataStore.Equals(CacheTableName))
 			{
 				return ServiceLocator.Instance.GetService<IDataStoreService>()?.Count(dataStore, tableName) ?? 0;
-			}
-			if (dataStore.Equals(ProfileTableName))
-			{
-				ErrorList luaTableData = ServiceLocator.Instance.GetService<IDataService>().GetLuaTableData(tableName, out var data);
-				if (luaTableData.Count > 0)
-				{
-					luaTableData.ToLogHelper();
-					return 0L;
-				}
-				return data.Data.Count;
 			}
 			return 0L;
 		}

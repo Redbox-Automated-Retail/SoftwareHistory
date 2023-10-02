@@ -2010,8 +2010,6 @@ public class Resources
 
 	public static string rentals_coming_soon => ResourceManager.GetString("rentals_coming_soon", resourceCulture);
 
-	public static string reservation_checkout_emv_swipe_message => ResourceManager.GetString("reservation_checkout_emv_swipe_message", resourceCulture);
-
 	public static string reservation_details_okay => ResourceManager.GetString("reservation_details_okay", resourceCulture);
 
 	public static string reservation_emv_insert_tap_hide_mobile_message => ResourceManager.GetString("reservation_emv_insert_tap_hide_mobile_message", resourceCulture);
@@ -2019,6 +2017,8 @@ public class Resources
 	public static string reservation_emv_insert_tap_title => ResourceManager.GetString("reservation_emv_insert_tap_title", resourceCulture);
 
 	public static string reservation_emv_insert_title => ResourceManager.GetString("reservation_emv_insert_title", resourceCulture);
+
+	public static string reservation_emv_message => ResourceManager.GetString("reservation_emv_message", resourceCulture);
 
 	public static string reservation_emv_swipe_title => ResourceManager.GetString("reservation_emv_swipe_title", resourceCulture);
 

@@ -2,12 +2,8 @@ using System;
 
 namespace Redbox.Rental.Model.Profile;
 
-public class Store : ILuaKeyValue
+public class Store
 {
-	public string Key { get; set; }
-
-	public string Value { get; set; }
-
 	public long StoreId { get; set; }
 
 	public string Address { get; set; }
