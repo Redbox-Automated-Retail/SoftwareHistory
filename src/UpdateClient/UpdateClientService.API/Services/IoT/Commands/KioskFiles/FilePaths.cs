@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace UpdateClientService.API.Services.IoT.Commands.KioskFiles;
 
@@ -69,6 +71,10 @@ public static class FilePaths
 		{
 			FileTypeEnum.Segment,
 			"C:\\ProgramData\\Redbox\\Segmentation"
+		},
+		{
+			FileTypeEnum.ProfileData,
+			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Redbox\\Data\\Profile")
 		}
 	};
 }

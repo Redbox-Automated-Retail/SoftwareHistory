@@ -18,5 +18,6 @@ public enum FileTypeEnum
 	Return,
 	ErrorLogs,
 	Configuration,
-	Segment
+	Segment,
+	ProfileData
 }

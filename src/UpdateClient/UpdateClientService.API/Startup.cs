@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json.Converters;
 using Redbox.NetCore.Logging.Extensions;
 using Redbox.NetCore.Middleware.Extensions;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -23,6 +24,7 @@ using Swashbuckle.AspNetCore.SwaggerUI;
 using UpdateClientService.API.App;
 using UpdateClientService.API.Services;
 using UpdateClientService.API.Services.Configuration;
+using UpdateClientService.API.Services.DataUpdate;
 using UpdateClientService.API.Services.DownloadService;
 using UpdateClientService.API.Services.FileCache;
 using UpdateClientService.API.Services.FileSets;
@@ -56,9 +58,12 @@ public class Startup
 
 	public void ConfigureServices(IServiceCollection services)
 	{
-		services.AddMvc(delegate(MvcOptions options)
+		MvcJsonMvcBuilderExtensions.AddJsonOptions(services.AddMvc(delegate(MvcOptions options)
 		{
 			options.AddLoggingFilter();
+		}), (Action<MvcJsonOptions>)delegate(MvcJsonOptions options)
+		{
+			options.SerializerSettings.Converters.Add(new StringEnumConverter());
 		}).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 		services.AddRouting(delegate(RouteOptions options)
 		{
@@ -104,6 +109,7 @@ public class Startup
 		services.AddScoped<IKernelService, KernelService>();
 		services.AddConfigurationService(Configuration);
 		services.AddSegmentService();
+		services.AddScoped<IDataUpdateService, DataUpdateService>();
 		services.AddScheduler();
 		services.AddHttpService(trackMetrics: true, () => new HttpClientHandler
 		{
