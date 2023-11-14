@@ -9,6 +9,8 @@ namespace Redbox.Rental.UI.Models;
 
 public class BrowseControlModel : DependencyObject
 {
+	public static readonly DependencyProperty BottomPageNumberVisibilityProperty = DependencyProperty.Register("BottomPageNumberVisibility", typeof(Visibility), typeof(BrowseControlModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
+
 	public static readonly DependencyProperty ShowPaddlesProperty = DependencyProperty.Register("ShowPaddles", typeof(bool), typeof(TitleDetailModel), new FrameworkPropertyMetadata(true));
 
 	public static readonly DependencyProperty SelectedDisplayProductUserControlSizeAndPositionProperty = DependencyProperty.Register("SelectedDisplayProductUserControlSizeAndPosition", typeof(SizeAndPosition), typeof(BrowseControlModel), new FrameworkPropertyMetadata(new SizeAndPosition(), OnSelectedDisplayProductUserControlSizeAndPositionPropertyChanged));
@@ -22,12 +24,6 @@ public class BrowseControlModel : DependencyObject
 	public static readonly DependencyProperty BrowseItemsProperty = DependencyProperty.Register("BrowseItems", typeof(List<IBrowseItemModel>), typeof(BrowseControlModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RedboxPlusMiniCartVisiblityProperty = DependencyProperty.Register("RedboxPlusMiniCartVisiblity", typeof(Visibility), typeof(BrowseControlModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty PageNumberTextStyleProperty = DependencyProperty.Register("PageNumberTextStyle", typeof(Style), typeof(BrowseControlModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty PageTitleTextVisibilityProperty = DependencyProperty.Register("PageTitleTextVisibility", typeof(Visibility), typeof(BrowseControlModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty PageTitleTextProperty = DependencyProperty.Register("PageTitleText", typeof(string), typeof(BrowseControlModel), new FrameworkPropertyMetadata(null));
 
 	private Color _backgroundColor = Color.FromRgb(229, 229, 229);
 
@@ -64,6 +60,21 @@ public class BrowseControlModel : DependencyObject
 	public bool ShowBorderItems { get; set; }
 
 	public Visibility PageNumberVisibility { get; set; }
+
+	public Visibility BottomPageNumberVisibility
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Visibility)GetValue(BottomPageNumberVisibilityProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BottomPageNumberVisibilityProperty, value);
+			});
+		}
+	}
 
 	public double PaddleOverlapWidth { get; set; }
 
@@ -145,51 +156,6 @@ public class BrowseControlModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(ShowPaddlesProperty, value);
-			});
-		}
-	}
-
-	public Style PageNumberTextStyle
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Style)GetValue(PageNumberTextStyleProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PageNumberTextStyleProperty, value);
-			});
-		}
-	}
-
-	public string PageTitleText
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(PageTitleTextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PageTitleTextProperty, value);
-			});
-		}
-	}
-
-	public Visibility PageTitleTextVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(PageTitleTextVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(PageTitleTextVisibilityProperty, value);
 			});
 		}
 	}

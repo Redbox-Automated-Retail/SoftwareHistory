@@ -25,7 +25,6 @@ public partial class StartViewRentAndBuyTestUserControl : TextToSpeechUserContro
 	{
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(rent_and_buy_movies_button);
-		obj?.SetStyle(rent_and_buy_games_button);
 		obj?.SetStyle(pick_up_button);
 		obj?.SetStyle(return_button);
 		obj?.SetStyle(handicap_button);
@@ -57,22 +56,6 @@ public partial class StartViewRentAndBuyTestUserControl : TextToSpeechUserContro
 			try
 			{
 				StartViewModel?.ProcessRentAndBuyMoviesButtonClick();
-				HandleWPFHit();
-			}
-			finally
-			{
-				CompleteRunOnce();
-			}
-		});
-	}
-
-	private void RentAndBuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		RunCommandOnce(delegate
-		{
-			try
-			{
-				StartViewModel?.ProcessRentAndBuyGamesButtonClick();
 				HandleWPFHit();
 			}
 			finally

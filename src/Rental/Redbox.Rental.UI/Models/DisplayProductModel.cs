@@ -111,14 +111,6 @@ public class DisplayProductModel : BrowseItemModel
 
 	public static readonly DependencyProperty ShowBuyProperty = DependencyProperty.Register("ShowBuy", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
-	public static readonly DependencyProperty ShowCollectionsProperty = DependencyProperty.Register("ShowCollections", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty CollectionsEnabledProperty = DependencyProperty.Register("CollectionsEnabled", typeof(bool), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty CollectionTextLine1Property = DependencyProperty.Register("CollectionTextLine1", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty CollectionTextLine2Property = DependencyProperty.Register("CollectionTextLine2", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
-
 	public static readonly DependencyProperty OutOfStockVisibilityProperty = DependencyProperty.Register("OutOfStockVisibility", typeof(Visibility), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty OutOfStockLine1TextProperty = DependencyProperty.Register("OutOfStockLine1Text", typeof(string), typeof(DisplayProductModel), new FrameworkPropertyMetadata(null));
@@ -1786,66 +1778,6 @@ public class DisplayProductModel : BrowseItemModel
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(FlagMarginProperty, value);
-			});
-		}
-	}
-
-	public Visibility ShowCollections
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(ShowCollectionsProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(ShowCollectionsProperty, value);
-			});
-		}
-	}
-
-	public bool CollectionsEnabled
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (bool)GetValue(CollectionsEnabledProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(CollectionsEnabledProperty, value);
-			});
-		}
-	}
-
-	public string CollectionTextLine1
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(CollectionTextLine1Property));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(CollectionTextLine1Property, value);
-			});
-		}
-	}
-
-	public string CollectionTextLine2
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(CollectionTextLine2Property));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(CollectionTextLine2Property, value);
 			});
 		}
 	}

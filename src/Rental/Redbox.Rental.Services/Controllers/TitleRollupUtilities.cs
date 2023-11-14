@@ -7,7 +7,6 @@ using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.ShoppingCart;
 using Redbox.Rental.UI.Models;
@@ -287,7 +286,7 @@ public class TitleRollupUtilities
 		{
 			titleRollupFormatButtonProperties.HideAndDisableButton();
 		}
-		if (titleProduct.TitleFamily == TitleFamily.Games && (Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames))
+		if (titleProduct.TitleFamily == TitleFamily.Games)
 		{
 			titleRollupFormatButtonProperties.HideAndDisableButton();
 		}

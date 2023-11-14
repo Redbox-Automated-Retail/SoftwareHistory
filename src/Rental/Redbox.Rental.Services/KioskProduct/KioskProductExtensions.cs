@@ -427,10 +427,6 @@ public static class KioskProductExtensions
 			{
 				result.Add((p as TitleRollupProduct).ToDictionary());
 			}
-			else if (p is CollectionProduct)
-			{
-				result.Add((p as CollectionProduct).ToDictionary());
-			}
 		});
 		return result;
 	}
@@ -451,10 +447,6 @@ public static class KioskProductExtensions
 			else if (p is TitleRollupProduct)
 			{
 				result.Add((p as TitleRollupProduct).ToDictionary());
-			}
-			else if (p is CollectionProduct)
-			{
-				result.Add((p as CollectionProduct).ToDictionary(titleFamily, titleType, include, exclude));
 			}
 		});
 		return result;
@@ -495,10 +487,6 @@ public static class KioskProductExtensions
 		{
 			return (product as MDVProduct).ToDictionary();
 		}
-		if (product is CollectionProduct)
-		{
-			return (product as CollectionProduct).ToDictionary();
-		}
 		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
 		{
 			["kiosk_product_type"] = (int)product.KioskProductType,
@@ -520,10 +508,6 @@ public static class KioskProductExtensions
 		if (product is MDVProduct)
 		{
 			return (product as MDVProduct).ToDictionary();
-		}
-		if (product is CollectionProduct)
-		{
-			return (product as CollectionProduct).ToDictionary(titleFamily, titleType, include, exclude);
 		}
 		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
 		{
@@ -562,7 +546,6 @@ public static class KioskProductExtensions
 			["kiosk_product_type"] = (int)product.KioskProductType,
 			["product_name"] = product.ProductName,
 			["product_description"] = product.ProductDescription,
-			["collections"] = product.Collections,
 			["product_id"] = product.ProductId,
 			["starring"] = product.Starring,
 			["running_time"] = product.RunningTime,
@@ -623,7 +606,6 @@ public static class KioskProductExtensions
 			["kiosk_product_type"] = (int)product.KioskProductType,
 			["product_name"] = product.ProductName,
 			["product_description"] = product.ProductDescription,
-			["collections"] = product.Collections,
 			["product_id"] = product.ProductId,
 			["starring"] = product.Starring,
 			["running_time"] = product.RunningTime,
@@ -674,7 +656,6 @@ public static class KioskProductExtensions
 			["kiosk_product_type"] = (int)product.KioskProductType,
 			["product_name"] = product.ProductName,
 			["product_description"] = product.ProductDescription,
-			["collections"] = product.Collections,
 			["product_id"] = product.ProductId,
 			["starring"] = product.Starring,
 			["running_time"] = product.RunningTime,
@@ -714,34 +695,6 @@ public static class KioskProductExtensions
 			["redbox_plus_eligible_date"] = product.RedboxPlusEligibleDate,
 			["is_redbox_plus_eligible"] = product.IsRedboxPlusEligible,
 			["discount_restriction"] = product.DiscountRestriction.ToString()
-		};
-	}
-
-	public static Dictionary<string, object> ToDictionary(this CollectionProduct product)
-	{
-		return product.ToDictionary(TitleFamily.All, TitleType.All, new List<long>(), new List<long>());
-	}
-
-	public static Dictionary<string, object> ToDictionary(this CollectionProduct product, TitleFamily titleFamily, TitleType titleType, List<long> include, List<long> exclude)
-	{
-		return new Dictionary<string, object>(StringComparer.CurrentCultureIgnoreCase)
-		{
-			["kiosk_product_type"] = (int)product.KioskProductType,
-			["product_name"] = product.ProductName,
-			["product_description"] = product.ProductDescription,
-			["image_file"] = product.ImageFile,
-			["id"] = product.Id,
-			["name"] = product.Name,
-			["sort_order"] = product.SortOrder,
-			["effective_start_date"] = product.EffectiveStartDate,
-			["effective_end_date"] = product.EffectiveEndDate,
-			["legal_info"] = product.LegalInfo,
-			["is_top_20"] = product.IsTop20,
-			["kiosk_products"] = product.KioskProducts.ToDictionary(),
-			["available_kiosk_products"] = product.AvailableKioskProducts.ToDictionary(),
-			["can_show"] = product.CanShow,
-			["incart_available_kiosk_products"] = product.GetInCartAvailableKioskProducts(titleFamily, titleType, include, exclude).ToDictionary(),
-			["incart_can_show"] = product.GetInCartCanShow(titleFamily, titleType, include, exclude)
 		};
 	}
 

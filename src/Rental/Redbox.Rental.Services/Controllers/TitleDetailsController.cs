@@ -12,7 +12,6 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
-using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Session;
@@ -56,7 +55,6 @@ public class TitleDetailsController : BaseViewController
 		titleDetailModel.BrowseProductControlModel = ConfigureBrowseControl();
 		titleDetailModel.BuyButtonHit += OnBuyButtonHit;
 		titleDetailModel.RentProduct += OnRentProduct;
-		titleDetailModel.CollectionButtonHit += OnCollectionButton;
 		titleDetailModel.MoreInfoHit += OnMoreInfoHit;
 		titleDetailModel.GoBackHit += OnGoBack;
 		titleDetailModel.SeeFullDetails += OnSeeFullDetails;
@@ -299,26 +297,6 @@ public class TitleDetailsController : BaseViewController
 		});
 	}
 
-	private static void OnCollectionButton(IBrowseItemModel displayProductModel)
-	{
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("TitleDetailsSeeRelatedCollection");
-		BrowseState.CollectionsPopupShown = true;
-		long? num = (displayProductModel?.Data as ITitleProduct)?.Collections?.FirstOrDefault();
-		if (num.HasValue)
-		{
-			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-			ICollectionProduct collection = null;
-			service?.GetCollection(num.Value, out collection);
-			if (collection != null)
-			{
-				BrowseState.PushNonBrowseViewBrowseStateSet();
-				BrowseState.PushCollectionBrowseStateSet(collection);
-				ViewService?.Push("browse_view");
-				ViewService?.Show();
-			}
-		}
-	}
-
 	private static void AddToCart(IKioskProduct product, bool isPurchase)
 	{
 		BrowseFunctions.AddProductToCart((ITitleProduct)product, isPurchase);
@@ -404,7 +382,6 @@ public class TitleDetailsController : BaseViewController
 		{
 			ratingVisibility = Visibility.Collapsed;
 		}
-		Visibility showCollections = ((titleProduct == null || titleProduct.ComingSoon || !displayProductModel.DisplayProductModelConstants.ShowCollections || titleProduct?.Collections?.Any() != true) ? Visibility.Collapsed : Visibility.Visible);
 		IList<IPricingRecord> list = displayProductModel.DisplayProductModelConstants.PricingService?.GetProductPricingRecords(titleProduct.ProductId);
 		bool flag = list != null && list.Count > 1;
 		IRentalShoppingCart rentalShoppingCart = displayProductModel.DisplayProductModelConstants.RentalShoppingCartService?.CurrentRentalShoppingCart;
@@ -452,13 +429,13 @@ public class TitleDetailsController : BaseViewController
 				if (true)
 				{
 					releaseYearVisibility = 0;
-					goto IL_05c9;
+					goto IL_0571;
 				}
 			}
 		}
 		releaseYearVisibility = 2;
-		goto IL_05c9;
-		IL_05c9:
+		goto IL_0571;
+		IL_0571:
 		displayProductModel.ReleaseYearVisibility = (Visibility)releaseYearVisibility;
 		displayProductModel.RatingBorderThickness = ((displayProductModel.RunningTimeVisibility == Visibility.Visible || displayProductModel.ReleaseYearVisibility == Visibility.Visible || displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
 		displayProductModel.RunningTimeBorderThickness = ((displayProductModel.ReleaseYearVisibility == Visibility.Visible || displayProductModel.CCSupported == Visibility.Visible) ? new Thickness(0.0, 0.0, 1.0, 0.0) : new Thickness(0.0, 0.0, 0.0, 0.0));
@@ -470,9 +447,6 @@ public class TitleDetailsController : BaseViewController
 		displayProductModel.MoreLikeThisText = Resources.title_details_more_like_this_text;
 		displayProductModel.MainHeight = displayProductModel.DisplayProductModelConstants.MainHeight;
 		displayProductModel.NotEmptyCaseVisibility = ((titleProduct != null && titleProduct.IsEmptyCase) ? Visibility.Collapsed : Visibility.Visible);
-		displayProductModel.ShowCollections = showCollections;
-		displayProductModel.CollectionsEnabled = titleProduct?.Collections?.Any() == true;
-		displayProductModel.CollectionTextLine1 = displayProductModel.DisplayProductModelConstants.CollectionTextLine1;
 		displayProductModel.BuyText = displayProductModel.DisplayProductModelConstants.BuyText;
 		displayProductModel.BuyButtonBuyTextStyle = displayProductModel.DisplayProductModelConstants.FontMontserrat16Style;
 		displayProductModel.BuyButtonBuyPriceTextStyle = displayProductModel.DisplayProductModelConstants.FontMontserrat20Style;

@@ -20,9 +20,7 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		InitializeComponent();
 		ApplyTheme();
 		RegisterRoutedCommand("RentOrBuyMoviesCommand", Redbox.Rental.UI.Commands.RentOrBuyMoviesCommand);
-		RegisterRoutedCommand("RentOrBuyGamesCommand", Redbox.Rental.UI.Commands.RentOrBuyGamesCommand);
 		RegisterRoutedCommand("BuyMoviesCommand", Redbox.Rental.UI.Commands.BuyMoviesCommand);
-		RegisterRoutedCommand("BuyGamesCommand", Redbox.Rental.UI.Commands.BuyGamesCommand);
 		RegisterRoutedCommand("ReturnProductCommand", Redbox.Rental.UI.Commands.ReturnProductCommand);
 		RegisterRoutedCommand("PickupProductCommand", Redbox.Rental.UI.Commands.PickupProductCommand);
 		RegisterRoutedCommand("ToggleADAModeCommand", Redbox.Rental.UI.Commands.ToggleADAModeCommand);
@@ -39,9 +37,7 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 	{
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(all_movies_button);
-		obj?.SetStyle(games_button);
 		obj?.SetStyle(buy_movies_button);
-		obj?.SetStyle(buy_games_button);
 		obj?.SetStyle(online_pickup_button);
 		obj?.SetStyle(return_button);
 		obj?.SetStyle(sign_in_button);
@@ -80,16 +76,6 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 		e.CanExecute = buy_movies_button.Visibility == Visibility.Visible;
 	}
 
-	private void BuyGamesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = buy_games_button.Visibility == Visibility.Visible;
-	}
-
-	private void RentGamesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = games_button.Visibility == Visibility.Visible;
-	}
-
 	private void BuyMoviesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		RunCommandOnce(delegate
@@ -97,38 +83,6 @@ public partial class StartViewUserControl : TextToSpeechUserControl, IWPFActor, 
 			try
 			{
 				StartViewModel?.ProcessBuyMoviesButtonClick();
-				HandleWPFHit();
-			}
-			finally
-			{
-				CompleteRunOnce();
-			}
-		});
-	}
-
-	private void BuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		RunCommandOnce(delegate
-		{
-			try
-			{
-				StartViewModel?.ProcessBuyGamesButtonClick();
-				HandleWPFHit();
-			}
-			finally
-			{
-				CompleteRunOnce();
-			}
-		});
-	}
-
-	private void RentOrBuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		RunCommandOnce(delegate
-		{
-			try
-			{
-				StartViewModel?.ProcessRentOrBuyGameButtonClick();
 				HandleWPFHit();
 			}
 			finally

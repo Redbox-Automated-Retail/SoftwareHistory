@@ -218,20 +218,15 @@ public class AnalyticsSession : IAnalyticsSession
 	{
 		try
 		{
-			if (!_configuration.GetSettingNames("marketing", "AB Testing", out var list))
+			string outOfStockTitleDetails = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.ABTesting.OutOfStockTitleDetails;
+			string name = "OutOfStockTitleDetails";
+			if (!string.IsNullOrEmpty(outOfStockTitleDetails) && outOfStockTitleDetails != "OFF")
 			{
-				return;
-			}
-			foreach (string item in list)
-			{
-				if (_configuration.TryGetValue<string>("marketing", "AB Testing", item, out var value) && !string.IsNullOrEmpty(value) && value != "OFF")
+				ABTests.Add(new ABTest
 				{
-					ABTests.Add(new ABTest
-					{
-						Name = item,
-						Value = value
-					});
-				}
+					Name = name,
+					Value = outOfStockTitleDetails
+				});
 			}
 		}
 		catch (Exception e)

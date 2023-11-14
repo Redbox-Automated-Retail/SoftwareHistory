@@ -629,9 +629,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.GetService<IConfiguration>();
 		AddService(typeof(IKioskSessionJsonAnalyticsService), KioskSessionJsonAnalyticsService.Instance);
 		AddService(typeof(IBarcodeTrackingService), BarcodeTrackingService.Instance);
-		InitializeBarcodeTrackingService();
-		AddService(typeof(IUploadDiscImageService), UploadDiscImageService.Instance);
-		InitializeUploadDiscImageService();
 		errorList.AddRange(ShoppingSessionService.Instance.Initialize(Path.Combine(RunningPath, "session.data")));
 		errorList.AddRange(DebugService.Instance.Initialize());
 		_ = ApplicationState.Instance.IsStandAlone;
@@ -681,24 +678,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		return errorList;
 	}
 
-	private void InitializeBarcodeTrackingService()
-	{
-		BarcodeTrackingService.Instance.CacheFileDataPath = DataPath;
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-		if (service != null)
-		{
-			BarcodeTrackingService.Instance.MaxBatchSize = service.BarcodeTrackingMaxBatchSize;
-			BarcodeTrackingService.Instance.TimerInterval = service.BarcodeTrackingTimerDuration;
-			BarcodeTrackingService.Instance.IsActive = service.MonitorBarcodeTracking;
-			BarcodeTrackingService.Instance.BarcodeTrackingMessagePriority = service.BarcodeTrackingMessagePriority;
-		}
-	}
-
-	private void InitializeUploadDiscImageService()
-	{
-		UploadDiscImageService.Instance.IsActive = true;
-	}
-
 	private void AddService(Type serviceType, object instance)
 	{
 		LogHelper.Instance.Log("ServiceLocator adding service: " + serviceType?.Name);
@@ -716,44 +695,39 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 			IKioskClientService service3 = ServiceLocator.Instance.GetService<IKioskClientService>();
 			AddService(instance: new ControlPanelService(), serviceType: typeof(IControlPanelService));
 			AddService(instance: new FieldMaintenanceService(), serviceType: typeof(IFieldMaintenanceService));
-			AddService(instance: new MarketingConfigurationManager(service2), serviceType: typeof(IMarketingConfigurationManager));
 			StoreManagerService storeManagerService = new StoreManagerService(Country.US, service2);
 			AddService(typeof(IStoreManager), storeManagerService);
 			service3?.Kiosk?.LoadNearbyKiosks();
-			service3?.Dual?.Refresh();
 			KioskHealthConfiguration kioskHealthConfiguration = new KioskHealthConfiguration(service2);
 			AddService(typeof(IKioskHealthConfiguration), kioskHealthConfiguration);
 			KioskEventService kioskEventService = new KioskEventService(storeManagerService, kioskHealthConfiguration);
 			kioskEventService.Start();
 			AddService(typeof(IKioskEventService), kioskEventService);
-			RentalHealthService instance = new RentalHealthService();
-			AddService(typeof(IRentalHealthService), instance);
+			AddService(instance: new RentalHealthService(), serviceType: typeof(IRentalHealthService));
 			KernelHelperService kernelHelperService = new KernelHelperService();
 			AddService(typeof(IKernelHelperService), kernelHelperService);
 			InventoryData inventoryData = new InventoryData(kernelHelperService);
 			inventoryData.Initialize();
 			AddService(typeof(IInventoryData), inventoryData);
-			InventoryService instance2 = new InventoryService(inventoryData);
-			AddService(typeof(IInventoryService), instance2);
+			AddService(instance: new InventoryService(inventoryData), serviceType: typeof(IInventoryService));
 			RentalShoppingCartService.Instance.Initialize();
 			RedboxRentalService redboxRentalService = new RedboxRentalService();
 			AddService(typeof(IRedboxRental), redboxRentalService);
 			errorList.AddRange(redboxRentalService.Initialize());
-			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(DataPath, "ProfileImages\\"), new CacheData(), new LocalData(), new ReservationData(DataPath), new KioskData(service), this);
+			DataService dataService = new DataService(service, new DataServiceInstance(), new ProfileData(DataPath, "ProfileImages\\"), new CacheData(), new LocalData(), new ReservationData(DataPath), this);
 			AddService(typeof(IDataService), dataService);
 			dataService.Initialize();
 			dataService.Start();
 			dataService.RefreshIfNeeded();
-			KioskClientServicePricing instance3 = new KioskClientServicePricing();
-			AddService(typeof(IKioskClientServicePricing), instance3);
+			AddService(instance: new KioskClientServicePricing(), serviceType: typeof(IKioskClientServicePricing));
 			PricingService pricingService = new PricingService(service, storeManagerService);
 			AddService(typeof(IPricingService), pricingService);
 			pricingService.Start();
 			ServiceLocator.Instance.GetService<IResourceBundleService>().RegisterAssemblyFunctions("Rental Kernel", typeof(RentalDataFunctions).Assembly);
 			VistarAdService vistarAdService = new VistarAdService();
 			AddService(typeof(IVistarAdService), vistarAdService);
-			AdService instance4 = new AdService(vistarAdService);
-			AddService(typeof(IAdService), instance4);
+			AdService instance = new AdService(vistarAdService);
+			AddService(typeof(IAdService), instance);
 			AddService(typeof(IPersonalizationService), new PersonalizationService());
 			AddService(typeof(ILoyaltyService), new LoyaltyService());
 			AddService(typeof(IPersistentDataCacheService), new PersistentDataCacheService());
@@ -871,11 +845,6 @@ public class EngineApplication : ApplicationContext, IInputService, IFileCacheSe
 		ServiceLocator.Instance.GetService<IKioskHealthService>().Stop();
 		ServiceLocator.Instance.GetService<IPricingService>().Stop();
 		ServiceLocator.Instance.GetService<IKioskEventService>().Stop();
-		IBarcodeTrackingService service14 = ServiceLocator.Instance.GetService<IBarcodeTrackingService>();
-		if (service14 != null)
-		{
-			service14.IsActive = false;
-		}
 		ServiceLocator.Instance.GetService<IHealthServices>()?.StopPingTimer();
 		ServiceLocator.Instance.GetService<IKernelExtensionService>()?.DeactivateAllExtensions();
 		ServiceLocator.Instance.GetService<IConfigurationService>()?.Stop().ForEach(delegate(Redbox.KioskEngine.ComponentModel.Error error)

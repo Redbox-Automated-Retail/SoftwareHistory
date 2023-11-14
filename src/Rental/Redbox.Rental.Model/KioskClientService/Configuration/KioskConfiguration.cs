@@ -13,4 +13,12 @@ public class KioskConfiguration : BaseConfiguration
 	public DualConfiguration Dual { get; set; } = new DualConfiguration();
 
 	public InventoryConfiguration Inventory { get; set; } = new InventoryConfiguration();
+
+	public MarketingGeneralConfiguration MarketingGeneral { get; set; } = new MarketingGeneralConfiguration();
+
+	public MarketingAdConfiguration MarketingAd { get; set; } = new MarketingAdConfiguration();
+
+	public MarketingReturnConfiguration MarketingReturn { get; set; } = new MarketingReturnConfiguration();
+
+	public ABTestingConfiguration ABTesting { get; set; } = new ABTestingConfiguration();
 }

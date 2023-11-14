@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
 
@@ -11,8 +10,6 @@ public class KioskProduct : IKioskProduct
 	protected KioskProductType _kioskProductType;
 
 	public bool _isValidProduct = true;
-
-	private List<long> _collections = new List<long>();
 
 	public KioskProductType KioskProductType
 	{
@@ -41,18 +38,6 @@ public class KioskProduct : IKioskProduct
 	public virtual string ProductName { get; set; }
 
 	public virtual string ProductDescription { get; set; }
-
-	public virtual List<long> Collections
-	{
-		get
-		{
-			return _collections;
-		}
-		set
-		{
-			_collections = value;
-		}
-	}
 
 	public KioskProduct(Store store)
 	{

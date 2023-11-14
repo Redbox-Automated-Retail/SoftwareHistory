@@ -1,4 +1,6 @@
-using System;
+﻿using System;
+using System.CodeDom.Compiler;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -36,7 +38,6 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(startover_button);
 		obj?.SetStyle(BackButton);
-		obj?.SetStyle(MoreCollectionsButton);
 	}
 
 	private void HandleWPFHit()
@@ -198,12 +199,6 @@ public partial class BrowseFilterBarUserControl : UserControl, IWPFActor, ICompo
 	private void GoBackCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		FilterBarModel?.ProcessOnBackButtonClicked();
-		Commands.ResetIdleTimerCommand.Execute(null, this);
-	}
-
-	private void MoreCollectionsCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		FilterBarModel?.ProcessOnMoreCollectionsButtonClicked();
 		Commands.ResetIdleTimerCommand.Execute(null, this);
 	}
 

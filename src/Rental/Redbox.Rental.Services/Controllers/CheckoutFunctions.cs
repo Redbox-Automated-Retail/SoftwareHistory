@@ -562,24 +562,15 @@ public class CheckoutFunctions
 
 	private static void ShowNonCriticalAuthorizeErrorIfNeeded(IAuthorizeResult authorizeResult, Action continueAction)
 	{
-		if (AuthorizeResultHasSubscriptionFailure(authorizeResult, SubscriptionType.Starz))
+		if (AuthorizeResultHasSubscriptionFailure(authorizeResult, SubscriptionType.RedboxPlus))
 		{
-			MessagePopupViewController.ShowStarzAuthorizeErrorMessage(closeErrorMessageAndContinueAction);
-		}
-		else if (AuthorizeResultHasSubscriptionFailure(authorizeResult, SubscriptionType.RedboxPlus))
-		{
-			MessagePopupViewController.ShowRedboxPlusAuthorizeErrorMessage(closeErrorMessageAndContinueAction2);
+			MessagePopupViewController.ShowRedboxPlusAuthorizeErrorMessage(closeErrorMessageAndContinueAction);
 		}
 		else
 		{
 			continueAction?.Invoke();
 		}
 		void closeErrorMessageAndContinueAction()
-		{
-			OrchestrationService.ViewGoBackSafe("StarzSubscriptionAuthorizeError", popOnly: true);
-			continueAction?.Invoke();
-		}
-		void closeErrorMessageAndContinueAction2()
 		{
 			OrchestrationService.ViewGoBackSafe("RedboxPluusSubscriptionAuthorizeError", popOnly: true);
 			continueAction?.Invoke();
@@ -1034,7 +1025,7 @@ public class CheckoutFunctions
 		}
 		IRentalShoppingCart rentalShoppingCart = ServiceLocator.Instance.GetService<IRentalShoppingCartService>()?.CurrentRentalShoppingCart;
 		bool num = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.EnableSonySweepstakes && rentalShoppingCart?.TitleItems?.Any((IRentalShoppingCartTitleItem x) => x.TitleProduct.Studio.ToLower() == "sony") == true;
-		bool flag = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxSweepstakes && (rentalShoppingCart?.TitleItems?.Count).GetValueOrDefault() > 0;
+		bool flag = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableRedboxSweepstakes && (rentalShoppingCart?.TitleItems?.Count).GetValueOrDefault() > 0;
 		if (num | flag)
 		{
 			PersonalizationFunctions.ShowSonySweepstakesConfirmationView(authorizeResult, text, flag);
@@ -1180,8 +1171,8 @@ public class CheckoutFunctions
 
 	public static void PromptUserForSignups()
 	{
-		bool flag = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableAvodLeadGenerationOfferWithoutBoxArt || Redbox.Rental.Services.Configuration.Configuration.Instance.EnableAvodLeadGenerationOfferWithBoxArt;
-		bool enableRedboxPlusLeadGenerationOffer = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusLeadGenerationOffer;
+		bool flag = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableAvodLeadGenerationOfferWithoutBoxArt || Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableAvodLeadGenerationOfferWithBoxArt;
+		bool enableRedboxPlusLeadGenerationOffer = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableRedboxPlusLeadGenerationOffer;
 		bool flag2 = ShowSubscriptionSignUpConfirmationView();
 		bool flag3 = PromptNewRedboxPlusCustomerForSignups();
 		if (enableRedboxPlusLeadGenerationOffer && !flag2 && !flag3)

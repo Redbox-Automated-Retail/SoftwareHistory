@@ -31,7 +31,7 @@ public class AvodLeadGenerationOfferViewController : BaseViewController
 		if (viewUserControl != null)
 		{
 			AvodLeadGenerationOfferViewModel avodLeadGenerationOfferViewModel = new AvodLeadGenerationOfferViewModel();
-			avodLeadGenerationOfferViewModel.GridBackgroundImageSource = (Redbox.Rental.Services.Configuration.Configuration.Instance.EnableAvodLeadGenerationOfferWithBoxArt ? "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/avod-lead-generation-offer-background-with-box-art.png" : "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/avod-lead-generation-offer-background-without-box-art.png");
+			avodLeadGenerationOfferViewModel.GridBackgroundImageSource = (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableAvodLeadGenerationOfferWithBoxArt ? "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/avod-lead-generation-offer-background-with-box-art.png" : "pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/avod-lead-generation-offer-background-without-box-art.png");
 			_emailAddress = avodLeadGenerationOfferViewParameters?.EmailAddress;
 			_optInConfirmationStatus = avodLeadGenerationOfferViewParameters?.OptInConfirmationStatus ?? OptInConfirmationStatus.DoNotShow;
 			avodLeadGenerationOfferViewModel.EmailText = ((!string.IsNullOrEmpty(_emailAddress)) ? string.Format(Resources.avod_lead_generation_has_email_text, _emailAddress) : Resources.avod_lead_generation_no_email_text);

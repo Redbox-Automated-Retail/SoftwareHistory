@@ -91,26 +91,6 @@ public static class OrchestrationService
 		AnalyticsService?.End(sessionId.ToString(), isSessionAbandoned);
 	}
 
-	public static bool IsCollectionsPopupEnabled()
-	{
-		ISession instance = Redbox.Rental.Services.Session.Session.Instance;
-		if (instance != null && !instance.BrowseState.CollectionsPopupShown && RentalIsCollectionsEnabled())
-		{
-			return RentalShowCollectionsPopup();
-		}
-		return false;
-	}
-
-	public static bool IsCollectionsPopupTimerEnabled()
-	{
-		IMarketingConfigurationManager service = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>();
-		if (IsCollectionsPopupEnabled())
-		{
-			return (service?.CollectionsPopUpTimer ?? 0) > 0;
-		}
-		return false;
-	}
-
 	public static void RegisterIdleTimerExpireSessionCallback(Action idleTimerExpireSessionCallback)
 	{
 		_idleTimerExpireSessionCallback = idleTimerExpireSessionCallback;
@@ -217,12 +197,7 @@ public static class OrchestrationService
 	public static int GetIdleTimerTimeout()
 	{
 		int num = 40000;
-		if (IsCollectionsPopupEnabled())
-		{
-			num = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>()?.CollectionsPopUpTimer ?? 0;
-			num = Math.Min(Math.Max(num, 16000), 60000);
-		}
-		else if (Redbox.Rental.Services.Configuration.Configuration.Instance != null && Redbox.Rental.Services.Configuration.Configuration.Instance.EarlyIdEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout > 0 && Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn == true)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance != null && Redbox.Rental.Services.Configuration.Configuration.Instance.EarlyIdEnabled && Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout > 0 && Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsLoggedIn == true)
 		{
 			num = Redbox.Rental.Services.Configuration.Configuration.Instance.SignInTimeout;
 		}
@@ -311,18 +286,8 @@ public static class OrchestrationService
 					}
 				}
 				break;
-			case KioskProductType.Collection:
-				if (kioskProduct is ICollectionProduct)
-				{
-					result = Redbox.Rental.UI.Views.Constants.Images.CollectionsCarousel;
-				}
-				break;
 			case KioskProductType.Subscription:
-				if (kioskProduct is IStarzSubscriptionProduct)
-				{
-					result = Redbox.Rental.UI.Views.Constants.Images.StarzBoxArt;
-				}
-				else if (kioskProduct is IRedboxPlusSubscriptionProduct)
+				if (kioskProduct is IRedboxPlusSubscriptionProduct)
 				{
 					result = Redbox.Rental.UI.Views.Constants.Images.RedboxPlusBoxArt;
 				}
@@ -406,7 +371,7 @@ public static class OrchestrationService
 		LogHelper.Instance.Log("RentalGetCarouselProducts");
 		try
 		{
-			ErrorList carouselProducts = ServiceLocator.Instance.GetService<IDataService>().GetCarouselProducts(RentalIsCollectionsEnabled(), maxCarouselItems, out var products);
+			ErrorList carouselProducts = ServiceLocator.Instance.GetService<IDataService>().GetCarouselProducts(maxCarouselItems, out var products);
 			if (carouselProducts.Count > 0)
 			{
 				carouselProducts.ToLogHelper();
@@ -436,23 +401,6 @@ public static class OrchestrationService
 			LogHelper.Instance.Log("OrchestrationService.RentalRefreshIfNeeded - PricingService");
 			ServiceLocator.Instance.GetService<IPricingService>().UpdatePricingInstance();
 			ServiceLocator.Instance.GetService<IProductGroupService>()?.StartSession();
-			IKioskClientService kioskClientService = ServiceLocator.Instance.GetService<IKioskClientService>();
-			if (kioskClientService?.Kiosk?.HasDual == true)
-			{
-				kioskClientService?.Dual?.LoadInStockInOther();
-				IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-				IViewService service2 = ServiceLocator.Instance.GetService<IViewService>();
-				if (service != null && service.KioskSession.Browse.ShowDualInStock)
-				{
-					Task.Run(delegate
-					{
-						kioskClientService?.Dual?.UpdateTitles();
-					}).ContinueWith(delegate
-					{
-						BrowseViewController.UpdateTitles();
-					}, CancellationToken.None, TaskContinuationOptions.None, service2.UITaskScheduler);
-				}
-			}
 			return result;
 		}
 		catch (Exception e)
@@ -460,33 +408,6 @@ public static class OrchestrationService
 			LogHelper.Instance.Log("An exception was raised in OrchestrationService.RentalRefreshIfNeeded", e);
 			return false;
 		}
-	}
-
-	public static bool RentalIsCollectionsEnabled()
-	{
-		IMarketingConfigurationManager service = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>();
-		IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		if (service == null || service2 == null)
-		{
-			return false;
-		}
-		ApplicationState instance = ApplicationState.Instance;
-		if (instance == null || !instance.IsADAAccessible)
-		{
-			return service.ShowCollections;
-		}
-		return false;
-	}
-
-	public static bool RentalShowCollectionsPopup()
-	{
-		IMarketingConfigurationManager service = ServiceLocator.Instance.GetService<IMarketingConfigurationManager>();
-		IResourceBundleService service2 = ServiceLocator.Instance.GetService<IResourceBundleService>();
-		if (service == null || service2 == null)
-		{
-			return false;
-		}
-		return service.ShowCollectionsPopUp;
 	}
 
 	public static void CreateStartViewAnalytics(string sessionStartTriggerActionName, string sessionType)
@@ -506,6 +427,7 @@ public static class OrchestrationService
 	public static void SetCulture(string culture)
 	{
 		ServiceLocator.Instance.GetService<IResourceBundleService>().Filter["culture"] = culture;
+		ServiceLocator.Instance.GetService<IAnalyticsService>()?.AddCurrentCulture(culture);
 		ResetCurrentView();
 	}
 
@@ -632,11 +554,6 @@ public static class OrchestrationService
 		return ServiceLocator.Instance.GetService<IStoreManager>()?.GetAlternateCulture();
 	}
 
-	public static bool GetCanSellUsedGames()
-	{
-		return ServiceLocator.Instance.GetService<IStoreManager>()?.CanSellUsedGames ?? false;
-	}
-
 	public static bool GetCanSellUsedMovies()
 	{
 		return ServiceLocator.Instance.GetService<IStoreManager>()?.CanSellUsedMovies ?? false;
@@ -749,11 +666,23 @@ public static class OrchestrationService
 			service2?.AddView(ViewService?.GetCurrentViewAnalyticsName());
 			service2?.AddQueuedViewEvents();
 		}
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.EnableBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableBrowseMessagePopup;
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.EnableStarzOffer = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableStarzOffer;
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMessagePopupDuration = Redbox.Rental.Services.Configuration.Configuration.Instance.BrowseMessagePopupDuration;
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ShowBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableBrowseMessagePopup || Redbox.Rental.Services.Configuration.Configuration.Instance.EnableStarzOffer;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.EnableBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableBrowseMessagePopup;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMessagePopupDuration = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.BrowseMessagePopupDuration;
+		Redbox.Rental.Services.Session.Session.Instance.BrowseState.ShowBrowseMessagePopup = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableBrowseMessagePopup;
 		RentalRefreshIfNeeded();
+		IKioskClientService kioskClientService = ServiceLocator.Instance.GetService<IKioskClientService>();
+		IConfiguration service3 = ServiceLocator.Instance.GetService<IConfiguration>();
+		IViewService service4 = ServiceLocator.Instance.GetService<IViewService>();
+		if (kioskClientService?.Kiosk?.HasDual == true && service3 != null && service3.KioskSession.Browse.ShowDualInStock && service4 != null)
+		{
+			Task.Run(delegate
+			{
+				kioskClientService?.Dual?.UpdateTitles();
+			}).ContinueWith(delegate
+			{
+				BrowseViewController.UpdateTitles();
+			}, CancellationToken.None, TaskContinuationOptions.None, service4.UITaskScheduler);
+		}
 	}
 
 	public static void AnalyticsAddLoggedInCustomerProfileNumber(string customerProfileNumber)

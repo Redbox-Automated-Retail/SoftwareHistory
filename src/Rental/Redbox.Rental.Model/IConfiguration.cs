@@ -49,24 +49,6 @@ public interface IConfiguration
 
 	bool _4KUpsellEnabled { get; }
 
-	bool EndGameRentals { get; }
-
-	bool EndGames { get; }
-
-	bool EnableBrowseMessagePopup { get; }
-
-	int BrowseMessagePopupDuration { get; }
-
-	bool EnableRedboxSweepstakes { get; }
-
-	bool EnableAvodLeadGenerationOfferWithoutBoxArt { get; }
-
-	bool EnableAvodLeadGenerationOfferWithBoxArt { get; }
-
-	bool EnableRedboxPlusLeadGenerationOffer { get; }
-
-	bool DisplayUpdatedPerksPoints { get; }
-
 	int OfflineItemsLimit { get; }
 
 	int OfflineGameRentalLimit { get; }
@@ -75,17 +57,9 @@ public interface IConfiguration
 
 	bool LoyaltySignUpAfterSwipeEnabled { get; }
 
-	bool EnableIRSecurity { get; }
-
-	bool EnableImageSecurity { get; }
-
-	int UploadDiscImageMessagePriority { get; }
-
 	int KioskAnalyticsMessagePriority { get; }
 
 	string PriceFiltersOnBrowseABTestVersion { get; }
-
-	int ScreenSaverTimeout { get; }
 
 	string OutOfStockTitleDetailsABTestVersion { get; }
 
@@ -95,61 +69,21 @@ public interface IConfiguration
 
 	string StartViewDarkModeEndTime { get; }
 
-	bool MonitorBarcodeTracking { get; }
-
-	int BarcodeTrackingMaxBatchSize { get; }
-
-	int BarcodeTrackingTimerDuration { get; }
-
-	int BarcodeTrackingMessagePriority { get; }
-
 	int KeepHalImagesForNumberOfDays { get; }
-
-	string FraudServicesUrl { get; }
 
 	bool AuthorizeAtPickup { get; }
 
-	string FraudServicesKey { get; }
-
 	bool UseTimerToInvokeCallbackEntries { get; }
-
-	bool AwsBarcodeTrackingEnabled { get; }
-
-	bool AwsUploadDiscImageEnabled { get; }
-
-	string AwsFraudServicesUrl { get; }
-
-	string AwsFraudServicesKey { get; }
 
 	bool GiftCardsEnabled { get; }
 
 	int TextToSpeechVolume { get; }
-
-	bool ShowAfterSwipePersonalizedOffers { get; }
-
-	bool UseDiscountsForPmnpOffers { get; }
-
-	bool EnableStarzOffer { get; }
-
-	bool EnableRedboxPlusOffer { get; }
-
-	bool EnableRedboxPlusRedemption { get; }
-
-	bool ShowKioskClosingVSM { get; }
-
-	bool ReturnVisitPromoOfferEnabled { get; }
-
-	int ReturnVisitPromoCheckTimeout { get; }
 
 	string KioskDataServicesUrl { get; }
 
 	string KioskDataServicesKey { get; }
 
 	bool SendJsonKioskAnalyticsToKioskDataService { get; }
-
-	bool EnableVistarAds { get; }
-
-	int VistarGetAdTimeout { get; }
 
 	string KioskClientServiceBaseUrl { get; }
 
@@ -226,8 +160,6 @@ public interface IConfiguration
 	bool UseKCSPricing { get; }
 
 	bool ButtonAnimationEnabled { get; }
-
-	int StartViewAdTimeout { get; }
 
 	void SessionReload();
 

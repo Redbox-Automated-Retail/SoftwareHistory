@@ -41,13 +41,9 @@ public interface IDataService
 
 	ErrorList GetTitleRollupProduct(long productGroupId, out IKioskProduct kioskProduct);
 
-	ErrorList GetCarouselProducts(bool showCollections, int maxCarouselItems, out List<IKioskProduct> products);
+	ErrorList GetCarouselProducts(int maxCarouselItems, out List<IKioskProduct> products);
 
 	ErrorList GetProductsForCustomerOffer(TitleFamily titleFamily, List<TitleType> titleTypes, bool includeTitleTypes, List<long> include, List<long> exclude, TimeSpan? includeOlderThan, bool isAdaView, bool isPurchase, out List<ITitleProduct> products);
-
-	ErrorList GetCollection(long collectionId, out ICollectionProduct collection);
-
-	ErrorList GetCollectionProducts(out List<IKioskProduct> products);
 
 	bool GetIsProductThinned(long productId);
 
@@ -90,10 +86,6 @@ public interface IDataService
 	List<string> GetAllUnmatchedMultiDiscBarcodes();
 
 	long GetProductGroupId(IKioskProduct kioskProduct);
-
-	ErrorList GetActiveBrowseSubscriptionProduct(out ISubscriptionProduct subscriptionProduct);
-
-	ErrorList GetActiveMyBagSubscriptionProduct(out ISubscriptionProduct subscriptionProduct);
 
 	IRedboxPlusPromoCampaign GetRedboxPlusPromoCampaign(int campaignId);
 

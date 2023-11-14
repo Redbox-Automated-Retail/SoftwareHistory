@@ -18,8 +18,7 @@
         </LinearGradientBrush>
       </Panel.Background>
     </Grid>
-    <TextBlock Name="PageNumberText" Margin="0,8,0,0" VerticalAlignment="Top" Foreground="#FF000000" TextAlignment="Center" Style="{Binding Path=PageNumberTextStyle, FallbackValue={StaticResource browse_centered_page_number_style}}" Visibility="{Binding Path=PageNumberVisibility}">Page #</TextBlock>
-    <TextBlock Name="PageTitleText" Style="{StaticResource font_montserrat_semibold_16_correct}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Foreground="#FF000000" TextAlignment="Center" Text="{Binding PageTitleText, FallbackValue=Redbox+ Movies}" Visibility="{Binding Path=PageTitleTextVisibility, FallbackValue=Collapsed}" />
+    <TextBlock Name="PageNumberText" Style="{StaticResource browse_centered_page_number_style}" Margin="0,8,0,0" VerticalAlignment="Top" Foreground="#FF000000" TextAlignment="Center" Visibility="{Binding Path=PageNumberVisibility}">Page #</TextBlock>
     <Grid Width="3072" HorizontalAlignment="Center">
       <StackPanel Name="BrowsePagesStackPanel" Orientation="Horizontal" HorizontalAlignment="Center">
         <Grid Name="PriorPageGrid" Width="{Binding Path=PageGridWidth, RelativeSource={RelativeSource AncestorType={x:Type local:BrowseUserControl}}}" />
@@ -50,5 +49,6 @@
         </Rectangle>
       </StackPanel>
     </Grid>
+    <TextBlock Name="BottomPageNumberText" Style="{StaticResource browse_centered_page_number_style}" Margin="0,0,0,-39" VerticalAlignment="Bottom" Foreground="#FF000000" TextAlignment="Center" Visibility="{Binding Path=BottomPageNumberVisibility, FallbackValue=Collapsed}">Page #</TextBlock>
   </Grid>
 </UserControl>

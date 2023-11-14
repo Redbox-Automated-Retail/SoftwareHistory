@@ -43,57 +43,27 @@ public class SubscriptionSignUpConfirmationViewController : BaseViewController
 	{
 		OrchestrationService.SetCurrentUICulture();
 		bool valueOrDefault = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.IsCPNewInThisSession == true;
-		if (subscriptionSignUpConfirmationViewModel?.SubscriptionProduct is IStarzSubscriptionProduct starzSubscriptionProduct)
+		subscriptionSignUpConfirmationViewModel.RedboxPlusExistingCustomerTextVisibility = (valueOrDefault ? Visibility.Collapsed : Visibility.Visible);
+		subscriptionSignUpConfirmationViewModel.RedboxPlusNewCustomerTextVisibility = ((!valueOrDefault) ? Visibility.Collapsed : Visibility.Visible);
+		if (subscriptionSignUpConfirmationViewModel?.SubscriptionProduct is IRedboxPlusSubscriptionProduct)
 		{
-			subscriptionSignUpConfirmationViewModel.RedboxPlusExistingCustomerTextVisibility = Visibility.Collapsed;
-			subscriptionSignUpConfirmationViewModel.RedboxPlusNewCustomerTextVisibility = Visibility.Collapsed;
-			subscriptionSignUpConfirmationViewModel.StazTextVisibility = Visibility.Visible;
 			if (valueOrDefault)
 			{
-				subscriptionSignUpConfirmationViewModel.RegisteredTrademarkSymbol = starzSubscriptionProduct.RegisteredTrademarkSymbolNewCP;
-				subscriptionSignUpConfirmationViewModel.RegisteredTrademarkSymbolMessage = starzSubscriptionProduct.RegisteredTrademarkSymbolNewCPMessage;
-				subscriptionSignUpConfirmationViewModel.TitleText1 = starzSubscriptionProduct.ConfirmationNewCPTitleText1;
-				subscriptionSignUpConfirmationViewModel.TitleText2 = starzSubscriptionProduct.ConfirmationNewCPTitleText2;
-				subscriptionSignUpConfirmationViewModel.MessageText1 = starzSubscriptionProduct.ConfirmationNewCPMessageText1;
-				subscriptionSignUpConfirmationViewModel.MessageText2 = starzSubscriptionProduct.ConfirmationNewCPMessageText2;
-				subscriptionSignUpConfirmationViewModel.SubMessageText = starzSubscriptionProduct.ConfirmationNewCPSubMessageText;
+				subscriptionSignUpConfirmationViewModel.TitleText1 = Resources.redbox_plus_signup_confirmation_new_customer_title;
+				subscriptionSignUpConfirmationViewModel.MessageText1 = Resources.redbox_plus_signup_confirmation_new_customer_message_1;
+				subscriptionSignUpConfirmationViewModel.MessageText2 = Resources.redbox_plus_signup_confirmation_new_customer_message_2;
+				subscriptionSignUpConfirmationViewModel.SubMessageText = Resources.redbox_plus_signup_confirmation_new_customer_submessage_1;
+				subscriptionSignUpConfirmationViewModel.SubMessageText2 = Resources.redbox_plus_signup_confirmation_new_customer_submessage_2;
 			}
 			else
 			{
-				subscriptionSignUpConfirmationViewModel.RegisteredTrademarkSymbol = starzSubscriptionProduct.RegisteredTrademarkSymbol;
-				subscriptionSignUpConfirmationViewModel.RegisteredTrademarkSymbolMessage = starzSubscriptionProduct.RegisteredTrademarkSymbolMessage;
-				subscriptionSignUpConfirmationViewModel.TitleText1 = starzSubscriptionProduct.ConfirmationTitleText1;
-				subscriptionSignUpConfirmationViewModel.TitleText2 = starzSubscriptionProduct.ConfirmationTitleText2;
-				subscriptionSignUpConfirmationViewModel.MessageText1 = starzSubscriptionProduct.ConfirmationMessageText1;
-				subscriptionSignUpConfirmationViewModel.MessageText2 = starzSubscriptionProduct.ConfirmationMessageText2;
-				subscriptionSignUpConfirmationViewModel.SubMessageText = string.Empty;
+				subscriptionSignUpConfirmationViewModel.TitleText1 = Resources.redbox_plus_signup_confirmation_existing_customer_title;
+				subscriptionSignUpConfirmationViewModel.MessageText1 = Resources.redbox_plus_signup_confirmation_existing_customer_message_1;
 			}
 		}
 		else
 		{
-			subscriptionSignUpConfirmationViewModel.StazTextVisibility = Visibility.Collapsed;
-			subscriptionSignUpConfirmationViewModel.RedboxPlusExistingCustomerTextVisibility = (valueOrDefault ? Visibility.Collapsed : Visibility.Visible);
-			subscriptionSignUpConfirmationViewModel.RedboxPlusNewCustomerTextVisibility = ((!valueOrDefault) ? Visibility.Collapsed : Visibility.Visible);
-			if (subscriptionSignUpConfirmationViewModel?.SubscriptionProduct is IRedboxPlusSubscriptionProduct)
-			{
-				if (valueOrDefault)
-				{
-					subscriptionSignUpConfirmationViewModel.TitleText1 = Resources.redbox_plus_signup_confirmation_new_customer_title;
-					subscriptionSignUpConfirmationViewModel.MessageText1 = Resources.redbox_plus_signup_confirmation_new_customer_message_1;
-					subscriptionSignUpConfirmationViewModel.MessageText2 = Resources.redbox_plus_signup_confirmation_new_customer_message_2;
-					subscriptionSignUpConfirmationViewModel.SubMessageText = Resources.redbox_plus_signup_confirmation_new_customer_submessage_1;
-					subscriptionSignUpConfirmationViewModel.SubMessageText2 = Resources.redbox_plus_signup_confirmation_new_customer_submessage_2;
-				}
-				else
-				{
-					subscriptionSignUpConfirmationViewModel.TitleText1 = Resources.redbox_plus_signup_confirmation_existing_customer_title;
-					subscriptionSignUpConfirmationViewModel.MessageText1 = Resources.redbox_plus_signup_confirmation_existing_customer_message_1;
-				}
-			}
-			else
-			{
-				LogHelper.Instance.Log("Error in subscription_sign_up_confirmation_view: Unable to find subscription product.");
-			}
+			LogHelper.Instance.Log("Error in subscription_sign_up_confirmation_view: Unable to find subscription product.");
 		}
 		subscriptionSignUpConfirmationViewModel.ContinueButtonText = Resources.got_it_button.ToUpper();
 	}

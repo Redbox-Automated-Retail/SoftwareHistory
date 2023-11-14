@@ -6,10 +6,6 @@ namespace Redbox.Rental.Model.Session;
 
 public interface IBrowseState
 {
-	bool CollectionsPopupShown { get; set; }
-
-	bool CarouselCollectionsSelected { get; set; }
-
 	bool ProductSelectedFromCarousel { get; set; }
 
 	bool ProductAddedFromCarousel { get; set; }
@@ -42,11 +38,7 @@ public interface IBrowseState
 
 	TitleType TitleType { get; set; }
 
-	bool BrowseCollections { get; set; }
-
 	BrowsePriceRangeParameter BrowsePriceRangeFilter { get; set; }
-
-	ICollectionProduct BrowseCollectionProduct { get; set; }
 
 	int PageNumber { get; set; }
 
@@ -76,15 +68,11 @@ public interface IBrowseState
 
 	bool EnableBrowseMessagePopup { get; set; }
 
-	bool EnableStarzOffer { get; set; }
-
 	int BrowseMessagePopupDuration { get; set; }
 
 	bool ShowBrowseMessagePopup { get; set; }
 
 	bool ShowingBrowseMessagePopup { get; set; }
-
-	bool IsStarzTermsAcceptanceCheckMarkChecked { get; set; }
 
 	bool ShowRedboxPlusTooltip { get; set; }
 
@@ -95,10 +83,6 @@ public interface IBrowseState
 	IBrowseStateSet PopBrowseStateSet();
 
 	void UnwindBrowseStateSetStack();
-
-	void PushCollectionsBrowseStateSet();
-
-	void PushCollectionBrowseStateSet(ICollectionProduct collectionProduct);
 
 	void PushNonBrowseViewBrowseStateSet();
 

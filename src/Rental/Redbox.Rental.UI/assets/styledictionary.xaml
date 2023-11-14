@@ -1966,10 +1966,6 @@
   <Style x:Key="browse_centered_page_number_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_16_correct}">
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
-  <Style x:Key="browse_right_justified_page_number_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_16_correct}">
-    <Setter Property="HorizontalAlignment" Value="Right" />
-    <Setter Property="Margin" Value="0,0,90,0" />
-  </Style>
   <Style x:Key="thin_border_button_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource white_rubine_to_warm_purple_border_button_style}">
     <Setter Property="Foreground" Value="#E42045" />
     <Setter Property="Redbox:RoundedButton.UsedDefaultCornerRadius" Value="True" />
@@ -3936,9 +3932,28 @@
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="28" />
     <Setter Property="BorderThickness" Value="0" />
   </Style>
+  <Style x:Key="button_selectable_unselected_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource purple_with_purple_border_button_style}">
+    <Setter Property="Height" Value="56" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="28" />
+  </Style>
+  <Style x:Key="button_selectable_small_unselected_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource purple_with_purple_border_button_style}">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="16" />
+  </Style>
+  <Style x:Key="button_selectable_selected_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource purple_with_purple_border_button_style_disabled}">
+    <Setter Property="Height" Value="56" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="28" />
+  </Style>
+  <Style x:Key="button_selectable_small_selected_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource purple_with_purple_border_button_style_disabled}">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Redbox:RoundedButton.CornerRadius" Value="16" />
+  </Style>
   <Style x:Key="button_link_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource transparent_button_style}">
     <Setter Property="Height" Value="44" />
     <Setter Property="Redbox:RoundedButton.CornerRadius" Value="0" />
+  </Style>
+  <Style x:Key="button_large_link_style" TargetType="{x:Type Redbox:RoundedButton}" BasedOn="{StaticResource button_link_style}">
+    <Setter Property="Height" Value="56" />
   </Style>
   <Style x:Key="button_text_medium_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_16}">
     <Setter Property="TextBlock.Padding" Value="24,0,24,0" />
@@ -3949,10 +3964,29 @@
   <Style x:Key="button_text_extra_extra_large_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_28}">
     <Setter Property="TextBlock.Padding" Value="52,0,52,0" />
   </Style>
+  <Style x:Key="button_text_selectable_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_14_correct}">
+    <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
+    <Setter Property="TextBlock.Padding" Value="24,0,24,0" />
+  </Style>
   <Style x:Key="button_text_link_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_16}">
     <Setter Property="TextBlock.Padding" Value="16,0,16,0" />
     <Setter Property="Foreground" Value="{StaticResource RubineRedBrush}" />
     <Setter Property="TextDecorations" Value="Underline" />
+  </Style>
+  <Style x:Key="button_text_medium_link_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource button_text_selectable_style}">
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="TextDecorations" Value="Underline" />
+  </Style>
+  <Style x:Key="button_image_selectable_style" TargetType="{x:Type Image}">
+    <Setter Property="Source" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-lg.png" />
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+  </Style>
+  <Style x:Key="button_image_selectable_arrow_style" TargetType="{x:Type Image}">
+    <Setter Property="Source" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/right-arrow.png" />
+    <Setter Property="Width" Value="6" />
+    <Setter Property="Height" Value="8" />
+    <Setter Property="Margin" Value="0,0,24,0" />
   </Style>
   <Style x:Key="modal_title_title_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_28}">
     <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />

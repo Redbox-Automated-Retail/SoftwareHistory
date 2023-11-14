@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
@@ -426,30 +425,6 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 			LogHelper.Instance.Log($"KioskClientServiceTransaction.ReturnAsync - sending request: {returnRequest}");
 			WebResult<ReturnResult> webResult = await ExecuteAsyncWebRequest<ReturnResult>(new Uri(base.KioskClientServiceBaseUrl + "/api/transaction/return"), returnRequest, "POST");
 			LogResponse("KioskClientServiceTransactions.Return", webResult);
-			if (webResult.ExceptionStatus == WebExceptionStatus.Success && webResult.Response != null && webResult.Response.Success)
-			{
-				IFraudService service = ServiceLocator.Instance.GetService<IFraudService>();
-				if (service != null)
-				{
-					Dictionary<string, object> result2 = new Dictionary<string, object>
-					{
-						{
-							"TransactionId",
-							webResult.Response.TransactionId
-						},
-						{
-							"cpAccountNumber",
-							webResult.Response.CPAccountNumber
-						}
-					};
-					ReturnMessageClientData clientData = new ReturnMessageClientData
-					{
-						Barcode = barcode,
-						FileName = fraudFileName
-					};
-					service.ProcessReturnResponse(result2, clientData);
-				}
-			}
 			return webResult.Response;
 		}
 		catch (Exception e)
@@ -865,7 +840,7 @@ public class KioskClientServiceTransaction : BaseKioskClientService, IKioskClien
 		try
 		{
 			LogHelper.Instance.Log("KioskClientServiceTransaction.ReturnPromoCheckAsync - sending request for barcode: " + barcode);
-			WebResult<ReturnPromoCheckResponse> webResult = await ExecuteAsyncWebRequest<ReturnPromoCheckResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/transaction/return/" + barcode + "/promocheck"), null, "GET", service.ReturnVisitPromoCheckTimeout);
+			WebResult<ReturnPromoCheckResponse> webResult = await ExecuteAsyncWebRequest<ReturnPromoCheckResponse>(new Uri(base.KioskClientServiceBaseUrl + "/api/transaction/return/" + barcode + "/promocheck"), null, "GET", service.KioskSession.MarketingReturn.ReturnVisitPromoCheckTimeout);
 			if (webResult.IsSuccessStatusCode)
 			{
 				result.Promo = webResult.Response.Promotion;

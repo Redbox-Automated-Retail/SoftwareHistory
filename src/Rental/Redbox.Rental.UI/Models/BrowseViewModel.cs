@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
-using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.UI.Models;
 
@@ -19,8 +18,6 @@ public class BrowseViewModel : DependencyObject
 	public Action OnMyPerksButtonClicked;
 
 	public Func<ISpeechControl> OnGetSpeechControl;
-
-	public IStarzSubscriptionProduct StarzSubscriptionProduct;
 
 	public static readonly DependencyProperty BrowseGroupSelectionProperty = DependencyProperty.Register("BrowseGroupSelection", typeof(DisplayGroupSelectionModel), typeof(BrowseViewModel), new FrameworkPropertyMetadata(null));
 

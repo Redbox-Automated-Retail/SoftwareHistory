@@ -64,7 +64,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 	public void StartOfferFlow(Action<bool> callbackAction)
 	{
 		LogHelper.Instance.Log("AfterSwipeOfferService: StartOfferFlow called.");
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowAfterSwipePersonalizedOffers)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.ShowAfterSwipePersonalizedOffers)
 		{
 			OrchestrationService.ViewShow("please_wait_view", null);
 			_continueAction = callbackAction;
@@ -498,7 +498,7 @@ public class AfterSwipeOfferService : IAfterSwipeOfferService
 			LogHelper.Instance.Log("AfterSwipeOfferService.SetPromoForSelectedOffer: Adjusting price for PRM offer.");
 			shoppingCartService.SetPurchasePriceForSelectedItem(selectedOffer, rentalShoppingCartTitleItem, service);
 		}
-		else if (selectedOffer.DiscountType != OfferDiscountType.MultiNightPrice || Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
+		else if (selectedOffer.DiscountType != OfferDiscountType.MultiNightPrice || Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.UseDiscountsForPmnpOffers)
 		{
 			LogHelper.Instance.Log("AfterSwipeOfferService.SetPromoForSelectedOffer: Creating promo for the offer.");
 			service.SetPromoFromCustomerOffer(currentRentalShoppingCart, selectedOffer, rentalShoppingCartTitleItem);

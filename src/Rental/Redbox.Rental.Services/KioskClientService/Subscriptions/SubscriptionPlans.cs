@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Redbox.Core;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskClientService.Subscriptions;
@@ -13,10 +12,6 @@ public class SubscriptionPlans : ISubscriptionPlans
 {
 	public bool Active { get; set; }
 
-	public string BrowseStarzSubscriptionPlan { get; set; }
-
-	public string MyBagStarzSubscriptionPlan { get; set; }
-
 	public List<ISubscriptionProduct> SubscriptionProducts { get; set; } = new List<ISubscriptionProduct>();
 
 	public List<IRedboxPlusPromoCampaign> RedboxPlusPromoCampaigns { get; set; } = new List<IRedboxPlusPromoCampaign>();
@@ -28,8 +23,6 @@ public class SubscriptionPlans : ISubscriptionPlans
 			return;
 		}
 		Active = getSubscriptionPlanResponse.Active;
-		BrowseStarzSubscriptionPlan = getSubscriptionPlanResponse.BrowseStarzSubscriptionPlan;
-		MyBagStarzSubscriptionPlan = getSubscriptionPlanResponse.MyBagStarzSubscriptionPlan;
 		if (getSubscriptionPlanResponse.SubscriptionPlans != null)
 		{
 			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
@@ -37,7 +30,7 @@ public class SubscriptionPlans : ISubscriptionPlans
 			{
 				if (subscriptionPlan.SubscriptionId == "STARZ")
 				{
-					CreateStarzSubscriptionProduct(service, subscriptionPlan);
+					LogHelper.Instance.Log("SubscriptionPlans - ignoring Starz subscriptions.  SubscriptionId: " + subscriptionPlan.SubscriptionId);
 				}
 				else if (subscriptionPlan.SubscriptionId == "RBPLUS")
 				{
@@ -57,52 +50,6 @@ public class SubscriptionPlans : ISubscriptionPlans
 		{
 			RedboxPlusPromoCampaigns.Add(redboxPlusPromoCampaign);
 		}
-	}
-
-	private void CreateStarzSubscriptionProduct(IDataService dataService, SubscriptionPlan eachSubscriptionPlan)
-	{
-		StarzSubscriptionProduct starzSubscriptionProduct = new StarzSubscriptionProduct(dataService?.GetStore())
-		{
-			SubscriptionId = eachSubscriptionPlan.Id,
-			ProductName = eachSubscriptionPlan.Name,
-			ProductDescription = eachSubscriptionPlan.Description,
-			IsPromotional = eachSubscriptionPlan.IsPromotional,
-			TaxRate = (dataService?.GetStore().PurchaseTaxRate / (decimal?)100).GetValueOrDefault()
-		};
-		StarzSubscriptionConstructorHelper.PopulateHardCodedFields(starzSubscriptionProduct);
-		foreach (SubscriptionPlanItem planItem in eachSubscriptionPlan.PlanItems)
-		{
-			StarzOfferPeriod starzOfferPeriod = new StarzOfferPeriod
-			{
-				SequenceNum = planItem.SequenceNum,
-				PeriodLength = planItem.PeriodLength,
-				IsPromoPrice = planItem.IsPromoPrice,
-				Price = planItem.Price
-			};
-			Enum.TryParse<StarzBillingPeriod>(planItem.BillingPeriod.ToString(), out var result);
-			starzOfferPeriod.BillingPeriod = result;
-			Enum.TryParse<StarzPeriodUnit>(planItem.PeriodUnit.ToString(), out var result2);
-			starzOfferPeriod.PeriodUnit = result2;
-			if (planItem.Benefits != null)
-			{
-				foreach (Benefit benefit in planItem.Benefits)
-				{
-					StarzBenefit starzBenefit = new StarzBenefit
-					{
-						Id = benefit.Id,
-						Description = benefit.Description,
-						Quantity = benefit.Quantity.GetValueOrDefault()
-					};
-					Enum.TryParse<StarzBenefitType>(benefit.Type.ToString(), out var result3);
-					starzBenefit.StarzBenefitType = result3;
-					Enum.TryParse<StarzBenefitPeriod>(benefit.Period.ToString(), out var result4);
-					starzBenefit.Period = result4;
-					starzOfferPeriod.Benefits.Add(starzBenefit);
-				}
-			}
-			starzSubscriptionProduct.OfferPeriods.Add(starzOfferPeriod);
-		}
-		SubscriptionProducts.Add(starzSubscriptionProduct);
 	}
 
 	private void CreateRedboxPlusSubscriptionProduct(IDataService dataService, SubscriptionPlan subscriptionPlan)
@@ -151,15 +98,5 @@ public class SubscriptionPlans : ISubscriptionPlans
 			redboxPlusSubscriptionProduct.OfferPeriods.Add(redboxPlusOfferPeriod);
 		}
 		SubscriptionProducts.Add(redboxPlusSubscriptionProduct);
-	}
-
-	public ISubscriptionProduct GetBrowseSubscriptionProduct()
-	{
-		return SubscriptionProducts.FirstOrDefault((ISubscriptionProduct x) => x.SubscriptionId == BrowseStarzSubscriptionPlan);
-	}
-
-	public ISubscriptionProduct GetMyBagSubscriptionProduct()
-	{
-		return SubscriptionProducts.FirstOrDefault((ISubscriptionProduct x) => x.SubscriptionId == MyBagStarzSubscriptionPlan);
 	}
 }

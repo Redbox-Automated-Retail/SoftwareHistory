@@ -28,8 +28,7 @@ public class RedboxPlusFunctions
 	{
 		get
 		{
-			IConfiguration instance = Redbox.Rental.Services.Configuration.Configuration.Instance;
-			if (instance != null && instance.EnableRedboxPlusRedemption)
+			if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableRedboxPlusRedemption)
 			{
 				return HasActiveSubscription;
 			}

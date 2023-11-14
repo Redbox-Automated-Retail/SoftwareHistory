@@ -2,15 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
-using Redbox.Rental.Model.KioskProduct;
 
 namespace Redbox.Rental.UI.Models;
 
 public class ShoppingCartViewModel : DependencyObject
 {
 	public Func<ISpeechControl> OnGetSpeechControl;
-
-	public IStarzSubscriptionProduct StarzSubscriptionProduct;
 
 	public static readonly DependencyProperty PayButtonText1Property = DependencyProperty.Register("PayButtonText1", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
 
@@ -29,8 +26,6 @@ public class ShoppingCartViewModel : DependencyObject
 	public static readonly DependencyProperty ADASpacerVisibilityProperty = DependencyProperty.Register("ADASpacerVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public static readonly DependencyProperty AddMovieButtonVisibilityProperty = DependencyProperty.Register("AddMovieButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
-
-	public static readonly DependencyProperty AddGameButtonVisibilityProperty = DependencyProperty.Register("AddGameButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
 	public static readonly DependencyProperty UpdateBagButtonVisibilityProperty = DependencyProperty.Register("UpdateBagButtonVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Visible));
 
@@ -74,24 +69,14 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public static readonly DependencyProperty MDVFootnoteVisibilityProperty = DependencyProperty.Register("MDVFootnoteVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
-	public static readonly DependencyProperty StarzLegalTextVisibilityProperty = DependencyProperty.Register("StarzLegalTextVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
 	public static readonly DependencyProperty PointsEstimateTextProperty = DependencyProperty.Register("PointsEstimateText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty PointsEstimateVisibilityProperty = DependencyProperty.Register("PointsEstimateVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty StarzOfferVisibilityProperty = DependencyProperty.Register("StarzOfferVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
-	public static readonly DependencyProperty StarzOfferTextProperty = DependencyProperty.Register("StarzOfferText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty StarzOfferSubTextProperty = DependencyProperty.Register("StarzOfferSubText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RedboxPlusMovieInfoVisibilityProperty = DependencyProperty.Register("RedboxPlusMovieInfoVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed)
 	{
 		AffectsRender = true
 	});
-
-	public static readonly DependencyProperty StarzOfferHeaderTextProperty = DependencyProperty.Register("StarzOfferHeaderText", typeof(string), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty RedboxPlusOfferVisibilityProperty = DependencyProperty.Register("RedboxPlusOfferVisibility", typeof(Visibility), typeof(ShoppingCartViewModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
@@ -128,8 +113,6 @@ public class ShoppingCartViewModel : DependencyObject
 	public string PromoCodeButtonText { get; set; }
 
 	public string AddMovieButtonText { get; set; }
-
-	public string AddGameButtonText { get; set; }
 
 	public string UpdateBagButtonText { get; set; }
 
@@ -454,21 +437,6 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
-	public Visibility AddGameButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AddGameButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AddGameButtonVisibilityProperty, value);
-			});
-		}
-	}
-
 	public bool PromoCodeButtonEnabled
 	{
 		get
@@ -634,81 +602,6 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
-	public Visibility StarzLegalTextVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(StarzLegalTextVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(StarzLegalTextVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility StarzOfferVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(StarzOfferVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(StarzOfferVisibilityProperty, value);
-			});
-		}
-	}
-
-	public string StarzOfferHeaderText
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(StarzOfferHeaderTextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(StarzOfferHeaderTextProperty, value);
-			});
-		}
-	}
-
-	public string StarzOfferText
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(StarzOfferTextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(StarzOfferTextProperty, value);
-			});
-		}
-	}
-
-	public string StarzOfferSubText
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(StarzOfferSubTextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(StarzOfferSubTextProperty, value);
-			});
-		}
-	}
-
 	public Visibility OfferVisibility
 	{
 		get
@@ -809,8 +702,6 @@ public class ShoppingCartViewModel : DependencyObject
 
 	public event Action OnAddMovieButtonClicked;
 
-	public event Action OnAddGameButtonClicked;
-
 	public event Action OnUpdateBagButtonClicked;
 
 	public event Action OnSignInButtonClicked;
@@ -824,10 +715,6 @@ public class ShoppingCartViewModel : DependencyObject
 	public event Action<DisplayProductModel, object> OnCancelBrowseItemModel;
 
 	public event Action<DisplayProductModel> OnViewOfferDetailsButtonClicked;
-
-	public event Action OnScanStarzQRCodeButtonClicked;
-
-	public event Action OnViewStarzOfferButtonClicked;
 
 	public event Action OnViewRedboxPlusOfferButtonClicked;
 
@@ -910,14 +797,6 @@ public class ShoppingCartViewModel : DependencyObject
 		}
 	}
 
-	public void ProcessOnAddGameButtonClicked()
-	{
-		if (OnAddGameButtonClicked != null)
-		{
-			OnAddGameButtonClicked();
-		}
-	}
-
 	public void ProcessOnUpdateBagButtonClicked()
 	{
 		OnUpdateBagButtonClicked?.Invoke();
@@ -938,11 +817,6 @@ public class ShoppingCartViewModel : DependencyObject
 		OnViewOfferDetailsButtonClicked?.Invoke(displayProductModel);
 	}
 
-	public void ProcessOnScanStarzQRCodeButtonClicked()
-	{
-		OnScanStarzQRCodeButtonClicked?.Invoke();
-	}
-
 	public void ProcessOnLoaded()
 	{
 		OnLoaded?.Invoke();
@@ -951,11 +825,6 @@ public class ShoppingCartViewModel : DependencyObject
 	public void ProcessOnViewRedboxPlusOfferButtonClicked()
 	{
 		OnViewRedboxPlusOfferButtonClicked?.Invoke();
-	}
-
-	public void ProcessOnViewStarzOfferButtonClicked()
-	{
-		OnViewStarzOfferButtonClicked?.Invoke();
 	}
 
 	public void ProcessOnScanRedboxPlusQRCodeButtonClicked()

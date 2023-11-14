@@ -14,10 +14,6 @@ public class FilterBarModel : DependencyObject
 
 	public static readonly DependencyProperty FilterBarTextVisibilityProperty = DependencyProperty.Register("FilterBarTextVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
-	public static readonly DependencyProperty MoreCollectionsButtonTextProperty = DependencyProperty.Register("MoreCollectionsButtonText", typeof(string), typeof(FilterBarModel), new FrameworkPropertyMetadata(null));
-
-	public static readonly DependencyProperty MoreCollectionsButtonVisibilityProperty = DependencyProperty.Register("MoreCollectionsButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
-
 	public static readonly DependencyProperty StartOverButtonTextProperty = DependencyProperty.Register("StartOverButtonText", typeof(string), typeof(FilterBarModel), new FrameworkPropertyMetadata(null));
 
 	public static readonly DependencyProperty StartOverButtonVisibilityProperty = DependencyProperty.Register("StartOverButtonVisibility", typeof(Visibility), typeof(FilterBarModel), new FrameworkPropertyMetadata(Visibility.Visible));
@@ -62,35 +58,7 @@ public class FilterBarModel : DependencyObject
 
 	public Style FilterButtonSelectedStyle { get; set; }
 
-	public Visibility MoreCollectionsButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(MoreCollectionsButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(MoreCollectionsButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public string MoreCollectionsButtonText
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (string)GetValue(MoreCollectionsButtonTextProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(MoreCollectionsButtonTextProperty, value);
-			});
-		}
-	}
+	public CheckMarkButtonModel BottomRedboxPlusMoviesButtonModel { get; set; }
 
 	public string StartOverButtonText
 	{
@@ -355,8 +323,6 @@ public class FilterBarModel : DependencyObject
 
 	public event Action OnBackButtonClicked;
 
-	public event Action OnMoreCollectionsButtonClicked;
-
 	public event Action<BrowseFilter> OnBrowseFilterButtonClicked;
 
 	public event Action OnFormatFilterButtonClicked;
@@ -408,14 +374,6 @@ public class FilterBarModel : DependencyObject
 		}
 	}
 
-	public void ProcessOnMoreCollectionsButtonClicked()
-	{
-		if (OnMoreCollectionsButtonClicked != null)
-		{
-			OnMoreCollectionsButtonClicked();
-		}
-	}
-
 	private static void SelectedPriceRangeChanged(DependencyObject obj, DependencyPropertyChangedEventArgs args)
 	{
 		if (obj != null && obj is FilterBarModel)
@@ -447,7 +405,7 @@ public class FilterBarModel : DependencyObject
 			{
 				filterBarModel.FormatFilterButtonText = filterBarModel.FormatFilterButtonStrings[titleType];
 				filterBarModel.FormatFilterButtonStyle = ((titleType == TitleType.All) ? filterBarModel.FilterButtonUnselectedStyle : filterBarModel.FilterButtonSelectedStyle);
-				filterBarModel.FormatFilterButtonCheckmarkVisibility = ((titleType == TitleType.All) ? Visibility.Collapsed : Visibility.Visible);
+				filterBarModel.FormatFilterButtonCheckmarkVisibility = ((filterBarModel.FormatFilterButtonVisibility != Visibility.Visible || titleType == TitleType.All) ? Visibility.Collapsed : Visibility.Visible);
 			}
 		}
 	}

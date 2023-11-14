@@ -163,6 +163,8 @@ public static class AnalyticsConstants
 
 		public const string BrowseWatchOptions = "BrowseWatchOptions";
 
+		public const string BrowseGenreSelectionPopup = "BrowseGenreSelectionPopup";
+
 		public const string BulletListPopupReserveOnlineGotit = "BulletListPopupReserveOnlineGotit";
 
 		public const string BulletListPopupRedboxPerksGotit = "BulletListPopupRedboxPerksGotit";
@@ -606,6 +608,12 @@ public static class AnalyticsConstants
 		public const string ReturnSuccessWithBrowseClose = "ReturnSuccessWithBrowseClose";
 
 		public const string ReturnSuccessWithBrowseSeeNewMovies = "ReturnSuccessWithBrowseSeeNewMovies";
+
+		public const string GenreSelectionPopupGenre = "GenreSelectionPopupGenre";
+
+		public const string GenreSelectionPopupCancel = "GenreSelectionPopupCancel";
+
+		public const string GenreSelectionPopupApply = "GenreSelectionPopupApply";
 	}
 
 	public static class DataTypeNames

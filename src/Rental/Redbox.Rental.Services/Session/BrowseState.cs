@@ -53,10 +53,6 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public bool CollectionsPopupShown { get; set; }
-
-	public bool CarouselCollectionsSelected { get; set; }
-
 	public bool ProductSelectedFromCarousel { get; set; }
 
 	public bool ProductAddedFromCarousel { get; set; }
@@ -143,30 +139,6 @@ public class BrowseState : IBrowseState
 		}
 	}
 
-	public bool BrowseCollections
-	{
-		get
-		{
-			return _browseStateSetStack.Peek().BrowseCollections;
-		}
-		set
-		{
-			_browseStateSetStack.Peek().BrowseCollections = value;
-		}
-	}
-
-	public ICollectionProduct BrowseCollectionProduct
-	{
-		get
-		{
-			return _browseStateSetStack.Peek().BrowseCollectionProduct;
-		}
-		set
-		{
-			_browseStateSetStack.Peek().BrowseCollectionProduct = value;
-		}
-	}
-
 	public string SelectedAlphaGroupName
 	{
 		get
@@ -221,15 +193,11 @@ public class BrowseState : IBrowseState
 
 	public bool EnableBrowseMessagePopup { get; set; }
 
-	public bool EnableStarzOffer { get; set; }
-
 	public int BrowseMessagePopupDuration { get; set; }
 
 	public bool ShowBrowseMessagePopup { get; set; }
 
 	public bool ShowingBrowseMessagePopup { get; set; }
-
-	public bool IsStarzTermsAcceptanceCheckMarkChecked { get; set; }
 
 	public bool ShowRedboxPlusTooltip { get; set; }
 
@@ -256,42 +224,10 @@ public class BrowseState : IBrowseState
 		return result;
 	}
 
-	public void PushCollectionsBrowseStateSet()
-	{
-		PushBrowseStateSet();
-		IsNonBrowseView = false;
-		BrowseCollections = true;
-		BrowseCollectionProduct = null;
-		PageNumber = 1;
-		TitleFamily = TitleFamily.Movies;
-		TitleType = TitleType.All;
-		BrowseMode = BrowseViewFilter.All;
-		BrowseSelectedSort = BrowseSelectedSort.Newest;
-		SelectedAlphaGroupName = null;
-		Genre = null;
-	}
-
-	public void PushCollectionBrowseStateSet(ICollectionProduct collectionProduct)
-	{
-		PushBrowseStateSet();
-		IsNonBrowseView = false;
-		BrowseCollections = false;
-		BrowseCollectionProduct = collectionProduct;
-		PageNumber = 1;
-		TitleFamily = TitleFamily.Movies;
-		TitleType = TitleType.All;
-		BrowseMode = BrowseViewFilter.All;
-		BrowseSelectedSort = BrowseSelectedSort.Newest;
-		SelectedAlphaGroupName = null;
-		Genre = null;
-	}
-
 	public void PushNonBrowseViewBrowseStateSet()
 	{
 		PushBrowseStateSet();
 		IsNonBrowseView = true;
-		BrowseCollections = false;
-		BrowseCollectionProduct = null;
 		PageNumber = 1;
 		TitleFamily = TitleFamily.Movies;
 		TitleType = TitleType.All;
@@ -312,8 +248,6 @@ public class BrowseState : IBrowseState
 	public void SetDefaultBrowseStateSet()
 	{
 		IsNonBrowseView = false;
-		BrowseCollections = false;
-		BrowseCollectionProduct = null;
 		PageNumber = 1;
 		TitleFamily = TitleFamily.Movies;
 		TitleType = TitleType.All;

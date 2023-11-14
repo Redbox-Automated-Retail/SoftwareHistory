@@ -183,7 +183,7 @@ public class NewCartConfirmViewController : BaseViewController
 			OfferProduct offerProduct = _selectedOffer.OfferProducts.FirstOrDefault((OfferProduct o) => o.ProductId == titleProduct.ProductId);
 			bool num2 = offerProduct != null;
 			bool flag2 = num2 && eachRentalShoppingCartItem.PricingRecord.InitialDays == offerProduct.NumberOfNights;
-			decimal? num3 = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers) ? new decimal?(0m) : ((decimal?)(eachRentalShoppingCartItem.PricingRecord.InitialDays - 1) * (decimal?)eachRentalShoppingCartItem.PricingRecord.ExtraNight - (decimal?)(offerProduct?.DiscountedPrice).GetValueOrDefault()));
+			decimal? num3 = ((!Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.UseDiscountsForPmnpOffers) ? new decimal?(0m) : ((decimal?)(eachRentalShoppingCartItem.PricingRecord.InitialDays - 1) * (decimal?)eachRentalShoppingCartItem.PricingRecord.ExtraNight - (decimal?)(offerProduct?.DiscountedPrice).GetValueOrDefault()));
 			displayCheckoutProductModel.OfferActionVisibility = Visibility.Visible;
 			decimal price = eachRentalShoppingCartItem.Price;
 			decimal? obj = (flag2 ? num3 : new decimal?(0m));

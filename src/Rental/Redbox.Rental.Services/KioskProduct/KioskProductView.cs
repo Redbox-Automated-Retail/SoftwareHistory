@@ -9,7 +9,6 @@ using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.Products;
 using Redbox.Rental.Model.KioskClientService.Subscriptions;
-using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Profile;
 using Redbox.Rental.Model.ShoppingCart;
@@ -70,8 +69,6 @@ public class KioskProductView
 
 	private Dictionary<long, TitleRollupProduct> _titleRollupProducts = new Dictionary<long, TitleRollupProduct>();
 
-	private Dictionary<long, ICollectionProduct> _collectionProducts = new Dictionary<long, ICollectionProduct>();
-
 	private List<ITitleProduct> _titlesWithNoRollup = new List<ITitleProduct>();
 
 	private List<MDVProduct> _mdvTitlesWithNoRollup = new List<MDVProduct>();
@@ -88,15 +85,9 @@ public class KioskProductView
 
 	private DateTime _lastRedboxPlusPromoCampaignLoad = DateTime.MinValue;
 
-	private ISubscriptionProduct _activeBrowseSubscriptionProduct;
-
-	private ISubscriptionProduct _activeMyBagSubscriptionProduct;
-
 	public IProfileDataInstance ProfileDataInstance { get; set; }
 
 	public ICacheDataInstance CacheDataInstance { get; set; }
-
-	public IKioskDataInstance KioskDataInstance { get; set; }
 
 	public List<Title> MovieTitles { get; } = new List<Title>();
 
@@ -106,15 +97,12 @@ public class KioskProductView
 
 	public Dictionary<long, TitleRollupProduct> TitleRollupProducts => _titleRollupProducts;
 
-	public Dictionary<long, ICollectionProduct> CollectionProducts => _collectionProducts;
-
-	public KioskProductView(Store store, IProfileDataInstance profileDataInstance, ICacheDataInstance cacheDataInstance, IKioskDataInstance kioskDataInstance, IStoreManager storeManager)
+	public KioskProductView(Store store, IProfileDataInstance profileDataInstance, ICacheDataInstance cacheDataInstance, IStoreManager storeManager)
 	{
 		_store = store;
 		_storeManager = storeManager;
 		ProfileDataInstance = profileDataInstance;
 		CacheDataInstance = cacheDataInstance;
-		KioskDataInstance = kioskDataInstance;
 		LoadView();
 	}
 
@@ -125,7 +113,6 @@ public class KioskProductView
 		LoadMDVProducts();
 		LoadMDVWorkaroundProducts();
 		LoadTitleRollupProducts();
-		LoadCollectionProducts();
 		LoadTitlesWithNoRollupOrMDV();
 		LoadMDVTitlesWithNoRollup();
 		LoadMDVWorkaroundTitlesWithNoRollup();
@@ -151,12 +138,6 @@ public class KioskProductView
 		}
 	}
 
-	public ISubscriptionProduct GetActiveBrowseSubscriptionProduct()
-	{
-		LoadSubscriptionProducts();
-		return _activeBrowseSubscriptionProduct;
-	}
-
 	public IRedboxPlusPromoCampaign GetRedboxPlusPromoCampaign(int promoCampaignId)
 	{
 		if ((_redboxPlusPromoCampaigns == null || _redboxPlusPromoCampaigns.Count == 0) && DateTime.Now > _lastRedboxPlusPromoCampaignLoad.AddMinutes(1.0))
@@ -165,12 +146,6 @@ public class KioskProductView
 			LoadSubscriptionProducts();
 		}
 		return _redboxPlusPromoCampaigns?.FirstOrDefault((IRedboxPlusPromoCampaign x) => x.PromoCampaignId == promoCampaignId);
-	}
-
-	public ISubscriptionProduct GetActiveMyBagSubscriptionProduct()
-	{
-		LoadSubscriptionProducts();
-		return _activeMyBagSubscriptionProduct;
 	}
 
 	public List<ISubscriptionProduct> GetSubscriptionProducts()
@@ -468,24 +443,13 @@ public class KioskProductView
 		return list.OrderList(BrowseSort.SortDate, BrowseViewFilter.All, MovieTitles);
 	}
 
-	public List<IKioskProduct> GetCarouselProducts(bool showCollections, int maxCarouselItems)
+	public List<IKioskProduct> GetCarouselProducts(int maxCarouselItems)
 	{
 		List<IKioskProduct> resultList = new List<IKioskProduct>();
 		List<ITitleProduct> source = _movieProducts.OrderList(BrowseSort.SortDate, BrowseViewFilter.All, MovieTitles).ToList();
 		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.HitMovies) && !resultList.Contains(x)).Take(maxCarouselItems)?.ForEach(resultList.Add);
 		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.Top20Movies) && !resultList.Contains(x)).Take(maxCarouselItems - resultList.Count)?.ForEach(resultList.Add);
 		source.Where((ITitleProduct x) => IsCarouselViewable(x, Genres.ActionAndAdventure) && !resultList.Contains(x)).Take(maxCarouselItems - resultList.Count)?.ForEach(resultList.Add);
-		if (showCollections)
-		{
-			resultList.Insert(Math.Min(5, resultList.Count()), new CollectionProduct(new Collection
-			{
-				Name = "Default",
-				Id = 0L
-			}, null, null, null, null, _store)
-			{
-				ImageFile = "image_collections_carousel"
-			});
-		}
 		return resultList.Take(maxCarouselItems).ToList();
 	}
 
@@ -495,25 +459,6 @@ public class KioskProductView
 		list.AddRange(_titleRollupProducts.Values.Where((TitleRollupProduct r) => r.KioskProducts.Any((ITitleProduct p) => !p.InStock)));
 		list.AddRange(_titlesWithNoRollup.Where((ITitleProduct t) => t.IsMovie && !t.InStock));
 		return list;
-	}
-
-	public List<IKioskProduct> GetCollectionProducts()
-	{
-		List<IKioskProduct> list = new List<IKioskProduct>();
-		(from pair in _collectionProducts
-			select pair.Value into c
-			where c.IsValidProduct
-			select c).ToList().ForEach(list.Add);
-		return list;
-	}
-
-	public ICollectionProduct GetCollection(long collectionId)
-	{
-		if (!_collectionProducts.ContainsKey(collectionId))
-		{
-			return null;
-		}
-		return _collectionProducts[collectionId];
 	}
 
 	public int GetInStockGameCount()
@@ -984,10 +929,10 @@ public class KioskProductView
 	{
 		_titleRollupProducts.Clear();
 		List<long> sortOrderProductGroupIds = null;
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.Current.Browse.LoadSortOrderProductGroups)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.Current.Browse.LoadSortOrderProductGroups && Redbox.Rental.Services.Configuration.Configuration.Instance.Current.Browse.NumberOfSortOrderProductGroupsToLoad > 0)
 		{
 			ProductGroupSortOrder productGroupSortOrder = ServiceLocator.Instance.GetService<IKioskClientService>()?.ProductGroups?.GetSortOrder();
-			sortOrderProductGroupIds = ((productGroupSortOrder != null && productGroupSortOrder.SortOrderType > 0 && productGroupSortOrder.SortOrders != null && productGroupSortOrder.SortOrders.Count > 0) ? ((IEnumerable<SortOrder>)productGroupSortOrder.SortOrders).Select((Func<SortOrder, long>)((SortOrder so) => so.ProductGroupId)).ToList() : null);
+			sortOrderProductGroupIds = ((productGroupSortOrder != null && productGroupSortOrder.SortOrderType > 0 && productGroupSortOrder.SortOrders != null && productGroupSortOrder.SortOrders.Count > 0) ? ((IEnumerable<SortOrder>)productGroupSortOrder.SortOrders).Select((Func<SortOrder, long>)((SortOrder so) => so.ProductGroupId)).Take(Redbox.Rental.Services.Configuration.Configuration.Instance.Current.Browse.NumberOfSortOrderProductGroupsToLoad).ToList() : null);
 		}
 		ProfileDataInstance.ProductGroups.Where((KeyValuePair<long, ProductGroup> pair) => pair.Value.ProductGroupTypeId == 1).ForEach(delegate(KeyValuePair<long, ProductGroup> pair)
 		{
@@ -1032,17 +977,6 @@ public class KioskProductView
 		TitleRollupProduct titleRollupProduct = new TitleRollupProduct(productGroup, _titleProducts, _mdvProducts, ProfileDataInstance, _store);
 		_titleRollupProducts[titleRollupProduct.ProductGroupId] = titleRollupProduct;
 		return titleRollupProduct;
-	}
-
-	private void LoadCollectionProducts()
-	{
-		_collectionProducts.Clear();
-		KioskDataInstance.Collections.ForEach(delegate(Collection c)
-		{
-			AddMissingProductIds(c.Titles, force: true);
-			CollectionProduct value = new CollectionProduct(c, _titleProducts, _mdvProducts, _titleRollupProducts, ProfileDataInstance, _store);
-			_collectionProducts[c.Id] = value;
-		});
 	}
 
 	private void LoadTitlesWithNoRollupOrMDV()
@@ -1204,7 +1138,5 @@ public class KioskProductView
 		ISubscriptionPlans subscriptionPlans = ServiceLocator.Instance.GetService<IKioskClientService>()?.Subscriptions?.GetSubscriptionPlans();
 		_subscriptionProducts = subscriptionPlans?.SubscriptionProducts;
 		_redboxPlusPromoCampaigns = subscriptionPlans?.RedboxPlusPromoCampaigns;
-		_activeBrowseSubscriptionProduct = subscriptionPlans?.GetBrowseSubscriptionProduct();
-		_activeMyBagSubscriptionProduct = subscriptionPlans?.GetMyBagSubscriptionProduct();
 	}
 }

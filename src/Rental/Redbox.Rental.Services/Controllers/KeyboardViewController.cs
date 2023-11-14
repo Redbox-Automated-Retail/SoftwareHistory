@@ -92,9 +92,6 @@ public class KeyboardViewController : BaseViewController
 		case KeyboardMode.PERKS_SIGN_UP:
 			InitForPerksSignup(keyboardLogic);
 			break;
-		case KeyboardMode.STARZ_SIGN_UP:
-			InitForStarzSignup(keyboardLogic);
-			break;
 		case KeyboardMode.REDBOX_PLUS_SIGN_UP:
 			InitForRedboxPlusSignup(keyboardLogic);
 			break;
@@ -231,15 +228,6 @@ public class KeyboardViewController : BaseViewController
 		KeyboardModel model = keyboardLogic.Model;
 		model.TitleText = Resources.perks_sign_up_title;
 		model.MessageText = Resources.email_privacy_message;
-		model.CancelButtonText = Resources.back_button.ToUpper();
-		model.ContinueButtonText = Resources.go_to_final_step_button;
-		model.EmailPromptText = Resources.keyboard_input_email_prompt;
-	}
-
-	private static void InitForStarzSignup(KeyboardLogic keyboardLogic)
-	{
-		KeyboardModel model = keyboardLogic.Model;
-		model.TitleText = Resources.starz_sign_up_title;
 		model.CancelButtonText = Resources.back_button.ToUpper();
 		model.ContinueButtonText = Resources.go_to_final_step_button;
 		model.EmailPromptText = Resources.keyboard_input_email_prompt;

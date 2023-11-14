@@ -26,10 +26,6 @@ public class DisplayProductModelConstants
 
 	public int MainHeight { get; set; }
 
-	public bool ShowCollections { get; set; }
-
-	public string CollectionTextLine1 { get; set; }
-
 	public string BuyText { get; set; }
 
 	public ITitleRollupFormatButtonTextValues TitleDetailFormatButtonTextValues { get; set; }

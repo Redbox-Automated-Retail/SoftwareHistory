@@ -20,7 +20,6 @@ using Redbox.Rental.Model.ShoppingCart;
 using Redbox.Rental.Model.Transaction;
 using Redbox.Rental.Services.RedboxPlus;
 using Redbox.Rental.Services.Session;
-using Redbox.Rental.Services.Starz;
 using Redbox.Rental.UI.Properties;
 using Redbox.Rental.UI.Views;
 
@@ -29,8 +28,6 @@ namespace Redbox.Rental.Services.Controllers;
 public class PersonalizationFunctions
 {
 	private static IRedboxPlusSubscriptionProduct _redboxPlusSubscriptionProduct;
-
-	private static IStarzSubscriptionProduct _starzSubscriptionProduct;
 
 	private static DateTime _loginStartTime;
 
@@ -94,16 +91,6 @@ public class PersonalizationFunctions
 	}
 
 	private static IAnalyticsService AnalyticsService => ServiceLocator.Instance.GetService<IAnalyticsService>();
-
-	public static bool CanAddStarzSubscription(IStarzSubscriptionProduct starzSubscriptionProduct)
-	{
-		IPersonalizationSession personalizationSession = Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession;
-		if (personalizationSession?.SubscriptionData != null && !personalizationSession.SubscriptionData.SubscriptionServiceIsDown && !personalizationSession.SubscriptionData.HasActiveStarzSubscription)
-		{
-			return personalizationSession.SubscriptionData.IsEligibleForSubscription(starzSubscriptionProduct?.SubscriptionId);
-		}
-		return false;
-	}
 
 	public static bool CanAddRedboxPlusSubscription()
 	{
@@ -276,31 +263,6 @@ public class PersonalizationFunctions
 			viewFrameInstance = OrchestrationService.PeekViewFrameByName("browse_view", out index);
 		}
 		return viewFrameInstance;
-	}
-
-	public static void ShowStarzSignInSignUpDialog(IStarzSubscriptionProduct starzSubscriptionProduct)
-	{
-		_starzSubscriptionProduct = starzSubscriptionProduct;
-		SignInViewParameters parameter = new SignInViewParameters
-		{
-			AfterSignInAction = delegate(LoginType loginType, ILoginResult loginResult)
-			{
-				AfterEmailOrPhoneAndPinSignInAction(loginType, loginResult, AfterStarzSignInAction);
-			},
-			SignUpAction = StarzSignUpAction,
-			SignUpType = SignUpType.Starz
-		};
-		OrchestrationService.ViewShow("sign_in_view", parameter);
-	}
-
-	public static void AfterStarzSignInAction(LoginType loginType, ILoginResult loginResult)
-	{
-		StarzSignupService.StartStarzSignup(_starzSubscriptionProduct);
-	}
-
-	private static void StarzSignUpAction()
-	{
-		StarzSignupService.StartStarzSignup(_starzSubscriptionProduct);
 	}
 
 	public static void AfterRedboxPlusSignInAction(LoginType loginType, ILoginResult loginResult)

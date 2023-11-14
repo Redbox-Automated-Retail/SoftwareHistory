@@ -34,8 +34,6 @@ public class HardwareService : IHardwareService
 		where IsRunable(x.Status) && string.Compare(x.ProgramName, "return", ignoreCase: true) == 0
 		select x;
 
-	public bool SupportsCameraFraudScan => Service.SupportsCameraFraudScan;
-
 	public int CurrentCameraGeneration => (int)Service.CurrentCameraGeneration;
 
 	public int BarcodeDecoder => (int)Service.BarcodeDecoder;
@@ -832,26 +830,6 @@ public class HardwareService : IHardwareService
 		if (!barcodeVMZPosition.Success)
 		{
 			barcodeVMZPosition.Errors.AddToLocalErrorList(errorList);
-		}
-		else
-		{
-			jobId = ConfigureJob(job, eventHandler, statusChangeHandler, errorList);
-		}
-		return errorList;
-	}
-
-	public Redbox.KioskEngine.ComponentModel.ErrorList FieldInsertFraudWithCheck(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId)
-	{
-		jobId = null;
-		Redbox.KioskEngine.ComponentModel.ErrorList errorList = new Redbox.KioskEngine.ComponentModel.ErrorList();
-		HardwareCommandResult hardwareCommandResult = Service.FieldInsertFraudWithCheck(new HardwareJobSchedule
-		{
-			Priority = HardwareJobPriority.Highest
-		}, out var job);
-		Redbox.Core.LogHelper.Instance.Log($"HardwareService.FieldInsertFraudWithCheck result.Success| {hardwareCommandResult.Success}");
-		if (!hardwareCommandResult.Success)
-		{
-			hardwareCommandResult.Errors.AddToLocalErrorList(errorList);
 		}
 		else
 		{

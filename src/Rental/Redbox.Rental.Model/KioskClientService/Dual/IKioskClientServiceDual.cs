@@ -9,9 +9,9 @@ public interface IKioskClientServiceDual
 
 	void LoadInStockInOther();
 
-	bool IsInStockInOther(long titleId);
-
 	void UpdateTitles();
+
+	bool IsInStockInOther(long titleId);
 
 	IRefreshResponse Refresh(long dualKioskId);
 

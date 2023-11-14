@@ -40,8 +40,6 @@ public class KioskClientServiceProxyCustomerProfileConstants
 
 			public const string TextClubEnabled = "Login.TextClubEnabled";
 
-			public const string ActiveStarzSubscriptionPlanId = "Login.ActiveStarzSubscriptionPlanId";
-
 			public const string RedboxPlusSubscriptionPlanId = "Login.RedboxPlusSubscriptionPlanId";
 
 			public const string RedboxPlusSubscriptionCampaignId = "Login.RedboxPlusSubscriptionCampaignId";

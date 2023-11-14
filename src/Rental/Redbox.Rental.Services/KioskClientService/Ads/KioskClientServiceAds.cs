@@ -5,6 +5,7 @@ using Redbox.Core;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.KioskClientService.Ads;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskClientService.Ads;
 
@@ -20,7 +21,7 @@ public class KioskClientServiceAds : BaseKioskClientService, IKioskClientService
 
 	public IGetAdResponse GetAd(AdLocation adLocation)
 	{
-		int timeoutSetting = ServiceLocator.Instance.GetService<IConfiguration>()?.VistarGetAdTimeout ?? 500;
+		int timeoutSetting = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.MarketingAd.VistarGetAdTimeout;
 		WebResult<GetAdResponse> webResult = ExecuteWebRequest<GetAdResponse>(new Uri(string.Format("{0}/{1}?location={2}", base.KioskClientServiceBaseUrl, "api/ads", adLocation)), null, "GET", timeoutSetting);
 		LogResponse($"KioskClientServiceAds.GetAd for ad location: {adLocation}", webResult);
 		if (webResult.ExceptionStatus == WebExceptionStatus.Timeout)
@@ -32,7 +33,7 @@ public class KioskClientServiceAds : BaseKioskClientService, IKioskClientService
 
 	public async Task<IGetAdResponse> GetAdAsync(AdLocation adLocation)
 	{
-		WebResult<GetAdResponse> webResult = await ExecuteAsyncWebRequest<GetAdResponse>(new Uri(string.Format("{0}/{1}?location={2}", base.KioskClientServiceBaseUrl, "api/ads", adLocation)), null, "GET", ServiceLocator.Instance.GetService<IConfiguration>()?.VistarGetAdTimeout ?? 500).ConfigureAwait(continueOnCapturedContext: false);
+		WebResult<GetAdResponse> webResult = await ExecuteAsyncWebRequest<GetAdResponse>(new Uri(string.Format("{0}/{1}?location={2}", base.KioskClientServiceBaseUrl, "api/ads", adLocation)), null, "GET", Redbox.Rental.Services.Configuration.Configuration.Instance.Current.MarketingAd.VistarGetAdTimeout).ConfigureAwait(continueOnCapturedContext: false);
 		LogResponse($"KioskClientServiceAds.GetAd for ad locataion: {adLocation}", webResult);
 		return webResult?.Response;
 	}

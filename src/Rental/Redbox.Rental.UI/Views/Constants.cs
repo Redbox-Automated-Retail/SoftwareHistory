@@ -83,8 +83,6 @@ public class Constants
 
 		public const string ApplicationLoadView = "ApplicationLoadView";
 
-		public const string CollectionMessageView = "CollectionMessageView";
-
 		public const string ComingSoonView = "ComingSoonView";
 
 		public const string ReturnView = "ReturnView";
@@ -119,8 +117,6 @@ public class Constants
 
 		public const string KeyboardPerksSignupView = "KeyboardPerksSignupView";
 
-		public const string KeyboardStarzSignupView = "KeyboardStarzSignupView";
-
 		public const string KeyboardRedboxPlusSignupView = "KeyboardRedboxPlusSignupView";
 
 		public const string PerksSignUpInfoPopupView = "PerksSignUpInfoPopupView";
@@ -140,10 +136,6 @@ public class Constants
 		public const string SonySweepstakesConfirmationView = "SonySweepstakesConfirmationView";
 
 		public const string SignInThanksView = "SignInThanksView";
-
-		public const string StarzOfferDetailView = "StarzOfferDetailView";
-
-		public const string StarzTermsAcceptanceView = "StarzTermsAcceptanceView";
 
 		public const string SubscriptionSignUpConfirmationView = "SubscriptionSignUpConfirmationView";
 
@@ -166,6 +158,8 @@ public class Constants
 		public const string ReturnVisitPromoOfferView = "ReturnVisitPromoOfferView";
 
 		public const string TitleDetailsWatchOptionsPopupView = "TitleDetailsWatchOptionsPopupView";
+
+		public const string GenreSelectionPopupView = "GenreSelectionPopupView";
 	}
 
 	public class ViewNames
@@ -256,8 +250,6 @@ public class Constants
 
 		public const string ApplicationLoadView = "application_load_view";
 
-		public const string CollectionMessageView = "collection_message_view";
-
 		public const string ComingSoonView = "coming_soon_view";
 
 		public const string ReturnView = "return_view";
@@ -296,8 +288,6 @@ public class Constants
 
 		public const string KeyboardPerksSignupView = "keyboard_perks_signup_view";
 
-		public const string KeyboardStarzSignupView = "keyboard_starz_signup_view";
-
 		public const string KeyboardRedboxPlusSignupView = "keyboard_redbox_plus_signup_view";
 
 		public const string PerksSignUpInfoPopupView = "perks_signup_info_popup_view";
@@ -318,15 +308,9 @@ public class Constants
 
 		public const string SignInThanksView = "sign_in_thanks_view";
 
-		public const string StarzOfferDetailView = "starz_offer_detail_view";
-
-		public const string StarzTermsAcceptanceView = "starz_terms_acceptance_view";
-
 		public const string SubscriptionSignUpConfirmationView = "subscription_sign_up_confirmation_view";
 
 		public const string BrowseMessagePopupView = "browse_message_popup_view";
-
-		public const string StarzBrowseMessagePopupView = "starz_browse_message_popup_view";
 
 		public const string BrowseMessagePopupLearnMorePopupView = "browse_message_popup_learn_more_popup_view";
 
@@ -351,6 +335,8 @@ public class Constants
 		public const string TitleDetailsWatchOptionsPopupView = "title_details_watch_options_popup_view";
 
 		public const string DualInStockLearnMorePopupView = "dual_in_stock_learn_more_popup_view";
+
+		public const string GenreSelectionPopupView = "genre_selection_popup_view";
 	}
 
 	public class ThemeNames
@@ -364,25 +350,11 @@ public class Constants
 
 	public class Images
 	{
-		private static BitmapImage _collectionsCarousel;
-
 		private static BitmapImage _movieMissingBoxArt;
 
 		private static BitmapImage _gameMissingBoxArt;
 
-		private static BitmapImage _starzBoxArt;
-
-		public static BitmapImage CollectionsCarousel
-		{
-			get
-			{
-				if (_collectionsCarousel == null)
-				{
-					_collectionsCarousel = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "Collections-Carousel.jpg")));
-				}
-				return _collectionsCarousel;
-			}
-		}
+		private static BitmapImage _redboxPlusBoxArt;
 
 		public static BitmapImage MovieMissingBoxArt
 		{
@@ -408,27 +380,15 @@ public class Constants
 			}
 		}
 
-		public static BitmapImage StarzBoxArt
-		{
-			get
-			{
-				if (_starzBoxArt == null)
-				{
-					_starzBoxArt = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "starz-box-art.png")));
-				}
-				return _starzBoxArt;
-			}
-		}
-
 		public static BitmapImage RedboxPlusBoxArt
 		{
 			get
 			{
-				if (_starzBoxArt == null)
+				if (_redboxPlusBoxArt == null)
 				{
-					_starzBoxArt = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "redbox-plus-box-art.png")));
+					_redboxPlusBoxArt = new BitmapImage(new Uri(string.Format("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/{0}", "redbox-plus-box-art.png")));
 				}
-				return _starzBoxArt;
+				return _redboxPlusBoxArt;
 			}
 		}
 	}

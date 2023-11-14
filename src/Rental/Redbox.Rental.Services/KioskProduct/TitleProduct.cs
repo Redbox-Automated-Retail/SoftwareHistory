@@ -108,7 +108,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return true;
 			}
-			if (TitleFamily == TitleFamily.Games && (Config.EndGames || !OrchestrationService.GetCanSellUsedGames()))
+			if (TitleFamily == TitleFamily.Games)
 			{
 				return false;
 			}
@@ -160,7 +160,7 @@ public class TitleProduct : KioskProduct, ITitleProduct, IKioskProduct
 			{
 				return false;
 			}
-			if (TitleFamily == TitleFamily.Games && (Config.EndGameRentals || Config.EndGames))
+			if (TitleFamily == TitleFamily.Games)
 			{
 				return false;
 			}

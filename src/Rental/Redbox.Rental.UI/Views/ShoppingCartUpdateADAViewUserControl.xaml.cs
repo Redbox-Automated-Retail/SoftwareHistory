@@ -32,11 +32,6 @@ public partial class ShoppingCartUpdateADAViewUserControl : TextToSpeechUserCont
 		Model?.ProcessAddMovieButtonPress();
 	}
 
-	private void AddGameCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		Model?.ProcessAddGameButtonPress();
-	}
-
 	private void PopulateDisplayProductModels()
 	{
 		List<DisplayProductWithCommandsUserControl> list = new List<DisplayProductWithCommandsUserControl>();

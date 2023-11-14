@@ -1,5 +1,4 @@
 using System;
-using System.Windows;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
 using Redbox.Rental.UI.Models;
@@ -215,21 +214,6 @@ public class StartViewTextToSpeech
 				{
 					Text = "To Rent Movies, Press 1."
 				});
-				if (viewModel.RentGamesEnabled && viewModel.RentOrBuyGamesButtonVisibility == Visibility.Visible)
-				{
-					speechPart.Events.Add(new MapKeyPressToAction
-					{
-						KeyCode = "2",
-						Action = delegate
-						{
-							viewModel.ProcessRentOrBuyGameButtonClick();
-						}
-					});
-					speechPart.Texts.Add(new TextPart
-					{
-						Text = "To Rent Games, Press 2."
-					});
-				}
 				if (viewModel.BuyMoviesEnabled)
 				{
 					speechPart.Events.Add(new MapKeyPressToAction
@@ -243,21 +227,6 @@ public class StartViewTextToSpeech
 					speechPart.Texts.Add(new TextPart
 					{
 						Text = "To Purchase Movies, Press 3."
-					});
-				}
-				if (viewModel.BuyGamesEnabled && viewModel.BuyGamesButtonVisibility == Visibility.Visible)
-				{
-					speechPart.Events.Add(new MapKeyPressToAction
-					{
-						KeyCode = "4",
-						Action = delegate
-						{
-							viewModel.ProcessBuyGamesButtonClick();
-						}
-					});
-					speechPart.Texts.Add(new TextPart
-					{
-						Text = "To Purchase Games, Press 4."
 					});
 				}
 				speechPart.Events.Add(new MapKeyPressToAction

@@ -1,5 +1,4 @@
 using System;
-using System.Windows;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel.TextToSpeech;
 using Redbox.KioskEngine.Environment.TextToSpeech;
@@ -104,17 +103,6 @@ public class ShoppingCartUpdateADAViewTextToSpeech
 						shoppingCartUpdateADAViewModel.ProcessAddMovieButtonPress();
 					}
 				});
-				if (shoppingCartUpdateADAViewModel.AddGameButtonVisibility == Visibility.Visible)
-				{
-					speechPart.Events.Add(new MapKeyPressToAction
-					{
-						KeyCode = "4",
-						Action = delegate
-						{
-							shoppingCartUpdateADAViewModel.ProcessAddGameButtonPress();
-						}
-					});
-				}
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = "Your Cart is Empty."
@@ -127,13 +115,6 @@ public class ShoppingCartUpdateADAViewTextToSpeech
 				{
 					Text = "To add a movie, press 3."
 				});
-				if (shoppingCartUpdateADAViewModel.AddGameButtonVisibility == Visibility.Visible)
-				{
-					speechPart.Texts.Add(new TextPart
-					{
-						Text = "To add a game, press 4."
-					});
-				}
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);
@@ -172,17 +153,6 @@ public class ShoppingCartUpdateADAViewTextToSpeech
 						shoppingCartUpdateADAViewModel.ProcessAddMovieButtonPress();
 					}
 				});
-				if (shoppingCartUpdateADAViewModel.AddGameButtonVisibility == Visibility.Visible)
-				{
-					speechPart.Events.Add(new MapKeyPressToAction
-					{
-						KeyCode = "4",
-						Action = delegate
-						{
-							shoppingCartUpdateADAViewModel.ProcessAddGameButtonPress();
-						}
-					});
-				}
 				speechPart.Texts.Add(new TextPart
 				{
 					Text = Resources.this_is_your_chance
@@ -218,13 +188,6 @@ public class ShoppingCartUpdateADAViewTextToSpeech
 				{
 					Text = "To add a movie, press 3."
 				});
-				if (shoppingCartUpdateADAViewModel.AddGameButtonVisibility == Visibility.Visible)
-				{
-					speechPart.Texts.Add(new TextPart
-					{
-						Text = "To add a game, press 4."
-					});
-				}
 			}
 		};
 		speechControl.SpeechParts.Add(speechPart);

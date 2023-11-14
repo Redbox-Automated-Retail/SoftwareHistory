@@ -2,9 +2,7 @@
 <localControls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.StartViewUserControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:Redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:localControls="clr-namespace:Redbox.Rental.UI.Controls" Focusable="False">
   <UIElement.CommandBindings>
     <CommandBinding Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Executed="RentOrBuyMoviesCommandBinding_Executed" CanExecute="RentOrBuyMoviesCommandBinding_CanExecute" />
-    <CommandBinding Command="{x:Static localbase:Commands.RentOrBuyGamesCommand}" Executed="RentOrBuyGamesCommandBinding_Executed" CanExecute="RentGamesCommandBinding_CanExecute" />
     <CommandBinding Command="{x:Static localbase:Commands.BuyMoviesCommand}" Executed="BuyMoviesCommandBinding_Executed" CanExecute="BuyMoviesCommandBinding_CanExecute" />
-    <CommandBinding Command="{x:Static localbase:Commands.BuyGamesCommand}" Executed="BuyGamesCommandBinding_Executed" CanExecute="BuyGamesCommandBinding_CanExecute" />
     <CommandBinding Command="{x:Static localbase:Commands.PickupProductCommand}" Executed="PickupProductCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ReturnProductCommand}" Executed="ReturnProductCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.HelpCommand}" Executed="HelpCommandBinding_Executed" />
@@ -56,29 +54,10 @@
               </StackPanel>
             </Grid>
           </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="games_button" Style="{StaticResource white_and_warm_purple_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="80" Width="217" CornerRadius="40" Command="{x:Static localbase:Commands.RentOrBuyGamesCommand}" Focusable="False" Visibility="{Binding Path=RentOrBuyGamesButtonVisibility, FallbackValue=Collapsed}" IsEnabled="{Binding RentGamesEnabled}">
-            <Grid>
-              <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}">
-                <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/gameControllerIconCopy.png" HorizontalAlignment="Left" Margin="24,0,0,1" Width="45" />
-              </DockPanel>
-              <StackPanel VerticalAlignment="Center" Margin="85,0,0,0">
-                <TextBlock Name="games_button_text_line1" Foreground="#FF000000" Style="{Binding Path=GamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_regular_20}}" Text="{Binding Path=GamesButtonTextLine1, FallbackValue=RENT}" Visibility="{Binding Path=RentMoviesGamesTextVisibility, FallbackValue=Visible}" />
-                <TextBlock Name="games_button_text_line2" Style="{Binding Path=GamesButtonTextLine2Style, FallbackValue={StaticResource font_montserrat_extrabold_24}}" Text="{Binding Path=GamesButtonTextLine2, FallbackValue=GAMES}" Visibility="{Binding Path=RentMoviesGamesTextVisibility, FallbackValue=Visible}" />
-                <TextBlock Style="{StaticResource font_museo_slab_900_28}" Text="GAMES" Visibility="{Binding Path=RentAndBuyMoviesGamesTextVisibility, FallbackValue=Collapsed}" />
-                <TextBlock Style="{StaticResource font_montserrat_regular_16}" Text="RENT &amp; BUY" Foreground="#303438" Visibility="{Binding Path=RentAndBuyMoviesGamesTextVisibility, FallbackValue=Collapsed}" />
-              </StackPanel>
-            </Grid>
-          </Redbox:RoundedButton>
           <Redbox:RoundedButton Name="buy_movies_button" Style="{StaticResource white_and_warm_purple_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="56" Width="217" CornerRadius="28" Command="{x:Static localbase:Commands.BuyMoviesCommand}" Focusable="False" Visibility="{Binding Path=BuyMoviesOrGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding BuyMoviesEnabled}">
             <Grid>
               <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}" />
               <TextBlock Name="buy_movies_button_text_line1" HorizontalAlignment="Center" Style="{Binding Path=BuyMoviesOrGamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=BuyMoviesOrGamesButtonTextLine1, FallbackValue=BUY MOVIES}" />
-            </Grid>
-          </Redbox:RoundedButton>
-          <Redbox:RoundedButton Name="buy_games_button" Style="{StaticResource white_and_warm_purple_button_style}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" Height="56" Width="217" CornerRadius="28" Command="{x:Static localbase:Commands.BuyGamesCommand}" Focusable="False" Visibility="{Binding Path=BuyGamesButtonVisibility, FallbackValue=Visible}" IsEnabled="{Binding BuyGamesEnabled}">
-            <Grid>
-              <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}" />
-              <TextBlock Name="buy_games_button_text_line1" HorizontalAlignment="Center" Style="{Binding Path=BuyGamesButtonTextLine1Style, FallbackValue={StaticResource font_montserrat_extrabold_20}}" Text="{Binding Path=BuyGamesButtonTextLine1, FallbackValue=BUY GAMES}" />
             </Grid>
           </Redbox:RoundedButton>
           <Redbox:RoundedButton Name="online_pickup_button" Style="{StaticResource darkpurple_to_lightpurple_white_border_button_style}" Margin="0,20,0,0" Width="217" Height="56" VerticalAlignment="Top" HorizontalAlignment="Left" CornerRadius="28" BorderThickness="3" Command="{x:Static localbase:Commands.PickupProductCommand}" Focusable="False" Visibility="{Binding IsReturnOnlyMode, Converter={StaticResource NotBoolToVisibility}}">

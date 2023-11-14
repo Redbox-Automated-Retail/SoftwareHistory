@@ -52,7 +52,7 @@ public class VsmViewController : BaseViewController
 
 	private static void GetAdImage(VsmViewModel vsmViewModel)
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKioskClosingVSM)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.ShowKioskClosingVSM)
 		{
 			vsmViewModel.MinimumDisplayTime = 7000;
 			vsmViewModel.AdImage = null;
@@ -123,7 +123,7 @@ public class VsmViewController : BaseViewController
 
 	public static bool IsVsmAdAvailable()
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ShowKioskClosingVSM)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.ShowKioskClosingVSM)
 		{
 			return true;
 		}

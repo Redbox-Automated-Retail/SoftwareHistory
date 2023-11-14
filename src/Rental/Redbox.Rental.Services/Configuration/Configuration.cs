@@ -19,21 +19,11 @@ public class Configuration : IConfiguration
 
 	private Dictionary<TitleType, bool> _gameHasContentTypes;
 
-	private bool _loyaltySignupEnabled;
-
 	private bool _loyaltySignupAfterSwipeEnabled;
-
-	private TimeSpan _loyaltySignupStartTime;
-
-	private TimeSpan _loyaltySignupEndTime;
 
 	private TimeSpan _loyaltySignupAfterSwipeStartTime;
 
 	private TimeSpan _loyaltySignupAfterSwipeEndTime;
-
-	private List<TitleType> _sendReturnImageTitleTypes;
-
-	private List<long> _sendReturnImageProductIds;
 
 	private string _priceFiltersOnBrowseABTestVersion;
 
@@ -216,37 +206,13 @@ public class Configuration : IConfiguration
 
 	public bool _4KUpsellEnabled { get; private set; }
 
-	public bool EndGameRentals { get; private set; }
-
-	public bool EndGames { get; private set; }
-
 	public int OfflineItemsLimit { get; private set; }
 
 	public int OfflineGameRentalLimit { get; private set; }
 
 	public int OfflineGamePurchaseLimit { get; private set; }
 
-	public int UploadDiscImageMessagePriority { get; private set; }
-
 	public int KioskAnalyticsMessagePriority { get; private set; }
-
-	public bool EnableVistarAds { get; private set; }
-
-	public int VistarGetAdTimeout { get; private set; }
-
-	public bool EnableBrowseMessagePopup { get; private set; }
-
-	public int BrowseMessagePopupDuration { get; private set; }
-
-	public bool EnableRedboxSweepstakes { get; private set; }
-
-	public bool EnableAvodLeadGenerationOfferWithoutBoxArt { get; private set; }
-
-	public bool EnableAvodLeadGenerationOfferWithBoxArt { get; private set; }
-
-	public bool EnableRedboxPlusLeadGenerationOffer { get; private set; }
-
-	public bool DisplayUpdatedPerksPoints { get; private set; }
 
 	public bool LoyaltySignUpAfterSwipeEnabled
 	{
@@ -260,37 +226,11 @@ public class Configuration : IConfiguration
 		}
 	}
 
-	public bool EnableIRSecurity { get; private set; }
-
-	public bool EnableImageSecurity { get; private set; }
-
-	public bool MonitorBarcodeTracking { get; private set; }
-
-	public int BarcodeTrackingMaxBatchSize { get; private set; }
-
-	public int BarcodeTrackingTimerDuration { get; private set; }
-
-	public int BarcodeTrackingMessagePriority { get; private set; }
-
-	public string FraudServicesUrl { get; private set; }
-
-	public string FraudServicesKey { get; private set; }
-
 	public int KeepHalImagesForNumberOfDays { get; private set; }
-
-	public bool AwsBarcodeTrackingEnabled { get; private set; }
-
-	public bool AwsUploadDiscImageEnabled { get; private set; }
-
-	public string AwsFraudServicesUrl { get; private set; }
-
-	public string AwsFraudServicesKey { get; private set; }
 
 	public bool PerksPassEnabled { get; private set; }
 
 	public string PriceFiltersOnBrowseABTestVersion => GetCultureBasedValue(_priceFiltersOnBrowseABTestVersion, "A");
-
-	public int ScreenSaverTimeout { get; private set; }
 
 	public string OutOfStockTitleDetailsABTestVersion => GetCultureBasedValue(_oosTitleDetailsABTestVersion, "A");
 
@@ -299,8 +239,6 @@ public class Configuration : IConfiguration
 	public string StartViewDarkModeStartTime { get; private set; }
 
 	public string StartViewDarkModeEndTime { get; private set; }
-
-	public bool ShowAfterSwipePersonalizedOffers { get; private set; }
 
 	public string KioskClientServiceBaseUrl { get; private set; }
 
@@ -313,22 +251,6 @@ public class Configuration : IConfiguration
 	public bool UseAWSBrokerService { get; private set; }
 
 	public bool AuthorizeAtPickup { get; private set; }
-
-	public bool UseDiscountsForPmnpOffers { get; private set; }
-
-	public bool EnableStarzOffer { get; private set; }
-
-	public bool EnableRedboxPlusOffer { get; private set; }
-
-	public bool EnableRedboxPlusRedemption { get; private set; }
-
-	public bool ShowKioskClosingVSM { get; private set; }
-
-	public bool ReturnVisitPromoOfferEnabled { get; private set; }
-
-	public int ReturnVisitPromoCheckTimeout { get; private set; }
-
-	public int StartViewAdTimeout { get; private set; }
 
 	public string KioskDataServicesUrl { get; private set; }
 
@@ -467,60 +389,21 @@ public class Configuration : IConfiguration
 		OfflineItemsLimit = ConfigGetValue(service, "system", "General", "OfflineItemsLimit", 3);
 		OfflineGameRentalLimit = ConfigGetValue(service, "system", "General", "OfflineGameRentalLimit", 1);
 		OfflineGamePurchaseLimit = ConfigGetValue(service, "system", "General", "OfflineGamePurchaseLimit", 2);
-		UploadDiscImageMessagePriority = ConfigGetValue(service, "system", "QueueService", "UploadDiscImageMessagePriority", 60);
 		KioskAnalyticsMessagePriority = ConfigGetValue(service, "system", "QueueService", "KioskAnalyticsMessagePriority", 0);
 		UseTimerToInvokeCallbackEntries = ConfigGetValue(service, "system", "General", "UseTimerToInvokeCallbackEntries", defaultValue: true);
 		GiftCardsEnabled = ConfigGetValue(service, "system", "General", "GiftCardsEnabled", defaultValue: true);
 		TextToSpeechVolume = ConfigGetValue(service, "system", "General", "TextToSpeechVolume", 100);
 		ButtonAnimationEnabled = ConfigGetValue(service, "system", "General", "ButtonAnimationEnabled", defaultValue: true);
 		UseLowestPriceSortOrder = ConfigGetValue(service, "system", "General", "UserLowestPriceSortOrder", defaultValue: false);
-		EndGameRentals = ConfigGetValue(service, "marketing", "MarketingGeneral", "EndGameRentals", defaultValue: true);
-		EndGames = ConfigGetValue(service, "marketing", "MarketingGeneral", "EndGames", defaultValue: true);
-		EnableVistarAds = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableVistarAds", defaultValue: false);
-		VistarGetAdTimeout = ConfigGetValue(service, "marketing", "MarketingGeneral", "VistarGetAdTimeout", 500);
-		ShowAfterSwipePersonalizedOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowAfterSwipePersonalizedOffers", defaultValue: false);
-		UseDiscountsForPmnpOffers = ConfigGetValue(service, "marketing", "MarketingGeneral", "UseDiscountsForPmnpOffers", defaultValue: false);
-		EnableBrowseMessagePopup = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableBrowseMessagePopup", defaultValue: false);
-		BrowseMessagePopupDuration = ConfigGetValue(service, "marketing", "MarketingGeneral", "BrowseMessagePopupDuration", 15000);
-		EnableRedboxSweepstakes = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxSweepstakes", defaultValue: false);
-		EnableAvodLeadGenerationOfferWithoutBoxArt = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableAvodLeadGenerationOfferWithoutBoxArt", defaultValue: false);
-		EnableAvodLeadGenerationOfferWithBoxArt = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableAvodLeadGenerationOfferWithBoxArt", defaultValue: false);
-		EnableRedboxPlusLeadGenerationOffer = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusLeadGenerationOffer", defaultValue: false);
-		EnableStarzOffer = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableStarzOffer", defaultValue: false);
-		EnableRedboxPlusOffer = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusOffer", defaultValue: false);
-		EnableRedboxPlusRedemption = ConfigGetValue(service, "marketing", "MarketingGeneral", "EnableRedboxPlusRedemption", defaultValue: false);
-		ShowKioskClosingVSM = ConfigGetValue(service, "marketing", "MarketingGeneral", "ShowKioskClosingVSM", defaultValue: false);
-		DisplayUpdatedPerksPoints = ConfigGetValue(service, "marketing", "MarketingGeneral", "DisplayUpdatedPerksPoints", defaultValue: false);
-		ReturnVisitPromoOfferEnabled = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoOfferEnabled", defaultValue: false);
-		ReturnVisitPromoCheckTimeout = ConfigGetValue(service, "marketing", "MarketingReturn", "ReturnVisitPromoCheckTimeout", 10000);
-		StartViewAdTimeout = ConfigGetValue(service, "marketing", "MarketingAd", "StartViewAdTimeout", 120000);
 		EarlyIdEnabled = ConfigGetValue(service, "system", "Personalization", "EarlyIDEnabled", defaultValue: false);
 		LoyaltyEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltyEnabled", defaultValue: false);
 		PerksPassEnabled = ConfigGetValue(service, "system", "Personalization", "PerksPassEnabled", defaultValue: false);
-		_loyaltySignupEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltySignUpEnabled", defaultValue: false);
 		_loyaltySignupAfterSwipeEnabled = ConfigGetValue(service, "system", "Personalization", "LoyaltySignUpAfterSwipeEnabled", defaultValue: false);
-		string timeSpan = ConfigGetValue<string>(service, "system", "Personalization", "SignUpStartEndTime", null);
-		ParseTimeRange(timeSpan, out _loyaltySignupStartTime, out _loyaltySignupEndTime, "SignUpStartEndTime");
-		string timeSpan2 = ConfigGetValue<string>(service, "system", "Personalization", "SignUpAfterSwipeStartEndTime", null);
-		ParseTimeRange(timeSpan2, out _loyaltySignupAfterSwipeStartTime, out _loyaltySignupAfterSwipeEndTime, "SignUpAfterSwipeStartEndTime");
-		FraudServicesUrl = ConfigGetValue<string>(service, "system", "Fraud", "FraudServicesUrl", null);
-		FraudServicesKey = ConfigGetValue<string>(service, "system", "Fraud", "FraudServicesKey", null);
-		BarcodeTrackingMaxBatchSize = ConfigGetValue(service, "system", "Fraud", "BarcodeTrackingMaxBatchSize", 10);
-		BarcodeTrackingTimerDuration = ConfigGetValue(service, "system", "Fraud", "BarcodeTrackingTimerDuration", 3600000);
-		BarcodeTrackingMessagePriority = ConfigGetValue(service, "system", "Fraud", "BarcodeTrackingMessagePriority", 110);
-		MonitorBarcodeTracking = ConfigGetValue(service, "system", "Fraud", "MonitorBarcodeTracking", defaultValue: false);
-		EnableIRSecurity = ConfigGetValue(service, "system", "Fraud", "EnableIRSecurity", defaultValue: false);
-		EnableImageSecurity = ConfigGetValue(service, "system", "Fraud", "EnableImageSecurity", defaultValue: false);
-		string sendImageTypes = ConfigGetValue(service, "system", "Fraud", "SendReturnImageTypes", TitleFamily.Games.ToString());
-		ParseImageTypes(sendImageTypes);
+		string timeSpan = ConfigGetValue<string>(service, "system", "Personalization", "SignUpAfterSwipeStartEndTime", null);
+		ParseTimeRange(timeSpan, out _loyaltySignupAfterSwipeStartTime, out _loyaltySignupAfterSwipeEndTime, "SignUpAfterSwipeStartEndTime");
 		KeepHalImagesForNumberOfDays = ConfigGetValue(service, "system", "Fraud", "KeepHalImagesForNumberOfDays", 30);
-		AwsBarcodeTrackingEnabled = ConfigGetValue(service, "system", "Fraud", "AwsBarcodeTrackingEnabled", defaultValue: false);
-		AwsUploadDiscImageEnabled = ConfigGetValue(service, "system", "Fraud", "AwsUploadDiscImageEnabled", defaultValue: false);
-		AwsFraudServicesUrl = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesUrl", null);
-		AwsFraudServicesKey = ConfigGetValue<string>(service, "system", "Fraud", "AwsFraudServicesKey", null);
-		_priceFiltersOnBrowseABTestVersion = GetABTestValue(service, "PriceFiltersOnBrowse", "MarketingGeneral");
-		_oosTitleDetailsABTestVersion = GetABTestValue(service, "OutOfStockTitleDetails", "AB Testing");
-		ScreenSaverTimeout = ConfigGetValue(service, "marketing", "AB Test Parameters", "ScreenSaverTimer", 25000);
+		_priceFiltersOnBrowseABTestVersion = GetABTestValue(KioskSession.MarketingGeneral.PriceFiltersOnBrowse);
+		_oosTitleDetailsABTestVersion = GetABTestValue(KioskSession.ABTesting.OutOfStockTitleDetails);
 		AuthorizeAtPickup = ConfigGetValue(service, "system", "General", "AuthorizeAtPickup", defaultValue: false);
 		StartViewDarkModeEnabled = ConfigGetValue(service, "system", "General", "StartViewDarkModeEnabled", defaultValue: false);
 		StartViewDarkModeStartTime = ConfigGetValue(service, "system", "General", "StartViewDarkModeStartTime", "19:0:0");
@@ -541,8 +424,8 @@ public class Configuration : IConfiguration
 		RedboxPlusDocument = ConfigGetValue(service, "system", "Documents", "RedboxPlusDocument", string.Empty);
 		UseMerchOrdersForThinning = ConfigGetValue(service, "system", "General", "UseMerchOrdersForThinning", defaultValue: false);
 		KioskClientServiceGetMerchandizingOrdersTimeout = ConfigGetValue(service, "system", "General", "KioskClientServiceGetMerchandizingOrdersTimeout", 60000);
-		string timeSpan3 = ConfigGetValue(service, "system", "General", "ThinJobTimeRange", "03:00:00-04:30:00");
-		ParseTimeRange(timeSpan3, out _thinJobStartTime, out _thinJobEndTime, "ThinJobTimeRange");
+		string timeSpan2 = ConfigGetValue(service, "system", "General", "ThinJobTimeRange", "03:00:00-04:30:00");
+		ParseTimeRange(timeSpan2, out _thinJobStartTime, out _thinJobEndTime, "ThinJobTimeRange");
 		MerchOrderExpirationDays = ConfigGetValue(service, "system", "General", "MerchOrderExpirationDays", 7);
 		ZeroTouchReadTimeout = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchReadTimeout", 600000);
 		ZeroTouchPickupEnabled = ConfigGetValue(service, "system", "ZeroTouch", "ZeroTouchPickupEnabled", defaultValue: true);
@@ -594,14 +477,14 @@ public class Configuration : IConfiguration
 		return value;
 	}
 
-	private string GetABTestValue(IConfigurationService configService, string testName, string categoryName)
+	private string GetABTestValue(string configValue)
 	{
-		string text = ConfigGetValue(configService, "marketing", categoryName, testName, "A");
-		if (string.IsNullOrEmpty(text) || text == "OFF")
+		string result = configValue;
+		if (string.IsNullOrEmpty(configValue) || configValue == "OFF")
 		{
-			text = "A";
+			result = "A";
 		}
-		return text;
+		return result;
 	}
 
 	private void ParseTimeRange(string timeSpan, out TimeSpan startTime, out TimeSpan endTime, string configSetting)
@@ -649,62 +532,5 @@ public class Configuration : IConfiguration
 			return timeOfDay < endTime;
 		}
 		return true;
-	}
-
-	private void ParseImageTypes(string sendImageTypes)
-	{
-		_sendReturnImageTitleTypes = new List<TitleType>();
-		_sendReturnImageProductIds = new List<long>();
-		if (string.IsNullOrEmpty(sendImageTypes))
-		{
-			return;
-		}
-		try
-		{
-			string[] array = sendImageTypes.Split(',');
-			foreach (string text in array)
-			{
-				List<TitleType> imageTypes = new List<TitleType>();
-				long result = 0L;
-				if (TryParseImageTitleTypes(text, out imageTypes))
-				{
-					_sendReturnImageTitleTypes.AddRange(imageTypes);
-				}
-				else if (long.TryParse(text, out result))
-				{
-					_sendReturnImageProductIds.Add(result);
-				}
-				else
-				{
-					LogHelper.Instance.Log("Invalid value specified in SendReturnImageTypes: '" + text + "'");
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			LogHelper.Instance.Log("Unable to parse SendReturnImageTypes. Value read was " + sendImageTypes, e);
-		}
-	}
-
-	private bool TryParseImageTitleTypes(string typeString, out List<TitleType> imageTypes)
-	{
-		imageTypes = new List<TitleType>();
-		if (Enum.TryParse<TitleType>(typeString, out var result) && Enum.IsDefined(typeof(TitleType), result))
-		{
-			imageTypes.Add(result);
-			return true;
-		}
-		if (Enum.TryParse<TitleFamily>(typeString, out var result2) && Enum.IsDefined(typeof(TitleFamily), result2))
-		{
-			foreach (TitleType value in Enum.GetValues(typeof(TitleType)))
-			{
-				if (result2 == TitleFamily.All || value.GetTitleFamily() == result2)
-				{
-					imageTypes.Add(value);
-				}
-			}
-			return true;
-		}
-		return false;
 	}
 }

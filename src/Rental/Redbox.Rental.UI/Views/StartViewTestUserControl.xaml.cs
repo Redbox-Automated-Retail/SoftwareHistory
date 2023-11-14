@@ -26,9 +26,7 @@ public partial class StartViewTestUserControl : TextToSpeechUserControl, ICompon
 	{
 		ITheme obj = ServiceLocator.Instance.GetService<IThemeService>()?.CurrentTheme;
 		obj?.SetStyle(rent_movies_button);
-		obj?.SetStyle(rent_games_button);
 		obj?.SetStyle(buy_movies_button);
-		obj?.SetStyle(buy_games_button);
 		obj?.SetStyle(return_button);
 		obj?.SetStyle(pick_up_button);
 		obj?.SetStyle(handicap_button);
@@ -63,16 +61,6 @@ public partial class StartViewTestUserControl : TextToSpeechUserControl, ICompon
 		e.CanExecute = buy_movies_button.Visibility == Visibility.Visible;
 	}
 
-	private void BuyGamesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = buy_games_button.Visibility == Visibility.Visible;
-	}
-
-	private void RentGamesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = rent_games_button.Visibility == Visibility.Visible;
-	}
-
 	private void BuyMoviesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		RunCommandOnce(delegate
@@ -80,38 +68,6 @@ public partial class StartViewTestUserControl : TextToSpeechUserControl, ICompon
 			try
 			{
 				StartViewModel?.ProcessBuyMoviesButtonClick();
-				HandleWPFHit();
-			}
-			finally
-			{
-				CompleteRunOnce();
-			}
-		});
-	}
-
-	private void BuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		RunCommandOnce(delegate
-		{
-			try
-			{
-				StartViewModel?.ProcessBuyGamesButtonClick();
-				HandleWPFHit();
-			}
-			finally
-			{
-				CompleteRunOnce();
-			}
-		});
-	}
-
-	private void RentOrBuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		RunCommandOnce(delegate
-		{
-			try
-			{
-				StartViewModel?.ProcessRentOrBuyGameButtonClick();
 				HandleWPFHit();
 			}
 			finally

@@ -18,10 +18,6 @@ public interface IBrowseStateSet
 
 	TitleType TitleType { get; set; }
 
-	bool BrowseCollections { get; set; }
-
-	ICollectionProduct BrowseCollectionProduct { get; set; }
-
 	int PageNumber { get; set; }
 
 	Genres? Genre { get; set; }

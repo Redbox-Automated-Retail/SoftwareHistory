@@ -18,7 +18,6 @@ using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Pricing;
 using Redbox.Rental.Model.Reservation;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.KioskProduct;
 using Redbox.Rental.Services.Loyalty;
 using Redbox.Rental.Services.Promotion;
@@ -662,23 +661,11 @@ public class ReservationFunctions
 		bool flag7 = OrchestrationService.IsGiftCard();
 		bool isInZeroTouchMode = Redbox.Rental.Services.Session.Session.Instance.IsInZeroTouchMode;
 		bool flag8 = accountReservations.All((IReservation x) => x.ReservationDetails.AuthorizeAtPickup);
-		bool flag9 = Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames;
-		bool flag10 = flag9;
-		IDataService dataService = ServiceLocator.Instance.GetService<IDataService>();
-		if ((dataService != null) & flag9)
-		{
-			flag10 = accountReservations.Any((IReservation x) => x.ReservationDetails.ReservedTitles.Any(delegate(IReservedTitle t)
-			{
-				dataService.GetProductByBarcode(t.Barcode, out var kioskProduct);
-				return ((ITitleProduct)kioskProduct).TitleFamily == TitleFamily.Games;
-			}));
-		}
 		List<string> reservedBarcodesToVend = GetReservedBarcodesToVend(accountReservations);
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() - num_reservations= {reservedBarcodesToVend.Count} num_reserved_titles= {count} is_RAP={flag8}");
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 2 - is_gift_card={flag7}   is_gc: {flag2}   is_mnp: {flag3}   is_mdv= {flag4}");
 		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 3 - is_loyalty_redemption= {flag5}  has_purchase= {flag6}  is_zero_touch= {isInZeroTouchMode}");
-		LogHelper.Instance.Log($"IsQualifiedForRecommendationOnPickup() part 4 - anyReservationsWithGames = {flag10}  Config.EndGameRentals= {Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals}  Config.EndGames= {Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames}");
-		if (((count == 1 && reservedBarcodesToVend.Count < 5) & flag8) && !flag7 && !isInZeroTouchMode && !flag2 && !flag3 && !flag4 && !flag5 && !flag6 && !(flag10 & flag9) && GetRecommendedProductCount(accountReservations) > 2)
+		if (((count == 1 && reservedBarcodesToVend.Count < 5) & flag8) && !flag7 && !isInZeroTouchMode && !flag2 && !flag3 && !flag4 && !flag5 && !flag6 && GetRecommendedProductCount(accountReservations) > 2)
 		{
 			flag = true;
 		}

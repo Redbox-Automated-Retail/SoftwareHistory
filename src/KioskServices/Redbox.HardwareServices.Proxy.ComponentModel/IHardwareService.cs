@@ -7,8 +7,6 @@ namespace Redbox.HardwareServices.Proxy.ComponentModel;
 
 public interface IHardwareService
 {
-	bool SupportsCameraFraudScan { get; }
-
 	int CurrentCameraGeneration { get; }
 
 	int BarcodeDecoder { get; }
@@ -74,8 +72,6 @@ public interface IHardwareService
 	ErrorList ClearMerchStatus(string[] ids, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList GetBarcodeVMZPosition(string[] ids, HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
-
-	ErrorList FieldInsertFraudWithCheck(HardwareEventHandler eventHandler, HardwareStatusChangeHandler statusChangeHandler, out string jobId);
 
 	ErrorList GetKioskFunctionCheckData(out IList<IKioskFunctionCheckData> data);
 

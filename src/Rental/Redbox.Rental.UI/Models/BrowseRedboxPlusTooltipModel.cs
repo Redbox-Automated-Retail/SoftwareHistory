@@ -9,6 +9,8 @@ public class BrowseRedboxPlusTooltipModel : DependencyObject
 
 	public static readonly DependencyProperty BrowseRedboxPlusTooltipUserControlVisibilityProperty = DependencyProperty.Register("BrowseRedboxPlusTooltipUserControlVisibility", typeof(Visibility), typeof(BrowseRedboxPlusTooltipModel), new FrameworkPropertyMetadata(Visibility.Collapsed));
 
+	public static readonly DependencyProperty BrowseRedboxPlusTooltipUserControlMarginProperty = DependencyProperty.Register("BrowseRedboxPlusTooltipUserControlMargin", typeof(Thickness), typeof(BrowseRedboxPlusTooltipModel), new FrameworkPropertyMetadata(new Thickness(28.0, 0.0, 0.0, 138.0)));
+
 	public string Text { get; set; }
 
 	public Visibility BrowseRedboxPlusTooltipUserControlVisibility
@@ -22,6 +24,21 @@ public class BrowseRedboxPlusTooltipModel : DependencyObject
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(BrowseRedboxPlusTooltipUserControlVisibilityProperty, value);
+			});
+		}
+	}
+
+	public Thickness BrowseRedboxPlusTooltipUserControlMargin
+	{
+		get
+		{
+			return base.Dispatcher.Invoke(() => (Thickness)GetValue(BrowseRedboxPlusTooltipUserControlMarginProperty));
+		}
+		set
+		{
+			base.Dispatcher.Invoke(delegate
+			{
+				SetValue(BrowseRedboxPlusTooltipUserControlMarginProperty, value);
 			});
 		}
 	}

@@ -40,7 +40,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			int valueOrDefault = (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession?.LoyaltySession?.PointsBalance).GetValueOrDefault();
 			ISession instance = Redbox.Rental.Services.Session.Session.Instance;
 			bool flag = instance != null && instance.PersonalizationSession?.StoredPromoCodes?.Count > 0;
-			bool displayUpdatedPerksPoints = Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints;
+			bool displayUpdatedPerksPoints = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.DisplayUpdatedPerksPoints;
 			int num = ((!displayUpdatedPerksPoints) ? 1 : 0);
 			int num2 = (displayUpdatedPerksPoints ? 1550 : 1000);
 			int num3 = (displayUpdatedPerksPoints ? 2000 : 1500);
@@ -425,8 +425,6 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			AdImage = null,
 			AdHeight = 0,
 			MainHeight = 628,
-			ShowCollections = false,
-			CollectionTextLine1 = Resources.title_detail_collection_text,
 			BuyText = Resources.title_detail_buy,
 			TitleDetailFormatButtonTextValues = new TitleRollupUtilities.TitleDetailFormatRentalButtonTextValues(),
 			Add = Resources.add,
@@ -446,7 +444,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
 			IsInCartBrowse = false,
-			EnableRedboxPlus = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption,
+			EnableRedboxPlus = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableRedboxPlusRedemption,
 			KioskClientService = ServiceLocator.Instance.GetService<IKioskClientService>(),
 			ShowWatchOptions = false,
 			ShowDualInStock = false

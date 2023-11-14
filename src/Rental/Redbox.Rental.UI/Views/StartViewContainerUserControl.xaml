@@ -2,9 +2,7 @@
 <controls:TextToSpeechUserControl x:Class="Redbox.Rental.UI.Views.StartViewContainerUserControl" xmlns:controls="clr-namespace:Redbox.Rental.UI.Controls" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:local="clr-namespace:Redbox.Rental.UI.Views" xmlns:localbase="clr-namespace:Redbox.Rental.UI" xmlns:redbox="clr-namespace:Redbox.Controls;assembly=Redbox.Controls" x:Name="StartViewBase">
   <UIElement.CommandBindings>
     <CommandBinding Command="{x:Static localbase:Commands.RentOrBuyMoviesCommand}" Executed="RentOrBuyMoviesCommandBinding_Executed" CanExecute="RentOrBuyMoviesCommandBinding_CanExecute" />
-    <CommandBinding Command="{x:Static localbase:Commands.RentOrBuyGamesCommand}" Executed="RentOrBuyGamesCommandBinding_Executed" CanExecute="RentGamesCommandBinding_CanExecute" />
     <CommandBinding Command="{x:Static localbase:Commands.BuyMoviesCommand}" Executed="BuyMoviesCommandBinding_Executed" CanExecute="BuyMoviesCommandBinding_CanExecute" />
-    <CommandBinding Command="{x:Static localbase:Commands.BuyGamesCommand}" Executed="BuyGamesCommandBinding_Executed" CanExecute="BuyGamesCommandBinding_CanExecute" />
     <CommandBinding Command="{x:Static localbase:Commands.PickupProductCommand}" Executed="PickupProductCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ReturnProductCommand}" Executed="ReturnProductCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.HelpCommand}" Executed="HelpCommandBinding_Executed" />

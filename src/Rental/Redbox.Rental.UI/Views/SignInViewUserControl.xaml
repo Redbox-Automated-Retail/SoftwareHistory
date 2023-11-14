@@ -22,7 +22,7 @@
           <TextBlock Name="header_label" Margin="0,0,0,0" Width="Auto" Height="Auto" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_bold_36}" TextWrapping="Wrap" TextAlignment="Left" Text="{Binding Path=HeaderLabelText, FallbackValue=Get free stuff just for signing up}" />
           <TextBlock Name="MessageText" Margin="0,24,0,0" Foreground="#FFFFFFFF" Style="{StaticResource font_montserrat_medium_20}" TextWrapping="Wrap" Visibility="{Binding MessageTextVisibility, FallbackValue=Collapsed}">
             <TextBlock.Inlines>
-              <Run Text="{Binding Path=MessageText, FallbackValue=Then youll continue with STARZ}" />
+              <Run Text="{Binding Path=MessageText, FallbackValue=Then youll continue with Redbox+}" />
               <Run BaselineAlignment="Superscript" FontSize="10" Text="{Binding RegisteredTrademarkSymbol, FallbackValue=®}" />
             </TextBlock.Inlines>
           </TextBlock>

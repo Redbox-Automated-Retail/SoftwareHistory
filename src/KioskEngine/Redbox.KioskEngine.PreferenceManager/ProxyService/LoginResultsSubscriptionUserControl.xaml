@@ -26,8 +26,6 @@
             <TextBox Name="EligibleSubscriptionPlanIdsTextbox" Width="340" Height="18" VerticalAlignment="Center" Margin="0,3" HorizontalAlignment="Left" Text="{Binding Path=EligibleSubscriptionPlanIds}" />
             <TextBlock Text="(CSV)" Grid.Row="11" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="2,0,0,0" />
           </StackPanel>
-          <TextBlock Text="Active Starz Subscription Id" Grid.Row="2" Grid.Column="0" FontSize="10" VerticalAlignment="Center" />
-          <TextBox Name="ActiveStarzSubscriptionIdTextbox" Grid.Row="2" Grid.Column="1" Width="340" Height="18" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,3" Text="{Binding Path=ActiveStarzSubscriptionPlanId}" />
           <TextBlock Text="Redbox+ Subscription Id" Grid.Row="4" Grid.Column="0" FontSize="10" VerticalAlignment="Center" />
           <TextBox Name="RedboxPlusSubscriptionIdTextbox" Grid.Row="4" Grid.Column="1" Width="340" Height="18" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,3" Text="{Binding Path=RedboxPlusSubscriptionPlanId}" />
           <TextBlock Text="Redbox+ Subscription Campaign Id" Grid.Row="5" Grid.Column="0" FontSize="10" VerticalAlignment="Center" />

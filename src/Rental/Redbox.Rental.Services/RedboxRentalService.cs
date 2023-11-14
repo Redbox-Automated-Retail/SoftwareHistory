@@ -64,7 +64,6 @@ public class RedboxRentalService : IRedboxRental
 		HardwareHelper.TurnOnAirExchangerFanIfConfigured(ServiceLocator.Instance.GetService<IConfiguration>()?.ForcedAirExchangerConfigured ?? true, ServiceLocator.Instance.GetService<IResourceBundleService>()?.CurrentBundleName);
 		ServiceLocator.Instance.GetService<IRentalHealthService>()?.KioskFunctionCheck();
 		BrowseViewController.CacheProductImages();
-		ServiceLocator.Instance.GetService<IFraudService>()?.CreateFraudSyncTimer();
 		CheckReaderValidation();
 	}
 

@@ -60,14 +60,6 @@ public partial class TitleDetailsUserControl : TextToSpeechUserControl, IWPFActo
 		HandleWPFHit();
 	}
 
-	private void Collection_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		IBrowseItemModel browseItemModel = GetBrowseItemUserControl(e.OriginalSource)?.DataContext as IBrowseItemModel;
-		_ = browseItemModel?.Data;
-		Model.ProcessCollectionButtonHit(browseItemModel);
-		HandleWPFHit();
-	}
-
 	private void Buy_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		IBrowseItemModel model = GetBrowseItemUserControl(e.OriginalSource)?.DataContext as IBrowseItemModel;

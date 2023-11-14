@@ -84,7 +84,7 @@ public class CustomerOffer
 
 	public bool ShouldAdjustPrice(IConfiguration configuration)
 	{
-		if (DiscountType != OfferDiscountType.MultiNightPrice || configuration.UseDiscountsForPmnpOffers)
+		if (DiscountType != OfferDiscountType.MultiNightPrice || configuration.KioskSession.MarketingGeneral.UseDiscountsForPmnpOffers)
 		{
 			if (ActionCode == ActionCode.Purchase)
 			{

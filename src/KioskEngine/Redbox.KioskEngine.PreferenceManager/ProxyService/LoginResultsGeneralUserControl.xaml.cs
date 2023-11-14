@@ -59,8 +59,6 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 
 		public static readonly DependencyProperty NumberOfSampleStoredPromosProperty = DependencyProperty.Register("NumberOfSampleStoredPromos", typeof(int), typeof(ProxyServiceLoginResultsModel), new FrameworkPropertyMetadata(0));
 
-		public static readonly DependencyProperty ActiveStarzSubscriptionPlanIdProperty = DependencyProperty.Register("ActiveStarzSubscriptionPlanId", typeof(string), typeof(ProxyServiceLoginResultsModel), new FrameworkPropertyMetadata(null));
-
 		public static readonly DependencyProperty RedboxPlusSubscriptionTierProperty = DependencyProperty.Register("RedboxPlusSubscriptionTier", typeof(string), typeof(ProxyServiceLoginResultsModel), new FrameworkPropertyMetadata(null));
 
 		public static readonly DependencyProperty RedboxPlusSubscriptionStatusProperty = DependencyProperty.Register("RedboxPlusSubscriptionStatus", typeof(string), typeof(ProxyServiceLoginResultsModel), new FrameworkPropertyMetadata(null));
@@ -173,21 +171,6 @@ public partial class LoginResultsGeneralUserControl : UserControl, IPreferencePa
 				base.Dispatcher.Invoke(delegate
 				{
 					SetValue(NumberOfSampleStoredPromosProperty, value);
-				});
-			}
-		}
-
-		public string ActiveStarzSubscriptionPlanId
-		{
-			get
-			{
-				return base.Dispatcher.Invoke(() => (string)GetValue(ActiveStarzSubscriptionPlanIdProperty));
-			}
-			set
-			{
-				base.Dispatcher.Invoke(delegate
-				{
-					SetValue(ActiveStarzSubscriptionPlanIdProperty, value);
 				});
 			}
 		}

@@ -58,12 +58,6 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 		HandleWPFHit();
 	}
 
-	private void AddGameCommandCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		Model?.ProcessOnAddGameButtonClicked();
-		HandleWPFHit();
-	}
-
 	private void ShoppingCartViewUserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
 	{
 		PopulateDisplayProductModels();
@@ -138,11 +132,6 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 		}
 	}
 
-	private void ScanStarzQRCodeCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		Model?.ProcessOnScanStarzQRCodeButtonClicked();
-	}
-
 	private void ShoppingCartViewUserControl_Loaded(object sender, RoutedEventArgs e)
 	{
 		Model?.ProcessOnLoaded();
@@ -156,10 +145,5 @@ public partial class ShoppingCartViewUserControl : TextToSpeechUserControl, IWPF
 	private void ScanRedboxPlusQRCodeCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		Model?.ProcessOnScanRedboxPlusQRCodeButtonClicked();
-	}
-
-	private void ViewStarzOfferCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		Model?.ProcessOnViewStarzOfferButtonClicked();
 	}
 }

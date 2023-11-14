@@ -38,7 +38,7 @@ public class KioskClientServiceQRCodeUtilities : BaseKioskClientService, IKioskC
 			}
 			catch (Exception arg)
 			{
-				LogHelper.Instance.Log($"StarzOfferDetailViewController: Unable to convert byte array to BitmapImage.  Exception:{arg}");
+				LogHelper.Instance.Log($"GetQRCodeImage: Unable to convert byte array to BitmapImage.  Exception:{arg}");
 			}
 		}
 		if ((bitmapImage == null) & returnDefaultOnError)

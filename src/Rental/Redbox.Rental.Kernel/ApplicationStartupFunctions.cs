@@ -38,12 +38,6 @@ public static class ApplicationStartupFunctions
 		(ServiceLocator.Instance.GetService<IIdleTimerService>()?.GetIdleTimer(idleTimerName))?.Stop();
 	}
 
-	[KernelFunction(Name = "kernel.is_collections_popup_timer_enabled")]
-	public static bool IsCollectionsPopupTimerEnabled()
-	{
-		return OrchestrationService.IsCollectionsPopupTimerEnabled();
-	}
-
 	[KernelFunction(Name = "kernel.get_idle_timer_timeout")]
 	public static int GetIdleTimerTimeout()
 	{

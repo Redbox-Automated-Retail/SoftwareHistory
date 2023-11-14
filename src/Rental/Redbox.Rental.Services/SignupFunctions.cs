@@ -81,18 +81,6 @@ public class SignupFunctions
 			personalizationSession.PromptForPerks = false;
 			personalizationSession.PromptForEarlyId = false;
 			personalizationSession.SubscriptionData = new SubscriptionData();
-			ISubscriptionProduct subscriptionProduct = null;
-			ServiceLocator.Instance.GetService<IDataService>()?.GetActiveBrowseSubscriptionProduct(out subscriptionProduct);
-			if (subscriptionProduct != null)
-			{
-				personalizationSession.SubscriptionData.EligibleSubscriptionPlanIds.Add(subscriptionProduct.SubscriptionId);
-			}
-			ISubscriptionProduct subscriptionProduct2 = null;
-			ServiceLocator.Instance.GetService<IDataService>()?.GetActiveMyBagSubscriptionProduct(out subscriptionProduct2);
-			if (subscriptionProduct2 != null)
-			{
-				personalizationSession.SubscriptionData.EligibleSubscriptionPlanIds.Add(subscriptionProduct2.SubscriptionId);
-			}
 			(ServiceLocator.Instance.GetService<IDataService>()?.GetRedboxPlusSubscriptionProducts())?.ForEach(delegate(IRedboxPlusSubscriptionProduct x)
 			{
 				personalizationSession.SubscriptionData.EligibleSubscriptionPlanIds.Add(x.SubscriptionId);

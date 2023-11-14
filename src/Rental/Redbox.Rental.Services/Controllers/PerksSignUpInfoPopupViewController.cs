@@ -40,7 +40,7 @@ public class PerksSignUpInfoPopupViewController : BaseViewController
 		viewModel.TitleText = Resources.perks_signup_info_title;
 		viewModel.EarnHeading = Resources.perks_signup_info_earn_header;
 		viewModel.UseHeading = Resources.perks_signup_info_use_header;
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.DisplayUpdatedPerksPoints)
 		{
 			viewModel.EarnOption1Desc = Resources.perks_signup_info_earn_desc_1_updated;
 			viewModel.EarnOption2Desc = Resources.perks_signup_info_earn_desc_2_updated;

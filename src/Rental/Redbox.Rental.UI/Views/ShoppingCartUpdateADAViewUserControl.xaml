@@ -3,7 +3,6 @@
   <UIElement.CommandBindings>
     <CommandBinding Command="{x:Static localbase:Commands.GoBackCommand}" Executed="GoBackCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.AddMovieCommand}" Executed="AddMovieCommandBinding_Executed" />
-    <CommandBinding Command="{x:Static localbase:Commands.AddGameCommand}" Executed="AddGameCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.BrowseItemCancelCommand}" Executed="BrowseItemCancelCommandBinding_Executed" />
   </UIElement.CommandBindings>
   <Grid>
@@ -25,9 +24,6 @@
             </Grid.RowDefinitions>
             <Redbox:RoundedButton Name="AddMovieButton" Style="{StaticResource classic_rubine_radio_button_with_dropshadow_style}" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="32" Height="59" Width="210" Command="{x:Static localbase:Commands.AddMovieCommand}" Visibility="{Binding Path=AddMovieButtonVisibility, FallbackValue=Visible}">
               <TextBlock Name="AddMovieButtonText" Style="{StaticResource font_museo_slab_900_20}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Path=AddMovieButtonText, FallbackValue=Add Movie}" />
-            </Redbox:RoundedButton>
-            <Redbox:RoundedButton Name="AddGameButton" Grid.Row="1" Style="{StaticResource classic_rubine_radio_button_with_dropshadow_style}" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="32" Height="59" Width="210" Command="{x:Static localbase:Commands.AddGameCommand}" Visibility="{Binding Path=AddGameButtonVisibility, FallbackValue=Visible}">
-              <TextBlock Name="AddGameButtonText" Style="{StaticResource font_museo_slab_900_20}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding Path=AddGameButtonText, FallbackValue=Add Game}" />
             </Redbox:RoundedButton>
           </Grid>
         </StackPanel>

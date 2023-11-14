@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -160,6 +161,21 @@ public partial class BrowseTopMenuUserControl : RentalUserControl, IWPFActor, IC
 					BrowseTopMenuModel?.ProcessOnBrowseMenuButtonClicked(dataContext);
 					Commands.ResetIdleTimerCommand.Execute(null, this);
 				}
+			}
+			finally
+			{
+				CompleteRunOnce();
+			}
+		});
+	}
+
+	private void AZButtonCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
+	{
+		RunCommandOnce(delegate
+		{
+			try
+			{
+				BrowseTopMenuModel?.ProcessOnAZButtonClicked();
 			}
 			finally
 			{

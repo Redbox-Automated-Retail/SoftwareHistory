@@ -10,13 +10,9 @@ public class ShoppingCartUpdateADAViewModel : BaseModel<ShoppingCartUpdateADAVie
 
 	public Action OnAddMovieButtonPress;
 
-	public Action OnAddGameButtonPress;
-
 	public Action<DisplayProductModel, object> OnCancelBrowseItemModel;
 
 	public static readonly DependencyProperty AddMovieButtonVisibilityProperty = BaseModel<ShoppingCartUpdateADAViewModel>.CreateDependencyProperty("AddMovieButtonVisibility", typeof(Visibility), Visibility.Visible);
-
-	public static readonly DependencyProperty AddGameButtonVisibilityProperty = BaseModel<ShoppingCartUpdateADAViewModel>.CreateDependencyProperty("AddGameButtonVisibility", typeof(Visibility), Visibility.Visible);
 
 	public static readonly DependencyProperty DisplayProductModelsProperty = BaseModel<ShoppingCartUpdateADAViewModel>.CreateDependencyProperty("DisplayProductModels", typeof(List<DisplayProductModel>));
 
@@ -27,8 +23,6 @@ public class ShoppingCartUpdateADAViewModel : BaseModel<ShoppingCartUpdateADAVie
 	public string OkButtonText { get; set; }
 
 	public string AddMovieButtonText { get; set; }
-
-	public string AddGameButtonText { get; set; }
 
 	public Visibility AddMovieButtonVisibility
 	{
@@ -41,21 +35,6 @@ public class ShoppingCartUpdateADAViewModel : BaseModel<ShoppingCartUpdateADAVie
 			base.Dispatcher.Invoke(delegate
 			{
 				SetValue(AddMovieButtonVisibilityProperty, value);
-			});
-		}
-	}
-
-	public Visibility AddGameButtonVisibility
-	{
-		get
-		{
-			return base.Dispatcher.Invoke(() => (Visibility)GetValue(AddGameButtonVisibilityProperty));
-		}
-		set
-		{
-			base.Dispatcher.Invoke(delegate
-			{
-				SetValue(AddGameButtonVisibilityProperty, value);
 			});
 		}
 	}
@@ -83,11 +62,6 @@ public class ShoppingCartUpdateADAViewModel : BaseModel<ShoppingCartUpdateADAVie
 	public void ProcessAddMovieButtonPress()
 	{
 		OnAddMovieButtonPress?.Invoke();
-	}
-
-	public void ProcessAddGameButtonPress()
-	{
-		OnAddGameButtonPress?.Invoke();
 	}
 
 	public void ProcessOnCancelBrowseItemModel(DisplayProductModel displayProductModel, object parameter)

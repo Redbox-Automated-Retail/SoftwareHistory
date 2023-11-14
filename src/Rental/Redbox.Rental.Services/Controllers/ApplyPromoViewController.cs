@@ -77,7 +77,7 @@ public class ApplyPromoViewController : BaseViewController
 		{
 			activePromoCode = BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.Promotion?.Name;
 		}
-		PromoListLogic.CreateOfferListItemModels(viewModel, personalizationSession, activePromoCode, 'X', includeOffers: false, Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption);
+		PromoListLogic.CreateOfferListItemModels(viewModel, personalizationSession, activePromoCode, 'X', includeOffers: false, Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableRedboxPlusRedemption);
 	}
 
 	private static void AddOrRemovePromoCommand_Execute(StoredPromoCodeModel model, Action<string> applyPromoAction)

@@ -52,16 +52,16 @@ public class SignInViewController : BaseViewController
 			signInViewModel.HeaderImage = new BitmapImage(new Uri("pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/" + text));
 			string styleName = ((signInViewParameters.SignUpType == SignUpType.Perks) ? "sign_in_up_perks_header_image" : "sign_in_up_redbox_header_image");
 			signInViewModel.HeaderImageStyle = WPFFunctions.GetStyle(viewUserControl, styleName);
-			signInViewModel.HeaderLabelText = ((signInViewParameters.SignUpType == SignUpType.Perks) ? Resources.sign_in_header_text : ((signInViewParameters.SignUpType == SignUpType.RedboxPlus) ? Resources.sign_in_redbox_plus_header_text : Resources.sign_in_starz_header_text));
+			signInViewModel.HeaderLabelText = ((signInViewParameters.SignUpType == SignUpType.Perks) ? Resources.sign_in_header_text : Resources.sign_in_redbox_plus_header_text);
 			signInViewModel.AlreadyMemberText = Resources.sign_in_already_member_text;
 			signInViewModel.SignInLabelText = Resources.sign_in;
 			signInViewModel.EmailAndPasswordButtonText = Resources.sign_in_email_and_password_button_text;
 			signInViewModel.PhoneAndPinButtonText = Resources.sign_in_phone_and_pin_button_text;
 			signInViewModel.MessageTextVisibility = ((signInViewParameters.SignUpType == SignUpType.Perks) ? Visibility.Collapsed : Visibility.Visible);
-			signInViewModel.MessageText = ((signInViewParameters.SignUpType == SignUpType.RedboxPlus) ? Resources.sign_in_redbox_plus_message_text : Resources.sign_in_starz_message_text);
+			signInViewModel.MessageText = Resources.sign_in_redbox_plus_message_text;
 			signInViewModel.RegisteredTrademarkSymbol = ((signInViewParameters.SignUpType == SignUpType.RedboxPlus) ? string.Empty : Resources.registered_trademark_symbol);
 			signInViewModel.BulletVisibility = ((signInViewParameters.SignUpType != SignUpType.Perks) ? Visibility.Collapsed : Visibility.Visible);
-			bool displayUpdatedPerksPoints = Redbox.Rental.Services.Configuration.Configuration.Instance.DisplayUpdatedPerksPoints;
+			bool displayUpdatedPerksPoints = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.DisplayUpdatedPerksPoints;
 			signInViewModel.Bullet1Text = (displayUpdatedPerksPoints ? Resources.sign_in_point_one_text_updated : Resources.sign_in_point_one_text);
 			signInViewModel.Bullet2Text = Resources.sign_in_point_two_text;
 			signInViewModel.Bullet3Text = Resources.sign_in_point_three_text;
@@ -311,14 +311,7 @@ public class SignInViewController : BaseViewController
 				EmailAddress = loginResult.PersonalizationSession.LoginEmailAddress,
 				ContinueAction = delegate
 				{
-					SignInViewParameters signInViewParameters = (BaseViewController.GetViewService()?.PeekViewFrameByName("sign_in_view", out var _))?.Parameter as SignInViewParameters;
-					bool num = signInViewParameters != null && signInViewParameters.SignUpType == SignUpType.Starz;
-					bool flag = signInViewParameters != null && signInViewParameters.SignUpType == SignUpType.RedboxPlus;
-					if (num)
-					{
-						PersonalizationFunctions.AfterStarzSignInAction(loginType, loginResult);
-					}
-					else if (flag)
+					if ((BaseViewController.GetViewService()?.PeekViewFrameByName("sign_in_view", out var _))?.Parameter is SignInViewParameters { SignUpType: SignUpType.RedboxPlus })
 					{
 						PersonalizationFunctions.AfterRedboxPlusSignInAction(loginType, loginResult);
 					}

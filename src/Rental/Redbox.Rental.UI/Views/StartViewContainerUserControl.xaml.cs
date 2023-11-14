@@ -19,9 +19,7 @@ public partial class StartViewContainerUserControl : TextToSpeechUserControl, IW
 	{
 		InitializeComponent();
 		RegisterRoutedCommand("RentOrBuyMoviesCommand", Redbox.Rental.UI.Commands.RentOrBuyMoviesCommand);
-		RegisterRoutedCommand("RentOrBuyGamesCommand", Redbox.Rental.UI.Commands.RentOrBuyGamesCommand);
 		RegisterRoutedCommand("BuyMoviesCommand", Redbox.Rental.UI.Commands.BuyMoviesCommand);
-		RegisterRoutedCommand("BuyGamesCommand", Redbox.Rental.UI.Commands.BuyGamesCommand);
 		RegisterRoutedCommand("PickupProductCommand", Redbox.Rental.UI.Commands.PickupProductCommand);
 		RegisterRoutedCommand("ReturnProductCommand", Redbox.Rental.UI.Commands.ReturnProductCommand);
 		RegisterRoutedCommand("HelpCommand", Redbox.Rental.UI.Commands.HelpCommand);
@@ -55,31 +53,9 @@ public partial class StartViewContainerUserControl : TextToSpeechUserControl, IW
 		e.CanExecute = StartViewModel?.BuyMoviesEnabled ?? false;
 	}
 
-	private void BuyGamesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = StartViewModel?.BuyGamesEnabled ?? false;
-	}
-
-	private void RentGamesCommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-	{
-		e.CanExecute = StartViewModel?.RentGamesEnabled ?? false;
-	}
-
 	private void BuyMoviesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
 	{
 		StartViewModel?.ProcessBuyMoviesButtonClick();
-		HandleWPFHit();
-	}
-
-	private void BuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		StartViewModel?.ProcessBuyGamesButtonClick();
-		HandleWPFHit();
-	}
-
-	private void RentOrBuyGamesCommandBinding_Executed(object sender, ExecutedRoutedEventArgs e)
-	{
-		StartViewModel?.ProcessRentOrBuyGameButtonClick();
 		HandleWPFHit();
 	}
 

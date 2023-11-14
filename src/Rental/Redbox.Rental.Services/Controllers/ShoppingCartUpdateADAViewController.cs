@@ -7,9 +7,7 @@ using Redbox.Rental.Model.Analytics;
 using Redbox.Rental.Model.Browse;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskProduct;
-using Redbox.Rental.Model.Session;
 using Redbox.Rental.Model.ShoppingCart;
-using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.Session;
 using Redbox.Rental.UI.Models;
 using Redbox.Rental.UI.Properties;
@@ -18,18 +16,6 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class ShoppingCartUpdateADAViewController : BaseViewController
 {
-	private static bool EndGames
-	{
-		get
-		{
-			if (!Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals || OrchestrationService.GetCanSellUsedGames())
-			{
-				return Redbox.Rental.Services.Configuration.Configuration.Instance.EndGames;
-			}
-			return true;
-		}
-	}
-
 	public static void ConfigureView()
 	{
 		FrameworkElement viewUserControl = BaseViewController.GetViewUserControl();
@@ -108,12 +94,8 @@ public class ShoppingCartUpdateADAViewController : BaseViewController
 		shoppingCartUpdateADAViewModel.Message = Resources.this_is_your_chance;
 		shoppingCartUpdateADAViewModel.OkButtonText = Resources.okay;
 		shoppingCartUpdateADAViewModel.AddMovieButtonText = Resources.add_movie_button_text;
-		shoppingCartUpdateADAViewModel.AddGameButtonText = Resources.add_game_button_text;
 		IRentalShoppingCartService rentalShoppingCartService = BaseViewController.RentalShoppingCartService;
 		shoppingCartUpdateADAViewModel.AddMovieButtonVisibility = ((rentalShoppingCartService == null || rentalShoppingCartService.CurrentRentalShoppingCart.IsFull) ? Visibility.Collapsed : Visibility.Visible);
-		bool flag = (ServiceLocator.Instance.GetService<IDataService>()?.GetInStockGameCount() ?? 0) > 0;
-		IRentalShoppingCartService rentalShoppingCartService2 = BaseViewController.RentalShoppingCartService;
-		shoppingCartUpdateADAViewModel.AddGameButtonVisibility = ((rentalShoppingCartService2 == null || rentalShoppingCartService2.CurrentRentalShoppingCart.IsFull || !flag || EndGames) ? Visibility.Collapsed : Visibility.Visible);
 	}
 
 	private static void IdleTimeOut()
@@ -133,7 +115,6 @@ public class ShoppingCartUpdateADAViewController : BaseViewController
 		{
 			shoppingCartUpdateADAViewModel.OnOkButtonPress = ProcessGoBackCommand;
 			shoppingCartUpdateADAViewModel.OnAddMovieButtonPress = ShowBrowseViewMovies;
-			shoppingCartUpdateADAViewModel.OnAddGameButtonPress = ShowBrowseViewGames;
 			shoppingCartUpdateADAViewModel.OnCancelBrowseItemModel = RemoveItemFromShoppingCart;
 		}
 	}
@@ -146,20 +127,6 @@ public class ShoppingCartUpdateADAViewController : BaseViewController
 			BaseViewController.AnalyticsService?.AddButtonPressEvent("ShoppingCartUpdateADADelete").AddData(ProductData.ToProductData(rentalShoppingCartItem));
 			ShoppingCartViewFunctions.RemoveItemFromShoppingCart(displayProductModel, parameter);
 		}
-	}
-
-	private static void ShowBrowseViewGames()
-	{
-		BaseViewController.ProcessWPFHit();
-		BaseViewController.AnalyticsService?.AddButtonPressEvent("ShoppingCartUpdateADAAddGame");
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.SetDefaultBrowseStateSet();
-		Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = TitleFamily.Games;
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.EndGameRentals)
-		{
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseMode = BrowseViewFilter.ForSale;
-			Redbox.Rental.Services.Session.Session.Instance.BrowseState.BrowseSelectedSort = BrowseSelectedSort.ForSale;
-		}
-		BaseViewController.GetViewService()?.UnwindToSafe("browse_view", discard: true, null);
 	}
 
 	private static void ShowBrowseViewMovies()

@@ -45,7 +45,7 @@ public class ReturnFunctions
 
 	public static void ShowReturnCompleteViewWithPromoCheck(string barcode, Action closeAction)
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.ReturnVisitPromoOfferEnabled)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingReturn.ReturnVisitPromoOfferEnabled)
 		{
 			ServiceLocator.Instance.GetService<IKioskClientService>().Transaction.ReturnPromoCheck(barcode, delegate(ReturnVisitPromotionInfo promo)
 			{

@@ -27,13 +27,6 @@ public partial class LoginResultsSubscriptionUserControl : UserControl, IPrefere
 	public LoginResultsSubscriptionUserControl()
 	{
 		InitializeComponent();
-		_testDataReadPropertyItems.Add(new TestDataReadPropertyItem("Login.ActiveStarzSubscriptionPlanId", delegate(ReadTestDataValueResult result)
-		{
-			_model.ActiveStarzSubscriptionPlanId = result.GetPropertyValue<string>();
-		}, delegate
-		{
-			_model.ActiveStarzSubscriptionPlanId = null;
-		}));
 		_testDataReadPropertyItems.Add(new TestDataReadPropertyItem("Login.EligibleSubscriptionPlanIds", delegate(ReadTestDataValueResult result)
 		{
 			_model.EligibleSubscriptionPlanIds = result.GetPropertyValue<string>();
@@ -144,7 +137,6 @@ public partial class LoginResultsSubscriptionUserControl : UserControl, IPrefere
 		try
 		{
 			PreferencePageHeaderUserControl.SetStatusText("Saving...");
-			await _testDataUtility.WriteKCSTestDataProperty("Login.ActiveStarzSubscriptionPlanId", _model.ActiveStarzSubscriptionPlanId);
 			await _testDataUtility.WriteKCSTestDataProperty("Login.EligibleSubscriptionPlanIds", _model.EligibleSubscriptionPlanIds);
 			await _testDataUtility.WriteKCSTestDataProperty("Login.RedboxPlusSubscriptionPlanId", _model.RedboxPlusSubscriptionPlanId);
 			await _testDataUtility.WriteKCSTestDataProperty("Login.RedboxPlusSubscriptionCampaignId", _model.RedboxPlusSubscriptionCampaignId);

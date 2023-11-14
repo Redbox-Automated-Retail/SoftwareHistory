@@ -46,6 +46,8 @@ public interface IAnalyticsService
 
 	IAnalyticsEvent AddTimeoutEvent(string viewName, int timeOut);
 
+	IAnalyticsSession AddCurrentCulture(string culture);
+
 	void WriteToFile(string sessionId, string contents, string extension);
 
 	void SendToKioskDataService(string sessionId);

@@ -342,6 +342,15 @@ public class AnalyticsService : IAnalyticsService
 		}
 	}
 
+	public IAnalyticsSession AddCurrentCulture(string culture)
+	{
+		if (CurrentSession == null || string.IsNullOrEmpty(culture))
+		{
+			return null;
+		}
+		return CurrentSession.AddProperty("CurrentCulture", culture);
+	}
+
 	public void WriteToFile(string sessionId, string contents, string extension)
 	{
 		try

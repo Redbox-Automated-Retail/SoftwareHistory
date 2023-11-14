@@ -65,8 +65,6 @@ public class TitleDetailModel : DependencyObject
 
 	public event Action<IBrowseItemModel, object> BuyButtonHit;
 
-	public event Action<IBrowseItemModel> CollectionButtonHit;
-
 	public event Action<IBrowseItemModel> MoreInfoHit;
 
 	public event Action GoBackHit;
@@ -94,11 +92,6 @@ public class TitleDetailModel : DependencyObject
 	public void ProcessBuyButtonHit(IBrowseItemModel model, object o)
 	{
 		BuyButtonHit?.Invoke(model, o);
-	}
-
-	public void ProcessCollectionButtonHit(IBrowseItemModel model)
-	{
-		CollectionButtonHit?.Invoke(model);
 	}
 
 	public void ProcessMoreInfoHit(IBrowseItemModel model)

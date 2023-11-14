@@ -722,7 +722,7 @@ public class RentalShoppingCart : IRentalShoppingCart
 			}
 			if ((customerOffer != null) & valueOrDefault)
 			{
-				if ((Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers && customerOffer.DiscountType == OfferDiscountType.MultiNightPrice) || (customerOffer.OfferScopeType == OfferScopeType.StoredRedeemable && Promotion.IsProductSpecific))
+				if ((Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.UseDiscountsForPmnpOffers && customerOffer.DiscountType == OfferDiscountType.MultiNightPrice) || (customerOffer.OfferScopeType == OfferScopeType.StoredRedeemable && Promotion.IsProductSpecific))
 				{
 					RemoveNonVendedPromoItems();
 					if (Promotion.Price == 0m)

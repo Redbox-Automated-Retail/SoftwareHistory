@@ -3,7 +3,6 @@
   <UIElement.CommandBindings>
     <CommandBinding Command="{x:Static localbase:Commands.BannerClickCommand}" Executed="BannerClickCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.RentAndBuyMoviesCommand}" Executed="RentAndBuyMoviesCommandBinding_Executed" />
-    <CommandBinding Command="{x:Static localbase:Commands.RentAndBuyGamesCommand}" Executed="RentAndBuyGamesCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.PickupProductCommand}" Executed="PickupProductCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ReturnProductCommand}" Executed="ReturnProductCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ToggleADAModeCommand}" Executed="ToggleADAModeCommandBinding_Executed" />
@@ -47,15 +46,6 @@
             <StackPanel VerticalAlignment="Center" Margin="15,0,0,0">
               <TextBlock Name="all_movies_button_text_line1" Style="{StaticResource font_museo_slab_900_32}" Foreground="#FF000000" Text="{Binding Path=AllMoviesButtonTextLine1, FallbackValue=Movies}" />
               <TextBlock Name="all_movies_button_text_line2" Style="{StaticResource font_museo_slab_700_18}" Foreground="#FF000000" Text="{Binding Path=AllMoviesButtonTextLine2, FallbackValue=Rent &amp; Buy}" Visibility="{Binding Path=RentAndBuyMoviesButtonTextVisibility, FallbackValue=Visible}" />
-            </StackPanel>
-          </DockPanel>
-        </Redbox:RoundedButton>
-        <Redbox:RoundedButton Name="rent_and_buy_games_button" Grid.Row="0" Grid.Column="1" Style="{StaticResource white_warmpurple_border_button_style}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Height="80" Width="230" CornerRadius="35" Command="{x:Static localbase:Commands.RentAndBuyGamesCommand}" Focusable="False" IsEnabled="{Binding RentGamesEnabled}">
-          <DockPanel LastChildFill="True" Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType={x:Type Redbox:RoundedButton}}}">
-            <Image Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/rent_and_buy_games.png" HorizontalAlignment="Left" Margin="25,20,0,20" DockPanel.Dock="Left" Width="36" Height="35" />
-            <StackPanel VerticalAlignment="Center" Margin="20,0,0,0">
-              <TextBlock Style="{StaticResource font_museo_slab_900_32}" Foreground="#FF000000" Text="{Binding Path=GamesButtonTextLine1, FallbackValue=Games}" />
-              <TextBlock Style="{StaticResource font_museo_slab_700_18}" Foreground="#FF000000" Text="{Binding Path=GamesButtonTextLine2, FallbackValue=Rent &amp; Buy}" Visibility="{Binding Path=RentAndBuyGamesButtonTextVisibility, FallbackValue=Visible}" />
             </StackPanel>
           </DockPanel>
         </Redbox:RoundedButton>

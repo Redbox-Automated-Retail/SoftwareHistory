@@ -4,8 +4,6 @@ namespace Redbox.Rental.Model.Personalization;
 
 public interface ISubscriptionData
 {
-	bool HasActiveStarzSubscription { get; }
-
 	bool SubscriptionServiceIsDown { get; set; }
 
 	List<IExistingSubscription> ExistingSubscriptions { get; set; }

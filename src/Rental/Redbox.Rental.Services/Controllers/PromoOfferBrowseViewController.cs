@@ -402,8 +402,6 @@ public class PromoOfferBrowseViewController : BaseViewController
 			AdImage = null,
 			AdHeight = 0,
 			MainHeight = 628,
-			ShowCollections = false,
-			CollectionTextLine1 = Resources.title_detail_collection_text,
 			BuyText = Resources.title_detail_buy,
 			TitleDetailFormatButtonTextValues = new TitleRollupUtilities.TitleDetailFormatRentalButtonTextValues(),
 			Add = Resources.add,
@@ -423,7 +421,7 @@ public class PromoOfferBrowseViewController : BaseViewController
 			PricingService = ServiceLocator.Instance.GetService<IPricingService>(),
 			RentalShoppingCartService = BaseViewController.RentalShoppingCartService,
 			IsInCartBrowse = false,
-			EnableRedboxPlus = Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption,
+			EnableRedboxPlus = Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableRedboxPlusRedemption,
 			KioskClientService = ServiceLocator.Instance.GetService<IKioskClientService>(),
 			ShowWatchOptions = false,
 			ShowDualInStock = false

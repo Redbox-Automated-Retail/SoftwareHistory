@@ -8,11 +8,7 @@ public class Commands
 
 	public static readonly RoutedCommand RentOrBuyMoviesCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand RentOrBuyGamesCommand = new RoutedCommand();
-
 	public static readonly RoutedCommand BuyMoviesCommand = new RoutedCommand();
-
-	public static readonly RoutedCommand BuyGamesCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand ReturnProductCommand = new RoutedCommand();
 
@@ -35,10 +31,6 @@ public class Commands
 	public static readonly RoutedCommand BannerClickCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand RentAndBuyMoviesCommand = new RoutedCommand();
-
-	public static readonly RoutedCommand RentAndBuyGamesCommand = new RoutedCommand();
-
-	public static readonly RoutedCommand CollectionCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand MoreInfoCommand = new RoutedCommand();
 
@@ -112,17 +104,11 @@ public class Commands
 
 	public static readonly RoutedCommand AddMovieCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand AddGameCommand = new RoutedCommand();
-
 	public static readonly RoutedCommand UpdateBagCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand ViewOfferDetailsCommand = new RoutedCommand();
 
-	public static readonly RoutedCommand ScanStarzQRCodeCommand = new RoutedCommand();
-
 	public static readonly RoutedCommand ScanRedboxPlusQRCodeCommand = new RoutedCommand();
-
-	public static readonly RoutedCommand ViewStarzOfferCommand = new RoutedCommand();
 
 	public static readonly RoutedCommand ViewRedboxPlusOfferCommand = new RoutedCommand();
 

@@ -70,8 +70,6 @@ public static class ConfigSetting
 
 	public const string SyncEmptyStartTimeRangeEnd = "SyncEmptyStartTimeRangeEnd";
 
-	public const string UseDiscountsForPmnpOffers = "UseDiscountsForPmnpOffers";
-
 	public const string ForcedAirExchangerConfigured = "ForcedAirExchangerConfigured";
 
 	public const string TextToSpeechVolume = "TextToSpeechVolume";
@@ -104,52 +102,6 @@ public static class ConfigSetting
 
 	public const string AlternateCulture = "AlternateCulture";
 
-	public const string ShowBlurayBrowse = "ShowBlurayBrowse";
-
-	public const string ShowCollections = "ShowCollections";
-
-	public const string ShowCollectionsPopUp = "ShowCollectionsPopUp";
-
-	public const string CollectionsPopUpTimer = "CollectionsPopUpTimer";
-
-	public const string CollectionsPopUpPaddleClicks = "CollectionsPopUpPaddleClicks";
-
-	public const string EndGameRentals = "EndGameRentals";
-
-	public const string EndGames = "EndGames";
-
-	public const string EnableVistarAds = "EnableVistarAds";
-
-	public const string VistarGetAdTimeout = "VistarGetAdTimeout";
-
-	public const string EnableBrowseMessagePopup = "EnableBrowseMessagePopup";
-
-	public const string BrowseMessagePopupDuration = "BrowseMessagePopupDuration";
-
-	public const string EnableRedboxSweepstakes = "EnableRedboxSweepstakes";
-
-	public const string EnableAvodLeadGenerationOfferWithoutBoxArt = "EnableAvodLeadGenerationOfferWithoutBoxArt";
-
-	public const string EnableAvodLeadGenerationOfferWithBoxArt = "EnableAvodLeadGenerationOfferWithBoxArt";
-
-	public const string EnableRedboxPlusLeadGenerationOffer = "EnableRedboxPlusLeadGenerationOffer";
-
-	public const string EnableStarzOffer = "EnableStarzOffer";
-
-	public const string EnableRedboxPlusOffer = "EnableRedboxPlusOffer";
-
-	public const string EnableRedboxPlusRedemption = "EnableRedboxPlusRedemption";
-
-	public const string ShowKioskClosingVSM = "ShowKioskClosingVSM";
-
-	public const string DisplayUpdatedPerksPoints = "DisplayUpdatedPerksPoints";
-
-	public const string ReturnVisitPromoOfferEnabled = "ReturnVisitPromoOfferEnabled";
-
-	public const string ReturnVisitPromoCheckTimeout = "ReturnVisitPromoCheckTimeout";
-
-	public const string StartViewAdTimeout = "StartViewAdTimeout";
-
 	public const string FAQDocument = "FAQDocument";
 
 	public const string TermsDocument = "TermsDocument";
@@ -174,47 +126,11 @@ public static class ConfigSetting
 
 	public const string ABTestDefaultValue = "A";
 
-	public const string PriceFiltersOnBrowse = "PriceFiltersOnBrowse";
-
-	public const string ScreenSaverTimer = "ScreenSaverTimer";
-
-	public const string OutOfStockTitleDetails = "OutOfStockTitleDetails";
-
 	public const string ShoppingCartLayout = "ShoppingCartLayout";
-
-	public const string ShowAfterSwipePersonalizedOffers = "ShowAfterSwipePersonalizedOffers";
-
-	public const string UploadDiscImageMessagePriority = "UploadDiscImageMessagePriority";
 
 	public const string KioskAnalyticsMessagePriority = "KioskAnalyticsMessagePriority";
 
-	public const string FraudServicesUrl = "FraudServicesUrl";
-
-	public const string FraudServicesKey = "FraudServicesKey";
-
-	public const string EnableIRSecurity = "EnableIRSecurity";
-
-	public const string EnableImageSecurity = "EnableImageSecurity";
-
-	public const string SendReturnImageTypes = "SendReturnImageTypes";
-
-	public const string MonitorBarcodeTracking = "MonitorBarcodeTracking";
-
-	public const string BarcodeTrackingMaxBatchSize = "BarcodeTrackingMaxBatchSize";
-
-	public const string BarcodeTrackingTimerDuration = "BarcodeTrackingTimerDuration";
-
-	public const string BarcodeTrackingMessagePriority = "BarcodeTrackingMessagePriority";
-
 	public const string KeepHalImagesForNumberOfDays = "KeepHalImagesForNumberOfDays";
-
-	public const string AwsBarcodeTrackingEnabled = "AwsBarcodeTrackingEnabled";
-
-	public const string AwsUploadDiscImageEnabled = "AwsUploadDiscImageEnabled";
-
-	public const string AwsFraudServicesUrl = "AwsFraudServicesUrl";
-
-	public const string AwsFraudServicesKey = "AwsFraudServicesKey";
 
 	public const string EarlyIDEnabled = "EarlyIDEnabled";
 
@@ -223,10 +139,6 @@ public static class ConfigSetting
 	public const string SignInTimeout = "SignInTimeout";
 
 	public const string SignInADATimeout = "SignInADATimeout";
-
-	public const string LoyaltySignUpEnabled = "LoyaltySignUpEnabled";
-
-	public const string LoyaltySignUpStartEndTime = "SignUpStartEndTime";
 
 	public const string LoyaltySignUpAfterSwipeEnabled = "LoyaltySignUpAfterSwipeEnabled";
 

@@ -5,6 +5,7 @@ using System.Net;
 using Redbox.Core;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskClientService.Campaign;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskClientService.Campaign;
 
@@ -36,16 +37,16 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 	public void LoadCampaign()
 	{
 		LogHelper.Instance.Log("KCS.Campaign.KioskClientServiceCampaign.LoadCampaign");
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-		_enableInCart = service?.Current?.CMS?.EnableInCart ?? true;
+		IConfiguration instance = Redbox.Rental.Services.Configuration.Configuration.Instance;
+		_enableInCart = instance.Current.CMS.EnableInCart;
 		LogHelper.Instance.Log($"EnableInCart {_enableInCart}");
 		_inCart = (_enableInCart ? GetKCSInCart() : null);
 		LogHelper.Instance.Log("InCart " + ((_inCart != null) ? "loaded" : "null"));
 		PromotionService.Instance?.LoadInCartData(_inCart);
-		_showStartScreen = service?.Current?.CMS?.ShowStartScreen ?? true;
+		_showStartScreen = instance.Current.CMS.ShowStartScreen;
 		LogHelper.Instance.Log($"ShowStartScreen {_showStartScreen}");
 		_startScreen = (_showStartScreen ? GetKCSStartScreen() : null);
-		LogHelper instance = LogHelper.Instance;
+		LogHelper instance2 = LogHelper.Instance;
 		KioskStartScreenDetails startScreen = _startScreen;
 		object obj;
 		if (startScreen != null)
@@ -57,15 +58,15 @@ public class KioskClientServiceCampaign : BaseKioskClientService, IKioskClientSe
 				if (true)
 				{
 					obj = $"loaded {_startScreen.Controls.Count}";
-					goto IL_01e0;
+					goto IL_0151;
 				}
 			}
 		}
 		obj = "null";
-		goto IL_01e0;
-		IL_01e0:
-		instance.Log("StartScreen " + (string)obj);
-		_loadCampaignTimerDuration = service?.Current?.CMS?.LoadCampaignTimerDuration ?? 2220000;
+		goto IL_0151;
+		IL_0151:
+		instance2.Log("StartScreen " + (string)obj);
+		_loadCampaignTimerDuration = instance.Current.CMS.LoadCampaignTimerDuration;
 		LogHelper.Instance.Log($"LoadCampaignTimerDuration {_loadCampaignTimerDuration}");
 	}
 

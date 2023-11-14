@@ -371,7 +371,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 
 	public void AddMultiNightOfferToItem(IRentalShoppingCartTitleItem rentalShoppingCartItem, CustomerOffer selectedOffer)
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.UseDiscountsForPmnpOffers)
 		{
 			LogHelper.Instance.Log("The UseDiscountsForPmnpOffers config setting is true, creating a discount for the item");
 			AddMultiNightDiscountPromo(rentalShoppingCartItem, selectedOffer);
@@ -425,7 +425,7 @@ public class RentalShoppingCartService : IRentalShoppingCartService
 
 	public void RemoveMultiNightOfferFromItem(IRentalShoppingCartTitleItem rentalShoppingCartItem)
 	{
-		if (Redbox.Rental.Services.Configuration.Configuration.Instance.UseDiscountsForPmnpOffers)
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.UseDiscountsForPmnpOffers)
 		{
 			RemoveMultiNightDiscountPromo(rentalShoppingCartItem);
 		}

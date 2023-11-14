@@ -184,7 +184,6 @@ public partial class KeyboardUserControl : BaseUserControl, IValueConverter, ICo
 		case KeyboardMode.EMAIL_RECEIPTS_PROMO:
 		case KeyboardMode.ACCOUNT_EMAIL_CHANGED:
 		case KeyboardMode.PERKS_SIGN_UP:
-		case KeyboardMode.STARZ_SIGN_UP:
 		case KeyboardMode.REDBOX_PLUS_SIGN_UP:
 		case KeyboardMode.LEAD_GENERATION_SIGN_UP:
 			SymbolKeysElem.Visibility = Visibility.Collapsed;
@@ -193,6 +192,8 @@ public partial class KeyboardUserControl : BaseUserControl, IValueConverter, ICo
 			PromoCodeElem.Visibility = Visibility.Collapsed;
 			CaseKeysElem.Visibility = Visibility.Visible;
 			CaseKeysElem.Margin = new Thickness(0.0, 0.0, 730.0, 0.0);
+			break;
+		case KeyboardMode.STARZ_SIGN_UP:
 			break;
 		}
 	}

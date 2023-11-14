@@ -19,7 +19,7 @@ namespace Redbox.Rental.Services.Controllers;
 
 public class MemberPerksViewController : BaseViewController
 {
-	private static bool EnableRedboxPlusRedemption => Redbox.Rental.Services.Configuration.Configuration.Instance.EnableRedboxPlusRedemption;
+	private static bool EnableRedboxPlusRedemption => Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.MarketingGeneral.EnableRedboxPlusRedemption;
 
 	private static IRedboxPlusSession RedboxPlusSession => (Redbox.Rental.Services.Session.Session.Instance?.PersonalizationSession)?.RedboxPlusSession ?? null;
 

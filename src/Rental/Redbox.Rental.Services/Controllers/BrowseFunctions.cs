@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
@@ -201,38 +200,6 @@ public class BrowseFunctions
 		{
 			OrchestrationService.ViewShow("browse_view");
 		}
-	}
-
-	public static DisplayCollectionModel CreateDisplayCollectionModelFromCollectionProduct(CollectionProduct collectionProduct)
-	{
-		DisplayCollectionModel displayCollectionModel = null;
-		if (collectionProduct != null)
-		{
-			displayCollectionModel = new DisplayCollectionModel
-			{
-				Name = collectionProduct.ProductName,
-				Data = collectionProduct,
-				Text = collectionProduct.ProductName
-			};
-			for (int i = 0; i < 3; i++)
-			{
-				BitmapImage bitmapImage = null;
-				bitmapImage = ((collectionProduct == null || !(collectionProduct.KioskProducts?.Count > i)) ? Redbox.Rental.UI.Views.Constants.Images.MovieMissingBoxArt : OrchestrationService.GetProductBitmapImage(collectionProduct?.KioskProducts[i]));
-				switch (i)
-				{
-				case 0:
-					displayCollectionModel.TopImage = bitmapImage;
-					break;
-				case 1:
-					displayCollectionModel.MiddleImage = bitmapImage;
-					break;
-				case 2:
-					displayCollectionModel.BottomImage = bitmapImage;
-					break;
-				}
-			}
-		}
-		return displayCollectionModel;
 	}
 
 	public static void ConfigureProductFlag(DisplayProductModel displayProductModel, ProductFlags productFlags, bool hideFlag, FrameworkElement frameworkElementToGetStyleFrom, ITitleProduct titleProduct, DisplayProductModelConstants displayProductModelConstants)

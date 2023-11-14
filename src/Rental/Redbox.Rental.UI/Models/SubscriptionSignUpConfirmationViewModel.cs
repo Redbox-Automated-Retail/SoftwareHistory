@@ -33,8 +33,6 @@ public class SubscriptionSignUpConfirmationViewModel : DependencyObject
 
 	public bool HasActionExecuted { get; set; }
 
-	public Visibility StazTextVisibility { get; set; }
-
 	public Visibility RedboxPlusExistingCustomerTextVisibility { get; set; }
 
 	public Visibility RedboxPlusNewCustomerTextVisibility { get; set; }

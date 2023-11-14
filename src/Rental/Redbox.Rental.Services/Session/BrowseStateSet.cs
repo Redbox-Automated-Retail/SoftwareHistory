@@ -21,10 +21,6 @@ public class BrowseStateSet : IBrowseStateSet
 
 	public TitleType TitleType { get; set; }
 
-	public bool BrowseCollections { get; set; }
-
-	public ICollectionProduct BrowseCollectionProduct { get; set; }
-
 	public string SelectedAlphaGroupName { get; set; }
 
 	public BrowseSelectedSort BrowseSelectedSort

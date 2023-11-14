@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Redbox.Rental.Model.KioskProduct;
 
 public interface IKioskProduct
@@ -11,6 +9,4 @@ public interface IKioskProduct
 	string ProductName { get; set; }
 
 	string ProductDescription { get; set; }
-
-	List<long> Collections { get; set; }
 }

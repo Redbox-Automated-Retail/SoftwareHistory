@@ -431,11 +431,10 @@ public class QueueService : IQueueService, IDisposable
 	public ErrorList Dequeue(Predicate<IMessage> predicate)
 	{
 		IQueueServicePriority currentQueueServicePriority = GetCurrentQueueServicePriority();
-		IMessage message = null;
-		ErrorList errorList = _queueServiceData.SelectNextMessage(currentQueueServicePriority, out message);
+		ErrorList errorList = _queueServiceData.SelectNextMessage(currentQueueServicePriority, out var message);
 		if ((errorList == null || !errorList.ContainsError()) && message != null)
 		{
-			IMessage message2 = new QueueMessage
+			IMessage obj = new QueueMessage
 			{
 				ID = message.ID,
 				Priority = message.Priority,
@@ -443,10 +442,7 @@ public class QueueService : IQueueService, IDisposable
 				Type = message.Type,
 				Data = FromEncryptedMessage(message.Data)
 			};
-			if (predicate(message2) || message2.Type == "UploadDiscImage")
-			{
-				errorList = _queueServiceData.DeleteMessage(message2.ID);
-			}
+			predicate(obj);
 		}
 		if (errorList.ContainsCode("Q999"))
 		{

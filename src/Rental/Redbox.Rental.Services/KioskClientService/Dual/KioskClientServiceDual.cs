@@ -19,17 +19,18 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 {
 	private const string _apiPath = "api/dual";
 
-	private NearbyKiosk _dualKiosk;
-
 	private ConcurrentDictionary<long, string> _inStockInOther = new ConcurrentDictionary<long, string>();
+
+	private NearbyKiosk DualKiosk => ServiceLocator.Instance.GetService<IKioskClientService>()?.Kiosk?.DualKiosk;
+
+	private bool ShowDualInStock => ServiceLocator.Instance.GetService<IConfiguration>()?.KioskSession.Browse.ShowDualInStock ?? false;
 
 	public void Refresh()
 	{
 		LogHelper.Instance.Log("KCS.Dual.KioskClientServiceDual.Refresh");
-		_dualKiosk = ServiceLocator.Instance.GetService<IKioskClientService>()?.Kiosk?.DualKiosk;
-		if (_dualKiosk != null && _dualKiosk.KioskId > 0)
+		if (DualKiosk != null && DualKiosk.KioskId > 0)
 		{
-			Refresh(_dualKiosk.KioskId);
+			Refresh(DualKiosk.KioskId);
 		}
 	}
 
@@ -37,7 +38,7 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 	{
 		LogHelper.Instance.Log("KCS.Dual.KioskClientServiceDual.LoadInStockInOther");
 		List<long> list = new List<long>();
-		if (GetShowDualInStock() && _dualKiosk != null)
+		if (DualKiosk != null && ShowDualInStock)
 		{
 			List<long> outOfStockTitleIds = GetOutOfStockTitleIds();
 			list = ((outOfStockTitleIds.Count > 0) ? InStockInOther(outOfStockTitleIds) : null)?.InStock ?? new List<long>();
@@ -49,21 +50,16 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 		});
 	}
 
-	public bool IsInStockInOther(long titleId)
-	{
-		return _inStockInOther.ContainsKey(titleId);
-	}
-
 	public void UpdateTitles()
 	{
 		LogHelper.Instance.Log("KCS.Dual.KioskClientServiceDual.UpdateTitles");
 		List<long> list = new List<long>();
-		if (GetShowDualInStock() && _dualKiosk != null && _dualKiosk.KioskId > 0)
+		if (DualKiosk != null && DualKiosk.KioskId > 0 && ShowDualInStock)
 		{
 			List<long> outOfStockTitleIds = GetOutOfStockTitleIds();
 			if (outOfStockTitleIds.Count > 0)
 			{
-				list = UpdateTitles(_dualKiosk.KioskId, outOfStockTitleIds)?.TitlesCount?.Where((KeyValuePair<long, int> tc) => tc.Value > 0).Select((KeyValuePair<long, int> tc) => tc.Key).ToList() ?? new List<long>();
+				list = UpdateTitles(DualKiosk.KioskId, outOfStockTitleIds)?.TitlesCount?.Where((KeyValuePair<long, int> tc) => tc.Value > 0).Select((KeyValuePair<long, int> tc) => tc.Key).ToList() ?? new List<long>();
 			}
 		}
 		_inStockInOther.Clear();
@@ -71,6 +67,11 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 		{
 			_inStockInOther.TryAdd(titleId, null);
 		});
+	}
+
+	public bool IsInStockInOther(long titleId)
+	{
+		return _inStockInOther.ContainsKey(titleId);
 	}
 
 	public IRefreshResponse Refresh(long dualKioskId)
@@ -177,11 +178,6 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 	public async Task<IInStockInOtherResponse> InStockInOtherAsync(IEnumerable<long> titleIds)
 	{
 		return await Task.Run(() => InStockInOther(titleIds));
-	}
-
-	private bool GetShowDualInStock()
-	{
-		return ServiceLocator.Instance.GetService<IConfiguration>()?.KioskSession.Browse.ShowDualInStock ?? false;
 	}
 
 	private List<long> GetOutOfStockTitleIds()

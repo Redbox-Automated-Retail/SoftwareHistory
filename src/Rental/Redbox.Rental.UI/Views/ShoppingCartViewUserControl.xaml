@@ -6,15 +6,12 @@
     <CommandBinding Command="{x:Static localbase:Commands.PromoCodeCommand}" Executed="PromoCodeCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.PayCommand}" Executed="PayCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.AddMovieCommand}" Executed="AddMovieCommandCommandBinding_Executed" />
-    <CommandBinding Command="{x:Static localbase:Commands.AddGameCommand}" Executed="AddGameCommandCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.UpdateBagCommand}" Executed="UpdateBagCommandCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.BrowseItemCancelCommand}" Executed="BrowseItemCancelCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.SignInCommand}" Executed="SignInCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.UsePointsCommand}" Executed="UsePointsCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.PointsBalanceInfoCommand}" Executed="PointsBalanceInfoCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ViewOfferDetailsCommand}" Executed="ViewOfferDetailsCommandBinding_Executed" />
-    <CommandBinding Command="{x:Static localbase:Commands.ScanStarzQRCodeCommand}" Executed="ScanStarzQRCodeCommandBinding_Executed" />
-    <CommandBinding Command="{x:Static localbase:Commands.ViewStarzOfferCommand}" Executed="ViewStarzOfferCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ViewRedboxPlusOfferCommand}" Executed="ViewRedboxPlusOfferCommandBinding_Executed" />
     <CommandBinding Command="{x:Static localbase:Commands.ScanRedboxPlusQRCodeCommand}" Executed="ScanRedboxPlusQRCodeCommandBinding_Executed" />
   </UIElement.CommandBindings>
@@ -64,9 +61,6 @@
               <Redbox:RoundedButton Name="AddMovieButton" Style="{StaticResource button_light_medium_secondary_style}" Margin="15,0,0,0" Command="{x:Static localbase:Commands.AddMovieCommand}" Visibility="{Binding Path=AddMovieButtonVisibility}">
                 <TextBlock Name="AddMovieButtonText" Style="{StaticResource button_text_medium_style}" Text="{Binding Path=AddMovieButtonText, FallbackValue=ADD MOVIE}" />
               </Redbox:RoundedButton>
-              <Redbox:RoundedButton Name="AddGameButton" Style="{StaticResource button_light_medium_secondary_style}" Margin="15,0,0,0" Command="{x:Static localbase:Commands.AddGameCommand}" Visibility="{Binding Path=AddGameButtonVisibility}">
-                <TextBlock Name="AddGameButtonText" Style="{StaticResource button_text_medium_style}" Text="{Binding Path=AddGameButtonText, FallbackValue=ADD GAME}" />
-              </Redbox:RoundedButton>
               <Redbox:RoundedButton Name="RedboxPlusInfoButton" Height="30" Margin="10,0,10,0" Style="{StaticResource transparent_button_style}" VerticalAlignment="Center" HorizontalAlignment="Right" Command="{Binding RedboxPlusInfoCommand}" Visibility="{Binding Path=RedboxPlusMovieInfoVisibility, FallbackValue=Visible}">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Name="RedboxPlussMovie" Style="{StaticResource font_montserrat_bold_16}" Foreground="{StaticResource CarlosPurple1Brush}" Margin="7,0,0,0" VerticalAlignment="Center" Text="{Binding Path=RedboxPlusMovieInfoButtonText, FallbackValue=Redbox+ movie}" />
@@ -89,30 +83,6 @@
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" CornerRadius="8,0,0,8" Background="{StaticResource RubineRedBrush}" />
                 <StackPanel Orientation="Vertical" Grid.Column="2">
-                  <Grid Width="583" Height="144" Visibility="{Binding StarzOfferVisibility, FallbackValue=Collapsed}">
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="131" />
-                      <ColumnDefinition Width="444" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                      <RowDefinition Height="38" />
-                      <RowDefinition Height="68" />
-                      <RowDefinition Height="40" />
-                    </Grid.RowDefinitions>
-                    <Image Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Width="103" Height="114" VerticalAlignment="Center" HorizontalAlignment="Center" Source="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/starz-box-art.png" />
-                    <TextBlock Grid.Column="1" Grid.Row="0" Style="{StaticResource font_montserrat_bold_16}" VerticalAlignment="Bottom" LineHeight="24" Foreground="{StaticResource CarlosPurple1Brush}" Text="{Binding StarzOfferHeaderText, FallbackValue=Limited Time Offer}" />
-                    <TextBlock Grid.Column="1" Grid.Row="1" Style="{StaticResource font_montserrat_medium_16}" LineHeight="20" Foreground="{StaticResource CarlosPurple1Brush}" Margin="0,6,0,0" Text="{Binding StarzOfferText, FallbackValue=$5/Mo for 3 Months of STARZ&#xA;+ 9 Redbox 1-Night Disc Rentals | 3/Month}" />
-                    <TextBlock Grid.Column="1" Grid.Row="1" Style="{StaticResource font_montserrat_medium_16}" VerticalAlignment="Bottom" LineHeight="20" Foreground="{StaticResource CarlosPurple1Brush}" Text="{Binding StarzOfferSubText, FallbackValue=Then $8.99/month}" />
-                    <StackPanel Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="210,0,0,16">
-                      <TextBlock Style="{StaticResource font_montserrat_medium_14}" Margin="0,0,8,4" LineHeight="16" Foreground="{StaticResource CarlosPurple1Brush}" Text="Not ready yet?" VerticalAlignment="Bottom" />
-                      <Redbox:RoundedButton Name="ScanStarzQRCodeButton" Style="{StaticResource transparent_button_style}" Command="{x:Static localbase:Commands.ScanStarzQRCodeCommand}">
-                        <TextBlock Style="{StaticResource font_montserrat_bold_underline_14}" LineHeight="20" Foreground="{StaticResource RubineRedBrush}" Text="Scan QR Code" />
-                      </Redbox:RoundedButton>
-                    </StackPanel>
-                    <Redbox:RoundedButton Name="ViewStarzOfferButton" Grid.Column="1" Grid.Row="0" Grid.RowSpan="3" VerticalAlignment="Bottom" Margin="0,16,16,14" HorizontalAlignment="Left" Style="{StaticResource transparent_button_style}" Command="{x:Static localbase:Commands.ViewStarzOfferCommand}">
-                      <TextBlock Style="{StaticResource font_montserrat_extrabold_underline_16}" LineHeight="24" Foreground="{StaticResource RubineRedBrush}" Text="VIEW OFFER" />
-                    </Redbox:RoundedButton>
-                  </Grid>
                   <Grid Name="OfferSeparatorLine" Height="2" Background="#CCCCCC" Margin="16,0,16,0" VerticalAlignment="Top" Visibility="{Binding OfferSeparatorLineVisibility, FallbackValue=Collapsed}" />
                   <Grid Width="583" Height="144" Visibility="{Binding RedboxPlusOfferVisibility, FallbackValue=Collapsed}">
                     <Grid.ColumnDefinitions>
@@ -140,11 +110,9 @@
                 </StackPanel>
               </Grid>
             </Border>
-            <Border BorderThickness="1" BorderBrush="#E8E8E8" Margin="0,0,0,3" Visibility="{Binding StarzOfferVisibility, FallbackValue=Collapsed}" />
             <TextBlock Name="PassiveSaleNote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#481b54" TextWrapping="Wrap" Margin="0,3,0,0" Text="{Binding Path=PassiveSaleNote, FallbackValue='Points &amp; Promos are valid for the stated discount off the fee for a 1 day rental of a disc. Your payment card, necessary for a rental, is charged the balance of the daily rental fee for a disc and the full daily rental fee for additional discs + tax (except where tax isnt charged) for the 1st rental day. Youre charged the full daily rental fee + tax for additional days you keep each disc after 9pm. To review our Terms, Privacy Policy, including our CA Privacy Notice, or to exercise your Do Not Sell Rights, see Terms &amp; Privacy.'}" />
             <TextBlock Name="ServiceFeeText" Style="{StaticResource font_montserrat_regular_11}" Foreground="#481b54" TextWrapping="Wrap" Margin="0,1,0,1" Text="{Binding Path=ServiceFeeText, FallbackValue=All checkouts may be subject to a service fee of 10¢.}" Visibility="{Binding Path=ServiceFeeTextVisibility}" />
             <TextBlock Name="MDVFootnote" Style="{StaticResource font_montserrat_regular_11}" Foreground="#481b54" TextWrapping="Wrap" Margin="0,1,0,1" Text="{Binding Path=MDVFootnote, FallbackValue=**Your card will be charged the full nightly fee plus applicable taxes until both discs are returned.}" Visibility="{Binding Path=MDVFootnoteVisibility}" />
-            <TextBlock Name="StarzLegalText" Style="{StaticResource font_montserrat_regular_11}" Foreground="#481b54" Text="Starz® and related channels and service marks are the property of Starz Entertainment, LLC." TextWrapping="Wrap" Margin="0,1,0,1" Visibility="{Binding Path=StarzLegalTextVisibility, FallbackValue=Collapsed}" />
           </StackPanel>
         </DockPanel>
         <DockPanel Name="RightSideDockPanel" Grid.Column="1" LastChildFill="True">

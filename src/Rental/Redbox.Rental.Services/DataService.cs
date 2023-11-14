@@ -9,7 +9,6 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.Cache;
 using Redbox.Rental.Model.DataService;
 using Redbox.Rental.Model.KioskClientService.Subscriptions;
-using Redbox.Rental.Model.KioskData;
 using Redbox.Rental.Model.KioskProduct;
 using Redbox.Rental.Model.Local;
 using Redbox.Rental.Model.Profile;
@@ -31,8 +30,6 @@ public class DataService : IDataService
 
 	private IReservationData _reservationData;
 
-	private IKioskData _kioskData;
-
 	private IEngineApplication _engine;
 
 	private string _runningPath;
@@ -49,8 +46,6 @@ public class DataService : IDataService
 
 	private KioskProductView _kioskProductView;
 
-	private IKioskDataInstance _kioskDataStagedInstance;
-
 	private int _inRefresh;
 
 	private Timer _changeTimer;
@@ -65,9 +60,7 @@ public class DataService : IDataService
 
 	private bool HasProfileStagedInstance => _profileStagedInstance != null;
 
-	private bool HasKioskDataStagedInstance => _kioskDataStagedInstance != null;
-
-	public DataService(IKernelService kernelService, IDataServiceInstance dataServiceInstance, IProfileData profileData, ICacheData cacheData, ILocalData localData, IReservationData reservationData, IKioskData kioskData, IEngineApplication engine)
+	public DataService(IKernelService kernelService, IDataServiceInstance dataServiceInstance, IProfileData profileData, ICacheData cacheData, ILocalData localData, IReservationData reservationData, IEngineApplication engine)
 	{
 		_kernelService = kernelService;
 		_dataServiceInstance = dataServiceInstance;
@@ -75,7 +68,6 @@ public class DataService : IDataService
 		_cacheData = cacheData;
 		_localData = localData;
 		_reservationData = reservationData;
-		_kioskData = kioskData;
 		_engine = engine;
 		_runningPath = engine.RunningPath;
 		_dataPath = engine.DataPath;
@@ -149,7 +141,7 @@ public class DataService : IDataService
 		{
 			lock (_lock)
 			{
-				if (HasProfileStagedInstance || HasKioskDataStagedInstance)
+				if (HasProfileStagedInstance)
 				{
 					UpdateAndRefreshView();
 					return true;
@@ -315,46 +307,6 @@ public class DataService : IDataService
 		{
 			return _kioskProductView.GetRedboxPlusPromoCampaign(campaignId);
 		}
-	}
-
-	public ErrorList GetActiveBrowseSubscriptionProduct(out ISubscriptionProduct subscriptionProduct)
-	{
-		WaitForFirstLoad();
-		subscriptionProduct = null;
-		ErrorList errorList = new ErrorList();
-		try
-		{
-			lock (_lock)
-			{
-				subscriptionProduct = _kioskProductView.GetActiveBrowseSubscriptionProduct();
-			}
-		}
-		catch (Exception e)
-		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetActiveBrowseSubscriptionProduct", "Unhandled exception occurred", e));
-		}
-		errorList.ToLogHelper();
-		return errorList;
-	}
-
-	public ErrorList GetActiveMyBagSubscriptionProduct(out ISubscriptionProduct subscriptionProduct)
-	{
-		WaitForFirstLoad();
-		subscriptionProduct = null;
-		ErrorList errorList = new ErrorList();
-		try
-		{
-			lock (_lock)
-			{
-				subscriptionProduct = _kioskProductView.GetActiveMyBagSubscriptionProduct();
-			}
-		}
-		catch (Exception e)
-		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetActiveMyBagSubscriptionProduct", "Unhandled exception occurred", e));
-		}
-		errorList.ToLogHelper();
-		return errorList;
 	}
 
 	public ErrorList GetSubscriptionProducts(out List<ISubscriptionProduct> subscriptionProducts)
@@ -569,7 +521,7 @@ public class DataService : IDataService
 		return errorList;
 	}
 
-	public ErrorList GetCarouselProducts(bool showCollections, int maxCarouselItems, out List<IKioskProduct> products)
+	public ErrorList GetCarouselProducts(int maxCarouselItems, out List<IKioskProduct> products)
 	{
 		WaitForFirstLoad();
 		products = null;
@@ -578,51 +530,12 @@ public class DataService : IDataService
 		{
 			lock (_lock)
 			{
-				products = _kioskProductView.GetCarouselProducts(showCollections, maxCarouselItems);
+				products = _kioskProductView.GetCarouselProducts(maxCarouselItems);
 			}
 		}
 		catch (Exception e)
 		{
 			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetProducts", "Unhandled exception occurred", e));
-		}
-		errorList.ToLogHelper();
-		return errorList;
-	}
-
-	public ErrorList GetCollection(long collectionId, out ICollectionProduct collection)
-	{
-		collection = null;
-		ErrorList errorList = new ErrorList();
-		try
-		{
-			lock (_lock)
-			{
-				collection = _kioskProductView.GetCollection(collectionId);
-			}
-		}
-		catch (Exception e)
-		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetCollectionProducts", "Unhandled exception occurred", e));
-		}
-		errorList.ToLogHelper();
-		return errorList;
-	}
-
-	public ErrorList GetCollectionProducts(out List<IKioskProduct> products)
-	{
-		WaitForFirstLoad();
-		products = null;
-		ErrorList errorList = new ErrorList();
-		try
-		{
-			lock (_lock)
-			{
-				products = _kioskProductView.GetCollectionProducts();
-			}
-		}
-		catch (Exception e)
-		{
-			errorList.Add(Redbox.KioskEngine.ComponentModel.Error.NewError("DataService.GetCollectionProducts", "Unhandled exception occurred", e));
 		}
 		errorList.ToLogHelper();
 		return errorList;
@@ -945,12 +858,7 @@ public class DataService : IDataService
 			_profileData.Activate();
 			profileDataInstance = _profileData.LoadDataInstance();
 		}
-		IKioskDataInstance kioskDataInstance = null;
-		if (_kioskData.HasStaged() || IsFirstTime)
-		{
-			kioskDataInstance = _kioskData.GetData();
-		}
-		if (profileDataInstance == null && kioskDataInstance == null)
+		if (profileDataInstance == null)
 		{
 			return;
 		}
@@ -962,10 +870,6 @@ public class DataService : IDataService
 				if (profileDataInstance != null)
 				{
 					_profileStagedInstance = profileDataInstance;
-				}
-				if (kioskDataInstance != null)
-				{
-					_kioskDataStagedInstance = kioskDataInstance;
 				}
 				if (IsFirstTime)
 				{
@@ -983,20 +887,11 @@ public class DataService : IDataService
 
 	private void UpdateAndRefreshView()
 	{
-		if (HasProfileStagedInstance || HasKioskDataStagedInstance)
+		if (HasProfileStagedInstance)
 		{
-			if (HasProfileStagedInstance)
-			{
-				LogHelper.Instance.Log("DataService.UpdateAndRefreshView - Has profile staged instance, updating.");
-				_dataServiceInstance.ProfileDataInstance = _profileStagedInstance;
-				_profileStagedInstance = null;
-			}
-			if (HasKioskDataStagedInstance)
-			{
-				LogHelper.Instance.Log("DataService.UpdateAndRefreshView - Has kioskdata staged instance, updating.");
-				_dataServiceInstance.KioskDataInstance = _kioskDataStagedInstance;
-				_kioskDataStagedInstance = null;
-			}
+			LogHelper.Instance.Log("DataService.UpdateAndRefreshView - Has profile staged instance, updating.");
+			_dataServiceInstance.ProfileDataInstance = _profileStagedInstance;
+			_profileStagedInstance = null;
 			RefreshView();
 		}
 	}
@@ -1007,6 +902,6 @@ public class DataService : IDataService
 		IStoreManager service = ServiceLocator.Instance.GetService<IStoreManager>();
 		service.SellThru = store.Sellthru;
 		service.PurchasePrice = store.PurchasePrice;
-		_kioskProductView = new KioskProductView(store, _dataServiceInstance.ProfileDataInstance, _dataServiceInstance.CacheDataInstance, _dataServiceInstance.KioskDataInstance, service);
+		_kioskProductView = new KioskProductView(store, _dataServiceInstance.ProfileDataInstance, _dataServiceInstance.CacheDataInstance, service);
 	}
 }

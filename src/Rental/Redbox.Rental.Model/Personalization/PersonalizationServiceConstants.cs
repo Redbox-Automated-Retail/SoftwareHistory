@@ -28,10 +28,6 @@ public class PersonalizationServiceConstants
 
 	public const string TextClubEnabled = "TextClubEnabled";
 
-	public const string HasActiveStarzSubscription = "HasActiveStarzSubscription";
-
-	public const string IsEligibleForStarzSubscription = "IsEligibleForStarzSubscription";
-
 	public const string ServerName = "server_name";
 
 	public const string RecommendedTitles = "RecommendedTitles";

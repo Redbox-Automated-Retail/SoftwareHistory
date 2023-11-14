@@ -5,6 +5,7 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.Ads;
 using Redbox.Rental.Model.KioskClientService;
 using Redbox.Rental.Model.KioskClientService.Ads;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.Ads;
 
@@ -13,9 +14,9 @@ public class VistarAdService : IVistarAdService, IAdService
 	public IAd GetScreenAd(AdLocation adLocation)
 	{
 		IVistarAd vistarAd = null;
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		IConfiguration instance = Redbox.Rental.Services.Configuration.Configuration.Instance;
 		bool flag = true;
-		if (service != null && service.EnableVistarAds && flag)
+		if (instance.Current.MarketingAd.EnableVistarAds && flag)
 		{
 			IGetAdResponse getAdResponse = ServiceLocator.Instance.GetService<IKioskClientService>()?.Ads?.GetAd(adLocation);
 			if (getAdResponse != null && getAdResponse.Success && getAdResponse.AdvertisementId != null && getAdResponse.AssetPath != null)
@@ -44,9 +45,9 @@ public class VistarAdService : IVistarAdService, IAdService
 	public async Task<IAd> GetScreenAdAsync(AdLocation adLocation)
 	{
 		IVistarAd ad = null;
-		IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
+		IConfiguration instance = Redbox.Rental.Services.Configuration.Configuration.Instance;
 		bool locationSupported = adLocation != AdLocation.Welcome;
-		if ((service?.EnableVistarAds ?? false) && locationSupported)
+		if (instance.Current.MarketingAd.EnableVistarAds && locationSupported)
 		{
 			IGetAdResponse getAdResponse = await (ServiceLocator.Instance.GetService<IKioskClientService>()?.Ads?.GetAdAsync(adLocation)).ConfigureAwait(continueOnCapturedContext: false);
 			if (getAdResponse != null && getAdResponse.Success && getAdResponse.AdvertisementId != null && getAdResponse.AssetPath != null)
@@ -76,13 +77,9 @@ public class VistarAdService : IVistarAdService, IAdService
 	{
 		bool flag = false;
 		IVistarAd vistarAd = adImpression?.Ad as IVistarAd;
-		if (vistarAd != null)
+		if (vistarAd != null && Redbox.Rental.Services.Configuration.Configuration.Instance.Current.MarketingAd.EnableVistarAds)
 		{
-			IConfiguration service = ServiceLocator.Instance.GetService<IConfiguration>();
-			if (service != null && service.EnableVistarAds)
-			{
-				flag = ServiceLocator.Instance.GetService<IKioskClientService>()?.Ads?.SendProofOfPlay(adImpression) == true;
-			}
+			flag = ServiceLocator.Instance.GetService<IKioskClientService>()?.Ads?.SendProofOfPlay(adImpression) == true;
 		}
 		LogHelper.Instance.Log($"VistarAdService.CreateImpression: Advertisement Id: {vistarAd?.AdvertisementId}, Location: {adImpression?.AdLocation}, Result: {flag}");
 		return flag;
@@ -92,7 +89,7 @@ public class VistarAdService : IVistarAdService, IAdService
 	{
 		bool flag = false;
 		IVistarAd vistarAd = adImpression?.Ad as IVistarAd;
-		if (vistarAd != null && (ServiceLocator.Instance.GetService<IConfiguration>()?.EnableVistarAds ?? false))
+		if (vistarAd != null && Redbox.Rental.Services.Configuration.Configuration.Instance.Current.MarketingAd.EnableVistarAds)
 		{
 			flag = await (ServiceLocator.Instance.GetService<IKioskClientService>()?.Ads?.SendProofOfPlayAsync(adImpression)).ConfigureAwait(continueOnCapturedContext: false);
 		}
