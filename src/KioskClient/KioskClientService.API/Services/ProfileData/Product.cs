@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace KioskClientService.API.Services.ProfileData;
 
+[UpdateDataTable(UpdateDataTable = UpdateDataTable.Product)]
 public class Product
 {
 	public long ProductId { get; set; }

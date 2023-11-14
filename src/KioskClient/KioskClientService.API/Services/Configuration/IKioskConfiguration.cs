@@ -22,6 +22,16 @@ public interface IKioskConfiguration
 
 	CMSConfiguration CMS { get; }
 
+	ProfileDataConfiguration ProfileData { get; }
+
+	MarketingGeneralConfiguration MarketingGeneral { get; }
+
+	MarketingAdConfiguration MarketingAd { get; }
+
+	MarketingReturnConfiguration MarketingReturn { get; }
+
+	ABTestingConfiguration ABTesting { get; }
+
 	TestData TestData { get; }
 
 	void Log(ConfigLogParameters loggingParameters = null);

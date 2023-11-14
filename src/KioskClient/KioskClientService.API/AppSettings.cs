@@ -25,4 +25,6 @@ public class AppSettings
 	public string DefaultProxyServiceUrl { get; set; }
 
 	public string UpdateClientServiceUrl { get; set; }
+
+	public ProfileDataSettings ProfileDataSettings { get; set; }
 }

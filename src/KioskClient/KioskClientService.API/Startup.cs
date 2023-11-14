@@ -20,6 +20,7 @@ using KioskClientService.API.Services.Campaigns;
 using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.CustomerProfile;
 using KioskClientService.API.Services.Data;
+using KioskClientService.API.Services.DataTableService;
 using KioskClientService.API.Services.Dual;
 using KioskClientService.API.Services.Encryption;
 using KioskClientService.API.Services.HttpQueue;
@@ -117,6 +118,7 @@ public class Startup
 				Title = "Kiosk Client API",
 				Version = "v1"
 			});
+			c.CustomSchemaIds((Type x) => x.FullName);
 		});
 		services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
 		services.AddSingleton<IApplicationSettings, ApplicationSettings>();
@@ -176,6 +178,7 @@ public class Startup
 		services.AddDualService();
 		services.AddProductCatalogService();
 		services.AddProfileDataService();
+		services.AddDataTableService();
 	}
 
 	public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger, IApplicationSettings applicationSettings, IOptionsSnapshotKioskConfiguration kioskConfigiuration)
@@ -206,12 +209,14 @@ public class Startup
 			scheduler.Schedule<PricingJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<SyncPlanogramsJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<CampaignJob>().EveryFifteenSeconds();
+			scheduler.Schedule<IProfileDataJob>().Cron("*/1 * * * *").PreventOverlapping("kiosk");
 			logger.LogInformation("Scheduling ConfigurationJob at */3");
 			logger.LogInformation("Scheduling ProductGroupSortOrderJob at */10");
 			logger.LogInformation("Scheduling SubscriptionJob at */5");
 			logger.LogInformation("Scheduling PricingJob at */5");
 			logger.LogInformation("Scheduling SyncPlanogramsJob at */5");
 			logger.LogInformation("Scheduling CampaignJob every 15 seconds");
+			logger.LogInformation("Scheduling ProfileDataJob at */1");
 		});
 		app.UseMvc();
 		LogAppSettings(logger, applicationSettings, kioskConfigiuration);

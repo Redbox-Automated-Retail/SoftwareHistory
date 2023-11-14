@@ -24,6 +24,16 @@ public class BaseKioskConfiguration : BaseConfiguration, IKioskConfiguration
 
 	public CMSConfiguration CMS { get; set; }
 
+	public ProfileDataConfiguration ProfileData { get; set; }
+
+	public MarketingGeneralConfiguration MarketingGeneral { get; set; }
+
+	public MarketingAdConfiguration MarketingAd { get; set; }
+
+	public MarketingReturnConfiguration MarketingReturn { get; set; }
+
+	public ABTestingConfiguration ABTesting { get; set; }
+
 	public TestData TestData { get; set; }
 
 	public BaseKioskConfiguration(ILogger<BaseKioskConfiguration> logger, IOptionsMonitor<KioskConfigurationSettings> optionsMonitorKioskConfigurationSettings, IEncryptionService encryptionService)

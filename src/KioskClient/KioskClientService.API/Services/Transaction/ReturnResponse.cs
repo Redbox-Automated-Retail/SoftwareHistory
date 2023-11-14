@@ -9,10 +9,6 @@ public class ReturnResponse : BaseResponse, IReplayableApiCall
 {
 	public Guid MessageId { get; set; }
 
-	public long? TransactionId { get; set; }
-
-	public string CPAccountNumber { get; set; }
-
 	public bool Replayable => !base.Errors.Any((Error e) => ReturnErrorCodes.DoNotQueueErrorCodes.Contains(e.Code));
 
 	public ReturnResponse()

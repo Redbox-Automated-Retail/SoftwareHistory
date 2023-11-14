@@ -39,15 +39,21 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		_storeService = storeService;
 	}
 
-	public async Task<PersistentDataWrapper<T>> Read<T>(string fileName, bool useCache = false) where T : IPersistentData
+	public async Task<PersistentDataWrapper<T>> Read<T>(string fileName, bool useCache = false, bool log = true) where T : IPersistentData
 	{
 		try
 		{
-			_logger?.LogDebugWithSource($"Read({fileName},useCache={useCache})", "Read");
+			if (log)
+			{
+				_logger?.LogDebugWithSource($"Read({fileName},useCache={useCache})", "Read");
+			}
 			PersistentDataWrapper<T> persistentDataWrapper = null;
 			if (useCache && _cache.TryGetValue(fileName, out var value) && value != null)
 			{
-				_logger?.LogDebugWithSource("Found cached value for file: " + fileName, "Read");
+				if (log)
+				{
+					_logger?.LogDebugWithSource("Found cached value for file: " + fileName, "Read");
+				}
 				return value as PersistentDataWrapper<T>;
 			}
 			string dataFilePath = GetDataFilePath(fileName);
@@ -93,7 +99,7 @@ public class PersistentDataCacheService : IPersistentDataCacheService
 		}
 		catch (Exception ex)
 		{
-			_logger?.LogErrorWithSource(ex, "unhandled exception occurred", "Write");
+			_logger?.LogErrorWithSource(ex, "Exception while writing to " + fileName, "Write");
 			return false;
 		}
 	}

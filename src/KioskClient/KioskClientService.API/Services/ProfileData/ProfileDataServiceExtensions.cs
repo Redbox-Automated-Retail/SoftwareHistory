@@ -6,6 +6,6 @@ public static class ProfileDataServiceExtensions
 {
 	public static IServiceCollection AddProfileDataService(this IServiceCollection services)
 	{
-		return services.AddScoped<IProfileDataService, ProfileDataService>();
+		return services.AddScoped<IProfileDataService, ProfileDataService>().AddScoped<IProfileDataJob, ProfileDataJob>();
 	}
 }
