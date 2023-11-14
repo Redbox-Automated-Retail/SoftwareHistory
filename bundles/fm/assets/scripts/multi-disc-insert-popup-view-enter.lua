@@ -70,17 +70,7 @@ insert_disc = function()
 		nil,
 		function( job_result )
 			for _, v in ipairs( job_result.results ) do
-                if v.code == "NoFraudMarkersDetected" 
-                and v.item_id ~= nil
-                and v.item_id ~= ""
-                and v.item_id ~= "UNKNOWN"
-                and kernel.is_paper_fraud( v.item_id ) == true then
-                    if kernel.rental_inventory_get_rapidstatus( v.item_id ) == nil then
-                        BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Fraud" }
-                        kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = fraud inserted into barcodestatus" )
-                    end
-                    kernel.send_fraud_alert( v.item_id, true, v.time_stamp24 )
-				elseif v.code == "ItemReturned"
+				if v.code == "ItemReturned"
 				and v.item_id ~= nil
 				and trim( v.item_id ) ~= ""
 				and string.lower( v.item_id ) ~= "unknown"

@@ -893,17 +893,6 @@ function newhardwaremanager()
 	                    return nil
                     end
 
-                    local fraud_result = find_code( job_result.results, "NoFraudMarkersDetected" )
-                    local barcode = (fraud_result or {}).item_id
-
-                    if fraud_result ~= nil 
-                    and kernel.is_paper_fraud( barcode ) == true
-                    and kernel.rental_inventory_get_rapidstatus( barcode ) == nil then
-                        BarcodeStatus[barcode] = { barcode = tostring( barcode ), status = "Fraud" }
-                        kernel.log( "barcode = " .. tostring( barcode ) .. ", status = fraud inserted into barcodestatus" )
-                    end
-                    --END Insert into barcode status
-                    --kernel.process_job_for_frauds(jobid, false)
 					enqueue_inventory_updates( job_result )
 					if on_complete ~= nil then
 						on_complete( job_result )
@@ -1531,32 +1520,6 @@ function newhardwaremanager()
 
 	t.read_fraud_disc = function( self, on_ready, on_complete, on_busy )
 		local result = kernel.hardwarereadfrauddisc(
-			self.default_status_change_handler,
-			function( jobid, status )
-				if has_job_ended( status ) then
-					local job_result = kernel.hardwaregetprogramresults( jobid )
-					enqueue_inventory_updates( job_result )
-					if on_complete ~= nil then
-						on_complete( job_result )
-					end
-					kernel.hardwaretrashjob( jobid )
-				end
-			end )
-
-		if result.success == false then
-			self:show_hardware_errors( result )
-			return { success = false, job_id = nil }
-		end
-
-		if not self:is_hardware_busy( result, on_ready, on_busy ) then
-			return { success = false, job_id = nil }
-		end
-
-		return { success = true, job_id = result.job_id }
-	end
-
-	t.field_insert_fraud_with_check = function( self, on_ready, on_complete, on_busy )
-		local result = kernel.fieldinsertfraudwithcheck(
 			self.default_status_change_handler,
 			function( jobid, status )
 				if has_job_ended( status ) then

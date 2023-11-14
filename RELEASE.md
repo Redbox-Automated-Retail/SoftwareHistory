@@ -1,17 +1,17 @@
-# Z (2023-10-01)
+# Aquaman 2023 (2023-11-14)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-10-01
-- Store labels: kop-rental-bundles-Z
+- Date (first download in the snapshots): 2023-11-14
+- Store labels: kop-rental-bundles-Aquaman2023
 - Package revisions:
-  - `kop-rental-bundles` revision 178 (`65D5FF77815C002373EC3048FF5E6258840EB4D1`)
+  - `kop-rental-bundles` revision 179 (`164E5807DA3DB46240D5AC94ABD1A0620D7C488E`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `BA2CD43FC0062C911C7268451CD7AA6DB697F964` | exact |
-| `fm.bundle` |  |  | `CF5D0A6F16723DF532CFAC96BDA4BDC0A17CA4CC` | exact |
-| `library-rental-common.bundle` |  |  | `8E121F282CF7BE9DC2275B820D5EC62296E6770D` | exact |
-| `ra-2.x.bundle` |  |  | `2210118D9512F9C6437FCCCB103DA2ACAD05ACCD` | exact |
+| `cp.bundle` |  |  | `442BB52ABCEE5C1B27A8D02972BCB3C460C08C26` | exact |
+| `fm.bundle` |  |  | `5D88BA1A71795F12923E09C09BBD5684C857A722` | exact |
+| `library-rental-common.bundle` |  |  | `9DAF248EBA61C97524D0620A304FA29BC9AB95FD` | exact |
+| `ra-2.x.bundle` |  |  | `EEA7920392031AF08B5B6EAF713CB7F6B21CAB2E` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes

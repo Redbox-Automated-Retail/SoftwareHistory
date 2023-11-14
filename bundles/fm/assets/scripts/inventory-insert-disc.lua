@@ -46,11 +46,9 @@ end
 
 responders.PhotocopyBarcode = function(tokens)
     set_text( "Checking for fraud status" )
-    local value = kernel.is_paper_fraud( tokens[2] ) and 'continue' or 'reject'
-    local job_signal_command = 'JOB signal job: ' .. tostring( tokens[3] ) .. ' value: ' .. value
+    local job_signal_command = 'JOB signal job: ' .. tostring( tokens[3] ) .. ' value: reject'
     kernel.log( job_signal_command )
     kernel.hardwareexecuteservicecommand( job_signal_command )
-        --kernel.process_return_unknown_event( tokens[2], tokens[3] )  --barcode, jobId
 end
 
 responders.ItemPlacementDone = function(tokens)
@@ -117,17 +115,7 @@ local result = hardware_manager:return_unknown(
 	function( job_result )
 		if job_result ~= nil then
 			for _, v in ipairs( job_result.results ) do
-                if v.code == "NoFraudMarkersDetected" 
-                and v.item_id ~= nil
-                and v.item_id ~= ""
-                and v.item_id ~= "UNKNOWN"
-                and kernel.is_paper_fraud( v.item_id ) == true then
-                    if kernel.rental_inventory_get_rapidstatus( v.item_id ) == nil then
-                        BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Fraud" }
-                        kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = fraud inserted into barcodestatus" )
-                    end
-                    kernel.send_fraud_alert( v.item_id, true, v.time_stamp24 )
-				elseif v.code == "ItemReturned" and v.item_id ~= nil and v.item_id ~= "UNKNOWN" then
+				if v.code == "ItemReturned" and v.item_id ~= nil and v.item_id ~= "UNKNOWN" then
 					
 					if v.item_id ~= nil and trim(v.item_id) ~= "" then
 						kernel.invsvcs_return(

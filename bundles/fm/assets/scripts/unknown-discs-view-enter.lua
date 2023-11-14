@@ -38,12 +38,11 @@ end
 
 
 responders.PhotocopyBarcode = function( args, jobId )
- local value = kernel.is_paper_fraud( args[2] ) and 'continue' or 'reject'
-    local job_signal_command = 'JOB signal job: ' .. tostring( jobId ) .. ' value: ' .. value
+    local job_signal_command = 'JOB signal job: ' .. tostring( jobId ) .. ' value: reject'
     kernel.log( job_signal_command )
     kernel.hardwareexecuteservicecommand( job_signal_command )
-    --kernel.process_return_unknown_event( args[2], jobId )
 end
+
 local overlay_progress_manager = newprogressmanager()
 
 local excluded_unknowns = {}
@@ -509,27 +508,16 @@ kernel.registeractorhitnotify(
 	                        return false
                         end
 
-                        local failedSecurityRead = contains_code( job_result.results, "NoFraudMarkersDetected" ) == true and kernel.is_paper_fraud( v.item_id ) == true
-                        local return_type = "BackwardsDiscReturn"
-
-                        if failedSecurityRead == true then
-                            return_type = "FailedIRSecurity"
-                            if kernel.rental_inventory_get_rapidstatus( v.item_id ) == nil then
-                                BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Fraud" }
-                                kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = fraud inserted into barcodestatus" )
-                            end
-                        end
-
                         local deck_slot_key = tostring( v.deck ) .. "@" .. tostring( v.slot )
 
 						kernel.invsvcs_return2(
 							StoreID,
-							return_type,
+							"BackwardsDiscReturn",
 							v.item_id,
 							v.deck,
 							v.slot,
 							current_unknown_return_time,
-                            failedSecurityRead,
+							false,
                             nil
 						)
 						table.insert( completion_summary.reinserted, { key=deck_slot_key, barcode=v.item_id, return_time=current_unknown_return_time, status="Successful return." } )

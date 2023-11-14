@@ -388,37 +388,16 @@ function newreturnmanager( shopping_cart )
 						elseif v.code == "ItemReturned"
 						and v.item_id ~= nil and v.item_id ~= "UNKNOWN" then
 							kernel.log( "ReturnManager:v.code = " .. tostring ( v.code ) .. ", v.item_id = " .. tostring( v.item_id ) .. ", v.return_time = " .. tostring( v.return_time ) )
-                            local type_value = "KioskReturn"
-                            local failed_security_read = false
-
-                            if contains_code( job_result.results, "NoFraudMarkersDetected" ) == true
-                            and kernel.is_paper_fraud( v.item_id ) == true then
-                                kernel.log("Return is fraud.  found NoFraudMarkersDetected")
-                                type_value = "FailedIRSecurity"
-                                failed_security_read = true
-                                peel_image_result = {} --already marked as fraud don't need to peel check
-                                if kernel.rental_inventory_get_rapidstatus( v.item_id ) == nil then
-                                    BarcodeStatus[v.item_id] = { barcode = tostring( v.item_id ), status = "Fraud" }
-                                    kernel.log( "barcode = " .. tostring( v.item_id ) .. ", status = Fraud inserted into BarcodeStatus" )
-                                end
-                                kernel.healthsvcs_sendalert2(
-	                                StoreManager:get_number(),
-	                                "ReturnRejected",
-	                                "SECURITYRETURN",
-	                                "Security missing on " .. tostring( v.item_id )
-                                )
-                            end
-
                             kernel.log('peel_image_result.message' .. tostring(peel_image_result.message))
 
 							kernel.invsvcs_return2(
 								StoreManager:get_number(),
-								type_value,
+								"KioskReturn",
 								v.item_id,
 								v.deck,
 								v.slot,
 								v.return_time,
-                                failed_security_read,
+								false,
                                 peel_image_result.message
                             )
 

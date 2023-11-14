@@ -73,11 +73,7 @@ end
 
 -- don't convert the idle_timer_callback to .net till all the views that use it are converted to .net
 function idle_timer_callback()
-	if kernel.is_collections_popup_timer_enabled() then
-		kernel.check_collections_popup("time") 
-	else
-		idle_timer_show_prompt(idle_timer_expire_session)
-	end
+	idle_timer_show_prompt(idle_timer_expire_session)
 end
 
 function idle_timer_show_prompt(expire_session)
