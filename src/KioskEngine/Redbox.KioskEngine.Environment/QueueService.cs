@@ -434,7 +434,7 @@ public class QueueService : IQueueService, IDisposable
 		ErrorList errorList = _queueServiceData.SelectNextMessage(currentQueueServicePriority, out var message);
 		if ((errorList == null || !errorList.ContainsError()) && message != null)
 		{
-			IMessage obj = new QueueMessage
+			IMessage message2 = new QueueMessage
 			{
 				ID = message.ID,
 				Priority = message.Priority,
@@ -442,7 +442,8 @@ public class QueueService : IQueueService, IDisposable
 				Type = message.Type,
 				Data = FromEncryptedMessage(message.Data)
 			};
-			predicate(obj);
+			predicate(message2);
+			_queueServiceData.DeleteMessage(message2.ID);
 		}
 		if (errorList.ContainsCode("Q999"))
 		{
