@@ -32,6 +32,8 @@ public interface IKioskConfiguration
 
 	ABTestingConfiguration ABTesting { get; }
 
+	KioskHealthConfiguration KioskHealth { get; }
+
 	TestData TestData { get; }
 
 	void Log(ConfigLogParameters loggingParameters = null);
