@@ -2,7 +2,7 @@
 <resource type="manifest">
   <property name="name" value="manifest" />
   <property name="product_name" value="Control Panel Application" />
-  <property name="product_version" value="3.53.0.23" />
+  <property name="product_version" value="3.54.0.25" />
   <property name="startup_script" value="application_startup" />
   <aspect name="schema">
     <resourceType name="root">

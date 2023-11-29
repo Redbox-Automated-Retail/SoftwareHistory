@@ -1,17 +1,17 @@
-# Aquaman 2023 (2023-11-14)
+# Bullwinkle (2023-11-29)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-11-14
-- Store labels: kop-rental-bundles-Aquaman2023
+- Date (first download in the snapshots): 2023-11-29
+- Store labels: kop-rental-bundles-Bullwinkle
 - Package revisions:
-  - `kop-rental-bundles` revision 179 (`164E5807DA3DB46240D5AC94ABD1A0620D7C488E`)
+  - `kop-rental-bundles` revision 180 (`D1FE0D5532184978B2F28FBA7C1D55B8356C2739`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `442BB52ABCEE5C1B27A8D02972BCB3C460C08C26` | exact |
-| `fm.bundle` |  |  | `5D88BA1A71795F12923E09C09BBD5684C857A722` | exact |
-| `library-rental-common.bundle` |  |  | `9DAF248EBA61C97524D0620A304FA29BC9AB95FD` | exact |
-| `ra-2.x.bundle` |  |  | `EEA7920392031AF08B5B6EAF713CB7F6B21CAB2E` | exact |
+| `cp.bundle` |  |  | `D26B3F7DB37F8E8043095E2E217CE95C6B6279BF` | exact |
+| `fm.bundle` |  |  | `93AAB7DC0D72BDF4B3178DC529D702C869B725ED` | exact |
+| `library-rental-common.bundle` |  |  | `938768ADF11390F22E3CDCB80DA1D28CD24B6C8D` | exact |
+| `ra-2.x.bundle` |  |  | `D18276B3B73A8F6D3B7EF12EC79ADD119C0774C4` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
