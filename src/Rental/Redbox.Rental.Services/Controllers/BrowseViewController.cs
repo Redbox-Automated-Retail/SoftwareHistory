@@ -68,12 +68,12 @@ public class BrowseViewController : BaseViewController
 	{
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		List<IKioskProduct> products = null;
-		service?.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
+		service?.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, null, isADAView: false, null, null, out products);
 		foreach (IKioskProduct item in products)
 		{
 			OrchestrationService.GetProductBitmapImage(item);
 		}
-		service?.GetProducts(BrowseViewFilter.ComingSoon, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
+		service?.GetProducts(BrowseViewFilter.ComingSoon, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, null, isADAView: false, null, null, out products);
 		foreach (IKioskProduct item2 in products)
 		{
 			OrchestrationService.GetProductBitmapImage(item2);
@@ -297,6 +297,25 @@ public class BrowseViewController : BaseViewController
 		}
 	}
 
+	private static void RatingSelectionPopupButtonModel_OnClicked(CheckMarkButtonModel checkMarkButtonModel)
+	{
+		BaseViewController.ProcessWPFHit();
+		if (checkMarkButtonModel != null && checkMarkButtonModel.IsSelected)
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("BrowseRatingSelectionPopup", "Deselect");
+			BrowseState.Rating = null;
+			BrowseState.PageNumber = 1;
+			ConfigureTopMenu();
+			ConfigureBrowseControl();
+			ConfigureBrowseFilterBar();
+		}
+		else
+		{
+			BaseViewController.AnalyticsService?.AddButtonPressEvent("BrowseRatingSelectionPopup");
+			OrchestrationService.ViewShow("rating_selection_popup_view");
+		}
+	}
+
 	private static void FormatSelectionPopupButtonModel_OnClicked(CheckMarkButtonModel checkMarkButtonModel)
 	{
 		BaseViewController.ProcessWPFHit();
@@ -320,23 +339,14 @@ public class BrowseViewController : BaseViewController
 
 	private static string GetFormatSelectionPopupButtonText()
 	{
-		string result = Resources.format_selection_popup_button_text;
-		switch (BrowseState.TitleType)
+		return BrowseState.TitleType switch
 		{
-		case TitleType.DVD:
-			result = Resources.dvd;
-			break;
-		case TitleType.Bluray:
-			result = Resources.blu_ray.ToUpper();
-			break;
-		case TitleType._4KUHD:
-			result = Resources.four_k_uhd;
-			break;
-		case TitleType.DigitalCode:
-			result = Resources.digital_code.ToUpper();
-			break;
-		}
-		return result;
+			TitleType.DVD => Resources.dvd, 
+			TitleType.Bluray => Resources.blu_ray.ToUpper(), 
+			TitleType._4KUHD => Resources.four_k_uhd, 
+			TitleType.DigitalCode => Resources.digital_code.ToUpper(), 
+			_ => Resources.format_selection_popup_button_text, 
+		};
 	}
 
 	private static void DealsFilterButtonModel_OnClicked(CheckMarkButtonModel checkMarkButtonModel)
@@ -383,6 +393,35 @@ public class BrowseViewController : BaseViewController
 		ConfigureBrowseFilterBar();
 	}
 
+	public static BrowseSort GetBrowseSort()
+	{
+		if (!ShowSortSelectionPopupButton() || !BrowseState.Sort.HasValue || BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha)
+		{
+			return BrowseState.BrowseSelectedSort.ConvertToBrowseSort(BrowseState.BrowseMode);
+		}
+		return BrowseState.Sort.Value;
+	}
+
+	private static string GetSortSelectionPopupButtonText(BrowseSort sort)
+	{
+		return sort switch
+		{
+			BrowseSort.Alpha => Resources.sort_alpha, 
+			BrowseSort.MerchandiseDate => Resources.sort_oldest, 
+			BrowseSort.SortDate => Resources.sort_trending, 
+			BrowseSort.InitialNightPrice => Resources.sort_price, 
+			BrowseSort.MerchandiseDateDescending => Resources.sort_newest, 
+			_ => Resources.sort_selection_popup_button_text, 
+		};
+	}
+
+	private static void SortSelectionPopupButtonModel_OnClicked(CheckMarkButtonModel checkMarkButtonModel)
+	{
+		BaseViewController.ProcessWPFHit();
+		BaseViewController.AnalyticsService?.AddButtonPressEvent("BrowseSortSelectionPopup");
+		OrchestrationService.ViewShow("sort_selection_popup_view");
+	}
+
 	private static void TopMenuModel_OnAZButtonClicked()
 	{
 		BaseViewController.ProcessWPFHit();
@@ -399,6 +438,8 @@ public class BrowseViewController : BaseViewController
 		BrowseState.TitleType = TitleType.All;
 		BrowseState.BrowseMode = ((BrowseState.BrowseMode == BrowseViewFilter.RedboxPlus) ? BrowseViewFilter.RedboxPlus : BrowseViewFilter.All);
 		BrowseState.Genre = null;
+		BrowseState.Rating = null;
+		BrowseState.Sort = null;
 		BrowseState.SelectedAlphaGroupName = null;
 		BrowseState.PageNumber = 1;
 		ConfigureTopMenu();
@@ -416,63 +457,92 @@ public class BrowseViewController : BaseViewController
 				Style style = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "button_selectable_unselected_style");
 				Style style2 = WPFFunctions.GetStyle(BaseViewController.GetViewUserControl(), "button_selectable_selected_style");
 				bool flag = BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha;
+				bool isRedboxPlusBrowseMode = BrowseFunctions.IsRedboxPlusBrowseMode;
+				bool hasValue = BrowseState.Genre.HasValue;
 				CheckMarkButtonModel checkMarkButtonModel = new CheckMarkButtonModel(style, style2)
 				{
 					Visibility = ((!ShowGenreSelectionPopupButton() || flag) ? Visibility.Collapsed : Visibility.Visible),
-					IsSelected = BrowseState.Genre.HasValue,
-					Text = (BrowseState.Genre.HasValue ? Resources.ResourceManager.GetString(string.Format($"genre_{(long)BrowseState.Genre.Value}")) : Resources.genre_selection_popup_button_text),
-					ShowArrow = !BrowseState.Genre.HasValue
+					IsSelected = hasValue,
+					Text = (hasValue ? Resources.ResourceManager.GetString(string.Format($"genre_{(long)BrowseState.Genre.Value}")) : Resources.genre_selection_popup_button_text),
+					ShowArrow = !hasValue,
+					TextMaxWidth = (isRedboxPlusBrowseMode ? 220 : ((!hasValue) ? 104 : 128))
 				};
 				checkMarkButtonModel.OnClicked += GenreSelectionPopupButtonModel_OnClicked;
+				bool hasValue2 = BrowseState.Rating.HasValue;
+				RatingsProperties.Properties.TryGetValue(BrowseState.Rating.GetValueOrDefault(), out var value);
 				CheckMarkButtonModel checkMarkButtonModel2 = new CheckMarkButtonModel(style, style2)
 				{
-					Visibility = ((!ShowTopFormatFilterButton() || flag) ? Visibility.Collapsed : Visibility.Visible),
-					IsSelected = (BrowseState.TitleType == TitleType.DVD || BrowseState.TitleType == TitleType.Bluray || BrowseState.TitleType == TitleType._4KUHD || BrowseState.TitleType == TitleType.DigitalCode),
-					Text = GetFormatSelectionPopupButtonText(),
-					ShowArrow = (BrowseState.TitleType != TitleType.DVD && BrowseState.TitleType != TitleType.Bluray && BrowseState.TitleType != TitleType._4KUHD && BrowseState.TitleType != TitleType.DigitalCode)
+					Visibility = ((!ShowRatingSelectionPopupButton() || flag) ? Visibility.Collapsed : Visibility.Visible),
+					IsSelected = hasValue2,
+					Text = ((!hasValue2) ? Resources.rating_selection_popup_button_text : (value?.Name ?? "None")),
+					ShowArrow = !hasValue2,
+					TextMaxWidth = (isRedboxPlusBrowseMode ? 220 : ((!hasValue2) ? 104 : 128))
 				};
-				checkMarkButtonModel2.OnClicked += FormatSelectionPopupButtonModel_OnClicked;
+				checkMarkButtonModel2.OnClicked += RatingSelectionPopupButtonModel_OnClicked;
+				bool flag2 = BrowseState.TitleType == TitleType.DVD || BrowseState.TitleType == TitleType.Bluray || BrowseState.TitleType == TitleType._4KUHD || BrowseState.TitleType == TitleType.DigitalCode;
 				CheckMarkButtonModel checkMarkButtonModel3 = new CheckMarkButtonModel(style, style2)
+				{
+					Visibility = ((!ShowTopFormatFilterButton() || flag) ? Visibility.Collapsed : Visibility.Visible),
+					IsSelected = flag2,
+					Text = GetFormatSelectionPopupButtonText(),
+					ShowArrow = !flag2,
+					TextMaxWidth = (isRedboxPlusBrowseMode ? 220 : ((!flag2) ? 104 : 128))
+				};
+				checkMarkButtonModel3.OnClicked += FormatSelectionPopupButtonModel_OnClicked;
+				CheckMarkButtonModel checkMarkButtonModel4 = new CheckMarkButtonModel(style, style2)
 				{
 					Visibility = ((!ShowTopDealsFilterButton() || flag) ? Visibility.Collapsed : Visibility.Visible),
 					IsSelected = (BrowseState.BrowseMode == BrowseViewFilter.Deals),
-					Text = Resources.deals_button
+					Text = Resources.deals_button,
+					TextMaxWidth = 128
 				};
-				checkMarkButtonModel3.OnClicked += DealsFilterButtonModel_OnClicked;
-				CheckMarkButtonModel checkMarkButtonModel4 = new CheckMarkButtonModel(style, style2)
+				checkMarkButtonModel4.OnClicked += DealsFilterButtonModel_OnClicked;
+				CheckMarkButtonModel checkMarkButtonModel5 = new CheckMarkButtonModel(style, style2)
 				{
 					Visibility = ((!ShowTopForSaleButton() || flag) ? Visibility.Collapsed : Visibility.Visible),
 					IsSelected = (BrowseState.BrowseMode == BrowseViewFilter.ForSale),
-					Text = Resources.for_sale_button
+					Text = Resources.to_buy_button,
+					TextMaxWidth = 128
 				};
-				checkMarkButtonModel4.OnClicked += ToBuyFilterButtonModel_OnClicked;
-				List<CheckMarkButtonModel> checkMarkButtonModels = new List<CheckMarkButtonModel> { checkMarkButtonModel, checkMarkButtonModel2, checkMarkButtonModel3, checkMarkButtonModel4 };
+				checkMarkButtonModel5.OnClicked += ToBuyFilterButtonModel_OnClicked;
+				BrowseSort browseSort = GetBrowseSort();
+				CheckMarkButtonModel checkMarkButtonModel6 = new CheckMarkButtonModel(style, style2)
+				{
+					Visibility = ((!ShowSortSelectionPopupButton() || flag) ? Visibility.Collapsed : Visibility.Visible),
+					IsSelected = false,
+					Text = Resources.sort_selection_popup_button_text,
+					SmallText = GetSortSelectionPopupButtonText(browseSort),
+					TextMaxWidth = (isRedboxPlusBrowseMode ? 220 : 128),
+					ShowDownArrow = true
+				};
+				checkMarkButtonModel6.OnClicked += SortSelectionPopupButtonModel_OnClicked;
+				List<CheckMarkButtonModel> checkMarkButtonModels = new List<CheckMarkButtonModel> { checkMarkButtonModel, checkMarkButtonModel2, checkMarkButtonModel3, checkMarkButtonModel4, checkMarkButtonModel5, checkMarkButtonModel6 };
 				topMenuModel.CheckMarkButtonModels = checkMarkButtonModels;
 				topMenuModel.AZButtonVisibility = ((!ShowTopAZButton()) ? Visibility.Collapsed : Visibility.Visible);
-				bool flag2 = BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha;
-				topMenuModel.AZButtonIconVisibility = (flag2 ? Visibility.Collapsed : Visibility.Visible);
-				topMenuModel.AZButtonExitIconVisibility = ((!flag2) ? Visibility.Collapsed : Visibility.Visible);
-				topMenuModel.AZButtonText = (flag2 ? Resources.abc_exit_button : Resources.abc_button);
+				bool flag3 = BrowseState.BrowseSelectedSort == BrowseSelectedSort.Alpha;
+				topMenuModel.AZButtonIconVisibility = (flag3 ? Visibility.Collapsed : Visibility.Visible);
+				topMenuModel.AZButtonExitIconVisibility = ((!flag3) ? Visibility.Collapsed : Visibility.Visible);
+				topMenuModel.AZButtonText = (flag3 ? Resources.abc_exit_button : Resources.abc_button);
 				topMenuModel.OnAZButtonClicked += TopMenuModel_OnAZButtonClicked;
 			}
 			else
 			{
-				bool flag3 = PersonalizationFunctions.IsSignedIn && RedboxPlusFunctions.CanShowRedboxPlusRedemption;
+				bool flag4 = PersonalizationFunctions.IsSignedIn && RedboxPlusFunctions.CanShowRedboxPlusRedemption;
 				bool isDeselectable = !BaseViewController.IsADAMode;
 				BrowseMenuButton browseMenuButton = null;
 				int width = (OrchestrationService.IsCultureSpanish() ? 142 : 121);
 				browseMenuButton = CreateGenreMenuButton(Genres.Top20Movies, highlightSelectedGenre, width, isDeselectable);
 				topMenuModel.MenuButtons.AddRange(new List<BrowseMenuButton>
 				{
-					CreateGenreMenuButton(Genres.ActionAndAdventure, highlightSelectedGenre, flag3 ? 101 : 121, isDeselectable),
-					CreateGenreMenuButton(Genres.Comedy, highlightSelectedGenre, flag3 ? 101 : 121, isDeselectable),
-					CreateGenreMenuButton(Genres.FamilyMovies, highlightSelectedGenre, flag3 ? 101 : 121, isDeselectable),
-					CreateGenreMenuButton(Genres.Horror, highlightSelectedGenre, flag3 ? 101 : 121, isDeselectable),
-					CreateGenreMenuButton(Genres.Drama, highlightSelectedGenre, flag3 ? 101 : 121, isDeselectable),
+					CreateGenreMenuButton(Genres.ActionAndAdventure, highlightSelectedGenre, flag4 ? 101 : 121, isDeselectable),
+					CreateGenreMenuButton(Genres.Comedy, highlightSelectedGenre, flag4 ? 101 : 121, isDeselectable),
+					CreateGenreMenuButton(Genres.FamilyMovies, highlightSelectedGenre, flag4 ? 101 : 121, isDeselectable),
+					CreateGenreMenuButton(Genres.Horror, highlightSelectedGenre, flag4 ? 101 : 121, isDeselectable),
+					CreateGenreMenuButton(Genres.Drama, highlightSelectedGenre, flag4 ? 101 : 121, isDeselectable),
 					browseMenuButton,
 					CreateGenreMenuButton(null, highlightSelectedGenre, OrchestrationService.IsCultureSpanish() ? 121 : 142)
 				});
-				if (flag3)
+				if (flag4)
 				{
 					topMenuModel.MenuButtons.Add(CreateSignOutMenuButton());
 				}
@@ -583,6 +653,8 @@ public class BrowseViewController : BaseViewController
 			BrowseState.BrowseMode = BrowseViewFilter.ForSale;
 			BrowseState.BrowseSelectedSort = BrowseSelectedSort.ForSale;
 			BrowseState.Genre = null;
+			BrowseState.Rating = null;
+			BrowseState.Sort = null;
 			BrowseState.PageNumber = 1;
 			BrowseState.BrowsePriceRangeFilter = null;
 			BrowseState.BrowseStudio = null;
@@ -813,7 +885,7 @@ public class BrowseViewController : BaseViewController
 			Visibility = ((!ShowBottomRedboxPlusMoviesButton()) ? Visibility.Collapsed : Visibility.Visible),
 			IsSelected = BrowseFunctions.IsRedboxPlusBrowseMode,
 			Text = Resources.redbox_plus_movies_button,
-			ImageMargin = new Thickness(-35.0, -20.0, 0.0, 0.0)
+			CheckMarkImageMargin = new Thickness(-35.0, -20.0, 0.0, 0.0)
 		};
 		checkMarkButtonModel.OnClicked += BottomRedboxPlusMoviesButtonModel_OnClicked;
 		filterBarModel.BottomRedboxPlusMoviesButtonModel = checkMarkButtonModel;
@@ -949,9 +1021,9 @@ public class BrowseViewController : BaseViewController
 	private static bool ShowHomeButton()
 	{
 		OrchestrationService.SetCurrentUICulture();
-		if (BrowseState.PageNumber <= 1 && BrowseState.BrowseMode == BrowseViewFilter.All && BrowseState.BrowseSelectedSort == BrowseSelectedSort.Newest)
+		if (BrowseState.PageNumber <= 1 && BrowseState.BrowseMode == BrowseViewFilter.All && BrowseState.BrowseSelectedSort == BrowseSelectedSort.Newest && !BrowseState.Genre.HasValue && !BrowseState.Rating.HasValue)
 		{
-			return BrowseState.Genre.HasValue;
+			return BrowseState.Sort.HasValue;
 		}
 		return true;
 	}
@@ -1044,6 +1116,24 @@ public class BrowseViewController : BaseViewController
 	}
 
 	private static bool ShowGenreSelectionPopupButton()
+	{
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.ShowTopFilterButtons)
+		{
+			return !BaseViewController.IsADAMode;
+		}
+		return false;
+	}
+
+	private static bool ShowRatingSelectionPopupButton()
+	{
+		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.ShowTopFilterButtons)
+		{
+			return !BaseViewController.IsADAMode;
+		}
+		return false;
+	}
+
+	private static bool ShowSortSelectionPopupButton()
 	{
 		if (Redbox.Rental.Services.Configuration.Configuration.Instance.KioskSession.Browse.ShowTopFilterButtons)
 		{
@@ -2566,11 +2656,11 @@ public class BrowseViewController : BaseViewController
 	private static List<IKioskProduct> GetBrowseKioskProducts()
 	{
 		IBrowseState browseState = Redbox.Rental.Services.Session.Session.Instance.BrowseState;
-		LogHelper.Instance.Log("RentalGetProducts by browseMode: {0} family: {1} familyType: {2} selectedSort: {3} selectedGenere: {4}, isADAView: {5}, priceFilterLow: {6}, priceFilterHigh {7}, studio {8} ", browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseState.BrowseSelectedSort, browseState.Genre, BaseViewController.IsADAMode, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, browseState.BrowseStudio);
+		LogHelper.Instance.Log("RentalGetProducts by browseMode: {0}, family: {1}, familyType: {2}, selectedBrowseSort: {3}, selectedGenre: {4}, selectedRating: {5}, selectedSort: {6}, isADAView: {7}, priceFilterLow: {8}, priceFilterHigh {9}, studio {10}", browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseState.BrowseSelectedSort, browseState.Genre, browseState.Rating, browseState.Sort, BaseViewController.IsADAMode, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, browseState.BrowseStudio);
 		try
 		{
 			IDataService service = ServiceLocator.Instance.GetService<IDataService>();
-			BrowseSort browseSort = browseState.BrowseSelectedSort.ConvertToBrowseSort(browseState.BrowseMode);
+			BrowseSort browseSort = GetBrowseSort();
 			List<long> include = new List<long>();
 			List<long> exclude = new List<long>();
 			List<TitleType> excludeTitleTypes = new List<TitleType>();
@@ -2583,7 +2673,7 @@ public class BrowseViewController : BaseViewController
 				excludeTitleTypes = PromotionService.Instance.GetInCartExcludeTitleTypeList();
 				excludeDiscountRestriction = PromotionService.Instance.GetInCartExcludeDiscountRestriction();
 			}
-			ErrorList products = service.GetProducts(browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseSort, (long?)browseState.Genre, include, exclude, BaseViewController.IsADAMode, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, out var products2, browseState.BrowseStudio, excludeTitleTypes, excludeDiscountRestriction);
+			ErrorList products = service.GetProducts(browseState.BrowseMode, browseState.TitleFamily, browseState.TitleType, browseSort, (long?)browseState.Genre, (long?)browseState.Rating, include, exclude, BaseViewController.IsADAMode, browseState.BrowsePriceRangeFilter?.PriceRangeLow, browseState.BrowsePriceRangeFilter?.PriceRangeHigh, out var products2, browseState.BrowseStudio, excludeTitleTypes, excludeDiscountRestriction);
 			if (products.Count > 0)
 			{
 				products.ToLogHelper();
@@ -2608,7 +2698,7 @@ public class BrowseViewController : BaseViewController
 	{
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		List<IKioskProduct> products = null;
-		service?.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, titleType, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
+		service?.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, titleType, BrowseSort.MerchandiseDate, null, null, null, null, isADAView: false, null, null, out products);
 		if (products == null)
 		{
 			return false;

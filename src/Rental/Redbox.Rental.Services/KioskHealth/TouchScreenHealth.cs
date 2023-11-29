@@ -5,15 +5,15 @@ using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Health;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
 public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 {
-	private IKioskHealthConfiguration _configuration;
-
 	private IKioskEventService _kioskEvents;
 
 	private IResourceBundleService _resourceBundleService;
@@ -68,9 +68,8 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 
 	private bool IsInactive => (DateTime.Now - _inActiveFrom).TotalMinutes >= (double)_touchScreenInActivity;
 
-	public TouchScreenHealth(IKioskHealthConfiguration configuration, IKioskEventService kioskEvents)
+	public TouchScreenHealth(IKioskEventService kioskEvents)
 	{
-		_configuration = configuration;
 		_kioskEvents = kioskEvents;
 		if (_changeTimer == null)
 		{
@@ -341,18 +340,30 @@ public class TouchScreenHealth : ITouchScreenHealth, IKioskHealthItem
 
 	private void ReadConfiguration()
 	{
-		_touchScreenActive = _configuration.TouchScreenActive;
-		_touchScreenReporting = _configuration.TouchScreenReporting;
-		_touchScreenHealing = _configuration.TouchScreenHealing;
-		_touchScreenStartCheck = _configuration.TouchScreenStartCheck;
-		_touchScreenEndCheck = _configuration.TouchScreenEndCheck;
-		_touchScreenInActivity = _configuration.TouchScreenInActivity;
-		_resetsBeforeAlert = _configuration.TouchScreenResetsToAlert;
+		KioskHealthConfiguration kioskHealth = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth;
+		_touchScreenActive = kioskHealth.TouchScreenActive;
+		_touchScreenReporting = kioskHealth.TouchScreenReporting;
+		_touchScreenHealing = kioskHealth.TouchScreenHealing;
+		_touchScreenStartCheck = GetTimeSpan(kioskHealth.TouchScreenStartCheck, new TimeSpan(16, 0, 0));
+		_touchScreenEndCheck = GetTimeSpan(kioskHealth.TouchScreenEndCheck, new TimeSpan(22, 0, 0));
+		_touchScreenInActivity = kioskHealth.TouchScreenInActivity;
+		_resetsBeforeAlert = kioskHealth.TouchScreenResetsToAlert;
 		LogHelper.Instance.Log("TouchScreenHealth Active {0}", _touchScreenActive);
 		LogHelper.Instance.Log("TouchScreenHealth Reporting {0}", _touchScreenReporting);
 		LogHelper.Instance.Log("TouchScreenHealth Healing {0}", _touchScreenHealing);
 		LogHelper.Instance.Log("TouchScreenHealth StartCheck {0}", _touchScreenStartCheck);
 		LogHelper.Instance.Log("TouchScreenHealth EndCheck {0}", _touchScreenEndCheck);
 		LogHelper.Instance.Log("TouchScreenHealth Inactivity {0}", _touchScreenInActivity);
+	}
+
+	private TimeSpan GetTimeSpan(string value, TimeSpan defaultValue)
+	{
+		if (value != null && TimeSpan.TryParse(value, out var result))
+		{
+			LogHelper.Instance.Log($"Parsed '{value}' to {result}");
+			return result;
+		}
+		LogHelper.Instance.Log($"failed to parse '{value}' to timespan.  returning default value {defaultValue}");
+		return defaultValue;
 	}
 }

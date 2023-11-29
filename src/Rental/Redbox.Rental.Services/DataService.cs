@@ -407,7 +407,7 @@ public class DataService : IDataService
 		return result;
 	}
 
-	public ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, out List<IKioskProduct> products, string studio = null, List<TitleType> excludeTitleTypes = null, bool excludeDiscountRestriction = false)
+	public ErrorList GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, long? ratingFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, out List<IKioskProduct> products, string studio = null, List<TitleType> excludeTitleTypes = null, bool excludeDiscountRestriction = false)
 	{
 		WaitForFirstLoad();
 		products = null;
@@ -416,7 +416,7 @@ public class DataService : IDataService
 		{
 			lock (_lock)
 			{
-				products = _kioskProductView.GetProducts(browseFilter, titleFamily, titleType, browseSort, genreFilter, include, exclude, isADAView, priceRangeLow, priceRangeHigh, studio, excludeTitleTypes, excludeDiscountRestriction);
+				products = _kioskProductView.GetProducts(browseFilter, titleFamily, titleType, browseSort, genreFilter, ratingFilter, include, exclude, isADAView, priceRangeLow, priceRangeHigh, studio, excludeTitleTypes, excludeDiscountRestriction);
 			}
 		}
 		catch (Exception e)
@@ -436,7 +436,7 @@ public class DataService : IDataService
 		{
 			lock (_lock)
 			{
-				result = (from x in _kioskProductView.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, TitleType.All, BrowseSort.SortDate, null, null, null, isADAView: false, null, null)
+				result = (from x in _kioskProductView.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, TitleType.All, BrowseSort.SortDate, null, null, null, null, isADAView: false, null, null)
 					where x is ITitleProduct
 					select x as ITitleProduct).ToList();
 			}

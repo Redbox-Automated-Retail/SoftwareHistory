@@ -165,6 +165,10 @@ public static class AnalyticsConstants
 
 		public const string BrowseGenreSelectionPopup = "BrowseGenreSelectionPopup";
 
+		public const string BrowseRatingSelectionPopup = "BrowseRatingSelectionPopup";
+
+		public const string BrowseSortSelectionPopup = "BrowseSortSelectionPopup";
+
 		public const string BulletListPopupReserveOnlineGotit = "BulletListPopupReserveOnlineGotit";
 
 		public const string BulletListPopupRedboxPerksGotit = "BulletListPopupRedboxPerksGotit";
@@ -614,6 +618,18 @@ public static class AnalyticsConstants
 		public const string GenreSelectionPopupCancel = "GenreSelectionPopupCancel";
 
 		public const string GenreSelectionPopupApply = "GenreSelectionPopupApply";
+
+		public const string RatingSelectionPopupRating = "RatingSelectionPopupRating";
+
+		public const string RatingSelectionPopupCancel = "RatingSelectionPopupCancel";
+
+		public const string RatingSelectionPopupApply = "RatingSelectionPopupApply";
+
+		public const string SortSelectionPopupSort = "SortSelectionPopupSort";
+
+		public const string SortSelectionPopupCancel = "SortSelectionPopupCancel";
+
+		public const string SortSelectionPopupApply = "SortSelectionPopupApply";
 	}
 
 	public static class DataTypeNames

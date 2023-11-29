@@ -36,7 +36,7 @@
       <ItemsControl ItemsSource="{Binding Path=CheckMarkButtonModels}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,-99,0" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="-43,0,0,0" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>

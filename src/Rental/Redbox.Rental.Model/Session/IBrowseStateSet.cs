@@ -22,6 +22,10 @@ public interface IBrowseStateSet
 
 	Genres? Genre { get; set; }
 
+	Ratings? Rating { get; set; }
+
+	BrowseSort? Sort { get; set; }
+
 	List<IBrowseItemModel> BrowseItemModels { get; set; }
 
 	List<IKioskProduct> BrowseProductsShown { get; set; }

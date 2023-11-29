@@ -3,22 +3,20 @@ using System.Collections.Generic;
 using Redbox.Core;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
 public class KioskHealthService : IKioskHealthService
 {
-	private IKioskHealthConfiguration _configuration;
-
 	private IKioskEventService _kioskEvents;
 
 	private bool _kioskHealthActive;
 
 	private List<IKioskHealthItem> _kioskHealthItems = new List<IKioskHealthItem>();
 
-	public KioskHealthService(IKioskHealthConfiguration configuration, IKioskEventService kioskEvents)
+	public KioskHealthService(IKioskEventService kioskEvents)
 	{
-		_configuration = configuration;
 		_kioskEvents = kioskEvents;
 	}
 
@@ -84,7 +82,7 @@ public class KioskHealthService : IKioskHealthService
 
 	private void ReadConfiguration()
 	{
-		_kioskHealthActive = _configuration.KioskHealthActive;
+		_kioskHealthActive = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth.KioskHealthActive;
 		LogHelper.Instance.Log("KioskHealthService Active {0}", _kioskHealthActive);
 	}
 }

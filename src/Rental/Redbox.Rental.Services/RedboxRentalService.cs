@@ -163,6 +163,8 @@ public class RedboxRentalService : IRedboxRental
 			{
 				browseState.BrowseMode = BrowseViewFilter.All;
 				browseState.Genre = null;
+				browseState.Rating = null;
+				browseState.Sort = null;
 				browseState.IsShoppingCartFullMessagesOpen = false;
 				browseState.ShoppingCartFullMessagesShown = false;
 				browseState.TitleFamily = TitleFamily.Movies;

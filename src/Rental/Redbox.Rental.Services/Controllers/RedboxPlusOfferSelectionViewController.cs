@@ -113,7 +113,7 @@ public class RedboxPlusOfferSelectionViewController : BaseViewController
 		redboxPlusOfferSelectionViewModel.NotReadyYetText = string.Format(Resources.redbox_plus_offer_selection_not_ready_yet_text, Resources.redbox_plus_qr_code_disiplay_url);
 		redboxPlusOfferSelectionViewModel.ScanQRCodeButtonText = Resources.redbox_plus_scan_qr_code_text;
 		List<IKioskProduct> products = null;
-		ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(BrowseViewFilter.RedboxPlus, TitleFamily.Movies, TitleType.All, BrowseSort.SortDate, null, null, null, isADAView: false, null, null, out products);
+		ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(BrowseViewFilter.RedboxPlus, TitleFamily.Movies, TitleType.All, BrowseSort.SortDate, null, null, null, null, isADAView: false, null, null, out products);
 		if (products == null)
 		{
 			return;

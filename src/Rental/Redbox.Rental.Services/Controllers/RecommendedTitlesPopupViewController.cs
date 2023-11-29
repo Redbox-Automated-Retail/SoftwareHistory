@@ -140,7 +140,7 @@ public class RecommendedTitlesPopupViewController : BaseViewController
 		{
 			return null;
 		}
-		ErrorList products = service.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, titleProduct.TitleType, BrowseSort.SortDate, null, null, null, isADAView: true, null, null, out var products2);
+		ErrorList products = service.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, titleProduct.TitleType, BrowseSort.SortDate, null, null, null, null, isADAView: true, null, null, out var products2);
 		if (products.Count > 0)
 		{
 			products.ToLogHelper();

@@ -4,15 +4,15 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Health;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
 public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 {
-	private IKioskHealthConfiguration _configuration;
-
 	private IKioskEventService _kioskEvents;
 
 	private bool _CCReaderActive;
@@ -37,9 +37,8 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 
 	private int _lockTimeout = 5000;
 
-	public CCReaderHealth(IKioskHealthConfiguration configuration, IKioskEventService kioskEvents)
+	public CCReaderHealth(IKioskEventService kioskEvents)
 	{
-		_configuration = configuration;
 		_kioskEvents = kioskEvents;
 	}
 
@@ -244,11 +243,12 @@ public class CCReaderHealth : IKioskHealthItem, ICCReaderHealth
 
 	private void ReadConfiguration()
 	{
-		_CCReaderActive = _configuration.CCReaderActive;
-		_CCReaderSendNoDataEvents = _configuration.CCReaderSendNoDataEvents;
-		_CCReaderSendBadDataEvents = _configuration.CCReaderSendBadDataEvents;
-		_CCReaderNoDataAttemptsToAlert = _configuration.CCReaderNoDataAttemptsToAlert;
-		_CCReaderBadDataAttemptsToAlert = _configuration.CCReaderBadDataAttemptsToAlert;
+		KioskHealthConfiguration kioskHealth = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth;
+		_CCReaderActive = kioskHealth.CCReaderActive;
+		_CCReaderSendNoDataEvents = kioskHealth.CCReaderSendNoDataEvents;
+		_CCReaderSendBadDataEvents = kioskHealth.CCReaderSendBadDataEvents;
+		_CCReaderNoDataAttemptsToAlert = kioskHealth.CCReaderNoDataAttemptsToAlert;
+		_CCReaderBadDataAttemptsToAlert = kioskHealth.CCReaderBadDataAttemptsToAlert;
 		LogHelper.Instance.Log("CCReaderHealth Active {0}", _CCReaderActive);
 		LogHelper.Instance.Log("CCReaderHealth Send No Data Events {0}", _CCReaderSendNoDataEvents);
 		LogHelper.Instance.Log("CCReaderHealth Failed Attempts {0}", _CCReaderNoDataAttemptsToAlert);

@@ -6,9 +6,11 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Health;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Services.App;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
@@ -75,8 +77,6 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 	}
 
 	private const string CardReaderDisconnectCachFile = "EMVDisconnectData";
-
-	private readonly IKioskHealthConfiguration _configuration;
 
 	private readonly IKioskEventService _kioskEvents;
 
@@ -149,9 +149,8 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 		TechnicalFallbackSessionTrackingReset = true
 	}.ToJson();
 
-	public EMVReaderHealth(IKioskHealthConfiguration configuration, IKioskEventService kioskEvents)
+	public EMVReaderHealth(IKioskEventService kioskEvents)
 	{
-		_configuration = configuration;
 		_kioskEvents = kioskEvents;
 	}
 
@@ -374,12 +373,13 @@ public class EMVReaderHealth : IKioskHealthItem, IEMVReaderHealth
 
 	private void ReadConfiguration()
 	{
-		_EMVReaderActive = _configuration.EMVReaderActive;
-		_EMVReaderTrackMultipleFallbacks = _configuration.EMVReaderTrackMultipleFallbacks;
-		_EMVReaderMultipleFallbacksThreshold = _configuration.EMVReaderMultipleFallbacksThreshold;
-		_EMVReaderDisconnectAlertActive = _configuration.EMVReaderDisconnectAlertActive;
-		_EMVReaderDisconnectAlertVelocity = _configuration.EMVReaderDisconnectAlertVelocity;
-		_EMVReaderDisconnectSampleSizeHours = _configuration.EMVReaderDisconnectSampleSizeHours;
+		KioskHealthConfiguration kioskHealth = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth;
+		_EMVReaderActive = kioskHealth.EMVReaderActive;
+		_EMVReaderTrackMultipleFallbacks = kioskHealth.EMVReaderTrackMultipleFallbacks;
+		_EMVReaderMultipleFallbacksThreshold = kioskHealth.EMVReaderMultipleFallbacksThreshold;
+		_EMVReaderDisconnectAlertActive = kioskHealth.EMVReaderDisconnectAlertActive;
+		_EMVReaderDisconnectAlertVelocity = kioskHealth.EMVReaderDisconnectAlertVelocity;
+		_EMVReaderDisconnectSampleSizeHours = kioskHealth.EMVReaderDisconnectSampleSizeHours;
 		LogHelper.Instance.Log($"EMVReaderHealth Active {_EMVReaderActive}");
 		LogHelper.Instance.Log($"EMVReaderHealth Track Multiple Technical Fallback Sessions Over Threshold {_EMVReaderTrackMultipleFallbacks}");
 		LogHelper.Instance.Log($"EMVReaderHealth Multiple Technical Fallback Sessions Threshold {_EMVReaderMultipleFallbacksThreshold}");

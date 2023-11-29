@@ -5,15 +5,15 @@ using System.Threading;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
 public class RouterHealth : IRouterHealth, IKioskHealthItem
 {
-	private IKioskHealthConfiguration _configuration;
-
 	private IKioskEventService _kioskEvents;
 
 	private IResourceBundleService _resourceBundleService;
@@ -89,9 +89,8 @@ public class RouterHealth : IRouterHealth, IKioskHealthItem
 		}
 	}
 
-	public RouterHealth(IKioskHealthConfiguration configuration, IKioskEventService kioskEvents)
+	public RouterHealth(IKioskEventService kioskEvents)
 	{
-		_configuration = configuration;
 		_kioskEvents = kioskEvents;
 		_resourceBundleService = ServiceLocator.Instance.GetService<IResourceBundleService>();
 	}
@@ -303,12 +302,13 @@ public class RouterHealth : IRouterHealth, IKioskHealthItem
 
 	private void ReadConfiguration()
 	{
-		_routerActive = _configuration.RouterActive;
-		_routerReporting = _configuration.RouterReporting;
-		_routerHealing = _configuration.RouterHealing;
-		_routerResetRetryMinutes = _configuration.RouterResetRetryMinutes;
-		_routerResetAfterXMessageFailures = _configuration.RouterResetAfterXMessageFailures;
-		_routerResetMaxAttempts = _configuration.RouterResetMaxAttempts;
+		KioskHealthConfiguration kioskHealth = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth;
+		_routerActive = kioskHealth.RouterActive;
+		_routerReporting = kioskHealth.RouterReporting;
+		_routerHealing = kioskHealth.RouterHealing;
+		_routerResetRetryMinutes = kioskHealth.RouterResetRetryMinutes;
+		_routerResetAfterXMessageFailures = kioskHealth.RouterResetAfterXMessageFailures;
+		_routerResetMaxAttempts = kioskHealth.RouterResetMaxAttempts;
 		LogHelper.Instance.Log("RouterHealth Active {0}", _routerActive);
 		LogHelper.Instance.Log("RouterHealth Reporting {0}", _routerReporting);
 		LogHelper.Instance.Log("RouterHealth Healing {0}", _routerHealing);

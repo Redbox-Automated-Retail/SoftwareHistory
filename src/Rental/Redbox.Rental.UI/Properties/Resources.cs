@@ -1676,6 +1676,12 @@ public class Resources
 
 	public static string quit_confirm_button => ResourceManager.GetString("quit_confirm_button", resourceCulture);
 
+	public static string rating_selection_popup_button_text => ResourceManager.GetString("rating_selection_popup_button_text", resourceCulture);
+
+	public static string rating_selection_popup_description => ResourceManager.GetString("rating_selection_popup_description", resourceCulture);
+
+	public static string rating_selection_popup_header => ResourceManager.GetString("rating_selection_popup_header", resourceCulture);
+
 	public static string rbplus_offer_1_acceptance_terms => ResourceManager.GetString("rbplus_offer_1_acceptance_terms", resourceCulture);
 
 	public static string rbplus_offer_1_benefit_1_detail_text => ResourceManager.GetString("rbplus_offer_1_benefit_1_detail_text", resourceCulture);
@@ -2260,6 +2266,30 @@ public class Resources
 
 	public static string sorry => ResourceManager.GetString("sorry", resourceCulture);
 
+	public static string sort_alpha => ResourceManager.GetString("sort_alpha", resourceCulture);
+
+	public static string sort_alphabetical => ResourceManager.GetString("sort_alphabetical", resourceCulture);
+
+	public static string sort_new_arrivals => ResourceManager.GetString("sort_new_arrivals", resourceCulture);
+
+	public static string sort_newest => ResourceManager.GetString("sort_newest", resourceCulture);
+
+	public static string sort_old_arrivals => ResourceManager.GetString("sort_old_arrivals", resourceCulture);
+
+	public static string sort_oldest => ResourceManager.GetString("sort_oldest", resourceCulture);
+
+	public static string sort_price => ResourceManager.GetString("sort_price", resourceCulture);
+
+	public static string sort_price_low_high => ResourceManager.GetString("sort_price_low_high", resourceCulture);
+
+	public static string sort_selection_popup_button_text => ResourceManager.GetString("sort_selection_popup_button_text", resourceCulture);
+
+	public static string sort_selection_popup_description => ResourceManager.GetString("sort_selection_popup_description", resourceCulture);
+
+	public static string sort_selection_popup_header => ResourceManager.GetString("sort_selection_popup_header", resourceCulture);
+
+	public static string sort_trending => ResourceManager.GetString("sort_trending", resourceCulture);
+
 	public static string sorted_label => ResourceManager.GetString("sorted_label", resourceCulture);
 
 	public static string starring_label => ResourceManager.GetString("starring_label", resourceCulture);
@@ -2429,6 +2459,8 @@ public class Resources
 	public static string title_type_name_xbox360 => ResourceManager.GetString("title_type_name_xbox360", resourceCulture);
 
 	public static string title_type_name_xboxone => ResourceManager.GetString("title_type_name_xboxone", resourceCulture);
+
+	public static string to_buy_button => ResourceManager.GetString("to_buy_button", resourceCulture);
 
 	public static string To_Games => ResourceManager.GetString("To_Games", resourceCulture);
 

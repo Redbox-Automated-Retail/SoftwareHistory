@@ -144,6 +144,8 @@ public class ShoppingCartViewFunctions
 				{
 					BrowseState.TitleFamily = inCartPromoActionRule.TitleFamily;
 					BrowseState.Genre = null;
+					BrowseState.Rating = null;
+					BrowseState.Sort = null;
 					BrowseState.BrowseSelectedSort = BrowseSelectedSort.Newest;
 					BrowseState.PageNumber = 1;
 					BrowseState.TitleType = inCartPromoActionRule.TitleType;

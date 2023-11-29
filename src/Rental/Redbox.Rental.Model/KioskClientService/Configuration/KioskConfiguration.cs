@@ -21,4 +21,6 @@ public class KioskConfiguration : BaseConfiguration
 	public MarketingReturnConfiguration MarketingReturn { get; set; } = new MarketingReturnConfiguration();
 
 	public ABTestingConfiguration ABTesting { get; set; } = new ABTestingConfiguration();
+
+	public KioskHealthConfiguration KioskHealth { get; set; } = new KioskHealthConfiguration();
 }

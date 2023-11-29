@@ -102,7 +102,7 @@ public class ReservationService : IReservationService
 		await Task.Factory.StartNew(delegate
 		{
 			List<IKioskProduct> products = new List<IKioskProduct>();
-			ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.Alpha, null, null, null, isADAView: true, null, null, out products);
+			ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.Alpha, null, null, null, null, isADAView: true, null, null, out products);
 			if (products != null)
 			{
 				foreach (IKioskProduct item in products)

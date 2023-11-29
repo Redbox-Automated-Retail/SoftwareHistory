@@ -1,6 +1,7 @@
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Kernel;
 
@@ -15,6 +16,6 @@ public static class KioskHealthEventFunctions
 	[KernelFunction(Name = "kernel.is_arcus_reset_enabled")]
 	internal static bool IsArcusResetEnabled()
 	{
-		return ServiceLocator.Instance.GetService<IKioskHealthConfiguration>()?.ArcusActive ?? false;
+		return Configuration.Instance.Current.KioskHealth.ArcusActive;
 	}
 }

@@ -1,15 +1,15 @@
 using System;
 using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
 public class ArcusHealth : IArcusHealth, IKioskHealthItem
 {
-	private IKioskHealthConfiguration _configuration;
-
 	private IKioskEventService _kioskEvents;
 
 	private const string HardwareCorrectionStart = "HardwareCorrectionStart";
@@ -28,9 +28,8 @@ public class ArcusHealth : IArcusHealth, IKioskHealthItem
 
 	private Guid? _relatedId;
 
-	public ArcusHealth(IKioskHealthConfiguration configuration, IKioskEventService kioskEvents)
+	public ArcusHealth(IKioskEventService kioskEvents)
 	{
-		_configuration = configuration;
 		_kioskEvents = kioskEvents;
 	}
 
@@ -98,8 +97,9 @@ public class ArcusHealth : IArcusHealth, IKioskHealthItem
 
 	private void ReadConfiguration()
 	{
-		_arcusActive = _configuration.ArcusActive;
-		_arcusReporting = _configuration.ArcusReporting;
+		KioskHealthConfiguration kioskHealth = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth;
+		_arcusActive = kioskHealth.ArcusActive;
+		_arcusReporting = kioskHealth.ArcusReporting;
 		LogHelper.Instance.Log("ArcusHealth Active {0}", _arcusActive);
 		LogHelper.Instance.Log("ArcusHealth Reporting {0}", _arcusReporting);
 	}

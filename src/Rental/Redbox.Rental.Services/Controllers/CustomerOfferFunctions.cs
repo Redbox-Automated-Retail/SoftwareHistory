@@ -111,7 +111,7 @@ public static class CustomerOfferFunctions
 
 	public static bool KioskHas4kDiscs()
 	{
-		ServiceLocator.Instance.GetService<IDataService>().GetProducts(BrowseViewFilter.All, TitleFamily.Movies, TitleType._4KUHD, BrowseSort.Alpha, null, null, null, isADAView: false, null, null, out var products);
+		ServiceLocator.Instance.GetService<IDataService>().GetProducts(BrowseViewFilter.All, TitleFamily.Movies, TitleType._4KUHD, BrowseSort.Alpha, null, null, null, null, isADAView: false, null, null, out var products);
 		return products.Any((IKioskProduct t) => ((ITitleProduct)t).HasBeenInStock);
 	}
 }

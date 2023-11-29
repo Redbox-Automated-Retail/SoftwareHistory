@@ -149,7 +149,7 @@ public class PurchaseFormatSelectionPopupViewController : BaseViewController
 	{
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		List<IKioskProduct> products = null;
-		service?.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, titleType, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
+		service?.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, titleType, BrowseSort.MerchandiseDate, null, null, null, null, isADAView: false, null, null, out products);
 		if (products != null)
 		{
 			return products.Count > 0;

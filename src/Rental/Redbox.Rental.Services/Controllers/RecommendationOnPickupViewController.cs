@@ -278,7 +278,7 @@ public class RecommendationOnPickupViewController : BaseLoyaltyController
 			List<long> list2 = new List<long> { 1139L };
 			list2.AddRange(excludeProducts);
 			List<IKioskProduct> products = null;
-			service.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, 1093L, null, list2, isADAView: true, null, null, out products);
+			service.GetProducts(BrowseViewFilter.All, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, 1093L, null, null, list2, isADAView: true, null, null, out products);
 			List<IKioskProduct> list3 = new List<IKioskProduct>();
 			foreach (IKioskProduct item in products)
 			{

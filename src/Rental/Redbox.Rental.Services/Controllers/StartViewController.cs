@@ -565,7 +565,7 @@ public class StartViewController : BaseViewController
 			startViewModel.SecondaryButtonsMargin = ((startViewModel.BuyMoviesOrGamesButtonVisibility != Visibility.Visible) ? new Thickness(0.0, 0.0, 115.0, 0.0) : new Thickness(0.0, 0.0, 15.0, 0.0));
 			startViewModel.KioskClosingMessageVisibility = ((!flag) ? Visibility.Collapsed : Visibility.Visible);
 			List<IKioskProduct> products = null;
-			bool buyMoviesEnabled = !(service?.GetProducts(BrowseViewFilter.ForSale, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products)).Any() && products.Any((IKioskProduct x) => ((ITitleProduct)x).TitleFamily == TitleFamily.Movies);
+			bool buyMoviesEnabled = !(service?.GetProducts(BrowseViewFilter.ForSale, TitleFamily.All, TitleType.All, BrowseSort.MerchandiseDate, null, null, null, null, isADAView: false, null, null, out products)).Any() && products.Any((IKioskProduct x) => ((ITitleProduct)x).TitleFamily == TitleFamily.Movies);
 			startViewModel.BuyMoviesEnabled = buyMoviesEnabled;
 			ServiceLocator.Instance.GetService<IMacroService>()["Start:BuyMoviesOrGames"] = "Movies";
 			startViewModel.AdaButtonCheckmarkVisibility = ((!BaseViewController.ApplicationState.IsADAAccessible) ? Visibility.Collapsed : Visibility.Visible);
@@ -779,7 +779,7 @@ public class StartViewController : BaseViewController
 	private static bool HasBrowseViewFilterProducts(BrowseViewFilter browseViewFilter, BrowseSort browseSort)
 	{
 		List<IKioskProduct> products = null;
-		ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(browseViewFilter, TitleFamily.Movies, TitleType.All, browseSort, null, null, null, isADAView: false, null, null, out products);
+		ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(browseViewFilter, TitleFamily.Movies, TitleType.All, browseSort, null, null, null, null, isADAView: false, null, null, out products);
 		return (products?.Count ?? 0) >= 1;
 	}
 
@@ -914,6 +914,8 @@ public class StartViewController : BaseViewController
 				Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = TitleFamily.Games;
 				Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
 				Redbox.Rental.Services.Session.Session.Instance.BrowseState.Genre = null;
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.Rating = null;
+				Redbox.Rental.Services.Session.Session.Instance.BrowseState.Sort = null;
 				PrepareToLeaveStartView();
 				OrchestrationService.StartUserInteraction(SessionStartTriggerActionList.Instance.FindByName(SessionStartTriggerActionConstants.GamesBannerClicked));
 				BaseViewController.AnalyticsService?.AddButtonPressEvent("StartBannerGames");
@@ -1332,6 +1334,8 @@ public class StartViewController : BaseViewController
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleFamily = titleProduct.TitleFamily;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.TitleType = TitleType.All;
 			Redbox.Rental.Services.Session.Session.Instance.BrowseState.Genre = null;
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.Rating = null;
+			Redbox.Rental.Services.Session.Session.Instance.BrowseState.Sort = null;
 		}
 	}
 

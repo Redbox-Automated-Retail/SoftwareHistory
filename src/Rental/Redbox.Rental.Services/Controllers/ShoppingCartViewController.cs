@@ -527,7 +527,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 			}, delegate
 			{
 				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning back", popOnly: false);
-				BrowseProducts(BrowseState.TitleFamily, BrowseState.Genre);
+				BrowseProducts(BrowseState.TitleFamily, BrowseState.Genre, BrowseState.Rating, BrowseState.Sort);
 			}, delegate
 			{
 				OrchestrationService.ViewGoBackSafe("ShowPromoCodeReturnVisitIneligibleCartWarning continue", popOnly: false);
@@ -631,7 +631,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 	private static void ShoppingCartViewModel_OnBackButtonClicked()
 	{
 		BaseViewController.AnalyticsService?.AddButtonPressEvent("ShoppingCartBack");
-		BrowseProducts(BrowseState.TitleFamily, BrowseState.Genre);
+		BrowseProducts(BrowseState.TitleFamily, BrowseState.Genre, BrowseState.Rating, BrowseState.Sort);
 	}
 
 	private static void ShoppingCartViewModel_OnAddMovieButtonClicked()
@@ -641,7 +641,7 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		{
 			BaseViewController.RentalShoppingCartService.CurrentRentalShoppingCart.InCartTitleMarketing = false;
 		}
-		BrowseProducts(TitleFamily.Movies, null);
+		BrowseProducts(TitleFamily.Movies, null, null, null);
 	}
 
 	private static void ShoppingCartViewModel_OnViewOfferDetailsButtonClicked(DisplayProductModel displayProductModel)
@@ -663,12 +663,14 @@ public class ShoppingCartViewController : BaseLoyaltyController
 		}
 	}
 
-	private static void BrowseProducts(TitleFamily titleFamily, Genres? genre)
+	private static void BrowseProducts(TitleFamily titleFamily, Genres? genre, Ratings? rating, BrowseSort? sort)
 	{
 		BrowseState.TitleFamily = titleFamily;
 		BrowseState.TitleType = TitleType.All;
 		BrowseState.BrowseSelectedSort = ((titleFamily == TitleFamily.Games) ? BrowseSelectedSort.ForSale : BrowseSelectedSort.Newest);
 		BrowseState.Genre = genre;
+		BrowseState.Rating = rating;
+		BrowseState.Sort = sort;
 		BrowseState.BrowseMode = ((titleFamily == TitleFamily.Games) ? BrowseViewFilter.ForSale : BrowseViewFilter.All);
 		BrowseState.PageNumber = 1;
 		BrowseState.BrowsePriceRangeFilter = null;

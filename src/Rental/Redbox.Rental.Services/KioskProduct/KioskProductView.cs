@@ -345,13 +345,17 @@ public class KioskProductView
 		}
 	}
 
-	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, string studio = null, List<TitleType> excludeTitleTypes = null, bool excludeDiscountRestriction = false)
+	public List<IKioskProduct> GetProducts(BrowseViewFilter browseFilter, TitleFamily titleFamily, TitleType titleType, BrowseSort browseSort, long? genreFilter, long? ratingFilter, List<long> include, List<long> exclude, bool isADAView, decimal? priceRangeLow, decimal? priceRangeHigh, string studio = null, List<TitleType> excludeTitleTypes = null, bool excludeDiscountRestriction = false)
 	{
 		List<ITitleProduct> list = new List<ITitleProduct>();
 		list = FilterByTitleFamily(browseFilter, titleFamily, new List<TitleType> { titleType }, list);
 		if (genreFilter.HasValue)
 		{
 			list = list.Where((ITitleProduct item) => ApplyGenreFilter(item, genreFilter.Value)).ToList();
+		}
+		if (ratingFilter.HasValue)
+		{
+			list = list.Where((ITitleProduct item) => ApplyRatingFilter(item, ratingFilter.Value)).ToList();
 		}
 		if (((include != null && include.Count > 0) || (exclude != null && exclude.Count > 0) || (excludeTitleTypes != null && excludeTitleTypes.Count > 0)) | excludeDiscountRestriction)
 		{
@@ -637,6 +641,11 @@ public class KioskProductView
 	private bool ApplyGenreFilter(ITitleProduct titleProduct, long genreFilter)
 	{
 		return titleProduct.Genres.Contains(genreFilter);
+	}
+
+	private bool ApplyRatingFilter(ITitleProduct titleProduct, long ratingFilter)
+	{
+		return titleProduct.RatingId == ratingFilter;
 	}
 
 	private bool FilterByPrice(ITitleProduct item, decimal? priceRangeLow, decimal? priceRangeHigh)

@@ -824,7 +824,7 @@ public class PromotionService : IPromotionService
 		if (service != null)
 		{
 			List<IKioskProduct> products = null;
-			service.GetProducts(BrowseViewFilter.All, titleFamily, titleType, BrowseSort.MerchandiseDate, null, null, null, isADAView: false, null, null, out products);
+			service.GetProducts(BrowseViewFilter.All, titleFamily, titleType, BrowseSort.MerchandiseDate, null, null, null, null, isADAView: false, null, null, out products);
 			foreach (IKioskProduct item in products)
 			{
 				ITitleProduct titleProduct = item as ITitleProduct;

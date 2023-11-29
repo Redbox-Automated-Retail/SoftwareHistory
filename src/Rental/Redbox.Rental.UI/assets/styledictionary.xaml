@@ -3968,6 +3968,10 @@
     <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
     <Setter Property="TextBlock.Padding" Value="24,0,24,0" />
   </Style>
+  <Style x:Key="button_text_selectable_small_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_semibold_13}">
+    <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />
+    <Setter Property="TextBlock.Padding" Value="24,0,24,0" />
+  </Style>
   <Style x:Key="button_text_link_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_extrabold_16}">
     <Setter Property="TextBlock.Padding" Value="16,0,16,0" />
     <Setter Property="Foreground" Value="{StaticResource RubineRedBrush}" />
@@ -3977,7 +3981,7 @@
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="TextDecorations" Value="Underline" />
   </Style>
-  <Style x:Key="button_image_selectable_style" TargetType="{x:Type Image}">
+  <Style x:Key="button_image_selectable_check_mark_style" TargetType="{x:Type Image}">
     <Setter Property="Source" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/purple-white-checkmark-lg.png" />
     <Setter Property="Width" Value="22" />
     <Setter Property="Height" Value="22" />
@@ -3987,6 +3991,12 @@
     <Setter Property="Width" Value="6" />
     <Setter Property="Height" Value="8" />
     <Setter Property="Margin" Value="0,0,24,0" />
+  </Style>
+  <Style x:Key="button_image_selectable_down_arrow_style" TargetType="{x:Type Image}">
+    <Setter Property="Source" Value="pack://Application:,,,/Redbox.Rental.UI;component/Assets/Images/down-arrow.png" />
+    <Setter Property="Width" Value="13" />
+    <Setter Property="Height" Value="17" />
+    <Setter Property="Margin" Value="18,0,0,0" />
   </Style>
   <Style x:Key="modal_title_title_style" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource font_montserrat_bold_28}">
     <Setter Property="Foreground" Value="{StaticResource CarlosPurple1Brush}" />

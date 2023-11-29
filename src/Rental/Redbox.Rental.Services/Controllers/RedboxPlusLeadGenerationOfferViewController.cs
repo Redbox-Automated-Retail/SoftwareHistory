@@ -74,7 +74,7 @@ public class RedboxPlusLeadGenerationOfferViewController : BaseViewController
 	private static void PopulateBoxArt(RedboxPlusLeadGenerationOfferViewModel redboxPlusLeadGenerationOfferViewModel)
 	{
 		List<IKioskProduct> products = null;
-		ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(BrowseViewFilter.RedboxPlus, TitleFamily.Movies, TitleType.All, BrowseSort.SortDate, null, null, null, isADAView: false, null, null, out products);
+		ServiceLocator.Instance.GetService<IDataService>()?.GetProducts(BrowseViewFilter.RedboxPlus, TitleFamily.Movies, TitleType.All, BrowseSort.SortDate, null, null, null, null, isADAView: false, null, null, out products);
 		if (products == null)
 		{
 			return;

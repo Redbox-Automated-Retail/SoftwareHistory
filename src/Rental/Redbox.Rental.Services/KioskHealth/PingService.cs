@@ -8,6 +8,7 @@ using Redbox.Rental.Model;
 using Redbox.Rental.Model.KioskHealth;
 using Redbox.Rental.Model.UpdateClientService;
 using Redbox.Rental.Model.UpdateClientService.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 using Redbox.Rental.Services.UpdateClientService.KioskHealth;
 
 namespace Redbox.Rental.Services.KioskHealth;
@@ -16,9 +17,9 @@ public class PingService : IPingService
 {
 	private Timer _pingTimer;
 
-	public bool Enabled => ServiceLocator.Instance.GetService<IKioskHealthConfiguration>()?.PingServiceEnabled ?? false;
+	public bool Enabled => Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth.PingServiceEnabled;
 
-	public int PingInterval => ServiceLocator.Instance.GetService<IKioskHealthConfiguration>()?.PingInterval ?? 900000;
+	public int PingInterval => Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth.PingInterval;
 
 	public PingService()
 	{

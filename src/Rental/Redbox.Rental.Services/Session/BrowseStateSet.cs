@@ -17,6 +17,10 @@ public class BrowseStateSet : IBrowseStateSet
 
 	public Genres? Genre { get; set; }
 
+	public Ratings? Rating { get; set; }
+
+	public BrowseSort? Sort { get; set; }
+
 	public int PageNumber { get; set; }
 
 	public TitleType TitleType { get; set; }

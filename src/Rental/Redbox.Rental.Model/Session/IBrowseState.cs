@@ -44,6 +44,10 @@ public interface IBrowseState
 
 	Genres? Genre { get; set; }
 
+	Ratings? Rating { get; set; }
+
+	BrowseSort? Sort { get; set; }
+
 	string BrowseStudio { get; set; }
 
 	List<IBrowseItemModel> BrowseItemModels { get; set; }

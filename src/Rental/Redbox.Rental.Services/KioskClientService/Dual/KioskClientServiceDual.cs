@@ -186,7 +186,7 @@ internal class KioskClientServiceDual : BaseKioskClientService, IKioskClientServ
 		IDataService service = ServiceLocator.Instance.GetService<IDataService>();
 		if (service != null)
 		{
-			service.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, TitleType.All, BrowseSort.Alpha, null, null, null, isADAView: true, null, null, out var products);
+			service.GetProducts(BrowseViewFilter.All, TitleFamily.Movies, TitleType.All, BrowseSort.Alpha, null, null, null, null, isADAView: true, null, null, out var products);
 			result = (products?.Where((IKioskProduct kp) => kp is ITitleProduct).Select((IKioskProduct kp) => kp as ITitleProduct).ToList())?.Where((ITitleProduct tp) => !tp.InStock).Select((ITitleProduct tp) => tp.ProductId).ToList() ?? new List<long>();
 		}
 		return result;

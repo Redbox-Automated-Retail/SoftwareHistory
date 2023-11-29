@@ -9,14 +9,12 @@ using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Health;
 using Redbox.Rental.Model.KioskEvents;
-using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskEvents;
 
 public class KioskEventService : IKioskEventService
 {
-	private IKioskHealthConfiguration _configuration;
-
 	private List<KioskEvent> _kioskEvents = new List<KioskEvent>();
 
 	private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
@@ -31,10 +29,9 @@ public class KioskEventService : IKioskEventService
 
 	private IStoreManager _storeManagerService;
 
-	public KioskEventService(IStoreManager storeManagerService, IKioskHealthConfiguration configuration)
+	public KioskEventService(IStoreManager storeManagerService)
 	{
 		_storeManagerService = storeManagerService;
-		_configuration = configuration;
 		string dataPath = ServiceLocator.Instance.GetService<IEngineApplication>().DataPath;
 		_kioskEventsFileName = Path.Combine(dataPath, "kioskevents.json");
 		if (_changeTimer == null)
@@ -80,7 +77,7 @@ public class KioskEventService : IKioskEventService
 		{
 			LogHelper.Instance.Log("KioskEventService.Start");
 			Load();
-			int num = _configuration.KioskEventsUnloadInterval;
+			int num = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth.KioskEventsUnloadInterval;
 			LogHelper.Instance.Log("KioskEventService Config - KioskEventUnloadInterval - {0} minutes", num);
 			if (num < 3)
 			{

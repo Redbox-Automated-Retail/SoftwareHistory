@@ -5,5 +5,6 @@ public enum BrowseSort
 	Alpha,
 	MerchandiseDate,
 	SortDate,
-	InitialNightPrice
+	InitialNightPrice,
+	MerchandiseDateDescending
 }

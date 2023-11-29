@@ -6,15 +6,15 @@ using Redbox.Core;
 using Redbox.KioskEngine.ComponentModel;
 using Redbox.Rental.Model;
 using Redbox.Rental.Model.Health;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
 public class ViewHealth : IViewHealth, IKioskHealthItem
 {
-	private IKioskHealthConfiguration _configuration;
-
 	private IKioskEventService _kioskEvents;
 
 	private IResourceBundleService _resourceBundleService;
@@ -105,9 +105,8 @@ public class ViewHealth : IViewHealth, IKioskHealthItem
 
 	private bool IsInABEMode => ServiceLocator.Instance.GetService<IApplicationState>()?.IsABEOn ?? false;
 
-	public ViewHealth(IKioskHealthConfiguration configuration, IKioskEventService kioskEvents)
+	public ViewHealth(IKioskEventService kioskEvents)
 	{
-		_configuration = configuration;
 		_kioskEvents = kioskEvents;
 		if (_noActivityTimer == null)
 		{
@@ -422,11 +421,12 @@ public class ViewHealth : IViewHealth, IKioskHealthItem
 
 	private void ReadConfiguration()
 	{
-		_viewActive = _configuration.ViewActive;
-		_viewReporting = _configuration.ViewReporting;
-		_viewHealingType = _configuration.ViewHealingType;
-		_viewInActivity = _configuration.ViewInActivity;
-		_viewInActivtiyABEMode = _configuration.ViewInActivityABEMode;
+		KioskHealthConfiguration kioskHealth = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth;
+		_viewActive = kioskHealth.ViewActive;
+		_viewReporting = kioskHealth.ViewReporting;
+		_viewHealingType = kioskHealth.ViewHealingType;
+		_viewInActivity = kioskHealth.ViewInActivity;
+		_viewInActivtiyABEMode = kioskHealth.ViewInActivityABEMode;
 		LogHelper.Instance.Log("ViewHealth Active {0}", _viewActive);
 		LogHelper.Instance.Log("ViewHealth Reporting {0}", _viewReporting);
 		LogHelper.Instance.Log("ViewHealth Healing Type {0}", _viewHealingType);

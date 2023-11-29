@@ -45,14 +45,32 @@ public class Configuration : IConfiguration
 	{
 		get
 		{
-			KioskConfiguration kioskConfiguration = ServiceLocator.Instance.GetService<IKioskClientService>()?.Configuration?.GetCurrentKioskConfiguration(KioskClientServiceBaseUrl);
-			if (kioskConfiguration == null)
+			KioskConfiguration kioskConfiguration = null;
+			IKioskClientService service = ServiceLocator.Instance.GetService<IKioskClientService>();
+			if (service != null)
+			{
+				kioskConfiguration = service.Configuration?.GetCurrentKioskConfiguration(KioskClientServiceBaseUrl);
+				if (kioskConfiguration == null)
+				{
+					LogHelper.Instance.Log("Unable to get current KioskConfiguration from KioskClientService");
+				}
+			}
+			else
 			{
 				kioskConfiguration = new KioskClientServiceConfiguration()?.GetCurrentKioskConfiguration(KioskClientServiceBaseUrl);
 			}
 			if (kioskConfiguration == null)
 			{
-				return new KioskConfiguration();
+				if (_lifetimeKioskConfiguration != null)
+				{
+					LogHelper.Instance.Log("Unable to get current KioskConfiguration.  Returning Lifetime values from app startup.");
+					kioskConfiguration = _lifetimeKioskConfiguration;
+				}
+				else
+				{
+					LogHelper.Instance.Log("Unable to get current KioskConfiguration. Returning default values");
+					kioskConfiguration = new KioskConfiguration();
+				}
 			}
 			return kioskConfiguration;
 		}

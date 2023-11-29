@@ -113,6 +113,30 @@ public class BrowseState : IBrowseState
 		}
 	}
 
+	public Ratings? Rating
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().Rating;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().Rating = value;
+		}
+	}
+
+	public BrowseSort? Sort
+	{
+		get
+		{
+			return _browseStateSetStack.Peek().Sort;
+		}
+		set
+		{
+			_browseStateSetStack.Peek().Sort = value;
+		}
+	}
+
 	public string BrowseStudio { get; set; }
 
 	public int PageNumber
@@ -235,6 +259,8 @@ public class BrowseState : IBrowseState
 		BrowseSelectedSort = BrowseSelectedSort.Newest;
 		SelectedAlphaGroupName = null;
 		Genre = null;
+		Rating = null;
+		Sort = null;
 	}
 
 	public void UnwindBrowseStateSetStack()
@@ -255,6 +281,8 @@ public class BrowseState : IBrowseState
 		BrowseSelectedSort = BrowseSelectedSort.Newest;
 		SelectedAlphaGroupName = null;
 		Genre = null;
+		Rating = null;
+		Sort = null;
 		BrowsePriceRangeFilter = null;
 		BrowseStudio = null;
 	}

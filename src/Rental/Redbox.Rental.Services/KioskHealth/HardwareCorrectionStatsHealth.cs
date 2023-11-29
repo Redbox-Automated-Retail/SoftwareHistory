@@ -2,24 +2,23 @@ using System;
 using Redbox.Core;
 using Redbox.HardwareServices.Proxy.ComponentModel;
 using Redbox.KioskEngine.ComponentModel;
+using Redbox.Rental.Model.KioskClientService.Configuration;
 using Redbox.Rental.Model.KioskEvents;
 using Redbox.Rental.Model.KioskHealth;
+using Redbox.Rental.Services.Configuration;
 
 namespace Redbox.Rental.Services.KioskHealth;
 
 public class HardwareCorrectionStatsHealth : IKioskHealthItem
 {
-	private IKioskHealthConfiguration _configuration;
-
 	private IKioskEventService _kioskEvents;
 
 	private bool _hcsActive;
 
 	private bool _hcsReporting;
 
-	public HardwareCorrectionStatsHealth(IKioskHealthConfiguration configuration, IKioskEventService kioskEvents)
+	public HardwareCorrectionStatsHealth(IKioskEventService kioskEvents)
 	{
-		_configuration = configuration;
 		_kioskEvents = kioskEvents;
 	}
 
@@ -120,8 +119,9 @@ public class HardwareCorrectionStatsHealth : IKioskHealthItem
 
 	private void ReadConfiguration()
 	{
-		_hcsActive = _configuration.HardwareCorrectionStatsActive;
-		_hcsReporting = _configuration.HardwareCorrectionStatsReporting;
+		KioskHealthConfiguration kioskHealth = Redbox.Rental.Services.Configuration.Configuration.Instance.Current.KioskHealth;
+		_hcsActive = kioskHealth.HardwareCorrectionStatsActive;
+		_hcsReporting = kioskHealth.HardwareCorrectionStatsReporting;
 		LogHelper.Instance.Log("Hardware Correction Stats Active {0}", _hcsActive);
 		LogHelper.Instance.Log("Hardware Correction Stats Reporting {0}", _hcsReporting);
 	}

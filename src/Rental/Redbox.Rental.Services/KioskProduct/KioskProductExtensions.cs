@@ -126,7 +126,11 @@ public static class KioskProductExtensions
 			return source.OrderBy((ITitleProduct item) => item.SortAlpha).ToList();
 		case BrowseSort.InitialNightPrice:
 			return (from item in source
-				orderby (item.RentalPriceRecords == null || item.RentalPriceRecords.Count < 1) ? 0m : item.RentalPriceRecords[0].InitialNight, item.SortAlpha
+				orderby item.IsEmptyCase, SortPrice(item, browseFilter), item.SortAlpha
+				select item).ToList();
+		case BrowseSort.MerchandiseDateDescending:
+			return (from item in source
+				orderby item.ShowOutOfStock, item.IsEmptyCase, item.SortMerchandise descending, item.SortBoxOfficeGross descending, item.SortName
 				select item).ToList();
 		default:
 		{
@@ -209,6 +213,20 @@ public static class KioskProductExtensions
 			BrowseViewFilter.ForSale => titleProduct.IsSellableAndInStock, 
 			_ => false, 
 		};
+	}
+
+	private static decimal SortPrice(ITitleProduct titleProduct, BrowseViewFilter browseFilter)
+	{
+		if (titleProduct == null)
+		{
+			return decimal.MaxValue;
+		}
+		List<ITitleProduct> source = ((titleProduct is ITitleRollupProduct && ((ITitleRollupProduct)titleProduct)?.KioskProducts != null) ? ((ITitleRollupProduct)titleProduct).KioskProducts : new List<ITitleProduct> { titleProduct });
+		if (browseFilter == BrowseViewFilter.ForSale)
+		{
+			return source.Min((ITitleProduct tp) => (!(tp.PurchasePrice != 0m)) ? decimal.MaxValue : tp.PurchasePrice);
+		}
+		return source.Min((ITitleProduct tp) => (tp.RentalPriceRecords?.FirstOrDefault())?.InitialNight ?? decimal.MaxValue);
 	}
 
 	public static TitleFamily ToFamily(this TitleType titleType)

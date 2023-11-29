@@ -160,6 +160,10 @@ public class Constants
 		public const string TitleDetailsWatchOptionsPopupView = "TitleDetailsWatchOptionsPopupView";
 
 		public const string GenreSelectionPopupView = "GenreSelectionPopupView";
+
+		public const string RatingSelectionPopupView = "RatingSelectionPopupView";
+
+		public const string SortSelectionPopupView = "SortSelectionPopupView";
 	}
 
 	public class ViewNames
@@ -337,6 +341,10 @@ public class Constants
 		public const string DualInStockLearnMorePopupView = "dual_in_stock_learn_more_popup_view";
 
 		public const string GenreSelectionPopupView = "genre_selection_popup_view";
+
+		public const string RatingSelectionPopupView = "rating_selection_popup_view";
+
+		public const string SortSelectionPopupView = "sort_selection_popup_view";
 	}
 
 	public class ThemeNames
