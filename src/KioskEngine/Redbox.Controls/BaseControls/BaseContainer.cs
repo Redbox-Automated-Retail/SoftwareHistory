@@ -39,17 +39,7 @@ public class BaseContainer : FrameworkElement, IAddChild
 		}
 	}
 
-	protected override int VisualChildrenCount
-	{
-		get
-		{
-			if (_childElement == null)
-			{
-				return 0;
-			}
-			return 1;
-		}
-	}
+	protected override int VisualChildrenCount => (_childElement != null) ? 1 : 0;
 
 	protected UIElement IntChild
 	{

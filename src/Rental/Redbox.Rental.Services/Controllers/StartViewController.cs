@@ -1581,7 +1581,7 @@ public class StartViewController : BaseViewController
 	{
 		LockHelper.TryLockObject(_lockObject, delegate
 		{
-			if ((!(Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.InReturnFlow)) ?? false)
+			if (!(Redbox.Rental.Services.Session.Session.Instance?.BrowseState?.InReturnFlow ?? true))
 			{
 				StartViewModel startViewModelFromView = GetStartViewModelFromView();
 				if (startViewModelFromView != null && startViewModelFromView.ReturnButtonEnabled)

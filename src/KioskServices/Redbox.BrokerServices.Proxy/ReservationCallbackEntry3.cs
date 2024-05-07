@@ -90,7 +90,7 @@ public class ReservationCallbackEntry3 : ICallbackEntry
 					list3.Add(new TitleResult
 					{
 						ItemID = title2.ItemID,
-						Reservable = ((item2.Barcode != "empty") ? true : false),
+						Reservable = (item2.Barcode != "empty"),
 						ReservedBarcode = item2.Barcode
 					});
 					break;

@@ -574,7 +574,7 @@ public class BrowseFunctions
 				{
 					BrowseState._4kWarningShown = true;
 					AnalyticsService?.AddButtonPressEvent("BrowseFunctionsOkay");
-					ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("multi_disc_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
+					ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("multi_disc_message_view:continue", BrowseState.ProductAddedFromCarousel);
 					AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 				});
 			}
@@ -660,7 +660,7 @@ public class BrowseFunctions
 			{
 				BrowseState._4kWarningShown = true;
 				AnalyticsService?.AddButtonPressEvent("BrowseFunctionsGotit");
-				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
+				ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("4k_message_view:continue", BrowseState.ProductAddedFromCarousel);
 				AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 			});
 		}
@@ -717,7 +717,7 @@ public class BrowseFunctions
 								}, delegate
 								{
 									_subPlatformWarningShown = true;
-									ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("subplatform_message_view:continue", BrowseState.ProductAddedFromCarousel ? true : false);
+									ServiceLocator.Instance.GetService<IViewService>()?.GoBackSafe("subplatform_message_view:continue", BrowseState.ProductAddedFromCarousel);
 									AddProductToCartIfUserApprovesWarnings(addProductToCartParameters);
 								});
 							}

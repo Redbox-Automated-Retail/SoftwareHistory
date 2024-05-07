@@ -53,20 +53,12 @@ public static class StringExtensions
 
 	public static bool IsAlpha(this string strToCheck)
 	{
-		if (!new Regex("[^a-zA-Z]").IsMatch(strToCheck))
-		{
-			return true;
-		}
-		return false;
+		return !new Regex("[^a-zA-Z]").IsMatch(strToCheck);
 	}
 
 	public static bool IsAlphaNumeric(this string strToCheck)
 	{
-		if (!new Regex("[^a-zA-Z0-9]").IsMatch(strToCheck))
-		{
-			return true;
-		}
-		return false;
+		return !new Regex("[^a-zA-Z0-9]").IsMatch(strToCheck);
 	}
 
 	public static bool IsAphaNumericOr(this string value, string extra)

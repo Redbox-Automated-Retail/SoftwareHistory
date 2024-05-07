@@ -49,7 +49,7 @@ public class MemberPerksPopupViewController : BaseViewController
 					RangeLimit = 50u
 				}
 			};
-			switch (perksInfo.TierName.ToLower())
+			switch (perksInfo.TierName?.ToLower())
 			{
 			default:
 				memberPerksPopupViewModel.MemberTier = TierType.Member;
