@@ -1,17 +1,17 @@
-# Bullwinkle (2023-11-29)
+# Calvin (2024-05-07)
 
 - Product: Rental bundles
-- Date (first download in the snapshots): 2023-11-29
-- Store labels: kop-rental-bundles-Bullwinkle
+- Date (first download in the snapshots): 2024-05-07
+- Store labels: kop-rental-bundles-Calvin
 - Package revisions:
-  - `kop-rental-bundles` revision 180 (`D1FE0D5532184978B2F28FBA7C1D55B8356C2739`)
+  - `kop-rental-bundles` revision 181 (`565E56D75F0FF210D3AA2B2ED533F2062CE8CDFF`)
 
 | File | Assembly | Version | SHA-1 | Status |
 |---|---|---|---|---|
-| `cp.bundle` |  |  | `D26B3F7DB37F8E8043095E2E217CE95C6B6279BF` | exact |
-| `fm.bundle` |  |  | `93AAB7DC0D72BDF4B3178DC529D702C869B725ED` | exact |
-| `library-rental-common.bundle` |  |  | `938768ADF11390F22E3CDCB80DA1D28CD24B6C8D` | exact |
-| `ra-2.x.bundle` |  |  | `D18276B3B73A8F6D3B7EF12EC79ADD119C0774C4` | exact |
+| `cp.bundle` |  |  | `EE988B2B743B13EB58B35C56442F0DC0C8BD8FBD` | exact |
+| `fm.bundle` |  |  | `D7A2C1E3A47D54D656323195C50F4A45E45CAA6D` | exact |
+| `library-rental-common.bundle` |  |  | `AD4C9DE78F797DF390072BF1637C5DD428C5DE38` | exact |
+| `ra-2.x.bundle` |  |  | `2E6962EC9E70BB3E3C60BE64FDBB9E55C752111D` | exact |
 | `afteractivate.lua` |  |  | `2548C5313D7F32665D7E4FDC0C214F10F9FC18EB` | exact |
 
 ## Notes
