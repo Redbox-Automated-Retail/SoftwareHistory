@@ -34,6 +34,8 @@ public interface IKioskConfiguration
 
 	KioskHealthConfiguration KioskHealth { get; }
 
+	PricingConfiguration Pricing { get; }
+
 	TestData TestData { get; }
 
 	void Log(ConfigLogParameters loggingParameters = null);

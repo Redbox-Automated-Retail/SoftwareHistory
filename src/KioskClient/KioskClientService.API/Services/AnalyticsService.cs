@@ -13,6 +13,7 @@ using KioskClientService.API.Services.Analytics.KioskDataService;
 using KioskClientService.API.Services.Analytics.Vistar;
 using KioskClientService.API.Services.Analytics.Vistar.Request;
 using KioskClientService.API.Services.Analytics.Vistar.Summaries;
+using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Vistar;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -31,20 +32,23 @@ public class AnalyticsService : IAnalyticsService
 
 	private readonly IAnalyticsQueue _queue;
 
+	private readonly IKioskConfiguration _kioskConfiguration;
+
 	private readonly Guid _clientSessionId = Guid.NewGuid();
 
-	public AnalyticsService(ILogger<AnalyticsService> logger, IStoreService store, IAdServerAnalyticsClient adServerClient, IKioskDataServiceClient kdsClient, IAnalyticsQueue queue)
+	public AnalyticsService(IOptionsSnapshotKioskConfiguration optionsSnapshotKioskConfiguration, ILogger<AnalyticsService> logger, IStoreService store, IAdServerAnalyticsClient adServerClient, IKioskDataServiceClient kdsClient, IAnalyticsQueue queue)
 	{
 		_logger = logger;
 		_adServerClient = adServerClient;
 		_kdsClient = kdsClient;
 		_store = store;
 		_queue = queue;
+		_kioskConfiguration = optionsSnapshotKioskConfiguration;
 	}
 
 	public async Task ServiceEvent(KioskClientEvent eventType, DateTime? eventTime)
 	{
-		_logger.LogInformation($"AnalyticsService.{eventType}");
+		_logger.LogInfoWithSource($"AnalyticsService.{eventType}", "ServiceEvent");
 		try
 		{
 			KioskClientEventRequest request = new KioskClientEventRequest(_store.KioskId, eventType, eventTime);
@@ -52,13 +56,13 @@ public class AnalyticsService : IAnalyticsService
 		}
 		catch (Exception arg)
 		{
-			_logger.LogError($"AnalyticsService.{eventType} - unhandled exception occurred. {arg}");
+			_logger.LogErrorWithSource($"AnalyticsService.{eventType} - unhandled exception occurred. {arg}", "ServiceEvent");
 		}
 	}
 
 	public async Task VistarGetAd(AdLocation adLocation, APIResponse<VistarGetAdResponse> getAdResponse)
 	{
-		_logger.LogInformation("AnalyticsService.VistarGetAd");
+		_logger.LogInfoWithSource("AnalyticsService.VistarGetAd", "VistarGetAd");
 		try
 		{
 			GetAdAnalyticsRequest analyticsObject = new GetAdAnalyticsRequest
@@ -73,13 +77,13 @@ public class AnalyticsService : IAnalyticsService
 		}
 		catch (Exception arg)
 		{
-			_logger.LogError($"AnlyticsService.VistarGetAd - unhandled exception occurred. {arg}");
+			_logger.LogErrorWithSource($"AnlyticsService.VistarGetAd - unhandled exception occurred. {arg}", "VistarGetAd");
 		}
 	}
 
 	public async Task VistarProofOfPlay(ProofOfPlayRequest proofOfPlayRequest, ProofOfPlayResponse proofOfPlayResponse, CachedAdvertisement ad = null)
 	{
-		_logger.LogInformation("AnalyticsService.VistarProofOfPlay");
+		_logger.LogInfoWithSource("AnalyticsService.VistarProofOfPlay", "VistarProofOfPlay");
 		try
 		{
 			ProofOfPlayAnalyticsRequest analyticsObject = new ProofOfPlayAnalyticsRequest
@@ -96,13 +100,13 @@ public class AnalyticsService : IAnalyticsService
 		}
 		catch (Exception arg)
 		{
-			_logger.LogError($"AnalyticsService.VistarProofOfPlay - unhandled exception occurred. {arg}");
+			_logger.LogErrorWithSource($"AnalyticsService.VistarProofOfPlay - unhandled exception occurred. {arg}", "VistarProofOfPlay");
 		}
 	}
 
 	public async Task VistarExpire(VistarExpirationRequest expireRequest, ExpireResponse expireResponse, CachedAdvertisement ad, AdExpirationSource adExpirationSource)
 	{
-		_logger.LogInformation("AnalyticsService.VistarExpire");
+		_logger.LogInfoWithSource("AnalyticsService.VistarExpire", "VistarExpire");
 		try
 		{
 			ExpireAnalyticsRequest analyticsObject = new ExpireAnalyticsRequest
@@ -119,7 +123,7 @@ public class AnalyticsService : IAnalyticsService
 		}
 		catch (Exception arg)
 		{
-			_logger.LogError($"AnalyticsService.VistarExpire - unhandled exception occurred. {arg}");
+			_logger.LogErrorWithSource($"AnalyticsService.VistarExpire - unhandled exception occurred. {arg}", "VistarExpire");
 		}
 	}
 
@@ -127,7 +131,7 @@ public class AnalyticsService : IAnalyticsService
 	{
 		try
 		{
-			_logger.LogInformation("AnalyticsService.VistarCache");
+			_logger.LogInfoWithSource("AnalyticsService.VistarCache", "VistarCache");
 			CacheAnalyticsRequest analyticsObject = new CacheAnalyticsRequest
 			{
 				KioskId = _store.KioskId,
@@ -140,13 +144,13 @@ public class AnalyticsService : IAnalyticsService
 		}
 		catch (Exception arg)
 		{
-			_logger.LogError($"AnalyticsService.Cache - unhandled exception occurred. {arg}");
+			_logger.LogErrorWithSource($"AnalyticsService.Cache - unhandled exception occurred. {arg}", "VistarCache");
 		}
 	}
 
 	public async Task DownloadAsset(APIResponse<byte[]> downloadAssetResponse)
 	{
-		_logger.LogInformation("AnalyticsService.DownloadAsset");
+		_logger.LogInfoWithSource("AnalyticsService.DownloadAsset", "DownloadAsset");
 		try
 		{
 			DownloadAssetAnalyticsRequest analyticsObject = new DownloadAssetAnalyticsRequest
@@ -162,7 +166,7 @@ public class AnalyticsService : IAnalyticsService
 		}
 		catch (Exception arg)
 		{
-			_logger.LogError($"AnalyticsService.DownloadAsset - unhandled exception occurred. {arg}");
+			_logger.LogErrorWithSource($"AnalyticsService.DownloadAsset - unhandled exception occurred. {arg}", "DownloadAsset");
 		}
 	}
 
@@ -181,7 +185,7 @@ public class AnalyticsService : IAnalyticsService
 
 	public void PurgeOldAnalytics(TimeSpan age)
 	{
-		_logger.LogInformation($"AnalyticsService.PurgeOldAnalytics - purging files older than {DateTime.Now - age}");
+		_logger.LogInfoWithSource($"AnalyticsService.PurgeOldAnalytics - purging files older than {DateTime.Now - age}", "PurgeOldAnalytics");
 		try
 		{
 			string path = Path.Combine(_store.DataPath, "Analytics");
@@ -195,7 +199,7 @@ public class AnalyticsService : IAnalyticsService
 		}
 		catch (Exception arg)
 		{
-			_logger.LogError($"AnalyticsService.PurgeOldAnalytics - unhandled exception occurred. {arg}");
+			_logger.LogErrorWithSource($"AnalyticsService.PurgeOldAnalytics - unhandled exception occurred. {arg}", "PurgeOldAnalytics");
 		}
 	}
 
@@ -258,42 +262,49 @@ public class AnalyticsService : IAnalyticsService
 
 	private async Task HandleAnalytics(AnalyticsType type, object analyticsObject)
 	{
-		await _queue.Enqueue(type, async delegate
+		if (_kioskConfiguration.KioskClientAds.AdAnalyticsActive)
 		{
-			string fullPath = Path.GetFullPath(Path.Combine(_store.DataPath, "Analytics/" + type));
-			Directory.CreateDirectory(Path.Combine(fullPath, "Complete"));
-			Directory.CreateDirectory(Path.Combine(fullPath, "Error"));
-			DirectoryInfo pendingDirectory = Directory.CreateDirectory(Path.Combine(fullPath, "Pending"));
-			string filePath = FilePath(fullPath, type, DateTime.Now);
-			_logger.LogInformation("Analytics.HandleAnalytics - writing " + type.ToString() + " analytics to " + filePath + ": " + analyticsObject.ToJson());
-			try
+			await _queue.Enqueue(type, async delegate
 			{
-				if (!File.Exists(filePath))
+				string fullPath = Path.GetFullPath(Path.Combine(_store.DataPath, "Analytics/" + type));
+				Directory.CreateDirectory(Path.Combine(fullPath, "Complete"));
+				Directory.CreateDirectory(Path.Combine(fullPath, "Error"));
+				DirectoryInfo pendingDirectory = Directory.CreateDirectory(Path.Combine(fullPath, "Pending"));
+				string filePath = FilePath(fullPath, type, DateTime.Now);
+				_logger.LogInfoWithSource("Analytics.HandleAnalytics - writing " + type.ToString() + " analytics to " + filePath + ": " + analyticsObject.ToJson(), "HandleAnalytics");
+				try
 				{
-					List<string> source = Directory.GetFiles(Directory.GetParent(filePath).FullName).ToList();
-					await Task.WhenAll(((IEnumerable<string>)source).Select((Func<string, Task>)async delegate(string path)
+					if (!File.Exists(filePath))
 					{
-						await CompleteAnalyticsFile(path, type);
-					}));
-					using StreamWriter file = File.AppendText(filePath);
-					await file.WriteAsync("[" + JsonConvert.SerializeObject(analyticsObject));
+						List<string> source = Directory.GetFiles(Directory.GetParent(filePath).FullName).ToList();
+						await Task.WhenAll(((IEnumerable<string>)source).Select((Func<string, Task>)async delegate(string path)
+						{
+							await CompleteAnalyticsFile(path, type);
+						}));
+						using StreamWriter file = File.AppendText(filePath);
+						await file.WriteAsync("[" + JsonConvert.SerializeObject(analyticsObject));
+					}
+					else
+					{
+						using StreamWriter file = File.AppendText(filePath);
+						await file.WriteAsync("," + JsonConvert.SerializeObject(analyticsObject));
+					}
 				}
-				else
+				catch (Exception arg)
 				{
-					using StreamWriter file = File.AppendText(filePath);
-					await file.WriteAsync("," + JsonConvert.SerializeObject(analyticsObject));
+					_logger.LogErrorWithSource($"Analytics.HandleAnalytics - error while writing analytics for {filePath}. {arg}", "HandleAnalytics");
 				}
-			}
-			catch (Exception arg)
-			{
-				_logger.LogError($"Analytics.HandleAnalytics - error while writing analytics for {filePath}. {arg}");
-			}
-			List<string> list = Directory.GetFiles(pendingDirectory.FullName).ToList();
-			foreach (string item in list)
-			{
-				await SendAnalytics(item, type);
-			}
-		});
+				List<string> list = Directory.GetFiles(pendingDirectory.FullName).ToList();
+				foreach (string item in list)
+				{
+					await SendAnalytics(item, type);
+				}
+			});
+		}
+		else
+		{
+			_logger.LogInfoWithSource($"Analytics type {type} not processed because AdAnalyticsActive configuration is turned off", "HandleAnalytics");
+		}
 	}
 
 	private async Task CompleteAnalyticsFile(string filePath, AnalyticsType type)
@@ -307,13 +318,13 @@ public class AnalyticsService : IAnalyticsService
 				{
 					await file.WriteAsync(']');
 				}
-				_logger.LogInformation("Analytics.CompleteAnalyticsFile - moving " + Path.GetFileName(filePath) + " to " + pendingPath);
+				_logger.LogInfoWithSource("Analytics.CompleteAnalyticsFile - moving " + Path.GetFileName(filePath) + " to " + pendingPath, "CompleteAnalyticsFile");
 				File.Move(filePath, Path.Combine(pendingPath, Path.GetFileName(filePath)));
 			}
 		}
 		catch (Exception arg)
 		{
-			_logger.LogError($"Analytics.CompleteAnalyticsFile - error completing file at {filePath}. {arg}");
+			_logger.LogErrorWithSource($"Analytics.CompleteAnalyticsFile - error completing file at {filePath}. {arg}", "CompleteAnalyticsFile");
 		}
 	}
 
@@ -325,7 +336,7 @@ public class AnalyticsService : IAnalyticsService
 		}
 		try
 		{
-			_logger.LogInformation("Analytics.SendAnalytics: Sending " + Path.GetFileName(filePath));
+			_logger.LogInfoWithSource("Analytics.SendAnalytics: Sending " + Path.GetFileName(filePath), "SendAnalytics");
 			APIResponse<AnalyticsResponse> aPIResponse = null;
 			switch (type)
 			{
@@ -366,7 +377,7 @@ public class AnalyticsService : IAnalyticsService
 				break;
 			}
 			default:
-				_logger.LogInformation("Analytics.SendAnalytics: Aggregation for analytics type " + type.ToString() + " not implemented.");
+				_logger.LogInfoWithSource("Analytics.SendAnalytics: Aggregation for analytics type " + type.ToString() + " not implemented.", "SendAnalytics");
 				break;
 			}
 			if (aPIResponse != null && aPIResponse.IsSuccessStatusCode)
@@ -380,7 +391,7 @@ public class AnalyticsService : IAnalyticsService
 		}
 		catch (UnauthorizedAccessException arg)
 		{
-			_logger.LogError($"Analytics.SendAnalytics: Error for {Path.GetFileName(filePath)}. {arg}");
+			_logger.LogErrorWithSource($"Analytics.SendAnalytics: Error for {Path.GetFileName(filePath)}. {arg}", "SendAnalytics");
 		}
 		catch (Exception error)
 		{
@@ -396,7 +407,7 @@ public class AnalyticsService : IAnalyticsService
 			{
 				File.Move(filePath, Path.Combine(Directory.GetParent(filePath).Parent.FullName, "Error/" + Path.GetFileName(filePath)));
 			}
-			_logger.LogError($"Analytics.SendAnalytics: Error for {Path.GetFileName(filePath)}. {error}");
+			_logger.LogErrorWithSource($"Analytics.SendAnalytics: Error for {Path.GetFileName(filePath)}. {error}", "MoveToErrorFolder");
 		}
 		catch (Exception arg)
 		{

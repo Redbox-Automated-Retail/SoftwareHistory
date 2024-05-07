@@ -206,14 +206,14 @@ public class Startup
 			scheduler.Schedule<IConfigurationJob>().Cron("*/3 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<ProductGroupSortOrderJob>().Cron("*/10 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<SubscriptionJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
-			scheduler.Schedule<PricingJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
+			scheduler.Schedule<PricingJob>().Cron($"*/{5} * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<SyncPlanogramsJob>().Cron("*/5 * * * *").PreventOverlapping("kiosk");
 			scheduler.Schedule<CampaignJob>().EveryFifteenSeconds();
 			scheduler.Schedule<IProfileDataJob>().Cron("*/1 * * * *").PreventOverlapping("kiosk");
 			logger.LogInformation("Scheduling ConfigurationJob at */3");
 			logger.LogInformation("Scheduling ProductGroupSortOrderJob at */10");
 			logger.LogInformation("Scheduling SubscriptionJob at */5");
-			logger.LogInformation("Scheduling PricingJob at */5");
+			logger.LogInformation($"Scheduling PricingJob at */{5} + a random 0 - {5} minutes");
 			logger.LogInformation("Scheduling SyncPlanogramsJob at */5");
 			logger.LogInformation("Scheduling CampaignJob every 15 seconds");
 			logger.LogInformation("Scheduling ProfileDataJob at */1");

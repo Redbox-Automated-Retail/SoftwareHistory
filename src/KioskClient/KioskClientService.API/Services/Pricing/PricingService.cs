@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using KioskClientService.API.App;
 using KioskClientService.API.Services.App;
+using KioskClientService.API.Services.Configuration;
 using KioskClientService.API.Services.ProxyApi;
 using Microsoft.Extensions.Logging;
 
@@ -20,6 +21,14 @@ public class PricingService : IPricingService
 
 	private readonly IStoreService _storeService;
 
+	private readonly IKioskConfiguration _kioskConfiguration;
+
+	private static DateTime? _defaultPricingNextRefresh;
+
+	private static DateTime? _rentalPricingNextRefresh;
+
+	private static DateTime? _purchasePricingNextRefresh;
+
 	private static int updatePeriod = 7200;
 
 	private static int updateSeconds = new Random().Next(0, updatePeriod - 300);
@@ -30,12 +39,14 @@ public class PricingService : IPricingService
 
 	private string _cachePricingPurchaseByPriceFileName => "PricingPurchaseByPrice";
 
-	public PricingService(IProxyApi proxyApi, ILogger<PricingService> logger, IPersistentDataCacheService persistentDataCacheService, IStoreService storeService)
+	public PricingService(IProxyApi proxyApi, ILogger<PricingService> logger, IPersistentDataCacheService persistentDataCacheService, IOptionsSnapshotKioskConfiguration kioskConfiguration, IStoreService storeService)
 	{
 		_proxyApi = proxyApi;
 		_logger = logger;
 		_persistentDataCacheService = persistentDataCacheService;
 		_storeService = storeService;
+		_kioskConfiguration = kioskConfiguration;
+		InitializeNextRefreshValues();
 	}
 
 	public async Task RefreshIfNeeded()
@@ -46,11 +57,15 @@ public class PricingService : IPricingService
 		await RefreshPurchasdePricingByPriceIfNeeded();
 	}
 
-	private bool NeedsUpdate(TimeSpan age)
+	private bool NeedsUpdate(TimeSpan? cacheAge, DateTime? nextRefresh = null)
 	{
-		if (age.TotalHours >= 26.0)
+		if (!cacheAge.HasValue)
 		{
 			return true;
+		}
+		if (cacheAge.Value.TotalHours >= 26.0)
+		{
+			return IsTimeForRefresh(nextRefresh);
 		}
 		DateTime now = DateTime.Now;
 		DateTime dateTime = DateTime.Today.AddHours(4.0);
@@ -59,24 +74,48 @@ public class PricingService : IPricingService
 			return false;
 		}
 		DateTime dateTime2 = dateTime.AddSeconds(updateSeconds);
-		if (now > dateTime2 && age.TotalSeconds > (double)updatePeriod)
+		if (now > dateTime2 && cacheAge.Value.TotalSeconds > (double)updatePeriod)
 		{
 			return true;
 		}
 		return false;
 	}
 
+	private void InitializeNextRefreshValues()
+	{
+		if (!_defaultPricingNextRefresh.HasValue)
+		{
+			int num = new Random().Next(1, Math.Max(2, _kioskConfiguration.Pricing.RefreshIntervalMinutes));
+			DateTime value = DateTime.Now.AddMinutes(num);
+			_defaultPricingNextRefresh = value;
+			_rentalPricingNextRefresh = value;
+			_purchasePricingNextRefresh = value;
+		}
+	}
+
+	private DateTime GetNextRefresh()
+	{
+		return DateTime.Now.AddMinutes(_kioskConfiguration.Pricing.RefreshIntervalMinutes);
+	}
+
+	private bool IsTimeForRefresh(DateTime? nextRefresh)
+	{
+		if (nextRefresh.HasValue)
+		{
+			return nextRefresh <= DateTime.Now;
+		}
+		return true;
+	}
+
 	public async Task RefreshDefaultPricingIfNeeded()
 	{
 		PersistentDataWrapper<DefaultPricingData> persistentDataWrapper = await _persistentDataCacheService.Read<DefaultPricingData>(_cachePricingDefaultFileName, useCache: true);
-		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
+		bool flag = persistentDataWrapper == null || persistentDataWrapper.Data == null;
+		string text = (flag ? "not set" : $"from ealier than today {persistentDataWrapper.Modified}");
+		TimeSpan? cacheAge = (flag ? ((TimeSpan?)null) : new TimeSpan?(DateTime.Now - persistentDataWrapper.Modified));
+		if (NeedsUpdate(cacheAge, _defaultPricingNextRefresh))
 		{
-			_logger?.LogInfoWithSource("Cache is not set - refreshing", "RefreshDefaultPricingIfNeeded");
-			await RefreshDefaultPricing();
-		}
-		else if (NeedsUpdate(DateTime.Now - persistentDataWrapper.Modified))
-		{
-			_logger?.LogInfoWithSource($"Cache is from ealier than today {persistentDataWrapper.Modified} - refreshing", "RefreshDefaultPricingIfNeeded");
+			_logger?.LogInfoWithSource("Cache is " + text + " - refreshing", "RefreshDefaultPricingIfNeeded");
 			await RefreshDefaultPricing();
 		}
 	}
@@ -84,14 +123,12 @@ public class PricingService : IPricingService
 	public async Task RefreshRentalPricingByPriceIfNeeded()
 	{
 		PersistentDataWrapper<RentalPricingByPriceData> persistentDataWrapper = await _persistentDataCacheService.Read<RentalPricingByPriceData>(_cachePricingRentalByPriceFileName, useCache: true);
-		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
+		bool flag = persistentDataWrapper == null || persistentDataWrapper.Data == null;
+		string text = (flag ? "not set" : $"from ealier than today {persistentDataWrapper.Modified}");
+		TimeSpan? cacheAge = (flag ? ((TimeSpan?)null) : new TimeSpan?(DateTime.Now - persistentDataWrapper.Modified));
+		if (NeedsUpdate(cacheAge, _rentalPricingNextRefresh))
 		{
-			_logger?.LogInfoWithSource("Cache is not set - refreshing", "RefreshRentalPricingByPriceIfNeeded");
-			await RefreshRentalPricingByPrice();
-		}
-		else if (NeedsUpdate(DateTime.Now - persistentDataWrapper.Modified))
-		{
-			_logger?.LogInfoWithSource($"Cache is from ealier than today {persistentDataWrapper.Modified} - refreshing", "RefreshRentalPricingByPriceIfNeeded");
+			_logger?.LogInfoWithSource("Cache is " + text + " - refreshing", "RefreshRentalPricingByPriceIfNeeded");
 			await RefreshRentalPricingByPrice();
 		}
 	}
@@ -99,14 +136,12 @@ public class PricingService : IPricingService
 	public async Task RefreshPurchasdePricingByPriceIfNeeded()
 	{
 		PersistentDataWrapper<PurchasePricingByPriceData> persistentDataWrapper = await _persistentDataCacheService.Read<PurchasePricingByPriceData>(_cachePricingPurchaseByPriceFileName, useCache: true);
-		if (persistentDataWrapper == null || persistentDataWrapper.Data == null)
+		bool flag = persistentDataWrapper == null || persistentDataWrapper.Data == null;
+		string text = (flag ? "not set" : $"from ealier than today {persistentDataWrapper.Modified}");
+		TimeSpan? cacheAge = (flag ? ((TimeSpan?)null) : new TimeSpan?(DateTime.Now - persistentDataWrapper.Modified));
+		if (NeedsUpdate(cacheAge, _purchasePricingNextRefresh))
 		{
-			_logger?.LogInfoWithSource("Cache is not set - refreshing", "RefreshPurchasdePricingByPriceIfNeeded");
-			await RefreshPurchasePricingByPrice();
-		}
-		else if (NeedsUpdate(DateTime.Now - persistentDataWrapper.Modified))
-		{
-			_logger?.LogInfoWithSource($"Cache is from ealier than today {persistentDataWrapper.Modified} - refreshing", "RefreshPurchasdePricingByPriceIfNeeded");
+			_logger?.LogInfoWithSource("Cache is " + text + " - refreshing", "RefreshPurchasdePricingByPriceIfNeeded");
 			await RefreshPurchasePricingByPrice();
 		}
 	}
@@ -122,6 +157,7 @@ public class PricingService : IPricingService
 	public async Task RefreshDefaultPricing()
 	{
 		_logger?.LogInfoWithSource("Started", "RefreshDefaultPricing");
+		_defaultPricingNextRefresh = GetNextRefresh();
 		if (_storeService.KioskId == 0L)
 		{
 			_logger?.LogErrorWithSource("KioskId must be > 0", "RefreshDefaultPricing");
@@ -134,18 +170,19 @@ public class PricingService : IPricingService
 			LogResponseErrors(aPIResponse);
 			_logger?.LogInfoWithSource("No pricing returned or error", "RefreshDefaultPricing");
 		}
-		else
+		else if (await _persistentDataCacheService.Write(new DefaultPricingData
 		{
-			await _persistentDataCacheService.Write(new DefaultPricingData
-			{
-				FormatPricing = list.ToList()
-			}, _cachePricingDefaultFileName);
+			FormatPricing = list.ToList()
+		}, _cachePricingDefaultFileName))
+		{
+			_logger.LogInfoWithSource("Cache updated", "RefreshDefaultPricing");
 		}
 	}
 
 	public async Task RefreshRentalPricingByPrice()
 	{
 		_logger?.LogInfoWithSource("Started", "RefreshRentalPricingByPrice");
+		_rentalPricingNextRefresh = GetNextRefresh();
 		if (_storeService.KioskId == 0L)
 		{
 			_logger?.LogErrorWithSource("KioskId must be > 0", "RefreshRentalPricingByPrice");
@@ -158,18 +195,19 @@ public class PricingService : IPricingService
 			LogResponseErrors(aPIResponse);
 			_logger?.LogInfoWithSource("No pricing returned or error", "RefreshRentalPricingByPrice");
 		}
-		else
+		else if (await _persistentDataCacheService.Write(new RentalPricingByPriceData
 		{
-			await _persistentDataCacheService.Write(new RentalPricingByPriceData
-			{
-				RentalPricing = list.ToList()
-			}, _cachePricingRentalByPriceFileName);
+			RentalPricing = list.ToList()
+		}, _cachePricingRentalByPriceFileName))
+		{
+			_logger.LogInfoWithSource("Cache updated", "RefreshRentalPricingByPrice");
 		}
 	}
 
 	public async Task RefreshPurchasePricingByPrice()
 	{
 		_logger?.LogInfoWithSource("Started", "RefreshPurchasePricingByPrice");
+		_purchasePricingNextRefresh = GetNextRefresh();
 		if (_storeService.KioskId == 0L)
 		{
 			_logger?.LogErrorWithSource("KioskId must be > 0", "RefreshPurchasePricingByPrice");
@@ -182,12 +220,12 @@ public class PricingService : IPricingService
 			LogResponseErrors(aPIResponse);
 			_logger?.LogInfoWithSource("No pricing returned or error", "RefreshPurchasePricingByPrice");
 		}
-		else
+		else if (await _persistentDataCacheService.Write(new PurchasePricingByPriceData
 		{
-			await _persistentDataCacheService.Write(new PurchasePricingByPriceData
-			{
-				PurchasePricing = list.ToList()
-			}, _cachePricingPurchaseByPriceFileName);
+			PurchasePricing = list.ToList()
+		}, _cachePricingPurchaseByPriceFileName))
+		{
+			_logger.LogInfoWithSource("Cache updated", "RefreshPurchasePricingByPrice");
 		}
 	}
 

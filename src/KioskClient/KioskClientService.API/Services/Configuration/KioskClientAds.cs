@@ -4,6 +4,8 @@ public class KioskClientAds : BaseCategorySetting
 {
 	public bool AdsActive { get; set; } = true;
 
+	public bool AdAnalyticsActive { get; set; }
+
 	public string VistarUrl { get; set; }
 
 	public int VistarTimeout { get; set; } = 5000;

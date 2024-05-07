@@ -36,6 +36,8 @@ public class BaseKioskConfiguration : BaseConfiguration, IKioskConfiguration
 
 	public KioskHealthConfiguration KioskHealth { get; set; }
 
+	public PricingConfiguration Pricing { get; set; }
+
 	public TestData TestData { get; set; }
 
 	public BaseKioskConfiguration(ILogger<BaseKioskConfiguration> logger, IOptionsMonitor<KioskConfigurationSettings> optionsMonitorKioskConfigurationSettings, IEncryptionService encryptionService)
