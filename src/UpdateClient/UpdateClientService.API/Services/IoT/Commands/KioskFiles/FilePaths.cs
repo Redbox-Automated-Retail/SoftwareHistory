@@ -75,6 +75,10 @@ public static class FilePaths
 		{
 			FileTypeEnum.ProfileData,
 			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Redbox\\Data\\Profile")
+		},
+		{
+			FileTypeEnum.Certificates,
+			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Redbox\\UpdateClient\\Certificates\\")
 		}
 	};
 }

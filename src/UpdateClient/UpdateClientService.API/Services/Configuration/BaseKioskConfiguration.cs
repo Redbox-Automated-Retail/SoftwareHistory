@@ -10,6 +10,10 @@ public class BaseKioskConfiguration : BaseConfiguration, IKioskConfiguration
 
 	public FileSets FileSets { get; set; }
 
+	public KioskHealthConfiguration KioskHealth { get; set; }
+
+	public KioskClientProxyApi KioskClientProxyApi { get; set; }
+
 	public BaseKioskConfiguration(ILogger<BaseKioskConfiguration> logger, IOptionsMonitor<KioskConfigurationSettings> optionsMonitorKioskConfigurationSettings, IEncryptionService encryptionService)
 		: base(logger, optionsMonitorKioskConfigurationSettings, encryptionService)
 	{

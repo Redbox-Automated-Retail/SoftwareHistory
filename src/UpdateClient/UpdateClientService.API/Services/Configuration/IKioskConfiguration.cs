@@ -8,5 +8,9 @@ public interface IKioskConfiguration
 
 	FileSets FileSets { get; }
 
+	KioskHealthConfiguration KioskHealth { get; }
+
+	KioskClientProxyApi KioskClientProxyApi { get; }
+
 	void Log(ConfigLogParameters loggingParameters = null);
 }

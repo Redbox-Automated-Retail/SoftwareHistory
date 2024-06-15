@@ -35,6 +35,8 @@ public class MqttProxy : IMqttProxy
 
 	private readonly IIotCommandDispatch _commandDispatch;
 
+	private readonly IIoTStatisticsService _ioTStatisticsService;
+
 	private readonly IStoreService _store;
 
 	private readonly AppSettings _appSettings;
@@ -62,13 +64,14 @@ public class MqttProxy : IMqttProxy
 
 	private bool IsMqttConnected => _iotClient?.IsConnected ?? false;
 
-	public MqttProxy(ILogger<MqttProxy> logger, ICertificateService certService, IIotCommandDispatch commandDispatch, IStoreService store, IOptions<AppSettings> appSettings)
+	public MqttProxy(ILogger<MqttProxy> logger, ICertificateService certService, IIotCommandDispatch commandDispatch, IStoreService store, IIoTStatisticsService ioTStatisticsService, IOptions<AppSettings> appSettings)
 	{
 		_logger = logger;
 		_certService = certService;
 		_commandDispatch = commandDispatch;
 		_store = store;
 		_appSettings = appSettings.Value;
+		_ioTStatisticsService = ioTStatisticsService;
 		MqttFactory mqttFactory = new MqttFactory();
 		_iotClient = mqttFactory.CreateMqttClient();
 		_iotClient.UseApplicationMessageReceivedHandler(async delegate(MqttApplicationMessageReceivedEventArgs e)
@@ -89,6 +92,10 @@ public class MqttProxy : IMqttProxy
 	private async Task ConnectedHandler(MqttClientConnectedEventArgs e)
 	{
 		_logger.LogInfoWithSource("Connected Result: " + e.ConnectResult.ToJson(), "ConnectedHandler", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
+		if (e.ConnectResult.ResultCode == MqttClientConnectResultCode.Success)
+		{
+			await _ioTStatisticsService.RecordConnectionSuccess();
+		}
 	}
 
 	private async Task DisconnectedHandler(MqttClientDisconnectedEventArgs e)
@@ -101,6 +108,7 @@ public class MqttProxy : IMqttProxy
 		{
 			_logger.LogErrorWithSource(e.Exception, $"Received DisconnectedHandler Event Reason: {e.Reason}", "DisconnectedHandler", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
 		}
+		await _ioTStatisticsService.RecordDisconnection();
 	}
 
 	private async Task MessageReceivedHandler(MqttApplicationMessageReceivedEventArgs e)
@@ -307,6 +315,7 @@ public class MqttProxy : IMqttProxy
 	private async Task ConnectToMqtt()
 	{
 		_logger.LogInfoWithSource($"Attempting to connect KioskId: {_store.KioskId} to mqtt", "ConnectToMqtt", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
+		await _ioTStatisticsService.RecordConnectionAttempt();
 		try
 		{
 			Clear();
@@ -322,6 +331,7 @@ public class MqttProxy : IMqttProxy
 		catch (Exception ex)
 		{
 			_logger.LogErrorWithSource(ex, "Exception occurred in ConnectToMqtt", "ConnectToMqtt", "/sln/src/UpdateClientService.API/Services/IoT/MqttProxy.cs");
+			await _ioTStatisticsService.RecordConnectionException(ex?.Message + ex?.InnerException?.Message);
 			await _certService.Validate();
 			_clientOptions = null;
 		}

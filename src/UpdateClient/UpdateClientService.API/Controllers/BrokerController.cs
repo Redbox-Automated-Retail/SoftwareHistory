@@ -1,19 +1,22 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using UpdateClientService.API.Controllers.Models;
-using UpdateClientService.API.Services.IoT;
-using UpdateClientService.API.Services.IoT.Commands;
-using UpdateClientService.API.Services.IoT.IoTCommand;
+using UpdateClientService.API.Services.Broker;
 
 namespace UpdateClientService.API.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public class BrokerController : AbstractBaseIotController
+public class BrokerController : ControllerBase
 {
-	public BrokerController(IIoTCommandClient iotService)
-		: base(iotService)
+	private readonly IBrokerService _brokerService;
+
+	private readonly IPingStatisticsService _pingStatisticsService;
+
+	public BrokerController(IBrokerService brokerService, IPingStatisticsService pingStatisticsService)
 	{
+		_brokerService = brokerService;
+		_pingStatisticsService = pingStatisticsService;
 	}
 
 	[HttpPost]
@@ -23,19 +26,7 @@ public class BrokerController : AbstractBaseIotController
 	[ProducesResponseType(504)]
 	public async Task<IActionResult> Ping([FromHeader(Name = "app-name")] string appName, [FromHeader(Name = "x-redbox-activityid")] string messageId, PingRequest pingRequest)
 	{
-		return await PerformIoTCommand<ObjectResult>(new IoTCommandModel
-		{
-			Version = 1,
-			RequestId = messageId,
-			AppName = appName,
-			Command = CommandEnum.KioskPing,
-			Payload = pingRequest,
-			QualityOfServiceLevel = QualityOfServiceLevel.AtMostOnce
-		}, new PerformIoTCommandParameters
-		{
-			IoTTopic = "$aws/rules/kioskping",
-			WaitForResponse = false
-		});
+		return await _brokerService.Ping(appName, messageId, pingRequest);
 	}
 
 	[HttpPost]
@@ -45,19 +36,7 @@ public class BrokerController : AbstractBaseIotController
 	[ProducesResponseType(504)]
 	public async Task<IActionResult> Register([FromHeader(Name = "app-name")] string appName, [FromHeader(Name = "x-redbox-activityid")] string messageId, RegisterRequest request)
 	{
-		return await PerformIoTCommand<ObjectResult>(new IoTCommandModel
-		{
-			Version = 1,
-			RequestId = messageId,
-			AppName = appName,
-			Command = CommandEnum.BrokerRegister,
-			Payload = request,
-			QualityOfServiceLevel = QualityOfServiceLevel.AtMostOnce
-		}, new PerformIoTCommandParameters
-		{
-			IoTTopic = "$aws/rules/kioskrestcall",
-			WaitForResponse = true
-		});
+		return await _brokerService.Register(appName, messageId, request);
 	}
 
 	[HttpPost]
@@ -67,18 +46,22 @@ public class BrokerController : AbstractBaseIotController
 	[ProducesResponseType(504)]
 	public async Task<IActionResult> UnRegister([FromHeader(Name = "app-name")] string appName, [FromHeader(Name = "x-redbox-activityid")] string messageId, UnRegisterRequest request)
 	{
-		return await PerformIoTCommand<ObjectResult>(new IoTCommandModel
-		{
-			Version = 1,
-			RequestId = messageId,
-			AppName = appName,
-			Command = CommandEnum.BrokerUnRegister,
-			Payload = request,
-			QualityOfServiceLevel = QualityOfServiceLevel.AtMostOnce
-		}, new PerformIoTCommandParameters
-		{
-			IoTTopic = "$aws/rules/kioskrestcall",
-			WaitForResponse = true
-		});
+		return await _brokerService.Unregister(appName, messageId, request);
+	}
+
+	[HttpGet]
+	[ProducesResponseType(typeof(PingStatisticsResponse), 200)]
+	[ProducesResponseType(500)]
+	public async Task<IActionResult> PingStatistics()
+	{
+		return (await _pingStatisticsService.GetPingStatisticsResponse()).ToObjectResult();
+	}
+
+	[HttpGet]
+	[ProducesResponseType(typeof(LastSuccessfulPingResponse), 200)]
+	[ProducesResponseType(500)]
+	public async Task<IActionResult> LastSuccessfulPing()
+	{
+		return (await _pingStatisticsService.GetLastSuccessfulPing()).ToObjectResult();
 	}
 }

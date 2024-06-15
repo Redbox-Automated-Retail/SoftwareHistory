@@ -17,6 +17,8 @@ public class AppSettings
 
 	public string IoTCertificateServiceApiKey { get; set; }
 
+	public string DefaultProxyServiceUrl { get; set; }
+
 	public string IoTBrokerEndpoint { get; set; }
 
 	public IEnumerable<CleanupFiles> CleanUpFiles { get; set; }

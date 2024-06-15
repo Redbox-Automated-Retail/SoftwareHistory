@@ -30,5 +30,6 @@ public enum CommandEnum
 	SyncTimestampAndTimezone,
 	GetKioskSegments,
 	TriggerReportFileSetVersions,
-	GetRecordChanges
+	GetRecordChanges,
+	GetIotStatisticsSummary
 }

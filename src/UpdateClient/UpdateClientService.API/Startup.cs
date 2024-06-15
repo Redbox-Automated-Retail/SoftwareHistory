@@ -23,6 +23,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using UpdateClientService.API.App;
 using UpdateClientService.API.Services;
+using UpdateClientService.API.Services.Broker;
 using UpdateClientService.API.Services.Configuration;
 using UpdateClientService.API.Services.DataUpdate;
 using UpdateClientService.API.Services.DownloadService;
@@ -40,7 +41,9 @@ using UpdateClientService.API.Services.IoT.FileSets;
 using UpdateClientService.API.Services.IoT.IoTCommand;
 using UpdateClientService.API.Services.IoT.Security.Certificate;
 using UpdateClientService.API.Services.Kernel;
+using UpdateClientService.API.Services.KioskCertificate;
 using UpdateClientService.API.Services.KioskEngine;
+using UpdateClientService.API.Services.ProxyApi;
 using UpdateClientService.API.Services.Segment;
 using UpdateClientService.API.Services.Transfer;
 using UpdateClientService.API.Services.Utilities;
@@ -110,6 +113,9 @@ public class Startup
 		services.AddConfigurationService(Configuration);
 		services.AddSegmentService();
 		services.AddScoped<IDataUpdateService, DataUpdateService>();
+		services.AddKioskCertificatesJob();
+		services.AddBrokerService();
+		services.AddProxyApi();
 		services.AddScheduler();
 		services.AddHttpService(trackMetrics: true, () => new HttpClientHandler
 		{
@@ -243,6 +249,26 @@ public class Startup
 			else
 			{
 				scheduler.Schedule<ISegmentServiceJob>().Cron(CronConstants.AtRandomMinuteEveryXHours(1)).PreventOverlapping("ISegmentServiceJob");
+			}
+			if (env.IsDevelopment())
+			{
+				scheduler.OnWorker("IKioskCertificatesJob").Schedule<IKioskCertificatesJob>().EverySeconds(20)
+					.PreventOverlapping("IKioskCertificatesJob");
+			}
+			else
+			{
+				scheduler.OnWorker("IKioskCertificatesJob").Schedule<IKioskCertificatesJob>().EveryTenMinutes()
+					.PreventOverlapping("IKioskCertificatesJob");
+			}
+			if (env.IsDevelopment())
+			{
+				scheduler.OnWorker("IReportFailedPingsJob").Schedule<IReportFailedPingsJob>().EveryFiveMinutes()
+					.PreventOverlapping("IReportFailedPingsJob");
+			}
+			else
+			{
+				scheduler.OnWorker("IReportFailedPingsJob").Schedule<IReportFailedPingsJob>().EveryFifteenMinutes()
+					.PreventOverlapping("IReportFailedPingsJob");
 			}
 		}).OnError(delegate(Exception exception)
 		{
